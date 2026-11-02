@@ -17,7 +17,7 @@ from markupsafe import escape
 from pos_next.restaurant import permissions, scope
 
 # What a card's design may hold and override: the fields of a Menu Design Template the templates print, and the option
-# groups to print. Anything else a card or a caller sends is ignored (NeoRestau lot 1, task 3; maintenance#2002).
+# groups to print. Anything else a card or a caller sends is ignored (NeoResto lot 1, task 3; maintenance#2002).
 DESIGN_SELECTS = ("style_theme", "paper_format", "price_alignment")
 DESIGN_CHECKS = ("show_descriptions", "show_allergens", "show_options", "show_images")
 # A number: its lowest, its highest, and what it is when not given
@@ -332,7 +332,7 @@ def save_card_design(card_name, template_name=None, overrides=None):
 	from pos_next.api.cash_entry import require_till_user
 
 	require_till_user()
-	# And whoever may write the card (not a cashier), saved as that user (NeoRestau lot 1, task 3)
+	# And whoever may write the card (not a cashier), saved as that user (NeoResto lot 1, task 3)
 	permissions.require("Restaurant Card", "write", card_name)
 	overrides = _parse_overrides(overrides)
 	_refuse_unsafe_css(overrides.get("custom_css"))

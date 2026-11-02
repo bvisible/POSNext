@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""A tablet opens the kitchen's or the runner's screen by scanning a QR code, with no password (NeoRestau lot 1, task 16).
+"""A tablet opens the kitchen's or the runner's screen by scanning a QR code, with no password (NeoResto lot 1, task 16).
 
 A manager of the restaurant makes a one-time token at the till; the tablet redeems it and is signed in with an account of
 its own: a portal account with no role, no password and no API key, at an address minted here, bound to one restaurant
@@ -120,10 +120,10 @@ class Tablets(FrappeTestCase):
 			patcher = patch.object(Restaurant, method)
 			patcher.start()
 			self.addCleanup(patcher.stop)
-		# Tablets presuppose NeoRestau; the site's own flag is not the test's to know
-		neorestau = patch.dict(frappe.conf, {"neorestau_active": 1})
-		neorestau.start()
-		self.addCleanup(neorestau.stop)
+		# Tablets presuppose NeoResto; the site's own flag is not the test's to know
+		neoresto = patch.dict(frappe.conf, {"neoresto_active": 1})
+		neoresto.start()
+		self.addCleanup(neoresto.stop)
 		# The restaurant's roles and their rules, as a migrate leaves them (a fresh CI site runs no after_migrate)
 		ensure_restaurant_roles()
 		self.changed_rules = grant_restaurant_permissions()
@@ -375,10 +375,10 @@ class TestMakingAToken(Tablets):
 				self.assert_refused_token(retired)
 		self.paired(colleagues)
 
-	def test_where_neorestau_is_off_nothing_is_paired(self):
+	def test_where_neoresto_is_off_nothing_is_paired(self):
 		token = self.token(station=self.grill)
 		kitchen_tablet = self.tablet(self.bistro, KITCHEN)
-		with patch.dict(frappe.conf, {"neorestau_active": 0}):
+		with patch.dict(frappe.conf, {"neoresto_active": 0}):
 			with as_user(MANAGER), self.assertRaises(frappe.ValidationError):
 				call(CREATE, screen=KITCHEN, restaurant=self.bistro)
 			with self.browser(), self.assertRaises(frappe.ValidationError):
@@ -950,7 +950,7 @@ class TestWhatATabletReaches(Tablets):
 			("get_tables", restaurant.get_tables, {"restaurant": self.bar}),
 			# The runner's screen is not the kitchen's
 			("get_runner_orders", restaurant.get_runner_orders, {}),
-			# //// Neoffice — the kitchen's tablet reads its OWN restaurant's settings since the kitchen is told of the next course by a setting of the till (NeoRestau lot 1, 01.11): another restaurant's stay refused
+			# //// Neoffice — the kitchen's tablet reads its OWN restaurant's settings since the kitchen is told of the next course by a setting of the till (NeoResto lot 1, 01.11): another restaurant's stay refused
 			("get_restaurant_settings", restaurant.get_restaurant_settings, {"restaurant": self.bar}),
 			("mark_items_delivered", restaurant.mark_items_delivered, {"invoice_name": self.order}),
 		):
@@ -1498,7 +1498,7 @@ class TestTheTabletsOfARestaurant(Tablets):
 
 class TestATabletStartedFromItsIconFindsItsScreen(Tablets):
 	"""The app installed on a tablet starts at the till's address (the manifest's start_url is /pos), not at the screen
-	the pairing opened: the tablet asks which screen it was paired for (NeoRestau lot 1, task 48)."""
+	the pairing opened: the tablet asks which screen it was paired for (NeoResto lot 1, task 48)."""
 
 	def test_a_tablet_is_answered_the_address_its_pairing_gave(self):
 		# One source: the pairing's answer and this one are the same string, for every screen a tablet can be paired for
@@ -1555,9 +1555,9 @@ class TestATabletStartedFromItsIconFindsItsScreen(Tablets):
 		self.assert_refused(tablet, "my_screen", call, MY_SCREEN)
 		self.assertEqual(self.sessions_of(tablet), [])
 
-	def test_where_neorestau_is_off_a_tablet_is_not_answered(self):
+	def test_where_neoresto_is_off_a_tablet_is_not_answered(self):
 		tablet = self.tablet(self.bistro, KITCHEN)
-		with patch.dict(frappe.conf, {"neorestau_active": 0}):
+		with patch.dict(frappe.conf, {"neoresto_active": 0}):
 			self.assert_refused(tablet, "my_screen", call, MY_SCREEN)
 
 	def test_the_endpoint_is_in_the_tablet_confinement_and_is_a_read(self):

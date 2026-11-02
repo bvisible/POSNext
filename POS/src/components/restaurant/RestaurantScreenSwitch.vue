@@ -1,5 +1,5 @@
 <template>
-	<!-- //// Neoffice — added file (no upstream equivalent). The switch between the restaurant's screens, the same on each of them (NeoRestau lot 1, task 38a-2, ruling 132): -->
+	<!-- //// Neoffice — added file (no upstream equivalent). The switch between the restaurant's screens, the same on each of them (NeoResto lot 1, task 38a-2, ruling 132): -->
 	<!-- //// Preparation, Runner, Floor plan, the current one lit. It goes to the other screen with the filters the user has on (the room, the station, the restaurant of the -->
 	<!-- //// address), so that the bar's kitchen leads to the runner of the bar. It offers only the screens the session may see (utils/restaurantScreens) and is not drawn at -->
 	<!-- //// all when there is one: a tablet paired for its screen has nothing to choose, and a switch of one button is a button that does nothing. -->

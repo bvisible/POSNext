@@ -1,5 +1,5 @@
 //// Neoffice — added file (no upstream equivalent). The background refresh of the stock quantities is always on, every
-//// minute, with no switch and no interval to set (NeoRestau lot 1, task 13, ruling 84): upstream let a till switch it
+//// minute, with no switch and no interval to set (NeoResto lot 1, task 13, ruling 84): upstream let a till switch it
 //// off, which left the quantities on screen as old as the last sale of that till, and a till that never found the
 //// switch never refreshed at all. The screen of the till's settings only shows its state.
 

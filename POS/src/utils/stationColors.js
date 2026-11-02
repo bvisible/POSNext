@@ -1,5 +1,5 @@
 //// Neoffice — added file (no upstream equivalent). What to write on a preparation station's colour, and what colour to write the
-//// station in on a dark card (NeoRestau lot 1, task 46). A station carries a colour the restaurant picked (its pills, its chips, its
+//// station in on a dark card (NeoResto lot 1, task 46). A station carries a colour the restaurant picked (its pills, its chips, its
 //// box on the floor plan), so the kitchen and runner screens cannot know it when they are written: they used white text on it
 //// and the station's own colour as text on a tint of itself, which reads on a light card and not on a dark one (white on a clay
 //// pill measured 2.8:1, a blue station's name on its own tint 2.0:1). The light mode keeps what it draws; the screens hand these two

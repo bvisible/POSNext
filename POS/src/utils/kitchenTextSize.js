@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The size of the text of the kitchen screen (NeoRestau lot 1, task 38a-1, ruling 109).
+//// Neoffice — added file (no upstream equivalent). The size of the text of the kitchen screen (NeoResto lot 1, task 38a-1, ruling 109).
 //// The product owner fights for room on the screen, and some cooks need glasses: the choice is theirs, one tap, kept on the device. The
 //// screen ships DENSE (Compact): four tickets on a 1366 x 768 screen was too few, and a cook who needs bigger text asks for it.
 ////

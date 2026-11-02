@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). Keep the screen on, and let it rest on purpose (NeoRestau lot 1, task 47). TWO different things:
+ * //// Neoffice — added file (no upstream equivalent). Keep the screen on, and let it rest on purpose (NeoResto lot 1, task 47). TWO different things:
  * //// (1) the browser's Screen Wake Lock keeps the physical screen on (it is released by the browser whenever the page is hidden, so it is asked for
  * //// again); (2) a web page cannot switch the physical screen off nor dim it, so after N minutes without a touch the page draws a near-black layer
  * //// itself while the lock and the live updates keep running, and the first touch wakes it WITHOUT reaching the control under the finger.

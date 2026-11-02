@@ -1,8 +1,8 @@
 <template>
 	<div data-test="tables-list" class="relative flex flex-col flex-1 min-h-0 bg-[#FAF3EA] text-[#141414] dark:bg-[#181b21] dark:text-ds-paper" :style="LIST_FONT">
-		<!-- //// Neoffice — dark mode (NeoRestau lot 1, smoke-test fix): the list stayed cream and white in the dark mode of the till, beside a dark cart. Every surface, line and text colour of the list has its dark counterpart from the design system's dark scope (the classes are `dark:` ones beside the light ones, or tablesListLook.js's constants); the plan's canvas beside it is the same ground. The light mode draws what it drew. -->
+		<!-- //// Neoffice — dark mode (NeoResto lot 1, smoke-test fix): the list stayed cream and white in the dark mode of the till, beside a dark cart. Every surface, line and text colour of the list has its dark counterpart from the design system's dark scope (the classes are `dark:` ones beside the light ones, or tablesListLook.js's constants); the plan's canvas beside it is the same ground. The light mode draws what it drew. -->
 		<!-- //// Neoffice — added file (no upstream equivalent). The list of tables of the restaurant till, as the waiter
-		     //// mockup draws it (NeoRestau lot 1, task 26; product owner, 31.10.2026: « on the phone, show the list of
+		     //// mockup draws it (NeoResto lot 1, task 26; product owner, 31.10.2026: « on the phone, show the list of
 		     //// the tables by default rather than the plan »). The filters (« All · N », then the rooms of the plan),
 		     //// the tables with something going on as cards, the most urgent first; « Soon », the reservations
 		     //// arriving; then the other tables, one line each, so that « All » finds any table. A tap opens the table

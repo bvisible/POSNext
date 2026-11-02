@@ -13,7 +13,7 @@
 	<!-- //// deletion, 32f2415d the closed-hours banner, e4769383 the clay retheme. Run git log -->
 	<!-- //// on this path for the full list.) -->
 	<div class="flex flex-col h-full bg-white dark:bg-gray-900 overflow-hidden">
-		<!-- On a phone the tables open on their list (NeoRestau lot 1, task 26), under the waiter mockup's top: « Tables »
+		<!-- On a phone the tables open on their list (NeoResto lot 1, task 26), under the waiter mockup's top: « Tables »
 		     on the ink bar, the user and the time, the switch « List | Floor plan ». Not while the plan is edited: the
 		     editor is the line's. -->
 		<TablesPhoneTop
@@ -25,7 +25,7 @@
 			@update:view="setView"
 			@open-runner="openRunnerTab"
 		/>
-		<!-- One line (NeoRestau lot 1, Ruling 48), with the look of the line the runner and the kitchen screen share
+		<!-- One line (NeoResto lot 1, Ruling 48), with the look of the line the runner and the kitchen screen share
 		     (RoomStationFilterLine, Ruling 44): the rooms on the left; on the right the stations and the Runner and
 		     Takeaway pills, or Save and Cancel while the plan is edited; the « ⋯ » menu at the very end. It was two rows
 		     (49 and 39 px, measured) and an Edit button within every finger's reach. A phone's list has its own filters
@@ -306,7 +306,7 @@
 			</label>
 		</div>
 
-		<!-- //// Neoffice — dark mode (NeoRestau lot 1, smoke-test fix): the canvas was a fixed light sheet in an inline style, which no dark class can reach, under table names written in light text (1.1:1). The colour and the dots are classes now (`canvasClass`): the same light ones, and in dark the ground the till's dark remap gives `bg-gray-50` with faint white dots, as the runner's plan has them. Only the size stays inline. -->
+		<!-- //// Neoffice — dark mode (NeoResto lot 1, smoke-test fix): the canvas was a fixed light sheet in an inline style, which no dark class can reach, under table names written in light text (1.1:1). The colour and the dots are classes now (`canvasClass`): the same light ones, and in dark the ground the till's dark remap gives `bg-gray-50` with faint white dots, as the runner's plan has them. Only the size stays inline. -->
 		<!-- Canvas. Put away, not removed, while the list is shown: its gestures are bound to it once, when it mounts.
 		     It hears the pointer of a pressed table to its end (task 26): a tap opens the table when the finger lifts, a
 		     long press shows its QR code, a press that moves pans the plan, a second finger pinches it (useTablePress) -->
@@ -646,7 +646,7 @@
 			{{ qrEnabled ? __("Tap a table to open its order · long press: its QR code") : __("Tap a table to open its order") }}
 		</p>
 
-		<!-- The list of the tables (NeoRestau lot 1, task 26): what the plan shows, sorted by what needs the waiter first.
+		<!-- The list of the tables (NeoResto lot 1, task 26): what the plan shows, sorted by what needs the waiter first.
 		     It reads the plan's data (the floor, the pass's orders) and its events, and opens a table as the plan does -->
 		<TablesList
 			v-if="shownView === 'list'"
@@ -1037,7 +1037,7 @@ import { roomCode } from "@/utils/kitchenRoomCode"
 //// Neoffice — a station's colour lightened for a dark canvas (smoke-test fix; task 46's helper, as the runner's plan uses it)
 import { onDark } from "@/utils/stationColors"
 import { initSocket } from "@/socket"
-//// Neoffice — opening a table (and the Paid/Cleaning rule that goes with it) is one function now, shared with the notices of a guest's order (composables/useOpenTable.js; Daniel, 01.11). It carried « Offert » (NeoRestau lot 1, task 24): what an offered row of a table's draft keeps when the table is opened.
+//// Neoffice — opening a table (and the Paid/Cleaning rule that goes with it) is one function now, shared with the notices of a guest's order (composables/useOpenTable.js; Daniel, 01.11). It carried « Offert » (NeoResto lot 1, task 24): what an offered row of a table's draft keeps when the table is opened.
 import { useOpenTable } from "@/composables/useOpenTable"
 import { tableNeedsCleaning } from "@/utils/tableStatus"
 import { Button, Dialog } from "frappe-ui"
@@ -1089,18 +1089,18 @@ const { showSuccess, showError, showInfo, handleError } = useToast()
 const canvasRef = ref(null)
 const isEditMode = ref(false)
 const isDirty = ref(false)
-// Laying out the floor (rooms, tables, stations, walls) is for whoever the server lets manage the floor (NeoRestau lot
+// Laying out the floor (rooms, tables, stations, walls) is for whoever the server lets manage the floor (NeoResto lot
 // 1, task 3): a cashier sees the plan and serves its tables, the Edit button is not his
 const canManageFloor = computed(() => Boolean(restaurantStore.can?.manage_floor))
 // Setting the status of a table is the service's, not the layout's: a cashier may (the server checks it again)
 const canSetTableStatus = computed(() => Boolean(restaurantStore.can?.set_table_status))
-// Pairing a tablet as the kitchen's or the runner's screen is for whoever may set the restaurant up (NeoRestau lot 1,
+// Pairing a tablet as the kitchen's or the runner's screen is for whoever may set the restaurant up (NeoResto lot 1,
 // task 16; the server checks it again)
 const canSetUpTheRestaurant = computed(() => Boolean(restaurantStore.can?.manage_settings))
 const tabletDialogOpen = ref(false)
 const phoneDialogOpen = ref(false)
 
-// ─── The tables as the plan or as their list (NeoRestau lot 1, task 26) ──────
+// ─── The tables as the plan or as their list (NeoResto lot 1, task 26) ──────
 // Product owner, 31.10.2026: « on the phone, show the list of the tables by default rather than the plan »,
 // « on phones the table's QR code must be easy to reach ». A phone opens on the list, a tablet and a PC
 // on the plan; the choice is kept on the device (useTablesView). The editor always shows the plan, without touching the
@@ -2086,7 +2086,7 @@ async function selectTable(table) {
 	}
 
 	//// Neoffice — the body of this function moved to composables/useOpenTable.js, so that the notice of a guest's order (« View table ») opens a table the way a tap in the list does, through the same function
-	//// (NeoRestau lot 1, Daniel, 01.11). Nothing changed in what it does: the order is read first, then the cart is cleared and rebuilt.
+	//// (NeoResto lot 1, Daniel, 01.11). Nothing changed in what it does: the order is read first, then the cart is cleared and rebuilt.
 	await openTable(table)
 
 	emit("table-selected", table)

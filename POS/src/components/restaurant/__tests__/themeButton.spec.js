@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The theme button of the kitchen and runner screens (NeoRestau lot 1, task 38a-2, ruling 131). A
+ * //// Neoffice — added file (no upstream equivalent). The theme button of the kitchen and runner screens (NeoResto lot 1, task 38a-2, ruling 131). A
  * //// tablet in dark because its system is dark gave the cook no way to change it: the screens have no user menu. One tap goes Auto, Light, Dark; a held
  * //// press names the three; the choice is the till's own (same key, same function).
  * @vitest-environment jsdom

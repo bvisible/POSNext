@@ -32,7 +32,7 @@ export const session = reactive({
 			// Initialize CSRF token immediately after successful login
 			await ensureCSRFToken();
 
-			//// Neoffice — the session just opened has not been stamped: the till's profile load asks for its days (NeoRestau lot 1, 01.11.2026).
+			//// Neoffice — the session just opened has not been stamped: the till's profile load asks for its days (NeoResto lot 1, 01.11.2026).
 			forgetKeepSignedIn();
 
 			await userResource.reload();
@@ -41,7 +41,7 @@ export const session = reactive({
 			//// length, the switch to the desk, the till's settings): a sign-out resets it (utils/sessionCleanup), and the
 			//// page loads it once, so a sign-in in the same tab loads the new user's before the till opens. Without it
 			//// an expense void failed with "requires authorization" and the PIN field fell back to 4 digits until a
-			//// reload (NeoRestau lot 1, task 3).
+			//// reload (NeoResto lot 1, task 3).
 			await useBootstrapStore().loadInitialData();
 
 			// Refresh userData from cookies after login

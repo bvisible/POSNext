@@ -1,7 +1,7 @@
 //// Neoffice — added file (no upstream equivalent). The public menu is a page of the router that anybody opens
-//// (NeoRestau lot 1, task 17): the QR code on a restaurant's tables leads a guest to /pos/menu/<restaurant>. Like the other
+//// (NeoResto lot 1, task 17): the QR code on a restaurant's tables leads a guest to /pos/menu/<restaurant>. Like the other
 //// pages a guest opens it needs no session; and it is not one of the till's own screens of the restaurant, which would send
-//// a guest to the login where the site does not run NeoRestau: the page asks the server and says politely that the menu is
+//// a guest to the login where the site does not run NeoResto: the page asks the server and says politely that the menu is
 //// not available.
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest"
@@ -29,7 +29,7 @@ async function visit(path) {
 describe("the public menu route", () => {
 	beforeEach(() => {
 		session.isLoggedIn = false
-		window.posnext_neorestau_active = true
+		window.posnext_neoresto_active = true
 	})
 
 	it("opens for a visitor with no session, with the restaurant of the address", async () => {
@@ -47,9 +47,9 @@ describe("the public menu route", () => {
 		expect(route.params.restaurant).toBe("Café & Bar / Grill")
 	})
 
-	it("opens whether or not the site runs NeoRestau: the page says it politely, the router does not send the guest away", async () => {
+	it("opens whether or not the site runs NeoResto: the page says it politely, the router does not send the guest away", async () => {
 		for (const flag of [false, undefined]) {
-			window.posnext_neorestau_active = flag
+			window.posnext_neoresto_active = flag
 
 			const route = await visit("/menu/The%20Bistro")
 

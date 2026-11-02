@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). How a service screen keeps up with the room (NeoRestau lot 1, Daniel, 01.11: « le délai entre l'envoi de la suite et la réception à la cuisine prend environ 10 secondes »).
+ * //// Neoffice — added file (no upstream equivalent). How a service screen keeps up with the room (NeoResto lot 1, Daniel, 01.11: « le délai entre l'envoi de la suite et la réception à la cuisine prend environ 10 secondes »).
  * //// The screen reads again on every signal of the server; a signal that arrives while the tablet's connection is down is lost, and the screen only found the order at its next timed reading, up to 15 seconds later
  * //// (30 on the runner). It now reads again when the connection comes back, when the page is looked at again, and often while the connection is down.
  * @vitest-environment jsdom

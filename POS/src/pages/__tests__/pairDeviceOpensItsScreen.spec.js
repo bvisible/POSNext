@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). A kitchen's or a runner's tablet opens its screen by scanning
- * //// the QR code a manager shows at the till (NeoRestau lot 1, task 16): the page the code opens hands it over by a
+ * //// the QR code a manager shows at the till (NeoResto lot 1, task 16): the page the code opens hands it over by a
  * //// POST (never a GET, which a link preview could make), takes it out of the address at once, and goes to the
  * //// screen the server names. A code that opens nothing says so clearly, in the server's words.
  * @vitest-environment jsdom

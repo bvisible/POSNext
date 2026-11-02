@@ -40,7 +40,7 @@ function siteNumberFormat(format) {
 
 //// Neoffice — the site's rounding method when System Settings names none is Frappe's own default, « Banker's Rounding
 //// (legacy) » (frappe.utils.data.rounded): upstream defaulted to « Banker's Rounding », so a till of such a site (the
-//// fleet's) rounded an exact half-cent to even where the invoice rounds it up (NeoRestau lot 1, Ruling 70).
+//// fleet's) rounded an exact half-cent to even where the invoice rounds it up (NeoResto lot 1, Ruling 70).
 const DEFAULT_ROUNDING_METHOD = "Banker's Rounding (legacy)";
 
 let settings = {

@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The pass delivers each order with its own lines: a table can
- * //// hold two drafts, and the server delivers only lines of the invoice it is given (NeoRestau lot 1, task 3).
+ * //// hold two drafts, and the server delivers only lines of the invoice it is given (NeoResto lot 1, task 3).
  * //// Delivering a table's group sends one call per invoice; until then the group went out under its first order's
  * //// invoice with every order's lines, which the server now refuses whole.
  * @vitest-environment jsdom

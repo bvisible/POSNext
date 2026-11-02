@@ -22,32 +22,36 @@ pos_next.patches.v2_0_0.remove_custom_company_fields
 pos_next.patches.v2_4_0.rehome_auth_gate_to_pos_next
 pos_next.patches.v2_3_0.enable_posa_allow_cancel_pos_expense
 pos_next.patches.v2_4_0.rename_locations_doctypes
-# //// Neoffice — NeoRestau: the site-wide Restaurant Settings single becomes the settings of a
+# //// Neoffice — NeoResto: the site-wide Restaurant Settings single becomes the settings of a
 # //// default restaurant, named after the default company (lot 1, task 1). It runs after the doctype sync,
 # //// which is what creates the Restaurant table, and does nothing on a site that never used the module.
 pos_next.patches.neorestau.move_restaurant_settings_to_a_restaurant
-# //// Neoffice — NeoRestau: the records a site made before the restaurants (rooms, tables, stations, cards, menus,
+# //// Neoffice — NeoResto: the records a site made before the restaurants (rooms, tables, stations, cards, menus,
 # //// reservations, tips) and every till in restaurant mode join the default restaurant (lot 1, task 2). It runs
-# //// after the entry above, which is what makes that restaurant. The three entries of NeoRestau count the same signs of
+# //// after the entry above, which is what makes that restaurant. The three entries of NeoResto count the same signs of
 # //// use (pos_next.restaurant.usage: a ticked till, a record, opening hours, an order on a table): a site that never
 # //// used the restaurant is left as it is by all of them.
 pos_next.patches.neorestau.attach_records_to_the_default_restaurant
-# //// Neoffice — NeoRestau: a site that used the restaurant keeps it. Restaurant mode shows at a till only where the
-# //// site flag `neorestau_active` is on (lot 1, task 4): this switches it on, once, where the site used the restaurant
+# //// Neoffice — NeoResto: a site that used the restaurant keeps it. Restaurant mode shows at a till only where the
+# //// site flag `neoresto_active` is on (lot 1, task 4): this switches it on, once, where the site used the restaurant
 # //// (the criterion the two entries above share: a ticked till, a record, opening hours, an order on a table), leaves
 # //// alone a site whose configuration already names the flag, on or off, and never switches it off. It runs after
 # //// them: they make the restaurant and give every till its own.
 pos_next.patches.neorestau.switch_neorestau_on_where_restaurant_mode_runs
 # //// Neoffice — the till's drawer movements and the closing's withdrawals are found by link fields of ours since
-# //// NeoRestau lot 1 (task 15): the entries written before carry their remark only, and are tagged from it, once.
+# //// NeoResto lot 1 (task 15): the entries written before carry their remark only, and are tagged from it, once.
 pos_next.patches.neorestau.tag_the_tills_cash_movements
 # //// Neoffice — no till loses its cash operations: an empty list offered every operation of the till's company before
 # //// task 15 made the list a control; each empty list is filled once with what the till offered, less what the new rule refuses.
 pos_next.patches.neorestau.keep_the_tills_cash_operations
-# //// Neoffice — NeoRestau: a till's staff stay signed in for the days its POS Settings say (`keep_signed_in_days`, product
+# //// Neoffice — NeoResto: a till's staff stay signed in for the days its POS Settings say (`keep_signed_in_days`, product
 # //// owner, 01.11.2026); the restaurant tills that already exist take the 30 days a new restaurant till takes. It runs
 # //// after the doctype sync, which is what makes the column.
 pos_next.patches.neorestau.keep_restaurant_staff_signed_in
-# //// Neoffice — NeoRestau: a lock now locks at once on leaving the screen only if the till says so (`session_lock_on_leave`,
+# //// Neoffice — NeoResto: a lock now locks at once on leaving the screen only if the till says so (`session_lock_on_leave`,
 # //// default off, product owner, 01.11.2026); the tills that already lock keep locking at once. Runs after the doctype sync.
 pos_next.patches.neorestau.keep_the_screen_lock_of_the_tills_that_lock
+# //// Neoffice — NeoRestau became NeoResto (02.11.2026): the page and the menu entry that were made under the old name are renamed once, and the site's flag
+# //// `neorestau_active` is carried to `neoresto_active`. It runs after the doctype sync and before the migrate's after_migrate, whose `setup()` would otherwise
+# //// make a second page and a second entry under the new name.
+pos_next.patches.neoresto.rename_what_neorestau_made

@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The lock of the till and the days it keeps its staff signed in (NeoRestau
+ * //// Neoffice — added file (no upstream equivalent). The lock of the till and the days it keeps its staff signed in (NeoResto
  * //// lot 1, product owner, 01.11.2026) are four POS Settings of the till's settings screen, which is drawn from the list the
  * //// server sends (task 13): "Lock the till" (off by default, nobody is forced to type a code), the delay without use, whether
  * //// leaving the screen locks at once, and "Keep staff signed in (days)", 0 to 90. They were fields of the old settings dialog;

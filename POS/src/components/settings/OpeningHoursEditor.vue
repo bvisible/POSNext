@@ -6,7 +6,7 @@
 	<!-- //// with opening hours and time-based card availability"; 102b1208 moves the card -->
 	<!-- //// assignment off Restaurant Card and onto the slots, 9ae00441 the Lunch and Dinner -->
 	<!-- //// slot defaults.) -->
-	<!-- //// Neoffice — one line per day since NeoRestau lot 1, task 13: the day, its slots, « Add slot » (mockup v2), -->
+	<!-- //// Neoffice — one line per day since NeoResto lot 1, task 13: the day, its slots, « Add slot » (mockup v2), -->
 	<!-- //// so that the week fits the till's settings screen at 1366 x 768; the design system's sand and clay. -->
 	<div class="flex flex-col">
 		<div

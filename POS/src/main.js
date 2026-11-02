@@ -62,7 +62,7 @@ import "./index.css";
 //// on the storage event so a toggle made in another tab lands here too (cfc64c9c,
 //// 2026-06-15 "fix(pos-dark): live theme sync with Frappe"). The dark rules it switches
 //// on live in POS/src/index.css.
-//// Neoffice — the body of this block moved to utils/colorMode.js (NeoRestau lot 1, task 38a-2, ruling 131): the user menu and the theme button of the
+//// Neoffice — the body of this block moved to utils/colorMode.js (NeoResto lot 1, task 38a-2, ruling 131): the user menu and the theme button of the
 //// kitchen and runner screens read and write the same mode, and three copies of the logic drifted. Same behaviour, one place.
 // Adopt the shared cockpit colour mode (neocockpit-colormode) BEFORE Vue mounts,
 // so the till opens in the right theme with no flash AND follows live changes

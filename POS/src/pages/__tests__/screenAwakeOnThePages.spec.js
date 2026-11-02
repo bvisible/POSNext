@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The kitchen, the runner and the customer displays keep their screen on and let it rest on purpose
- * //// (NeoRestau lot 1, task 47). The product owner's tablet fell asleep by itself in the kitchen. On each page: the browser's Screen Wake Lock is asked for; after
+ * //// (NeoResto lot 1, task 47). The product owner's tablet fell asleep by itself in the kitchen. On each page: the browser's Screen Wake Lock is asked for; after
  * //// 30 minutes without a touch a near-black layer is drawn (a web page cannot switch the screen off nor dim it) with a small clock and the number of waiting orders;
  * //// the first touch wakes it WITHOUT pressing the control under the finger; a new ticket wakes it; the control beside the size of the text changes the settings
  * //// of this device. The customer displays hold the lock and never rest. The browser, the clock and the server are mocked.

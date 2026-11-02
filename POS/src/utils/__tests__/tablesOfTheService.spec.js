@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The list of tables a waiter opens on his phone (NeoRestau lot 1,
+//// Neoffice — added file (no upstream equivalent). The list of tables a waiter opens on his phone (NeoResto lot 1,
 //// task 26): every table of the restaurant, sorted by what needs him first. Dishes ready at the pass, then a QR order
 //// waiting for him to accept it, then the other occupied tables, the one seated longest first; then « Soon », the
 //// reservations that arrive within the hour; then the free tables and the tables being cleaned, so that « All » can

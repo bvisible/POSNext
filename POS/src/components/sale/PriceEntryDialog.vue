@@ -143,7 +143,7 @@ const {
 	onEnter: confirmPrice,
 })
 
-// Whoever opened the dialog for a dish waiting at 0.00 is told when it closes without a price (NeoRestau lot 1, task 27,
+// Whoever opened the dialog for a dish waiting at 0.00 is told when it closes without a price (NeoResto lot 1, task 27,
 // fix round 1: the phone's long press takes that dish back)
 let onCancel = null
 

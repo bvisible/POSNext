@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""A line of several units can be marked ready for some of them only (NeoRestau lot 1, kitchen test of 01.11).
+"""A line of several units can be marked ready for some of them only (NeoResto lot 1, kitchen test of 01.11).
 
 A line of six dishes was all or nothing: the cook "took everything", when four of the six were done. The kitchen now says
 « ready » with a quantity: the runner sees the four to carry, and the kitchen keeps the line with the two left to cook. A line

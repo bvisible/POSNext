@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The kitchen alerts as a screen reads them (NeoRestau lot 1, Daniel, 01.11: a popup and a sound when the next course is ordered, a sound when dishes
+//// Neoffice — added file (no upstream equivalent). The kitchen alerts as a screen reads them (NeoResto lot 1, Daniel, 01.11: a popup and a sound when the next course is ordered, a sound when dishes
 //// come up ready). They are settings of the till (POS Settings, "Kitchen alerts"); the server resolves them for the restaurant a screen is opened on and answers `kitchen_alerts` in
 //// `get_restaurant_settings` (pos_next.restaurant.kitchen_alerts). This reads that answer, and reads anything it does not understand as the default: a screen never breaks on an answer that is missing, old or odd.
 

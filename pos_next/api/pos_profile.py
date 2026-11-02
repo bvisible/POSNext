@@ -9,7 +9,7 @@ from frappe.utils import cint
 from pos_next.api.utilities import _parse_list_parameter, check_user_company
 
 
-# //// Neoffice — the door a shift is opened through (NeoRestau lot 1, task 5): `mode="restaurant"` is the entry NeoRestau
+# //// Neoffice — the door a shift is opened through (NeoResto lot 1, task 5): `mode="restaurant"` is the entry NeoResto
 # //// opens (/pos?mode=restaurant) and offers the restaurant tills, any other value the usual entry and the other tills.
 # //// The rule and its fallbacks live in pos_next.restaurant.door; this function only passes the door on.
 @frappe.whitelist()
@@ -40,7 +40,7 @@ def get_pos_profiles(mode: str | None = None):
 	)
 
 	# //// Neoffice — only the tills of the door the cashier came through, each told whether it is a restaurant till
-	# //// (pos_next.restaurant.door, NeoRestau lot 1, task 5); upstream answered every till of the user.
+	# //// (pos_next.restaurant.door, NeoResto lot 1, task 5); upstream answered every till of the user.
 	from pos_next.restaurant.door import offer_at_the_door
 
 	return offer_at_the_door(pos_profiles, mode)
@@ -101,7 +101,7 @@ def get_pos_settings(pos_profile):
 
 	if not pos_profile:
 		# //// Neoffice — the defaults a till falls back on (no profile, a read that failed) are told whether the site runs
-		# //// NeoRestau like every other answer of this function (NeoRestau lot 1, task 4, fix round 1).
+		# //// NeoResto like every other answer of this function (NeoResto lot 1, task 4, fix round 1).
 		return default_settings()
 
 	try:
@@ -117,7 +117,7 @@ def get_pos_settings(pos_profile):
 		return pos_settings
 	except Exception:
 		frappe.log_error(frappe.get_traceback(), "Get POS Settings Error")
-		# //// Neoffice — the defaults, told whether the site runs NeoRestau (see above).
+		# //// Neoffice — the defaults, told whether the site runs NeoResto (see above).
 		return default_settings()
 
 
@@ -257,7 +257,7 @@ def get_taxes(pos_profile):
 					"idx": tax_row.idx,
 					# //// Neoffice — what ERPNext also reads of a row to compute it: the row a « previous row » charge
 					# //// stands on, and the amount of an « Actual » one. The till computes the invoice's taxes the way
-					# //// ERPNext does, to the cent (NeoRestau lot 1, Ruling 70; POS utils/invoiceTaxes.js).
+					# //// ERPNext does, to the cent (NeoResto lot 1, Ruling 70; POS utils/invoiceTaxes.js).
 					"row_id": tax_row.get("row_id"),
 					"tax_amount": tax_row.get("tax_amount") or 0,
 				}
@@ -335,7 +335,7 @@ def get_default_customer(pos_profile):
 		return {"customer": None}
 
 
-# //// Neoffice — no longer a web endpoint (NeoRestau lot 1, task 13, fix round 1): the till's warehouse is
+# //// Neoffice — no longer a web endpoint (NeoResto lot 1, task 13, fix round 1): the till's warehouse is
 # //// saved with its other settings through pos_next.till_settings.api.save_till_settings (the warehouses of
 # //// the till's company, one transaction with the rest). Upstream's settings dialog was the only caller of
 # //// this door. Kept for in-process callers (tests).

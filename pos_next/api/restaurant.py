@@ -13,7 +13,7 @@ import frappe
 from frappe import _
 from frappe.utils import cint, flt
 
-# //// Neoffice — `kitchen_alerts` joined the import: the popup and the sound a till sets for the kitchen and the runner (NeoRestau lot 1, Daniel, 01.11)
+# //// Neoffice — `kitchen_alerts` joined the import: the popup and the sound a till sets for the kitchen and the runner (NeoResto lot 1, Daniel, 01.11)
 # //// Neoffice — so did `call_seen`: the call of the next course the screens of a station took up, carried by each reading of the orders (Daniel, 01.11)
 from pos_next.restaurant import (
 	call_seen,
@@ -145,7 +145,7 @@ def get_tables(restaurant=None):
 		),
 		restaurant,
 	)
-	# The short code of each room, typed or made from its name (NeoRestau lot 1, task 38b): the chip of a ticket
+	# The short code of each room, typed or made from its name (NeoResto lot 1, task 38b): the chip of a ticket
 	for area in areas:
 		area["area_code"] = room_code.room_code(area.get("short_code"), area.area_name)
 	tables = scope.stamp(
@@ -179,18 +179,18 @@ def get_tables(restaurant=None):
 	occupied_names = [t.name for t in tables if t.status == "Occupied"]
 	order_map = {}
 	# The total of an open order is the takings of a table: told to whoever may read the sales invoices, as the day's
-	# takings of the restaurant's overview are (restaurant/neorestau.overview_figures), and to no role that reads the floor
+	# takings of the restaurant's overview are (restaurant/neoresto.overview_figures), and to no role that reads the floor
 	# without them (a restaurant manager, a till manager). The list of tables then says the rest without it.
 	tell_totals = frappe.has_permission("Sales Invoice", "read")
 	if occupied_names:
 		orders = frappe.get_all(
 			"Sales Invoice",
 			filters={"docstatus": 0, "restaurant_table": ["in", occupied_names]},
-			# The total of the open order: the list of tables says it under each table (NeoRestau lot 1, task 26)
+			# The total of the open order: the list of tables says it under each table (NeoResto lot 1, task 26)
 			fields=["name", "restaurant_table", "owner", "creation", "kds_status", "grand_total"],
 			order_by="modified desc"
 		)
-		# The ticket number of each order (NeoRestau lot 1, task 38b): what the floor plan and the list of tables read aloud
+		# The ticket number of each order (NeoResto lot 1, task 38b): what the floor plan and the list of tables read aloud
 		tickets.stamp(orders, restaurant)
 		for order in orders:
 			tbl = order.restaurant_table
@@ -250,7 +250,7 @@ def get_tables(restaurant=None):
 def _count_qr_lines_to_accept(tables, has_item_kds):
 	"""Say on each table how many lines of a guest's QR order wait for the waiter to accept them (`qr_waiting_count`).
 
-	The list of tables puts such a table near the top, « QR · N items to accept » (NeoRestau lot 1, task 26). A guest's
+	The list of tables puts such a table near the top, « QR · N items to accept » (NeoResto lot 1, task 26). A guest's
 	order, where the restaurant has its QR orders approved, puts its lines on hold (`kds_status` Waiting) in a kitchen
 	batch of their own (`submit_guest_order`). A line the till holds back is on hold too, but in no batch: the till
 	numbers a batch only when it sends lines to the kitchen. And once the till has saved the table, its lines are written
@@ -504,7 +504,7 @@ def _order_status_of(dish_statuses, uncalled=None):
 	- Pending for what says nothing at all: no dish, or dishes with no status
 
 	`uncalled` (one flag per dish, in the same order) marks the dishes that left AHEAD of their course and are not called yet (the service
-	rhythm, NeoRestau lot 1): they are at the kitchen, which may start and finish them, but they are not what the order is waiting for. While
+	rhythm, NeoResto lot 1): they are at the kitchen, which may start and finish them, but they are not what the order is waiting for. While
 	some other dish is live the order follows the others alone; when only such dishes are live it is Pending until one is begun and Preparing
 	after that, never Ready: nothing waits at the pass for a course nobody called.
 	"""
@@ -669,7 +669,7 @@ def _advance_dishes(invoice_name, status, station=None):
 			_write_dish(dish, status, update_modified=False)
 
 
-# //// Neoffice — POST only, a write of the kitchen's screen (NeoRestau lot 1, task 16, at its merge with task 23):
+# //// Neoffice — POST only, a write of the kitchen's screen (NeoResto lot 1, task 16, at its merge with task 23):
 # //// a tablet's session holds no CSRF token, and a top-level GET (a link opened on it) carries its cookie; the
 # //// kitchen card calls it by POST (frappe-ui `call`).
 @frappe.whitelist(methods=["POST"])
@@ -824,7 +824,7 @@ def get_station_items_map(restaurant=None):
 
 
 def _offered_fields():
-	"""The fields of an offered row (« Offert », NeoRestau lot 1, task 24) a table's draft hands back to the till: its
+	"""The fields of an offered row (« Offert », NeoResto lot 1, task 24) a table's draft hands back to the till: its
 	list price, and its flag where the site has the field (pos_next.offered.ensure_offered_field)."""
 	from pos_next.offered import FIELD
 
@@ -868,13 +868,13 @@ def get_table_order(table_name):
 		return None
 
 	order = orders[0]
-	# The ticket number of the order (NeoRestau lot 1, task 38b): what the till's order screen reads; the name stays for its calls
+	# The ticket number of the order (NeoResto lot 1, task 38b): what the till's order screen reads; the name stays for its calls
 	tickets.stamp([order], scope.restaurant_of_record("Restaurant Table", table_name))
 
 	# Fetch items
 	# stock_uom and conversion_factor: the unit the line is in and what it is worth in stock units (task 22)
 	item_fields = ["item_code", "item_name", "qty", "rate", "amount", "uom", "stock_uom", "conversion_factor", "image"]
-	# An offered row (« Offert », NeoRestau lot 1, task 24) comes back offered: its flag and its list price
+	# An offered row (« Offert », NeoResto lot 1, task 24) comes back offered: its flag and its list price
 	item_fields += _offered_fields()
 	if frappe.db.has_column("Sales Invoice Item", "posa_special_instructions"):
 		item_fields.append("posa_special_instructions")
@@ -884,11 +884,11 @@ def get_table_order(table_name):
 		item_fields.append("posa_item_modifiers")
 	if frappe.db.has_column("Sales Invoice Item", "kds_status"):
 		item_fields.append("kds_status")
-	# //// Neoffice — the family each line was ordered under (NeoRestau lot 1, service families): the till shows it on the line
+	# //// Neoffice — the family each line was ordered under (NeoResto lot 1, service families): the till shows it on the line
 	# //// and sends the next course by it. A site not migrated yet has no column and no family.
 	if frappe.db.has_column("Sales Invoice Item", "service_family"):
 		item_fields.append("service_family")
-	# //// Neoffice — whether each line left ahead of its course and when the room called it (the service rhythm, NeoRestau lot 1, Daniel, 01.11):
+	# //// Neoffice — whether each line left ahead of its course and when the room called it (the service rhythm, NeoResto lot 1, Daniel, 01.11):
 	# //// the till names the next course to call from them
 	item_fields += _ahead_fields()
 
@@ -968,7 +968,7 @@ def get_kds_orders(station=None, restaurant=None):
 	# Filter purely in Python - include orders with table OR takeaway orders, of this restaurant
 	orders = [o for o in raw_orders if o.get("restaurant_table") or o.get("is_takeaway")]
 	orders = scope.keep_orders_of(orders, restaurant)
-	# The ticket number of each order (NeoRestau lot 1, task 38b): what the kitchen's card reads aloud, never the invoice's name
+	# The ticket number of each order (NeoResto lot 1, task 38b): what the kitchen's card reads aloud, never the invoice's name
 	tickets.stamp(orders, restaurant)
 	table_names = {o.get("restaurant_table") for o in orders if o.get("restaurant_table")}
 	tables = {}
@@ -989,7 +989,7 @@ def get_kds_orders(station=None, restaurant=None):
 		# filters its tickets by room as the runner does. A takeaway order sits at no table, so it is of no
 		# room (""), and the screen shows it under "all rooms" only.
 		order["area"] = table.get("area") or ""
-		# The code of that room, which the ticket's header opens with (NeoRestau lot 1, task 38b); a takeaway order has EMP
+		# The code of that room, which the ticket's header opens with (NeoResto lot 1, task 38b); a takeaway order has EMP
 		order["area_code"] = (
 			room_code.TAKEAWAY_CODE
 			if not order["area"] and order.get("is_takeaway")
@@ -1019,7 +1019,7 @@ def get_kds_orders(station=None, restaurant=None):
 		item_fields.append("kds_sent_at")
 
 	# //// Neoffice — whether each line left ahead of its course and when the room called it: the kitchen counts a line from its call and shows
-	# //// the lines not called as « ahead » (the service rhythm, NeoRestau lot 1, Daniel, 01.11)
+	# //// the lines not called as « ahead » (the service rhythm, NeoResto lot 1, Daniel, 01.11)
 	item_fields += _ahead_fields()
 
 	# //// Neoffice — the family each line was stored with: the ticket draws its dishes in sections by family (Daniel, 01.11)
@@ -1168,7 +1168,7 @@ def get_tips(from_date=None, to_date=None, server=None, table=None, restaurant=N
 	return {"tips": tips, "total": total, "count": len(tips)}
 
 
-# //// Neoffice — POST only, a write of the kitchen's and the runner's screens (NeoRestau lot 1, task 16,
+# //// Neoffice — POST only, a write of the kitchen's and the runner's screens (NeoResto lot 1, task 16,
 # //// fix round 2): a tablet's session holds no CSRF token, and a top-level GET (a link opened on it)
 # //// carries its cookie; the screens and the till call it by POST (frappe-ui `call`).
 @frappe.whitelist(methods=["POST"])
@@ -1231,7 +1231,7 @@ def update_item_kds_status(invoice_name, item_code, status, qty=None, restore=No
 			_write_dish(item, status)
 
 	# //// Neoffice — the order follows ALL its dishes, forward and back: it was only raised to Ready when every dish was, so a
-	# //// delivery taken back left it Delivered and the ticket off the kitchen screen (NeoRestau lot 1, task 38b, rulings 78, 79).
+	# //// delivery taken back left it Delivered and the ticket off the kitchen screen (NeoResto lot 1, task 38b, rulings 78, 79).
 	_follow_the_dishes(invoice_name)
 
 	frappe.publish_realtime("kds_update")
@@ -1447,7 +1447,7 @@ def update_table(name, table_name=None, capacity=None, shape=None):
 		"table_name": doc.table_name,
 		"area": doc.area,
 		"area_name": frappe.db.get_value("Restaurant Area", doc.area, "area_name") or doc.area,
-		# The room's code, as the floor plan reads the table (NeoRestau lot 1, task 38b)
+		# The room's code, as the floor plan reads the table (NeoResto lot 1, task 38b)
 		"area_code": room_code.codes_of_areas([doc.area]).get(doc.area) or "",
 		"restaurant": doc.restaurant,
 		"capacity": doc.capacity,
@@ -1638,7 +1638,7 @@ def open_table(table_name, pos_profile, customer=None):
 		draft_fields = ["item_code", "item_name", "qty", "rate", "uom", "stock_uom", "conversion_factor",
 			"posa_special_instructions", "preparation_station",
 			"posa_item_modifiers", "kds_status"]
-		# //// Neoffice — the family each line was ordered under (NeoRestau lot 1, service families): the till names the next course
+		# //// Neoffice — the family each line was ordered under (NeoResto lot 1, service families): the till names the next course
 		# //// from it (« Commander la suite · Desserts »). The draft came back without it, so a table opened on another till, or on a
 		# //// pad, or after a reload, had lines with no course and never offered the next one (Daniel, 01.11). `get_table_order` has
 		# //// always sent it. A site not migrated yet has no column and no family.
@@ -1686,7 +1686,7 @@ def open_table(table_name, pos_profile, customer=None):
 			"paid_amount": flt(order.paid_amount) - tip_total,
 			"tip_total": tip_total,
 			"is_new": False,
-			# The ticket number of the order (NeoRestau lot 1, task 38b); the name stays for the till's calls
+			# The ticket number of the order (NeoResto lot 1, task 38b); the name stays for the till's calls
 			**tickets.told(
 				order.get("posa_ticket_no"), tickets.ticket_settings(scope.restaurant_of_record("Restaurant Table", table_name)).digits
 			),
@@ -1940,7 +1940,7 @@ def rename_area(name, new_name, short_code=None):
 	permissions.require("Restaurant Area", "write", name)
 	doc = frappe.get_doc("Restaurant Area", name)
 	doc.area_name = new_name
-	# //// Neoffice — the room's short code is edited with its name, from the floor plan's room dialog (NeoRestau lot 1, task 38b)
+	# //// Neoffice — the room's short code is edited with its name, from the floor plan's room dialog (NeoResto lot 1, task 38b)
 	if short_code is not None:
 		doc.short_code = short_code
 	doc.save()
@@ -2267,7 +2267,7 @@ def _cards_outside_hours(restaurant, schedule):
 @frappe.whitelist()
 def get_other_cards(restaurant=None):
 	"""The restaurant's other cards, the ones its opening hours keep off the till right now: what the « ⋯ » of the card
-	row offers (NeoRestau lot 1, task 25). The restaurant is the one named, else the till's own.
+	row offers (NeoResto lot 1, task 25). The restaurant is the one named, else the till's own.
 
 	Only the active cards of that restaurant, within their dates, that the hours name and do not show: never an inactive
 	card, a card outside its dates, the permanent card, a card the hours name nowhere, or another restaurant's card.
@@ -2319,7 +2319,7 @@ def check_card_can_be_opened(card_name, restaurant=None):
 
 @frappe.whitelist()
 def open_card_outside_hours(card_name, restaurant=None, authorization_token=None):
-	"""One card of the restaurant's with its items, for the till to open by hand (NeoRestau lot 1, task 25).
+	"""One card of the restaurant's with its items, for the till to open by hand (NeoResto lot 1, task 25).
 
 	The answer is shaped as the cards of `get_active_cards`. A card the opening hours show is served as it is. A card
 	they keep off the till right now is the one a cashier fetches from the « ⋯ » of the card row, and opening it goes
@@ -2420,7 +2420,7 @@ def get_restaurant_settings(restaurant=None):
 	runner's tablet and the kitchen's read whether their restaurant's runner step is on and the popup and the sound of
 	the kitchen alerts, and nothing else (pos_next.restaurant.devices).
 	"""
-	# //// Neoffice — the kitchen's tablet reads its restaurant's alerts the way the runner's reads its runner switch (NeoRestau lot 1, Daniel, 01.11): this call, cut to its own restaurant, and only the shape `screen_settings` gives
+	# //// Neoffice — the kitchen's tablet reads its restaurant's alerts the way the runner's reads its runner switch (NeoResto lot 1, Daniel, 01.11): this call, cut to its own restaurant, and only the shape `screen_settings` gives
 	device = devices.screen_device(devices.KITCHEN, devices.RUNNER)
 	if device:
 		restaurant, _station = devices.cut_to_device(device, restaurant)
@@ -2455,7 +2455,7 @@ def get_restaurant_settings(restaurant=None):
 		"is_open": is_open,
 		"current_slot": current_slot,
 		"enable_runner": bool(settings.enable_runner),
-		# //// Neoffice — how the courses reach the kitchen, the restaurant's choice (NeoRestau lot 1, Daniel, 01.11: « Oui, les deux modes »)
+		# //// Neoffice — how the courses reach the kitchen, the restaurant's choice (NeoResto lot 1, Daniel, 01.11: « Oui, les deux modes »)
 		"service_rhythm": service_families.normalise_rhythm(settings.get("service_rhythm")),
 		"enable_takeaway": bool(till.enable_takeaway),
 		"takeaway_card": till.takeaway_card or None,
@@ -2476,7 +2476,7 @@ def get_restaurant_settings(restaurant=None):
 		# The reservation dialog reads these two
 		"default_reservation_duration": settings.default_reservation_duration,
 		"reservation_channels": settings.reservation_channels,
-		# //// Neoffice — the popup and the sound of the kitchen alerts: the settings of the till this user works at, else of the restaurant's oldest (NeoRestau lot 1, Daniel, 01.11)
+		# //// Neoffice — the popup and the sound of the kitchen alerts: the settings of the till this user works at, else of the restaurant's oldest (NeoResto lot 1, Daniel, 01.11)
 		"kitchen_alerts": kitchen_alerts.kitchen_alert_settings(settings.name, scope.current_profile()),
 	}
 
@@ -2982,7 +2982,7 @@ def get_runner_orders(area=None, restaurant=None):
 	)
 	station_labels = {st.name: st.station_name for st in all_stations}
 	# The type of each line's station (Kitchen, Bar, Other): the list of tables says « dishes ready » only when a dish is,
-	# a line of a kitchen (NeoRestau lot 1, task 26)
+	# a line of a kitchen (NeoResto lot 1, task 26)
 	station_types = {st.name: st.station_type for st in all_stations}
 	for st in all_stations:
 		station_info = {"station_name": st.station_name, "station_color": st.color, "station_id": st.name}
@@ -3010,7 +3010,7 @@ def get_runner_orders(area=None, restaurant=None):
 			if not item_status or item_status == "Delivered":
 				continue
 			# //// Neoffice — a line sent AHEAD of its course whose call has not come is not the runner's: the kitchen may have finished it, and it waits
-			# //// for the room (NeoRestau lot 1, the service rhythm, Daniel, 01.11: « Prêt d'avance », not offered to the runner until it is called)
+			# //// for the room (NeoResto lot 1, the service rhythm, Daniel, 01.11: « Prêt d'avance », not offered to the runner until it is called)
 			if _is_uncalled(item):
 				continue
 
@@ -3108,7 +3108,7 @@ def get_runner_orders(area=None, restaurant=None):
 	# //// Neoffice — every line says its family and the color of its category, as the kitchen's list does: ONE read for all the lines (Daniel, 01.11)
 	service_families.stamp_lines(item for order in result for item in order["items"])
 
-	# What the runner's card reads aloud besides the table (NeoRestau lot 1, task 38b): the ticket number and its digits, and the
+	# What the runner's card reads aloud besides the table (NeoResto lot 1, task 38b): the ticket number and its digits, and the
 	# code of the room, never the invoice's name (which stays in the row for the calls the screen makes)
 	tickets.stamp(result, restaurant)
 	area_codes = room_code.codes_of_areas(order["area"] for order in result)
@@ -3136,7 +3136,7 @@ def _deliver_dish(dish):
 	_write_dish(dish, "Delivered")
 
 
-# //// Neoffice — POST only, a write of the kitchen's and the runner's screens (NeoRestau lot 1, task 16,
+# //// Neoffice — POST only, a write of the kitchen's and the runner's screens (NeoResto lot 1, task 16,
 # //// fix round 2): a tablet's session holds no CSRF token, and a top-level GET (a link opened on it)
 # //// carries its cookie; the screens and the till call it by POST (frappe-ui `call`).
 @frappe.whitelist(methods=["POST"])
@@ -3183,7 +3183,7 @@ def mark_items_delivered(invoice_name, item_names=None):
 			if (dish.kds_status or "") != "Delivered"
 		]
 	# //// Neoffice — the pass delivers no line the room has not called: a line sent ahead is not at the pass until its course is called, whatever
-	# //// state the kitchen put it in (NeoRestau lot 1, the service rhythm, Daniel, 01.11)
+	# //// state the kitchen put it in (NeoResto lot 1, the service rhythm, Daniel, 01.11)
 	dishes = [dish for dish in dishes if not _is_uncalled(dish)]
 	# //// Neoffice — a line cooked in part is delivered for the units at the pass only (kitchen test of 01.11): the rest is still to cook
 	for dish in dishes:
@@ -3196,7 +3196,7 @@ def mark_items_delivered(invoice_name, item_names=None):
 	return {"status": "success"}
 
 
-# //// Neoffice — the room's call of a course, where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11: « Oui, les deux modes »):
+# //// Neoffice — the room's call of a course, where the kitchen prepares ahead (NeoResto lot 1, the service rhythm, Daniel, 01.11: « Oui, les deux modes »):
 # //// « Commander la suite » does not release anything in that rhythm, the course is already at the kitchen, marked ahead; it SIGNALS that the room wants it now.
 # //// POST only, a write of the waiter's till.
 @frappe.whitelist(methods=["POST"])
@@ -3296,10 +3296,10 @@ def get_takeaway_orders(restaurant=None):
 	restaurant = restaurant or scope.current_restaurant()
 	result = []
 	kept = scope.keep_orders_of(raw_orders, restaurant)
-	# The ticket number of each order (NeoRestau lot 1, task 38b), beside the takeaway number it has had until now
+	# The ticket number of each order (NeoResto lot 1, task 38b), beside the takeaway number it has had until now
 	tickets.stamp(kept, restaurant)
 	for order in kept:
-		# A takeaway order sits in no room: its code is EMP (NeoRestau lot 1, task 38b)
+		# A takeaway order sits in no room: its code is EMP (NeoResto lot 1, task 38b)
 		order["area_code"] = room_code.TAKEAWAY_CODE
 		items = frappe.get_all(
 			"Sales Invoice Item",
@@ -3322,7 +3322,7 @@ def get_next_takeaway_number():
 	permissions.require("Sales Invoice", "read")
 	current_date = today()
 	# One takeaway order counts once: its kitchen ticket (the draft the till validates) and its payment (the invoice the
-	# till pays, which carries the order's flag and number for its takeaway VAT, NeoRestau lot 1, task 11) share the
+	# till pays, which carries the order's flag and number for its takeaway VAT, NeoResto lot 1, task 11) share the
 	# order's number. An order without a number (a web order) counts on its own.
 	count = frappe.db.sql(
 		"""

@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The settings of the PRINT BUTTON of the kitchen's and the runner's cards (NeoRestau lot 1,
+//// Neoffice — added file (no upstream equivalent). The settings of the PRINT BUTTON of the kitchen's and the runner's cards (NeoResto lot 1,
 //// task 44): a big order is carried to the pass on paper, so a printer button stands beside the card's main button and prints a COPY of the ticket,
 //// by the server, on the printer of the station the screen is opened on. Four settings, each with a sensible default, kept on THIS DEVICE like the
 //// kitchen's text size and its awake settings (utils/screenAwake: the built-in default, the restaurant's value when it has one, then the device's):

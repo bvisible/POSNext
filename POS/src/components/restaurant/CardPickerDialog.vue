@@ -1,6 +1,6 @@
 <template>
 	<!-- //// Neoffice — added file (no upstream equivalent). The dialog the floor plan's « ⋯ » menu opens with its entry -->
-	<!-- //// « Open another card » (NeoRestau lot 1, task 25): the same list as the « ⋯ » of the order screen's card row, -->
+	<!-- //// « Open another card » (NeoResto lot 1, task 25): the same list as the « ⋯ » of the order screen's card row, -->
 	<!-- //// the same pick, through the same authorization gate. The card picked joins the row of this till until it is -->
 	<!-- //// closed or the shift is, so that the next table opened shows it. -->
 	<div

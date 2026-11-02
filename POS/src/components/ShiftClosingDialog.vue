@@ -243,7 +243,7 @@
 								<div class="text-gray-600 text-xs">{{ __("Net tax") }}</div>
 							</div>
 						</div>
-						<!-- //// Neoffice — « Offert » (NeoRestau lot 1, task 24): the units offered during the shift and their value at -->
+						<!-- //// Neoffice — « Offert » (NeoResto lot 1, task 24): the units offered during the shift and their value at -->
 						<!-- //// list price, one line, « Offerts : n articles, valeur CHF x » (closing data: offered_count, offered_value). -->
 						<p
 							v-if="offeredLine"
@@ -1359,7 +1359,7 @@
 					<!-- //// stores the remainder on POS Closing Shift, which the next opening dialog offers as -->
 					<!-- //// opening balance. Only rendered when that template is configured (5783eb27, -->
 					<!-- //// 2026-03-28 "cash withdrawal at shift closing with suggested opening balance"). -->
-					<!-- //// Neoffice — a template the till cannot book is not offered: the server says why (NeoRestau lot 1, task 15). -->
+					<!-- //// Neoffice — a template the till cannot book is not offered: the server says why (NeoResto lot 1, task 15). -->
 					<div
 						v-if="closingData.closing_withdrawal_problem && !showSuccessReport"
 						class="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800"
@@ -1690,7 +1690,7 @@ import EodPrintDialog from "./EodPrintDialog.vue";
 import { offeredClosingLine } from "@/utils/offeredRows";
 //// Neoffice — the session's cash drawer openings (maintenance#1935).
 import CashDrawerSummary from "./pos/CashDrawerSummary.vue";
-//// Neoffice — the drawer movements the server refused on this device (NeoRestau lot 1, task 15).
+//// Neoffice — the drawer movements the server refused on this device (NeoResto lot 1, task 15).
 import { getRefusedCashMovements, sessionUserId } from "../utils/offline/cashMovements";
 
 const props = defineProps({
@@ -1962,7 +1962,7 @@ async function submitClosing() {
 		console.error("Error submitting closing shift:", error);
 		//// Neoffice — a drawer movement was recorded or cancelled since this dialog opened: the server refused
 		//// the closing (its expected cash missed it). The figures are read again, the amounts counted so far kept,
-		//// and the server's reason shown (NeoRestau lot 1, task 15).
+		//// and the server's reason shown (NeoResto lot 1, task 15).
 		if (error?.exc_type === "CashMovementsChanged") {
 			await reloadClosingDataKeepingCounts();
 			errorMessage.value = error.messages?.[0] || "";
@@ -1976,7 +1976,7 @@ async function submitClosing() {
 	}
 }
 
-//// Neoffice — added (NeoRestau lot 1, task 15): the closing data read again after the server refused the
+//// Neoffice — added (NeoResto lot 1, task 15): the closing data read again after the server refused the
 //// closing because a drawer movement changed meanwhile; what the cashier counted per payment method stays.
 async function reloadClosingDataKeepingCounts() {
 	const counted = new Map(

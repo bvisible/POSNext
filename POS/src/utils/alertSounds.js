@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The sounds of the kitchen's and the runner's screens (NeoRestau lot 1, Daniel's request of 01.11: « un son pour aviser […] dans les réglages de la
+//// Neoffice — added file (no upstream equivalent). The sounds of the kitchen's and the runner's screens (NeoResto lot 1, Daniel's request of 01.11: « un son pour aviser […] dans les réglages de la
 //// caisse, et peut-être même choisir le son avec des choix »). Every sound is SYNTHESISED, no audio file, no binary asset: a sound here is a table of notes (a frequency, a shape, when it starts, how long
 //// it rings, how loud), and `schedule` hands that table back as plain data, so the sounds are tested without any audio. The player that turns a schedule into oscillators is alertSoundPlayer.
 ////

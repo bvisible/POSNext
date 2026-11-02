@@ -132,7 +132,7 @@ doctype_list_js = {"Coupon Code": "public/js/coupon_code_list.js"}
 jinja = {
 	"methods": [
 		"pos_next.pos_next.utils.pos_closing_print.get_items_sold",
-		# //// Neoffice — the end-of-day print's line of what was offered (« Offert », NeoRestau lot 1, task 24).
+		# //// Neoffice — the end-of-day print's line of what was offered (« Offert », NeoResto lot 1, task 24).
 		"pos_next.offered.get_offered_line",
 	]
 }
@@ -167,7 +167,7 @@ _custom_field_names = [
 	"Coupon Code-referral_code",
 	"Sales Invoice-restaurant_table",
 	"Sales Invoice-kds_status",
-	# //// Neoffice — the ticket number of a restaurant order and the business day it was counted in (NeoRestau lot 1,
+	# //// Neoffice — the ticket number of a restaurant order and the business day it was counted in (NeoResto lot 1,
 	# //// task 38b, rulings 122 and 124): the kitchen shows it instead of the draft's Sales Invoice number.
 	"Sales Invoice-posa_ticket_no",
 	"Sales Invoice-posa_ticket_day",
@@ -175,12 +175,12 @@ _custom_field_names = [
 	"Sales Invoice Item-preparation_station",
 	"Sales Invoice Item-kds_status",
 	"Sales Invoice Item-posa_item_modifiers",
-	# //// Neoffice — the service families (NeoRestau lot 1): the family of an Item Group, and the family each line of an order
+	# //// Neoffice — the service families (NeoResto lot 1): the family of an Item Group, and the family each line of an order
 	# //// carries. The fixture file ships them at every migrate whatever this list says; the names are listed here so that an
 	# //// export of the fixtures does not drop them.
 	"Item Group-service_family",
 	"Sales Invoice Item-service_family",
-	# //// Neoffice — the color of an Item Group on the kitchen and runner tickets (NeoRestau lot 1, Daniel's request of 01.11)
+	# //// Neoffice — the color of an Item Group on the kitchen and runner tickets (NeoResto lot 1, Daniel's request of 01.11)
 	"Item Group-service_color",
 ]
 if not _has_native_coupon_code_field():
@@ -272,7 +272,7 @@ doc_events = {
 	},
 	"Sales Invoice": {
 		# //// Neoffice — a takeaway sale at a restaurant till takes the restaurant's takeaway tax category, and each item
-		# //// its takeaway template, before ERPNext's validate computes the taxes from them (NeoRestau lot 1, task 10).
+		# //// its takeaway template, before ERPNext's validate computes the taxes from them (NeoResto lot 1, task 10).
 		"before_validate": "pos_next.restaurant.takeaway_tax.apply_takeaway_tax_category",
 		"validate": [
 			"pos_next.api.sales_invoice_hooks.validate",
@@ -281,7 +281,7 @@ doc_events = {
 			# //// (9bc096de 2026-02-05, restored by f0c960ff 2026-03-21).
 			"pos_next.api.sales_invoice_hooks.validate_coupon_on_invoice",
 			"pos_next.api.wallet.validate_wallet_payment",
-			# //// Neoffice — an offered row (« Offert », NeoRestau lot 1, task 24) stays at 100 %, never a promotion's free
+			# //// Neoffice — an offered row (« Offert », NeoResto lot 1, task 24) stays at 100 %, never a promotion's free
 			# //// row, and only on a till that lets its cashiers change a discount, whatever path saves it.
 			"pos_next.offered.validate_offered_rows",
 		],
@@ -354,17 +354,17 @@ doc_events = {
 		"after_rename": "pos_next.realtime_events.emit_card_updated_event",
 	},
 	# //// Neoffice — the opening hours and the other settings moved from the single `Restaurant Settings`
-	# //// onto each Restaurant (NeoRestau lot 1, task 1): a restaurant's save is what tells the tills now.
+	# //// onto each Restaurant (NeoResto lot 1, task 1): a restaurant's save is what tells the tills now.
 	"Restaurant": {
 		"on_update": "pos_next.realtime_events.emit_restaurant_settings_updated_event",
 		# //// Neoffice — a deleted restaurant takes its tablets with it (sessions ended, accounts disabled): a restaurant
-		# //// made again under the same name inherits none (NeoRestau lot 1, task 16). After the delete, not on_trash:
+		# //// made again under the same name inherits none (NeoResto lot 1, task 16). After the delete, not on_trash:
 		# //// on_trash runs before the link check, and ending a session commits, so a restaurant whose delete its links
 		# //// refuse would have lost its tablets all the same.
 		"after_delete": "pos_next.restaurant.devices.forget_the_tablets_of",
 	},
 	# //// Neoffice — a restaurant tablet's account stays a portal account with no role, no password, no API key, no other
-	# //// name and no OAuth token, whoever saves it; only the pairing writes it (pos_next.restaurant.devices, NeoRestau
+	# //// name and no OAuth token, whoever saves it; only the pairing writes it (pos_next.restaurant.devices, NeoResto
 	# //// lot 1, task 16). Upstream has no User hook here.
 	"User": {
 		"before_validate": "pos_next.restaurant.devices.guard_device_account_before_validate",
@@ -405,7 +405,7 @@ scheduler_events = {
 		"pos_next.tasks.cleanup_expired_promotions.cleanup_expired_promotions",
 	],
 	# //// Neoffice — an online booking whose guest has not confirmed it from the e-mail by its deadline expires
-	# //// (NeoRestau lot 1, task 18). It frees its tables at the deadline itself; this job writes it down soon after,
+	# //// (NeoResto lot 1, task 18). It frees its tables at the deadline itself; this job writes it down soon after,
 	# //// so that the till's list and the statistics stop counting it.
 	"cron": {
 		"*/5 * * * *": [
@@ -441,7 +441,7 @@ scheduler_events = {
 # -----------------------------------------------------------
 
 # ignore_links_on_delete = ["Communication", "ToDo"]
-# //// Neoffice — a restaurant's tablet and its spent pairing codes (NeoRestau lot 1, task 16) never keep a
+# //// Neoffice — a restaurant's tablet and its spent pairing codes (NeoResto lot 1, task 16) never keep a
 # //// station, a restaurant or an account from being deleted: they are bindings and history, and a tablet whose
 # //// station or restaurant is gone shows nothing (pos_next.restaurant.devices). Upstream ignores none.
 ignore_links_on_delete = ["Restaurant Device", "Restaurant Device Pairing"]
@@ -492,7 +492,7 @@ permission_query_conditions = {
 # auth_hooks = [
 # 	"pos_next.auth.validate"
 # ]
-# //// Neoffice — a restaurant's tablet signs in with an account of its own (NeoRestau lot 1, task 16). Its session
+# //// Neoffice — a restaurant's tablet signs in with an account of its own (NeoResto lot 1, task 16). Its session
 # //// reaches the page and the calls of its screens and nothing else, whatever other app serves signed-in users: an
 # //// auth hook runs for every request once the caller is known, by cookie, token or key. Upstream has none.
 auth_hooks = ["pos_next.restaurant.devices.confine_tablet_session"]
@@ -514,10 +514,10 @@ pos_next_loyalty_provider = []
 pos_next_bootstrap_settings = []
 # //// Neoffice — the restaurant rides the seam upstream gave satellite apps: the bootstrap, the settings dialog, the
 # //// profile data and the answer of a save all call it after they read the till's POS Settings. One function tells every
-# //// screen which restaurant (`restaurant`, `restaurant_name`) the till works for (NeoRestau lot 1, task 2), the next what
+# //// screen which restaurant (`restaurant`, `restaurant_name`) the till works for (NeoResto lot 1, task 2), the next what
 # //// its user may manage there (`restaurant_can`, task 3), the last whether the till is a restaurant till
-# //// (`enable_restaurant_mode`, effective only where the site runs NeoRestau) and whether the site does
-# //// (`neorestau_active`, task 4). The seam calls each hook on its own and logs the one that fails: the mode is a hook of
+# //// (`enable_restaurant_mode`, effective only where the site runs NeoResto) and whether the site does
+# //// (`neoresto_active`, task 4). The seam calls each hook on its own and logs the one that fails: the mode is a hook of
 # //// its own so that no other hook failing can leave the stored tick in its place, and the last of the app's, so that no
 # //// hook of the app rewrites the effective mode after it. Added to upstream's empty list, which stays as upstream ships it.
 pos_next_bootstrap_settings += [
@@ -537,14 +537,14 @@ website_route_rules = [
 # /pos is not the Desk: expose optional-app install flags to the Vue app.
 update_website_context = ["pos_next.optional_apps.update_pos_page_context"]
 
-# //// Neoffice — a core Frappe hook, not an extension point of POS Next: the desk is told whether the site runs NeoRestau
-# //// (`frappe.boot.neorestau_active`), which the POS Settings form reads to show its Restaurant section, the tick that makes
-# //// a till a restaurant till included, only where it does (NeoRestau lot 1, task 4). Upstream has no boot hook.
+# //// Neoffice — a core Frappe hook, not an extension point of POS Next: the desk is told whether the site runs NeoResto
+# //// (`frappe.boot.neoresto_active`), which the POS Settings form reads to show its Restaurant section, the tick that makes
+# //// a till a restaurant till included, only where it does (NeoResto lot 1, task 4). Upstream has no boot hook.
 boot_session = ["pos_next.restaurant.mode.extend_boot"]
 
-# //// Neoffice — NeoRestau, the restaurant as a business application (NeoRestau lot 1, task 6). Two hooks of neoffice_theme,
-# //// not extension points of POS Next, which nothing reads on a site without the theme: it lists NeoRestau with the
+# //// Neoffice — NeoResto, the restaurant as a business application (NeoResto lot 1, task 6). Two hooks of neoffice_theme,
+# //// not extension points of POS Next, which nothing reads on a site without the theme: it lists NeoResto with the
 # //// applications of their own and builds its space of tabs from them, the way NeoAuto (the garage) declares itself. The
-# //// application shows only where the site's `neorestau_active` says 1. Upstream has neither hook.
-neoffice_business_apps = ["pos_next.restaurant.neorestau.business_apps"]
-neoffice_workspace_tabs = ["pos_next.restaurant.neorestau.tabs"]
+# //// application shows only where the site's `neoresto_active` says 1. Upstream has neither hook.
+neoffice_business_apps = ["pos_next.restaurant.neoresto.business_apps"]
+neoffice_workspace_tabs = ["pos_next.restaurant.neoresto.tabs"]

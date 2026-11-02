@@ -1,7 +1,7 @@
-# //// Neoffice — added file (no upstream equivalent). Whether a site used the restaurant (NeoRestau lot 1, task 4, fix
+# //// Neoffice — added file (no upstream equivalent). Whether a site used the restaurant (NeoResto lot 1, task 4, fix
 # //// rounds 1 and 2): the one criterion shared by the three patches that act only on a site that did, the one that makes
 # //// the default restaurant out of the single `Restaurant Settings`, the one that attaches what a site made before the
-# //// restaurants to the default restaurant, and the one that switches NeoRestau on.
+# //// restaurants to the default restaurant, and the one that switches NeoResto on.
 """Whether a site ever used the restaurant module."""
 
 import frappe

@@ -3,7 +3,7 @@
 	<!-- //// its order view: its name, how many lines it holds, the status of the kitchen, and on the right the two things a -->
 	<!-- //// waiter reaches for: the QR button of the table and "Back". The QR button used to sit at the right end of the row -->
 	<!-- //// of the restaurant's cards, where a few cards (or one more button) pushed it off a phone's screen; here it is -->
-	<!-- //// always in view, whatever the width, and it is a 44 px touch target (NeoRestau lot 1, product owner: a waiter -->
+	<!-- //// always in view, whatever the width, and it is a 44 px touch target (NeoResto lot 1, product owner: a waiter -->
 	<!-- //// shows the table's code on his phone to the guests, who scan it). It was in POSSale.vue (c5208ba7 2026-03-28). -->
 	<div
 		class="flex items-center justify-between gap-2 px-4 py-3 border-b-2"

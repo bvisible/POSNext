@@ -1,5 +1,5 @@
 //// Neoffice — added file (no upstream equivalent). The approver of « Open a card outside its hours » reads which card it
-//// is (NeoRestau lot 1, task 25): the summary of the authorization dialog gains a row for it, and the other actions' summaries
+//// is (NeoResto lot 1, task 25): the summary of the authorization dialog gains a row for it, and the other actions' summaries
 //// are as they were.
 import { describe, expect, it } from "vitest"
 import { buildAuthorizationSummary } from "@/utils/authorizationSummary"

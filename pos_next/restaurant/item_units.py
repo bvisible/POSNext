@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent). The units of the items a restaurant read hands to the till
-# //// (NeoRestau lot 1, task 22).
+# //// (NeoResto lot 1, task 22).
 #
 # A cart line made from a restaurant card, a menu course or a table's order read back has to carry what a line made
 # from the grid carries (`get_items`): the stock unit of its item and the item's OTHER units with their factors. A

@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). Whether the kitchen screen keeps the tickets whose dishes are all with the runner (NeoRestau lot 1, Daniel, 01.11): kept, at the end of the band in preparation,
+ * //// Neoffice — added file (no upstream equivalent). Whether the kitchen screen keeps the tickets whose dishes are all with the runner (NeoResto lot 1, Daniel, 01.11): kept, at the end of the band in preparation,
  * by default; left off the screen when the device is set so.
  * @vitest-environment jsdom
  */

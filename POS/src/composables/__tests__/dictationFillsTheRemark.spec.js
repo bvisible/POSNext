@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The remark for the kitchen can be dictated on the phone
- * //// (NeoRestau lot 1, task 27): the browser's speech recognition, in Swiss French unless the till speaks German
+ * //// (NeoResto lot 1, task 27): the browser's speech recognition, in Swiss French unless the till speaks German
  * //// or Italian, found only where the browser has it, started by the waiter's press and by nothing else.
  * @vitest-environment jsdom
  */

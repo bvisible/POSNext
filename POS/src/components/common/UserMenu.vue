@@ -317,7 +317,7 @@ const colorModes = [
 	},
 ];
 const colorMode = ref("system");
-//// Neoffice — the body moved to utils/colorMode.js (NeoRestau lot 1, task 38a-2, ruling 131): the theme button of the kitchen and runner screens and
+//// Neoffice — the body moved to utils/colorMode.js (NeoResto lot 1, task 38a-2, ruling 131): the theme button of the kitchen and runner screens and
 //// main.js use the same function, so that the three cannot drift. The user menu still persists the desk theme (`User.desk_theme`) as it always did.
 function applyColorMode(mode) {
 	colorMode.value = mode;

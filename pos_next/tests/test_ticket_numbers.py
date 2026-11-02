@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""The ticket number of a restaurant order (NeoRestau lot 1, task 38b, rulings 122 and 124).
+"""The ticket number of a restaurant order (NeoResto lot 1, task 38b, rulings 122 and 124).
 
 An order of a table or a takeaway order is a draft Sales Invoice, and the draft takes its Sales Invoice number (FA-…) at
 its first save, in an order nobody chose and with a gap for each one deleted. The kitchen and the runner must not show

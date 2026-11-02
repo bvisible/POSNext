@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The labels NeoRestau lot 1 task 9 corrects reach their screens:
+ * //// Neoffice — added file (no upstream equivalent). The labels NeoResto lot 1 task 9 corrects reach their screens:
  * //// the "Plan" view of the pass and of the reservation form reads "Plan de salle", a kitchen status reads in French
  * //// wherever one is shown, each through a context of its own so that no common word is changed for the whole site,
  * //// and the permanent card, which the system names, reads "Articles permanents" wherever its name is displayed.

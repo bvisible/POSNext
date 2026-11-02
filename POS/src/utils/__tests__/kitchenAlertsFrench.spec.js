@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The kitchen alerts in French (NeoRestau lot 1, Daniel, 01.11): the product owner speaks French, and everything a person reads (the notice in the kitchen, the chip that asks
+ * //// Neoffice — added file (no upstream equivalent). The kitchen alerts in French (NeoResto lot 1, Daniel, 01.11): the product owner speaks French, and everything a person reads (the notice in the kitchen, the chip that asks
  * //// for a touch, the section of the till's settings, the names of the sounds) goes through the real catalogue (pos_next/locale/fr.po) and the real `translate`. The words of the choices of the desk's POS Settings form
  * //// (the Select options of the doctype) are the same words under no context, which is how the desk looks them up.
  * @vitest-environment jsdom

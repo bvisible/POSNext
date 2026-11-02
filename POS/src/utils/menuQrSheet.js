@@ -1,5 +1,5 @@
 //// Neoffice — added file (no upstream equivalent). The sheet that carries the QR code of a restaurant's public menu, to
-//// be printed and stood on the tables (NeoRestau lot 1, task 17): the code large, the restaurant's name, and one line
+//// be printed and stood on the tables (NeoResto lot 1, task 17): the code large, the restaurant's name, and one line
 //// that says what to do with it. It is a page of its own, printed through a hidden frame like the receipts of the
 //// till (printInvoice.browserPrintDoc), so that the till under it, whatever is open on it, never ends up on the paper.
 

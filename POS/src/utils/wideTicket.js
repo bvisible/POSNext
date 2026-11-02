@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The WIDE card of a long ticket (NeoRestau lot 1, task 38a-3, rulings 107 and 109).
+//// Neoffice — added file (no upstream equivalent). The WIDE card of a long ticket (NeoResto lot 1, task 38a-3, rulings 107 and 109).
 //// A ticket with many dishes first takes TWO card widths (layer 2 of the product owner's answer to « what if the text is longer than the room the cook has? »), its dishes
 //// staying in ONE list: the lines are as long again, so fewer of them wrap and more of the ticket is in view before the body has to scroll (layer 3) or the cook opens it
 //// full screen (layer 4). The rules are written here, once, and tested here; the kitchen's band and the runner's flow only read them.

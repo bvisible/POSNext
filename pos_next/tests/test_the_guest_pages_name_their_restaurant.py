@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""A guest session names its restaurant from its first call (NeoRestau lot 1, Ruling 52).
+"""A guest session names its restaurant from its first call (NeoResto lot 1, Ruling 52).
 
 The tab of a guest page carries the name of the restaurant: "The Bistro · Neopos" instead of "Order · Neopos". The only name
 a page had was the company of the order, which `get_order_status` answers once an invoice exists, so a page had no name
@@ -47,7 +47,7 @@ class TestTheGuestSessionNamesItsRestaurant(Tills, FrappeTestCase):
 		super().setUp()
 		for patcher in (
 			patch.object(frappe, "publish_realtime"),
-			patch.dict(frappe.conf, {"neorestau_active": 1}),
+			patch.dict(frappe.conf, {"neoresto_active": 1}),
 		):
 			patcher.start()
 			self.addCleanup(patcher.stop)

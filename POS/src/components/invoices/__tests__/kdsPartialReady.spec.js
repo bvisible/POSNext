@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). A line of several units can be marked ready for SOME of them (NeoRestau lot 1, kitchen test of 01.11: « six of
+ * //// Neoffice — added file (no upstream equivalent). A line of several units can be marked ready for SOME of them (NeoResto lot 1, kitchen test of 01.11: « six of
  * //// the same dish, and four are done »). The status menu of a dish with more than one unit left to cook gets a stepper - n + beside « ready », starting on ALL that is
  * //// left so that one tap is what it always was; the ticket shows the units still to cook as the line's quantity and a pill « 4 of 6 sent » for what left; and the toast of
  * //// the five seconds puts the line back to the counters it had. jsdom has no layout engine: the boxes of the elements are given by hand.

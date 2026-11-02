@@ -1,9 +1,9 @@
 //// Neoffice — added file (no upstream equivalent). Where a tablet goes when the app starts at the till's address
-//// (NeoRestau lot 1, task 48). A kitchen's or runner's tablet is installed as an app, and every launch from its
+//// (NeoResto lot 1, task 48). A kitchen's or runner's tablet is installed as an app, and every launch from its
 //// home-screen icon starts at /pos, the till's page, not at the screen its pairing opened: it would open the shift
 //// dialog and ask for profiles a tablet's account may not read. The tablet asks the server which screen it was paired
 //// for (the same address its pairing answered with), and the router sends it there before the till is even loaded.
-import { neorestauActive } from "@/utils/neorestau"
+import { neorestoActive } from "@/utils/neoresto"
 import {
 	forgetScreen,
 	isDeskSession,
@@ -62,7 +62,7 @@ function insideTheApp(address) {
 
 /**
  * Where a navigation to `to` goes instead, if the browser is a tablet's. One of:
- *   null            the way it was going: not a tablet, not a page of the till, or a site that does not run NeoRestau
+ *   null            the way it was going: not a tablet, not a page of the till, or a site that does not run NeoResto
  *   { screen }      the tablet's own screen, as a router address (the server's answer, else the one it remembers)
  *   { pair: true }  the pairing page: the server refused the tablet, or it can reach nothing and remembers nothing, or
  *                   its sessions were ended and the app starts at the till's address
@@ -73,7 +73,7 @@ function insideTheApp(address) {
  */
 export async function whereTheTabletStarts(to) {
 	if (to?.meta?.allowGuest || to?.meta?.pairable) return null
-	if (!neorestauActive()) return null
+	if (!neorestoActive()) return null
 	if (isTabletSession()) return await itsOwnScreen()
 	if (isSignedOut()) {
 		// A tablet whose sessions were ended (disconnected at the till, expired) is a visitor by the time the router runs:

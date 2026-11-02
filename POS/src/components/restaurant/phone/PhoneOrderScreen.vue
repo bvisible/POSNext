@@ -1,5 +1,5 @@
 <!-- //// Neoffice — added file (no upstream equivalent). The order of an open table on a phone, as the waiter mockup -->
-<!-- //// draws it (NeoRestau lot 1, task 27; product owner, 31.10.2026: « look at your mockup, it is well done… the -->
+<!-- //// draws it (NeoResto lot 1, task 27; product owner, 31.10.2026: « look at your mockup, it is well done… the -->
 <!-- //// same for the card as buttons »; mockup WaiterMenu): the ink header (back to the tables, the table, its QR code, the -->
 <!-- //// card when the restaurant serves several), the card's types as coloured chips, the card as three buttons per -->
 <!-- //// row, and the order one tap away at the bottom. The till decides when it shows (utils/phoneCard.js, -->

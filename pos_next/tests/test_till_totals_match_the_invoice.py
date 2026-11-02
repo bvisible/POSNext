@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""The till shows what the invoice holds, to the cent (NeoRestau lot 1, Ruling 70).
+"""The till shows what the invoice holds, to the cent (NeoResto lot 1, Ruling 70).
 
 The till computes a cart's VAT and grand total by ERPNext's own rules (POS utils/invoiceTaxes.js), on the rows it sends.
 POS/src/composables/__tests__/useInvoice.invoiceParity.spec.js rings carts through the till's own code and keeps, in

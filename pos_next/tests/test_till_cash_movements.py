@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""Money in and out of a till's drawer (« Entrées/Sorties de caisse »), NeoRestau lot 1, task 15.
+"""Money in and out of a till's drawer (« Entrées/Sorties de caisse »), NeoResto lot 1, task 15.
 
 Every movement is booked exactly as its Journal Entry Template declares it (Credit: the counterparty is
 debited and the totalization credited; Debit: the reverse), its drawer direction is what happens to the

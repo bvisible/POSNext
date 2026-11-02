@@ -124,7 +124,7 @@ class CustomSalesInvoice(SalesInvoice):
 		if parent:
 			parent(sales_team)
 
-	# //// Neoffice — an offered row (« Offert », NeoRestau lot 1, task 24) is a gift at 100 %, not a discount, and by
+	# //// Neoffice — an offered row (« Offert », NeoResto lot 1, task 24) is a gift at 100 %, not a discount, and by
 	# //// design a second row of its item: ERPNext's three checks below concern the rows sold, so each runs ERPNext's own
 	# //// code with the offered rows set aside (pos_next.offered.without_offered_rows). The item's max discount caps a
 	# //// discount, not an offer (a manager's PIN, opt-in, guards the offer); the selling price check finds no sale below

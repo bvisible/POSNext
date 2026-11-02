@@ -212,7 +212,7 @@ def get_cash_in_out(filters, group_by_field):
 	"""Fetch the till's drawer movements (Journal Entries tagged with their shift).
 
 	Each entry's amount and direction are what it did to the till's cash account (posa_cash_movement_account),
-	as the closing reads them (pos_next.cash_movement, NeoRestau lot 1 task 15); the remark the register
+	as the closing reads them (pos_next.cash_movement, NeoResto lot 1 task 15); the remark the register
 	parsed before was free text, and its total_debit counted the VAT line of a split entry."""
 	# The link fields come with the fixture: between a pull and the migrate that creates them, the register
 	# shows the rest of the till's activity instead of failing on an unknown column.

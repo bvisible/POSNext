@@ -1,5 +1,5 @@
 <template>
-	<!-- //// Neoffice — added file (no upstream equivalent). The discreet chip of the kitchen and runner screens (NeoRestau lot 1, Daniel, 01.11): a sound is enabled in the till's settings, but a browser lets no page make a sound -->
+	<!-- //// Neoffice — added file (no upstream equivalent). The discreet chip of the kitchen and runner screens (NeoResto lot 1, Daniel, 01.11): a sound is enabled in the till's settings, but a browser lets no page make a sound -->
 	<!-- //// before somebody has touched it, and a tablet in a kitchen is left alone for hours. Until the page is touched the chip says so; any touch unlocks the audio (utils/alertSoundPlayer), the chip itself included. Ink on paper, -->
 	<!-- //// a quiet outline: it is a reminder, not an alarm. Below 1024 px only its icon is drawn, as the bar's other buttons, and its words stay for a screen reader. -->
 	<button

@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The settings of "keep the screen on" and "rest the screen" (NeoRestau lot 1, task 47): their
+ * //// Neoffice — added file (no upstream equivalent). The settings of "keep the screen on" and "rest the screen" (NeoResto lot 1, task 47): their
  * //// defaults in ONE small module, the layers that can override them (the restaurant's, later; the device's, now), the per-device storage that must work
  * //// when the browser refuses it, and the rule that says a ticket is NEW.
  * @vitest-environment jsdom

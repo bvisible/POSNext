@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The « Install the app » entry of the user's menu (NeoRestau lot 1, kitchen test of 01.11): the browser
+ * //// Neoffice — added file (no upstream equivalent). The « Install the app » entry of the user's menu (NeoResto lot 1, kitchen test of 01.11): the browser
  * //// sends its install invitation (`beforeinstallprompt`) ONCE, when the page loads, and the install badge is only drawn in the items view, so a waiter who
  * //// looks at the tables never saw the offer. The invitation is now kept at module level for whoever asks later, and a browser that offers none gets the way
  * //// to do it by hand.

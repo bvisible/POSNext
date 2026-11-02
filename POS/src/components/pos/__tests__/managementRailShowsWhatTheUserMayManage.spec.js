@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The management rail of a restaurant till shows each restaurant
- * //// entry to whoever the server lets use it (NeoRestau lot 1, task 3; `restaurant_can` of the till's settings):
+ * //// entry to whoever the server lets use it (NeoResto lot 1, task 3; `restaurant_can` of the till's settings):
  * //// the cards, the option groups and the preparation workflows to the restaurant's managers, the tips to whoever
  * //// may read them, the reservations to every user of the till. The till's own settings are its managers'
  * //// (product owner, 30.10.2026): the Settings entry shows to whoever may save them.
@@ -59,7 +59,7 @@ describe("the management rail shows the till's settings to whoever may save them
 		expect(settingsEntry(undefined)).toBe(false)
 	})
 
-	// //// Neoffice — NeoRestau lot 1, task 13: the restaurant's tabs of the settings are the restaurant manager's too,
+	// //// Neoffice — NeoResto lot 1, task 13: the restaurant's tabs of the settings are the restaurant manager's too,
 	// //// at the till of HIS restaurant: the server tells the till (manage_restaurant_settings, per till)
 	it("shows it to the manager of the till's own restaurant, for the restaurant's tabs", () => {
 		expect(settingsEntry({ ...NO_RIGHT, manage_restaurant_settings: true }, true)).toBe(true)

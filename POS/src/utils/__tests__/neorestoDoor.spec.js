@@ -1,7 +1,7 @@
 //// Neoffice — added file (no upstream equivalent). The door a visitor came through, read from the query of the route
-//// (NeoRestau lot 1, task 5): `?mode=restaurant` is the restaurant door NeoRestau opens, anything else is the usual one.
+//// (NeoResto lot 1, task 5): `?mode=restaurant` is the restaurant door NeoResto opens, anything else is the usual one.
 import { describe, expect, it } from "vitest"
-import { RESTAURANT_DOOR, doorOf } from "../neorestau"
+import { RESTAURANT_DOOR, doorOf } from "../neoresto"
 
 const route = (query) => ({ query })
 

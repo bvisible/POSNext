@@ -1,6 +1,6 @@
 <template>
 	<!-- //// Neoffice — added file (no upstream equivalent). The switch at the end of the kitchen screen's filter line that -->
-	<!-- //// chooses how its two bands are laid out (NeoRestau lot 1, task 23): BANDS, the waiting tickets in a lane above the -->
+	<!-- //// chooses how its two bands are laid out (NeoResto lot 1, task 23): BANDS, the waiting tickets in a lane above the -->
 	<!-- //// tickets in preparation, or COLUMNS, side by side. Two buttons rather than one that flips: a cook reads what each -->
 	<!-- //// does before touching it. The name of each layout is written on its button because the screen is a tablet, where -->
 	<!-- //// a tooltip never shows; the icons are lucide's, the set the till's build already carries. It is as high as the -->

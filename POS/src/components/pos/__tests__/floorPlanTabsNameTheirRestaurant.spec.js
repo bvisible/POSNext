@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The floor plan opens the kitchen screen, the pass and the
- * //// takeaway counter in tabs of their own (NeoRestau lot 1, task 2). A new tab has no till settings loaded yet,
+ * //// takeaway counter in tabs of their own (NeoResto lot 1, task 2). A new tab has no till settings loaded yet,
  * //// so each of them is told the till's restaurant in its address.
  * @vitest-environment jsdom
  */

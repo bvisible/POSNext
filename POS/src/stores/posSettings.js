@@ -2,10 +2,10 @@ import { createResource } from "frappe-ui";
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import { useBootstrapStore } from "./bootstrap";
-//// Neoffice — the bounds of the till's « Tiles per row » (NeoRestau lot 1, task 13).
+//// Neoffice — the bounds of the till's « Tiles per row » (NeoResto lot 1, task 13).
 import { tilesPerRow as tilesPerRowOf } from "@/utils/tileGrid";
 //// Neoffice — no `call` import (apiWrapper) here any more: it was added for the restaurant-mode toggle
-//// (8aa35c29, 2026-03-20), left unused by 82fcc1bf, and went with the toggle (NeoRestau lot 1, task 4).
+//// (8aa35c29, 2026-03-20), left unused by 82fcc1bf, and went with the toggle (NeoResto lot 1, task 4).
 //// Neoffice — the staff of a till stay signed in for the days its settings say, asked once the profile is known (loadSettings).
 import { keepStaffSignedIn } from "@/utils/keepSignedIn";
 
@@ -87,22 +87,22 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		customer_display_show_address_fields: 0,
 		// Restaurant Settings
 		enable_restaurant_mode: 0,
-		//// Neoffice — the restaurant this till works for and its label (NeoRestau lot 1, task 2), sent by the
+		//// Neoffice — the restaurant this till works for and its label (NeoResto lot 1, task 2), sent by the
 		//// bootstrap with the till's settings.
 		restaurant: "",
 		restaurant_name: "",
-		//// Neoffice — what the user may manage of that restaurant, sent with the settings (NeoRestau lot 1, task 3):
+		//// Neoffice — what the user may manage of that restaurant, sent with the settings (NeoResto lot 1, task 3):
 		//// nothing until the server says so.
 		restaurant_can: {},
-		//// Neoffice — whether the site runs NeoRestau, sent with the settings (NeoRestau lot 1, task 4): off until the
+		//// Neoffice — whether the site runs NeoResto, sent with the settings (NeoResto lot 1, task 4): off until the
 		//// server says so. enable_restaurant_mode above is already the EFFECTIVE mode (the till's own tick, counted only
-		//// where NeoRestau runs and for a till that names its restaurant), so nothing here works it out again.
-		neorestau_active: false,
+		//// where NeoResto runs and for a till that names its restaurant), so nothing here works it out again.
+		neoresto_active: false,
 		default_restaurant_area: "",
 		// Security
 		enable_session_lock: 0,
 		session_lock_timeout: 5,
-		//// Neoffice — 0: the lock waits for its delay without use instead of locking the moment the screen is left (NeoRestau lot 1).
+		//// Neoffice — 0: the lock waits for its delay without use instead of locking the moment the screen is left (NeoResto lot 1).
 		session_lock_on_leave: 0,
 		//// Neoffice — the Journal Entry Template used to book the cash the cashier takes out of the
 		//// drawer at shift close, and to suggest the next opening balance. Upstream closes a shift
@@ -112,7 +112,7 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		// Cash Management
 		closing_withdrawal_template: "",
 		//// Neoffice — how many tiles a row of the catalogue grids shows: "Automatic" (as the grids always were) or a
-		//// number from 3 to 8 (NeoRestau lot 1, task 13). Seeded so that no grid moves before the server says so.
+		//// number from 3 to 8 (NeoResto lot 1, task 13). Seeded so that no grid moves before the server says so.
 		tiles_per_row: "Automatic",
 		//// Neoffice — the till's « Block a sale beyond the stock » (its POS Profile's box, sent with the settings,
 		//// ruling 82): ticked until the server says, as the field's default.
@@ -239,7 +239,7 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 	);
 
 	//// Neoffice — no enableRestaurantMode computed here any more: nothing read it. The restaurant store reads
-	//// settings.enable_restaurant_mode itself, the effective mode the server sends (NeoRestau lot 1, task 4).
+	//// settings.enable_restaurant_mode itself, the effective mode the server sends (NeoResto lot 1, task 4).
 	//// Neoffice — end of the Biome re-wrap, then two blocks upstream does not have: the default
 	//// restaurant area (8aa35c29, 2026-03-20 "Phase 1 restaurant module") and the
 	//// customer-facing display flags — enable, let the customer create their own account, and
@@ -269,7 +269,7 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		() => Number.parseInt(settings.value.session_lock_timeout) || 5
 	);
 	//// Neoffice — lock at once on leaving the screen (the tab hidden, the phone asleep), or only after the delay without use
-	//// (POS Settings.session_lock_on_leave, NeoRestau lot 1, product owner, 01.11.2026). Off by default: a waiter's phone sleeps all day.
+	//// (POS Settings.session_lock_on_leave, NeoResto lot 1, product owner, 01.11.2026). Off by default: a waiter's phone sleeps all day.
 	const sessionLockOnLeave = computed(() => Boolean(Number(settings.value.session_lock_on_leave)));
 
 	//// Neoffice — Journal Entry Template used to book the cash the cashier takes out of the
@@ -312,7 +312,7 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		settings.value.pos_profile = posProfile;
 
 		//// Neoffice — the till's profile is known: its staff are kept signed in for the days its POS Settings say, once per page
-		//// load (utils/keepSignedIn.js; NeoRestau lot 1, product owner, 01.11.2026). Fire-and-forget, a failure never blocks the till.
+		//// load (utils/keepSignedIn.js; NeoResto lot 1, product owner, 01.11.2026). Fire-and-forget, a failure never blocks the till.
 		keepStaffSignedIn(posProfile);
 
 		// OPTIMIZATION: Check if bootstrap has preloaded the settings
@@ -408,23 +408,23 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 			customer_display_show_address_fields: 0,
 			// Restaurant Settings
 			enable_restaurant_mode: 0,
-			//// Neoffice — the restaurant a till works for is zeroed with the rest (NeoRestau lot 1, task 2), and what
+			//// Neoffice — the restaurant a till works for is zeroed with the rest (NeoResto lot 1, task 2), and what
 			//// the previous user could manage of it (task 3): the next cashier is told his own rights.
 			restaurant: "",
 			restaurant_name: "",
 			restaurant_can: {},
-			//// Neoffice — and whether the site runs NeoRestau (NeoRestau lot 1, task 4), told again to the next user.
-			neorestau_active: false,
+			//// Neoffice — and whether the site runs NeoResto (NeoResto lot 1, task 4), told again to the next user.
+			neoresto_active: false,
 			default_restaurant_area: "",
 			// Security
 			enable_session_lock: 0,
 			session_lock_timeout: 5,
-			//// Neoffice — same for the lock's "at once on leaving the screen" choice (NeoRestau lot 1).
+			//// Neoffice — same for the lock's "at once on leaving the screen" choice (NeoResto lot 1).
 			session_lock_on_leave: 0,
 			//// Neoffice — same for the closing-withdrawal template (5783eb27, 2026-03-28).
 			// Cash Management
 			closing_withdrawal_template: "",
-			//// Neoffice — the grids of the next user start automatic too (NeoRestau lot 1, task 13), and the stock
+			//// Neoffice — the grids of the next user start automatic too (NeoResto lot 1, task 13), and the stock
 			//// guard's box ticked (ruling 82).
 			tiles_per_row: "Automatic",
 			posa_block_sale_beyond_available_qty: 1,
@@ -458,7 +458,7 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 	 * @returns {boolean} - True if stock validation should prevent negative stock
 	 */
 	function shouldEnforceStockValidation() {
-		//// Neoffice — « Block a sale beyond the stock » means what it says at the till too (NeoRestau lot 1, task
+		//// Neoffice — « Block a sale beyond the stock » means what it says at the till too (NeoResto lot 1, task
 		//// 13, ruling 82): where the site refuses negative stock the till blocks whatever the till's box says (ERPNext
 		//// would refuse to book the sale); where the site allows it, the box decides (unsaid: blocks, the field's
 		//// default). Upstream read the site's setting only.
@@ -600,7 +600,7 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		// Computed - Security
 		enableSessionLock,
 		sessionLockTimeout,
-		//// Neoffice — lock at once on leaving the screen, or only after the delay (NeoRestau lot 1, 01.11.2026).
+		//// Neoffice — lock at once on leaving the screen, or only after the delay (NeoResto lot 1, 01.11.2026).
 		sessionLockOnLeave,
 
 		//// Neoffice — export for the closing-withdrawal template (5783eb27, 2026-03-28).

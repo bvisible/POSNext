@@ -1,7 +1,7 @@
 <!--
   //// Neoffice — upstream's settings dialog wrote each field by hand in tabs of its own (stock, sales; ours added a
   //// restaurant tab and a printing tab) and saved them in three ways. The till's settings are now ONE screen drawn
-  //// from one list of settings (NeoRestau lot 1, task 13; product owner, 30.10.2026: « the till manager does not
+  //// from one list of settings (NeoResto lot 1, task 13; product owner, 30.10.2026: « the till manager does not
   //// leave the till »): TillSettingsScreen.vue, ours, with its eleven tabs, its lightbulbs and its one Save. This
   //// file keeps upstream's name and props, so that the till opens the screen as it always opened the dialog.
   //// Earlier Neoffice history of the dialog: the Restaurant tab (32f2415d, 9ae00441, 823cd5d8, 860a115b, 68786b21,

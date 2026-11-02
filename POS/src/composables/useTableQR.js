@@ -2,7 +2,7 @@
 //// server for the table's guest code (create_table_token returns the code the table already has, or makes one) and shows
 //// it at once. It used to ask a question first (a confirmation dialog) and wait for a second press on its "Generate QR"
 //// button (c5208ba7 + f3affeaa, 2026-03-28); the product owner wanted the code itself, with a line that says what it is
-//// (NeoRestau lot 1). The click path lives here, out of POSSale.vue, because that page is too large to mount in a test.
+//// (NeoResto lot 1). The click path lives here, out of POSSale.vue, because that page is too large to mount in a test.
 ////
 //// Every press asks the server, which answers the table's active code and makes one only when the table has none: the
 //// till keeps no copy of the codes it showed, so a code expired from another device is never shown (Ruling 52; the page
@@ -23,7 +23,7 @@ export function useTableQR({ table, posProfile }) {
 	// A second press while the answer is on its way asks nothing
 	let asking = false
 
-	//// Neoffice — the press can name its table (NeoRestau lot 1, task 26): the list's QR button and a long press on the plan ask for the code of a table pressed on the FLOOR, where no table is open on the cart; the header bar's
+	//// Neoffice — the press can name its table (NeoResto lot 1, task 26): the list's QR button and a long press on the plan ask for the code of a table pressed on the FLOOR, where no table is open on the cart; the header bar's
 	//// button hands its click event, which is no table, and gets the cart's open table as before.
 	const isATable = (value) => Boolean(value && typeof value === "object" && (value.name || value.table_name) && !("target" in value))
 	async function handleQRButtonClick(pressed = null) {

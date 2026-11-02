@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""A guest orders from the QR code of a table, as nobody (NeoRestau lot 1, Daniel's test of 01.11: « j'ai voulu commander une boisson mais problème de
+"""A guest orders from the QR code of a table, as nobody (NeoResto lot 1, Daniel's test of 01.11: « j'ai voulu commander une boisson mais problème de
 droit », a red « PermissionError » under « Send Order »).
 
 The guest is the `Guest` user: no role, no right on any account. Saving a Sales Invoice reads the customer's receivable account, and ERPNext refuses that

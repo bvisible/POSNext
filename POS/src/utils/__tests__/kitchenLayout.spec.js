@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The kitchen screen can lay its two bands out in two ways, stacked
- * //// or side by side (NeoRestau lot 1, task 23). The choice is a habit of the DEVICE: a tablet on the wall and a tablet
+ * //// or side by side (NeoResto lot 1, task 23). The choice is a habit of the DEVICE: a tablet on the wall and a tablet
  * //// held upright do not read the same way. It is kept in the browser's storage, which can be missing, full or refused,
  * //// and a fresh device has to open on a layout of its own without ever having been asked.
  * @vitest-environment jsdom

@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). What the till does when a guest orders or pays from the QR code of a table (NeoRestau lot 1, Daniel, 01.11: « regarde comment la caisse sommelier reçoit
+ * //// Neoffice — added file (no upstream equivalent). What the till does when a guest orders or pays from the QR code of a table (NeoResto lot 1, Daniel, 01.11: « regarde comment la caisse sommelier reçoit
  * //// l'info (popup et autre) »): a notice per table in a small stack, the sound the till chose once per event at the volume it set, and nothing at all for an event that is no news. All of it follows the till's own
  * //// settings (`floor_guest_popup`, `floor_popup_seconds`, `floor_guest_sound`, `kitchen_alert_volume`), read from the settings store with the defaults for a till that does not carry them yet.
  * @vitest-environment jsdom

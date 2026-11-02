@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent). Which restaurant a piece of code is working for,
-# //// and that restaurant's settings (NeoRestau lot 1, task 1). The settings used to be one single,
+# //// and that restaurant's settings (NeoResto lot 1, task 1). The settings used to be one single,
 # //// `Restaurant Settings`, read as `frappe.get_single(...)` all over the code; they are now the fields
 # //// of a `Restaurant`, one set per restaurant, and every reader asks this module for the set of the
 # //// restaurant it is working for.

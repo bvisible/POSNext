@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The QR button of a table sits in the header bar of the open table,
- * //// beside "Back" (NeoRestau lot 1). The product owner: a waiter shows the table's code on his PHONE to the guests,
+ * //// beside "Back" (NeoResto lot 1). The product owner: a waiter shows the table's code on his PHONE to the guests,
  * //// who scan it, so the QR of the table must be easy to reach on a smartphone. The button used to be the last one of the
  * //// row of the restaurant's cards, where a few cards (or a longer label) pushed it off a phone's screen; in the header
  * //// bar it is always in view, whatever the width, and it is a 44 px touch target with the QR icon and the word.

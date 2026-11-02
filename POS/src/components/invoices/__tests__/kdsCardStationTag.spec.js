@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The station's tag on a kitchen dish (NeoRestau lot 1, task 38a-1, ruling 110): in
+ * //// Neoffice — added file (no upstream equivalent). The station's tag on a kitchen dish (NeoResto lot 1, task 38a-1, ruling 110): in
  * //// the view of ALL the stations a small coloured label stands INLINE on the dish's own line, before its name, and takes no line of its
  * //// own (it was a pill under every dish, and "il faut vraiment optimiser les tickets"); in the view of one station it is not drawn at all
  * //// (the filter at the top says which station it is). A dish also says its own state on its line only when that is not the ticket's.

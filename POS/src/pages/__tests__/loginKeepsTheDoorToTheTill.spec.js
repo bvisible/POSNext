@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The door follows the entry (NeoRestau lot 1, task 5, fix round 1): a
+//// Neoffice — added file (no upstream equivalent). The door follows the entry (NeoResto lot 1, task 5, fix round 1): a
 //// visitor who opens /pos?mode=restaurant while signed out is sent to the login page with his query string, signs in there,
 //// and the login page then pushes him to the till. Each of its three pushes (the shift dialog closed with its X, a shift
 //// opened, the dialog cancelled or the open shift resumed) must carry the query string on: otherwise the till runs at /pos/
@@ -152,7 +152,7 @@ describe("the login page, once the visitor has signed in", () => {
 	}
 
 	beforeEach(() => {
-		window.posnext_neorestau_active = true
+		window.posnext_neoresto_active = true
 	})
 	afterEach(() => {
 		wrapper?.unmount()

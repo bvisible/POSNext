@@ -1,5 +1,5 @@
 //// Neoffice — added file (no upstream equivalent). A screen that learns a name only after its route hands it to the tab
-//// (NeoRestau lot 1): `useTabTitle(() => stationLabel.value)` in the kitchen, `useTabTitle(() => guestStore.restaurantName,
+//// (NeoResto lot 1): `useTabTitle(() => stationLabel.value)` in the kitchen, `useTabTitle(() => guestStore.restaurantName,
 //// { instead: true })` on a guest page. The name follows its source, and the tab takes it back when the source empties. The
 //// navigation that leaves the screen drops it (the router's afterEach, utils/tabTitle.js), and the watcher stops with the
 //// page. This file imports no store: the guest pages use it too, and they must never pull in the till's stores.

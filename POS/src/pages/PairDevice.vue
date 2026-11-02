@@ -1,6 +1,6 @@
 <template>
 	<!-- //// Neoffice — added file (no upstream equivalent). The page a kitchen's or a runner's tablet opens by -->
-	<!-- //// scanning the QR code a manager shows at the till (NeoRestau lot 1, task 16): it hands the token over -->
+	<!-- //// scanning the QR code a manager shows at the till (NeoResto lot 1, task 16): it hands the token over -->
 	<!-- //// by a POST, and the tablet, signed in with its own account, goes to its screen. No password is typed. -->
 	<!-- //// With no code, or once its session has ended, it says how to get a code. A visitor's page: no store, -->
 	<!-- //// no offline worker, plain fetch (see the guest pages). -->

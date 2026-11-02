@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The station's tag appears on the kitchen screen's dishes only in the view of ALL the
- * //// stations (NeoRestau lot 1, task 38a-1, ruling 110): a screen opened on one station, or a station chosen in the filter, does not draw it.
+ * //// stations (NeoResto lot 1, task 38a-1, ruling 110): a screen opened on one station, or a station chosen in the filter, does not draw it.
  * @vitest-environment jsdom
  */
 import { flushPromises, mount } from "@vue/test-utils"

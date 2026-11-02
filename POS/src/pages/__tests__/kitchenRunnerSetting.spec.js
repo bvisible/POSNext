@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The kitchen's last action follows the station's runner setting (NeoRestau
+ * //// Neoffice — added file (no upstream equivalent). The kitchen's last action follows the station's runner setting (NeoResto
  * //// lot 1, task 38a-1, ruling 112), with the real cards.
  * ////
  * //// WITH a runner (the default of a station) a dish that is "Ready" LEAVES the kitchen screen: it took room on every ticket, and

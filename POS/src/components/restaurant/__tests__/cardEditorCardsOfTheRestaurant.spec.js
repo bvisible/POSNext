@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The card editor lists the cards of the till's restaurant, by
- * //// the server's rule, and makes the card of the permanent items through the server (NeoRestau lot 1, task 2): a
+ * //// the server's rule, and makes the card of the permanent items through the server (NeoResto lot 1, task 2): a
  * //// card is named by its card name, unique on the whole site, so a second restaurant cannot take the name the
  * //// first one has, and the server picks a free one.
  * @vitest-environment jsdom

@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). A queued sale put back in the cart keeps the price it was billed at
- * //// (NeoRestau lot 1, task 15, money review of 01.11). The rows of a queued invoice carry the rate AFTER the discount and
+ * //// (NeoResto lot 1, task 15, money review of 01.11). The rows of a queued invoice carry the rate AFTER the discount and
  * //// the discount percentage as well; a row whose rate was set by hand took its percentage back to the cart, so editing the
  * //// sale took the discount a second time: a hand-set 8.00 given 10 % off was queued at 7.20 and came back at 6.48.
  * @vitest-environment jsdom

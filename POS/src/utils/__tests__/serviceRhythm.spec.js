@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The service rhythm as the screens read it (NeoRestau lot 1, Daniel, 01.11):
+ * //// Neoffice — added file (no upstream equivalent). The service rhythm as the screens read it (NeoResto lot 1, Daniel, 01.11):
  * //// only "Prepared ahead", spelled exactly, is the kitchen preparing ahead; every other value is the room's call.
  */
 import { describe, expect, it } from "vitest"

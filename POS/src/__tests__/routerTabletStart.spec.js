@@ -1,6 +1,6 @@
 //// Neoffice — added file (no upstream equivalent). A tablet paired as the kitchen's or the runner's screen is installed
 //// as an app, and every launch from its home-screen icon starts at the till's address (the manifest's start_url is /pos),
-//// not at the screen the pairing opened (NeoRestau lot 1, task 48). The router sends such a session straight to ITS OWN
+//// not at the screen the pairing opened (NeoResto lot 1, task 48). The router sends such a session straight to ITS OWN
 //// screen, asking the server which one, before the till's page is even loaded: no shift dialog, no error, no flash of the
 //// till. A desk account, a visitor and a portal customer go the way they always went.
 // @vitest-environment jsdom
@@ -85,7 +85,7 @@ async function visit(path) {
 beforeEach(() => {
 	fetchMock = vi.fn()
 	vi.stubGlobal("fetch", fetchMock)
-	window.posnext_neorestau_active = true
+	window.posnext_neoresto_active = true
 	window.localStorage.clear()
 	forgetCookies()
 	session.isLoggedIn = true
@@ -343,8 +343,8 @@ describe("a tablet whose sessions were ended (disconnected at the till, expired)
 		expect((await visit("/takeaway")).name).toBe("Login")
 	})
 
-	it("is a visitor like any other where the site does not run NeoRestau", async () => {
-		window.posnext_neorestau_active = false
+	it("is a visitor like any other where the site does not run NeoResto", async () => {
+		window.posnext_neoresto_active = false
 
 		expect((await visit("/")).name).toBe("Login")
 	})
@@ -404,9 +404,9 @@ describe("everyone else", () => {
 		expect(warn).toHaveBeenCalled()
 	})
 
-	it("nothing changes where the site does not run NeoRestau", async () => {
+	it("nothing changes where the site does not run NeoResto", async () => {
 		aTablet()
-		window.posnext_neorestau_active = false
+		window.posnext_neoresto_active = false
 
 		const route = await visit("/")
 

@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The kitchen screen's choice to keep or leave off the tickets that are with the runner (NeoRestau lot 1, Daniel, 01.11), shared by the bands that are drawn and the panel
+//// Neoffice — added file (no upstream equivalent). The kitchen screen's choice to keep or leave off the tickets that are with the runner (NeoResto lot 1, Daniel, 01.11), shared by the bands that are drawn and the panel
 //// that changes it, and kept on the device like the side of the oldest ticket (utils/runnerTickets holds the rule and the storage).
 import { ref } from "vue"
 import { readRunnerTickets, saveRunnerTickets } from "@/utils/runnerTickets"

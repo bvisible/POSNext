@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""The page a phone opens from the QR code of a table is read in the guest's language (NeoRestau lot 1, Daniel's test of 01.11: « il faut traduire »).
+"""The page a phone opens from the QR code of a table is read in the guest's language (NeoResto lot 1, Daniel's test of 01.11: « il faut traduire »).
 
 The page asks the server for the dictionary of the app and for its stamp, as a guest: nobody is signed in on a guest's phone. Both endpoints were closed to a
 guest, so the page never had a French word. The dictionary is public text (the strings are in the open-source repo): a guest reads it, in the language the

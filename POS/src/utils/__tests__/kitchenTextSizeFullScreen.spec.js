@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The size a ticket opened FULL SCREEN draws its dishes in (NeoRestau lot 1, task 38a-3, ruling 107 layer 3): one step above the
+ * //// Neoffice — added file (no upstream equivalent). The size a ticket opened FULL SCREEN draws its dishes in (NeoResto lot 1, task 38a-3, ruling 107 layer 3): one step above the
  * //// screen's, never below Large, Extra large staying where it is; with the head and the buttons of a panel (the table at 34 px, the timer at 26 px, buttons 56 px high), each a floor that a
  * //// bigger size keeps. The panel is teleported out of the screen's root, where the size's variables do not reach, so these are the ones it carries itself.
  */

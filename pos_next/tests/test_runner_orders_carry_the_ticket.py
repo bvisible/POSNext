@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""What the runner's list tells about an order (NeoRestau lot 1, task 38b, rulings 122, 124, 126, 130).
+"""What the runner's list tells about an order (NeoResto lot 1, task 38b, rulings 122, 124, 126, 130).
 
 The runner's card has the kitchen's anatomy: the room's code, the table, the ticket's number, and « Hand over » instead
 of « Deliver » for a takeaway. `get_runner_orders` told none of it: its card could only show the table, and the invoice's

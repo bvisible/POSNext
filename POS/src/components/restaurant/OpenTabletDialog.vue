@@ -1,6 +1,6 @@
 <template>
 	<!-- //// Neoffice — added file (no upstream equivalent). Opening a tablet as the kitchen's or the runner's screen -->
-	<!-- //// (NeoRestau lot 1, task 16): the manager chooses the screen, the till shows a one-time QR code with the -->
+	<!-- //// (NeoResto lot 1, task 16): the manager chooses the screen, the till shows a one-time QR code with the -->
 	<!-- //// time it stays valid, the tablet scans it and opens with an account of its own, no password typed. Beside -->
 	<!-- //// it, the restaurant's tablets, each with who paired it, when it was last seen, on how many tablets it is -->
 	<!-- //// open, and « Disconnect ». The list follows the tablets for as long as the dialog is open (every few seconds, a -->

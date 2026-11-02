@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The cart of a table's order, grouped by course like the kitchen's ticket (NeoRestau lot 1, Daniel, 01.11: « il faut
+ * //// Neoffice — added file (no upstream equivalent). The cart of a table's order, grouped by course like the kitchen's ticket (NeoResto lot 1, Daniel, 01.11: « il faut
  * //// la même logique que dans la cuisine sur le ticket de la table, il faut barrer et réduire pour laisser que ce qu'il reste visible »). The rule is pure: the cart's
  * //// rows in, the groups to draw out, in the order of the meal, with the courses that are all delivered folded and the lines held back in a last group of their own.
  */

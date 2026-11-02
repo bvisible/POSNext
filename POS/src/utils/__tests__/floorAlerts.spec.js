@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The floor alerts as the till reads them (NeoRestau lot 1, Daniel, 01.11: « regarde comment la caisse sommelier reçoit l'info (popup et autre) »):
+ * //// Neoffice — added file (no upstream equivalent). The floor alerts as the till reads them (NeoResto lot 1, Daniel, 01.11: « regarde comment la caisse sommelier reçoit l'info (popup et autre) »):
  * //// a popup when a guest orders or pays from the QR code of a table, how long it stays, the sound that goes with it, and the volume the kitchen alerts already set. They are settings of the TILL
  * //// (POS Settings), read with the rest of its settings; a till whose settings do not carry them yet (a site not migrated, a copy kept before the update) reads the defaults.
  */

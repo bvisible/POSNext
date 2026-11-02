@@ -11,7 +11,7 @@ from frappe.model.document import Document
 class MenuDesignTemplate(Document):
 	def validate(self):
 		# A custom CSS only styles the menu: the PDF engine must not fetch anything for it, and it must not leave its
-		# style sheet (NeoRestau lot 1, task 3; maintenance#2002). The generator drops such a CSS anyway.
+		# style sheet (NeoResto lot 1, task 3; maintenance#2002). The generator drops such a CSS anyway.
 		from pos_next.api.menu_pdf import _refuse_unsafe_css
 
 		_refuse_unsafe_css(self.custom_css)

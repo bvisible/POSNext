@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The phone classes of the kitchen and runner screens are compiled by the till's own Tailwind
- * //// configuration and come out as the rules they need (NeoRestau lot 1, smoke-test fix). `max-md:` is the complement of `md:` (below 768 px and from
+ * //// configuration and come out as the rules they need (NeoResto lot 1, smoke-test fix). `max-md:` is the complement of `md:` (below 768 px and from
  * //// 768 px never apply together), which is what keeps the desk's line as it was; the phone's 40 px heights come after the 44, 38 and 32 px they replace in
  * //// the stylesheet, so that they win without `!important`. A class that is mistyped compiles to nothing, and the element is silently left as it was: so
  * //// the screens' sources are compiled, and the rules are read in the stylesheet.

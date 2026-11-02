@@ -1,6 +1,6 @@
 <template>
 	<!-- //// Neoffice — added file (no upstream equivalent). The public menu: the page that the one QR code on -->
-	<!-- //// a restaurant's tables opens, at /pos/menu/<restaurant> (NeoRestau lot 1, task 17). It shows the -->
+	<!-- //// a restaurant's tables opens, at /pos/menu/<restaurant> (NeoResto lot 1, task 17). It shows the -->
 	<!-- //// restaurant's guest card to read — sections, dishes with their picture, description, price and -->
 	<!-- //// badges — and nothing to order: no cart, no table, no account. The QR a waiter brings to a table -->
 	<!-- //// (GuestOrder.vue, tied to the table's draft ticket) stays as it is. Upstream POSNext has no guest -->
@@ -113,7 +113,7 @@ onMounted(async () => {
 			menu.value = await fetchPublicMenu(restaurant)
 			state.value = "ready"
 		} catch {
-			// Whatever the reason (the restaurant does not publish, NeoRestau is off, the connection dropped), the guest
+			// Whatever the reason (the restaurant does not publish, NeoResto is off, the connection dropped), the guest
 			// reads the same polite sentence: a refusal is never shown as it came
 			state.value = "unavailable"
 		}

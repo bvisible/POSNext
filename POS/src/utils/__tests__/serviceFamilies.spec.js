@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The service families of a restaurant order, on the till's side
- * //// (NeoRestau lot 1): what a send puts on the pass and what it holds back, which course « order the next course »
+ * //// (NeoResto lot 1): what a send puts on the pass and what it holds back, which course « order the next course »
  * //// releases, and the words of it. The rule is the server's (pos_next/restaurant/service_families.py); this copy only
  * //// serves the kitchen dialog's pre-ticked boxes and the label of the button. Both are tested against ONE table of
  * //// examples, pos_next/tests/service_family_cases.json, so that the lines the dialog ticks are the lines the server sends.

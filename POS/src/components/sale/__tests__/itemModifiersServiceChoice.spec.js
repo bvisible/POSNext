@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The « Service » choice also sits in the dialog of the line's note and
- * //// options (NeoRestau lot 1, service families), so that the waiter who opens a line to add a remark or an option can give it
+ * //// options (NeoResto lot 1, service families), so that the waiter who opens a line to add a remark or an option can give it
  * //// another course in the same place: the field is the line's `service_family`, the one the chip on the line and « Edit Item
  * //// Details » change too. Shown only on a table's order of a restaurant that has set a family; a line the kitchen has keeps its course.
  * @vitest-environment jsdom

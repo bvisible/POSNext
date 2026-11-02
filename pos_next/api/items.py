@@ -18,7 +18,7 @@ from frappe.query_builder import functions as fn
 from frappe.query_builder.functions import IfNull
 from frappe.utils import flt, getdate, nowdate
 
-# //// Neoffice — every item the till loads carries its VAT maps, on site and to take away (NeoRestau lot 1, task 11).
+# //// Neoffice — every item the till loads carries its VAT maps, on site and to take away (NeoResto lot 1, task 11).
 from pos_next.restaurant.takeaway_tax import attach_item_tax_rates
 
 ITEM_RESULT_FIELDS = [
@@ -928,7 +928,7 @@ def _build_item_base_conditions(
 	]
 	# //// hide internal items from POS item grid — fa5e2ee
 	# //// Neoffice — read where the site has the field: a site without the theme (a fresh CI site) has no internal
-	# //// item to hide, and the bare condition failed every catalogue query there (NeoRestau lot 1, task 11).
+	# //// item to hide, and the bare condition failed every catalogue query there (NeoResto lot 1, task 11).
 	if frappe.db.has_column("Item", "is_internal_item"):
 		conditions.append("IFNULL(i.is_internal_item, 0) != 1")
 	if exclude_variants:

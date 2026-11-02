@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). In the floor plan's editor the add-room action is always there,
- * //// whatever the number of rooms (NeoRestau lot 1, Ruling 48). The room group, add button included, used to be drawn
+ * //// whatever the number of rooms (NeoResto lot 1, Ruling 48). The room group, add button included, used to be drawn
  * //// only when the plan had more than one room: a restaurant with one room, or none, could not add the next one from the
  * //// plan. Renaming and deleting stay with several rooms, so the last room still cannot be deleted from the plan.
  * @vitest-environment jsdom

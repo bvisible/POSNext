@@ -1,6 +1,6 @@
 // //// Neoffice — added file (no upstream equivalent).
 /**
- * What a row of the invoice history says about its ticket (NeoRestau lot 1, task 29).
+ * What a row of the invoice history says about its ticket (NeoResto lot 1, task 29).
  *
  * The server sends the first three lines (`items_preview`) and the number of lines (`items_count`); a row
  * held on the device (an offline sale) carries its lines itself and gets the same preview.

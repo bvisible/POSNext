@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). Keep the screen on, and let it rest on purpose (NeoRestau lot 1, task 47). The product owner's
+//// Neoffice — added file (no upstream equivalent). Keep the screen on, and let it rest on purpose (NeoResto lot 1, task 47). The product owner's
 //// tablet fell asleep by itself in the kitchen; he also wants a screen that nobody touched for half an hour to go quiet, and to come back with a touch.
 //// These are TWO DIFFERENT THINGS, and this composable keeps them apart:
 ////

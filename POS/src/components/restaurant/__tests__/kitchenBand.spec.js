@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). One band of the kitchen screen (NeoRestau lot 1, task 23): its
+ * //// Neoffice — added file (no upstream equivalent). One band of the kitchen screen (NeoResto lot 1, task 23): its
  * //// header with the number of tickets it holds, then its tickets as a LANE that scrolls sideways (bands one above the
  * //// other) or as a COLUMN that scrolls up and down (side by side), with a count of the tickets out of sight, or one short
  * //// line when it holds none. jsdom has no layout engine: the boxes of the elements are given by hand.
@@ -602,7 +602,7 @@ describe("45 tickets in two bands", () => {
 	})
 })
 
-//// Neoffice — the tickets of the tables that have ordered their next course FLASH until the cook has taken them up (NeoRestau lot 1, Daniel, 01.11): the band hands the card the one question it asks, « is this one of the flashing orders »
+//// Neoffice — the tickets of the tables that have ordered their next course FLASH until the cook has taken them up (NeoResto lot 1, Daniel, 01.11): the band hands the card the one question it asks, « is this one of the flashing orders »
 describe("the flashing tickets", () => {
 	const HighlightingTicket = {
 		props: ["order", "highlighted"],

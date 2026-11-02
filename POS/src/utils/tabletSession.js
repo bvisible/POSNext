@@ -1,5 +1,5 @@
 //// Neoffice — added file (no upstream equivalent). A kitchen's or a runner's tablet signs in with an account of its own,
-//// paired by a QR code shown at the till, with no password (NeoRestau lot 1, task 16). What its screens need to know
+//// paired by a QR code shown at the till, with no password (NeoResto lot 1, task 16). What its screens need to know
 //// of the browser's session, read from the cookies Frappe sets on every answer: no store, no request, nothing that
 //// a screen of a visitor could not load.
 
@@ -38,7 +38,7 @@ export function signedInUser() {
 }
 
 /**
- * Whether the browser is signed in with a tablet's own account (NeoRestau lot 1, task 48): a portal account (no desk
+ * Whether the browser is signed in with a tablet's own account (NeoResto lot 1, task 48): a portal account (no desk
  * session) at an address of the tablets' domain, the one the server confines to the kitchen's and the runner's screens.
  * The server decides what such a session may do; this only says whether to ask it where the tablet's screen is.
  */

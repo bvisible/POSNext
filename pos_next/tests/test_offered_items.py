@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""« Offert » at the till (NeoRestau lot 1, task 24).
+"""« Offert » at the till (NeoResto lot 1, task 24).
 
 The cashier offers some or all of a line's quantity. The offered part is a row of its own of the same item, flagged by a
 field of ours (`posa_is_offered`, never ERPNext's `is_free_item`, which a pricing rule may strip): it keeps its list
@@ -792,7 +792,7 @@ class TestTheKitchenAndTheTable(OfferedTill, FrappeTestCase):
 			.insert(ignore_permissions=True)
 			.token
 		)
-		with patch.dict(frappe.conf, {"neorestau_active": 1}):
+		with patch.dict(frappe.conf, {"neoresto_active": 1}):
 			self.draft(self.two_paid_one_offered(), restaurant_table=table.name)
 			# The till opening the table, and reloading it after a guest's order
 			for answer in (

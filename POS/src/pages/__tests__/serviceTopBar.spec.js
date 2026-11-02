@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The ONE top bar of the kitchen screen and of the runner screen (NeoRestau lot 1, task 38a-2,
+ * //// Neoffice — added file (no upstream equivalent). The ONE top bar of the kitchen screen and of the runner screen (NeoResto lot 1, task 38a-2,
  * //// rulings 128 and 129). The page opened on three lines (a title that said « preparation » whatever the station, a subtitle, a line of chips)
  * //// before the first ticket. Now ROW 1 is one line: the title names the STATION the screen is opened on, with the count beside it, then the
  * //// actions; ROW 2, the rooms and the stations, is drawn only when there is something to choose.

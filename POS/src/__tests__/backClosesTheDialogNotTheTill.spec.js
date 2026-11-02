@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The Back of a phone closes the QR dialog and the till stays where it is
- * //// (NeoRestau lot 1). The dialog takes one entry of the browser's history while it is a phone's (composables/
+ * //// (NeoResto lot 1). The dialog takes one entry of the browser's history while it is a phone's (composables/
  * //// useBackClosesDialog), and the Back that follows consumes it. That Back is a pop of the history like any other, which the
  * //// router of the till answers: onto the location it is already at, since the entry has the address of the page. Here it is
  * //// the real router of the till (guards and `afterEach` included) and the real dialog, and what has to stay is the till's:

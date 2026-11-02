@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). ERPNext's computation of a sale's taxes and totals, ported for the
- * //// till (utils/invoiceTaxes.js; NeoRestau lot 1, Ruling 70: the screen equals the invoice, to the cent). The figures
+ * //// till (utils/invoiceTaxes.js; NeoResto lot 1, Ruling 70: the screen equals the invoice, to the cent). The figures
  * //// below are ERPNext's own, worked through calculate_taxes_and_totals step by step; the Python suite
  * //// (test_till_totals_match_the_invoice) submits the same carts and compares them with real invoices.
  */

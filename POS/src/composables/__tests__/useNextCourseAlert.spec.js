@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). What the kitchen screen does when the next course is ordered (NeoRestau lot 1, Daniel, 01.11: « il doit y avoir un popup à la cuisine, et aussi un son
+ * //// Neoffice — added file (no upstream equivalent). What the kitchen screen does when the next course is ordered (NeoResto lot 1, Daniel, 01.11: « il doit y avoir un popup à la cuisine, et aussi un son
  * //// pour aviser », then « enlever le bandeau et afficher la carte »): it reads each reading of its orders through the rule (utils/nextCourseWatch), rings the sound the till chose once per reading, and makes
  * //// the ticket FLASH until the cook has taken its dishes up or said it has been seen (« To do »): « il faut la laisser clignoter jusqu'à ce qu'on ait validé ». All of it follows the till's settings.
  * @vitest-environment jsdom

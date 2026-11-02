@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""The send path of a restaurant that prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11: « Oui, les deux modes »).
+"""The send path of a restaurant that prepares ahead (NeoResto lot 1, the service rhythm, Daniel, 01.11: « Oui, les deux modes »).
 
 In the room's rhythm (the default) « Valider » sends the drinks and the first food course and holds the others back (`Waiting`). Where the
 restaurant prepares ahead, EVERYTHING leaves: a food line that would have been held leaves marked `kds_ahead`, so that the kitchen may start it,

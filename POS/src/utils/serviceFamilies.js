@@ -1,5 +1,5 @@
 //// Neoffice — added file (no upstream equivalent). The service families of a restaurant order, on the till's side
-//// (NeoRestau lot 1). A restaurant says, on the Item Group of its menu, which group is a drink, a starter, a main or a
+//// (NeoResto lot 1). A restaurant says, on the Item Group of its menu, which group is a drink, a starter, a main or a
 //// dessert; each line of an order carries its family (`service_family`), and a table's order goes to the kitchen in the
 //// rhythm of a meal: the drinks and the first food family present at « Valider », the other food held back (`Waiting`)
 //// until the waiter orders the next course.
@@ -13,7 +13,7 @@
 //// anything else for a line that has left for the kitchen.
 
 import { computed, shallowRef } from "vue"
-//// Neoffice — the call of a course where the kitchen prepares ahead, and the restaurant's service rhythm (NeoRestau lot 1, Daniel, 01.11: « Oui, les deux modes »)
+//// Neoffice — the call of a course where the kitchen prepares ahead, and the restaurant's service rhythm (NeoResto lot 1, Daniel, 01.11: « Oui, les deux modes »)
 import { isUncalled } from "./courseCall"
 import { hasLeftForTheKitchen } from "./lineKitchenState"
 import { PREPARED_AHEAD, rhythmOf } from "./serviceRhythm"

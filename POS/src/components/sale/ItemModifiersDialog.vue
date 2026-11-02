@@ -60,7 +60,7 @@
 					<p class="text-sm">{{ __("No modifiers available for this item") }}</p>
 				</div>
 
-				<!-- //// The « Service » choice (service families, NeoRestau lot 1): the course the line belongs to, the field the chip on the -->
+				<!-- //// The « Service » choice (service families, NeoResto lot 1): the course the line belongs to, the field the chip on the -->
 				<!-- //// line and « Edit Item Details » change too. Only a table's order of a restaurant that has set a family. -->
 				<div v-if="showServiceChoice" data-service-choice class="pt-4 border-t">
 					<label class="block text-sm font-medium text-gray-700 mb-2">{{ serviceLabel() }}</label>
@@ -322,7 +322,7 @@ function saveModifiers() {
 
 	// Use direct reference (already the cart item)
 	const cartItem = itemIdx >= 0 ? cartStore.invoiceItems[itemIdx] : item.value
-	// The course chosen, when the line can still change it (service families, NeoRestau lot 1)
+	// The course chosen, when the line can still change it (service families, NeoResto lot 1)
 	if (cartItem && showServiceChoice.value && serviceFamily.value !== (cartItem.service_family || "")) {
 		cartStore.setServiceFamily(cartItem, serviceFamily.value)
 	}

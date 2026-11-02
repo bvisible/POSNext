@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The sheet that carries the QR code of a restaurant's public menu
- * //// (NeoRestau lot 1, task 17): the code of the address of the menu, large, the restaurant's name, and « Scan to see the
+ * //// (NeoResto lot 1, task 17): the code of the address of the menu, large, the restaurant's name, and « Scan to see the
  * //// menu ». It is printed from a hidden frame, so that nothing of the till under it ends up on the paper.
  * @vitest-environment jsdom
  */

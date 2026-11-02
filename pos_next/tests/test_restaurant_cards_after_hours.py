@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""A card the opening hours keep off the till can be fetched from a « ⋯ » (NeoRestau lot 1, task 25).
+"""A card the opening hours keep off the till can be fetched from a « ⋯ » (NeoResto lot 1, task 25).
 
 The restaurant's opening hours assign cards to service slots. A card they name is shown during its slots only, and
 between the services nothing of it shows by itself: the afternoon between a lunch and an evening service has no card

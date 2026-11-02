@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""The sound and the popup of the kitchen's and the runner's screens are settings of the till (NeoRestau lot 1, Daniel, 01.11).
+"""The sound and the popup of the kitchen's and the runner's screens are settings of the till (NeoResto lot 1, Daniel, 01.11).
 
 Daniel asked that the kitchen is told with a popup and a sound when the next course is ordered, that the sound is in the
 till's settings ("Réglages de la caisse") and that it can be chosen from a few. The five settings live on the till's POS

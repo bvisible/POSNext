@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""Freeing the tables being cleaned, a room at a time (NeoRestau lot 1, Ruling 48).
+"""Freeing the tables being cleaned, a room at a time (NeoResto lot 1, Ruling 48).
 
 The floor plan's « ⋯ » menu holds « Free the tables being cleaned »: once the room has been cleaned, every one of its
 tables that is in the Cleaning state goes back to Empty in ONE call, instead of the waiter opening each of them (the

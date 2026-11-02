@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). « View table » on the notice of a guest's order (NeoRestau lot 1, Daniel, 01.11: « regarde comment la caisse sommelier reçoit l'info »). It opens the table of the notice
+//// Neoffice — added file (no upstream equivalent). « View table » on the notice of a guest's order (NeoResto lot 1, Daniel, 01.11: « regarde comment la caisse sommelier reçoit l'info »). It opens the table of the notice
 //// the way tapping it in the list does: the same function (composables/useOpenTable), and a table the guest has paid goes where tapping a paid table goes (the payment summary of the page, where the cashier decides what
 //// happens to it). The notice is dismissed with the press. What the waiter has in front of him is never thrown away to show another table: an order in progress with lines not sent yet keeps the screen and the notice, and
 //// the waiter is told.

@@ -1,7 +1,7 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The bootstrap carries what the till asks of its user: the
  * //// authorization policy and the PIN length, the switch to the desk, the till's settings with what he may manage
- * //// (NeoRestau lot 1, task 3). A sign-out resets it; a sign-in in the same tab, without a reload, loads the new
+ * //// (NeoResto lot 1, task 3). A sign-out resets it; a sign-in in the same tab, without a reload, loads the new
  * //// user's: an expense void then asks for approval instead of failing, and the PIN field has the server's length.
  * @vitest-environment jsdom
  */

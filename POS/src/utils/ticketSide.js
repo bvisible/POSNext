@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The side of the kitchen screen where the OLDEST ticket stands (NeoRestau lot 1, Daniel 01.11: he would like the oldest at the right). The tickets are in order of arrival,
+//// Neoffice — added file (no upstream equivalent). The side of the kitchen screen where the OLDEST ticket stands (NeoResto lot 1, Daniel 01.11: he would like the oldest at the right). The tickets are in order of arrival,
 //// oldest first, and have always been drawn from the left; a screen may be set to draw them from the right instead (the lane starts at the right edge, a grid fills from it). It is a choice of the DEVICE, kept like the
 //// size of the text, and the default is the left, which is how a row of tickets reads and where the oldest are the first seen when there are more tickets than the screen holds.
 

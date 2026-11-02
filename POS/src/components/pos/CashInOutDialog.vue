@@ -6,7 +6,7 @@
 	<!-- //// ledger. (6c598630, 2026-03-28 "cash in/out from POS using Journal Entry Templates"; -->
 	<!-- //// 2e2ef1a0 adapts to the ERPNext Swiss template structure (totalization and -->
 	<!-- //// counterparty), ee6587a0 reads template_title, dd53c641 adds the search filter, -->
-	<!-- //// 82b2493a the POS Profile template filter.) Rebuilt by NeoRestau lot 1, task 15: the -->
+	<!-- //// 82b2493a the POS Profile template filter.) Rebuilt by NeoResto lot 1, task 15: the -->
 	<!-- //// direction comes from the server, an empty list means no movement, « without VAT », the -->
 	<!-- //// receipt's photo, the shift's cap, cancel while the shift is open, and the offline queue. -->
 	<Dialog v-model="open" :options="{ title: __('Cash In/Out'), size: '3xl' }">

@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). A dish that is Delivered on the kitchen ticket is done: it is INERT
- * //// (NeoRestau lot 1, task 42). It used to be a tap target like the others and its status menu offered "Preparing" and
+ * //// (NeoResto lot 1, task 42). It used to be a tap target like the others and its status menu offered "Preparing" and
  * //// "Ready", i.e. it let a cook put a delivered dish back; and the menu hung inside the line's wrapper, which carried the
  * //// fade of a delivered dish, so the menu inherited the 40 % opacity and was painted UNDER the next lines. Now the fade and
  * //// the strike-through sit on the line's content alone, a delivered dish takes no touch at all, and the menu of any other

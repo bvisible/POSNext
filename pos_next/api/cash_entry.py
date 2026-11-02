@@ -4,7 +4,7 @@
 # //// Entries built from Journal Entry Templates, following the erpnextswiss template
 # //// structure (totalization / counterparty accounts) and restricted to the templates the
 # //// POS Profile allows (6c598630 2026-03-28 "feat: cash in/out from POS using Journal Entry
-# //// Templates"; 9cb47184, ee6587a0, 2e2ef1a0, 82b2493a the same day). Rebuilt by NeoRestau lot 1,
+# //// Templates"; 9cb47184, ee6587a0, 2e2ef1a0, 82b2493a the same day). Rebuilt by NeoResto lot 1,
 # //// task 15: booked as each template declares, the till's list enforced, the closing's rule for who
 # //// records, link fields instead of the remark, cancel, cap, receipt photo and offline queue.
 # Copyright (c) 2024, POS Next and contributors
@@ -114,7 +114,7 @@ def require_document_till(doctype, name):
 
 
 # //// Neoffice — added (no upstream equivalent). The till's drawer movements (« Entrées/Sorties de
-# //// caisse ») were rebuilt to the standard of upstream's POS expense (NeoRestau lot 1, task 15; study
+# //// caisse ») were rebuilt to the standard of upstream's POS expense (NeoResto lot 1, task 15; study
 # //// cash-movements-study.md, option A). The journal entry is written by pos_next.cash_movement, which
 # //// books exactly what the template declares; the endpoints below decide who may record, cancel and
 # //// attach, and keep the till's list of operations a control the server checks on every write.
@@ -140,7 +140,7 @@ NOTE_MAX_LENGTH = 500
 
 # //// Neoffice — added (no upstream equivalent). Who records, cancels or reads a till's drawer movements:
 # //// the rule of the closing (require_shift_access), that is the shift's own cashier at a till they may use,
-# //// or a till manager (TILL_MANAGER_ROLES) on any till's shift (defect D3). NeoRestau's purse model (lot 4:
+# //// or a till manager (TILL_MANAGER_ROLES) on any till's shift (defect D3). NeoResto's purse model (lot 4:
 # //// one cash fund, several sommeliers) will change who records; this is the one function to change.
 def require_cash_movement_access(pos_opening_shift):
 	"""Refuse unless the caller may work on this shift's drawer; return the shift's stored values, its name

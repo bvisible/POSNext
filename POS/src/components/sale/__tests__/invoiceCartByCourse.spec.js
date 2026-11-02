@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The cart of a table's order, drawn by course like the kitchen's ticket (NeoRestau lot 1, Daniel, 01.11: « il faut la même logique que dans la cuisine sur le
+ * //// Neoffice — added file (no upstream equivalent). The cart of a table's order, drawn by course like the kitchen's ticket (NeoResto lot 1, Daniel, 01.11: « il faut la même logique que dans la cuisine sur le
  * //// ticket de la table, il faut barrer et réduire pour laisser que ce qu'il reste visible »): a header per course, the courses that are all delivered folded into one row, the lines held back in a last group,
  * //// and a device switch that turns it all off. The cart is mounted for real, with the stores of the sale page.
  * @vitest-environment jsdom

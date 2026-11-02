@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent). A till's staff stay signed in for the number of days its POS Settings say
-# //// (`keep_signed_in_days`, pos_next.api.session, NeoRestau lot 1, product owner, 01.11.2026: 30 days for the restaurant's
+# //// (`keep_signed_in_days`, pos_next.api.session, NeoResto lot 1, product owner, 01.11.2026: 30 days for the restaurant's
 # //// waiters). A till that becomes a restaurant till takes the 30 days when it is saved (POSSettings.validate_keep_signed_in_days);
 # //// this gives them, once, to the restaurant tills that already were, whose row was written before the field existed. A
 # //// counter till is left at 0, the site's rule, and a restaurant till whose manager already chose a number is left alone.

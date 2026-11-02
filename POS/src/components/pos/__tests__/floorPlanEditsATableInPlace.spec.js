@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). "Edit table" on the floor plan edits the table that was
- * //// opened (NeoRestau lot 1, task 9). The dialog used to call `create_table` with the new label: renaming a table
+ * //// opened (NeoResto lot 1, task 9). The dialog used to call `create_table` with the new label: renaming a table
  * //// made another one beside it, and its seats and shape could not be changed. It calls `update_table` on the
  * //// table's own name now, and says why the server refused it (a label another table of the restaurant has).
  * @vitest-environment jsdom

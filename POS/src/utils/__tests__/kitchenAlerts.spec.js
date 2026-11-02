@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The kitchen alerts as a screen reads them (NeoRestau lot 1, Daniel, 01.11): the server answers `kitchen_alerts` in `get_restaurant_settings`
+ * //// Neoffice — added file (no upstream equivalent). The kitchen alerts as a screen reads them (NeoResto lot 1, Daniel, 01.11): the server answers `kitchen_alerts` in `get_restaurant_settings`
  * //// (pos_next.restaurant.kitchen_alerts), and a screen must never break on an answer that is missing, old or odd: whatever is not understood is the default.
  */
 import { describe, expect, it } from "vitest"

@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). « Open a tablet » at the till (NeoRestau lot 1, task 16): the
+ * //// Neoffice — added file (no upstream equivalent). « Open a tablet » at the till (NeoResto lot 1, task 16): the
  * //// manager chooses the screen, the dialog shows the QR code of a one-time code and the time it stays valid, notices
  * //// the tablet opening, and lists the restaurant's tablets with who paired them, when they were last seen, and
  * //// « Disconnect ». The entry shows only to whoever may set the restaurant up.

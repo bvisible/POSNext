@@ -1,5 +1,5 @@
 <!-- //// Neoffice — added file (no upstream equivalent). The entries of the user's avatar menu that belong to the lock of the till
-     (NeoRestau lot 1, product owner, 01.11.2026): "Lock" (at once, whatever the auto-lock setting says), "Set my till code" and, for
+     (NeoResto lot 1, product owner, 01.11.2026): "Lock" (at once, whatever the auto-lock setting says), "Set my till code" and, for
      a user who has one, "Remove my code". They sit in the menu's slot; the dialog they open (TillCodeDialog) is mounted by the page
      OUTSIDE the menu, because the menu closes, and takes its slot with it, on every click. -->
 <template>

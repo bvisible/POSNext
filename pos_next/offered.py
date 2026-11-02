@@ -1,4 +1,4 @@
-# //// Neoffice — added file (no upstream equivalent). « Offert » (NeoRestau lot 1, task 24): the cashier offers some or
+# //// Neoffice — added file (no upstream equivalent). « Offert » (NeoResto lot 1, task 24): the cashier offers some or
 # //// all of a line's quantity. The offered part is a row of its own, flagged by a field of ours (`posa_is_offered`, never
 # //// ERPNext's is_free_item, which a pricing rule may strip): it keeps its list price at a 100 % discount, so the invoice
 # //// says what was offered and charges nothing for it, no VAT on it, while its stock goes out like any unit sold.

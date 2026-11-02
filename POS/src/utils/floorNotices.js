@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). What a guest's order or payment makes of a notice on the till (NeoRestau lot 1, Daniel, 01.11, after ordering a drink from the QR code of a table as a guest:
+//// Neoffice — added file (no upstream equivalent). What a guest's order or payment makes of a notice on the till (NeoResto lot 1, Daniel, 01.11, after ordering a drink from the QR code of a table as a guest:
 //// « regarde comment la caisse sommelier reçoit l'info (popup et autre) »). The rules are written ONCE here and tested without a screen or a socket; stores/floorNotices applies them, the notices are drawn by
 //// components/restaurant/FloorNotices.
 ////

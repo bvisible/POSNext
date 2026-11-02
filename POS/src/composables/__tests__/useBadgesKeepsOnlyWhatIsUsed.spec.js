@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The badges composable offers what a screen calls and nothing
- * //// else (NeoRestau lot 1, task 9, fix round 1). A panel once read and saved the badges of a dish through it; the panel
+ * //// else (NeoResto lot 1, task 9, fix round 1). A panel once read and saved the badges of a dish through it; the panel
  * //// is gone (the item sheet reads the catalogue here and saves with update_item_badges itself), and loadItemBadges and
  * //// saveItemBadges, with a raw fetch and a CSRF header of their own, stayed with no caller.
  * @vitest-environment jsdom

@@ -70,7 +70,7 @@ class POSClosingShift(Document):
 		self.update_payment_reconciliation()
 		# //// Neoffice — the drawer movements of the shift (ours, pos_next.cash_movement) are stored on the
 		# //// closing as the ledger has them, whatever the payload carried: the till's closing and a closing
-		# //// made at the desk keep the same list (NeoRestau lot 1, task 15). The shift's row is locked first,
+		# //// made at the desk keep the same list (NeoResto lot 1, task 15). The shift's row is locked first,
 		# //// as a movement locks it (cash_entry._lock_shift): one recorded meanwhile waits, then finds it closed.
 		from pos_next import cash_movement
 
@@ -234,7 +234,7 @@ class POSClosingShift(Document):
 			return
 
 		# //// Neoffice — the withdrawal goes through the one writer of the drawer's movements
-		# //// (pos_next.cash_movement, NeoRestau lot 1 task 15): booked as its template declares, refused when
+		# //// (pos_next.cash_movement, NeoResto lot 1 task 15): booked as its template declares, refused when
 		# //// the template does not take money out of the till's cash account, tagged with this closing.
 		from pos_next import cash_movement
 
@@ -256,7 +256,7 @@ class POSClosingShift(Document):
 	def _cancel_withdrawal_journal_entry(self):
 		"""Cancel the withdrawal Journal Entry created at shift closing."""
 		# //// Neoffice — found by its link to this closing (posa_cash_movement_closing), and by the remark
-		# //// the writer of before NeoRestau lot 1 used, for a withdrawal the tagging patch could not reach.
+		# //// the writer of before NeoResto lot 1 used, for a withdrawal the tagging patch could not reach.
 		entries = frappe.get_all(
 			"Journal Entry",
 			filters={"docstatus": 1, "posa_cash_movement_closing": self.name},
@@ -826,7 +826,7 @@ def make_closing_shift_from_opening(opening_shift):
 	# //// cash in/out from POS using Journal Entry Templates — 6c59863 + 5783eb2 (+2 more)
 	# Process cash in/out entries
 	# //// Neoffice — read from the movements' link fields and the till's cash account rows
-	# //// (pos_next.cash_movement, NeoRestau lot 1 task 15), not from the remark, and stored on the closing.
+	# //// (pos_next.cash_movement, NeoResto lot 1 task 15), not from the remark, and stored on the closing.
 	from pos_next import cash_movement
 	from pos_next.api.cash_entry import _movement_payload
 
@@ -937,7 +937,7 @@ def make_closing_shift_from_opening(opening_shift):
 		or ""
 	)
 	# //// Neoffice — a withdrawal template the till cannot book (it does not take money out of the till's
-	# //// cash account) is not offered: the closing would refuse it at submit (NeoRestau lot 1, task 15).
+	# //// cash account) is not offered: the closing would refuse it at submit (NeoResto lot 1, task 15).
 	closing_withdrawal_problem = (
 		cash_movement.withdrawal_problem(
 			closing_withdrawal_template, opening_shift.get("pos_profile"), opening_shift.get("company")
@@ -976,7 +976,7 @@ def make_closing_shift_from_opening(opening_shift):
 			"closing_withdrawal_problem": closing_withdrawal_problem,
 		}
 	)
-	# //// Neoffice — what the shift offered (« Offert », NeoRestau lot 1, task 24): the units and their value at list
+	# //// Neoffice — what the shift offered (« Offert », NeoResto lot 1, task 24): the units and their value at list
 	# //// price, offered_count and offered_value, for the closing's line « Offerts : n articles, valeur CHF x ».
 	from pos_next.offered import offered_summary
 
@@ -1079,7 +1079,7 @@ def submit_closing_shift(closing_shift):
 	require_caller_may_close(closing_shift)
 	closing_shift_doc = frappe.get_doc(closing_shift)
 	# //// Neoffice — the till's closing data lists the drawer movements its expected cash counts; validate
-	# //// compares them with the ledger under the shift's lock (NeoRestau lot 1, task 15).
+	# //// compares them with the ledger under the shift's lock (NeoResto lot 1, task 15).
 	if "cash_movements" in closing_shift:
 		closing_shift_doc.flags.till_cash_movements = [
 			row.get("journal_entry")

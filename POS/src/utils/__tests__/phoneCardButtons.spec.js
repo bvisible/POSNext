@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). What the phone's order screen reads off a restaurant card
- * //// (NeoRestau lot 1, task 27; product owner, 31.10.2026, pointing at the waiter mockup): one chip per type of the
+ * //// (NeoResto lot 1, task 27; product owner, 31.10.2026, pointing at the waiter mockup): one chip per type of the
  * //// card (its categories, else its items' item groups), one colour per type taken from the items' own colour (the
  * //// Item's custom_color), the quantities already in the order, and the price of a dish with its options.
  */

@@ -70,7 +70,7 @@
 							</div>
 						</div>
 
-						<!-- //// Neoffice — the personal code of the till (NeoRestau lot 1, product owner, 01.11.2026): a user who has a code -->
+						<!-- //// Neoffice — the personal code of the till (NeoResto lot 1, product owner, 01.11.2026): a user who has a code -->
 						<!-- //// opens the lock with a big keypad (block below) and falls back to this password form by a plain link; a user -->
 						<!-- //// who has none sees this form alone, as upstream shows it. -->
 						<!-- Password Form -->
@@ -261,11 +261,11 @@
 </template>
 
 <script setup>
-//// Neoffice — computed and the two lifecycle hooks join the import, for the keypad of the personal code (NeoRestau lot 1, 01.11.2026).
+//// Neoffice — computed and the two lifecycle hooks join the import, for the keypad of the personal code (NeoResto lot 1, 01.11.2026).
 import { ref, watch, nextTick, computed, onMounted, onBeforeUnmount } from "vue";
 import { FeatherIcon } from "frappe-ui";
 import { useSessionLock } from "@/composables/useSessionLock";
-//// Neoffice — the personal code of the till (NeoRestau lot 1, product owner, 01.11.2026).
+//// Neoffice — the personal code of the till (NeoResto lot 1, product owner, 01.11.2026).
 import { useTillCode } from "@/composables/useTillCode";
 import { useOfflineStatus } from "@/composables/useOfflineStatus";
 import { session } from "@/data/session";
@@ -431,7 +431,7 @@ async function handleSignOut() {
 	opacity: 0;
 }
 
-/* //// Neoffice — a wrong code shakes the dots (NeoRestau lot 1, personal code of the till). */
+/* //// Neoffice — a wrong code shakes the dots (NeoResto lot 1, personal code of the till). */
 .lock-shake {
 	animation: lock-shake 0.45s ease-in-out;
 }

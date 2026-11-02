@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). A card the opening hours keep off the till can be fetched from a
- * //// « ⋯ » (NeoRestau lot 1, task 25, as the product owner amended it on 31.10.2026): the hours show a card during its
+ * //// « ⋯ » (NeoResto lot 1, task 25, as the product owner amended it on 31.10.2026): the hours show a card during its
  * //// slots only, and between the services nothing of it shows by itself. The store keeps what the cashier opened by
  * //// hand: it joins the row marked as such and stays on THIS till, through a reload, until it is closed or the shift
  * //// closes; it is fetched from the server one card at a time (the till does not hold a copy of every card).

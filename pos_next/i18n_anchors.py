@@ -43,7 +43,7 @@ def _i18n_anchors():
 	_("Homemade", context="Menu Badge")
 	_("Local", context="Menu Badge")
 	_("Organic", context="Menu Badge")
-	# The service families (NeoRestau lot 1): the Select options and the label of the Custom Field `service_family` on the Item
+	# The service families (NeoResto lot 1): the Select options and the label of the Custom Field `service_family` on the Item
 	# Group. The desk translates them as `__(option, null, "Item Group")`, so the French « Plat » reaches the Item Group form
 	# without touching the bare word « Main » that ERPNext translates for its own sense. The till reads its own context.
 	_("Service Family", context="Item Group")
@@ -55,7 +55,7 @@ def _i18n_anchors():
 		"The family of the articles of this group in a restaurant: Drink, Starter, Main or Dessert. A sub-group with none takes its parent's. A group with no family anywhere up its tree is never held back in the kitchen.",
 		context="Item Group",
 	)
-	# The category colour of the kitchen and runner tickets (NeoRestau lot 1, Daniel's request of 01.11): the label and the description of
+	# The category colour of the kitchen and runner tickets (NeoResto lot 1, Daniel's request of 01.11): the label and the description of
 	# the Custom Field `service_color` on the Item Group, read by the desk under the same context as the family's.
 	_("Service Colour", context="Item Group")
 	_(

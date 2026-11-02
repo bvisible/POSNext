@@ -441,7 +441,7 @@ async function markDelivered() {
 }
 
 // A table's group can hold the lines of several orders (two drafts on one table): each order is delivered with its
-// own lines, one call per invoice. The server delivers only lines of the invoice it is given (NeoRestau lot 1, task 3);
+// own lines, one call per invoice. The server delivers only lines of the invoice it is given (NeoResto lot 1, task 3);
 // until then the group went out under its first order's invoice, with every order's lines.
 async function deliverPerInvoice(items) {
 	const byInvoice = {}

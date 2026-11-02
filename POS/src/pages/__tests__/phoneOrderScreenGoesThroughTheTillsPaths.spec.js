@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The phone's order screen (NeoRestau lot 1, task 27) is a new
+ * //// Neoffice — added file (no upstream equivalent). The phone's order screen (NeoResto lot 1, task 27) is a new
  * //// face on the till's own paths, read here in POSSale.vue: a touch adds a dish exactly as the card grid of a
  * //// tablet does (handleCardItemClick, the same stock rule, the same card), a long press opens the options in the
  * //// sheet that takes the options dialog's place on a phone (the same handle, so every path that opens the dialog

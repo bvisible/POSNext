@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The QR dialog of a table on a phone (NeoRestau lot 1). The product
+ * //// Neoffice — added file (no upstream equivalent). The QR dialog of a table on a phone (NeoResto lot 1). The product
  * //// owner: a waiter shows the table's code on his PHONE to the guests, who scan it. Below Tailwind's `sm` (640 px) the
  * //// dialog is therefore the whole screen: the code as large as the width allows (never under 300 px, ink on white, with its
  * //// quiet zone), the name of the table large, the line that says what the code is for, and at the bottom, within thumb

@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The screens of the restaurant, and the way from one to another (NeoRestau lot 1, task 38a-2,
+//// Neoffice — added file (no upstream equivalent). The screens of the restaurant, and the way from one to another (NeoResto lot 1, task 38a-2,
 //// ruling 132). The kitchen screen let its user hop from the bar to the kitchen and never to the runner, while the runner could go to either:
 //// two ideas were mixed, WHICH SCREEN (preparation, runner, floor plan) and WHICH FILTER (the room, the station). They are separate now. A
 //// switch on every screen goes from one screen to another, and the filters ride along in the address, so that going from the bar's kitchen to the

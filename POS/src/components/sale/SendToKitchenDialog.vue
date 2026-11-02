@@ -6,7 +6,7 @@
 	<!-- //// back stay "Waiting" instead of being sent. (c7f6932c 2026-03-23, which also -->
 	<!-- //// stopped marking a table Occupied before any draft invoice existed; b86559db -->
 	<!-- //// dynamic title; 78a6fda7 colour thumbnail; 34ee11a8 item-group fallback.) -->
-	<!-- //// The boxes are ticked by the rhythm of the meal (service families, NeoRestau lot 1): at a table the drinks and -->
+	<!-- //// The boxes are ticked by the rhythm of the meal (service families, NeoResto lot 1): at a table the drinks and -->
 	<!-- //// the first food family present, the rest held back. The rule is the server's; this is its copy for the boxes. -->
 	<Dialog
 		v-model="show"
@@ -139,7 +139,7 @@ import {
 	isTableService,
 	planKitchenSend,
 } from "@/utils/serviceFamilies"
-// An offered row (« Offert », NeoRestau lot 1, task 24) is part of a dish: it goes to the kitchen with its paid line
+// An offered row (« Offert », NeoResto lot 1, task 24) is part of a dish: it goes to the kitchen with its paid line
 import { followsItsPaidLine, isOfferedRow, kitchenFollowers } from "@/utils/offeredRows"
 
 const emit = defineEmits(["items-sent"])
@@ -207,8 +207,8 @@ function open() {
 	const rows = cartStore.invoiceItems
 	const lines = rows.filter((item) => !item.is_free_item && !followsItsPaidLine(rows, item))
 	// The boxes of the lines not sent yet are ticked by the rhythm of the meal: at a table the drinks and the first food family
-	// present go, the rest is held back; at the counter and on a takeaway everything goes (service families, NeoRestau lot 1)
-	//// Neoffice — where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11), a line the room would have held is ticked too and leaves marked ahead ("ahead" in the plan)
+	// present go, the rest is held back; at the counter and on a takeaway everything goes (service families, NeoResto lot 1)
+	//// Neoffice — where the kitchen prepares ahead (NeoResto lot 1, the service rhythm, Daniel, 01.11), a line the room would have held is ticked too and leaves marked ahead ("ahead" in the plan)
 	const plan = planKitchenSend(
 		lines,
 		isTableService({

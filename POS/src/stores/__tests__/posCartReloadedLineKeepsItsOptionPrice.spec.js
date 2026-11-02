@@ -2,7 +2,7 @@
  * //// Neoffice — added file (no upstream equivalent). A table's order reloaded from the server (a guest's order at the
  * //// open table, replaceAllItems) carries each dish at the price the server holds, its options included. Saving the
  * //// options of such a line again must move its price by the change only, never take the options off twice
- * //// (NeoRestau lot 1, task 27, fix round 1: a dish at 40.50 with « no side −1.50 » fell to 39.00 when the waiter
+ * //// (NeoResto lot 1, task 27, fix round 1: a dish at 40.50 with « no side −1.50 » fell to 39.00 when the waiter
  * //// added a remark).
  * @vitest-environment jsdom
  */

@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The lock screen of the till shows a big numeric keypad when the user has a
- * //// personal code (NeoRestau lot 1, product owner, 01.11.2026), and behaves exactly as it always did when they have none. The
+ * //// personal code (NeoResto lot 1, product owner, 01.11.2026), and behaves exactly as it always did when they have none. The
  * //// real lock, the real code state and the real screen; only the network, the user and the cart are stand-ins.
  * @vitest-environment jsdom
  */

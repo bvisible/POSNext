@@ -1,7 +1,7 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). A restaurant till says so in its header with a fixed label
- * //// (NeoRestau lot 1, task 4), where the RESTO switch used to be: nothing in the header flips the mode, the till's own
- * //// settings decide it (and only where the site runs NeoRestau: the server sends the effective mode).
+ * //// (NeoResto lot 1, task 4), where the RESTO switch used to be: nothing in the header flips the mode, the till's own
+ * //// settings decide it (and only where the site runs NeoResto: the server sends the effective mode).
  * @vitest-environment jsdom
  */
 import { readFileSync } from "node:fs"

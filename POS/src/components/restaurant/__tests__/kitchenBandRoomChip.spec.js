@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). A band hands each card the NAME of the room its order sits in (NeoRestau lot 1,
+ * //// Neoffice — added file (no upstream equivalent). A band hands each card the NAME of the room its order sits in (NeoResto lot 1,
  * //// task 38a-1, ruling 126), so that the card's header can show the room's short code: an order carries the link to its room
  * //// (`area`), the screen knows the rooms. A takeaway sits in no room, and a room the screen does not know draws no chip.
  * @vitest-environment jsdom

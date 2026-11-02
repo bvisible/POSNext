@@ -41,7 +41,7 @@ import {
 } from "@/utils/offline";
 import { call } from "@/utils/apiWrapper";
 //// Neoffice — the till's drawer movements made offline (ours, utils/offline/cashMovements.js) are counted,
-//// sent and preloaded with the sales and the expenses (NeoRestau lot 1, task 15).
+//// sent and preloaded with the sales and the expenses (NeoResto lot 1, task 15).
 import {
 	getPendingCashMovementCount,
 	preloadCashMovementDialogData,

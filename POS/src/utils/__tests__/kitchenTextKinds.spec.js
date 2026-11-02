@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). Three kinds of text on a kitchen ticket (NeoRestau lot 1, task 38a-1, ruling
+ * //// Neoffice — added file (no upstream equivalent). Three kinds of text on a kitchen ticket (NeoResto lot 1, task 38a-1, ruling
  * //// 123): the OPTIONS of a dish, a REMARK or instruction, and an ALLERGY. They look different, so that an allergy cannot be taken for
  * //// a remark. The server stores a remark as free text (`posa_special_instructions`), so what makes it an allergy is a list of WORDS
  * //// (allergie, gluten, lactose...), a default the restaurant can replace by a setting of its own (`allergy_words`).

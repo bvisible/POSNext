@@ -287,7 +287,7 @@ def _strip_server_managed_fields(payload):
 	# Accepting client-side packed rows can reintroduce duplicates on re-save.
 	cleaned.pop("packed_items", None)
 	# //// Neoffice — the ticket number of a restaurant order is the server's: counted by the restaurant at the order's
-	# //// first save (pos_next.restaurant.tickets), never taken from a till (NeoRestau lot 1, task 38b, rulings 122, 124).
+	# //// first save (pos_next.restaurant.tickets), never taken from a till (NeoResto lot 1, task 38b, rulings 122, 124).
 	cleaned.pop("posa_ticket_no", None)
 	cleaned.pop("posa_ticket_day", None)
 	return cleaned
@@ -871,7 +871,7 @@ def _get_item_negative_stock_allow_set(items):
 
 def _should_block(pos_profile):
 	"""Check if sale should be blocked for insufficient stock."""
-	# //// Neoffice — « Block a sale beyond the stock » means what it says (NeoRestau lot 1, task 13, ruling
+	# //// Neoffice — « Block a sale beyond the stock » means what it says (NeoResto lot 1, task 13, ruling
 	# //// 82). Where the site refuses negative stock, the till blocks whatever its box says: ERPNext would
 	# //// refuse to book the sale. Where the site allows it, the box decides, read as it is ticked (no value:
 	# //// blocks, the field's default); no till named, the site decides, as upstream. Upstream let every sale
@@ -1221,7 +1221,7 @@ def update_invoice(data):
 		# //// to a table would forget the four dishes the kitchen has already sent.
 		cooked_before = _kds_unit_counters_of(data.get("name")) if has_kds_field else {}
 
-		# //// Neoffice — the service families (NeoRestau lot 1): a line the till sent with no decision is decided here, by the
+		# //// Neoffice — the service families (NeoResto lot 1): a line the till sent with no decision is decided here, by the
 		# //// one rule of pos_next.restaurant.service_families, against what the stored order already sent. A table's order goes
 		# //// in the rhythm of the meal (drinks and the first food family now, the rest held); a takeaway, a counter order and
 		# //// a site that sets no family send every line, as before. A line the till decided (the kitchen dialog's choice) is
@@ -1232,7 +1232,7 @@ def update_invoice(data):
 		# The lines of the stored draft as they are before this save rewrites them: what already left, and in which send
 		# //// Neoffice — read FOR UPDATE: the room's call of a course (`restaurant.call_next_course`, the service rhythm) is not in the payload.
 		# //// `decide_new_lines` gives it, and the mark of a line sent ahead, back to the lines the document is rebuilt from, so a call made
-		# //// while this save runs must be seen, not lost (NeoRestau lot 1, Daniel, 01.11)
+		# //// while this save runs must be seen, not lost (NeoResto lot 1, Daniel, 01.11)
 		stored_lines = (
 			service_families.stored_lines(data.get("name"), lock=True) if doctype == "Sales Invoice" else []
 		)
@@ -1682,7 +1682,7 @@ def update_invoice(data):
 		# //// Neoffice — an order of a table, or a takeaway order of a restaurant till, takes its TICKET number at its first
 		# //// save (a counter per restaurant and business day, locked in this transaction; none for a plain counter sale). The
 		# //// draft's own FA number is not what the kitchen reads: it comes in an order nobody chose and leaves a gap for each
-		# //// draft deleted. Before the reload below, so that the answer carries it (NeoRestau lot 1, task 38b, rulings 122, 124).
+		# //// draft deleted. Before the reload below, so that the answer carries it (NeoResto lot 1, task 38b, rulings 122, 124).
 		if doctype == "Sales Invoice":
 			from pos_next.restaurant import tickets
 
@@ -1711,7 +1711,7 @@ def update_invoice(data):
 				if has_kds_batch:
 					# //// Neoffice — the number of the next send is read from the lines as they were stored: the document is rewritten
 					# //// from the payload, which carries no batch, so the rows read back here had none and every send was number 1
-					# //// (service families, NeoRestau lot 1: the next course must be a send of its own on the kitchen's screen).
+					# //// (service families, NeoResto lot 1: the next course must be a send of its own on the kitchen's screen).
 					existing_batches = [frappe.utils.cint(row.get("kds_batch") or 0) for row in stored_lines]
 					next_batch = max(existing_batches, default=0) + 1
 
@@ -1721,7 +1721,7 @@ def update_invoice(data):
 				sent_to_kitchen = any(
 					(item_data.get("kds_status") or "") not in ("", "Waiting") for item_data in data.get("items", [])
 				)
-				# //// Neoffice — each line of the payload is matched to ITS row (service families, NeoRestau lot 1): the first
+				# //// Neoffice — each line of the payload is matched to ITS row (service families, NeoResto lot 1): the first
 				# //// row with the same dish and unit took every line of that dish, so a dish ordered twice (the round the
 				# //// kitchen has and the round that waits, or one starter and one main) kept one status for both. Rows are taken
 				# //// once each, the row at the line's own position first (the document keeps the payload's order).
@@ -1731,7 +1731,7 @@ def update_invoice(data):
 				for position, item_data in enumerate(data.get("items", [])):
 					item_kds = item_data.get("kds_status")
 					# //// Neoffice — the stored line this one stands for, found whatever its status: it tells whether the line was already
-					# //// at the kitchen (service families, NeoRestau lot 1).
+					# //// at the kitchen (service families, NeoResto lot 1).
 					before = service_families.row_of_the_line(stored_lines, position, item_data, taken_stored)
 					if before:
 						taken_stored.add(before.name)
@@ -1746,12 +1746,12 @@ def update_invoice(data):
 								item_kds,
 								update_modified=False,
 							)
-							# //// Neoffice — the batch of a line at the kitchen (NeoRestau lot 1, service families). A line that left in an earlier
+							# //// Neoffice — the batch of a line at the kitchen (NeoResto lot 1, service families). A line that left in an earlier
 							# //// send keeps its batch; a line that leaves in this save, after others have left, takes the number of this send (the
 							# //// kitchen draws each send apart); the first send stays without one, as it always was; a line held back has none (a
 							# //// held line with a batch is a guest's, which the waiter has to accept). Upstream gave a batch to a line whose stored
 							# //// status was Waiting, read AFTER the save had written the payload's status over it: never.
-							# //// Neoffice — the time a line LEFT for the kitchen (NeoRestau lot 1, Daniel's test of 01.11: the timer of a ticket
+							# //// Neoffice — the time a line LEFT for the kitchen (NeoResto lot 1, Daniel's test of 01.11: the timer of a ticket
 							# //// counted from the order's last change, so a table that had eaten for three hours read « 3 h 03 » when its desserts were
 							# //// sent). A line leaving in this save takes the time of the save; one that already left keeps its own, which the rebuilt row
 							# //// lost with the rest of the payload; one that left before the field existed stays without (the ticket then falls back to
@@ -2218,7 +2218,7 @@ def submit_invoice(invoice=None, data=None):
 			# //// Neoffice — a takeaway sale (a sale made offline, replayed) is drafted without its takeaway flag and
 			# //// number, which the document takes right after, before its save and submit: update_invoice commits the
 			# //// draft and tells the kitchen screen, where a takeaway draft is an order to cook. The flag gives the
-			# //// paid invoice its takeaway tax category (pos_next.restaurant.takeaway_tax; NeoRestau lot 1, task 11).
+			# //// paid invoice its takeaway tax category (pos_next.restaurant.takeaway_tax; NeoResto lot 1, task 11).
 			takeaway = {key: invoice.pop(key) for key in ("is_takeaway", "takeaway_number") if key in invoice}
 			created = update_invoice(json.dumps(invoice))
 			if not created or not isinstance(created, dict):
@@ -2386,7 +2386,7 @@ def submit_invoice(invoice=None, data=None):
 			# If loyalty covers entire amount and no payments, clear payment entries
 			# to avoid validation errors from empty/default payment modes (Sales Invoice only)
 			# //// Neoffice — measured against the total the invoice will hold (_grand_total_as_saved): a takeaway sale
-			# //// takes its takeaway VAT only at the save below (NeoRestau lot 1, task 10).
+			# //// takes its takeaway VAT only at the save below (NeoResto lot 1, task 10).
 			if doctype == "Sales Invoice" and flt(
 				loyalty_data.get("loyalty_amount")
 			) >= _grand_total_as_saved(invoice_doc):
@@ -2704,7 +2704,7 @@ def submit_invoice(invoice=None, data=None):
 # mapping (cash) ⇒ accounting credit note only, cashier hands the money back.
 
 
-# //// Neoffice — added function (no upstream equivalent), NeoRestau lot 1, task 10. The grand total the invoice will
+# //// Neoffice — added function (no upstream equivalent), NeoResto lot 1, task 10. The grand total the invoice will
 # //// hold once saved, read before the save: a takeaway sale at a restaurant till takes the restaurant's takeaway tax
 # //// category in before_validate (pos_next.restaurant.takeaway_tax), and on a till pricing without tax its VAT moves the
 # //// total. The draft the till saved first was computed on site; submit_invoice read that total for the « loyalty
@@ -2968,7 +2968,7 @@ def _create_invoice_from_sales_order(so, payments, pos_profile, invoice_payload,
 
 
 # //// Neoffice — added (no upstream equivalent): the tip settings are a restaurant's own since the
-# //// site-wide single `Restaurant Settings` was split per restaurant (NeoRestau lot 1, task 1); an
+# //// site-wide single `Restaurant Settings` was split per restaurant (NeoResto lot 1, task 1); an
 # //// invoice's restaurant is the one of its POS Profile.
 def _restaurant_settings_of(invoice_doc):
 	"""The settings of the restaurant an invoice was rung up in (empty when the site has no restaurant)."""
@@ -2984,7 +2984,7 @@ def _extract_tip_items(invoice_doc):
 	Used to preserve guest-paid tips when the POS rebuilds the items array.
 	Returns a list of dicts suitable for invoice_doc.append("items", ...).
 	"""
-	# //// Neoffice — the tip item is the one of the invoice's restaurant (NeoRestau lot 1, task 1).
+	# //// Neoffice — the tip item is the one of the invoice's restaurant (NeoResto lot 1, task 1).
 	tip_item_code = _restaurant_settings_of(invoice_doc).get("tip_item")
 
 	if not tip_item_code:
@@ -3016,7 +3016,7 @@ def _add_tip_to_invoice(invoice_doc, tip_amount, data, record_amount=None):
 	    record_amount: Amount for the Restaurant Tip record (POS tip only, excludes prior guest tips).
 	                   If None, uses tip_amount. Pass 0 to skip creating a record.
 	"""
-	# //// Neoffice — the tip settings are the ones of the invoice's restaurant (NeoRestau lot 1, task 1).
+	# //// Neoffice — the tip settings are the ones of the invoice's restaurant (NeoResto lot 1, task 1).
 	settings = _restaurant_settings_of(invoice_doc)
 	if not settings.get("enable_tips") or not settings.get("tip_item"):
 		return
@@ -3058,7 +3058,7 @@ def _add_tip_to_invoice(invoice_doc, tip_amount, data, record_amount=None):
 			tip_record = frappe.get_doc(
 				{
 					"doctype": "Restaurant Tip",
-					# //// Neoffice — the tip belongs to the restaurant whose settings priced it (NeoRestau lot 1, task 2)
+					# //// Neoffice — the tip belongs to the restaurant whose settings priced it (NeoResto lot 1, task 2)
 					"restaurant": settings.get("name"),
 					"tip_date": frappe.utils.today(),
 					"sales_invoice": invoice_doc.name,

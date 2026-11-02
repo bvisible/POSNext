@@ -1,23 +1,23 @@
-# //// Neoffice — added file (no upstream equivalent). NeoRestau, the restaurant's business application, declared to
-# //// neoffice_theme the way NeoAuto (the garage) declares itself (NeoRestau lot 1, task 6): the restaurant module of the
+# //// Neoffice — added file (no upstream equivalent). NeoResto, the restaurant's business application, declared to
+# //// neoffice_theme the way NeoAuto (the garage) declares itself (NeoResto lot 1, task 6): the restaurant module of the
 # //// till had no place at the desk, and a restaurant is run from the desk as much as from the till. The theme is not a
 # //// dependency of this app: its modules are imported inside the functions that only the theme calls, and a site without
 # //// it (a fresh CI site) is left as it is.
-"""NeoRestau, the restaurant's business application, declared to neoffice_theme.
+"""NeoResto, the restaurant's business application, declared to neoffice_theme.
 
 No app of its own: what a restaurant does already lives in this one - the floor and its tables, the cards and menus, the
 options of a dish, the preparation stations, the reservations, the tips - and in the ERP it sits on (the items, the sales).
-NeoRestau is the view of it made for a restaurant, at the top of the menu:
+NeoResto is the view of it made for a restaurant, at the top of the menu:
 
 - declared to the theme through `neoffice_business_apps` (`business_apps`): the cockpit puts it with the applications of
-  their own, right below "My space", where the site switches it on (`neorestau_active: 1` in the site configuration, the
+  their own, right below "My space", where the site switches it on (`neoresto_active: 1` in the site configuration, the
   very flag the till reads: off by default), and hides it elsewhere. Whoever holds the point of sale (`FOLLOWS`) holds it;
 - its tabs (`tabs`, through `neoffice_workspace_tabs`): the lists above, the items and the sales taken from the spaces that
   already declare them (never written twice: a change there is a change here), the settings, and an overview whose main
   button opens the restaurant door of the till;
 - its overview figures (`overview_figures`), counted for the restaurant the reader works for and only as he may read them;
-- its menu entry, a virtual App Customization `neorestau` listing its page, and that page (`setup`), made at migrate where
-  the site runs NeoRestau, or by the provisioning of a restaurant client.
+- its menu entry, a virtual App Customization `neoresto` listing its page, and that page (`setup`), made at migrate where
+  the site runs NeoResto, or by the provisioning of a restaurant client.
 """
 
 from contextlib import contextmanager
@@ -27,14 +27,14 @@ import frappe
 from frappe import _
 
 from pos_next.restaurant.door import restaurants_of_the_restaurant_tills
-from pos_next.restaurant.mode import neorestau_active
+from pos_next.restaurant.mode import neoresto_active
 from pos_next.restaurant.scope import current_restaurant, restaurant_or_filters
 from pos_next.restaurant.settings import default_restaurant
 
 # The application, its page and its space, as the theme names them: one name, three uses
-APP = "neorestau"
-SPACE = WORKSPACE = TITLE = "NeoRestau"
-# The page NeoRestau follows: whoever holds it holds NeoRestau (the theme's access_model.with_declared)
+APP = "neoresto"
+SPACE = WORKSPACE = TITLE = "NeoResto"
+# The page NeoResto follows: whoever holds it holds NeoResto (the theme's access_model.with_declared)
 FOLLOWS = "Retail"
 # Among the applications of their own: NeoAuto stands at 48, Construction at 50, Fitness at 55
 SORT_ORDER = 49
@@ -54,13 +54,13 @@ OPEN_SESSION = [["docstatus", "=", 1], ["status", "=", "Open"]]
 
 
 def active():
-	"""The site's switch: off unless `neorestau_active` says 1, the flag the till reads too (mode.neorestau_active)."""
-	return neorestau_active()
+	"""The site's switch: off unless `neoresto_active` says 1, the flag the till reads too (mode.neoresto_active)."""
+	return neoresto_active()
 
 
 def business_apps():
 	"""neoffice_theme's `neoffice_business_apps` hook (workspace_guard.declared_business_apps): whoever holds the point of
-	sale, given or through their roles, holds NeoRestau too (access_model.with_declared)."""
+	sale, given or through their roles, holds NeoResto too (access_model.with_declared)."""
 	return [
 		{
 			"name": APP,
@@ -78,7 +78,7 @@ def business_apps():
 
 
 def tabs():
-	"""{space: [tab, ...]}, or nothing while the site does not run NeoRestau."""
+	"""{space: [tab, ...]}, or nothing while the site does not run NeoResto."""
 	if not active():
 		return {}
 	from neoffice_theme.workspace_spaces import operations, retail
@@ -104,7 +104,7 @@ def tabs():
 
 
 def _ours(tab, **changes):
-	"""A tab as NeoRestau shows it: given with its page (the access model's bundle), whatever space declared it. The
+	"""A tab as NeoResto shows it: given with its page (the access model's bundle), whatever space declared it. The
 	tab is copied, never changed: the theme's own is as it was."""
 	bundle = tab.get("bundle") or []
 	bundle = [bundle] if isinstance(bundle, str) else list(bundle)
@@ -347,7 +347,7 @@ def restaurant_tills(restaurant):
 	"""The tills (POS Profiles) that work for `restaurant` as restaurant tills, by name.
 
 	Which tills are restaurant tills is the door's answer (door.restaurants_of_the_restaurant_tills, task 5: the tick of a
-	till's own settings, the restaurant it names, the site running NeoRestau, over the one row that counts), asked for
+	till's own settings, the restaurant it names, the site running NeoResto, over the one row that counts), asked for
 	every till of the site and kept for this restaurant. A disabled till counts: what it took today is still today's
 	takings."""
 	if not restaurant:
@@ -360,11 +360,11 @@ def restaurant_tills(restaurant):
 
 
 def setup():
-	"""after_migrate, and the provisioning of a restaurant client (`bench execute pos_next.restaurant.neorestau.setup`,
-	right after the site's configuration gets `neorestau_active: 1`, with no migrate): the page of NeoRestau and its
+	"""after_migrate, and the provisioning of a restaurant client (`bench execute pos_next.restaurant.neoresto.setup`,
+	right after the site's configuration gets `neoresto_active: 1`, with no migrate): the page of NeoResto and its
 	menu entry, where the site runs it and the theme is there.
 
-	Made once, and only made: its administrators may rename, reorder or hide the entry afterwards, and switching NeoRestau
+	Made once, and only made: its administrators may rename, reorder or hide the entry afterwards, and switching NeoResto
 	off hides it (the theme) without deleting anything. It works in a process of its own - no request, no migrate flag -
 	and leaves what is already there as it is, so that it can be called as often as wanted."""
 	if not active() or not frappe.db.exists("DocType", "App Customization"):
@@ -390,7 +390,7 @@ def setup():
 
 
 def _make_the_page():
-	"""The page of NeoRestau, public and empty (the theme draws its overview), if the site has none."""
+	"""The page of NeoResto, public and empty (the theme draws its overview), if the site has none."""
 	if frappe.db.exists("Workspace", WORKSPACE):
 		return
 	page = frappe.get_doc(
@@ -428,7 +428,7 @@ def _never_exported():
 
 
 def _logo():
-	"""The icon of the menu entry: the point of sale's own (the first enabled App Customization that lists the page NeoRestau
+	"""The icon of the menu entry: the point of sale's own (the first enabled App Customization that lists the page NeoResto
 	follows and has an icon), else the default one."""
 	entries = frappe.get_all(
 		"App Customization Workspace",

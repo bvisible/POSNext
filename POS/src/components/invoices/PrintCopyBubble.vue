@@ -1,5 +1,5 @@
 <template>
-	<!-- //// Neoffice — added file (no upstream equivalent). What the state of the print button means, in words, under it (NeoRestau lot 1, task 44; the bill's printer button says it above itself,
+	<!-- //// Neoffice — added file (no upstream equivalent). What the state of the print button means, in words, under it (NeoResto lot 1, task 44; the bill's printer button says it above itself,
 	     InvoiceCart, ruling 97): « Sending… », « Printing… », « Printed », « Printer offline: the ticket will come out when it is back (15 min) », « Not printed: … ». It hangs from the
 	     action row of the ticket (the row is `relative`), at its right, over the dishes for the few seconds the state lasts; a screen reader hears it (role status). Nothing is drawn while
 	     nothing is on its way. -->

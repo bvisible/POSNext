@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The list of tables of the restaurant till (NeoRestau lot 1, task 26):
+//// Neoffice — added file (no upstream equivalent). The list of tables of the restaurant till (NeoResto lot 1, task 26):
 //// on a phone the till opens on it rather than on the floor plan (product owner, 31.10.2026: « on the phone, show the
 //// list of the tables by default rather than the plan »), as the waiter mockup draws it. It holds every table of the
 //// restaurant, sorted by what needs the waiter first, and says of each only what the till's data says: the parts of

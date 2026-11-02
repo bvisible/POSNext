@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The switch at the end of the kitchen screen's filter line that
- * //// chooses how the two bands are laid out, stacked or side by side (NeoRestau lot 1, task 23). It is read on a tablet,
+ * //// chooses how the two bands are laid out, stacked or side by side (NeoResto lot 1, task 23). It is read on a tablet,
  * //// so nothing in it waits for a mouse: the name of each layout is written on its button, and the buttons are as high as
  * //// the chips of the line.
  * @vitest-environment jsdom

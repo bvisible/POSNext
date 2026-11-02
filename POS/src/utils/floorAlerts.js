@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The floor alerts as the till reads them (NeoRestau lot 1, Daniel, 01.11, after ordering a drink from the QR code of a table as a guest: « regarde comment la
+//// Neoffice — added file (no upstream equivalent). The floor alerts as the till reads them (NeoResto lot 1, Daniel, 01.11, after ordering a drink from the QR code of a table as a guest: « regarde comment la
 //// caisse sommelier reçoit l'info (popup et autre) »). When a guest orders or pays from the QR code of a table, the waiter's and the sommelier's till shows a notice (stores/floorNotices) and rings.
 ////
 //// They are settings of the TILL (POS Settings, "Floor alerts", pos_next.till_settings.registry), read with the rest of the till's settings (`get_pos_settings`, the bootstrap), and the volume is the one the kitchen

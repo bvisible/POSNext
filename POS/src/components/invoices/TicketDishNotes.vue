@@ -1,5 +1,5 @@
 <template>
-	<!-- //// Neoffice — added file (no upstream equivalent). What a ticket says under a dish (NeoRestau lot 1, task 38a-2, ruling 130: one card anatomy for the kitchen and the runner). -->
+	<!-- //// Neoffice — added file (no upstream equivalent). What a ticket says under a dish (NeoResto lot 1, task 38a-2, ruling 130: one card anatomy for the kitchen and the runner). -->
 	<!-- //// The kitchen card drew THREE KINDS of text itself (task 38a-1, ruling 123); the runner's card now draws the same three, and a second copy of that markup would drift, so it is -->
 	<!-- //// written once, here. The OPTIONS are ink with an arrow; a REMARK or instruction is the accent, medium, with the « i »; an ALLERGY is the one red, bold, in a tinted strip of its -->
 	<!-- //// own with a warning mark, so that it cannot be taken for a remark. All three are the size of the dish's own text. Options and a plain remark share a line while they fit. -->

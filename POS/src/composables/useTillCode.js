@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The personal code of the till (NeoRestau lot 1, product owner, 01.11.2026):
+//// Neoffice — added file (no upstream equivalent). The personal code of the till (NeoResto lot 1, product owner, 01.11.2026):
 //// what this device knows about the signed-in user's code, and the three calls that change it. A waiter's phone stays signed
 //// in for 30 days, and the counterpart is a lock that a SHORT CODE opens instead of the long account password.
 ////

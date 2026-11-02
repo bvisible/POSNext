@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). What the user may manage of the restaurant is what the server
- * //// told the till in its settings (`restaurant_can`, NeoRestau lot 1, task 3), and nothing more: a right it did
+ * //// told the till in its settings (`restaurant_can`, NeoResto lot 1, task 3), and nothing more: a right it did
  * //// not grant, or did not send yet, is refused.
  * @vitest-environment jsdom
  */

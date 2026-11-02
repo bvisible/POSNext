@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The till rounds as its site does (NeoRestau lot 1, Ruling 70): a
+ * //// Neoffice — added file (no upstream equivalent). The till rounds as its site does (NeoResto lot 1, Ruling 70): a
  * //// site whose System Settings name no rounding method rounds with Frappe's default, « Banker's Rounding (legacy) »,
  * //// where an exact half rounds up at a precision (frappe.utils.data._bankers_rounding_legacy). The till rounded those
  * //// sites' half-cents to even, a cent away from the invoice.

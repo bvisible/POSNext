@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The kitchen screen and the takeaway counter are pages of
- * //// their own, opened in a tab from a till (NeoRestau lot 1, task 2): the tab has no till settings loaded, so the
+ * //// their own, opened in a tab from a till (NeoResto lot 1, task 2): the tab has no till settings loaded, so the
  * //// restaurant whose orders it shows comes from its address. A kitchen bookmark made before a site could hold
  * //// several restaurants names a station alone, and the restaurant is then the station's.
  * @vitest-environment jsdom

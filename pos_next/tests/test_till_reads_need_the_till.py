@@ -144,7 +144,7 @@ class TestTillReadsNeedTheTill(FrappeTestCase):
 
 		frappe.set_user(TILL)
 		# The till's settings, as the till's manager reads them; what the restaurant lets each user manage
-		# (`restaurant_can`) is the user's own, not the till's (NeoRestau lot 1, task 3)
+		# (`restaurant_can`) is the user's own, not the till's (NeoResto lot 1, task 3)
 		settings = pos_profile.get_pos_settings(self.profile)
 		self.assertEqual(set(settings.pop("restaurant_can")), set(expected["settings"].pop("restaurant_can")))
 		self.assertEqual(settings, expected["settings"])

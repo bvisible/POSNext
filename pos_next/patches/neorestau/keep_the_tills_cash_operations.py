@@ -1,4 +1,4 @@
-# //// Neoffice — added file (no upstream equivalent). Since NeoRestau lot 1 (task 15) a till's list of cash
+# //// Neoffice — added file (no upstream equivalent). Since NeoResto lot 1 (task 15) a till's list of cash
 # //// operations (POS Profile.posa_cash_entry_templates) is a control: an empty list means no movement. Before,
 # //// an empty list offered every Journal Entry Template of the till's company, so a till that never chose its
 # //// operations would lose them the day the lot reaches it. This fills, once, each empty list with what that till

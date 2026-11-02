@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The cart, the edit dialog and the invoice agree on the unit of a
- * //// line, whatever path added it (NeoRestau lot 1, task 22): a dish added from a restaurant card used to be a line
+ * //// line, whatever path added it (NeoResto lot 1, task 22): a dish added from a restaurant card used to be a line
  * //// without a unit, so it never merged with the same dish added from the grid, a table's order read back from the
  * //// server was given « Nos » when its row named no unit, and the invoice carried whatever the line had.
  * @vitest-environment jsdom

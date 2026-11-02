@@ -1,8 +1,8 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). Whether a till is a restaurant till is ticked on the desk's
- * //// POS Settings form and nowhere else (NeoRestau lot 1, task 4; product owner, 30.10.2026): the till's own settings
+ * //// POS Settings form and nowhere else (NeoResto lot 1, task 4; product owner, 30.10.2026): the till's own settings
  * //// screen offers neither the tick nor the choice of the restaurant, and the desk form shows them only where the
- * //// site runs NeoRestau.
+ * //// site runs NeoResto.
  * @vitest-environment node
  */
 import { readFileSync } from "node:fs"
@@ -17,7 +17,7 @@ const DESK_FORM =
 	"../../../../../pos_next/pos_next/doctype/pos_settings/pos_settings.json"
 
 describe("the till's settings screen", () => {
-	// The dialog the till opens, and the screen it shows since NeoRestau lot 1, task 13
+	// The dialog the till opens, and the screen it shows since NeoResto lot 1, task 13
 	const screen = ["../POSSettings.vue", "../TillSettingsScreen.vue", "../TillSettingField.vue"]
 		.map(source)
 		.join("\n")
@@ -28,7 +28,7 @@ describe("the till's settings screen", () => {
 
 	it("offers no choice of the restaurant the till works for", () => {
 		expect(screen).not.toMatch(/\bsettings(\.value)?\.restaurant\b/)
-		expect(screen).not.toMatch(/\bsettings(\.value)?\.neorestau_active\b/)
+		expect(screen).not.toMatch(/\bsettings(\.value)?\.neoresto_active\b/)
 	})
 })
 
@@ -38,13 +38,13 @@ describe("the desk's POS Settings form", () => {
 		doctype.fields.find((df) => df.fieldname === fieldname)
 
 	// Frappe evaluates an "eval:" depends_on as `let out = <code>; return out` with the page's globals around it
-	function shownWhere(neorestau) {
+	function shownWhere(neoresto) {
 		const expression = field("section_break_restaurant").depends_on
 		expect(expression.startsWith("eval:")).toBe(true)
 		const code = `let out = ${expression.slice(5)}; return out`
 		const previous = globalThis.frappe
 		globalThis.frappe = {
-			boot: neorestau === undefined ? {} : { neorestau_active: neorestau },
+			boot: neoresto === undefined ? {} : { neoresto_active: neoresto },
 		}
 		try {
 			return Boolean(new Function("doc", "parent", code)({}, {}))
@@ -53,7 +53,7 @@ describe("the desk's POS Settings form", () => {
 		}
 	}
 
-	it("shows its Restaurant section only where the desk was told NeoRestau runs", () => {
+	it("shows its Restaurant section only where the desk was told NeoResto runs", () => {
 		expect(shownWhere(1)).toBe(true)
 		expect(shownWhere(0)).toBe(false)
 		expect(shownWhere(undefined)).toBe(false)

@@ -1,5 +1,5 @@
 <template>
-	<!-- //// Neoffice — added file (no upstream equivalent). The row of card buttons of the order screen (NeoRestau lot 1, -->
+	<!-- //// Neoffice — added file (no upstream equivalent). The row of card buttons of the order screen (NeoResto lot 1, -->
 	<!-- //// task 25), taken out of POSSale.vue so that it can be tested: one button per card; a card opened by hand carries -->
 	<!-- //// a small mark and a « × » that closes it; the « ⋯ » that fetches a card the opening hours keep off the till ends -->
 	<!-- //// the row. -->
@@ -77,7 +77,7 @@
 								/>
 							</svg>
 						</span>
-						<!-- The permanent card is shown by its label, not by the English name it is stored under (NeoRestau lot 1, task 9) -->
+						<!-- The permanent card is shown by its label, not by the English name it is stored under (NeoResto lot 1, task 9) -->
 						{{ cardLabel(card) }}
 					</button>
 					<!-- Closes a card opened by hand: the hours decide again for it -->

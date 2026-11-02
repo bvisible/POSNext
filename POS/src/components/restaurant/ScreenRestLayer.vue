@@ -1,5 +1,5 @@
 <template>
-	<!-- //// Neoffice — added file (no upstream equivalent). The layer a screen at REST is drawn as (NeoRestau lot 1, task 47). A web page cannot switch the physical -->
+	<!-- //// Neoffice — added file (no upstream equivalent). The layer a screen at REST is drawn as (NeoResto lot 1, task 47). A web page cannot switch the physical -->
 	<!-- //// screen off nor dim it, so after N minutes without a touch the kitchen and runner screens are covered by this near-black layer: a small clock, how many -->
 	<!-- //// orders are waiting, a moon, in the dim warm grey the design system gives to tertiary text on a dark ground (4.9:1 and more on black, readable in the dark and -->
 	<!-- //// no brighter than it has to be). The wake lock and the live updates run on under it. It is the same dark in light mode and in dark mode (no `dark:` here), it -->

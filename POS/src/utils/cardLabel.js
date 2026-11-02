@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). How a card of the restaurant is named on a screen (NeoRestau lot 1,
+//// Neoffice — added file (no upstream equivalent). How a card of the restaurant is named on a screen (NeoResto lot 1,
 //// task 9, fix round 1). The permanent card, the one every restaurant keeps for the items that are always available, is
 //// made by the server under a name the system chose (get_or_create_permanent_card: "Permanent items", else "Permanent
 //// items - <restaurant>" when another restaurant took the first, else a number), in the language of whoever made it. An

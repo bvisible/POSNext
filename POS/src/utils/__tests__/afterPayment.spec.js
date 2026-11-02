@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). What a restaurant's phone does once a sale is paid (NeoRestau lot 1, kitchen test of 01.11):
+ * //// Neoffice — added file (no upstream equivalent). What a restaurant's phone does once a sale is paid (NeoResto lot 1, kitchen test of 01.11):
  * //// it goes back to the tables instead of staying on the empty cart tab, and the receipt window closes by itself a moment after Print.
  */
 import { describe, expect, it } from "vitest"

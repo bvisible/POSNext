@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The kitchen ticket separates the courses and tints the categories (NeoRestau lot 1, Daniel's
+ * //// Neoffice — added file (no upstream equivalent). The kitchen ticket separates the courses and tints the categories (NeoResto lot 1, Daniel's
  * //// request of 01.11: « comment on fait pour séparer entrée, plat, dessert » on the tickets, a thin dashed rule with a small label, and « une couleur très
  * //// pastel mais parlante, configurable dans les catégories, pas obligatoire »). Inside each send the dishes still to cook are drawn in sections in the
  * //// order of the meal (Drink, Starter, Main, Dessert); the finished dishes stay at the end of the send under no label; a ticket none of whose dishes

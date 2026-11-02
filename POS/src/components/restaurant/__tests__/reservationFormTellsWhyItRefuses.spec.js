@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The reservation form tells the reason when the server refuses a booking (NeoRestau lot 1, 01.11: a booking outside the opening hours only read
+ * //// Neoffice — added file (no upstream equivalent). The reservation form tells the reason when the server refuses a booking (NeoResto lot 1, 01.11: a booking outside the opening hours only read
  * //// « Failed to create reservation », and the person at the till could not tell why). The server's own message is shown, the generic words only when it said nothing.
  * @vitest-environment jsdom
  */

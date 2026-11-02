@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). Laying out the floor plan (rooms, tables, stations, walls) is
- * //// for whoever the server lets manage the floor (NeoRestau lot 1, task 3): the till is told so in its settings
+ * //// for whoever the server lets manage the floor (NeoResto lot 1, task 3): the till is told so in its settings
  * //// (`restaurant_can.manage_floor`). A cashier sees the plan and serves its tables; the way into the editor is not
  * //// his, and the editor does not open for him whatever calls it. The server refuses his writes anyway. The way in
  * //// is the « Edit the floor plan » item of the « ⋯ » menu at the end of the plan's line (Ruling 48; it was an Edit

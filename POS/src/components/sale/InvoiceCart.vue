@@ -708,7 +708,7 @@
 						</svg>
 						<span>{{ __("Clear") }}</span>
 					</button>
-					<!-- //// Neoffice — « Replier les services livrés » (NeoRestau lot 1, Daniel, 01.11): the device's choice to draw a table's order by course and fold the courses that are all delivered. A small switch -->
+					<!-- //// Neoffice — « Replier les services livrés » (NeoResto lot 1, Daniel, 01.11): the device's choice to draw a table's order by course and fold the courses that are all delivered. A small switch -->
 					<!-- //// next to « Trier », only where it does something (a table's order of a restaurant that uses courses). The button is 44px for a finger and takes no height from the row (-my-1.5). ON is -->
 					<!-- //// the ink (paper in dark), OFF a neutral track: no colour of the till's dark remap is used, so the two states stay apart there. -->
 					<button
@@ -1248,9 +1248,9 @@
 			<div v-else ref="cartListRef" class="flex flex-col gap-1">
 				<!-- //// Neoffice — the key names the ROW too: the same dish and unit can sit on two lines (the one the kitchen has, the -->
 				<!-- //// one that waits), and a key they shared let a field's focus and the quantity typed into it land on the other -->
-				<!-- //// row (NeoRestau lot 1, task 22, fix round 3). -->
+				<!-- //// row (NeoResto lot 1, task 22, fix round 3). -->
 				<!-- //// Neoffice — an offered row (task 24) shares its paid line's code and unit: it is a row of its own, so its row key tells it from the paid line. -->
-				<!-- //// Neoffice — the lines come under a header per course (NeoRestau lot 1, Daniel, 01.11): this outer loop walks the groups (cartEntries), the loop inside it is the cart's own, over the lines a group -->
+				<!-- //// Neoffice — the lines come under a header per course (NeoResto lot 1, Daniel, 01.11): this outer loop walks the groups (cartEntries), the loop inside it is the cart's own, over the lines a group -->
 				<!-- //// shows (a course that is all delivered shows none while it is folded). Outside a table's order of a restaurant that uses courses, or with the device's switch off, there is ONE group with no header: the flat list. -->
 				<template v-for="entry in cartEntries" :key="entry.key">
 				<CartCourseHeader
@@ -1317,7 +1317,7 @@
 						</div>
 					</div>
 
-					<!-- //// Neoffice — « Offert » (NeoRestau lot 1, task 24): an offered row, under its paid line (nestOfferedRows), -->
+					<!-- //// Neoffice — « Offert » (NeoResto lot 1, task 24): an offered row, under its paid line (nestOfferedRows), -->
 					<!-- //// or on its own when the whole line is offered: « Offert », 0.00 charged, its value struck through. -->
 					<!-- //// « Annuler l'offert » hands the cart row behind the copy shown back to the cart (cartRowOf). -->
 					<div
@@ -1549,7 +1549,7 @@
 										<FeatherIcon name="edit-3" class="w-2.5 h-2.5 me-0.5" />
 										{{ __("Note") }}
 									</span>
-									<!-- //// Neoffice — the course of the line (service families, NeoRestau lot 1): a tap on the chip gives the line another -->
+									<!-- //// Neoffice — the course of the line (service families, NeoResto lot 1): a tap on the chip gives the line another -->
 									<!-- //// course ("une entrée prise en plat"), until the kitchen has the line. -->
 									<ServiceFamilyChip
 										v-if="showFamilyChip(item)"
@@ -1576,7 +1576,7 @@
 											name="clock"
 											class="w-2.5 h-2.5 me-0.5"
 										/>
-										<!-- //// Neoffice — the kitchen status is a label under its own context (kitchenStatusLabel), not the bare word every app shares (NeoRestau lot 1, task 9) -->
+										<!-- //// Neoffice — the kitchen status is a label under its own context (kitchenStatusLabel), not the bare word every app shares (NeoResto lot 1, task 9) -->
 										{{ kitchenStatusLabel(item.kds_status) }}
 									</span>
 								</div>
@@ -1634,7 +1634,7 @@
 										>
 											<FeatherIcon name="minus" class="w-4 h-4" />
 										</button>
-										<!-- //// Neoffice — @blur hands over its event: a sent line shows its quantity again when the field is left unreadable (NeoRestau lot 1, task 22, fix round 2); Escape drops what was typed (fix round 3) -->
+										<!-- //// Neoffice — @blur hands over its event: a sent line shows its quantity again when the field is left unreadable (NeoResto lot 1, task 22, fix round 2); Escape drops what was typed (fix round 3) -->
 										<input
 											:value="formatQuantity(getDisplayQuantity(item))"
 											@input="updateQuantity(item, $event.target.value)"
@@ -1965,7 +1965,7 @@
 			<!-- //// the table IS the hold, and saving a local draft raised "Draft not found". -->
 			<!-- //// (8aa35c29, 7269b953, 7fdaa8cf, c7f6932c, 71050faf, d3ca6959, 884f8ebd, -->
 			<!-- //// a268f4e9, 48b2e6c0, 2026-03-20 to 04-01.) -->
-			<!-- //// Neoffice — « Commander la suite » (service families, NeoRestau lot 1): when courses are held back at a table, the waiter -->
+			<!-- //// Neoffice — « Commander la suite » (service families, NeoResto lot 1): when courses are held back at a table, the waiter -->
 			<!-- //// orders the next one (named on the button), or everything held for a table in a hurry. Only the waiter's gesture releases a -->
 			<!-- //// held course; the kitchen touches nothing. -->
 			<!-- //// Neoffice — the two buttons that order are easy to see (Daniel, 01.11: « il faut mettre les 2 boutons de commande plus visibles »): « Commander la suite » is a SOLID ink button, « Tout commander » keeps -->
@@ -2078,7 +2078,7 @@
 					]"
 					:aria-label="__('Print provisional ticket')"
 				>
-					<!-- //// Neoffice — the ticket's state on the button (ruling 97, NeoRestau task 28a): a spinner while -->
+					<!-- //// Neoffice — the ticket's state on the button (ruling 97, NeoResto task 28a): a spinner while -->
 					<!-- //// it is sent and printed, a tick once printed, a warning when the printer is offline or it did -->
 					<!-- //// not print, and what it means in words above the button (utils/provisionalTicket.js). -->
 					<span class="relative flex items-center justify-center">
@@ -2259,16 +2259,16 @@ import { useRestaurantStore } from "@/stores/restaurant";
 import { isLightColor } from "@/utils/itemColors";
 //// Neoffice — the row actions hand over the cart row behind a shown copy (utils/cartRow.js).
 import { cartRowOf, rowKeyOf } from "@/utils/cartRow";
-//// Neoffice — which lines have left for the kitchen: their typed quantity waits for the end of the typing (NeoRestau lot 1, task 22, fix round 2)
+//// Neoffice — which lines have left for the kitchen: their typed quantity waits for the end of the typing (NeoResto lot 1, task 22, fix round 2)
 import { hasLeftForTheKitchen } from "@/utils/lineKitchenState";
-//// Neoffice — the badge of a dish sent to the kitchen shows its status through kitchenStatusLabel (NeoRestau lot 1, task 9)
+//// Neoffice — the badge of a dish sent to the kitchen shows its status through kitchenStatusLabel (NeoResto lot 1, task 9)
 import { kitchenStatusLabel } from "@/utils/kitchenStatus";
 import { DEFAULT_CURRENCY, formatCurrency as formatCurrencyUtil } from "@/utils/currency";
 import { useFormatters } from "@/composables/useFormatters";
 import { useCartSort } from "@/composables/useCartSort";
 import { isOffline } from "@/utils/offline";
 import { nestFreeRows } from "@/utils/gwpSameItemFreeRows";
-//// Neoffice — « Offert » (NeoRestau lot 1, task 24): offered rows nested under their paid line, the cart's offer actions.
+//// Neoffice — « Offert » (NeoResto lot 1, task 24): offered rows nested under their paid line, the cart's offer actions.
 import { OFFER_CONTEXT, canOfferRow, isOfferedRow, listPrice, nestOfferedRows } from "@/utils/offeredRows";
 import { useOfferedItemsStore } from "@/stores/offeredItems";
 import { useItemSearchStore } from "@/stores/itemSearch";
@@ -2280,7 +2280,7 @@ const log = logger.create("InvoiceCart");
 import { createResource } from "frappe-ui";
 import { computed, onBeforeUnmount, onMounted, ref, watch, nextTick } from "vue";
 import EditItemDialog from "./EditItemDialog.vue";
-//// Neoffice — the course chip of a line and the words of « Commander la suite » (service families, NeoRestau lot 1).
+//// Neoffice — the course chip of a line and the words of « Commander la suite » (service families, NeoResto lot 1).
 import ServiceFamilyChip from "./ServiceFamilyChip.vue";
 import {
 	canChangeFamily,
@@ -2293,7 +2293,7 @@ import {
 	getDisplayQuantity as getDisplayQuantityForLine,
 	resolvePaidQuantityFromDisplay as resolvePaidQtyForLine,
 } from "@/utils/gwpSameItemFreeRows";
-//// Neoffice — the lines of a table's order come under a header per course, the courses that are all delivered folded (NeoRestau lot 1, Daniel, 01.11); the device chooses whether they do.
+//// Neoffice — the lines of a table's order come under a header per course, the courses that are all delivered folded (NeoResto lot 1, Daniel, 01.11); the device chooses whether they do.
 import CartCourseHeader from "./CartCourseHeader.vue";
 import LucideChevronsDownUp from "~icons/lucide/chevrons-down-up";
 import { useFoldDelivered } from "@/composables/useFoldDelivered";
@@ -2317,7 +2317,7 @@ const { formatQuantity, formatDate } = useFormatters(); // Quantity and date for
 
 function handleProceedToPayment() {
 	//// Neoffice — the payment is made on the cart as the cashier sees it: the quantity typed in a field that is still focused is
-	//// committed first (NeoRestau lot 1, task 22, fix round 3).
+	//// committed first (NeoResto lot 1, task 22, fix round 3).
 	commitTypedQuantity();
 	//// Neoffice — [R] added: helpers the restaurant cart needs and upstream has no use
 	//// for. formatModifiers renders the JSON stored on the invoice line by the modifier
@@ -2348,7 +2348,7 @@ function getStationColor(stationName) {
 
 function getStationDisplayName(stationName) {
 	//// Neoffice — a station is shown by its label, never by its name: a new one is named by a hash, and the
-	//// item map alone missed a station reached through its item group (NeoRestau lot 1, task 2).
+	//// item map alone missed a station reached through its item group (NeoResto lot 1, task 2).
 	return restaurantStore.stationLabel(stationName);
 }
 
@@ -2440,7 +2440,7 @@ const emit = defineEmits([
 	"send-to-kitchen", // () - Send order to kitchen (restaurant mode)
 	"open-kitchen-dialog", // () - Open kitchen dialog (restaurant mode)
 	"send-item-to-kitchen", // (item) - Send individual item to kitchen (restaurant mode)
-	//// Neoffice — the waiter orders the next course held back, or everything held (service families, NeoRestau lot 1).
+	//// Neoffice — the waiter orders the next course held back, or everything held (service families, NeoResto lot 1).
 	"order-next-course", // () - Order the next held course (restaurant mode, table service)
 	"order-everything", // () - Order every held line (restaurant mode, table service)
 	"show-coupons", // () - Show available coupons
@@ -2559,7 +2559,7 @@ const changingCustomer = ref(false); // Search shown over the selected customer
 const showEditDialog = ref(false); // Controls edit dialog visibility
 const selectedItem = ref(null); // Item being edited
 //// Neoffice — the cart row behind the copy being edited: the update must reach THAT line, not the first line of the same item and
-//// unit (the dish can sit twice in a table's cart, one line sent and one that waits). NeoRestau lot 1, task 22, fix round 1.
+//// unit (the dish can sit twice in a table's cart, one line sent and one that waits). NeoResto lot 1, task 22, fix round 1.
 let editedRow = null;
 
 // UOM dropdown state - tracks which item's UOM dropdown is open (by item_code)
@@ -2852,7 +2852,7 @@ const displaySubtotal = computed(() => {
  */
 const displayGrandTotal = computed(() => {
 	//// Neoffice — the grand total shown is the invoice's: props.grandTotal, the store's own computation by ERPNext's
-	//// rules with the Swiss 0.05 rounding (4fdb5df4; NeoRestau lot 1, Ruling 70). Upstream added up the lines shown above
+	//// rules with the Swiss 0.05 rounding (4fdb5df4; NeoResto lot 1, Ruling 70). Upstream added up the lines shown above
 	//// (subtotal + tax − discount + rounding), which is not the invoice's total when a header discount meets prices
 	//// without tax: ERPNext takes the discount off the total and computes the tax after it (100.00 + 8.1 % with 10.00
 	//// off is 98.10, the lines above say 100.00 + 7.35 − 10.00). On a till whose prices include the tax they agree.
@@ -2908,7 +2908,7 @@ const hasSendableItems = computed(() => {
 	);
 });
 
-//// Neoffice — the service families (NeoRestau lot 1). The chip and « Commander la suite » belong to a table's order of a
+//// Neoffice — the service families (NeoResto lot 1). The chip and « Commander la suite » belong to a table's order of a
 //// restaurant that has set a family; a takeaway, a counter order and a site with no family show none of it.
 const isTableOrder = computed(
 	() => restaurantStore.isEnabled && Boolean(cartStore.restaurantTable) && !cartStore.isTakeaway
@@ -2924,7 +2924,7 @@ function changeFamily(item, family) {
 }
 
 // The next course among the held lines (a held drink is no course)
-//// Neoffice — and, where the kitchen prepares ahead, the next course SENT AHEAD and not called yet (the service rhythm, NeoRestau lot 1, Daniel, 01.11)
+//// Neoffice — and, where the kitchen prepares ahead, the next course SENT AHEAD and not called yet (the service rhythm, NeoResto lot 1, Daniel, 01.11)
 const nextCourse = computed(() => nextRelease(cartStore.invoiceItems, restaurantStore.serviceRhythm));
 const showNextCourse = computed(() => isTableOrder.value && nextCourse.value.indexes.length > 0);
 
@@ -2938,7 +2938,7 @@ function orderEverything() {
 	emit("order-everything");
 }
 
-//// Neoffice — the cart of a table's order by course, like the kitchen's ticket (NeoRestau lot 1, Daniel, 01.11: « il faut barrer et réduire pour laisser que ce qu'il reste visible »): a header per course in
+//// Neoffice — the cart of a table's order by course, like the kitchen's ticket (NeoResto lot 1, Daniel, 01.11: « il faut barrer et réduire pour laisser que ce qu'il reste visible »): a header per course in
 //// the order of the meal, the courses that are all delivered folded into one row, the lines held back in a last group (utils/cartCourses holds the rule). The device chooses whether the cart does it
 //// (« Replier les services livrés », on by default); off, or outside a table's order of a restaurant that uses courses, the list is the flat one it always was. Only the drawing changes: the lines,
 //// the totals and the tax are the cart's, and a delivered line is still billed.
@@ -3387,7 +3387,7 @@ function getSmartStep(quantity) {
 //// Neoffice — the quantity of a line, or its removal, is asked for BY ROW: with the item and its unit alone the parent found the
 //// first line carrying them, and a table's cart now holds the same dish twice (the line the kitchen has, the line that waits): the
 //// stepper of the second one lowered or removed the first. The row also tells the store which line must not take a new unit
-//// (NeoRestau lot 1, task 22, fix round 1).
+//// (NeoResto lot 1, task 22, fix round 1).
 function setQuantityOf(item, quantity) {
 	emit("update-quantity", item.item_code, quantity, item.uom, cartRowOf(item));
 }
@@ -3407,7 +3407,7 @@ function incrementQuantity(item) {
 
 	const step = getSmartStep(getDisplayQuantity(item));
 	const newPaidQty = Math.round((getDisplayQuantity(item) + step) * 10000) / 10000;
-	//// Neoffice — by row, see setQuantityOf / removeRowOf (NeoRestau lot 1, task 22, fix round 1).
+	//// Neoffice — by row, see setQuantityOf / removeRowOf (NeoResto lot 1, task 22, fix round 1).
 	setQuantityOf(item, newPaidQty);
 }
 
@@ -3426,10 +3426,10 @@ function decrementQuantity(item) {
 	if (newPaidQty <= 0) {
 		// If quantity would be 0 or negative, remove the item
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		//// Neoffice — by row, see setQuantityOf / removeRowOf (NeoRestau lot 1, task 22, fix round 1).
+		//// Neoffice — by row, see setQuantityOf / removeRowOf (NeoResto lot 1, task 22, fix round 1).
 		removeRowOf(item);
 	} else {
-		//// Neoffice — by row, see setQuantityOf / removeRowOf (NeoRestau lot 1, task 22, fix round 1).
+		//// Neoffice — by row, see setQuantityOf / removeRowOf (NeoResto lot 1, task 22, fix round 1).
 		setQuantityOf(item, newPaidQty);
 	}
 }
@@ -3449,7 +3449,7 @@ function updateQuantity(item, value) {
 	//// Neoffice — the field fires on every key. On a line that has left for the kitchen the waiter's « 12 » went through « 1 »,
 	//// which lowered the line the kitchen has, and then « 12 », which put 11 units on a new line: the bill said 12, the
 	//// kitchen had made 4 and would get 11 more. Such a line takes the quantity when the waiter leaves the field or presses
-	//// Enter (handleQuantityBlur), once, as the number he typed (NeoRestau lot 1, task 22, fix round 2).
+	//// Enter (handleQuantityBlur), once, as the number he typed (NeoResto lot 1, task 22, fix round 2).
 	const row = cartRowOf(item);
 	if (hasLeftForTheKitchen(row)) {
 		if (Number.isNaN(Number.parseFloat(value))) typedOnSentLine.delete(row);
@@ -3466,7 +3466,7 @@ const typedOnSentLine = new Map();
 
 //// Neoffice — commits every quantity typed and not yet applied, each once. A button tap does not always blur the field it was typed in
 //// (a phone), and a keyboard shortcut (F9, Ctrl/Cmd+Enter) runs from it: the payment then opened on the cart without the quantity,
-//// and the kitchen dialog offered a cart that lacked the units it was about to bill (NeoRestau lot 1, task 22, fix round 3).
+//// and the kitchen dialog offered a cart that lacked the units it was about to bill (NeoResto lot 1, task 22, fix round 3).
 function commitTypedQuantity() {
 	for (const [row, typed] of [...typedOnSentLine]) {
 		typedOnSentLine.delete(row);
@@ -3503,11 +3503,11 @@ function applyTypedQuantity(item, value) {
 	const paidQty = resolvePaidQuantityFromDisplay(item, displayQty);
 
 	// If quantity is zero or negative, remove the item from the cart
-	//// Neoffice — by row, see setQuantityOf / removeRowOf (NeoRestau lot 1, task 22, fix round 1).
+	//// Neoffice — by row, see setQuantityOf / removeRowOf (NeoResto lot 1, task 22, fix round 1).
 	if (paidQty <= 0) return removeRowOf(item);
 
 	// For positive numbers, update paid quantity (free row stays separate in data)
-	//// Neoffice — by row, see setQuantityOf / removeRowOf (NeoRestau lot 1, task 22, fix round 1).
+	//// Neoffice — by row, see setQuantityOf / removeRowOf (NeoResto lot 1, task 22, fix round 1).
 	setQuantityOf(item, paidQty);
 }
 
@@ -3519,7 +3519,7 @@ function applyTypedQuantity(item, value) {
  *
  * @param {Object} item - Cart item that lost focus
  */
-//// Neoffice — the event is handed over so a sent line can show its quantity again (NeoRestau lot 1, task 22, fix round 2).
+//// Neoffice — the event is handed over so a sent line can show its quantity again (NeoResto lot 1, task 22, fix round 2).
 function handleQuantityBlur(item, event = null) {
 	if (isLockedFreeRow(item)) return;
 	//// Neoffice — a quantity typed on a sent line is applied now, once; a field left empty or unreadable shows the quantity again
@@ -3538,13 +3538,13 @@ function handleQuantityBlur(item, event = null) {
 	if (!item.quantity || item.quantity <= 0) {
 		// If quantity is 0 or invalid, remove the item
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		//// Neoffice — by row, see setQuantityOf / removeRowOf (NeoRestau lot 1, task 22, fix round 1).
+		//// Neoffice — by row, see setQuantityOf / removeRowOf (NeoResto lot 1, task 22, fix round 1).
 		removeRowOf(item);
 	} else {
 		// Round to 4 decimal places for consistency
 		const roundedQty = Math.round(getDisplayQuantity(item) * 10000) / 10000;
 		if (roundedQty !== getDisplayQuantity(item)) {
-			//// Neoffice — by row, see setQuantityOf / removeRowOf (NeoRestau lot 1, task 22, fix round 1).
+			//// Neoffice — by row, see setQuantityOf / removeRowOf (NeoResto lot 1, task 22, fix round 1).
 			setQuantityOf(item, roundedQty);
 		}
 	}
@@ -3582,7 +3582,7 @@ async function selectUom(item, newUom) {
 
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	const currentUom = item.uom || item.stock_uom;
-	//// Neoffice — by row (NeoRestau lot 1, task 22, fix round 1): the dish can sit twice in a table's cart, one line sent and one that
+	//// Neoffice — by row (NeoResto lot 1, task 22, fix round 1): the dish can sit twice in a table's cart, one line sent and one that
 	//// waits, and the unit asked for is the one of the line whose dropdown was opened; the parent's second call gets the same row.
 	await cartStore.changeItemUOM(item.item_code, newUom, currentUom, cartRowOf(item));
 	openUomDropdown.value = null;
@@ -3607,12 +3607,12 @@ function openEditDialog(item) {
 	//// Neoffice — the cart row behind the line shown, for « Offert » (task 24): the dialog edits a copy.
 	selectedCartRow.value = cartRowOf(item);
 	selectedItem.value = { ...item };
-	//// Neoffice — the row the dialog edits, kept to hand it back with the update (NeoRestau lot 1, task 22, fix round 1).
+	//// Neoffice — the row the dialog edits, kept to hand it back with the update (NeoResto lot 1, task 22, fix round 1).
 	editedRow = cartRowOf(item);
 	showEditDialog.value = true;
 }
 
-//// Neoffice — « Offert » (NeoRestau lot 1, task 24): the dialog's line may be offered where the till lets its cashiers
+//// Neoffice — « Offert » (NeoResto lot 1, task 24): the dialog's line may be offered where the till lets its cashiers
 //// change a discount, on an invoice, for a sold line; the offer confirmed there splits the cart row (offeredItems).
 const offeredItems = useOfferedItemsStore();
 const selectedCartRow = ref(null);

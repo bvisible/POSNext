@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). A ticket that is long but NOT wide keeps its scroll (NeoRestau lot 1, task 38a-3, ruling 107 layer 3): the body of the card scrolls inside it, with the
+ * //// Neoffice — added file (no upstream equivalent). A ticket that is long but NOT wide keeps its scroll (NeoResto lot 1, task 38a-3, ruling 107 layer 3): the body of the card scrolls inside it, with the
  * //// fade and the « +N lines » strip at its foot, and the strip is the way into the full-screen ticket. The cook can also be at the END of the scroll, with nothing left to count: the card still scrolls,
  * //// so it still has a small « View all » on its strip, and the full-screen ticket is still one tap away. A card whose dishes all fit has no strip at all. jsdom has no layout engine: the boxes of the
  * //// elements are given by hand.

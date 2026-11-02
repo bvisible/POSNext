@@ -1,5 +1,5 @@
 <template>
-	<!-- //// Neoffice — added file (no upstream equivalent). « Open the till on a device » (it was « Open a smartphone »: a tablet opens the till by its code too, Daniel 01.11; NeoRestau lot 1, kitchen test 01.11): a waiter's phone is -->
+	<!-- //// Neoffice — added file (no upstream equivalent). « Open the till on a device » (it was « Open a smartphone »: a tablet opens the till by its code too, Daniel 01.11; NeoResto lot 1, kitchen test 01.11): a waiter's phone is -->
 	<!-- //// not paired like a kitchen's tablet, it signs in with its owner's own account. What the manager needs is somewhere to GIVE the -->
 	<!-- //// till's address, so that nobody types it for the first time: a QR code to scan with the phone's camera, and the same link to copy -->
 	<!-- //// and send. Nothing secret in it, so it makes no token and has no time limit. -->

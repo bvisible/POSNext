@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). A finger on a table of the floor plan (NeoRestau lot 1, task 26). The
+//// Neoffice — added file (no upstream equivalent). A finger on a table of the floor plan (NeoResto lot 1, task 26). The
 //// plan opened a table as soon as the pointer went down; a long press on a table now shows the table's QR code at once
 //// (product owner, 31.10.2026: « on phones the table's QR code must be easy to reach »), so a tap opens
 //// the table when the finger lifts, and the two are told apart by how long the finger stays. A press that moves is the

@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""The copy of a kitchen ticket, asked for from the kitchen's or the runner's screen (NeoRestau lot 1, task 44).
+"""The copy of a kitchen ticket, asked for from the kitchen's or the runner's screen (NeoResto lot 1, task 44).
 
 POS Next names the moment (the hook `pos_next_kitchen_reprint`) and checks who asks; an app that prints (cloudprnt) listens.
 The suite stands in for that app with listeners of its own, so that it proves POS Next alone: who may ask for a copy (a desk

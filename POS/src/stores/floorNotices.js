@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). What the till does when a guest orders or pays from the QR code of a table (NeoRestau lot 1, Daniel, 01.11, after ordering a drink from the QR code of a table as a
+//// Neoffice — added file (no upstream equivalent). What the till does when a guest orders or pays from the QR code of a table (NeoResto lot 1, Daniel, 01.11, after ordering a drink from the QR code of a table as a
 //// guest: « regarde comment la caisse sommelier reçoit l'info (popup et autre) »). The realtime events reach the restaurant store (stores/restaurant), which hands them to `tell`; the rules of what a notice says and
 //// how notices stack are utils/floorNotices; the stack is drawn by components/restaurant/FloorNotices. What is done follows the till's settings (POS Settings, "Floor alerts"; utils/floorAlerts):
 ////

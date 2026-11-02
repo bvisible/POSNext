@@ -5,7 +5,7 @@
 	<!-- //// Upstream POSNext is a retail POS and books nothing (ebc3ecc5, 2026-03-29 -->
 	<!-- //// "restaurant reservation system with POS dialog, online booking, and email -->
 	<!-- //// notifications"). It tells a refused booking as refused, and carries a field only a -->
-	<!-- //// script fills (NeoRestau lot 1, task 18). -->
+	<!-- //// script fills (NeoResto lot 1, task 18). -->
 	<div class="flex flex-col min-h-screen bg-gray-50">
 		<!-- Header -->
 		<div class="bg-white border-b px-4 py-4 text-center">
@@ -193,7 +193,7 @@
 				</div>
 
 				<!-- A field nobody sees, the keyboard skips and no browser fills: only a script fills it, and the server -->
-				<!-- then answers like any booking and keeps nothing (NeoRestau lot 1, task 18) -->
+				<!-- then answers like any booking and keeps nothing (NeoResto lot 1, task 18) -->
 				<div class="decoy" aria-hidden="true">
 					<input v-model="decoy" type="text" name="subject" tabindex="-1" autocomplete="off" />
 				</div>

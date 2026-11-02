@@ -1,6 +1,6 @@
 <template>
 	<!-- //// Neoffice — the panel is no longer the whole screen (Daniel, 01.11: « un pop-up un tout petit peu plus petit […] la hauteur, il faut l'avoir, mais la largeur, on peut faire quelque chose de plus sympa »): it is as high as the ticket needs, up to the screen, and as wide as one column of dishes (the card sets its width), centred over the board; a very long ticket scrolls up and down inside it. -->
-	<!-- //// Neoffice — added file (no upstream equivalent). A ticket opened FULL SCREEN over the board (NeoRestau lot 1, task 38a-3, ruling 107 layer 3: « on force par-dessus »). -->
+	<!-- //// Neoffice — added file (no upstream equivalent). A ticket opened FULL SCREEN over the board (NeoResto lot 1, task 38a-3, ruling 107 layer 3: « on force par-dessus »). -->
 	<!-- //// The long ticket of a busy service does not fit its card, even wide, so the cook opens it: the same ticket, the same buttons, in a panel that takes the screen, over the board that keeps -->
 	<!-- //// updating behind it. This is only the SHELL (the scrim, the dialog, the way out); what is inside is the card itself, drawn in its full-screen form by the card that opened it. It is -->
 	<!-- //// closed by the × of the card, by a tap on the scrim around it, and by Escape. The focus is kept inside it while it is open and goes back where it was when it closes. It is -->

@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). How a ticket number is written on a restaurant screen (NeoRestau lot 1, task 38b,
+//// Neoffice — added file (no upstream equivalent). How a ticket number is written on a restaurant screen (NeoResto lot 1, task 38b,
 //// rulings 122 and 124). The server counts the tickets of a restaurant (`ticket_no`, a whole number) and tells each screen the digits the
 //// restaurant writes them with (`ticket_digits`): the screen writes 7 as « 0007 ». The invoice's own name (FA-…) is NEVER what a service
 //// screen reads aloud: a draft takes it in an order nobody chose, and it is only a number once the sale is validated.

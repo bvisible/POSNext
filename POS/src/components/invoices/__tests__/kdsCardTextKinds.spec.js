@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). Three kinds of text on a kitchen dish (NeoRestau lot 1, task 38a-1, ruling 123):
+ * //// Neoffice — added file (no upstream equivalent). Three kinds of text on a kitchen dish (NeoResto lot 1, task 38a-1, ruling 123):
  * //// OPTIONS in ink with an arrow, a REMARK or instruction in the accent with the "i", an ALLERGY in the one red, bold, in a tinted strip
  * //// of its own with a warning mark. All three the size of the dish's own text, never lighter than the ink at 80 %. The information is as
  * //// important as the dish; it was pale grey, small, and any annotation was red. What makes a remark an allergy is a list of words.

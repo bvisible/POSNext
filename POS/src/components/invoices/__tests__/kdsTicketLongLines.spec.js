@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). A kitchen ticket can hold twenty-five dishes with options and
- * //// remarks (NeoRestau lot 1, task 23). It must never grow past its band: its dishes scroll inside it, by touch, while
+ * //// remarks (NeoResto lot 1, task 23). It must never grow past its band: its dishes scroll inside it, by touch, while
  * //// its head (table, number, timer) and its main button stay where they are; a fade and a count ("+22 lines") say that
  * //// more dishes follow; no dish is ever cut without saying so. The status menu of a dish opens on the screen, not inside
  * //// the scrolling body that would cut it. jsdom has no layout engine: the boxes of the elements are given by hand.

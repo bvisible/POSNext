@@ -1,5 +1,5 @@
 //// Neoffice — added file (no upstream equivalent). The units of a cart line, whatever path added the line
-//// (NeoRestau lot 1, task 22). A line can be born from a grid item, a restaurant card entry, a menu course, a table's
+//// (NeoResto lot 1, task 22). A line can be born from a grid item, a restaurant card entry, a menu course, a table's
 //// order read back from the server or an offline invoice's row, and each of them knows a different part of the
 //// item's units: the grid item all of them, a card entry its stock unit and the others, an order row only the unit
 //// the line is in. The part a source does not know is derived from the rest or looked up, never invented: a dish

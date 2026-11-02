@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The classes the sections and the tint of the kitchen and runner tickets use are compiled by the
- * //// till's own Tailwind configuration, and the dish's text stays readable on the tint in light AND dark mode (NeoRestau lot 1, Daniel's request of 01.11).
+ * //// till's own Tailwind configuration, and the dish's text stays readable on the tint in light AND dark mode (NeoResto lot 1, Daniel's request of 01.11).
  * //// A class that is mistyped compiles to nothing and the element is silently left as it was, so the sources are compiled and what matters is read in the
  * //// stylesheet. The contrast is computed from the colours the stylesheet really gives (the text colours, and the dark remap of the till's `index.css`),
  * //// against the card with the tint composited over it: the tint of EVERY colour, the extremes included (white lifts the card most, and the dark text is

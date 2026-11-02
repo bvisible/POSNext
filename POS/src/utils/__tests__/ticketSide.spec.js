@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The side of the kitchen screen where the oldest ticket stands (NeoRestau lot 1, Daniel 01.11): the left by default, the right when the device is set so.
+ * //// Neoffice — added file (no upstream equivalent). The side of the kitchen screen where the oldest ticket stands (NeoResto lot 1, Daniel 01.11): the left by default, the right when the device is set so.
  * @vitest-environment jsdom
  */
 import { beforeEach, describe, expect, it } from "vitest"

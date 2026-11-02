@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""The room's call of a course, where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11: « Oui, les deux modes »).
+"""The room's call of a course, where the kitchen prepares ahead (NeoResto lot 1, the service rhythm, Daniel, 01.11: « Oui, les deux modes »).
 
 In that rhythm the later courses of a table are already at the kitchen when the waiter presses « Commander la suite »: they left at « Valider »,
 marked `kds_ahead`, and the kitchen may have started and finished them. `restaurant.call_next_course` is the waiter's gesture: it stamps

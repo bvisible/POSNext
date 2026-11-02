@@ -6,7 +6,7 @@
 /* //// align POS design with Neoffice theme and improve customer display — c9d9c1c + d8904ff */
 /* Neoffice heading font */
 @import url("https://fonts.googleapis.com/css2?family=Forum&display=swap");
-/* //// Neoffice — the public menu names Karla but imports no font from Google: a guest's phone calls no third party (NeoRestau lot 1, task 17). */
+/* //// Neoffice — the public menu names Karla but imports no font from Google: a guest's phone calls no third party (NeoResto lot 1, task 17). */
 
 /* CSS Custom Properties for consistent z-index layering */
 :root {

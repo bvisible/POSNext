@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The provisional ticket prints where the till prints its receipts
- * //// (NeoRestau lot 1, task 28a). On the restaurant till of a site, the printer button of the cart opened the browser's
+ * //// (NeoResto lot 1, task 28a). On the restaurant till of a site, the printer button of the cart opened the browser's
  * //// print window although the till had a CloudPRNT receipt printer. Round 2 (ruling 93): one tap sends the order as
  * //// the screen shows it, shaped as the PAYMENT sends it, to the server, which prices and prints it WITHOUT saving
  * //// anything; the till never saves the order to print it. Ruling 97: the button shows where the ticket stands

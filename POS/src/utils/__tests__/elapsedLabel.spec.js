@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The time a ticket has waited, as the kitchen's and the pass's tickets write it
- * //// (NeoRestau lot 1): minutes and seconds up to the hour, then hours and minutes. A ticket that has stood eighteen hours read
+ * //// (NeoResto lot 1): minutes and seconds up to the hour, then hours and minutes. A ticket that has stood eighteen hours read
  * //// « 1107:52 », which nobody reads.
  */
 import { describe, expect, it } from "vitest"

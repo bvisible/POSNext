@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). What the status of a table says about tapping it: a table that has been paid or is being cleaned has no order to open, the cashier decides what happens to it
- * //// (NeoRestau lot 1, Daniel, 01.11). The floor's list and the notice of a guest's order share the rule.
+ * //// (NeoResto lot 1, Daniel, 01.11). The floor's list and the notice of a guest's order share the rule.
  */
 import { describe, expect, it } from "vitest"
 import { tableNeedsCleaning } from "../tableStatus"

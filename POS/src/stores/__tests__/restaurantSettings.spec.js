@@ -188,7 +188,7 @@ describe("restaurant settings are read and saved per restaurant", () => {
 	})
 })
 
-describe("the service rhythm is the restaurant's choice (NeoRestau lot 1, Daniel, 01.11)", () => {
+describe("the service rhythm is the restaurant's choice (NeoResto lot 1, Daniel, 01.11)", () => {
 	let store
 	beforeEach(() => {
 		setActivePinia(createPinia())

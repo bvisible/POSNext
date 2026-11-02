@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The QR dialog of a table (NeoRestau lot 1, task 53): it still draws the code, and its
+ * //// Neoffice — added file (no upstream equivalent). The QR dialog of a table (NeoResto lot 1, task 53): it still draws the code, and its
  * //// Print button now puts a ticket on the till's receipt printer through the server; the browser's print window opens only when the
  * //// server says the till has no printer.
  * @vitest-environment jsdom

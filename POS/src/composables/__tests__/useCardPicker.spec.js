@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The piece the order screen's « ⋯ » and the floor plan's « ⋯ »
- * //// share to open a card the hours keep off the till (NeoRestau lot 1, task 25): the cards on offer, the pick (which
+ * //// share to open a card the hours keep off the till (NeoResto lot 1, task 25): the cards on offer, the pick (which
  * //// goes through the authorization gate as « Open a card outside its hours » where a rule asks a manager's PIN), and
  * //// the menu entry the floor plan includes in its own menu, shaped like its other entries.
  * @vitest-environment jsdom

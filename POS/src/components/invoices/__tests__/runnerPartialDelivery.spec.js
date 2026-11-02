@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The runner carries the units at the pass of a line the kitchen marked ready in part (NeoRestau lot 1, kitchen
+ * //// Neoffice — added file (no upstream equivalent). The runner carries the units at the pass of a line the kitchen marked ready in part (NeoResto lot 1, kitchen
  * //// test of 01.11: « six of the same dish, and four are done »). The server tells the card the units to carry as the line's quantity (`qty`) and the line's own quantity
  * //// beside it (`ordered_qty`): the card says « 4× » and « (4 of 6) », delivers the line, and the toast of the five seconds puts the counters back as they were.
  * @vitest-environment jsdom

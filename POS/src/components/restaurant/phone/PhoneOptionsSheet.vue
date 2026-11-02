@@ -1,5 +1,5 @@
 <!-- //// Neoffice — added file (no upstream equivalent). The options of a dish on a phone, in a sheet from the bottom -->
-<!-- //// of the screen, as the waiter mockup draws it (NeoRestau lot 1, task 27; mockup WaiterOptions; design § G, -->
+<!-- //// of the screen, as the waiter mockup draws it (NeoResto lot 1, task 27; mockup WaiterOptions; design § G, -->
 <!-- //// validated as is by the product owner: « required, one of, extras, a remark for the kitchen with a microphone -->
 <!-- //// to dictate, quantity »). It takes the options dialog's place on a phone (ItemModifiersDialog.vue keeps -->
 <!-- //// tablets and computers) and keeps its contract: open(line) edits a line of the order in place, through the -->

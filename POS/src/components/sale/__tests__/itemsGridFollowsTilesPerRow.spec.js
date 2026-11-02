@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The shop's item grid follows the till's « Tiles per row »
- * //// (NeoRestau lot 1, task 13; product owner, 30.10.2026): « Automatic » keeps the columns by the width of the
+ * //// (NeoResto lot 1, task 13; product owner, 30.10.2026): « Automatic » keeps the columns by the width of the
  * //// pane exactly as they were, a number from 3 to 8 fixes them, and an item without a picture then shows its name
  * //// once, in its well. The list view is unchanged.
  * @vitest-environment jsdom

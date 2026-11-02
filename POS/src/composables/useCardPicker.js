@@ -1,5 +1,5 @@
 //// Neoffice — added file (no upstream equivalent). The piece the two « ⋯ » of the restaurant till share to open a card
-//// the opening hours keep off the till (NeoRestau lot 1, task 25): the « ⋯ » at the end of the order screen's card
+//// the opening hours keep off the till (NeoResto lot 1, task 25): the « ⋯ » at the end of the order screen's card
 //// row, and the entry of the floor plan's own « ⋯ » menu. Both list the same cards (the store's `pickableCards`), pick
 //// through the same gesture, and the card picked joins the row of THIS till until it is closed or the shift is, so that
 //// the next table opened shows it.

@@ -1,4 +1,4 @@
-# //// Neoffice — added file (no upstream equivalent). Until the personal till code (NeoRestau lot 1, product owner, 01.11.2026) a
+# //// Neoffice — added file (no upstream equivalent). Until the personal till code (NeoResto lot 1, product owner, 01.11.2026) a
 # //// lock locked the moment the browser tab was left; the new setting `session_lock_on_leave` makes that a choice, and its default
 # //// is "wait for the delay" (a waiter whose phone goes to sleep between two tables must not type a code each time). A till that
 # //// ALREADY locks keeps what it had: this ticks the setting, once, for the tills whose lock is on.

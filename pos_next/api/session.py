@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent). The till keeps its staff signed in for as long as the till says
-# //// (NeoRestau lot 1, product owner, 01.11.2026: "Ok, tu peux mettre 30 jours"). A waiter's phone and a till must not
+# //// (NeoResto lot 1, product owner, 01.11.2026: "Ok, tu peux mettre 30 jours"). A waiter's phone and a till must not
 # //// ask for a password every morning, and the length is a setting of the TILL (POS Settings.keep_signed_in_days, per
 # //// POS Profile), not of the ERP's System Settings, whose `session_expiry` is the site's rule for everybody else.
 """Keep a till's staff signed in for the number of days the till's POS Settings say.

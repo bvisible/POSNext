@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The timer of a kitchen ticket counts from the course the kitchen is working on (NeoRestau lot 1, Daniel, 01.11: « il faudrait afficher le temps
+ * //// Neoffice — added file (no upstream equivalent). The timer of a kitchen ticket counts from the course the kitchen is working on (NeoResto lot 1, Daniel, 01.11: « il faudrait afficher le temps
  * //// maintenant du départ du dessert »): the oldest send among the dishes still to cook, else the latest send, else the order's last change. Read without a screen.
  */
 import { describe, expect, it } from "vitest"
@@ -113,7 +113,7 @@ describe("the most recent send of a ticket", () => {
 	})
 })
 
-//// Neoffice — where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11): a dish sent ahead counts from the room's CALL, and counts for nothing until it comes
+//// Neoffice — where the kitchen prepares ahead (NeoResto lot 1, the service rhythm, Daniel, 01.11): a dish sent ahead counts from the room's CALL, and counts for nothing until it comes
 describe("the dishes sent ahead of their course", () => {
 	const CALLED = "2026-11-01 13:10:00.000000"
 	const ahead = (status, sentAt, calledAt = null) => ({

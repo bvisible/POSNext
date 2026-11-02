@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The kitchen's words (NeoRestau lot 1, task 38a-1, ruling 113): a BADGE
+ * //// Neoffice — added file (no upstream equivalent). The kitchen's words (NeoResto lot 1, task 38a-1, ruling 113): a BADGE
  * //// says the state a dish or a ticket is in, a BUTTON says the action the cook is about to do. The two used to share
  * //// their msgids ("Start", "Ready", "Delivered"), so « Début » sat on the button and « Prêt » on both the badge and the
  * //// button: the cook read « Prêt » on a dish that was to be delivered. Now the states are « Retenu » (held back by the

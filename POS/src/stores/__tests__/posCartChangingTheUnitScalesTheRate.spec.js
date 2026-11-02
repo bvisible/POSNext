@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). Changing the unit of a line from its row in the cart scales its
- * //// rate when nobody priced the new unit (NeoRestau lot 1, task 22, fix round 1). A dish added from a restaurant card
+ * //// rate when nobody priced the new unit (NeoResto lot 1, task 22, fix round 1). A dish added from a restaurant card
  * //// is priced by the card, not by the price list: for a unit the price list does not know, the server answers 0 (or
  * //// nothing, offline), and the cart took that for the new rate, or kept the rate of the first unit while the factor
  * //// (and the stock taken) grew with the new one. A price of the price list for the unit still wins.

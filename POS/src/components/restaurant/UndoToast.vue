@@ -1,5 +1,5 @@
 <template>
-	<!-- //// Neoffice — added file (no upstream equivalent). The small toast that offers « Undo » for five seconds after a ticket was marked ready or delivered (NeoRestau lot 1, task 38a-2, -->
+	<!-- //// Neoffice — added file (no upstream equivalent). The small toast that offers « Undo » for five seconds after a ticket was marked ready or delivered (NeoResto lot 1, task 38a-2, -->
 	<!-- //// ruling 112). It says what just happened (« Table 22 · To deliver »), has one button of 44 px, and a thin bar that runs out with the time left. It is drawn by the page, not by -->
 	<!-- //// the card: the ticket leaves the card's band the moment it is pressed. Ink on paper like the « +N lines » hint, so it is not taken for a status colour. -->
 	<div aria-live="polite" role="status" class="pointer-events-none fixed inset-x-0 bottom-4 z-50 flex justify-center px-4">

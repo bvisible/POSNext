@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The kitchen's ticket where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11: « Oui, les deux modes »). The later courses are on the
+ * //// Neoffice — added file (no upstream equivalent). The kitchen's ticket where the kitchen prepares ahead (NeoResto lot 1, the service rhythm, Daniel, 01.11: « Oui, les deux modes »). The later courses are on the
  * //// ticket from « Valider », marked « À l'avance »: the cooks may start and finish them, the order of the meal (the device's rule that greys the later courses) is off, a dish finished before its course is called is
  * //// « Prêt d'avance » (a state of its own, not a dish at the pass), and nothing counts from a dish nobody has called: no timer, no late colour, no main button. The card is mounted for real.
  * @vitest-environment jsdom

@@ -1,9 +1,9 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""Whether a site used the restaurant (NeoRestau lot 1, task 4, fix rounds 1 and 2).
+"""Whether a site used the restaurant (NeoResto lot 1, task 4, fix rounds 1 and 2).
 
 Three patches act only on a site that used the restaurant module: the one that makes the default restaurant out of the
 single `Restaurant Settings`, the one that attaches what a site made before the restaurants to the default restaurant,
-and the one that switches NeoRestau on. They share one criterion, `site_used_the_restaurant`: a ticked till, a record
+and the one that switches NeoResto on. They share one criterion, `site_used_the_restaurant`: a ticked till, a record
 that only a person makes (a room, a table, a card, a menu, a station, a reservation, a tip), opening hours, an order on
 a table. Never the stored values of the single: a migrate writes its defaults on every site, those of a client that never
 used the module included, and a default cannot be told from a choice.

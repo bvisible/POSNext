@@ -106,7 +106,7 @@
 																	localItem.rate
 															)
 														}}
-														<!-- //// Neoffice — the price is per the unit the line is in, and the header says nothing when the line has none: upstream wrote « Nos » for a line without a stock unit, an item that has another one (NeoRestau lot 1, task 22). -->
+														<!-- //// Neoffice — the price is per the unit the line is in, and the header says nothing when the line has none: upstream wrote « Nos » for a line without a stock unit, an item that has another one (NeoResto lot 1, task 22). -->
 														<template v-if="lineUom"> / {{ lineUom }}</template>
 													</p>
 												</div>
@@ -271,7 +271,7 @@
 																>{{ localUom }}</span
 															>
 														</div>
-														<!-- //// Neoffice — a line that knows no unit has nothing to choose from: the select is disabled instead of opening on « No results found » (NeoRestau lot 1, task 22, fix round 1). -->
+														<!-- //// Neoffice — a line that knows no unit has nothing to choose from: the select is disabled instead of opening on « No results found » (NeoResto lot 1, task 22, fix round 1). -->
 														<SelectInput
 															v-else
 															v-model="localUom"
@@ -330,7 +330,7 @@
 												/>
 											</div>
 
-											<!-- //// Neoffice — the « Service » choice (service families, NeoRestau lot 1): the course the line belongs to, which -->
+											<!-- //// Neoffice — the « Service » choice (service families, NeoResto lot 1): the course the line belongs to, which -->
 											<!-- //// decides when the kitchen is sent it. A starter served with the mains is simply Plat chosen for it. Only a table's order -->
 											<!-- //// of a restaurant that has set a family; a line the kitchen has keeps the course it was sent under. -->
 											<div
@@ -509,7 +509,7 @@
 												{{ __("SKU promotion applied — discount is locked") }}
 											</div>
 
-											<!-- //// Neoffice — « Offert » (NeoRestau lot 1, task 24): offer some or all of the line, at zero. The -->
+											<!-- //// Neoffice — « Offert » (NeoResto lot 1, task 24): offer some or all of the line, at zero. The -->
 											<!-- //// quantity offered goes from 1 to the line's, « Tout » offers the whole line; Confirm is then the -->
 											<!-- //// footer's one primary action (ink, Neoffice design system). Shown where the cart allows it (canOffer). -->
 											<div
@@ -658,7 +658,7 @@
 									<Button variant="subtle" @click="cancel">{{
 										__("Cancel")
 									}}</Button>
-									<!-- //// Neoffice — one confirmation per opening: a double tap sent the change twice (NeoRestau lot 1, task 22, fix round 3) -->
+									<!-- //// Neoffice — one confirmation per opening: a double tap sent the change twice (NeoResto lot 1, task 22, fix round 3) -->
 									<Button
 										variant="solid"
 										@click="updateItem"
@@ -696,7 +696,7 @@ import { usePOSOffersStore } from "@/stores/posOffers";
 import { usePOSShiftStore } from "@/stores/posShift";
 import { useSerialNumberStore } from "@/stores/serialNumber";
 import { getItemStock } from "@/utils/stockValidator";
-//// Neoffice — the unit select lists the units of the line, built where every cart line's units are (NeoRestau lot 1, task 22).
+//// Neoffice — the unit select lists the units of the line, built where every cart line's units are (NeoResto lot 1, task 22).
 import { unitsOf, uomChoices } from "@/utils/cartLineUnits";
 //// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 import {
@@ -713,11 +713,11 @@ import {
 import { Button, FeatherIcon, createResource } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 import SelectInput from "@/components/common/SelectInput.vue";
-//// Neoffice — the « Service » choice of the line (service families, NeoRestau lot 1).
+//// Neoffice — the « Service » choice of the line (service families, NeoResto lot 1).
 import { usePOSCartStore } from "@/stores/posCart";
 import { canChangeFamily, hasServiceFamilies, serviceLabel } from "@/utils/serviceFamilies";
 import ServiceFamilyChoice from "./ServiceFamilyChoice.vue";
-//// Neoffice — « Offert » (NeoRestau lot 1, task 24): the bounds of the quantity offered and its value.
+//// Neoffice — « Offert » (NeoResto lot 1, task 24): the bounds of the quantity offered and its value.
 import { OFFER_CONTEXT, clampOfferQuantity, listPrice, offerBounds } from "@/utils/offeredRows";
 
 const { showSuccess, showError, showWarning } = useToast();
@@ -796,7 +796,7 @@ const localUom = ref("");
 const localRate = ref(0);
 const localWarehouse = ref("");
 const localSalesPerson = ref("");
-//// Neoffice — the course of the line while the dialog is open (service families, NeoRestau lot 1).
+//// Neoffice — the course of the line while the dialog is open (service families, NeoResto lot 1).
 const cartStore = usePOSCartStore();
 const localServiceFamily = ref("");
 const showServiceChoice = computed(
@@ -947,7 +947,7 @@ const uomOptions = computed(() => {
 	//// Neoffice — upstream started the list with the item's stock unit whether the line had one or not: a line
 	//// without a stock unit (a dish added from a restaurant card) listed one option with an empty value, and the
 	//// select showed nothing. The unit the line is in is now always a choice, and no choice is empty
-	//// (NeoRestau lot 1, task 22).
+	//// (NeoResto lot 1, task 22).
 	return uomChoices(localItem.value).map((uom) => ({ value: uom, label: uom }));
 });
 
@@ -995,7 +995,7 @@ async function loadSalesPersons() {
 	salesPersons.value = await loadSalesPersonsForProfile(settingsStore.settings?.pos_profile);
 }
 
-//// Neoffice — the change of this opening has been sent (NeoRestau lot 1, task 22, fix round 3). The dialog fades out after the first tap
+//// Neoffice — the change of this opening has been sent (NeoResto lot 1, task 22, fix round 3). The dialog fades out after the first tap
 //// and its button stays for a moment: a second tap sent the same change again, as a new object, and a raise of a sent line added its
 //// units twice. Set when the change is emitted, cleared when the dialog is given a line.
 const alreadyConfirmed = ref(false);
@@ -1009,7 +1009,7 @@ watch(
 			isInitializingItem.value = true;
 			//// Neoffice — whatever added the line, it is read with the units it can be derived to have, and the select
 			//// starts on the unit the line is in: upstream fell back to « Nos », a unit the item may not have, and
-			//// « Update Item » then wrote it onto the line (NeoRestau lot 1, task 22).
+			//// « Update Item » then wrote it onto the line (NeoResto lot 1, task 22).
 			localItem.value = { ...newItem, ...unitsOf(newItem) };
 			localQuantity.value = newItem.quantity || 1;
 			localUom.value = localItem.value.uom || "";
@@ -1018,7 +1018,7 @@ watch(
 			originalPriceListRate.value = newItem.price_list_rate || newItem.rate || 0;
 			localWarehouse.value = newItem.warehouse || props.warehouses[0]?.name || "";
 			localSalesPerson.value = newItem.sales_person || "";
-			//// Neoffice — the course of the line given (service families, NeoRestau lot 1).
+			//// Neoffice — the course of the line given (service families, NeoResto lot 1).
 			localServiceFamily.value = newItem.service_family || "";
 
 			// Initialize serial numbers
@@ -1204,7 +1204,7 @@ async function getRateForUom(uom) {
 
 	//// Neoffice — nobody priced this unit (a dish priced by its card, not by the price list): that is an answer of its own,
 	//// null, not the rate of the first unit. Upstream kept the rate of the first unit here while the factor, and the stock taken,
-	//// grew with the new one; handleUomChange scales it instead (NeoRestau lot 1, task 22, fix round 1).
+	//// grew with the new one; handleUomChange scales it instead (NeoResto lot 1, task 22, fix round 1).
 	return null;
 }
 
@@ -1253,7 +1253,7 @@ async function handleUomChange(newUom) {
 	if (requestId !== uomRateRequestId.value) return;
 
 	//// Neoffice — no price for this unit anywhere: the rate of the line and the price it started from are scaled by the factors
-	//// of the two units, as the locked branch above does for a rate that must be kept (NeoRestau lot 1, task 22, fix round 1).
+	//// of the two units, as the locked branch above does for a rate that must be kept (NeoResto lot 1, task 22, fix round 1).
 	const priced = fetchedRate !== null;
 	const newRate = priced
 		? roundCurrency(fetchedRate)
@@ -1380,7 +1380,7 @@ function formatCurrency(amount) {
 }
 
 function updateItem() {
-	//// Neoffice — one confirmation per opening, see alreadyConfirmed (NeoRestau lot 1, task 22, fix round 3).
+	//// Neoffice — one confirmation per opening, see alreadyConfirmed (NeoResto lot 1, task 22, fix round 3).
 	if (alreadyConfirmed.value) return;
 	if (isLockedFreeItem.value) {
 		showError(__("Free promotional items cannot be edited"));
@@ -1496,7 +1496,7 @@ function updateItem() {
 		sales_person_name: selectedSp
 			? selectedSpMeta?.sales_person_name || selectedSp
 			: null,
-		//// Neoffice — the course chosen, when the line can still change it (service families, NeoRestau lot 1).
+		//// Neoffice — the course chosen, when the line can still change it (service families, NeoResto lot 1).
 		service_family: canChangeServiceFamily.value
 			? localServiceFamily.value
 			: localItem.value.service_family || "",
@@ -1524,7 +1524,7 @@ function cancel() {
 	show.value = false;
 }
 
-//// Neoffice — « Offert » (NeoRestau lot 1, task 24): the quantity offered of the line as the cart holds it (its edits in
+//// Neoffice — « Offert » (NeoResto lot 1, task 24): the quantity offered of the line as the cart holds it (its edits in
 //// this dialog are not part of the offer), within its bounds, and its value at list price. Confirm hands the quantity to
 //// the cart (offer-item), which splits the line; Cancel goes back to the line's editing.
 const offering = ref(false);

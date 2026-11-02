@@ -1,6 +1,6 @@
 //// Neoffice — added file (no upstream equivalent). The till's drawer movements queued offline go through the
 //// sync store like the sales and the expenses: counted in the header badge, sent on the way back online, and
-//// their dialog's data preloaded once a shift is open (NeoRestau lot 1, task 15).
+//// their dialog's data preloaded once a shift is open (NeoResto lot 1, task 15).
 import { createPinia, setActivePinia } from "pinia";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 

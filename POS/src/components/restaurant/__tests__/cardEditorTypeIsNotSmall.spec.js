@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The type of the restaurant cards screen (NeoRestau lot 1, Daniel 01.11: « la police de caractère est relativement petite, […] il faut aligner sur le standard de
+ * //// Neoffice — added file (no upstream equivalent). The type of the restaurant cards screen (NeoResto lot 1, Daniel 01.11: « la police de caractère est relativement petite, […] il faut aligner sur le standard de
  * //// l'ERP »): its small texts were 8, 9 and 10 px. 12 px is the least the till writes anywhere, so no text of this screen is set below it. The component is too large to mount for this, so its template is read.
  * @vitest-environment node
  */

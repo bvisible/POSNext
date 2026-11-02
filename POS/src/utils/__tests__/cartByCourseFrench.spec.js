@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The cart of a table's order by course, in French (NeoRestau lot 1, Daniel, 01.11): the product owner speaks French, so every string the new header, the rule of the groups
+ * //// Neoffice — added file (no upstream equivalent). The cart of a table's order by course, in French (NeoResto lot 1, Daniel, 01.11): the product owner speaks French, so every string the new header, the rule of the groups
  * //// and the switch of the cart put on a screen has its line in the real catalogue (pos_next/locale/fr.po), and its template line in main.pot. Words the kitchen's ticket already says (« À suivre », the names of the courses) are
  * //// reused, not written again.
  */

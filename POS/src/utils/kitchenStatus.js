@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The label of a kitchen status (NeoRestau lot 1, task 9).
+//// Neoffice — added file (no upstream equivalent). The label of a kitchen status (NeoResto lot 1, task 9).
 //// An order and each dish on it go Pending, Preparing, Ready, Delivered (`kds_status` of the Sales Invoice and of its
 //// items). The values are stored in English and never translated: the server, the kitchen display and the runner
 //// compare them. Only what is DISPLAYED is translated, here, under a context of its own. "Pending", "Ready" and

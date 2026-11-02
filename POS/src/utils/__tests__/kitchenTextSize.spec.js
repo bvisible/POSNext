@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The size of the text of the kitchen screen (NeoRestau lot 1, task 38a-1, ruling
+ * //// Neoffice — added file (no upstream equivalent). The size of the text of the kitchen screen (NeoResto lot 1, task 38a-1, ruling
  * //// 109): DENSE by default, because a cook who can read small wants many tickets on the screen, and a cook who needs glasses wants
  * //// them big. Four sizes (Compact, Normal, Large, Extra large), kept on the device, applied by CSS variables on the page's root:
  * //// font sizes, paddings, button heights. These are the rules of the choice and the table of the variables, read without a screen.

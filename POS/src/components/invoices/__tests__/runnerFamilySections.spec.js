@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The runner's card separates the courses and tints the categories as the kitchen's ticket does (NeoRestau
+ * //// Neoffice — added file (no upstream equivalent). The runner's card separates the courses and tints the categories as the kitchen's ticket does (NeoResto
  * //// lot 1, Daniel's request of 01.11): the dishes at the pass are drawn in sections in the order of the meal (Drink, Starter, Main, Dessert), each under a small
  * //// label with a thin dashed rule; a dish whose family is unknown stands loose at the top; a card none of whose dishes carries a family is drawn exactly as it
  * //// always was; a dish whose category has a colour has a pale tint behind its row, and only a strict `#RRGGBB` is ever put in a style. The same in the view by

@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The kitchen screen gets the room filter the runner has (NeoRestau
+ * //// Neoffice — added file (no upstream equivalent). The kitchen screen gets the room filter the runner has (NeoResto
  * //// lot 1, task 9c): the same rooms, from the same read, on the same single line as its stations, with the same
  * //// behaviour. A room shows the tickets of that room's tables; "all rooms" shows everything, takeaway orders
  * //// included (they sit at no table, so they belong to no room).

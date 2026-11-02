@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). « Print the menu QR » (NeoRestau lot 1, task 17) is an entry of the
+ * //// Neoffice — added file (no upstream equivalent). « Print the menu QR » (NeoResto lot 1, task 17) is an entry of the
  * //// floor plan's « ⋯ » menu: it is there only where the restaurant switched its public menu on, and only for whoever the
  * //// server lets set the restaurant up (`restaurantStore.can.manage_settings`). Pressed, it prints the sheet with the QR
  * //// code of the address of the menu: https://<site>/pos/menu/<restaurant>.

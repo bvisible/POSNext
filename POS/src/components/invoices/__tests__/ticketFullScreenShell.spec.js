@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The shell of a ticket opened full screen (NeoRestau lot 1, task 38a-3, ruling 107 layer 3): a scrim and a dialog teleported to the body, a
+ * //// Neoffice — added file (no upstream equivalent). The shell of a ticket opened full screen (NeoResto lot 1, task 38a-3, ruling 107 layer 3): a scrim and a dialog teleported to the body, a
  * //// tap on the scrim and Escape ask to close, a tap inside does not, the focus goes in and stays in, and goes back where it was when the shell goes. What is inside is the card's own business
  * //// (kdsTicketFullScreen.spec.js, runnerTicketFullScreen.spec.js); here it is a pair of buttons.
  * @vitest-environment jsdom

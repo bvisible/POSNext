@@ -1,7 +1,7 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The tab of the till carries the till's name once a shift is open
  * //// ("Restaurant till · Neopos"), and says plain "Neopos" before: with the till, the runner and the kitchen open side
- * //// by side, the product owner could not tell which tab was which (NeoRestau lot 1). The till is the one screen whose
+ * //// by side, the product owner could not tell which tab was which (NeoResto lot 1). The till is the one screen whose
  * //// name is not in its route: it is the POS Profile of the shift, known only once a shift is open.
  * ////
  * //// POSSale.vue is too large to mount here, so this covers what the page calls (`useTillTabTitle`, over the real shift

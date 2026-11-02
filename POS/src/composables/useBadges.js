@@ -7,7 +7,7 @@
 //// not, and a POS left open all day hits a stale token (4f6f8755). The item sheet saves
 //// a dish's badges itself, with update_item_badges. The read and the save of one dish's
 //// badges that this file also held lost their only caller with the badge panel
-//// (NeoRestau lot 1, task 9) and are gone. The PDF is fetched through an iframe
+//// (NeoResto lot 1, task 9) and are gone. The PDF is fetched through an iframe
 //// (1b29c36f, 2026-03-26).
 import { ref } from "vue"
 import { call } from "@/utils/apiWrapper"

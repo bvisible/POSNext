@@ -283,9 +283,9 @@
 import { Button, Dialog, Input } from "frappe-ui";
 import { createResource } from "frappe-ui";
 import { computed, ref, watch } from "vue";
-//// Neoffice — the door the cashier came through is read from the route (NeoRestau lot 1, task 5, see fetchProfiles).
+//// Neoffice — the door the cashier came through is read from the route (NeoResto lot 1, task 5, see fetchProfiles).
 import { useRoute } from "vue-router";
-import { doorOf } from "@/utils/neorestau";
+import { doorOf } from "@/utils/neoresto";
 import { useShift } from "../composables/useShift";
 import { useFormatters } from "../composables/useFormatters";
 import ShiftClosingDialog from "./ShiftClosingDialog.vue";
@@ -323,8 +323,8 @@ const profilesResource = createResource({
 	auto: false,
 });
 
-//// Neoffice — upstream offered every till of the user. NeoRestau's button opens /pos?mode=restaurant, the restaurant door,
-//// which offers the restaurant's tills; the usual entry offers the others (NeoRestau lot 1, task 5). This dialog sits on the
+//// Neoffice — upstream offered every till of the user. NeoResto's button opens /pos?mode=restaurant, the restaurant door,
+//// which offers the restaurant's tills; the usual entry offers the others (NeoResto lot 1, task 5). This dialog sits on the
 //// login page and on the till, so it reads the door from the route it is in (the router keeps the query string on the way
 //// to the login), each time it asks for the list and not once and for all: the page may move from one door to the other
 //// while the dialog stays mounted. The request has no cache key on purpose, as a key would keep the answer of one door

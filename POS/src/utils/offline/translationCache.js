@@ -57,7 +57,7 @@ const normalizeLocale = (locale) => (locale || "en").toLowerCase();
 //// Neoffice — `stamp` joins the signature (see the entry below).
 async function persist(locale, messages, timestamp, stamp) {
 	try {
-		//// Neoffice — the entry keeps the server's stamp of the dictionary it holds (NeoRestau lot 1, 01.11): the till compares it with the server's to know
+		//// Neoffice — the entry keeps the server's stamp of the dictionary it holds (NeoResto lot 1, 01.11): the till compares it with the server's to know
 		//// whether a word was added or corrected since, whatever the build and the clock say. An entry stored without one reads back with no stamp.
 		const entry = { locale, messages, timestamp, version: CACHE_VERSION, ...(stamp ? { stamp } : {}) };
 		memoryCache.set(locale, entry);

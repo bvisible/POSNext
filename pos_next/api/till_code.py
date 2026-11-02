@@ -1,4 +1,4 @@
-# //// Neoffice — added file (no upstream equivalent). The personal code of the till (NeoRestau lot 1, product owner,
+# //// Neoffice — added file (no upstream equivalent). The personal code of the till (NeoResto lot 1, product owner,
 # //// 01.11.2026): a waiter's phone stays signed in for 30 days (pos_next.api.session), and the counterpart is a lock that
 # //// opens with a SHORT code of the waiter's own instead of the long account password, which is the pain on a phone.
 """The personal code of the till: four to six digits, kept hashed beside the account password and never in its place.

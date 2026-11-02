@@ -1,5 +1,5 @@
 //// Neoffice — added file (no upstream equivalent). The Print button of a table's QR dialog puts a TICKET on the till's receipt printer
-//// (NeoRestau lot 1, task 53): the table's name in large letters, a line telling the guest to scan to order, the QR code and its link in
+//// (NeoResto lot 1, task 53): the table's name in large letters, a line telling the guest to scan to order, the QR code and its link in
 //// small characters. It used to open the browser's print window. One tap asks the SERVER (pos_next.api.table_qr_ticket), with the guest
 //// token of the code and the till: the server works the table and the link out from the token, so the browser sends no text and no address.
 //// The button then says where the paper stands as the bill's printer button does (utils/provisionalTicket.js, ruling 97): sending, printing,

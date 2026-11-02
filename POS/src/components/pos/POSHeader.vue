@@ -24,7 +24,7 @@
 			<!-- //// app inside Neoffice, not a standalone product. (87f168fe, 2026-03-20 "align POS -->
 			<!-- //// design with Neoffice theme and improve customer display") -->
 			<div class="w-16 flex-shrink-0 flex items-center justify-center px-2">
-				<!-- //// Neoffice — the logo keeps its proportions (NeoRestau lot 1, smoke-test fix): `h-8 w-auto` in a column of 48 px made the browser shrink the box to 48 x 32 for a 300 x 71 picture, and a picture drawn into a box of another shape is stretched (a logo without a `viewBox` is; one with it is merely letter-boxed). The box keeps the 48 x 32 hit area of the exit button, and the picture is fitted inside it (`object-contain`), never stretched. -->
+				<!-- //// Neoffice — the logo keeps its proportions (NeoResto lot 1, smoke-test fix): `h-8 w-auto` in a column of 48 px made the browser shrink the box to 48 x 32 for a 300 x 71 picture, and a picture drawn into a box of another shape is stretched (a logo without a `viewBox` is; one with it is merely letter-boxed). The box keeps the 48 x 32 hit area of the exit button, and the picture is fitted inside it (`object-contain`), never stretched. -->
 				<img
 					:src="neofficeLogo"
 					alt="Neoffice"
@@ -133,7 +133,7 @@
 
 				<!-- Right Side: Controls -->
 				<div class="flex items-center gap-0.5 sm:gap-1 md:gap-2 flex-shrink-0">
-					<!-- //// Neoffice — the chip « Touch the screen to enable the sound » of the floor alerts (NeoRestau lot 1, Daniel, 01.11): a browser lets no page make a sound before somebody has touched it, and the -->
+					<!-- //// Neoffice — the chip « Touch the screen to enable the sound » of the floor alerts (NeoResto lot 1, Daniel, 01.11): a browser lets no page make a sound before somebody has touched it, and the -->
 					<!-- //// till rings when a guest orders. It is there while the till has a sound to play and the page has not been touched, and only from 640 px: it is 44 px wide (its icon only, below 1024 px) and a phone's -->
 					<!-- //// header (the logo, the label, the sync and the cache buttons, the user menu) has no room to give. A phone's first touch of the page unlocks the audio all the same; the chip is only the reminder. -->
 					<SoundUnlockChip :enabled="floorSoundOn" class="max-sm:!hidden" />
@@ -141,7 +141,7 @@
 					<!-- //// counter till by its own POS Settings (the tick on the desk's POS Settings form), a -->
 					<!-- //// device switch is not wanted. The switch (8aa35c29, 2026-03-20 "Phase 1 restaurant -->
 					<!-- //// module"; 5d4db328, 924e688c, 59599289) stood here; a fixed label stands there now, for -->
-					<!-- //// a restaurant till only (NeoRestau lot 1, task 4). It is not a button. It is drawn in the -->
+					<!-- //// a restaurant till only (NeoResto lot 1, task 4). It is not a button. It is drawn in the -->
 					<!-- //// Design System's clay, the till's only vivid hue: tailwind.config.js maps blue-N to the clay -->
 					<!-- //// ramp (400 is #d68a59, 50 its tint, 700 its ink) and index.css carries it into dark mode. -->
 					<div
@@ -547,7 +547,7 @@ import { version } from "../../../package.json";
 //// (9a807f74, 2026-06-01 "customer display follows the launching POS's exact shift").
 //// The posSettings and restaurant store imports that stood beside it were dead code (e8cecbcf,
 //// 2026-03-20 had the header toggle the store itself, 59599289, 2026-03-21 put that decision back
-//// in POSSale and left them behind): removed with the restaurant switch (NeoRestau lot 1, task 4).
+//// in POSSale and left them behind): removed with the restaurant switch (NeoResto lot 1, task 4).
 //// The header stays presentational: POSSale hands it the restaurant mode as a prop.
 import { usePOSShiftStore } from "@/stores/posShift";
 
@@ -690,13 +690,13 @@ const props = defineProps({
 		default: false,
 	},
 	//// Neoffice — whether this is a restaurant till, for the fixed label that replaced the restaurant switch
-	//// (NeoRestau lot 1, task 4). POSSale hands it the restaurant store's mode, which is the effective one the
+	//// (NeoResto lot 1, task 4). POSSale hands it the restaurant store's mode, which is the effective one the
 	//// server sent; the header neither decides it nor lets anyone flip it, and has no canToggleRestaurant prop.
 	isRestaurantMode: {
 		type: Boolean,
 		default: false,
 	},
-	//// Neoffice — whether the till has a sound to ring when a guest orders (the floor alerts, stores/floorNotices): the chip that asks for a touch is drawn while it has (NeoRestau lot 1, Daniel, 01.11).
+	//// Neoffice — whether the till has a sound to ring when a guest orders (the floor alerts, stores/floorNotices): the chip that asks for a touch is drawn while it has (NeoResto lot 1, Daniel, 01.11).
 	floorSoundOn: {
 		type: Boolean,
 		default: false,

@@ -1,9 +1,9 @@
 # //// Neoffice — added file (no upstream equivalent). A restaurant owns its rooms, tables, stations, cards, menus,
-# //// reservations and tips, and a till works for one restaurant (NeoRestau lot 1, task 2). The records a site made
+# //// reservations and tips, and a till works for one restaurant (NeoResto lot 1, task 2). The records a site made
 # //// before the restaurants existed name none: this patch attaches them to the default restaurant, and every till
 # //// in restaurant mode to that restaurant too, since the till's `restaurant` link is mandatory once the mode is on.
 # //// A site that never used the restaurant is left as it is: what counts as use is `site_used_the_restaurant`, the one
-# //// criterion of the three patches (NeoRestau lot 1, task 4, fix round 2).
+# //// criterion of the three patches (NeoResto lot 1, task 4, fix round 2).
 import frappe
 
 from pos_next.restaurant.settings import create_default_restaurant, default_restaurant

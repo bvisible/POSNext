@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The kitchen screen splits its tickets into the ones waiting and
- * //// the ones in preparation, each in order of arrival (NeoRestau lot 1, task 23). The split and the order live in a
+ * //// the ones in preparation, each in order of arrival (NeoResto lot 1, task 23). The split and the order live in a
  * //// helper of their own so that they are read, and tested, apart from the screen that draws them.
  */
 import { readFileSync } from "node:fs"
@@ -438,7 +438,7 @@ describe("splitting the tickets into the two bands", () => {
 	})
 })
 
-//// Neoffice — where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11): the dishes sent ahead of their course and not called are not what the ticket waits for
+//// Neoffice — where the kitchen prepares ahead (NeoResto lot 1, the service rhythm, Daniel, 01.11): the dishes sent ahead of their course and not called are not what the ticket waits for
 describe("the dishes sent ahead of their course (the service rhythm)", () => {
 	const { ahead_cases: aheadCases } = JSON.parse(
 		readFileSync(new URL("../../../../pos_next/tests/kitchen_status_cases.json", import.meta.url), "utf8"),

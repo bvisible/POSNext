@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). How many tickets of one width fit the area that holds them (NeoRestau lot 1, task 38a-3): the number a wide card needs to know whether
+//// Neoffice — added file (no upstream equivalent). How many tickets of one width fit the area that holds them (NeoResto lot 1, task 38a-3): the number a wide card needs to know whether
 //// it may take two (utils/wideTicket). Read from the boxes on the screen, so it follows the size of the tablet, a layout chosen, and the text size (which changes the width of a ticket without
 //// changing the area's: the screen hands its size down, utils/kitchenTextSize TEXT_SIZE_KEY, and the count is made again when it moves).
 import { inject, onMounted, onUnmounted, ref, watch } from "vue"

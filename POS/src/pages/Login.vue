@@ -149,7 +149,7 @@ import { logger } from "@/utils/logger";
 const log = logger.create("Login");
 
 const router = useRouter();
-//// Neoffice — the door follows the entry (NeoRestau lot 1, task 5). NeoRestau's entry route is /pos?mode=restaurant, and the
+//// Neoffice — the door follows the entry (NeoResto lot 1, task 5). NeoResto's entry route is /pos?mode=restaurant, and the
 //// router carries its query string to this page when the visitor is not signed in. The shift dialog here reads the door from
 //// this route, and so does the one the till opens later (after a shift closing, from its shift buttons, "Close & Open New"):
 //// upstream pushed the till with no query, which dropped the door at the first sign-in and left the restaurant cashier at

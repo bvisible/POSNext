@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). An item's VAT maps are the till's (NeoRestau lot 1, task 11): the
+ * //// Neoffice — added file (no upstream equivalent). An item's VAT maps are the till's (NeoResto lot 1, task 11): the
  * //// offline item cache is keyed by item code and shared by every till of a browser, so it keeps the maps by till, and
  * //// the cart takes only its own till's: a browser that switches tills never taxes a line with the other's.
  * @vitest-environment jsdom

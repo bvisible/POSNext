@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). Dictating the remark for the kitchen on the phone (NeoRestau lot 1,
+//// Neoffice — added file (no upstream equivalent). Dictating the remark for the kitchen on the phone (NeoResto lot 1,
 //// task 27; design § G: « a remark for the kitchen (with a microphone to dictate) »). The browser's own speech
 //// recognition (Web Speech API, `SpeechRecognition`, prefixed `webkitSpeechRecognition` in Chrome and Safari): offered
 //// only where the browser has it, started by the waiter's press and by nothing else, stopped by a second press, cut

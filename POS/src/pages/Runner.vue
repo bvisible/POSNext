@@ -21,7 +21,7 @@
 	</div>
 
 	<!-- //// Neoffice — the text size is a set of CSS variables on the root, as on the kitchen screen (task 38a-2): the cards read them. And the dynamic viewport height, as the kitchen's root has it (ruling 72): a tablet browser's toolbar must not cut the foot of the screen. -->
-	<!-- //// Neoffice — the phone (NeoRestau lot 1, smoke-test fix): below 768 px the root never widens the page (`max-md:overflow-x-hidden`): the bar's controls used to push it to 797 px at 390 px, and a page wider than the phone widens the layout viewport of a mobile browser, which stretched the full-screen ticket past the screen. The bar wraps now (ServiceTopBar); this keeps it so whatever a screen adds later. -->
+	<!-- //// Neoffice — the phone (NeoResto lot 1, smoke-test fix): below 768 px the root never widens the page (`max-md:overflow-x-hidden`): the bar's controls used to push it to 797 px at 390 px, and a page wider than the phone widens the layout viewport of a mobile browser, which stretched the full-screen ticket past the screen. The bar wraps now (ServiceTopBar); this keeps it so whatever a screen adds later. -->
 	<div v-else class="flex flex-col h-screen supports-[height:100dvh]:h-dvh bg-gray-100 dark:bg-gray-900 max-md:overflow-x-hidden" :style="textSizeStyle" :data-text-size="textSize" data-test="runner-screen">
 		<!-- //// Neoffice — ONE top bar instead of a header of two lines and a line of chips, the same as the kitchen's (task 38a-2, rulings 129 and 130). Row 1: « Runner » -->
 		<!-- //// (and the room when one is chosen) with the count of what is ready on the same line, the display modes of the screen, and at the right the actions. -->
@@ -57,7 +57,7 @@
 				<!-- //// Neoffice — the choices of the printer button of the tickets (task 44): the button (off on the runner screen unless chosen), what prints, the COPY mark. Drawn where a station has a printer -->
 				<PrintCopySettings v-if="hasCopyPrinters" screen="Runner" :settings="copySettings" @change="setCopySetting" />
 			</template>
-			<!-- //// Neoffice — a sound is on but the browser has not been touched yet: it can make none before (NeoRestau lot 1, Daniel, 01.11) -->
+			<!-- //// Neoffice — a sound is on but the browser has not been touched yet: it can make none before (NeoResto lot 1, Daniel, 01.11) -->
 			<template #chip>
 				<SoundUnlockChip :enabled="runnerSoundOn" />
 			</template>
@@ -242,11 +242,11 @@ import SegmentedControl from "@/components/restaurant/SegmentedControl.vue"
 import { SCREEN_RUNNER } from "@/utils/restaurantScreens"
 import { useDocumentTitle } from "@/composables/useDocumentTitle"
 import { useKitchenTextSize } from "@/composables/useKitchenTextSize"
-//// Neoffice — keep the screen on, and let it rest on purpose (NeoRestau lot 1, task 47)
+//// Neoffice — keep the screen on, and let it rest on purpose (NeoResto lot 1, task 47)
 import ScreenAwakeSettings from "@/components/restaurant/ScreenAwakeSettings.vue"
 import ScreenRestLayer from "@/components/restaurant/ScreenRestLayer.vue"
 import { useScreenAwake } from "@/composables/useScreenAwake"
-//// Neoffice — the printer button of the tickets: a copy of the ticket for the pass, printed by the server (NeoRestau lot 1, task 44)
+//// Neoffice — the printer button of the tickets: a copy of the ticket for the pass, printed by the server (NeoResto lot 1, task 44)
 import PrintCopySettings from "@/components/restaurant/PrintCopySettings.vue"
 import { usePrintCopy } from "@/composables/usePrintCopy"
 import { ticketCounts } from "@/utils/screenAwake"
@@ -263,7 +263,7 @@ import { byArrival } from "@/utils/kitchenBands"
 //// Neoffice — what to write on a station's colour, and the colour lightened for a dark screen (task 46)
 import { inkOn, onDark } from "@/utils/stationColors"
 import { call } from "@/utils/apiWrapper"
-//// Neoffice — the runner's sound when dishes come up ready is the till's setting (POS Settings, "Kitchen alerts"), played by the shared alert-sound player (NeoRestau lot 1, Daniel, 01.11)
+//// Neoffice — the runner's sound when dishes come up ready is the till's setting (POS Settings, "Kitchen alerts"), played by the shared alert-sound player (NeoResto lot 1, Daniel, 01.11)
 import SoundUnlockChip from "@/components/restaurant/SoundUnlockChip.vue"
 import { useKitchenAlertSettings } from "@/composables/useKitchenAlertSettings"
 import { playAlertSound } from "@/utils/alertSoundPlayer"

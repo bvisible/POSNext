@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The address that the QR code on a restaurant's tables opens, the
- * //// call that reads the menu behind it, and how a price is written on it (NeoRestau lot 1, task 17).
+ * //// call that reads the menu behind it, and how a price is written on it (NeoResto lot 1, task 17).
  * @vitest-environment jsdom
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"

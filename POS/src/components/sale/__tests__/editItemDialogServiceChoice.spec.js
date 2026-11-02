@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The « Service » choice of « Edit Item Details » (NeoRestau lot 1, service
+ * //// Neoffice — added file (no upstream equivalent). The « Service » choice of « Edit Item Details » (NeoResto lot 1, service
  * //// families, the product owner's addition of 01.11): a starter must be able to be served WITH the mains. A line takes the
  * //// family of its article's group, and the waiter, who taps the product in the cart to edit it, can give it another one there
  * //// (Boisson, Entrée, Plat, Dessert); « served with the mains » is simply Plat chosen for a starter. The chip on the line and

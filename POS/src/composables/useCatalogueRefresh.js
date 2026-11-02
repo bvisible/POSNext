@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). What a till does when its own settings screen changed what it
- * //// sells (NeoRestau lot 1, task 13): its price list, its item groups, its brands, the unavailable items, the
+ * //// sells (NeoResto lot 1, task 13): its price list, its item groups, its brands, the unavailable items, the
  * //// variants, the pricing rules, its warehouse. It does what its refresh button does (POSSale.handleRefresh): the
  * //// items are fetched from the SERVER. A plain reload is not enough: once the till has had fresh items this session,
  * //// loadAllItems serves the browser's copy (IndexedDB), which keeps the old prices, and a cart line takes the price

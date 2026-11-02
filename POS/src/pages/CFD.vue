@@ -89,7 +89,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from "vue"
 import { initSocket } from "@/socket"
-//// Neoffice — the customer display keeps its screen on (NeoRestau lot 1, task 47): nobody touches it, so it never rests
+//// Neoffice — the customer display keeps its screen on (NeoResto lot 1, task 47): nobody touches it, so it never rests
 import { useScreenAwake } from "@/composables/useScreenAwake"
 //// Neoffice — the customer display shows amounts like the till (formatCFDCurrency below).
 import { formatCurrency } from "@/utils/currency"

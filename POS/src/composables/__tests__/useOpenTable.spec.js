@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). Opening a table in the till: the way tapping it in the list does it, and the way a notice of a guest's order does it (NeoRestau lot 1, Daniel, 01.11: « regarde
+ * //// Neoffice — added file (no upstream equivalent). Opening a table in the till: the way tapping it in the list does it, and the way a notice of a guest's order does it (NeoResto lot 1, Daniel, 01.11: « regarde
  * //// comment la caisse sommelier reçoit l'info »). The server's order of the table is read FIRST (the cart stays in front of the waiter meanwhile), then the cart is cleared and rebuilt in one go: the table, the lines
  * //// with their units, family and « offered » flag, the draft, the customer. The floor's list and the notices both go through this one function, so that they cannot open a table in two different ways.
  * @vitest-environment jsdom

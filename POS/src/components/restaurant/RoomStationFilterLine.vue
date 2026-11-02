@@ -1,12 +1,12 @@
 <template>
 	<!-- //// Neoffice — added file (no upstream equivalent). The one line of filters the runner and the kitchen screen -->
-	<!-- //// share (NeoRestau lot 1, task 9c): the rooms on the left, the preparation stations on the right. They were two -->
+	<!-- //// share (NeoResto lot 1, task 9c): the rooms on the left, the preparation stations on the right. They were two -->
 	<!-- //// rows on the runner and the kitchen had no room filter at all; the product owner asked for one line on both -->
 	<!-- //// screens, with the same behaviour. A screen hands over what it counts and keeps the choice; this component only -->
 	<!-- //// draws the chips and says what was chosen. It does not give a count a meaning: by default a count is plain text -->
 	<!-- //// in parentheses in the tone of its chip, and a screen that counts something with a meaning of its own (the -->
 	<!-- //// runner: the dishes that are READY, in green) draws its counts itself, through the slots. -->
-	<!-- //// Neoffice — an optional `end` slot closes the line (NeoRestau lot 1, task 23): the kitchen screen puts the switch of -->
+	<!-- //// Neoffice — an optional `end` slot closes the line (NeoResto lot 1, task 23): the kitchen screen puts the switch of -->
 	<!-- //// its layout (bands or side by side) there, on the line it already has, instead of on a row of its own that would -->
 	<!-- //// cost a row of tickets. The runner passes nothing, so its line is what it was. -->
 	<div
@@ -137,7 +137,7 @@ const allLabel = computed(() =>
 // with its border and the tickets get the rest of the screen. The product owner prefers ticket space to the 44 px touch
 // guideline of the design system (NeoPOS, section 7) for THESE chips: the guideline stays for the rest of the till. The
 // chips keep their width (px-4) and the room between them, so they stay easy to hit. The colours are the screens' own.
-//// Neoffice — the phone (NeoRestau lot 1, smoke-test fix): below 768 px there is no ticket space to save (the line wraps onto as many rows as it needs and a phone is a tall screen), and a finger is not a stylus: the chips are 40 px high, the touch minimum, and a little narrower (px-3), and the stations take a row of their own, from the left (the right edge of a phone is no corner to keep them in). From 768 px they are the 32 px, px-4 chips and the right-hand group they were.
+//// Neoffice — the phone (NeoResto lot 1, smoke-test fix): below 768 px there is no ticket space to save (the line wraps onto as many rows as it needs and a phone is a tall screen), and a finger is not a stylus: the chips are 40 px high, the touch minimum, and a little narrower (px-3), and the stations take a row of their own, from the left (the right edge of a phone is no corner to keep them in). From 768 px they are the 32 px, px-4 chips and the right-hand group they were.
 const CHIP =
 	"inline-flex items-center gap-1.5 h-8 max-md:h-10 px-4 max-md:px-3 text-sm font-medium rounded-lg transition-colors whitespace-nowrap touch-manipulation"
 const ACTIVE = "bg-gray-800 text-white dark:bg-white dark:text-gray-800"

@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). How a kitchen or runner screen gets the alerts of its till (NeoRestau lot 1, Daniel, 01.11): it asks `get_restaurant_settings` for its restaurant (the call
+ * //// Neoffice — added file (no upstream equivalent). How a kitchen or runner screen gets the alerts of its till (NeoResto lot 1, Daniel, 01.11): it asks `get_restaurant_settings` for its restaurant (the call
  * //// a tablet already makes, answered for a device account in the shape its screen reads), keeps what the last good answer said when a later one fails, and asks again every few minutes.
  * @vitest-environment jsdom
  */
@@ -116,7 +116,7 @@ describe("the alerts of a screen", () => {
 	})
 })
 
-//// Neoffice — the service rhythm of the restaurant rides in the same answer (NeoRestau lot 1, Daniel, 01.11): the kitchen greys the later courses only where the room calls them
+//// Neoffice — the service rhythm of the restaurant rides in the same answer (NeoResto lot 1, Daniel, 01.11): the kitchen greys the later courses only where the room calls them
 describe("the service rhythm of a screen's restaurant", () => {
 	it("is the room's call until the server has answered", () => {
 		const { rhythm } = mountWith({ restaurant: () => ({ restaurant: "Bistro" }) })

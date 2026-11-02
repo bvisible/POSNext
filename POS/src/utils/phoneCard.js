@@ -1,5 +1,5 @@
 //// Neoffice — added file (no upstream equivalent). The restaurant card on a phone, as the waiter mockup draws it
-//// (NeoRestau lot 1, task 27; product owner, 31.10.2026, pointing at the mockup: « look at your mockup, it is well
+//// (NeoResto lot 1, task 27; product owner, 31.10.2026, pointing at the mockup: « look at your mockup, it is well
 //// done… the same for the card as buttons »): the card's types as chips, one colour per type taken from the items' own
 //// colour (the Item's custom_color, set on the item sheet), the quantities the order already holds, and the price of a
 //// dish with its options. Pure functions: the phone's order screen and its options sheet read the card through here.

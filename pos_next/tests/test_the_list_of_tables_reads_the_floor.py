@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""What the list of tables reads from the floor (NeoRestau lot 1, task 26).
+"""What the list of tables reads from the floor (NeoResto lot 1, task 26).
 
 On a phone the restaurant till opens on the list of its tables, sorted by what needs the waiter first: dishes ready at
 the pass, a QR order waiting for him to accept it, then the other occupied tables, the oldest seated first, each with
@@ -162,7 +162,7 @@ class TestTheListOfTablesReadsTheFloor(TwoRestaurants, FrappeTestCase):
 		self.assertIsNone(self.table_on_the_floor(self.table_two)["order_summary"])
 
 	# Whoever is told the total: the takings of a table are the sales invoices', as the restaurant's figures are
-	# (restaurant/neorestau.overview_figures: the day's takings only to whoever reads the invoices)
+	# (restaurant/neoresto.overview_figures: the day's takings only to whoever reads the invoices)
 
 	def as_user(self, email, roles):
 		_user(email, roles, "System User")

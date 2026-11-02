@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The settings of the print button of the kitchen's and the runner's cards (NeoRestau lot 1, task 44):
+ * //// Neoffice — added file (no upstream equivalent). The settings of the print button of the kitchen's and the runner's cards (NeoResto lot 1, task 44):
  * //// the button on the kitchen screen (on), the button on the runner screen (off), what prints (this station's lines, or the whole order) and the COPY mark
  * //// (on). Each has a default, the restaurant's value may replace it and the device's choice replaces that; and the button is drawn only where the
  * //// station has a printer, whatever the settings say.

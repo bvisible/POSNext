@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""A table opened again hands the till the family of each of its lines (NeoRestau lot 1, Daniel's test of 01.11: « je vois pas comment faire
+"""A table opened again hands the till the family of each of its lines (NeoResto lot 1, Daniel's test of 01.11: « je vois pas comment faire
 la demande de la suite sur la table 2 »).
 
 The till names the next course (« Commander la suite · Desserts ») from the family each line of the cart carries. `open_table` returned a

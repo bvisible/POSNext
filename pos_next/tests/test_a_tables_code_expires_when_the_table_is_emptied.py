@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""A table's QR code expires whenever the table is emptied (NeoRestau lot 1, Ruling 52).
+"""A table's QR code expires whenever the table is emptied (NeoResto lot 1, Ruling 52).
 
 Freeing a table by hand (`update_table_status` to Empty, `mark_table_available`) expired its guest codes; three other
 paths emptied a table and left them active, so that the next QR press showed the previous party's code again, and the
@@ -49,9 +49,9 @@ class TestTheCodeOfAnEmptiedTable(Tills, FrappeTestCase):
 		realtime = patch.object(frappe, "publish_realtime")
 		realtime.start()
 		self.addCleanup(realtime.stop)
-		neorestau = patch.dict(frappe.conf, {"neorestau_active": 1})
-		neorestau.start()
-		self.addCleanup(neorestau.stop)
+		neoresto = patch.dict(frappe.conf, {"neoresto_active": 1})
+		neoresto.start()
+		self.addCleanup(neoresto.stop)
 		self.make_till(enable_restaurant_mode=1, restaurant=self.restaurant)
 		area = self.insert("Restaurant Area", restaurant=self.restaurant, area_name="_Test Emptied Room")
 		self.table = self.insert("Restaurant Table", area=area, table_name="_Test Emptied T1")

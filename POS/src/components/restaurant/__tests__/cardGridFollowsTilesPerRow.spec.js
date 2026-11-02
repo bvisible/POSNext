@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The grid of a restaurant card follows the till's « Tiles per
- * //// row » (NeoRestau lot 1, task 13; product owner, 30.10.2026): « Automatic » keeps the columns by the width of
+ * //// row » (NeoResto lot 1, task 13; product owner, 30.10.2026): « Automatic » keeps the columns by the width of
  * //// the screen exactly as they were, a number from 3 to 8 fixes them, and a dish without a picture then shows its
  * //// name once, in its well, with its price.
  * @vitest-environment jsdom

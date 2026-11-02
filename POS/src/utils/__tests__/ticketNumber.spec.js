@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). How a ticket number is written on a service screen (NeoRestau lot 1, task 38b,
+ * //// Neoffice — added file (no upstream equivalent). How a ticket number is written on a service screen (NeoResto lot 1, task 38b,
  * //// rulings 122 and 124): the server sends the whole number and the digits, the screen pads it.
  */
 import { describe, expect, it } from "vitest"

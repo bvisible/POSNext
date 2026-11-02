@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The sounds of the kitchen's and the runner's screens (NeoRestau lot 1, Daniel's request of 01.11: « un son pour aviser […] dans les réglages de la caisse,
+ * //// Neoffice — added file (no upstream equivalent). The sounds of the kitchen's and the runner's screens (NeoResto lot 1, Daniel's request of 01.11: « un son pour aviser […] dans les réglages de la caisse,
  * //// et peut-être même choisir le son avec des choix »). A sound is a SCHEDULE of notes (a pure table, tested here without any audio); a thin player turns it into oscillators (alertSoundPlayer).
  * @vitest-environment jsdom
  */

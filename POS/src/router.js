@@ -1,10 +1,10 @@
 import { shiftState } from "@/composables/useShift";
 import { userResource } from "@/data/user";
-//// Neoffice — the restaurant's own screens open only where the site runs NeoRestau (NeoRestau lot 1, task 4, fix round 1).
-import { redirectWhereNeoRestauIsOff } from "@/utils/neorestau";
-//// Neoffice — where a paired tablet goes when the installed app starts at the till's address (NeoRestau lot 1, task 48).
+//// Neoffice — the restaurant's own screens open only where the site runs NeoResto (NeoResto lot 1, task 4, fix round 1).
+import { redirectWhereNeoRestoIsOff } from "@/utils/neoresto";
+//// Neoffice — where a paired tablet goes when the installed app starts at the till's address (NeoResto lot 1, task 48).
 import { whereTheTabletStarts } from "@/utils/tabletStart";
-//// Neoffice — each screen names its tab (NeoRestau lot 1): the router writes it after every navigation, from the `title` of
+//// Neoffice — each screen names its tab (NeoResto lot 1): the router writes it after every navigation, from the `title` of
 //// the route; utils/tabTitle.js is the one place that writes the title of the tab.
 import { showScreen } from "@/utils/tabTitle";
 import { createRouter, createWebHistory } from "vue-router";
@@ -42,10 +42,10 @@ const routes = [
 		name: "KDS",
 		path: "/kds",
 		component: () => import("@/pages/KDS.vue"),
-		//// Neoffice — a screen of the restaurant: opens only where the site runs NeoRestau (utils/neorestau.js); a tablet
+		//// Neoffice — a screen of the restaurant: opens only where the site runs NeoResto (utils/neoresto.js); a tablet
 		//// signs in to it with a QR code (pairable: signed out, it is sent to the pairing page, not to a password).
 		//// Neoffice — `title` is the name of this screen's tab, translated when written (utils/tabTitle.js).
-		meta: { needsNeoRestau: true, pairable: true, title: () => __("Kitchen") },
+		meta: { needsNeoResto: true, pairable: true, title: () => __("Kitchen") },
 	},
 	{
 		name: "CFD",
@@ -58,26 +58,27 @@ const routes = [
 		name: "Runner",
 		path: "/runner",
 		component: () => import("@/pages/Runner.vue"),
-		//// Neoffice — a screen of the restaurant: opens only where the site runs NeoRestau (utils/neorestau.js); a tablet
+		//// Neoffice — a screen of the restaurant: opens only where the site runs NeoResto (utils/neoresto.js); a tablet
 		//// signs in to it with a QR code (pairable: signed out, it is sent to the pairing page, not to a password).
-		meta: { needsNeoRestau: true, pairable: true, title: () => __("Runner") },
+		meta: { needsNeoResto: true, pairable: true, title: () => __("Runner") },
 	},
 	//// Neoffice — the page a kitchen's or a runner's tablet opens by scanning the QR code a manager shows at the till
-	//// (NeoRestau lot 1, task 16): open to a visitor (the tablet has no session yet), only where the site runs
-	//// NeoRestau. The code rides in the fragment of the address (/pos/pair#<code>), which no request carries.
+	//// (NeoResto lot 1, task 16): open to a visitor (the tablet has no session yet), only where the site runs
+	//// NeoResto. The code rides in the fragment of the address (/pos/pair#<code>), which no request carries.
 	{
 		name: "PairDevice",
 		path: "/pair",
 		component: () => import("@/pages/PairDevice.vue"),
-		meta: { allowGuest: true, needsNeoRestau: true },
+		//// Neoffice — the guard's name follows the product's: NeoRestau became NeoResto (02.11.2026)
+		meta: { allowGuest: true, needsNeoResto: true },
 	},
 	{
 		name: "Takeaway",
 		path: "/takeaway",
 		component: () => import("@/pages/Takeaway.vue"),
-		//// Neoffice — a screen of the restaurant: opens only where the site runs NeoRestau (utils/neorestau.js).
+		//// Neoffice — a screen of the restaurant: opens only where the site runs NeoResto (utils/neoresto.js).
 		//// Neoffice — `title` is the name of this screen's tab, translated when written (utils/tabTitle.js).
-		meta: { needsNeoRestau: true, title: () => __("Takeaway") },
+		meta: { needsNeoResto: true, title: () => __("Takeaway") },
 	},
 	{
 		name: "GuestOrder",
@@ -100,10 +101,10 @@ const routes = [
 		//// Neoffice — `title` is the name of this screen's tab, translated when written (utils/tabTitle.js).
 		meta: { allowGuest: true, title: () => __("Reservation") },
 	},
-	//// Neoffice — the public menu (NeoRestau lot 1, task 17): the page that the one QR code on a restaurant's tables opens.
+	//// Neoffice — the public menu (NeoResto lot 1, task 17): the page that the one QR code on a restaurant's tables opens.
 	//// Like the other pages a guest opens it is let through with no session (meta.allowGuest); it is not behind
-	//// needsNeoRestau, which would send a guest to the till's login: the page asks the server, and says "This menu is not
-	//// available" politely where the site does not run NeoRestau or the restaurant did not switch its public menu on.
+	//// needsNeoResto, which would send a guest to the till's login: the page asks the server, and says "This menu is not
+	//// available" politely where the site does not run NeoResto or the restaurant did not switch its public menu on.
 	{
 		name: "PublicMenu",
 		path: "/menu/:restaurant",
@@ -122,12 +123,12 @@ const router = createRouter({
 	routes,
 });
 
-//// Neoffice — added guard, first in line (NeoRestau lot 1, task 48). A kitchen's or runner's tablet is installed as an
+//// Neoffice — added guard, first in line (NeoResto lot 1, task 48). A kitchen's or runner's tablet is installed as an
 //// app and every launch from its icon starts at /pos, the manifest's start_url: the route "/" is the till, whose shift
 //// dialog asks for profiles a tablet's account may not read ("Aucun profil POS disponible ... PermissionError"). Such a
 //// session is sent straight to ITS OWN screen (asked of the server, else the one it remembers), replacing the till's
 //// address, before the till's page is even loaded: no dialog, no error, no flash of the till. It speaks only for a
-//// session of the tablets' own accounts on a site that runs NeoRestau; a desk user, a visitor and a portal customer
+//// session of the tablets' own accounts on a site that runs NeoResto; a desk user, a visitor and a portal customer
 //// pass through untouched (upstream's guard below runs as it always did). A tablet the server refuses, or that can
 //// reach nothing and remembers nothing, goes to the pairing page, as a signed-out one does.
 //// Neoffice — a failure here (a browser that refuses its cookies) must never stop a navigation: it passes on to the way it was going.
@@ -154,9 +155,9 @@ router.beforeEach((to, from, next) => {
 	}
 
 	//// Neoffice — added guard: the till's own screens of the restaurant (/kds, /runner, /takeaway) open only where the
-	//// site runs NeoRestau; elsewhere the visitor goes back to the till, which sends him to the login if he has no
+	//// site runs NeoResto; elsewhere the visitor goes back to the till, which sends him to the login if he has no
 	//// session. It comes first: those screens may load with no till profile, and so no setting of the till to read.
-	const elsewhere = redirectWhereNeoRestauIsOff(to);
+	const elsewhere = redirectWhereNeoRestoIsOff(to);
 	if (elsewhere) {
 		next(elsewhere);
 		return;
@@ -176,24 +177,24 @@ router.beforeEach((to, from, next) => {
 
 	// Redirect logic
 	if (to.name === "Login" && isLoggedIn) {
-		//// Neoffice — and back: the door (the ?mode= query of NeoRestau's entry route, NeoRestau lot 1, task 5) must survive
+		//// Neoffice — and back: the door (the ?mode= query of NeoResto's entry route, NeoResto lot 1, task 5) must survive
 		//// the redirect to the login page AND the redirect back from it, or a signed-in visitor who lands on the login page
 		//// (the back button, a bookmark) would reach the till at the usual door. See the redirect to the login below.
 		next({ name: "POSSale", query: to.query });
 	} else if (to.name !== "Login" && !isLoggedIn) {
-		//// Neoffice — upstream dropped the query string here. NeoRestau's entry route is /pos?mode=restaurant, the door that
-		//// offers the restaurant's tills (NeoRestau lot 1, task 5). A visitor who is not signed in goes to the login first,
+		//// Neoffice — upstream dropped the query string here. NeoResto's entry route is /pos?mode=restaurant, the door that
+		//// offers the restaurant's tills (NeoResto lot 1, task 5). A visitor who is not signed in goes to the login first,
 		//// and the shift dialog that opens there once he is signed in reads the door from the query of its route: without it
 		//// a restaurant cashier would be offered the usual tills. Remove if upstream keeps the query on this redirect.
 		//// Neoffice — a kitchen's or runner's screen whose tablet is signed out goes to the pairing page instead, which says
-		//// how to get a new code (and links to the login): a tablet has no password to type (NeoRestau lot 1, task 16).
+		//// how to get a new code (and links to the login): a tablet has no password to type (NeoResto lot 1, task 16).
 		next(to.meta?.pairable ? { name: "PairDevice" } : { name: "Login", query: to.query });
 	} else {
 		next();
 	}
 });
 
-//// Neoffice — the one place that names the tab of every screen (NeoRestau lot 1): once a navigation is done, the `title` of
+//// Neoffice — the one place that names the tab of every screen (NeoResto lot 1): once a navigation is done, the `title` of
 //// its route is written, "<screen> · Neopos"; a route with none is plain "Neopos". A navigation that failed changed
 //// nothing. A screen that learns a name later (the till, the kitchen, the guest pages) hands it to utils/tabTitle.js itself.
 router.afterEach((to, from, failure) => {

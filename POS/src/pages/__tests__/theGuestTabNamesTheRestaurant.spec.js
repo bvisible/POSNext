@@ -1,7 +1,7 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The tab of a guest page carries the name of the restaurant
  * //// ("The Bistro · Neopos") instead of the bare word of the screen ("Order · Neopos"), from the first call of the session
- * //// (NeoRestau lot 1, Ruling 52). The only name a page had was the company of an order, which exists only once there is an
+ * //// (NeoResto lot 1, Ruling 52). The only name a page had was the company of an order, which exists only once there is an
  * //// invoice, and on a site that runs several restaurants under one company it told them apart no better. The server now
  * //// answers `restaurant_name` to `validate_token`, the call every guest session starts with (a takeaway session starts
  * //// with `create_takeaway_token` and validates its token right after); the store keeps it at `validateToken`, and the

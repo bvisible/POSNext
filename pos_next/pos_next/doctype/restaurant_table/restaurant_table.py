@@ -6,7 +6,7 @@
 # For license information, please see license.txt
 
 # //// Neoffice — a table is in the restaurant of its room, and its name only has to be unique within that
-# //// restaurant (NeoRestau lot 1, task 2). A table is named by a hash from now on: invoices, reservations, tips and
+# //// restaurant (NeoResto lot 1, task 2). A table is named by a hash from now on: invoices, reservations, tips and
 # //// guest tokens link to it by name, and a name that is also the label could not be changed, nor shared by two
 # //// restaurants.
 import frappe
@@ -30,7 +30,7 @@ class RestaurantTable(Document):
 		self._stay_in_its_restaurant()
 
 	def _only_its_status_without_the_floor_right(self):
-		"""A cashier may write a table, for its status (NeoRestau lot 1, task 3); laying it out is the floor plan's.
+		"""A cashier may write a table, for its status (NeoResto lot 1, task 3); laying it out is the floor plan's.
 
 		Checked on the document, so that no route (the desk form, the REST API, frappe.client) lets whoever may not
 		lay out the floor (permissions.RIGHTS["manage_floor"]) change a table's label, room, seats, place, size or shape.

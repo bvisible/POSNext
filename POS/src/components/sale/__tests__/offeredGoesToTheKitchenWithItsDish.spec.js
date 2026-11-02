@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). An offered row is part of a dish the guests ordered (NeoRestau lot
+ * //// Neoffice — added file (no upstream equivalent). An offered row is part of a dish the guests ordered (NeoResto lot
  * //// 1, task 24): it goes to the kitchen with its paid line, in the same send, never on a ticket of its own. The send
  * //// dialog lists the dish once (its paid line); sending that line sends the offered rows of the same dish not sent yet.
  * @vitest-environment jsdom

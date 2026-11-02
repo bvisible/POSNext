@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""The QR ticket of a table, asked for from the Print button of the QR dialog (NeoRestau lot 1, task 53).
+"""The QR ticket of a table, asked for from the Print button of the QR dialog (NeoResto lot 1, task 53).
 
 The dialog shows the QR code of a table and used to open the browser's print window. Now Print asks the SERVER to put a
 ticket on the till's receipt printer: POS Next names the moment (the hook `pos_next_table_qr_print`), checks who asks,

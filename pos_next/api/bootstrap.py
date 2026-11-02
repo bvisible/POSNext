@@ -186,7 +186,7 @@ def _get_precision_settings():
 		"rounding_method": settings.rounding_method,
 		"number_format": settings.number_format,
 		# //// Neoffice — how ERPNext rounds an invoice's tax rows (each line's share first, where it is set): the till
-		# //// computes its taxes the way the invoice does, to the cent (NeoRestau lot 1, Ruling 70; POS
+		# //// computes its taxes the way the invoice does, to the cent (NeoResto lot 1, Ruling 70; POS
 		# //// utils/invoiceTaxes.js).
 		"round_row_wise_tax": frappe.db.get_single_value("Accounts Settings", "round_row_wise_tax") or 0,
 	}
@@ -277,7 +277,7 @@ def _get_pos_settings(pos_profile_doc):
 			frappe.db.get_single_value("Stock Settings", "allow_negative_stock") or 0
 		)
 		# //// Neoffice — the till's « Block a sale beyond the stock » (its POS Profile's box), which its
-		# //// stock guard reads where the site allows negative stock (NeoRestau lot 1, task 13, ruling 82);
+		# //// stock guard reads where the site allows negative stock (NeoResto lot 1, task 13, ruling 82);
 		# //// no value: blocks.
 		block_sale = pos_profile_doc.get("posa_block_sale_beyond_available_qty")
 		settings["posa_block_sale_beyond_available_qty"] = (
@@ -291,7 +291,7 @@ def _get_pos_settings(pos_profile_doc):
 		return settings
 	except Exception:
 		frappe.log_error(frappe.get_traceback(), "Get POS Settings Error")
-		# //// Neoffice — the defaults, told whether the site runs NeoRestau like every other answer (NeoRestau lot 1,
+		# //// Neoffice — the defaults, told whether the site runs NeoResto like every other answer (NeoResto lot 1,
 		# //// task 4, fix round 1).
 		from pos_next.restaurant.mode import default_settings
 

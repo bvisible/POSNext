@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). A line that has left for the kitchen never absorbs a new unit
- * //// (NeoRestau lot 1, task 22, fix round 1). The line of a table's order read back carries its unit and its kitchen
+ * //// (NeoResto lot 1, task 22, fix round 1). The line of a table's order read back carries its unit and its kitchen
  * //// status; the card tap, the grid, the scanner and the « + » of the stepper all went through a lookup on the item
  * //// and its unit alone, so a second round of the same drink became « Wine x5 » on a line already « Pending »: the
  * //// extra unit was billed and never sent to the bar. A new unit leaves at once, on a line of its own that the

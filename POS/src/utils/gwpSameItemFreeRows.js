@@ -11,7 +11,7 @@
 //// Neoffice — each shown line keeps the way back to its cart row (utils/cartRow.js): the row actions
 //// address a line by identity, and the lines below are copies.
 import { withCartRow } from "@/utils/cartRow"
-//// Neoffice — an offered row (NeoRestau lot 1, task 24) is no paid line: see findPaidCartItem.
+//// Neoffice — an offered row (NeoResto lot 1, task 24) is no paid line: see findPaidCartItem.
 import { isOfferedRow } from "@/utils/offeredRows"
 
 function findPaidCartItem(items, itemCode, uom) {

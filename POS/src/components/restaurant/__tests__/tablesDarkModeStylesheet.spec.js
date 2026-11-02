@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The dark classes of the till's floor plan and list of tables are compiled by the till's own
- * //// Tailwind configuration and come out as the rules they need (NeoRestau lot 1, smoke-test fix). A class that is mistyped, or a colour the configuration
+ * //// Tailwind configuration and come out as the rules they need (NeoResto lot 1, smoke-test fix). A class that is mistyped, or a colour the configuration
  * //// does not name (`dark:text-ds-sucess`), compiles to nothing and the element is silently left as it was. So the sources are compiled, and what matters
  * //// is read in the stylesheet: the rules exist, they sit in the dark scope, and the colours are the design system's.
  * //// The CONTRAST is computed here from those compiled colours and from the till's own dark remap (index.css), the way a browser composes them: every text

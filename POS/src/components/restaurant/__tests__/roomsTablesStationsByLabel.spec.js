@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). A room, a table and a preparation station are named by a
- * //// hash from now on (NeoRestau lot 1, task 2), so every screen that shows one shows its LABEL: the kitchen
+ * //// hash from now on (NeoResto lot 1, task 2), so every screen that shows one shows its LABEL: the kitchen
  * //// screen, the runner's cards and the reservation desk, while a room is still chosen by its name.
  * @vitest-environment jsdom
  */

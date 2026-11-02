@@ -1,4 +1,4 @@
-# //// Neoffice — added file (no upstream equivalent). What a restaurant owns (NeoRestau lot 1, task 2):
+# //// Neoffice — added file (no upstream equivalent). What a restaurant owns (NeoResto lot 1, task 2):
 # //// its rooms, tables, preparation stations, cards, menus, reservations and tips. A site can run several
 # //// restaurants, so every list the till reads is the list of ONE restaurant (the till's), a record is
 # //// created in the restaurant that asked, and a label (the name of a room, a table, a station) only has to be

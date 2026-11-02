@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The wide card of a long ticket (NeoRestau lot 1, task 38a-3, ruling 107 layer 2): the rules that say which tickets take two
+ * //// Neoffice — added file (no upstream equivalent). The wide card of a long ticket (NeoResto lot 1, task 38a-3, ruling 107 layer 2): the rules that say which tickets take two
  * //// card widths and where. A ticket with MORE than `WIDE_TICKET_LINES` dishes is wide, on a screen that holds at least `WIDE_MIN_COLUMNS` columns of tickets; the dishes it counts are
  * //// the ones sent, not the preview announced under « Coming next ». jsdom has no layout engine: widths are given by hand.
  * @vitest-environment jsdom

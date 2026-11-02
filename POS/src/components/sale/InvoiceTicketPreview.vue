@@ -2,7 +2,7 @@
 	<div :class="rootClass" :title="preview.title" data-testid="invoice-preview">
 		<!-- //// Neoffice — added file (no upstream equivalent). What a ticket holds, in the middle column of a row of -->
 		<!-- //// the invoice history: its first dishes, one per line, each cut with an ellipsis by itself, then -->
-		<!-- //// « +n items » on a line of its own (NeoRestau lot 1, task 29). Below 768 px the row has no middle column -->
+		<!-- //// « +n items » on a line of its own (NeoResto lot 1, task 29). Below 768 px the row has no middle column -->
 		<!-- //// any more and the dishes sit side by side under its left block, in the room of two lines. -->
 		<div ref="box" dir="auto" :class="boxClass">
 			<span

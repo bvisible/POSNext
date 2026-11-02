@@ -1,14 +1,14 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""The public menu (NeoRestau lot 1, task 17): one QR code on the tables shows a restaurant's guest card, read only.
+"""The public menu (NeoResto lot 1, task 17): one QR code on the tables shows a restaurant's guest card, read only.
 
 Today a guest orders at the table through the unique QR the waiter brings, which is tied to the table's draft ticket.
 This is the other QR: the same for every table, it opens `/pos/menu/<restaurant>`, a page that shows the card and lets
 nobody order. It exists only where the restaurant switched it on (`Restaurant.enable_public_menu`) and the site runs
-NeoRestau; the endpoint behind it is open to anybody, so these tests pin what it must never say: nothing of stock, cost,
+NeoResto; the endpoint behind it is open to anybody, so these tests pin what it must never say: nothing of stock, cost,
 an internal item, another restaurant's card, a card that is not published, a private file.
 
 Every test builds what it needs under names of its own (`_Test`) and works inside a savepoint it rolls back. The site's
-NeoRestau flag is set by patching the configuration the code reads; nothing writes a site_config.json.
+NeoResto flag is set by patching the configuration the code reads; nothing writes a site_config.json.
 """
 
 import copy
@@ -73,8 +73,8 @@ THE_TEST_RESTAURANT = object()
 
 
 @contextmanager
-def a_site_where_neorestau_is(value):
-	"""The site's `neorestau_active` as the code reads it (None: the key is not in the configuration)."""
+def a_site_where_neoresto_is(value):
+	"""The site's `neoresto_active` as the code reads it (None: the key is not in the configuration)."""
 	with patch.dict(frappe.conf):
 		if value is None:
 			frappe.conf.pop(SITE_FLAG, None)
@@ -126,7 +126,7 @@ class PublicMenuFixtures:
 		# A built card is kept for a minute, in Redis, which a rollback does not empty
 		self.restaurants = []
 		self.addCleanup(self.forget_the_cards)
-		flag = a_site_where_neorestau_is(1)
+		flag = a_site_where_neoresto_is(1)
 		flag.__enter__()
 		self.addCleanup(flag.__exit__, None, None, None)
 		# Tip provisioning (an item and an account) is the restaurant doctype's own test
@@ -279,9 +279,9 @@ class TestThePublicMenuIsOffUnlessThereIsOne(PublicMenuFixtures, FrappeTestCase)
 
 		self.assertEqual(self.refusal(), NOT_AVAILABLE)
 
-	def test_where_neorestau_is_off_nothing_is_public(self):
+	def test_where_neoresto_is_off_nothing_is_public(self):
 		for value in (0, "0", None):
-			with self.subTest(neorestau=value), a_site_where_neorestau_is(value):
+			with self.subTest(neoresto=value), a_site_where_neoresto_is(value):
 				self.assertEqual(self.refusal(), NOT_AVAILABLE)
 
 	def test_a_disabled_restaurant_publishes_nothing(self):
@@ -308,10 +308,10 @@ class TestThePublicMenuIsOffUnlessThereIsOne(PublicMenuFixtures, FrappeTestCase)
 		with self.assertRaises(frappe.DoesNotExistError):
 			public_menu.get_public_menu(self.restaurant)
 
-	def test_neorestau_going_off_takes_effect_at_once_even_when_the_card_is_kept(self):
+	def test_neoresto_going_off_takes_effect_at_once_even_when_the_card_is_kept(self):
 		self.assertTrue(public_menu.get_public_menu(self.restaurant))
 
-		with a_site_where_neorestau_is(0), self.assertRaises(frappe.DoesNotExistError):
+		with a_site_where_neoresto_is(0), self.assertRaises(frappe.DoesNotExistError):
 			public_menu.get_public_menu(self.restaurant)
 
 
@@ -776,11 +776,11 @@ class TestThePublicMenuInProcess(PublicMenuFixtures, FrappeTestCase):
 
 		self.assertIsNone(public_menu.public_menu(self.restaurant))
 
-	def test_it_is_none_where_neorestau_is_off_even_when_the_card_is_kept(self):
+	def test_it_is_none_where_neoresto_is_off_even_when_the_card_is_kept(self):
 		self.assertTrue(public_menu.public_menu(self.restaurant))
 
 		for value in (0, "0", None):
-			with self.subTest(neorestau=value), a_site_where_neorestau_is(value):
+			with self.subTest(neoresto=value), a_site_where_neoresto_is(value):
 				self.assertIsNone(public_menu.public_menu(self.restaurant))
 
 	def test_it_is_none_for_a_disabled_restaurant_and_for_a_name_that_is_not_one(self):

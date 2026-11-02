@@ -14,9 +14,9 @@ import { usePOSSettingsStore } from "./posSettings"
 import { db } from "../utils/offline/db"
 import { logger } from "../utils/logger"
 import { call } from "../utils/apiWrapper"
-//// Neoffice — the service families (NeoRestau lot 1): the map of Item Groups to families is kept where the cart can read it.
+//// Neoffice — the service families (NeoResto lot 1): the map of Item Groups to families is kept where the cart can read it.
 import { setGroupFamilies } from "../utils/serviceFamilies"
-//// Neoffice — the restaurant's service rhythm (NeoRestau lot 1, Daniel, 01.11): the room calls each course, or the kitchen prepares ahead
+//// Neoffice — the restaurant's service rhythm (NeoResto lot 1, Daniel, 01.11): the room calls each course, or the kitchen prepares ahead
 import { rhythmOf } from "../utils/serviceRhythm"
 //// Neoffice — a guest who orders or pays from the QR code of a table is told to the waiter's till here (Daniel, 01.11): a notice and a sound, see stores/floorNotices.
 import { useFloorNoticesStore } from "./floorNotices"
@@ -43,7 +43,7 @@ export const RESTAURANT_RIGHTS = [
 ]
 
 // The cards a cashier opened by hand stay on THIS till, through a reload of the page, until he closes them or the shift
-// closes (NeoRestau lot 1, task 25). They are kept in the browser, which may refuse it (a private window, a full
+// closes (NeoResto lot 1, task 25). They are kept in the browser, which may refuse it (a private window, a full
 // quota): the till then works as it did, a card opened being lost with the page.
 const OPENED_CARDS_KEY = "pos_next_opened_cards"
 
@@ -86,7 +86,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		auto_detect_tip: true,
 		tip_item: null,
 		enable_runner: true,
-		//// Neoffice — how the courses reach the kitchen (NeoRestau lot 1, Daniel, 01.11): the room calls them unless the restaurant says its kitchen prepares ahead
+		//// Neoffice — how the courses reach the kitchen (NeoResto lot 1, Daniel, 01.11): the room calls them unless the restaurant says its kitchen prepares ahead
 		service_rhythm: "Called by the room",
 		enable_takeaway: false,
 		takeaway_card: null,
@@ -106,7 +106,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		warning: null,
 	})
 	// The cards the opening hours keep off the till right now (by name and description), and the ones the cashier opened
-	// by hand from the « ⋯ » (NeoRestau lot 1, task 25): see below.
+	// by hand from the « ⋯ » (NeoResto lot 1, task 25): see below.
 	const hiddenCards = ref([])
 	const openedCards = ref(readOpenedCards())
 	const lastOpenedCard = ref(null)
@@ -114,7 +114,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		() => posSettingsStore.settings.enable_restaurant_mode,
 	)
 	// What the user may manage of the restaurant, as the server told the till (`restaurant_can` of the till's settings,
-	// NeoRestau lot 1, task 3): the floor plan, the cards, the option groups, the workflows, the settings, the tips.
+	// NeoResto lot 1, task 3): the floor plan, the cards, the option groups, the workflows, the settings, the tips.
 	// A right the server did not grant, or did not send yet, is refused: the till shows only what the server allows,
 	// and the server refuses the rest whatever the till shows.
 	const can = computed(() => {

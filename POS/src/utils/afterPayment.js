@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). What a restaurant's phone does once a sale is paid (NeoRestau lot 1, kitchen test of 01.11): it went on
+//// Neoffice — added file (no upstream equivalent). What a restaurant's phone does once a sale is paid (NeoResto lot 1, kitchen test of 01.11): it went on
 //// showing the empty cart tab, and the receipt window stayed open after Print with a close cross too small for a finger. The rules are written here, once.
 
 /** How long the receipt window stays open after Print in a restaurant, in milliseconds: long enough to see the receipt was sent. */

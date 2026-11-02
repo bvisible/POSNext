@@ -2,7 +2,7 @@
 //// options it carries (posa_item_modifiers, as the options dialog and the phone's options sheet write them). A line
 //// loaded from the server comes at the price the server holds, its options included; the cart has to know how much of
 //// that price its options make (the line's _modifiers_applied), or saving the options again takes them off twice
-//// (NeoRestau lot 1, task 27, fix round 1). One reading for every path that loads a line: a table opened on the floor
+//// (NeoResto lot 1, task 27, fix round 1). One reading for every path that loads a line: a table opened on the floor
 //// (FloorPlanEditor.vue), a server draft (POSSale.vue), a guest's order reloaded at the open table (useInvoice.js,
 //// replaceAllItems).
 

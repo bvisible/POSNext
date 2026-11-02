@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The timer at the head of a kitchen ticket counts from the course at the kitchen (NeoRestau lot 1, Daniel, 01.11: the starters and
+ * //// Neoffice — added file (no upstream equivalent). The timer at the head of a kitchen ticket counts from the course at the kitchen (NeoResto lot 1, Daniel, 01.11: the starters and
  * //// the mains are struck through, the desserts have just been sent, and the ticket still read « 3 h 03 », the time since the table sat down). The ticket reads the time each dish left.
  * @vitest-environment jsdom
  */

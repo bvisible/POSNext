@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""The till's settings screen reads one list and saves through one door (NeoRestau lot 1, task 13).
+"""The till's settings screen reads one list and saves through one door (NeoResto lot 1, task 13).
 
 The list (`pos_next.till_settings.registry`) describes every setting once: where it lives, its tab, its help, which
 till shows it, what it depends on, whether it is set at the office only. It names no field the code does not have,
@@ -429,9 +429,9 @@ class TillSettingsCase(FrappeTestCase):
 		frappe.db.savepoint(SAVEPOINT)
 		self.addCleanup(frappe.db.rollback, save_point=SAVEPOINT)
 		self.addCleanup(frappe.set_user, "Administrator")
-		neorestau = patch.dict(frappe.conf, {"neorestau_active": 1})
-		neorestau.start()
-		self.addCleanup(neorestau.stop)
+		neoresto = patch.dict(frappe.conf, {"neoresto_active": 1})
+		neoresto.start()
+		self.addCleanup(neoresto.stop)
 
 	def as_user(self, user):
 		frappe.set_user(user)
@@ -465,9 +465,9 @@ class TestWhoOpensTheSettings(TillSettingsCase):
 		# Sales orders are a shop till's
 		self.assertNotIn("allow_sales_order", settings)
 
-	def test_a_restaurant_till_where_neorestau_is_off_is_a_shop_till(self):
+	def test_a_restaurant_till_where_neoresto_is_off_is_a_shop_till(self):
 		self.as_user(TILL_MANAGER)
-		with patch.dict(frappe.conf, {"neorestau_active": 0}):
+		with patch.dict(frappe.conf, {"neoresto_active": 0}):
 			answer = get_till_settings(self.restaurant_till)
 
 		self.assertEqual(till_tabs(answer), SHOP_TABS)
@@ -817,7 +817,7 @@ class TestTilesPerRow(TillSettingsCase):
 
 class TestTheLockAndTheStaffSession(TillSettingsCase):
 	"""The lock of the till and the days it keeps its staff signed in were fields of the old settings dialog before they were
-	settings of the list (NeoRestau lot 1, 01.11.2026): the list holds the same ranges as the document and the session."""
+	settings of the list (NeoResto lot 1, 01.11.2026): the list holds the same ranges as the document and the session."""
 
 	def test_the_list_describes_the_four_settings_with_the_ranges_the_server_holds(self):
 		from pos_next.api.session import MAX_KEEP_SIGNED_IN_DAYS

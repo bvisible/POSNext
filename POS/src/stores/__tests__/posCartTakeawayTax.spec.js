@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). A takeaway order at the till (NeoRestau lot 1, task 11): the
+ * //// Neoffice — added file (no upstream equivalent). A takeaway order at the till (NeoResto lot 1, task 11): the
  * //// cart is taxed at the takeaway rates while it is one, and its payment carries the takeaway flag and the order's
  * //// number to the server, which then gives the invoice the restaurant's takeaway tax category. The draft the till
  * //// saves just before the payment never carries them: a takeaway draft is a kitchen ticket to the kitchen screen and

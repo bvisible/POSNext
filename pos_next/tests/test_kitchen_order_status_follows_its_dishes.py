@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""The status of an order follows ALL its dishes, forward and backward (NeoRestau lot 1, task 38b, rulings 79 and 78).
+"""The status of an order follows ALL its dishes, forward and backward (NeoResto lot 1, task 38b, rulings 79 and 78).
 
 `update_item_kds_status` used to raise the order's own status to Ready when every dish was ready, and do nothing else. So the
 order was never lowered: a kitchen without a runner delivers an order in one gesture (every dish Delivered, the order
@@ -47,7 +47,7 @@ class TestTheRuleOfTheStatus(FrappeTestCase):
 
 
 	def test_every_example_of_the_shared_table_of_dishes_sent_ahead_gives_its_status(self):
-		# //// Neoffice — the dishes that left AHEAD of their course and are not called (the service rhythm, NeoRestau lot 1)
+		# //// Neoffice — the dishes that left AHEAD of their course and are not called (the service rhythm, NeoResto lot 1)
 		with open(CASES, encoding="utf-8") as table:
 			cases = json.load(table)["ahead_cases"]
 

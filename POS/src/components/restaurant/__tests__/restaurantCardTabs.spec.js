@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The row of card buttons of the order screen (NeoRestau lot 1,
+ * //// Neoffice — added file (no upstream equivalent). The row of card buttons of the order screen (NeoResto lot 1,
  * //// task 25): one button per card; a card opened by hand carries a mark and a « × »; the « ⋯ » that fetches a card the
  * //// opening hours keep off the till ends the row. Nothing above the buttons says anything about the hours: between
  * //// two services the afternoon has no card of its own, and the « ⋯ » is the way back.

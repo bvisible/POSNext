@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The kitchen screen's text size as the screen holds it (NeoRestau lot 1, task 38a-1,
+//// Neoffice — added file (no upstream equivalent). The kitchen screen's text size as the screen holds it (NeoResto lot 1, task 38a-1,
 //// ruling 109): the cook's pick, kept on the DEVICE (a tablet in the kitchen keeps its own, a cook who needs glasses sets it once), and
 //// shown as the CSS variables the screen's root carries. The rules and the table of sizes are in utils/kitchenTextSize and tested there;
 //// this only wires them to the browser's storage.

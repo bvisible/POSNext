@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The kitchen and runner PAGES, and the pieces they are made of, in DARK mode
- * //// (NeoRestau lot 1, task 46): the floor plan's canvas was a fixed light sheet under light table names, an unchecked
+ * //// (NeoResto lot 1, task 46): the floor plan's canvas was a fixed light sheet under light table names, an unchecked
  * //// "Show completed" box was a solid white disc that reads as "on", the runner's room count was white on a light green, a station's
  * //// name was written in its own colour on a tint of it (a blue one 2.0:1), the empty states were a shade under 4.5:1. The cards
  * //// have their own spec (components/invoices/__tests__/kitchenDarkMode.spec.js); a browser measured the contrast (task 46's

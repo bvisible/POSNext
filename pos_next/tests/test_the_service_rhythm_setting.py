@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""The service rhythm of a restaurant (NeoRestau lot 1, Daniel, 01.11: « Oui, les deux modes »).
+"""The service rhythm of a restaurant (NeoResto lot 1, Daniel, 01.11: « Oui, les deux modes »).
 
 A restaurant chooses, in its settings, how the courses of a meal reach the kitchen:
 

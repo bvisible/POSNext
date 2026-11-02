@@ -1,5 +1,5 @@
 //// Neoffice — added file (no upstream equivalent). What a service screen (the kitchen's, the runner's) needs to put a PRINTER BUTTON on its
-//// cards and make it print a copy of a ticket (NeoRestau lot 1, task 44): the device's four settings (utils/printCopy), the stations that
+//// cards and make it print a copy of a ticket (NeoResto lot 1, task 44): the device's four settings (utils/printCopy), the stations that
 //// have a printer (asked of the server, and again every minute: a printer is plugged in or out while the screen is open), whether a card
 //// draws its button, what the button says, and the print itself (utils/kitchenCopy). The screen hands in the station it is opened on and the
 //// restaurant it shows; it hands the object this returns to its bands and cards, which ask `canPrint(order)`, `stateOf(order)` and `print(order)`.

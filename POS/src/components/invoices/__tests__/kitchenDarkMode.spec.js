@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The kitchen ticket and the runner card are readable in DARK mode (NeoRestau
+ * //// Neoffice — added file (no upstream equivalent). The kitchen ticket and the runner card are readable in DARK mode (NeoResto
  * //// lot 1, task 46). On a tablet in dark mode the main buttons were a blank white square (the Button's own fill turns to bright
  * //// paper in dark and the cards forced white text on it), the "In preparation" badge was a patch of one colour (the till's dark
  * //// remap lightens the text and leaves the background as light), the late timer's red was 3.1:1 and its pulse took it to 1.6:1,

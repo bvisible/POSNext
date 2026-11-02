@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The top of the floor plan is ONE line (NeoRestau lot 1, Ruling 48):
+ * //// Neoffice — added file (no upstream equivalent). The top of the floor plan is ONE line (NeoResto lot 1, Ruling 48):
  * //// the room tabs on the left, the station chips and the Runner pill on the right, with the look of the line the
  * //// runner and the kitchen screen share (RoomStationFilterLine: chips 32 px high, a line of 41 px, Ruling 44). It was
  * //// two rows of 49 and 39 px, and an Edit button that was too easy to hit. The tabs, the chips and the pills keep what

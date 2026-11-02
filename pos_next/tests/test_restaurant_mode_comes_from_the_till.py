@@ -1,12 +1,12 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""A till is a restaurant till by its own setting, and only where NeoRestau runs (NeoRestau lot 1, task 4).
+"""A till is a restaurant till by its own setting, and only where NeoResto runs (NeoResto lot 1, task 4).
 
 The restaurant switch of the till's header, and the per-device memory behind it, are gone (lot 0): what makes a till a
 restaurant till is its POS Settings (`enable_restaurant_mode`, one row per POS Profile, ticked at the desk). It counts
-only where the site runs NeoRestau (the site flag `neorestau_active`, off unless the site switches it on), and only for
+only where the site runs NeoResto (the site flag `neoresto_active`, off unless the site switches it on), and only for
 a till that names its restaurant. Every way the till reads its settings answers that effective mode, so that with
-NeoRestau off nothing of the restaurant shows at the till: the entry points of the guests that START something refuse as
-well, and what a payment started before NeoRestau went off goes through stays open, so that the payment can be recorded.
+NeoResto off nothing of the restaurant shows at the till: the entry points of the guests that START something refuse as
+well, and what a payment started before NeoResto went off goes through stays open, so that the payment can be recorded.
 
 The suite relies on neither the patches nor any POS Settings row: a fresh CI site runs no patch, while the clone of a
 working site holds a real restaurant till. Every test builds the rows it needs and nothing here commits. The site's
@@ -29,15 +29,15 @@ from pos_next.patches.neorestau.switch_neorestau_on_where_restaurant_mode_runs i
 from pos_next.pos_next.doctype.pos_settings.pos_settings import get_pos_settings, update_pos_settings
 from pos_next.pos_next.doctype.restaurant.restaurant import Restaurant
 from pos_next.restaurant import mode
-from pos_next.restaurant.mode import effective_restaurant_mode, neorestau_active
+from pos_next.restaurant.mode import effective_restaurant_mode, neoresto_active
 from pos_next.tests.test_a_site_that_used_the_restaurant import a_site_that_never_used_the_restaurant
 from pos_next.tests.test_till_writes_need_the_till import CASHIER_ROLE, OTHER_TILL, TILL, _till_fixture, _user
 
 ABSENT = object()
 RESTAURANT = "_Test Mode Restaurant"
 COUNTER_TILL = "_Test Mode Counter Till"
-SAVEPOINT = "neorestau_mode_test"
-SITE_FLAG = "neorestau_active"
+SAVEPOINT = "neoresto_mode_test"
+SITE_FLAG = "neoresto_active"
 MODE_HOOK = "pos_next.restaurant.mode.extend_bootstrap_settings"
 BOOT_HOOK = "pos_next.restaurant.mode.extend_boot"
 SWITCH_ON_PATCH = "pos_next.patches.neorestau.switch_neorestau_on_where_restaurant_mode_runs"
@@ -47,7 +47,7 @@ TOKEN = "_Test unknown token"
 NEXT_WEEK = add_days(nowdate(), 7)
 # What a visitor STARTS through the guest and booking pages (a new order, a new payment, a booking, a look at the free
 # tables), and what the till starts for them (the code of a table, made by its QR button), with arguments that reach
-# nothing of their own: the guard of NeoRestau comes before everything the entry point does. None of them sits on the
+# nothing of their own: the guard of NeoResto comes before everything the entry point does. None of them sits on the
 # return path of a payment.
 STARTS_SOMETHING = (
 	(guest_ordering.create_table_token, (TOKEN, TOKEN)),
@@ -60,7 +60,7 @@ STARTS_SOMETHING = (
 		(NEXT_WEEK, "20:00:00", 2, "_Test Guest", "0790000000", "mode-guest@yopmail.com"),
 	),
 )
-# What a payment started before NeoRestau went off goes through, whatever the flag says: the page the provider sends the
+# What a payment started before NeoResto went off goes through, whatever the flag says: the page the provider sends the
 # diner back to loads through validate_token and get_guest_menu before it can call confirm_guest_payment; the takeaway page
 # asks for its token again on every mount, the return included, and submit_takeaway_order finishes the order that a
 # succeeded payment paid. Also open: what reads back or confirms something already started.
@@ -96,28 +96,30 @@ def a_request_from(ip):
 
 
 def the_refusal():
-	"""What the guard of NeoRestau says where the site does not run it, read from the guard itself."""
-	with a_site_where_neorestau_is(0):
+	"""What the guard of NeoResto says where the site does not run it, read from the guard itself."""
+	with a_site_where_neoresto_is(0):
 		try:
-			mode.require_neorestau()
+			mode.require_neoresto()
 		except frappe.ValidationError as refused:
 			return str(refused)
-	raise AssertionError("the guard let a site that does not run NeoRestau through")
+	raise AssertionError("the guard let a site that does not run NeoResto through")
 
 
 @contextmanager
-def a_site_where_neorestau_is(value):
-	"""The site's `neorestau_active` as the code reads it (ABSENT: the key is not in the configuration)."""
+def a_site_where_neoresto_is(value):
+	"""The site's `neoresto_active` as the code reads it (ABSENT: the key is not in the configuration)."""
 	with patch.dict(frappe.conf):
 		if value is ABSENT:
 			frappe.conf.pop(SITE_FLAG, None)
+			# The site's configuration may still carry the flag under its old name (see mode.LEGACY_SITE_FLAG): absent means under neither
+			frappe.conf.pop("neorestau_active", None)
 		else:
 			frappe.conf[SITE_FLAG] = value
 		yield
 
 
-class TestWhereNeoRestauRuns(FrappeTestCase):
-	def test_neorestau_runs_only_where_the_site_says_so(self):
+class TestWhereNeoRestoRuns(FrappeTestCase):
+	def test_neoresto_runs_only_where_the_site_says_so(self):
 		for value, runs in (
 			(1, True),
 			("1", True),
@@ -129,17 +131,17 @@ class TestWhereNeoRestauRuns(FrappeTestCase):
 			(False, False),
 			(ABSENT, False),
 		):
-			with self.subTest(value=value), a_site_where_neorestau_is(value):
-				self.assertIs(neorestau_active(), runs)
+			with self.subTest(value=value), a_site_where_neoresto_is(value):
+				self.assertIs(neoresto_active(), runs)
 
-	def test_restaurant_mode_is_off_where_neorestau_is_off(self):
+	def test_restaurant_mode_is_off_where_neoresto_is_off(self):
 		till = {"enable_restaurant_mode": 1, "restaurant": RESTAURANT}
 		for value in (0, ABSENT):
-			with self.subTest(neorestau=value), a_site_where_neorestau_is(value):
+			with self.subTest(neoresto=value), a_site_where_neoresto_is(value):
 				self.assertFalse(effective_restaurant_mode(till))
 
-	def test_restaurant_mode_follows_the_till_where_neorestau_runs(self):
-		with a_site_where_neorestau_is(1):
+	def test_restaurant_mode_follows_the_till_where_neoresto_runs(self):
+		with a_site_where_neoresto_is(1):
 			self.assertTrue(
 				effective_restaurant_mode({"enable_restaurant_mode": 1, "restaurant": RESTAURANT})
 			)
@@ -148,7 +150,7 @@ class TestWhereNeoRestauRuns(FrappeTestCase):
 			)
 
 	def test_a_till_that_names_no_restaurant_is_not_a_restaurant_till(self):
-		with a_site_where_neorestau_is(1):
+		with a_site_where_neoresto_is(1):
 			for restaurant in (None, ""):
 				with self.subTest(restaurant=restaurant):
 					self.assertFalse(
@@ -223,46 +225,46 @@ class Tills:
 
 
 class TestTheTillReadsItsEffectiveMode(Tills, FrappeTestCase):
-	def assert_every_read_says(self, mode_is, neorestau_is):
+	def assert_every_read_says(self, mode_is, neoresto_is):
 		for source, read in self.every_read().items():
 			with self.subTest(source=source):
 				answer = read()
 				self.assertEqual(answer["enable_restaurant_mode"], mode_is)
-				self.assertIs(answer["neorestau_active"], neorestau_is)
+				self.assertIs(answer["neoresto_active"], neoresto_is)
 
-	def test_a_restaurant_till_is_a_restaurant_till_where_neorestau_runs(self):
+	def test_a_restaurant_till_is_a_restaurant_till_where_neoresto_runs(self):
 		self.make_till(enable_restaurant_mode=1, restaurant=self.restaurant)
-		with a_site_where_neorestau_is(1):
+		with a_site_where_neoresto_is(1):
 			self.assert_every_read_says(1, True)
 
-	def test_nothing_of_the_restaurant_shows_where_neorestau_is_off(self):
+	def test_nothing_of_the_restaurant_shows_where_neoresto_is_off(self):
 		self.make_till(enable_restaurant_mode=1, restaurant=self.restaurant)
 		for value in (0, ABSENT):
-			with self.subTest(neorestau=value), a_site_where_neorestau_is(value):
+			with self.subTest(neoresto=value), a_site_where_neoresto_is(value):
 				self.assert_every_read_says(0, False)
 
-	def test_a_counter_till_stays_a_counter_till_where_neorestau_runs(self):
+	def test_a_counter_till_stays_a_counter_till_where_neoresto_runs(self):
 		self.make_till(enable_restaurant_mode=0, restaurant=self.restaurant)
-		with a_site_where_neorestau_is(1):
+		with a_site_where_neoresto_is(1):
 			self.assert_every_read_says(0, True)
 
 	def test_a_till_in_restaurant_mode_that_names_no_restaurant_is_a_counter_till(self):
 		self.make_till(enable_restaurant_mode=1)
-		with a_site_where_neorestau_is(1):
+		with a_site_where_neoresto_is(1):
 			self.assert_every_read_says(0, True)
 
 	def test_the_flag_is_told_to_the_till_whatever_its_mode(self):
-		# A site running NeoRestau says so to every till, the ones that are not restaurant tills included
+		# A site running NeoResto says so to every till, the ones that are not restaurant tills included
 		self.make_till(enable_restaurant_mode=0)
-		with a_site_where_neorestau_is(1):
-			self.assertIs(get_pos_settings(self.fx.profile)["neorestau_active"], True)
-		with a_site_where_neorestau_is(0):
-			self.assertIs(get_pos_settings(self.fx.profile)["neorestau_active"], False)
+		with a_site_where_neoresto_is(1):
+			self.assertIs(get_pos_settings(self.fx.profile)["neoresto_active"], True)
+		with a_site_where_neoresto_is(0):
+			self.assertIs(get_pos_settings(self.fx.profile)["neoresto_active"], False)
 
-	def test_the_settings_a_till_falls_back_on_still_say_whether_the_site_runs_neorestau(self):
+	def test_the_settings_a_till_falls_back_on_still_say_whether_the_site_runs_neoresto(self):
 		profile = frappe.get_doc("POS Profile", self.fx.profile)
 		for value, told in ((1, True), (0, False)):
-			with a_site_where_neorestau_is(value), patch.object(frappe, "log_error"):
+			with a_site_where_neoresto_is(value), patch.object(frappe, "log_error"):
 				with patch("pos_next.api.bootstrap.merge_pos_settings", side_effect=RuntimeError("no read")):
 					broken_bootstrap = bootstrap._get_pos_settings(profile)
 				with patch("pos_next.api.constants.merge_pos_settings", side_effect=RuntimeError("no read")):
@@ -273,8 +275,8 @@ class TestTheTillReadsItsEffectiveMode(Tills, FrappeTestCase):
 				("a profile's settings whose read failed", broken_profile),
 				("no profile at all", no_profile),
 			):
-				with self.subTest(neorestau=value, source=source):
-					self.assertIs(answer["neorestau_active"], told)
+				with self.subTest(neoresto=value, source=source):
+					self.assertIs(answer["neoresto_active"], told)
 					self.assertEqual(answer["enable_restaurant_mode"], 0)
 
 	def test_the_hook_that_derives_the_mode_comes_last_among_the_apps_own(self):
@@ -287,10 +289,10 @@ class TestTheTillReadsItsEffectiveMode(Tills, FrappeTestCase):
 
 	def test_the_mode_is_derived_even_when_another_hook_of_the_seam_fails(self):
 		# The seam calls each hook on its own and logs the one that fails: the restaurant must not show at a till
-		# where NeoRestau is off because the hook that tells its rights was down
+		# where NeoResto is off because the hook that tells its rights was down
 		settings = {"enable_restaurant_mode": 1, "restaurant": self.restaurant}
 		with (
-			a_site_where_neorestau_is(0),
+			a_site_where_neoresto_is(0),
 			patch(
 				"pos_next.restaurant.permissions.rights_of_the_user",
 				side_effect=RuntimeError("rights are down"),
@@ -300,14 +302,14 @@ class TestTheTillReadsItsEffectiveMode(Tills, FrappeTestCase):
 			registry.extend_bootstrap_settings(settings, None)
 		self.assertTrue(logged.called, "the failing hook should have been logged")
 		self.assertEqual(settings["enable_restaurant_mode"], 0)
-		self.assertIs(settings["neorestau_active"], False)
+		self.assertIs(settings["neoresto_active"], False)
 
 	def test_the_dialog_never_writes_back_the_tick_it_read(self):
 		# The dialog reads the settings as the till does (the effective mode) and sends them back whole when a setting
-		# changes: where NeoRestau is off, that answer says "counter" for a till whose tick is on, and writing it back
+		# changes: where NeoResto is off, that answer says "counter" for a till whose tick is on, and writing it back
 		# would switch the tick off at the first unrelated save. The tick and the restaurant are the desk's.
 		self.make_till(enable_restaurant_mode=1, restaurant=self.restaurant, max_discount_allowed=5)
-		with a_site_where_neorestau_is(0):
+		with a_site_where_neoresto_is(0):
 			settings = get_pos_settings(self.fx.profile)
 			self.assertEqual(settings["enable_restaurant_mode"], 0)
 			settings["max_discount_allowed"] = 12
@@ -320,12 +322,12 @@ class TestTheTillReadsItsEffectiveMode(Tills, FrappeTestCase):
 	def test_a_save_answers_the_settings_as_the_till_reads_them(self):
 		# What the dialog merges back into its own state is the effective mode, never the stored tick
 		self.make_till(enable_restaurant_mode=1, restaurant=self.restaurant)
-		for value, mode_is, neorestau_is in ((0, 0, False), (1, 1, True)):
-			with self.subTest(neorestau=value), a_site_where_neorestau_is(value):
+		for value, mode_is, neoresto_is in ((0, 0, False), (1, 1, True)):
+			with self.subTest(neoresto=value), a_site_where_neoresto_is(value):
 				answer = update_pos_settings(self.fx.profile, {"max_discount_allowed": 9})
 				self.assertEqual(answer["max_discount_allowed"], 9)
 				self.assertEqual(answer["enable_restaurant_mode"], mode_is)
-				self.assertIs(answer["neorestau_active"], neorestau_is)
+				self.assertIs(answer["neoresto_active"], neoresto_is)
 				# The whole seam answered: the restaurant's label and what the user may manage of it
 				self.assertEqual(answer["restaurant_name"], RESTAURANT)
 				self.assertIn("restaurant_can", answer)
@@ -333,11 +335,11 @@ class TestTheTillReadsItsEffectiveMode(Tills, FrappeTestCase):
 
 	def test_a_save_from_the_till_changes_neither_the_tick_nor_the_restaurant(self):
 		self.make_till(enable_restaurant_mode=1, restaurant=self.restaurant)
-		with a_site_where_neorestau_is(1):
+		with a_site_where_neoresto_is(1):
 			update_pos_settings(self.fx.profile, {"enable_restaurant_mode": 0, "restaurant": ""})
 		self.assertEqual(self.stored("enable_restaurant_mode", "restaurant"), (1, self.restaurant))
 		self.make_till(enable_restaurant_mode=0)
-		with a_site_where_neorestau_is(1):
+		with a_site_where_neoresto_is(1):
 			update_pos_settings(
 				self.fx.profile,
 				{"enable_restaurant_mode": 1, "restaurant": self.restaurant, "max_discount_allowed": 7},
@@ -353,10 +355,10 @@ class TestTheTillReadsItsEffectiveMode(Tills, FrappeTestCase):
 		self.assertEqual(self.stored("enable_restaurant_mode", "restaurant"), (0, None))
 
 
-class TestTheGuestEntryPointsNeedNeoRestau(FrappeTestCase):
-	"""Where the site does not run NeoRestau nothing of the restaurant shows: the pages a diner opens on a phone (the QR
+class TestTheGuestEntryPointsNeedNeoResto(FrappeTestCase):
+	"""Where the site does not run NeoResto nothing of the restaurant shows: the pages a diner opens on a phone (the QR
 	menu, the web takeaway, the booking form) cannot start anything, with a short message, at the entry points that start
-	something new (an order, a payment, a booking). What a payment started before NeoRestau went off goes through stays
+	something new (an order, a payment, a booking). What a payment started before NeoResto went off goes through stays
 	open (see STAYS_OPEN): it must be recordable whatever the flag says."""
 
 	def setUp(self):
@@ -369,22 +371,22 @@ class TestTheGuestEntryPointsNeedNeoRestau(FrappeTestCase):
 		frappe.set_user("Guest")
 		self.refusal = the_refusal()
 
-	def test_the_guard_refuses_only_where_neorestau_is_off(self):
+	def test_the_guard_refuses_only_where_neoresto_is_off(self):
 		self.assertTrue(self.refusal)
 		self.assertLess(len(self.refusal), 80)
-		with a_site_where_neorestau_is(1):
-			self.assertIsNone(mode.require_neorestau())
+		with a_site_where_neoresto_is(1):
+			self.assertIsNone(mode.require_neoresto())
 		for value in (0, "0", None, ABSENT):
-			with self.subTest(neorestau=value), a_site_where_neorestau_is(value):
+			with self.subTest(neoresto=value), a_site_where_neoresto_is(value):
 				with self.assertRaises(frappe.ValidationError):
-					mode.require_neorestau()
+					mode.require_neoresto()
 
-	def test_a_visitor_cannot_start_anything_where_neorestau_is_off(self):
+	def test_a_visitor_cannot_start_anything_where_neoresto_is_off(self):
 		for value in (0, ABSENT):
 			for entry_point, arguments in STARTS_SOMETHING:
-				with self.subTest(neorestau=value, entry_point=entry_point.__name__):
+				with self.subTest(neoresto=value, entry_point=entry_point.__name__):
 					with (
-						a_site_where_neorestau_is(value),
+						a_site_where_neoresto_is(value),
 						self.assertRaises(frappe.ValidationError) as refused,
 					):
 						entry_point(*arguments)
@@ -392,8 +394,8 @@ class TestTheGuestEntryPointsNeedNeoRestau(FrappeTestCase):
 
 	def test_every_entry_point_that_starts_something_asks_the_guard_first(self):
 		with (
-			patch.object(guest_ordering, "require_neorestau", side_effect=TheGuardWasAsked),
-			patch.object(reservations, "require_neorestau", side_effect=TheGuardWasAsked),
+			patch.object(guest_ordering, "require_neoresto", side_effect=TheGuardWasAsked),
+			patch.object(reservations, "require_neoresto", side_effect=TheGuardWasAsked),
 		):
 			for entry_point, arguments in STARTS_SOMETHING:
 				with self.subTest(entry_point=entry_point.__name__):
@@ -402,8 +404,8 @@ class TestTheGuestEntryPointsNeedNeoRestau(FrappeTestCase):
 
 	def test_no_other_entry_point_asks_the_guard(self):
 		with (
-			patch.object(guest_ordering, "require_neorestau", side_effect=TheGuardWasAsked),
-			patch.object(reservations, "require_neorestau", side_effect=TheGuardWasAsked),
+			patch.object(guest_ordering, "require_neoresto", side_effect=TheGuardWasAsked),
+			patch.object(reservations, "require_neoresto", side_effect=TheGuardWasAsked),
 		):
 			for entry_point, arguments in STAYS_OPEN:
 				with self.subTest(entry_point=entry_point.__name__):
@@ -411,28 +413,28 @@ class TestTheGuestEntryPointsNeedNeoRestau(FrappeTestCase):
 						entry_point(*arguments)
 					except TheGuardWasAsked:
 						self.fail(
-							"the guard of NeoRestau stands in front of a call a payment's return goes through"
+							"the guard of NeoResto stands in front of a call a payment's return goes through"
 						)
 					except Exception:
 						pass  # the unknown token is refused, as it always was
 
-	def test_what_stays_open_is_not_refused_where_neorestau_is_off(self):
+	def test_what_stays_open_is_not_refused_where_neoresto_is_off(self):
 		for value in (0, ABSENT):
 			for entry_point, arguments in STAYS_OPEN:
-				with self.subTest(neorestau=value, entry_point=entry_point.__name__):
-					with a_site_where_neorestau_is(value):
+				with self.subTest(neoresto=value, entry_point=entry_point.__name__):
+					with a_site_where_neoresto_is(value):
 						try:
 							entry_point(*arguments)
 						except Exception as answered:
-							# The unknown token is refused as it always was: not by the guard of NeoRestau
+							# The unknown token is refused as it always was: not by the guard of NeoResto
 							self.assertNotEqual(str(answered), self.refusal)
 
 
-class TestAPaymentStartedBeforeNeoRestauWentOffCanBeRecorded(Tills, FrappeTestCase):
-	"""A diner pays by card on his phone; the payment page sends him back; NeoRestau was switched off meanwhile (the site's
+class TestAPaymentStartedBeforeNeoRestoWentOffCanBeRecorded(Tills, FrappeTestCase):
+	"""A diner pays by card on his phone; the payment page sends him back; NeoResto was switched off meanwhile (the site's
 	own decision). The page he returns to loads through validate_token and get_guest_menu before it can mount the
 	checkout that calls confirm_guest_payment: a refusal there would lose the payment, and nothing would report it. With
-	a valid table token, on a site where NeoRestau is off, those answer; a new order and a new payment are refused."""
+	a valid table token, on a site where NeoResto is off, those answer; a new order and a new payment are refused."""
 
 	def setUp(self):
 		super().setUp()
@@ -454,9 +456,9 @@ class TestAPaymentStartedBeforeNeoRestauWentOffCanBeRecorded(Tills, FrappeTestCa
 		).token
 		self.takeaway_token = self.insert("Guest Order Token", mode="takeaway").token
 		self.refusal = the_refusal()
-		neorestau_off = patch.dict(frappe.conf)
-		neorestau_off.start()
-		self.addCleanup(neorestau_off.stop)
+		neoresto_off = patch.dict(frappe.conf)
+		neoresto_off.start()
+		self.addCleanup(neoresto_off.stop)
 		frappe.conf.pop(SITE_FLAG, None)
 		frappe.set_user("Guest")
 
@@ -513,7 +515,7 @@ class TestAPaymentStartedBeforeNeoRestauWentOffCanBeRecorded(Tills, FrappeTestCa
 
 
 class TestTheSwitchOnPatch(FrappeTestCase):
-	"""A site that used the restaurant keeps it: the patch switches NeoRestau on there, once, and never switches it off."""
+	"""A site that used the restaurant keeps it: the patch switches NeoResto on there, once, and never switches it off."""
 
 	def setUp(self):
 		super().setUp()
@@ -556,39 +558,39 @@ class TestTheSwitchOnPatch(FrappeTestCase):
 
 	def test_a_site_already_running_restaurant_mode_keeps_it(self):
 		self.a_till_in_restaurant_mode()
-		with a_site_where_neorestau_is(ABSENT):
+		with a_site_where_neoresto_is(ABSENT):
 			execute()
 		self.write_flag.assert_called_once_with(SITE_FLAG, 1)
 
 	def test_a_till_that_is_switched_off_still_counts_as_running_restaurant_mode(self):
 		# The site once ran restaurant mode and the till may be switched on again: the flag must be there
 		self.a_till_in_restaurant_mode(enabled=0)
-		with a_site_where_neorestau_is(ABSENT):
+		with a_site_where_neoresto_is(ABSENT):
 			execute()
 		self.write_flag.assert_called_once_with(SITE_FLAG, 1)
 
 	def test_a_site_that_ran_the_restaurant_without_ticking_a_till_keeps_it(self):
 		# Restaurant mode was a switch of the header, which ticked nothing: its rooms, its tables, its cards say it ran
 		self.a_room()
-		with a_site_where_neorestau_is(ABSENT):
+		with a_site_where_neoresto_is(ABSENT):
 			execute()
 		self.write_flag.assert_called_once_with(SITE_FLAG, 1)
 
 	def test_a_site_without_restaurant_mode_is_left_off(self):
-		with a_site_where_neorestau_is(ABSENT):
+		with a_site_where_neoresto_is(ABSENT):
 			execute()
 		self.write_flag.assert_not_called()
 
 	def test_a_site_that_holds_only_the_defaults_of_the_single_is_left_off(self):
 		# A migrate writes them on every site, a client that never used the restaurant included
 		self.assertTrue(frappe.db.get_singles_dict("Restaurant Settings"))
-		with a_site_where_neorestau_is(ABSENT):
+		with a_site_where_neoresto_is(ABSENT):
 			execute()
 		self.write_flag.assert_not_called()
 
-	def test_a_counter_till_does_not_switch_neorestau_on(self):
+	def test_a_counter_till_does_not_switch_neoresto_on(self):
 		self.a_till_in_restaurant_mode(enable_restaurant_mode=0)
-		with a_site_where_neorestau_is(ABSENT):
+		with a_site_where_neoresto_is(ABSENT):
 			execute()
 		self.write_flag.assert_not_called()
 
@@ -598,14 +600,14 @@ class TestTheSwitchOnPatch(FrappeTestCase):
 		self.a_till_in_restaurant_mode()
 		self.a_room()
 		for value in (1, 0, "0", None):
-			with self.subTest(value=value), a_site_where_neorestau_is(value):
+			with self.subTest(value=value), a_site_where_neoresto_is(value):
 				execute()
 				execute()
 		self.write_flag.assert_not_called()
 
 	def test_running_it_twice_switches_on_once(self):
 		self.a_till_in_restaurant_mode()
-		with a_site_where_neorestau_is(ABSENT):
+		with a_site_where_neoresto_is(ABSENT):
 			execute()
 			# The first run wrote the flag; the code reads it as the site now has it
 			frappe.conf[SITE_FLAG] = 1
@@ -622,17 +624,17 @@ class TestTheSwitchOnPatch(FrappeTestCase):
 		self.assertGreater(entries.index(SWITCH_ON_PATCH), entries.index("[post_model_sync]"))
 
 
-class TestTheDeskIsToldWhereNeoRestauRuns(FrappeTestCase):
+class TestTheDeskIsToldWhereNeoRestoRuns(FrappeTestCase):
 	"""The POS Settings form shows its Restaurant section (the tick, the restaurant, the area, the takeaway) only where
-	NeoRestau runs: the tick stays on the desk, and it is not there when NeoRestau is off."""
+	NeoResto runs: the tick stays on the desk, and it is not there when NeoResto is off."""
 
-	def test_the_boot_of_the_desk_says_whether_neorestau_runs(self):
+	def test_the_boot_of_the_desk_says_whether_neoresto_runs(self):
 		for value, told in ((1, True), (0, False), (ABSENT, False)):
-			with self.subTest(neorestau=value), a_site_where_neorestau_is(value):
+			with self.subTest(neoresto=value), a_site_where_neoresto_is(value):
 				bootinfo = frappe._dict()
 				mode.extend_boot(bootinfo)
 				# A bool, like the one the till is told
-				self.assertIs(bootinfo.neorestau_active, told)
+				self.assertIs(bootinfo.neoresto_active, told)
 
 	def test_the_boot_hook_is_registered(self):
 		self.assertIn(BOOT_HOOK, frappe.get_hooks("boot_session"))
@@ -640,7 +642,7 @@ class TestTheDeskIsToldWhereNeoRestauRuns(FrappeTestCase):
 	def test_the_restaurant_section_of_the_form_depends_on_it(self):
 		meta = frappe.get_meta("POS Settings")
 		self.assertEqual(
-			meta.get_field("section_break_restaurant").depends_on, "eval:frappe.boot.neorestau_active"
+			meta.get_field("section_break_restaurant").depends_on, "eval:frappe.boot.neoresto_active"
 		)
 		# The tick and the restaurant sit inside that section: hiding it hides both, whatever the tick says
 		fields = [field.fieldname for field in meta.fields]

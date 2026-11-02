@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The QZ Tray printer of this computer, cleared on the till's
- * //// settings screen, is forgotten for good (NeoRestau lot 1, task 13, fix round 2): the composable keeps only a
+ * //// settings screen, is forgotten for good (NeoResto lot 1, task 13, fix round 2): the composable keeps only a
  * //// chosen name in the browser's storage, and printing falls back to the stored name, so a printer cleared in
  * //// memory came back at the next reload. This runs the real composable and the real storage; only QZ Tray itself
  * //// (the websocket library) and the server are stood in for.

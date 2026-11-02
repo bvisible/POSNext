@@ -1,10 +1,10 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The way into the floor plan's editor is a small « ⋯ » at the very
- * //// end of the plan's line, which opens a menu (NeoRestau lot 1, Ruling 48): the Edit button was on the line, within
+ * //// end of the plan's line, which opens a menu (NeoResto lot 1, Ruling 48): the Edit button was on the line, within
  * //// every finger's reach, and was pressed too easily. The menu is a list of items, each with its own rule of who
  * //// sees it, and the « ⋯ » is shown when at least one item is: « Edit the floor plan » (whoever may lay out the floor),
  * //// « Free the tables being cleaned » (whoever may set the status of a table, a cashier included) and « Open a tablet »
- * //// (whoever may set the restaurant up, NeoRestau lot 1, task 16).
+ * //// (whoever may set the restaurant up, NeoResto lot 1, task 16).
  * @vitest-environment jsdom
  */
 import { flushPromises, mount } from "@vue/test-utils"
@@ -457,7 +457,7 @@ describe("the « ⋯ » menu of the floor plan's line", () => {
 		})
 	})
 
-	describe("« Open a tablet » (NeoRestau lot 1, task 16)", () => {
+	describe("« Open a tablet » (NeoResto lot 1, task 16)", () => {
 		const tabletItem = () => wrapper.find('[data-test="menu-open-a-tablet"]')
 		const dialog = () => wrapper.find('[data-test="open-tablet-dialog"]')
 

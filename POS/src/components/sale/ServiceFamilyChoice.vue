@@ -1,6 +1,6 @@
 <template>
 	<!-- //// Neoffice — added file (no upstream equivalent). The four service families of a line (Drink, Starter, Main, Dessert)
-	     as four large buttons, one of them chosen (NeoRestau lot 1). Used where the waiter gives a line its family: the line's
+	     as four large buttons, one of them chosen (NeoResto lot 1). Used where the waiter gives a line its family: the line's
 	     edit dialogs and the chip on the line. A line's family decides when the kitchen is sent it; « served with the mains » is
 	     simply the family Main given to a starter. -->
 	<div class="space-y-1.5">

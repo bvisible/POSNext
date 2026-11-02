@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The guest's own pages (QR at the table) show an offered line as
- * //// « Offert », read only (NeoRestau lot 1, task 24). The word comes from the server in the guest's language
+ * //// « Offert », read only (NeoResto lot 1, task 24). The word comes from the server in the guest's language
  * //// (`offered_label` of get_order_status): the till's translations are not open to a guest.
  * @vitest-environment jsdom
  */

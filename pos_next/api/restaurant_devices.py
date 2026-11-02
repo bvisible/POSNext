@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent). Opening a tablet as the kitchen's or the runner's screen by a
-# //// QR code, with no password typed (NeoRestau lot 1, task 16). The till asks for a one-time token, shows it as a QR
+# //// QR code, with no password typed (NeoResto lot 1, task 16). The till asks for a one-time token, shows it as a QR
 # //// code, lists the restaurant's tablets, disconnects one, and retires its unused tokens when its dialog closes; the
 # //// tablet redeems the token and is signed in with its own device account. The rules are pos_next.restaurant.devices'.
 """The endpoints of the restaurant's tablets: make a pairing token, redeem it, list the tablets, disconnect one, retire
@@ -17,7 +17,7 @@ from frappe import _
 from frappe.utils import add_to_date, get_datetime, get_fullname, get_url, now_datetime
 
 from pos_next.restaurant import devices, permissions, scope
-from pos_next.restaurant.mode import require_neorestau
+from pos_next.restaurant.mode import require_neoresto
 
 
 def _restaurant_to_set_up(restaurant=None) -> str:
@@ -38,9 +38,9 @@ def create_pairing_code(screen, station=None, restaurant=None):
 	server) and how many seconds it stays valid. Only the token's hash is kept. The tokens its maker made earlier for
 	the same screen, and nobody used, stop opening anything: the till shows one at a time.
 	"""
-	# Who may set the restaurant up first: anyone else is refused whether the site runs NeoRestau or not
+	# Who may set the restaurant up first: anyone else is refused whether the site runs NeoResto or not
 	restaurant = _restaurant_to_set_up(restaurant)
-	require_neorestau()
+	require_neoresto()
 	if screen not in devices.SCREENS:
 		frappe.throw(_("A tablet opens the kitchen screen or the runner screen."))
 	# The runner's screen shows every station
@@ -89,7 +89,7 @@ def redeem_pairing_code(token=None):
 	hashed = devices.token_hash(token) if devices.well_formed(token) else None
 	del token
 	devices.hold_back_a_guessing_address()
-	require_neorestau()
+	require_neoresto()
 	if not hashed:
 		devices.refuse_token()
 	found = frappe.db.sql(

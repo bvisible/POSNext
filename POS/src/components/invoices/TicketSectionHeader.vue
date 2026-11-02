@@ -1,5 +1,5 @@
 <template>
-	<!-- //// Neoffice — added file (no upstream equivalent). The label that opens a section of a kitchen or runner ticket (NeoRestau lot 1, Daniel's request of 01.11: « un petit liséré, un tiret qui montre la séparation »):
+	<!-- //// Neoffice — added file (no upstream equivalent). The label that opens a section of a kitchen or runner ticket (NeoResto lot 1, Daniel's request of 01.11: « un petit liséré, un tiret qui montre la séparation »):
 	     the course in capitals, tiny and muted at the left, a thin dashed rule after it. It is drawn INSIDE the wrapper of the first dish of its section, so that in the full-screen columns it is never left alone at the foot
 	     of a column. The rule is dashed like the « Send N » separator of the kitchen's card, in grey so that the two cannot be taken for one another. The size follows the text size the screen chose (`--kds-fs-ref`). -->
 	<!-- //// Neoffice — a section of the KITCHEN's ticket can be pressed to take all its dishes at once (Daniel, 01.11), and a section that waits for the course before it is muted: `selectable` and `held`, both off for the runner's card -->

@@ -1,4 +1,4 @@
-# //// Neoffice — added file (no upstream equivalent). The one list of a till's settings (NeoRestau lot 1,
+# //// Neoffice — added file (no upstream equivalent). The one list of a till's settings (NeoResto lot 1,
 # //// task 13; product owner, 30.10.2026): what each setting is, where it lives (POS Settings, POS Profile, the
 # //// till's Restaurant, this computer, the printer rows of the cloudprnt app), the tab and the group that show
 # //// it, its label and the help behind its lightbulb, which till shows it (every till, a shop till, a restaurant
@@ -12,7 +12,7 @@ they are served, in the language of the user who reads them.
 
 Only what the till really uses is listed: a field that no code acts on, a duplicate, an option of ERPNext's own
 till page or a feature switched off on purpose is in `NOT_LISTED`, with the reason (mockup v2 notes and the study
-of the inert settings, NeoRestau lot 1). A setting the till shows must work.
+of the inert settings, NeoResto lot 1). A setting the till shows must work.
 """
 
 from __future__ import annotations
@@ -214,13 +214,13 @@ _GROUPS = (
 	# General
 	Group("languages", "general", _lt("Languages"), 1),
 	Group("session_lock", "general", _lt("Lock"), 1),
-	# //// Neoffice — how long the till keeps its staff signed in (pos_next.api.session, NeoRestau lot 1, product owner,
+	# //// Neoffice — how long the till keeps its staff signed in (pos_next.api.session, NeoResto lot 1, product owner,
 	# //// 01.11.2026): added to the list when this task's registry met the setting, which the old settings page had got meanwhile.
 	Group("staff_session", "general", _lt("Staff session"), 1),
 	Group("default_customer", "general", _lt("Customer"), 2),
-	# //// Neoffice — the popup and the sounds of the kitchen and runner screens (NeoRestau lot 1, Daniel, 01.11: « le son doit être dans les réglages de la caisse »)
+	# //// Neoffice — the popup and the sounds of the kitchen and runner screens (NeoResto lot 1, Daniel, 01.11: « le son doit être dans les réglages de la caisse »)
 	Group("kitchen_alerts", "general", _lt("Kitchen alerts"), 2),
-	# //// Neoffice — the notice and the sound of the till itself when a guest orders or pays from the QR code of a table (NeoRestau lot 1, Daniel, 01.11: « regarde comment la
+	# //// Neoffice — the notice and the sound of the till itself when a guest orders or pays from the QR code of a table (NeoResto lot 1, Daniel, 01.11: « regarde comment la
 	# //// caisse sommelier reçoit l'info (popup et autre) »), beside the kitchen's.
 	Group("floor_alerts", "general", _lt("Floor alerts"), 2),
 	Group("customer_display", "general", _lt("Customer display"), 3),
@@ -297,7 +297,7 @@ SETTINGS = (
 		till=RESTAURANT_TILL,
 		applies=APPLIES_RESTAURANT,
 	),
-	# //// Neoffice — the service rhythm (NeoRestau lot 1, Daniel, 01.11: « Oui, les deux modes »): the restaurant says whether the room calls each course
+	# //// Neoffice — the service rhythm (NeoResto lot 1, Daniel, 01.11: « Oui, les deux modes »): the restaurant says whether the room calls each course
 	# //// (the default) or the kitchen prepares them ahead. A field of the Restaurant, the restaurant managers' by its place (it is no setting of the till).
 	Setting(
 		"service_rhythm",
@@ -317,7 +317,7 @@ SETTINGS = (
 		),
 		applies=APPLIES_RESTAURANT,
 	),
-	# //// Neoffice — the digits of the ticket number (NeoRestau lot 1, task 38b), added to the list when this task's registry
+	# //// Neoffice — the digits of the ticket number (NeoResto lot 1, task 38b), added to the list when this task's registry
 	# //// met the field; the server holds the same 1..9 range (Restaurant._check_ticket_number_digits).
 	Setting(
 		"ticket_number_digits",
@@ -449,7 +449,7 @@ SETTINGS = (
 		kind=INFO,
 	),
 	# ---------------------------------------------------------------- Online ordering
-	# //// Neoffice — the public menu of the QR code (NeoRestau lot 1), added to the list when this task's registry met the field.
+	# //// Neoffice — the public menu of the QR code (NeoResto lot 1), added to the list when this task's registry met the field.
 	Setting(
 		"enable_public_menu",
 		"qr_ordering",
@@ -650,7 +650,7 @@ SETTINGS = (
 		depends_on=(on("enable_reservations"), on("enable_online_reservations")),
 		applies=APPLIES_RESTAURANT,
 	),
-	# //// Neoffice — the expiry of an unconfirmed online booking (NeoRestau lot 1, task 18), added to the list when this task's
+	# //// Neoffice — the expiry of an unconfirmed online booking (NeoResto lot 1, task 18), added to the list when this task's
 	# //// registry met the field.
 	Setting(
 		"unconfirmed_reservation_expiry",
@@ -724,7 +724,7 @@ SETTINGS = (
 		max=1440,
 	),
 	# //// Neoffice — the choice of locking at once on leaving the screen, and the days a till keeps its staff signed in:
-	# //// both were added to the old settings page by NeoRestau lot 1 (01.11.2026) while the registry was being built; the
+	# //// both were added to the old settings page by NeoResto lot 1 (01.11.2026) while the registry was being built; the
 	# //// server holds the same 0..90 range for the days (pos_settings.validate_keep_signed_in_days).
 	Setting(
 		"session_lock_on_leave",
@@ -787,7 +787,7 @@ SETTINGS = (
 		doctype=POS_SETTINGS,
 		depends_on=(on("enable_customer_display"), on("enable_customer_display_account_creation")),
 	),
-	# //// Neoffice — the kitchen alerts (NeoRestau lot 1, Daniel, 01.11): a notice on the kitchen screen when the next course of a table is ordered,
+	# //// Neoffice — the kitchen alerts (NeoResto lot 1, Daniel, 01.11): a notice on the kitchen screen when the next course of a table is ordered,
 	# //// the sound of that notice and of the runner's dishes ready, and their volume. The tablets read them through `get_restaurant_settings`
 	# //// (pos_next.restaurant.kitchen_alerts); the screen of the till only edits them, with a Listen button for each sound. They are settings of the TILL (the General tab), so a restaurant manager,
 	# //// who sets three till settings only (ruling 63), does not see them: the till's manager does.
@@ -847,7 +847,7 @@ SETTINGS = (
 		till=RESTAURANT_TILL,
 		kind=INFO,
 	),
-	# //// Neoffice — the floor alerts (NeoRestau lot 1, Daniel, 01.11): when a guest orders or pays from the QR code of a table, the waiter's and the sommelier's till shows a notice
+	# //// Neoffice — the floor alerts (NeoResto lot 1, Daniel, 01.11): when a guest orders or pays from the QR code of a table, the waiter's and the sommelier's till shows a notice
 	# //// (« Table 2 — le client commande : 3 x Verre de vin ») and rings. The till reads them with its own settings (`get_pos_settings`); they are settings of the TILL (the General tab),
 	# //// so a restaurant manager, who sets three till settings only (ruling 63), does not see them: the till's manager does. The sound plays at the alert volume set above.
 	Setting(
@@ -913,7 +913,7 @@ SETTINGS = (
 		options=TILES_PER_ROW,
 	),
 	# A phone shows the restaurant card as buttons without pictures unless the till asks for them
-	# (NeoRestau lot 1, task 27; design § G: « no pictures by default, a setting with or without »)
+	# (NeoResto lot 1, task 27; design § G: « no pictures by default, a setting with or without »)
 	Setting(
 		"phone_card_pictures",
 		"items",
@@ -1415,7 +1415,7 @@ SETTINGS = (
 		doctype=POS_PROFILE,
 		choices="journal_entry_templates",
 	),
-	# //// Neoffice — the two limits of the cash movements (NeoRestau lot 1, task 15), added to the list when this task's
+	# //// Neoffice — the two limits of the cash movements (NeoResto lot 1, task 15), added to the list when this task's
 	# //// registry met them: the most a shift may take out of the drawer, and how long an offline movement keeps its day.
 	Setting(
 		"posa_cash_movement_out_limit",

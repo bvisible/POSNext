@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). New French words reach a device at once (NeoRestau lot 1, kitchen test of 01.11): a phone that kept a
+ * //// Neoffice — added file (no upstream equivalent). New French words reach a device at once (NeoResto lot 1, kitchen test of 01.11): a phone that kept a
  * //// dictionary fetched before a word was added showed that word in English for up to 24 hours, because a release that only carries new words does not change
  * //// the front build the cache is keyed by. The till asks the server for a short stamp of the dictionary at start-up and when it comes back to the screen, and
  * //// fetches the dictionary only when the stamp is not the one it holds.

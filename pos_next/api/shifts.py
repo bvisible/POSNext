@@ -262,7 +262,7 @@ def submit_closing_shift(closing_shift):
 		result = submit_shift(closing_shift)
 		return {"name": result, "status": "success"}
 	# //// Neoffice — a closing whose figures miss a drawer movement recorded meanwhile is refused as it is:
-	# //// the till's closing dialog recognises it and reloads its figures (NeoRestau lot 1, task 15).
+	# //// the till's closing dialog recognises it and reloads its figures (NeoResto lot 1, task 15).
 	except CashMovementsChanged:
 		raise
 	except Exception as e:

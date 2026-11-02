@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The lock of the till opens with a SHORT PERSONAL CODE (NeoRestau lot 1,
+ * //// Neoffice — added file (no upstream equivalent). The lock of the till opens with a SHORT PERSONAL CODE (NeoResto lot 1,
  * //// product owner, 01.11.2026): verified by the server (pos_next.api.till_code.verify_till_code), or offline against a PBKDF2
  * //// hash of the code that was cached after a SUCCESSFUL online verification (same 24 h life and same attempt counter as the
  * //// cached password). Also here: "Lock" by hand works whatever the auto-lock setting says, and a lock that waits for its delay

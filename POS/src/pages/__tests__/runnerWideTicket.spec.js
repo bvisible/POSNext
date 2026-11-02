@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The WIDE card on the runner screen (NeoRestau lot 1, task 38a-3, ruling 107 layer 2, ruling 130). A card with more than 12 dishes takes
+ * //// Neoffice — added file (no upstream equivalent). The WIDE card on the runner screen (NeoResto lot 1, task 38a-3, ruling 107 layer 2, ruling 130). A card with more than 12 dishes takes
  * //// TWO card widths in the runner's flow (the width of two tickets and the gap between them), its dishes staying in one list; it is never wider than the flow, and where the flow holds fewer than
  * //// three columns of tickets it stays one width. jsdom has no layout engine: the width of the flow is given by hand, the card is read from its classes.
  * @vitest-environment jsdom

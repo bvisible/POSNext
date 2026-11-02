@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). What is out of sight on the kitchen screen (NeoRestau lot 1,
+ * //// Neoffice — added file (no upstream equivalent). What is out of sight on the kitchen screen (NeoResto lot 1,
  * //// task 23): the tickets of a lane or a column that scroll past the edge of the screen, and the dishes of a ticket that
  * //// scroll past the foot of the ticket. Both are counted from the boxes of the elements, so that a cook sees the
  * //// backlog ("+12") and a long ticket's missing dishes ("+4 lines") without scrolling to find out. jsdom has no

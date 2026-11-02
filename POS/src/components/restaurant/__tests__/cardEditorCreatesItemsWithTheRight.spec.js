@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). Creating an item from the card editor takes the ERP's right to
- * //// create items (NeoRestau lot 1, task 3; `restaurant_can.create_items`): a card manager without it is offered
+ * //// create items (NeoResto lot 1, task 3; `restaurant_can.create_items`): a card manager without it is offered
  * //// neither "Create new item" nor, after a search that found nothing, "Create '<what was searched>'", whose dialog
  * //// the server would refuse him.
  * @vitest-environment jsdom

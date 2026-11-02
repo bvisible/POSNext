@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). A finger on a table of the floor plan (NeoRestau lot 1, task 26):
+ * //// Neoffice — added file (no upstream equivalent). A finger on a table of the floor plan (NeoResto lot 1, task 26):
  * //// a tap opens the table when the finger lifts, a long press shows the table's QR code at once (where the table may
  * //// have one), and a press that moves is a pan of the plan: neither a tap nor a long press. A second finger makes
  * //// a pinch, which presses no table either. The long press is a finger's or a pen's, never a mouse's: a mouse held on a

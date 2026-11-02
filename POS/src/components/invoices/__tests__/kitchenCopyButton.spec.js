@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The printer button on the kitchen's card AND the runner's card (NeoRestau lot 1, task 44): beside the
+ * //// Neoffice — added file (no upstream equivalent). The printer button on the kitchen's card AND the runner's card (NeoResto lot 1, task 44): beside the
  * //// ticket's main button, the same square on the button height (`--kds-btn-h`, which the text size and the full-screen panel change), drawn only when the
  * //// screen says it can print; one tap asks the screen to print (the card calls nothing itself); the button says where the copy stands as the bill's printer
  * //// button does (a spinner, a tick, a warning, and the words under it); it cannot be pressed again while a copy is on its way. jsdom has no layout engine:

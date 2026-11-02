@@ -1,6 +1,6 @@
 <template>
 	<!-- //// Neoffice — added file (no upstream equivalent). The list of the cards the opening hours keep off the till, one -->
-	<!-- //// button per card (NeoRestau lot 1, task 25). The « ⋯ » of the order screen's card row draws it in its menu and the -->
+	<!-- //// button per card (NeoResto lot 1, task 25). The « ⋯ » of the order screen's card row draws it in its menu and the -->
 	<!-- //// floor plan's entry « Open another card » in a dialog: one list, so that both places look and answer alike. -->
 	<div class="py-1" data-test="card-picker-list">
 		<button

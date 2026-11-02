@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). Every tab of the till app was titled "Neopos", so with the till, the
- * //// runner and the kitchen open side by side nobody knew which tab was which (NeoRestau lot 1, product owner). Each
+ * //// runner and the kitchen open side by side nobody knew which tab was which (NeoResto lot 1, product owner). Each
  * //// screen now names its tab, "<screen> · Neopos", and the rule lives in ONE place: the router's afterEach reads the
  * //// `title` of the route (utils/tabTitle.js). A screen that learns a name after its route (the till once a shift is
  * //// open, the kitchen once a station is chosen, a guest page once it knows the restaurant) hands it over with
@@ -116,7 +116,7 @@ function aPageNaming(name, options) {
 
 beforeEach(() => {
 	session.isLoggedIn = true
-	window.posnext_neorestau_active = true
+	window.posnext_neoresto_active = true
 	words.catalogue = {}
 })
 
@@ -149,11 +149,11 @@ describe("the tab of each screen", () => {
 	})
 
 	it("is the title of where a visitor lands when he is sent elsewhere", async () => {
-		window.posnext_neorestau_active = false
-		// The kitchen is closed where the site does not run NeoRestau: the till answers
+		window.posnext_neoresto_active = false
+		// The kitchen is closed where the site does not run NeoResto: the till answers
 		expect(await visit("/kds")).toBe("Neopos")
 
-		window.posnext_neorestau_active = true
+		window.posnext_neoresto_active = true
 		session.isLoggedIn = false
 		expect(await visit("/runner")).toBe("Neopos")
 	})

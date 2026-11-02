@@ -2,7 +2,7 @@
  * //// Neoffice — added file (no upstream equivalent). An option of a dish moves its price either way: « + 2.00 » for a
  * //// sauce, « − 1.50 » for no side. The cart applied a lowering only when it replaced an earlier adjustment, never as
  * //// the first one nor after the options went back to zero: the dish stayed at its full price while the options
- * //// sheet of the phone (NeoRestau lot 1, task 27) and the options dialog both show the lowering.
+ * //// sheet of the phone (NeoResto lot 1, task 27) and the options dialog both show the lowering.
  * @vitest-environment jsdom
  */
 import { createPinia, setActivePinia } from "pinia"

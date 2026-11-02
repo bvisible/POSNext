@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). Which cart lines have left for the kitchen (NeoRestau lot 1, task
+//// Neoffice — added file (no upstream equivalent). Which cart lines have left for the kitchen (NeoResto lot 1, task
 //// 22, fix round 1). A line is not sent yet while it has no kitchen status or is « Waiting » (held back by the waiter):
 //// the kitchen dialog offers it, the Validate button counts it, the payment sends it. Every other status (Pending,
 //// Preparing, Ready, Delivered) means the kitchen has it; the dialog and the cart already read it that way, this is the

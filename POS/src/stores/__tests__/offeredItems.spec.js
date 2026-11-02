@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). « Offert » at the till (NeoRestau lot 1, task 24): the cashier
+ * //// Neoffice — added file (no upstream equivalent). « Offert » at the till (NeoResto lot 1, task 24): the cashier
  * //// offers some or all of a line; the paid part keeps the rest, the offered part is a row of the same dish at zero, kept
  * //// apart from every path that addresses a line by its item code (the stepper, the line dialog, a new unit scanned, the
  * //// offers engine, a coupon), and merged back on « Annuler l'offert ». Who may offer: whoever may change a discount at

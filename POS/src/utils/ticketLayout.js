@@ -1,5 +1,5 @@
 //// Neoffice — added file (no upstream equivalent). One size for the tickets of the runner and of the kitchen screen
-//// (NeoRestau lot 1, task 9c). The two screens drew their tickets on grids of their own (5 columns of about 365 px
+//// (NeoResto lot 1, task 9c). The two screens drew their tickets on grids of their own (5 columns of about 365 px
 //// against 4 of about 450 px on a 1900 px wide screen) and cut them to sizes of their own (the padding, the title, the
 //// timer, the item lines), so the same order did not look alike from one screen to the other. The grid and the frame
 //// are written ONCE, here: both pages and both ticket cards take them from here, so a size changed in this file changes
@@ -30,7 +30,7 @@ export const TICKET_GRID =
 	"grid grid-cols-[repeat(auto-fill,minmax(0,var(--kds-card-w,250px)))] justify-start gap-2"
 
 // ---------------------------------------------------------------------------------------------------------------------
-// The kitchen screen in two bands (NeoRestau lot 1, task 23). The kitchen shows the tickets waiting and the tickets in
+// The kitchen screen in two bands (NeoResto lot 1, task 23). The kitchen shows the tickets waiting and the tickets in
 // preparation apart from each other, and it is used on tablets: it can hold thirty tickets in one band and tickets of
 // twenty-five dishes. Neither a long grid that scrolls down a page nor a ticket that grows with its dishes can do that
 // and keep the two bands on the screen, so a ticket is bounded by its band, and the band by its share of the screen.
@@ -94,7 +94,7 @@ export const TICKET_FRAME = {
 }
 
 /**
- * The sizes of the KITCHEN card (NeoRestau lot 1, task 38a-1, ruling 109), laid over the shared frame above, for the parts the size chosen
+ * The sizes of the KITCHEN card (NeoResto lot 1, task 38a-1, ruling 109), laid over the shared frame above, for the parts the size chosen
  * changes: paddings, text, dish line. Each reads a CSS variable the screen's root sets (utils/kitchenTextSize) with the Compact value as its
  * fallback, so that a card drawn outside the page is dense too. They are `!important`: the frame's `text-xl`, `px-4`... are in the same
  * stylesheet at the same weight and the later one wins, and they also carry a letter-spacing and a weight of their own that the kitchen's
@@ -110,7 +110,7 @@ export const KITCHEN_FRAME = {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// The runner screen's tickets, STACKED (NeoRestau lot 1, task 38a-2, ruling 130). The runner's cards stood in one row of full-height columns, so a ticket of two
+// The runner screen's tickets, STACKED (NeoResto lot 1, task 38a-2, ruling 130). The runner's cards stood in one row of full-height columns, so a ticket of two
 // dishes left most of its column empty while the next ticket sat off the screen. A short ticket now stacks under the one before it in the same column, and a
 // long ticket keeps a column for itself: the cards FLOW, oldest first, from the top of a column to its foot and on to the next column (a column-wrapping flex
 // box as tall as the screen leaves it), each as wide as the size of the text says (`--kds-card-w`, utils/kitchenTextSize) and never taller than the screen
@@ -135,7 +135,7 @@ export const TICKET_ROW = "flex h-full min-h-[14rem] flex-row items-stretch gap-
 export const TICKET_CARD = "w-[var(--kds-card-w,250px)] max-h-full flex-none"
 
 // ---------------------------------------------------------------------------------------------------------------------
-// The WIDE card (NeoRestau lot 1, task 38a-3, ruling 107 layer 2). A ticket with more than `WIDE_TICKET_LINES` dishes (utils/wideTicket) takes two card widths where the screen holds at least
+// The WIDE card (NeoResto lot 1, task 38a-3, ruling 107 layer 2). A ticket with more than `WIDE_TICKET_LINES` dishes (utils/wideTicket) takes two card widths where the screen holds at least
 // three columns: in a grid or a lane it spans two columns (the gap between them is part of it), in the runner's flow it is two widths and the gap wide. It never spans more than the room there is
 // (`max-w-full`), and its dishes stay in one list.
 // ---------------------------------------------------------------------------------------------------------------------
@@ -148,7 +148,7 @@ export const TICKET_CARD_WIDE =
 	"w-[calc(var(--kds-card-w,250px)*2+0.5rem)] max-w-full max-h-full flex-none"
 
 // ---------------------------------------------------------------------------------------------------------------------
-// The FULL-SCREEN ticket (NeoRestau lot 1, task 38a-3, ruling 107 layer 3). The card opened over the board: its dishes in as many columns as the height of the panel needs, side by side
+// The FULL-SCREEN ticket (NeoResto lot 1, task 38a-3, ruling 107 layer 3). The card opened over the board: its dishes in as many columns as the height of the panel needs, side by side
 // (a 24-dish ticket does not fit one screen even in large text), the panel scrolling sideways when it still overflows. The sizes are the variables of the size the panel is drawn in
 // (utils/kitchenTextSize fullScreenVariables); these are the classes that change with the form, and they stay whole literals for Tailwind's scan of `src/**/*.js`.
 // ---------------------------------------------------------------------------------------------------------------------

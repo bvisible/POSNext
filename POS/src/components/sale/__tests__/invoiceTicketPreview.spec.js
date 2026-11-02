@@ -1,6 +1,6 @@
 // //// Neoffice — added file (no upstream equivalent).
 /**
- * The dishes of a ticket, in the middle column of a row of the invoice history (NeoRestau lot 1, task 29, fix round 1).
+ * The dishes of a ticket, in the middle column of a row of the invoice history (NeoResto lot 1, task 29, fix round 1).
  *
  * From 768 px up the dishes are STACKED, one per line, each cut with its own ellipsis, and « +n items » is a line
  * of its own: nothing is clamped, so all the dishes handed over are shown and the count is the server's. Below it

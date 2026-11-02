@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The player of the alert sounds (NeoRestau lot 1, Daniel's request of 01.11). A browser lets no page make a sound before somebody has touched it
+ * //// Neoffice — added file (no upstream equivalent). The player of the alert sounds (NeoResto lot 1, Daniel's request of 01.11). A browser lets no page make a sound before somebody has touched it
  * //// (the autoplay policy), and a tablet in a kitchen is left alone for hours: there is ONE shared audio context, created and resumed on the first touch of the page, and a sound asked for before
  * //// that is not played late, it is dropped (a bell ringing twenty minutes after the dish, when somebody finally taps, would be worse than none). A fake audio context records what is played.
  * @vitest-environment jsdom

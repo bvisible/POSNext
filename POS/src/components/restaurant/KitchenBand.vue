@@ -1,5 +1,5 @@
 <template>
-	<!-- //// Neoffice — added file (no upstream equivalent). One band of the kitchen screen (NeoRestau lot 1, task 23): the -->
+	<!-- //// Neoffice — added file (no upstream equivalent). One band of the kitchen screen (NeoResto lot 1, task 23): the -->
 	<!-- //// tickets WAITING, or the tickets IN PREPARATION. The product owner asked for the two apart, each in order of -->
 	<!-- //// arrival, and the screen is a tablet that can hold thirty tickets in a band: so a band is bounded (a share of the -->
 	<!-- //// screen that does not move when tickets come and go), its tickets scroll inside it by touch, and it says how many -->
@@ -129,7 +129,7 @@ const props = defineProps({
 	rooms: { type: Array, default: () => [] },
 	//// Neoffice — the restaurant's own runner switch: with no runner at all the kitchen delivers whatever a station says (task 38a-1)
 	runnerEnabled: { type: Boolean, default: true },
-	//// Neoffice — the orders whose tickets FLASH: the tables that have ordered their next course and not been taken up yet (NeoRestau lot 1, Daniel, 01.11); none, no ticket does
+	//// Neoffice — the orders whose tickets FLASH: the tables that have ordered their next course and not been taken up yet (NeoResto lot 1, Daniel, 01.11); none, no ticket does
 	flashOrders: { type: Array, default: () => [] },
 	//// Neoffice — what the screen does to read its orders again, called by a card once the server has answered a press
 	reload: { type: Function, default: () => {} },

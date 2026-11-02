@@ -338,7 +338,7 @@ def _get_bank_deposit_data(data):
 # //// Neoffice — added helpers. _get_invoice_collections sums the POS Payment Entry Reference rows
 # //// of each closing shift; _get_cash_in_out sums the Journal Entries our cash in/out feature
 # //// writes, found by their link to the opening shift (024d87bb, 2026-04-12; the link fields came with
-# //// NeoRestau lot 1, task 15, before which the remark was matched).
+# //// NeoResto lot 1, task 15, before which the remark was matched).
 def _get_invoice_collections(data):
 	"""Batch-fetch total invoice collection amounts per closing shift."""
 	shift_names = list({row.shift for row in data})
@@ -366,7 +366,7 @@ def _get_invoice_collections(data):
 def _get_cash_in_out(data):
 	"""Batch-fetch cash in/out totals per opening shift."""
 	# //// Neoffice — the movements' link fields and their rows on the till's cash account, read the way the
-	# //// closing reads them (pos_next.cash_movement.shift_totals, NeoRestau lot 1 task 15): the remark matched
+	# //// closing reads them (pos_next.cash_movement.shift_totals, NeoResto lot 1 task 15): the remark matched
 	# //// before was free text, and its total_debit counted a VAT line and a template booked the wrong way.
 	from pos_next import cash_movement
 	return cash_movement.shift_totals({row.get("pos_opening_shift") for row in data if row.get("pos_opening_shift")})

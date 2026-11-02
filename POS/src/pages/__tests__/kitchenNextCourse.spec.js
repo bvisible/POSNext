@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The kitchen screen when the next course is ordered (NeoRestau lot 1, Daniel, 01.11: « quand on commande la suite il doit y avoir un popup à la cuisine, et aussi un son
+ * //// Neoffice — added file (no upstream equivalent). The kitchen screen when the next course is ordered (NeoResto lot 1, Daniel, 01.11: « quand on commande la suite il doit y avoir un popup à la cuisine, et aussi un son
  * //// pour aviser »). The screen reads its orders every 15 seconds and on each `kds_update`; a ticket ALREADY on the screen that gets a newer send makes a notice under the bar (« T-12 — the next course is ordered:
  * //// Desserts »), rings the sound the till chose and highlights the ticket. What it does follows the till's settings, which a kitchen tablet reads through get_restaurant_settings. (the French words are pinned in utils/__tests__/kitchenAlertsFrench.spec.js).
  * @vitest-environment jsdom

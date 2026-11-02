@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). A table's QR code from the floor (NeoRestau lot 1, task 26): the
+ * //// Neoffice — added file (no upstream equivalent). A table's QR code from the floor (NeoResto lot 1, task 26): the
  * //// list's QR button and a long press on the plan ask for it, and the page shows it through the order view's own
  * //// entry (handleQRButtonClick), for the table pressed, which is not the cart's (no table is open on the floor). One
  * //// function of the page, handleShowTableQR, is that way in: at the merge with useTableQR (Task 9d+9e) it is the one

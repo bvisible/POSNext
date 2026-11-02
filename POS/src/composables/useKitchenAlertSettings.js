@@ -1,10 +1,10 @@
-//// Neoffice — added file (no upstream equivalent). How a kitchen or runner screen gets the alerts of its till (NeoRestau lot 1, Daniel, 01.11). The screens run on paired device accounts with no till behind them
+//// Neoffice — added file (no upstream equivalent). How a kitchen or runner screen gets the alerts of its till (NeoResto lot 1, Daniel, 01.11). The screens run on paired device accounts with no till behind them
 //// (no POS Profile, no POS Settings of their own): they ask `get_restaurant_settings`, the call a tablet already makes, for their restaurant, and the server resolves the alerts from the POS Settings of the
 //// restaurant's till (pos_next.restaurant.kitchen_alerts). The reading is repeated every few minutes so that a change made at the till reaches a tablet that stays open for days.
 import { onMounted, onUnmounted, ref } from "vue"
 import { call } from "@/utils/apiWrapper"
 import { DEFAULT_KITCHEN_ALERTS, readKitchenAlerts } from "@/utils/kitchenAlerts"
-//// Neoffice — the restaurant's service rhythm rides in the same answer: the kitchen greys the later courses only where the room calls them (NeoRestau lot 1, Daniel, 01.11)
+//// Neoffice — the restaurant's service rhythm rides in the same answer: the kitchen greys the later courses only where the room calls them (NeoResto lot 1, Daniel, 01.11)
 import { CALLED_BY_THE_ROOM, rhythmOf } from "@/utils/serviceRhythm"
 
 /** How often the settings are read again, in milliseconds. */

@@ -48,7 +48,7 @@ describe("a shown line leads back to its cart row", () => {
 
 // The price dialog of a dish with no price hands back the item it was opened on: the row of the cart when the dish is already
 // there (its options were chosen first), a fresh item when it is not. A dish that is in the cart under another row is not it
-// (NeoRestau lot 1, task 22, fix round 2).
+// (NeoResto lot 1, task 22, fix round 2).
 describe("the cart line an item stands for", () => {
 	it("a row of the cart is its own line", () => {
 		const first = line("GIFT-CARD")

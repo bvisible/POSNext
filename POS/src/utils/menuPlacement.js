@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). Where the status menu of a dish opens on the kitchen ticket (NeoRestau
+//// Neoffice — added file (no upstream equivalent). Where the status menu of a dish opens on the kitchen ticket (NeoResto
 //// lot 1, task 23). The menu hung under the dish INSIDE the ticket. A long ticket's dishes now scroll inside the ticket,
 //// and a menu inside a scrolling body is cut by its foot, or makes the body scroll to show it. It is placed on the screen
 //// instead: below the dish, above it when there is no room below, always inside the window.

@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The dark classes of the kitchen and runner screens are compiled by the
- * //// till's own Tailwind configuration and come out as the rules the dark mode needs (NeoRestau lot 1, task 46). A class that
+ * //// till's own Tailwind configuration and come out as the rules the dark mode needs (NeoResto lot 1, task 46). A class that
  * //// is mistyped, or a colour the configuration does not name (`dark:text-ds-danger`), compiles to nothing and the element is
  * //// silently left as it was, which is how a blank button reaches a tablet. So the screens' sources are compiled, and what
  * //// matters is read in the stylesheet: the rules exist, they sit in the dark scope, they carry the design system's colours,

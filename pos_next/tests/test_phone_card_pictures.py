@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""A phone shows the restaurant card as buttons without pictures unless the till asks for them (NeoRestau lot 1, task 27).
+"""A phone shows the restaurant card as buttons without pictures unless the till asks for them (NeoResto lot 1, task 27).
 
 The setting is POS Settings.phone_card_pictures: off by default, set from the till's own settings screen (the Sale
 screen tab of a restaurant till; a shop till has no card and is refused it), and handed to the till by its bootstrap

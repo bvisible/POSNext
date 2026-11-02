@@ -1,5 +1,5 @@
 <template>
-	<!-- //// Neoffice — added file (no upstream equivalent). The header of a course in the cart of a table's order (NeoRestau lot 1, Daniel, 01.11: « la même logique que dans la cuisine sur le ticket
+	<!-- //// Neoffice — added file (no upstream equivalent). The header of a course in the cart of a table's order (NeoResto lot 1, Daniel, 01.11: « la même logique que dans la cuisine sur le ticket
 	     de la table, il faut barrer et réduire pour laisser que ce qu'il reste visible »). It is the kitchen ticket's way of saying a course: the name in small capitals and a dashed rule after it.
 	     A course that is all delivered is ONE row that a press opens and closes: a chevron, the name, a check mark, a rule, how many lines and what they come to. The whole row is the button
 	     (44 px high at least), so that the chevron is not the only place to press. The colours are the screen's own greys, which the till's dark remap lightens by itself. -->

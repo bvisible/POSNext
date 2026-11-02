@@ -514,7 +514,7 @@
 			>
 				<!-- Columns follow the pane's own width (auto-fill), not the viewport -->
 				<!-- //// Neoffice — or the till's « Tiles per row », a number from 3 to 8 (POS Settings.tiles_per_row, -->
-				<!-- //// NeoRestau lot 1, task 13): « Automatic » leaves the grid exactly as upstream draws it. -->
+				<!-- //// NeoResto lot 1, task 13): « Automatic » leaves the grid exactly as upstream draws it. -->
 				<div
 					class="pos-item-grid grid gap-2 sm:gap-2.5"
 					:class="tileGridClass(settingsStore.settings.tiles_per_row)"
@@ -1030,7 +1030,7 @@ import {
 } from "@/utils/lowEndOptimizations";
 import { performanceConfig } from "@/utils/performanceConfig";
 import { shouldValidateItemStock } from "@/utils/stockValidator";
-//// Neoffice — the till's « Tiles per row » (NeoRestau lot 1, task 13).
+//// Neoffice — the till's « Tiles per row » (NeoResto lot 1, task 13).
 import { tileGridClass, tileGridStyle, tilesPerRow } from "@/utils/tileGrid";
 
 const props = defineProps({
@@ -1685,7 +1685,7 @@ function handleClickOutside(event) {
 	grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
 }
 
-/* //// Neoffice — a fixed number of tiles per row (POS Settings.tiles_per_row, NeoRestau lot 1, task 13): each
+/* //// Neoffice — a fixed number of tiles per row (POS Settings.tiles_per_row, NeoResto lot 1, task 13): each
    //// tile is measured by its own width. An item without a picture shows its name in a well shorter than a
    //// picture's, clear of the stock badge that overhangs the corner, and not again under it; the price always
    //// shows whole, a narrow tile dropping the info button for it. Nothing here touches the automatic grid. */

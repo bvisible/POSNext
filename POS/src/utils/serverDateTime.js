@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). A datetime the server wrote, as a number of milliseconds (NeoRestau lot 1). The kitchen's order of tickets and the ticket's own
+//// Neoffice — added file (no upstream equivalent). A datetime the server wrote, as a number of milliseconds (NeoResto lot 1). The kitchen's order of tickets and the ticket's own
 //// timer read the same times, so they read them with the same hand (the parser lived in utils/kitchenBands; the timer of a ticket needs it too, and the two files import each other's
 //// neighbours, so it is a file of its own).
 

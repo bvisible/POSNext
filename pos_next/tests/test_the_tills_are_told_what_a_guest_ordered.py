@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""The alert a guest's order sends to the tills names the lines of THIS order (NeoRestau lot 1, Daniel, 01.11: « regarde comment la caisse sommelier reçoit
+"""The alert a guest's order sends to the tills names the lines of THIS order (NeoResto lot 1, Daniel, 01.11: « regarde comment la caisse sommelier reçoit
 l'info »).
 
 A guest orders from the QR code of a table and the waiter's till has to tell the waiter, with the words of the order: « Table 2 — le client commande : 3 x Verre
@@ -125,7 +125,7 @@ class TheTillsAreToldWhatAGuestOrdered(ServiceCase):
 		self.assertEqual(told["count"], 1)
 
 	def test_the_same_dish_ordered_again_is_a_new_line_and_is_named(self):
-		# A second round (NeoRestau lot 1, 01.11): the guest's page sends the NEW lines only and empties its cart after each send, so the same drink
+		# A second round (NeoResto lot 1, 01.11): the guest's page sends the NEW lines only and empties its cart after each send, so the same drink
 		# ordered again is a new line of the order, not a line already there. The tills are told of what that send added, as for any other.
 		self.validation("Direct to Kitchen")
 		self.order((self.cola, 1))

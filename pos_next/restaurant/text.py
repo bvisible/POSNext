@@ -1,4 +1,4 @@
-# //// Neoffice — added file (no upstream equivalent). A dish's description as text (NeoRestau lot 1, task 3).
+# //// Neoffice — added file (no upstream equivalent). A dish's description as text (NeoResto lot 1, task 3).
 """The text of a rich-text field, for the screens and the printed menu that show it as text."""
 
 from html import unescape

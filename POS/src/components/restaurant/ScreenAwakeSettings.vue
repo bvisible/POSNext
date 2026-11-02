@@ -1,6 +1,6 @@
 <template>
 	<!-- //// Neoffice — added file (no upstream equivalent). The control of the screen's four awake settings, in the top bar of the kitchen and runner screens beside the -->
-	<!-- //// size of the text (NeoRestau lot 1, task 47). The product owner's tablet fell asleep by itself; he also wants a screen nobody touched to go quiet and to come -->
+	<!-- //// size of the text (NeoResto lot 1, task 47). The product owner's tablet fell asleep by itself; he also wants a screen nobody touched to go quiet and to come -->
 	<!-- //// back with a touch. One icon button of 44 px, as its neighbours, that opens a small panel (never a new bar): keep the screen on, rest the screen after N minutes, -->
 	<!-- //// wake on a new ticket, let the tablet sleep after N more minutes of rest, each with ONE line of help. The panel holds nothing the page keeps: it shows the -->
 	<!-- //// settings it is given and says what the person changed; the device keeps them (useScreenAwake). -->

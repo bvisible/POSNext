@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""Every item the till loads carries its VAT rates, on site and to take away (NeoRestau lot 1, task 11).
+"""Every item the till loads carries its VAT rates, on site and to take away (NeoResto lot 1, task 11).
 
 The till computes the VAT item by item, as the invoice does: it needs each item's VAT map (account -> rate) for its own
 tax category (`item_tax_rate`) and for its restaurant's takeaway category (`takeaway_item_tax_rate`, None where the till

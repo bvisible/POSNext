@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The till shows what the invoice will hold, to the cent (NeoRestau
+ * //// Neoffice — added file (no upstream equivalent). The till shows what the invoice will hold, to the cent (NeoResto
  * //// lot 1, Ruling 70): the VAT, the grand total and the Swiss 0.05 rounding of a cart, its lines as ERPNext forms them
  * //// (a rate at the cent), its header discount spread before the tax, its takeaway rates. Each cart below goes through
  * //// the till's own code (useInvoice) and its figures are checked against ERPNext's, worked by hand; the payload the

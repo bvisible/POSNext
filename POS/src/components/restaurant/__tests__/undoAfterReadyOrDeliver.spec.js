@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). Five seconds to take back a mis-tap on « Ready » or « Deliver » (NeoRestau lot 1, task 38a-2, ruling 112). A ticket
+ * //// Neoffice — added file (no upstream equivalent). Five seconds to take back a mis-tap on « Ready » or « Deliver » (NeoResto lot 1, task 38a-2, ruling 112). A ticket
  * //// that is marked ready leaves the cook's screen and one that is delivered leaves everyone's, so a finger that slipped was a ticket gone. A small toast says what
  * //// happened and offers « Undo » for five seconds; undoing puts each dish back in the state it had (the call-back), one call per item. The toast is the PAGE's: the
  * //// ticket's card is gone from its band the moment it is pressed, and a component that is gone cannot answer a press.

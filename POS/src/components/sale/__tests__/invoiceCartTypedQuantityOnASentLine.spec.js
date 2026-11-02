@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). A quantity typed on a line that has left for the kitchen is applied
- * //// when the waiter leaves the field, not on every keystroke (NeoRestau lot 1, task 22, fix round 2). The field fires
+ * //// when the waiter leaves the field, not on every keystroke (NeoResto lot 1, task 22, fix round 2). The field fires
  * //// on each key: on a sent line at 4, typing « 12 » lowered the line to 1 with the first key, then raised it to 12 with
  * //// the second, and the raise went on a new line of 11 units: the bill said 12, the kitchen had made 4 and would get 11
  * //// more (15). The cart is mounted for real and the keys are typed into its quantity field.

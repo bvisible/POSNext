@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The pieces of the personal till code are wired into the till (NeoRestau lot 1,
+ * //// Neoffice — added file (no upstream equivalent). The pieces of the personal till code are wired into the till (NeoResto lot 1,
  * //// product owner, 01.11.2026): the user's menu holds the entries of the lock and the page mounts their dialog OUTSIDE the menu,
  * //// the three places that configure the lock hand it the "lock on leaving" choice, the settings store reads it, the sign-out
  * //// forgets the code's keys, and every string the feature shows is written in French in the catalogue.

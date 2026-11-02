@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). What a device knows of the signed-in user's personal till code (NeoRestau
+ * //// Neoffice — added file (no upstream equivalent). What a device knows of the signed-in user's personal till code (NeoResto
  * //// lot 1, product owner, 01.11.2026): whether there is one and how long it is, cached per user so that the lock screen can show
  * //// its keypad after a reload and offline, replaced by every answer of the server, and never holding the code itself.
  * @vitest-environment jsdom

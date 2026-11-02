@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The call of a course, where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11: « Oui, les deux modes »).
+//// Neoffice — added file (no upstream equivalent). The call of a course, where the kitchen prepares ahead (NeoResto lot 1, the service rhythm, Daniel, 01.11: « Oui, les deux modes »).
 ////
 //// In a restaurant that prepares ahead, the later courses of a meal LEAVE at « Valider » marked `kds_ahead`, so that the kitchen may start and finish them; the waiter's « Commander la suite »
 //// then only SIGNALS that the room wants the course now: the server stamps `kds_called_at` on its lines (restaurant.call_next_course). A line sent ahead and not called yet is UNCALLED: it is

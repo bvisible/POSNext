@@ -1,5 +1,5 @@
 //// Neoffice — added file (no upstream equivalent). The sections of a kitchen or runner ticket by service family, and the pale tint of a
-//// category (NeoRestau lot 1, Daniel's request of 01.11: « comment on fait pour séparer entrée, plat, dessert » on the tickets, « une section
+//// category (NeoResto lot 1, Daniel's request of 01.11: « comment on fait pour séparer entrée, plat, dessert » on the tickets, « une section
 //// avec un petit liséré, un tiret qui montre la séparation », and « une couleur très pastel mais parlante, configurable dans les catégories,
 //// pas obligatoire, une couleur de fond pour les catégories »).
 ////

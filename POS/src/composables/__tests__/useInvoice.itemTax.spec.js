@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The till computes the VAT item by item (NeoRestau lot 1, task 11).
+ * //// Neoffice — added file (no upstream equivalent). The till computes the VAT item by item (NeoResto lot 1, task 11).
  * //// An item's tax comes from the till's tax rows where each row's rate is replaced by the item's own rate for that
  * //// row's account when its VAT map has one (ERPNext's rule for item_tax_rate); the cart takes the takeaway map while it
  * //// is a takeaway order; the tax rows are summed per account. The screen then says what the invoice says: in

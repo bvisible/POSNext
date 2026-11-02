@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). A kitchen's or a runner's tablet signs in with an account of its
- * //// own, paired by a QR code at the till (NeoRestau lot 1, task 16). Its screen has no till behind it: no « Back to
+ * //// own, paired by a QR code at the till (NeoResto lot 1, task 16). Its screen has no till behind it: no « Back to
  * //// POS ». When the tablet is disconnected at the till, or its session ends, the screen's next poll is refused with
  * //// the browser signed out: it goes to the pairing page, which says how to open it again, instead of piling up
  * //// error messages.

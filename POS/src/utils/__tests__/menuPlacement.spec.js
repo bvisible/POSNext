@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). Where the status menu of a dish opens on the kitchen ticket
- * //// (NeoRestau lot 1, task 23). The menu used to hang under the dish inside the ticket. Now that a long ticket's dishes
+ * //// (NeoResto lot 1, task 23). The menu used to hang under the dish inside the ticket. Now that a long ticket's dishes
  * //// scroll inside the ticket, a menu hanging inside it would be cut by the foot of the ticket: it is placed on the
  * //// screen instead, below the dish, or above when there is no room below. Fix round 1: opened upward, it is held by its
  * //// LOWER edge, so that it touches the dish whatever its height (a dish being prepared has two buttons, a dish waiting

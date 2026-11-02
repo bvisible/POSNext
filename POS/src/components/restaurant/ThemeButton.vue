@@ -1,5 +1,5 @@
 <template>
-	<!-- //// Neoffice — added file (no upstream equivalent). The theme button of the kitchen and runner screens (NeoRestau lot 1, task 38a-2, ruling 131). A tablet that opens in dark -->
+	<!-- //// Neoffice — added file (no upstream equivalent). The theme button of the kitchen and runner screens (NeoResto lot 1, task 38a-2, ruling 131). A tablet that opens in dark -->
 	<!-- //// because its system is dark gave the cook no way to change it: these screens have no user menu. One button of 44 px in the top bar: its icon is the mode in use (a sun -->
 	<!-- //// for Light, a moon for Dark, a half-moon for Auto, the system's own), one tap goes on to the next (Auto, Light, Dark), and a press held for half a second opens the -->
 	<!-- //// three with their names, for whoever wants to know what the icon means. It reads and writes the mode the till's own user menu does (utils/colorMode). -->

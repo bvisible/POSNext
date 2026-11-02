@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent). What the till asks of the server about the service families of a
-# //// restaurant order (NeoRestau lot 1): the family of each Item Group, and the plan of a send. The rule itself is
+# //// restaurant order (NeoResto lot 1): the family of each Item Group, and the plan of a send. The rule itself is
 # //// pos_next/restaurant/service_families.py; these two calls only hand it to the till.
 """The till's calls about the service families."""
 

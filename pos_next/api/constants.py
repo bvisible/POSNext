@@ -48,11 +48,11 @@ POS_SETTINGS_FIELDS = [
 	"enable_session_lock",
 	"session_lock_timeout",
 	"show_variants_as_items",
-	# //// Neoffice — same whitelist: how long the till keeps its staff signed in (pos_next.api.session, NeoRestau
+	# //// Neoffice — same whitelist: how long the till keeps its staff signed in (pos_next.api.session, NeoResto
 	# //// lot 1, 01.11.2026). The till does not read it, the settings dialog edits it.
 	"keep_signed_in_days",
 	# //// Neoffice — same whitelist: whether leaving the screen locks the till at once, or only the delay without use does
-	# //// (the personal till code, NeoRestau lot 1, 01.11.2026).
+	# //// (the personal till code, NeoResto lot 1, 01.11.2026).
 	"session_lock_on_leave",
 	# //// Neoffice — same whitelist, for two features with no upstream equivalent: restaurant mode
 	# //// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode") and the cash
@@ -61,7 +61,7 @@ POS_SETTINGS_FIELDS = [
 	# //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a + 5783eb2
 	# Restaurant Settings
 	"enable_restaurant_mode",
-	# //// Neoffice — the restaurant a till works for (NeoRestau lot 1, task 2): the screens pass it to every
+	# //// Neoffice — the restaurant a till works for (NeoResto lot 1, task 2): the screens pass it to every
 	# //// restaurant endpoint. Its label (`restaurant_name`) is added by pos_next.restaurant.scope, on the hook
 	# //// pos_next_bootstrap_settings.
 	"restaurant",
@@ -79,13 +79,13 @@ POS_SETTINGS_FIELDS = [
 	"cart_lifo",
 	"display_item_code",
 	# //// Neoffice — how many tiles a row of the till's item grids shows ("Automatic" or 3 to 8): a setting of the
-	# //// till's sale screen (NeoRestau lot 1, task 13, product owner 30.10.2026). Missing here, the till would read
+	# //// till's sale screen (NeoResto lot 1, task 13, product owner 30.10.2026). Missing here, the till would read
 	# //// "Automatic" whatever the manager chose.
 	"tiles_per_row",
-	# //// Neoffice — whether a phone shows the pictures on the restaurant card's buttons (NeoRestau lot 1, task 27):
+	# //// Neoffice — whether a phone shows the pictures on the restaurant card's buttons (NeoResto lot 1, task 27):
 	# //// missing here, a phone would show none whatever the manager chose.
 	"phone_card_pictures",
-	# //// Neoffice — same whitelist: the till's own popup and sound when a guest orders or pays from the QR code of a table (NeoRestau lot 1, Daniel, 01.11), and the
+	# //// Neoffice — same whitelist: the till's own popup and sound when a guest orders or pays from the QR code of a table (NeoResto lot 1, Daniel, 01.11), and the
 	# //// volume it rings at, which is the kitchen alerts' (the tablets read that one from get_restaurant_settings, the till reads it here). Missing here, a till would
 	# //// ring Chime for 30 s whatever the manager chose.
 	"floor_guest_popup",
@@ -141,7 +141,7 @@ DEFAULT_POS_SETTINGS = {
 	# //// 5783eb27 2026-03-28 "cash withdrawal at shift closing with suggested opening balance").
 	# Restaurant Settings
 	"enable_restaurant_mode": 0,
-	# //// Neoffice — mirrors POS_SETTINGS_FIELDS: the restaurant a till works for, and its label (NeoRestau lot 1,
+	# //// Neoffice — mirrors POS_SETTINGS_FIELDS: the restaurant a till works for, and its label (NeoResto lot 1,
 	# //// task 2).
 	"restaurant": "",
 	"restaurant_name": "",
@@ -160,7 +160,7 @@ DEFAULT_POS_SETTINGS = {
 	"miraaya_installed": 0,
 	"cart_lifo": 0,
 	"display_item_code": 1,
-	# //// Neoffice — mirrors POS_SETTINGS_FIELDS: today's grids until a manager chooses (NeoRestau lot 1, task 13).
+	# //// Neoffice — mirrors POS_SETTINGS_FIELDS: today's grids until a manager chooses (NeoResto lot 1, task 13).
 	"tiles_per_row": "Automatic",
 	# //// Neoffice — mirrors POS_SETTINGS_FIELDS: no pictures on a phone's card until a manager asks (task 27).
 	"phone_card_pictures": 0,

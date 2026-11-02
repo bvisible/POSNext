@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). What a tablet's screens read of the browser's session (NeoRestau
+ * //// Neoffice — added file (no upstream equivalent). What a tablet's screens read of the browser's session (NeoResto
  * //// lot 1, task 16), from the cookies Frappe sets on every answer: `system_user` says whether the account is a desk
  * //// account, `user_id` who is signed in ("Guest" once the session has ended).
  * @vitest-environment jsdom

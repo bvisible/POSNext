@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). On the phone's card a touch is +1 and a long press opens the
- * //// options (NeoRestau lot 1, task 27). A waiter scrolls the card with the same finger: a press that moves more
+ * //// options (NeoResto lot 1, task 27). A waiter scrolls the card with the same finger: a press that moves more
  * //// than a few pixels is a scroll, never a long press, and never a +1 either.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"

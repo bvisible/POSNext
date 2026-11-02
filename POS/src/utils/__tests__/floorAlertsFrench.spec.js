@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The floor alerts in French (NeoRestau lot 1, Daniel, 01.11): the product owner speaks French, and everything a person reads (the notice on the till, its buttons,
+ * //// Neoffice — added file (no upstream equivalent). The floor alerts in French (NeoResto lot 1, Daniel, 01.11): the product owner speaks French, and everything a person reads (the notice on the till, its buttons,
  * //// the group of the till's settings, the warnings of « View table ») goes through the real catalogue (pos_next/locale/fr.po) and the real `translate`. The template (main.pot) carries each new string, empty.
  * @vitest-environment jsdom
  */

@@ -1,10 +1,10 @@
-//// Neoffice — added file (no upstream equivalent). « Commander la suite » and « Tout commander » (NeoRestau lot 1, service
+//// Neoffice — added file (no upstream equivalent). « Commander la suite » and « Tout commander » (NeoResto lot 1, service
 //// families). A table's order holds its later courses back (`Waiting`); only the waiter's gesture releases them, and the
 //// kitchen touches nothing. The server says WHICH lines are released, by the same rule that held them (the till only has its
 //// copy for the boxes of the kitchen dialog); the till marks them and sends the order, which is a send of its own on the
 //// kitchen's screen. If the send fails the lines are held again, so that the cart never shows as sent what the kitchen has not got.
 ////
-//// Neoffice — where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11: « Oui, les deux modes »), the course is already at the kitchen, marked ahead: the gesture does not release it, it CALLS it. One atomic
+//// Neoffice — where the kitchen prepares ahead (NeoResto lot 1, the service rhythm, Daniel, 01.11: « Oui, les deux modes »), the course is already at the kitchen, marked ahead: the gesture does not release it, it CALLS it. One atomic
 //// call of the server stamps the time of the call on the lines of the course (`restaurant.call_next_course`), the kitchen's popup and sound go off on it, and the order is not sent a second time. The same gesture releases the
 //// lines of the room's rhythm that are held by hand, in a restaurant that changed its rhythm while the table was open.
 

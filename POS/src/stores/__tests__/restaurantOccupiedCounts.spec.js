@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The red badge of a room's tab counts its occupied tables (NeoRestau
+ * //// Neoffice — added file (no upstream equivalent). The red badge of a room's tab counts its occupied tables (NeoResto
  * //// lot 1, fix round 1). The store counted them by the LABEL of the room and the plan read them by its NAME, so that the
  * //// badge never showed on a room named by a hash (every room made since the rooms belong to a restaurant); it showed only
  * //// on a room whose name was its label. The count is keyed by the name, which is what the plan and every record use.

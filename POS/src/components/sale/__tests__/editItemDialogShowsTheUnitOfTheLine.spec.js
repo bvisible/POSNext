@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The unit select of « Edit Item Details » (NeoRestau lot 1, task 22).
+ * //// Neoffice — added file (no upstream equivalent). The unit select of « Edit Item Details » (NeoResto lot 1, task 22).
  * //// A dish added from a restaurant card opened the dialog with « Nos » in the header and an EMPTY unit select: the card
  * //// entry carried no unit, the cart line was born without one, the dialog listed `undefined` as the only option and
  * //// invented « Nos » as the current value. Whatever path added a line, the select shows the unit the line is in and lists

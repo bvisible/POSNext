@@ -1,4 +1,4 @@
-# //// Neoffice — added file (no upstream equivalent). « Offer an item » (NeoRestau lot 1, task 24): an opt-in manager PIN
+# //// Neoffice — added file (no upstream equivalent). « Offer an item » (NeoResto lot 1, task 24): an opt-in manager PIN
 # //// for the lines a cashier offers, through upstream's authorization gate, registered the way the fork's other actions
 # //// are (one module, one line in actions/__init__.py, one option of POS Authorization Rule.action).
 """The offered rows of a sale, approved by a manager where a rule asks for it.

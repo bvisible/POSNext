@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The logic of the till's settings screen (NeoRestau lot 1, task 13):
+//// Neoffice — added file (no upstream equivalent). The logic of the till's settings screen (NeoResto lot 1, task 13):
 //// the screen is drawn from the list the server sends (pos_next.till_settings.api.get_till_settings), and this works
 //// out, from that list alone, the rail of tabs, the columns of a tab, which setting is greyed by another, what changed
 //// since the screen was read and what a save must refresh at the till.

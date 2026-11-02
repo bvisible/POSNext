@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The QR button of a table shows the table's code at once (NeoRestau
+ * //// Neoffice — added file (no upstream equivalent). The QR button of a table shows the table's code at once (NeoResto
  * //// lot 1): it used to ask a question first (a confirmation dialog) and wait for a second click on its "Generate QR"
  * //// button. The product owner: the QR itself, straight away, with a small line that says what it is.
  * ////

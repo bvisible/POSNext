@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The restaurant till shows its tables as a list or as the floor
- * //// plan (NeoRestau lot 1, task 26). On a phone (below 768 px) it opens on the list, on a tablet and a PC on the plan
+ * //// plan (NeoResto lot 1, task 26). On a phone (below 768 px) it opens on the list, on a tablet and a PC on the plan
  * //// as before; the waiter's choice is remembered on THIS device, in the browser's storage, and a storage that refuses
  * //// (a private window, a full or blocked one) never stops the till: the choice then lasts as long as the page.
  * @vitest-environment jsdom

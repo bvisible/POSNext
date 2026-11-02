@@ -1,5 +1,5 @@
 //// Neoffice — added file (no upstream equivalent). How many tiles a row of the till's catalogue grids shows
-//// (NeoRestau lot 1, task 13; product owner, 30.10.2026: « six or seven would fit, all the more since many products
+//// (NeoResto lot 1, task 13; product owner, 30.10.2026: « six or seven would fit, all the more since many products
 //// have no picture »). The till's setting `tiles_per_row` (POS Settings) is "Automatic" (the grids as they always
 //// were: the shop's by the width of its pane, the restaurant's by the width of the screen) or a number from 3 to 8.
 //// Both grids read it through here: the shop's item grid (ItemsSelector.vue) and the restaurant's card grid

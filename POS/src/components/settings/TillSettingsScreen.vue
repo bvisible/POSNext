@@ -1,5 +1,5 @@
 <!-- //// Neoffice — added file (no upstream equivalent). The till's settings screen, drawn from ONE list of settings -->
-<!-- //// (NeoRestau lot 1, task 13; product owner, 30.10.2026: « the till manager does not leave the till »): eleven -->
+<!-- //// (NeoResto lot 1, task 13; product owner, 30.10.2026: « the till manager does not leave the till »): eleven -->
 <!-- //// tabs in a rail (the restaurant's four on a restaurant till only, then the till's seven), every setting with -->
 <!-- //// its help behind the lightbulb, a setting that depends on another shown greyed while that one is off, and one -->
 <!-- //// « Save » for the whole screen. The list, its tabs, help texts and rules are served by pos_next.till_settings -->
@@ -216,7 +216,7 @@
 												</p>
 											</div>
 
-											<!-- //// Neoffice — the Listen buttons of the kitchen alerts: they play the sound and the volume chosen in the lines above (NeoRestau lot 1, Daniel, 01.11) -->
+											<!-- //// Neoffice — the Listen buttons of the kitchen alerts: they play the sound and the volume chosen in the lines above (NeoResto lot 1, Daniel, 01.11) -->
 											<div
 												v-else-if="block.setting.key === 'kitchen_alert_listen'"
 												:class="greyed(block.setting) ? 'opacity-[0.42]' : ''"
@@ -229,7 +229,7 @@
 												/>
 											</div>
 
-											<!-- //// Neoffice — the Listen button of the floor alerts: it plays the till's own sound (a guest orders or pays from the QR code of a table) at the volume of the kitchen alerts (NeoRestau lot 1, Daniel, 01.11) -->
+											<!-- //// Neoffice — the Listen button of the floor alerts: it plays the till's own sound (a guest orders or pays from the QR code of a table) at the volume of the kitchen alerts (NeoResto lot 1, Daniel, 01.11) -->
 											<div
 												v-else-if="block.setting.key === 'floor_alert_listen'"
 												:class="greyed(block.setting) ? 'opacity-[0.42]' : ''"
@@ -444,7 +444,7 @@ const props = defineProps({
 	//// Neoffice — kept for the callers: the warehouse is now read with the till's other settings.
 	currentWarehouse: String,
 	//// Neoffice — lets a caller open the screen on one tab: the card editor's « edit the schedule » opens the
-	//// hours (6b38498b, 2026-03-27; the tab is "hours" since NeoRestau lot 1, task 13).
+	//// hours (6b38498b, 2026-03-27; the tab is "hours" since NeoResto lot 1, task 13).
 	initialTab: { type: String, default: "" },
 })
 

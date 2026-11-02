@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). What to write on a preparation station's colour, and the colour a
- * //// station is written in on a dark card (NeoRestau lot 1, task 46). The restaurant picks a station's colour, so the kitchen
+ * //// station is written in on a dark card (NeoResto lot 1, task 46). The restaurant picks a station's colour, so the kitchen
  * //// and runner screens cannot know it when they are written: white text on it was 2.8:1 on a clay station, and a blue station's
  * //// name on a tint of its own colour was 2.0:1 on a dark card.
  */

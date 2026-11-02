@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). What the sale page and the cart hand to the cart store (NeoRestau lot
+ * //// Neoffice — added file (no upstream equivalent). What the sale page and the cart hand to the cart store (NeoResto lot
  * //// 1, task 22, fix round 1). The units of a menu course item, of the rows of an offline invoice taken back and of a card
  * //// entry reach the cart line through functions a spec calls; nothing else would notice the page building the line
  * //// without them. The same for the row of a line: the stepper, the typed quantity, the removal, the unit dropdown and the

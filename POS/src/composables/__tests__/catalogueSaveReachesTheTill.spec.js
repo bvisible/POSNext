@@ -1,7 +1,7 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). A setting saved at the till that changes what it sells (its
  * //// price list, its item groups, its brands, the variants) reaches the till's items at once, from the server: the
- * //// browser's copy of the items keeps the old prices, and a cart line takes the price the till shows (NeoRestau
+ * //// browser's copy of the items keeps the old prices, and a cart line takes the price the till shows (NeoResto
  * //// lot 1, task 13, fix round 1). What the settings no longer offer leaves the browser's copy, the till's open search
  * //// and group tab show the new prices, and a cart already started keeps the prices it announced, which the till
  * //// says once (fix round 2, ruling 81).

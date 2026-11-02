@@ -1,5 +1,5 @@
 //// Neoffice — added file (no upstream equivalent). The door a visitor comes through (`/pos?mode=restaurant` is the
-//// restaurant door NeoRestau opens) survives the router's redirects between the till and the login (NeoRestau lot 1,
+//// restaurant door NeoResto opens) survives the router's redirects between the till and the login (NeoResto lot 1,
 //// task 5). A visitor who is not signed in is sent to the login first; the shift dialog, on the login page as on the till,
 //// reads the door from the query of the route it is in, so a redirect that dropped the query string would offer a
 //// restaurant cashier the usual tills after signing in.
@@ -26,7 +26,7 @@ const { default: router } = await import("../router")
 describe("the door a visitor comes through", () => {
 	beforeEach(async () => {
 		session.isLoggedIn = false
-		window.posnext_neorestau_active = true
+		window.posnext_neoresto_active = true
 		// Every visit starts from a screen that is open to all (the router is one object for the whole file, and a
 		// navigation to the route it is on is dropped)
 		await router.push("/display")

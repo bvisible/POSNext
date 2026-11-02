@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The kitchen's last action follows the station's runner setting (NeoRestau lot 1,
+//// Neoffice — added file (no upstream equivalent). The kitchen's last action follows the station's runner setting (NeoResto lot 1,
 //// task 38a-1, ruling 112). A preparation station says whether its dishes go through a runner (`use_runner`, on by default).
 ////
 //// - WITH a runner, the cook stops at "Ready": the dish waits for the runner, who delivers it from the runner screen. It stays on the
@@ -17,7 +17,7 @@
 //// one table pos_next/tests/kitchen_pass_cases.json. A line cooked in part stays on the kitchen's ticket with the units still to cook as its quantity
 //// (`qty`, the line's own quantity being kept in `ordered_qty`), and the cooked ones wait at the pass.
 import { splitIntoBands } from "@/utils/kitchenBands"
-//// Neoffice — a dish sent ahead of its course is not at the pass until the room calls it (the service rhythm, NeoRestau lot 1, Daniel, 01.11)
+//// Neoffice — a dish sent ahead of its course is not at the pass until the room calls it (the service rhythm, NeoResto lot 1, Daniel, 01.11)
 import { isUncalled } from "@/utils/courseCall"
 
 // A dish the cook still works on, or has finished: what a ticket is about
@@ -250,7 +250,7 @@ export function readyForTheRunner(
 		const ready = []
 		for (const line of order?.items || []) {
 			if (!dishUsesRunner(line, stations, runnerEnabled)) continue
-			//// Neoffice — the runner is offered a dish only once its course is called (the service rhythm, NeoRestau lot 1)
+			//// Neoffice — the runner is offered a dish only once its course is called (the service rhythm, NeoResto lot 1)
 			if (isUncalled(line)) continue
 			const units = unitsAtThePass(line)
 			if (units <= 0) continue

@@ -1,7 +1,7 @@
 # //// Neoffice — added file (no upstream equivalent). Upstream POSNext has no guest ordering, so no QR code of a table to
 # //// print. The Print button of the QR dialog opened the browser's print window; a restaurant wants a paper out of the
 # //// till's receipt printer. POS Next names the moment, checks who asks and works the link out from the guest token; an app
-# //// that prints (cloudprnt) listens to the hook below, declared in its own hooks.py (NeoRestau lot 1, task 53).
+# //// that prints (cloudprnt) listens to the hook below, declared in its own hooks.py (NeoResto lot 1, task 53).
 """Print the QR ticket of a table on the till's receipt printer.
 
 The browser sends the guest TOKEN of the table's code and the till it works at, never a text or an address: the table and the

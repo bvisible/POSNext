@@ -33,7 +33,7 @@ export function cartRowOf(line) {
  * The cart line an item stands for: the row itself when the item is a line of the cart (or a shown copy of one), `null` when it
  * is not. The price dialog of a dish with no price hands back the item it was opened on, and a fresh item of a dish that is
  * already in the cart (a first round, maybe sent) is not the line to price: looking the line up by item code priced that line
- * and added no unit (NeoRestau lot 1, task 22, fix round 2).
+ * and added no unit (NeoResto lot 1, task 22, fix round 2).
  * @param {Array<Object>} cartItems - The cart's rows
  * @param {Object|null|undefined} item - A cart row, a shown copy of one, a fresh item, or nothing
  * @returns {Object|null}
@@ -51,7 +51,7 @@ let lastRowKey = 0
 /**
  * A key that tells a cart row from every other, shown copy or not: the same dish and unit can sit on two lines (the one the
  * kitchen has, the one that waits), so the item and its unit do not name a row. The list of the cart keys its lines with it, so a
- * field's focus and what was typed into it stay with its own row (NeoRestau lot 1, task 22, fix round 3).
+ * field's focus and what was typed into it stay with its own row (NeoResto lot 1, task 22, fix round 3).
  * @param {Object|null|undefined} line - A cart row or a shown copy of one
  * @returns {string}
  */

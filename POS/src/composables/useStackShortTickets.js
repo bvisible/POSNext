@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The runner's setting « stack short tickets » (NeoRestau lot 1, task 38a-2, ruling 130): short tickets stack in a
+//// Neoffice — added file (no upstream equivalent). The runner's setting « stack short tickets » (NeoResto lot 1, task 38a-2, ruling 130): short tickets stack in a
 //// column instead of each taking a column of its own. ON by default (the point of the screen is to show more of what waits at the pass); a device can turn it off,
 //// kept in its own storage as the kitchen's layout is, until the restaurant's settings carry it. The rules are here, the page only reads them.
 import { ref } from "vue"

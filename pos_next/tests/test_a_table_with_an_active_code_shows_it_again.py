@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""The QR button of a table shows the code the table already has, to whoever may press it (NeoRestau lot 1).
+"""The QR button of a table shows the code the table already has, to whoever may press it (NeoResto lot 1).
 
 `create_table_token` used to expire every active Guest Order Token of the table and make a new one on each call: pressing
 the QR button a second time, or from a second till, killed the code already placed on the table (shown on a tablet, printed,
@@ -14,7 +14,7 @@ that till's restaurant, no wider and no narrower. That is a desk account that ma
 so that a user kept to restaurant B who names a till of restaurant A reads neither A's floor nor A's live code. Nothing
 more is asked: not an assignment to the till (a kitchen screen's account and a manager read the floor without being users
 of the POS Profile), not a right on the table, not the right to make a token. A portal account and a visitor are refused,
-a table must be on the floor of the till it names, and the site must run NeoRestau.
+a table must be on the floor of the till it names, and the site must run NeoResto.
 
 The suite relies on no patch, no after_migrate and no data of the site: it makes the restaurants, the tills, the rooms and
 the tables it needs (the `Tills` fixture of the mode suite), and each test rolls back to the savepoint it started from.
@@ -33,7 +33,7 @@ from pos_next.pos_next.doctype.guest_order_token.guest_order_token import GuestO
 from pos_next.restaurant import permissions
 from pos_next.tests.test_restaurant_mode_comes_from_the_till import (
 	Tills,
-	a_site_where_neorestau_is,
+	a_site_where_neoresto_is,
 	the_refusal,
 )
 from pos_next.tests.test_till_writes_need_the_till import CASHIER_ROLE, _user
@@ -81,16 +81,16 @@ def make_a_till_of(profile, restaurant):
 
 
 class TheQrButton:
-	"""What both suites stand on: the realtime spy, the flag of NeoRestau, and the helpers that make rows."""
+	"""What both suites stand on: the realtime spy, the flag of NeoResto, and the helpers that make rows."""
 
 	def setUp(self):
 		super().setUp()
 		realtime = patch.object(frappe, "publish_realtime")
 		realtime.start()
 		self.addCleanup(realtime.stop)
-		neorestau = patch.dict(frappe.conf, {"neorestau_active": 1})
-		neorestau.start()
-		self.addCleanup(neorestau.stop)
+		neoresto = patch.dict(frappe.conf, {"neoresto_active": 1})
+		neoresto.start()
+		self.addCleanup(neoresto.stop)
 
 	def insert(self, doctype, **values):
 		return frappe.get_doc({"doctype": doctype, **values}).insert(ignore_permissions=True).name
@@ -465,9 +465,9 @@ class TestWhoMayPressTheQrButton(TheQrButton, Tills, FrappeTestCase):
 
 		self.assertEqual(self.tokens_of(self.table_a), 0)
 
-	def test_where_neorestau_is_off_no_code_is_made(self):
+	def test_where_neoresto_is_off_no_code_is_made(self):
 		for value in (0, None):
-			with self.subTest(neorestau=value), a_site_where_neorestau_is(value):
+			with self.subTest(neoresto=value), a_site_where_neoresto_is(value):
 				with self.assertRaises(frappe.ValidationError) as refused:
 					guest_ordering.create_table_token(self.table_a, self.fx.profile)
 				self.assertEqual(str(refused.exception), the_refusal())
@@ -608,7 +608,7 @@ class TestWhoMayPressTheQrButton(TheQrButton, Tills, FrappeTestCase):
 				self.assertEqual(frappe.db.get_value("Guest Order Token", code["name"], "table"), table)
 
 	def test_a_kitchen_screens_account_reads_the_rooms_without_being_a_user_of_the_till(self):
-		# The kitchen and the runner read their rooms from `get_tables` (NeoRestau lot 1, task 9c). A kitchen tablet runs on a
+		# The kitchen and the runner read their rooms from `get_tables` (NeoResto lot 1, task 9c). A kitchen tablet runs on a
 		# desk account that holds a till role besides the kitchen's: it reads the restaurant, and is no user of the POS Profile
 		self.assertIn(permissions.KITCHEN_ROLE, frappe.get_roles(KITCHEN_STAFF))
 		self.assertFalse(frappe.db.exists("POS Profile User", {"user": KITCHEN_STAFF}))

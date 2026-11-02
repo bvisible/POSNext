@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The options dialog of a dish showed « Confirm » in clay (NeoRestau
+ * //// Neoffice — added file (no upstream equivalent). The options dialog of a dish showed « Confirm » in clay (NeoResto
  * //// lot 1, task 22). The design system wants the primary action of a surface in ink, never in the accent: this till
  * //// maps every blue-N utility onto the clay ramp (tailwind.config.js), so `theme="blue"` on a frappe-ui Button is a
  * //// clay button, while the Button's default theme is the ink one « Update Item » already has.

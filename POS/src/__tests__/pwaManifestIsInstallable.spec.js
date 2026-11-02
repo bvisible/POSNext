@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The till can be installed as an app (NeoRestau lot 1, Daniel, 01.11: the shortcut he made from Chrome opened a browser tab, « pas en web app »). Chrome
+ * //// Neoffice — added file (no upstream equivalent). The till can be installed as an app (NeoResto lot 1, Daniel, 01.11: the shortcut he made from Chrome opened a browser tab, « pas en web app »). Chrome
  * //// mints a real app only for a manifest it finds installable: PNG icons of 192 and 512 px (SVG icons alone are not taken on Android), a start URL inside the scope, a standalone display and a stable id.
  * //// The manifest is written in vite.config.js and built from it, so it is read from there, and the icon files it names are looked for in public/.
  * @vitest-environment node

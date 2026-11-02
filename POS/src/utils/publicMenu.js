@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The public menu (NeoRestau lot 1, task 17): the address that the QR
+//// Neoffice — added file (no upstream equivalent). The public menu (NeoResto lot 1, task 17): the address that the QR
 //// code on a restaurant's tables opens, the call that reads the menu behind it, and how a price is written on it.
 //// Upstream POSNext has no guest surface at all.
 

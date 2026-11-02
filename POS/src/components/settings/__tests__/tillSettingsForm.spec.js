@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The rules of the till's settings screen, from the list alone
- * //// (NeoRestau lot 1, task 13): the rail of tabs, the columns of a tab, when a setting is greyed, what a save
+ * //// (NeoResto lot 1, task 13): the rail of tabs, the columns of a tab, when a setting is greyed, what a save
  * //// sends, what the till must take again once it is saved.
  * @vitest-environment jsdom
  */

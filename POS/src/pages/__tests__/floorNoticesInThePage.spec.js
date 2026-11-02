@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The floor alerts in the till's page (NeoRestau lot 1, Daniel, 01.11: « regarde comment la caisse sommelier reçoit l'info (popup et autre) »), read in the sources:
+ * //// Neoffice — added file (no upstream equivalent). The floor alerts in the till's page (NeoResto lot 1, Daniel, 01.11: « regarde comment la caisse sommelier reçoit l'info (popup et autre) »), read in the sources:
  * //// the notices stand between the header and the work (never over them), « View table » goes through the one function that opens a table, the chip that asks for a touch is drawn by the header, a user who leaves leaves
  * //// his notices, and only the till has them: the kitchen's and the runner's tablets never start the listeners nor draw a notice.
  */

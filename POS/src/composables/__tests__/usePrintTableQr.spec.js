@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The Print button of a table's QR dialog puts a ticket on the till's receipt printer
- * //// (NeoRestau lot 1, task 53): the call it makes, the states it shows, and when (only then) the browser prints instead.
+ * //// (NeoResto lot 1, task 53): the call it makes, the states it shows, and when (only then) the browser prints instead.
  * @vitest-environment jsdom
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"

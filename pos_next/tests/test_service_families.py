@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""The service families of a restaurant order (NeoRestau lot 1, the first slice of Daniel's « famille de service »).
+"""The service families of a restaurant order (NeoResto lot 1, the first slice of Daniel's « famille de service »).
 
 A restaurant says, on the Item Group of its menu, which group is a drink, a starter, a main or a dessert (a sub-group with
 no family takes its parent's). Each line of an order carries its family, and a table's order is sent to the kitchen in

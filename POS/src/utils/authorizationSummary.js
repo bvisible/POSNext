@@ -28,7 +28,7 @@ export function buildAuthorizationSummary(state = {}, { formatAmount = formatCur
 		rows.push({ key: "journal_entry", label: t("Journal Entry"), value: String(context.journal_entry) });
 	}
 
-	//// Neoffice — opening a card outside its hours (NeoRestau lot 1, task 25): the approver reads which card it is
+	//// Neoffice — opening a card outside its hours (NeoResto lot 1, task 25): the approver reads which card it is
 	if (context.restaurant_card) {
 		rows.push({
 			key: "restaurant_card",

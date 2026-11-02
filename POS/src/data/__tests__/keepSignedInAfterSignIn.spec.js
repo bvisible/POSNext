@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). A sign-in opens a session of its own, which the till has to ask the server to
- * //// keep open (NeoRestau lot 1, product owner, 01.11.2026): a sign-in, or a sign-out, in the same tab makes the till ask again
+ * //// keep open (NeoResto lot 1, product owner, 01.11.2026): a sign-in, or a sign-out, in the same tab makes the till ask again
  * //// when its profile is loaded; without either, a page load asks once.
  * @vitest-environment jsdom
  */

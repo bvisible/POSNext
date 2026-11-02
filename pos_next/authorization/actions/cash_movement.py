@@ -1,6 +1,6 @@
 # //// Neoffice — added file (no upstream equivalent). The till's drawer movements (« Entrées/Sorties de
 # //// caisse », pos_next.api.cash_entry) are ours; cancelling one at the till goes through upstream's
-# //// authorization gate like a POS expense's void, under an action of its own (NeoRestau lot 1, task 15).
+# //// authorization gate like a POS expense's void, under an action of its own (NeoResto lot 1, task 15).
 # //// The gate is opt-in: nothing is asked until a POS Authorization Rule names « Void Cash Movement ».
 """« Void Cash Movement »: a manager's approval to cancel a drawer movement at the till.
 

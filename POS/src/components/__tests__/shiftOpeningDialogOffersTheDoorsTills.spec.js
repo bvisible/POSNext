@@ -1,5 +1,5 @@
 //// Neoffice — added file (no upstream equivalent). The shift opening dialog asks the server for the tills of the door the
-//// cashier came through (NeoRestau lot 1, task 5): `/pos?mode=restaurant` is the restaurant door NeoRestau opens, the
+//// cashier came through (NeoResto lot 1, task 5): `/pos?mode=restaurant` is the restaurant door NeoResto opens, the
 //// usual entry offers the other tills. The dialog sits on the login page and on the till, so it reads the door from the
 //// route it is in, each time it asks for the list. The list is never kept between doors.
 // @vitest-environment jsdom

@@ -1,4 +1,4 @@
-# //// Neoffice — added file (no upstream equivalent). A tablet of a restaurant (NeoRestau lot 1, task 16): the
+# //// Neoffice — added file (no upstream equivalent). A tablet of a restaurant (NeoResto lot 1, task 16): the
 # //// kitchen's or the runner's screen, opened with an account of its own after a manager showed a QR code at the
 # //// till. The row is the binding the kitchen's and the runner's endpoints accept that account by
 # //// (pos_next.restaurant.devices); it is written by the pairing endpoints only, never from the desk.

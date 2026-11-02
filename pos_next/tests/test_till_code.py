@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""The personal code of the till (NeoRestau lot 1, product owner, 01.11.2026).
+"""The personal code of the till (NeoResto lot 1, product owner, 01.11.2026).
 
 A waiter's phone stays signed in for 30 days; the counterpart is a lock that is opened by a SHORT PERSONAL CODE instead of
 the long account password. `pos_next.api.till_code` keeps that code, hashed, beside the account password and never in its

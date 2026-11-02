@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent). The site-wide single `Restaurant Settings`
-# //// becomes the settings of one default restaurant, named after the default company (NeoRestau lot 1,
+# //// becomes the settings of one default restaurant, named after the default company (NeoResto lot 1,
 # //// task 1): the opening hours, tips, QR and web ordering and reservation rules a site had set keep
 # //// working, now as the first of its restaurants. The single stays in place, untouched but for its opening
 # //// hours, which move with the settings.
@@ -14,7 +14,7 @@ SINGLE = "Restaurant Settings"
 def execute():
 	"""Create the default restaurant from the single, when the site used the restaurant module.
 
-	What counts as use is `site_used_the_restaurant`, which the patch that switches NeoRestau on shares: never the
+	What counts as use is `site_used_the_restaurant`, which the patch that switches NeoResto on shares: never the
 	stored values of the single, which a migrate writes on every site, a client that never used the module included.
 	Idempotent: nothing happens once a restaurant exists.
 	"""

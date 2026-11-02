@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""Two restaurants on one site (NeoRestau lot 1, task 2).
+"""Two restaurants on one site (NeoResto lot 1, task 2).
 
 Rooms, tables, preparation stations, cards, menus, reservations and tips belong to a restaurant, and a till works
 for one restaurant, the one its POS Settings name. What a till reads is that restaurant's, what it creates is that
@@ -99,11 +99,11 @@ class TwoRestaurants:
 		commit = patch.object(frappe.db, "commit")
 		commit.start()
 		self.addCleanup(commit.stop)
-		# Two restaurants on one site presuppose NeoRestau: the entry points of the guests refuse to start anything where
+		# Two restaurants on one site presuppose NeoResto: the entry points of the guests refuse to start anything where
 		# the site does not run it (task 4), and the site's own flag is not the test's to know
-		neorestau = patch.dict(frappe.conf, {"neorestau_active": 1})
-		neorestau.start()
-		self.addCleanup(neorestau.stop)
+		neoresto = patch.dict(frappe.conf, {"neoresto_active": 1})
+		neoresto.start()
+		self.addCleanup(neoresto.stop)
 		self.a = self.make_restaurant("_Test Restaurant A", logo="/files/_test_restaurant_a.png")
 		self.b = self.make_restaurant("_Test Restaurant B")
 		self.room_a = self.make_room(self.a)
@@ -352,7 +352,7 @@ class TestEachTillSeesItsOwnRestaurant(TwoRestaurants, FrappeTestCase):
 		self.assertEqual(frappe.db.get_value("Restaurant Table", self.table_b, "status"), "Occupied")
 
 	def test_a_station_says_whether_its_dishes_go_through_a_runner(self):
-		"""The kitchen screen's last button follows its station (NeoRestau lot 1, task 38a-1, ruling 112).
+		"""The kitchen screen's last button follows its station (NeoResto lot 1, task 38a-1, ruling 112).
 
 		With a runner the cook stops at "Ready" and the dish leaves the screen; with none the cook delivers. The screen
 		reads which it is from the stations it is given, so the answer carries the flag, as the doctype stores it.
@@ -916,7 +916,7 @@ class TestOrdersBelongToTheRestaurantOfTheirTable(TwoRestaurants, FrappeTestCase
 		self.assertEqual(table_order["table_display_name"], TABLE)
 
 	def test_the_kitchen_screen_says_the_room_of_each_table(self):
-		# The kitchen screen filters its tickets by room as the runner does (NeoRestau lot 1, task 9c): each
+		# The kitchen screen filters its tickets by room as the runner does (NeoResto lot 1, task 9c): each
 		# order says the room of its table, the same `area` the runner's orders carry
 		terrace = self.make_room(self.a, label="Terrace")
 		terrace_table = self.make_table(self.a, terrace, table_name="T2")

@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The service rhythm of a restaurant on the screens' side (NeoRestau lot 1, Daniel, 01.11: « Oui, les deux modes »).
+//// Neoffice — added file (no upstream equivalent). The service rhythm of a restaurant on the screens' side (NeoResto lot 1, Daniel, 01.11: « Oui, les deux modes »).
 ////
 //// A restaurant chooses in its settings how the courses of a meal reach the kitchen (the Select `service_rhythm` of the Restaurant, pos_next/restaurant/service_families.py):
 //// - "Called by the room" (the default): at « Valider » the drinks and the first course leave, the later courses are held back until the waiter orders them;

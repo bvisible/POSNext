@@ -1,5 +1,5 @@
 //// Neoffice — added file (no upstream equivalent). ERPNext's own computation of a sale's taxes and totals, for the
-//// till (NeoRestau lot 1, Ruling 70): what the cart shows, the provisional ticket and the receipt printed offline must
+//// till (NeoResto lot 1, Ruling 70): what the cart shows, the provisional ticket and the receipt printed offline must
 //// equal the invoice the server submits, to the cent. The server computes them in
 //// erpnext/controllers/taxes_and_totals.py (class calculate_taxes_and_totals, version 15 of the fleet's fork); this
 //// module is that computation, step for step, for what a till sends: the rows as formatItemsForSubmission builds them

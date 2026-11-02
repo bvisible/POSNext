@@ -35,7 +35,7 @@
 //// `biome check --write`, then re-apply that one search change.
 import { logger } from "../utils/logger";
 import { generateOfflineId } from "../utils/offline/uuid";
-//// Neoffice — the VAT maps are kept by till (utils/offline/vatMaps.js; NeoRestau lot 1, task 11).
+//// Neoffice — the VAT maps are kept by till (utils/offline/vatMaps.js; NeoResto lot 1, task 11).
 import { withVatMapsByTill } from "../utils/offline/vatMaps";
 
 const log = logger.create("OfflineWorker");

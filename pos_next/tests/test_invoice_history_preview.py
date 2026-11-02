@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""The till's invoice history says what each ticket holds (NeoRestau lot 1, task 29).
+"""The till's invoice history says what each ticket holds (NeoResto lot 1, task 29).
 
 get_invoices serves the « Historique des factures » dialog: next to each invoice's number, customer, date and
 amount, the row shows the first three dishes of the ticket and how many dishes it has, so that one sees at a glance

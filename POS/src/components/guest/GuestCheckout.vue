@@ -73,7 +73,7 @@
 								data-test="guest-receipt-line"
 								class="flex items-center justify-between text-sm">
 								<span class="text-gray-700">{{ oItem.qty }}× {{ oItem.item_name }}</span>
-								<!-- An offered line (NeoRestau lot 1, task 24) reads « Offert », in the guest's language -->
+								<!-- An offered line (NeoResto lot 1, task 24) reads « Offert », in the guest's language -->
 								<span v-if="oItem.posa_is_offered" class="font-semibold text-[#A15A2E]">{{ oItem.offered_label }}</span>
 								<span v-else class="flex items-center gap-1.5">
 									<span v-if="oItem.discount_percentage > 0" class="text-gray-400 line-through text-xs">{{ formatPrice(oItem.qty * oItem.price_list_rate) }}</span>
@@ -139,7 +139,7 @@
 								<span class="text-gray-700">{{ oItem.qty }}× {{ oItem.item_name }}</span>
 								<span v-if="oItem.discount_percentage > 0 && !oItem.posa_is_offered" class="text-[10px] font-semibold text-green-700 bg-green-100 px-1.5 py-0.5 rounded">-{{ oItem.discount_percentage }}%</span>
 							</div>
-							<!-- An offered line (NeoRestau lot 1, task 24) reads « Offert », read only, in the guest's language -->
+							<!-- An offered line (NeoResto lot 1, task 24) reads « Offert », read only, in the guest's language -->
 							<span v-if="oItem.posa_is_offered" class="font-semibold text-[#A15A2E]">{{ oItem.offered_label }}</span>
 							<span v-else class="flex items-center gap-1.5">
 								<span v-if="oItem.discount_percentage > 0" class="text-gray-400 line-through text-xs">{{ formatPrice(oItem.qty * oItem.price_list_rate) }}</span>

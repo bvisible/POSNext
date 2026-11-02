@@ -1,11 +1,11 @@
-//// Neoffice — added file (no upstream equivalent). The timer at the head of a kitchen ticket (NeoRestau lot 1, Daniel's test of 01.11: « au sommet, on voit que le temps est toujours le temps
+//// Neoffice — added file (no upstream equivalent). The timer at the head of a kitchen ticket (NeoResto lot 1, Daniel's test of 01.11: « au sommet, on voit que le temps est toujours le temps
 //// de départ […] il faudrait afficher le temps maintenant du départ du dessert »).
 ////
 //// A table's ticket lives for the whole meal, and its dishes leave for the kitchen in courses (a line carries the time it left, `kds_sent_at`). The timer counts from the course the kitchen is
 //// working on now: the oldest send among the dishes still to cook (Pending, Preparing); when none is left to cook, from the latest send (the dishes wait at the pass since then). A dish held
 //// back by the waiter (Waiting) has not left and counts for nothing; a ticket whose dishes carry no time (sent before the field existed) falls back to the order's last change, as before.
 ////
-//// Where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11), a dish sent ahead of its course counts from the room's CALL (`kds_called_at`) and from nothing until it comes (utils/courseCall.goAt):
+//// Where the kitchen prepares ahead (NeoResto lot 1, the service rhythm, Daniel, 01.11), a dish sent ahead of its course counts from the room's CALL (`kds_called_at`) and from nothing until it comes (utils/courseCall.goAt):
 //// no timer starts from it, and it makes no ticket late.
 
 //// Neoffice — the server's datetime read by hand, as the order of the tickets reads it (a browser that refuses « 2026-11-01 14:30:12.123456 » must not make the two disagree)

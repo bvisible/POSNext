@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). On a phone, an open table's order is taken on the screen the
- * //// waiter mockup draws (NeoRestau lot 1, task 27; product owner, 31.10.2026: « look at your mockup, it is well
+ * //// waiter mockup draws (NeoResto lot 1, task 27; product owner, 31.10.2026: « look at your mockup, it is well
  * //// done… the same for the card as buttons »): the card's types as coloured chips, the card as three buttons per row
  * //// in the items' colours, the count already ordered on each button, a touch for +1 and a long press for the
  * //// options, « Sold out » when the dish cannot be sold, and the order one tap away.

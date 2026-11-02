@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). « Offert » in the line dialog (NeoRestau lot 1, task 24): a button
+ * //// Neoffice — added file (no upstream equivalent). « Offert » in the line dialog (NeoResto lot 1, task 24): a button
  * //// « Offert », then the quantity offered — 1 by default, from 1 to the line's quantity, « Tout » for the whole line —
  * //// and Confirm, the dialog's one primary action while it is open (ink, never clay).
  * @vitest-environment jsdom

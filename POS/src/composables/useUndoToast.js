@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The toast that offers « Undo » for five seconds after a ticket was marked ready or delivered (NeoRestau lot 1, task 38a-2,
+//// Neoffice — added file (no upstream equivalent). The toast that offers « Undo » for five seconds after a ticket was marked ready or delivered (NeoResto lot 1, task 38a-2,
 //// ruling 112). A card cannot hold it: the ticket leaves its band, even its screen, the moment it is pressed, and a component that is gone cannot answer a press. It lives
 //// here, one at a time for the whole screen (a new offer replaces the one before, which simply runs out), and the page draws it (UndoToast.vue).
 import { ref } from "vue"

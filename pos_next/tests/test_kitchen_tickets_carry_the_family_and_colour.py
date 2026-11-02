@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""The kitchen's and the runner's lists tell each dish its service family and its category color (NeoRestau lot 1, Daniel's
+"""The kitchen's and the runner's lists tell each dish its service family and its category color (NeoResto lot 1, Daniel's
 request of 01.11: « séparer entrée, plat, dessert » on the tickets, and « une couleur de fond pour les catégories »).
 
 `get_kds_orders` and `get_runner_orders` return on every line:

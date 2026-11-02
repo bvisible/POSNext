@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The kitchen screen lays its two bands out in one of two ways (NeoRestau
+//// Neoffice — added file (no upstream equivalent). The kitchen screen lays its two bands out in one of two ways (NeoResto
 //// lot 1, task 23): BANDS, the waiting tickets in a lane above the tickets in preparation, each lane scrolling sideways;
 //// or COLUMNS, the waiting tickets in a narrow column on the left and the tickets in preparation in a wide one on the
 //// right, each scrolling up and down. Which one reads better depends on the tablet and on how it is held, so the cook

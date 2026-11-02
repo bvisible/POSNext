@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The pan of the floor plan begins past the few pixels a finger
- * //// shakes (NeoRestau lot 1, task 26, fix round 1): a table opens when the finger lifts, and the pointer of that tap
+ * //// shakes (NeoResto lot 1, task 26, fix round 1): a table opens when the finger lifts, and the pointer of that tap
  * //// goes on to the plan's gestures. A tap that shook 4 px moved the plan by 4 px and saved it: ten taps left (9, 9) in
  * //// the room's stored view. Now a pointer that moves less than the slop pans nothing and saves nothing; past it the
  * //// plan follows the pointer and the view is saved once, when the pointer lifts.

@@ -16997,7 +16997,7 @@ msgstr "Rechercher des articles ({0})"
 msgid "Function keys (PC keyboards)"
 msgstr "Touches de fonction (claviers PC)"
 
-# //// Neoffice — NeoRestau lot 1 (2026-10-30): the French of what the lot added - the desk space, the
+# //// Neoffice — NeoResto lot 1 (2026-10-30): the French of what the lot added - the desk space, the
 # //// restaurant till, the messages of the restaurant API and of its doctypes, the role names. The bare words
 # //// below that other apps of the bench already translate (Admin, Logo, Preparation, Tills, Upcoming,
 # //// sessions open, {0} tickets) carry the very French those apps give them, checked against their
@@ -17026,7 +17026,7 @@ msgstr "Administrateur"
 msgid "Capacity must be a whole number of at least 1"
 msgstr "La capacité doit être un nombre entier d'au moins 1"
 
-#: pos_next/restaurant/neorestau.py:152
+#: pos_next/restaurant/neoresto.py:152
 msgid "Cards and menus"
 msgstr "Cartes et menus"
 
@@ -17034,11 +17034,11 @@ msgstr "Cartes et menus"
 msgid "Choose the cards to print"
 msgstr "Choisissez les cartes à imprimer"
 
-# //// Neoffice — the state of a table in NeoRestau's desk lists (Free, Occupied, Cleaning). The bare words are
+# //// Neoffice — the state of a table in NeoResto's desk lists (Free, Occupied, Cleaning). The bare words are
 # //// shared by the whole site and other apps translate them for their own sense (« Free » is « Gratuit » in
 # //// one app and « Offert » in another), so the table's sense lives under this context and no common word
 # //// changes.
-#: pos_next/restaurant/neorestau.py:236
+#: pos_next/restaurant/neoresto.py:236
 msgctxt "Table state"
 msgid "Cleaning"
 msgstr "En nettoyage"
@@ -17048,12 +17048,12 @@ msgstr "En nettoyage"
 msgid "Failed to load station details"
 msgstr "Échec du chargement des détails du poste"
 
-#: pos_next/restaurant/neorestau.py:140
+#: pos_next/restaurant/neoresto.py:140
 msgid "Floor and tables"
 msgstr "Salle et tables"
 
 # //// Neoffice — same context as "Cleaning" above.
-#: pos_next/restaurant/neorestau.py:232
+#: pos_next/restaurant/neoresto.py:232
 msgctxt "Table state"
 msgid "Free"
 msgstr "Libre"
@@ -17067,12 +17067,12 @@ msgstr "Logo"
 msgid "No restaurant is set up yet"
 msgstr "Aucun restaurant n'est encore configuré"
 
-#: pos_next/restaurant/neorestau.py:256
+#: pos_next/restaurant/neoresto.py:256
 msgid "No-shows"
 msgstr "Absents"
 
 # //// Neoffice — same context as "Cleaning" above.
-#: pos_next/restaurant/neorestau.py:233
+#: pos_next/restaurant/neoresto.py:233
 msgctxt "Table state"
 msgid "Occupied"
 msgstr "Occupée"
@@ -17081,11 +17081,11 @@ msgstr "Occupée"
 msgid "Only the status of a table changes without the right to lay out the floor plan"
 msgstr "Sans le droit de modifier le plan de salle, seul l'état d'une table peut changer"
 
-#: pos_next/restaurant/neorestau.py:129
+#: pos_next/restaurant/neoresto.py:129
 msgid "Open the restaurant till"
 msgstr "Ouvrir la caisse du restaurant"
 
-#: pos_next/restaurant/neorestau.py:218
+#: pos_next/restaurant/neoresto.py:218
 msgid "Preparation"
 msgstr "Préparation"
 
@@ -17125,7 +17125,7 @@ msgstr "Les services du restaurant ne sont pas disponibles"
 msgid "Restaurant till"
 msgstr "Caisse restaurant"
 
-#: pos_next/restaurant/neorestau.py:215
+#: pos_next/restaurant/neoresto.py:215
 msgid "Restaurants"
 msgstr "Restaurants"
 
@@ -17163,7 +17163,7 @@ msgstr "Le restaurant auquel cette caisse est rattachée"
 msgid "These settings belong to a restaurant, and none is named: open the till of a restaurant, or name the restaurant of this till in its POS Settings"
 msgstr "Ces paramètres appartiennent à un restaurant, et aucun n'est indiqué : ouvrez la caisse d'un restaurant, ou indiquez le restaurant de cette caisse dans ses Paramètres POS"
 
-#: pos_next/restaurant/neorestau.py:216
+#: pos_next/restaurant/neoresto.py:216
 msgid "Tills"
 msgstr "Caisses"
 
@@ -17172,23 +17172,23 @@ msgstr "Caisses"
 msgid "Unknown restaurant setting: {0}"
 msgstr "Paramètre de restaurant inconnu : {0}"
 
-#: pos_next/restaurant/neorestau.py:253
+#: pos_next/restaurant/neoresto.py:253
 msgid "Upcoming"
 msgstr "À venir"
 
-#: pos_next/restaurant/neorestau.py:334
+#: pos_next/restaurant/neoresto.py:334
 msgid "reservations still to come today"
 msgstr "réservations à venir aujourd'hui"
 
-#: pos_next/restaurant/neorestau.py:341
+#: pos_next/restaurant/neoresto.py:341
 msgid "sessions open"
 msgstr "sessions ouvertes"
 
-#: pos_next/restaurant/neorestau.py:313
+#: pos_next/restaurant/neoresto.py:313
 msgid "tables occupied"
 msgstr "tables occupées"
 
-#: pos_next/restaurant/neorestau.py:325
+#: pos_next/restaurant/neoresto.py:325
 #, python-brace-format
 msgid "{0} tickets"
 msgstr "{0} tickets"
@@ -17198,7 +17198,7 @@ msgstr "{0} tickets"
 msgid "{0} {1} already exists in this restaurant"
 msgstr "{0} {1} existe déjà dans ce restaurant"
 
-#: pos_next/restaurant/neorestau.py:324
+#: pos_next/restaurant/neoresto.py:324
 #, python-brace-format
 msgid "{0} · taken today"
 msgstr "{0} · encaissé du jour"
@@ -18574,7 +18574,7 @@ msgstr "Les compteurs à restaurer ne sont pas compris"
 msgid "Open the ticket full screen"
 msgstr "Ouvrir le ticket en plein écran"
 
-# //// Neoffice — the service families (NeoRestau lot 1): the words of the course a line belongs to, under a context of their own. "Main" and "Drink" are common words that another app of the site translates for its own sense (ERPNext reads "Main" as « Principal »), and the app loaded last wins Frappe's merged dictionary.
+# //// Neoffice — the service families (NeoResto lot 1): the words of the course a line belongs to, under a context of their own. "Main" and "Drink" are common words that another app of the site translates for its own sense (ERPNext reads "Main" as « Principal »), and the app loaded last wins Frappe's merged dictionary.
 #: POS/src/utils/serviceFamilies.js
 msgctxt "Service family"
 msgid "Drink"
@@ -18635,7 +18635,7 @@ msgctxt "Service family"
 msgid "Service"
 msgstr "Service"
 
-# //// Neoffice — the sections of the kitchen and runner tickets (NeoRestau lot 1, Daniel's request of 01.11): the label above the dishes of each course, written in capitals by the card.
+# //// Neoffice — the sections of the kitchen and runner tickets (NeoResto lot 1, Daniel's request of 01.11): the label above the dishes of each course, written in capitals by the card.
 #: POS/src/utils/ticketFamilies.js
 msgctxt "Service family"
 msgid "Drinks"
@@ -18711,7 +18711,7 @@ msgctxt "Kitchen send number"
 msgid "Send"
 msgstr "Envoi"
 
-# //// Neoffice — how long the till keeps its staff signed in (pos_next.api.session, NeoRestau lot 1, product owner, 01.11.2026)
+# //// Neoffice — how long the till keeps its staff signed in (pos_next.api.session, NeoResto lot 1, product owner, 01.11.2026)
 #. Label of a Int field in DocType 'POS Settings'
 #: POS/src/components/settings/POSSettings.vue
 #: pos_next/pos_next/doctype/pos_settings/pos_settings.json
@@ -18824,7 +18824,7 @@ msgctxt "Kitchen order status"
 msgid "Waits until the course before it is done"
 msgstr "Attend la fin du service précédent"
 
-# //// Neoffice — the personal code of the till: a short code of the user's own opens the lock screen instead of the account password (pos_next.api.till_code, NeoRestau lot 1, product owner, 01.11.2026)
+# //// Neoffice — the personal code of the till: a short code of the user's own opens the lock screen instead of the account password (pos_next.api.till_code, NeoResto lot 1, product owner, 01.11.2026)
 #. Label of a Check field in DocType 'POS Settings'
 #: POS/src/components/settings/POSSettings.vue
 #: pos_next/pos_next/doctype/pos_settings/pos_settings.json
@@ -20400,7 +20400,7 @@ msgstr "Garder le solde sur la carte"
 msgid "When the card is worth more than the receipt, the rest stays on the card for next time."
 msgstr "Lorsque la carte vaut plus que le reçu, le reste demeure sur la carte pour une prochaine fois."
 
-# //// Neoffice — the kitchen alerts of the till's settings (popup and sound when the next course is ordered, the runner's sound; NeoRestau lot 1, Daniel, 01.11.2026)
+# //// Neoffice — the kitchen alerts of the till's settings (popup and sound when the next course is ordered, the runner's sound; NeoResto lot 1, Daniel, 01.11.2026)
 #. Label of a Section Break field in DocType 'POS Settings'
 #: POS/src/components/settings/KitchenAlertsSettings.vue
 #: pos_next/pos_next/doctype/pos_settings/pos_settings.json
@@ -20571,7 +20571,7 @@ msgstr "Bip"
 msgid "Listen to the sounds"
 msgstr "Écouter les sons"
 
-# //// Neoffice — French for the service rhythm (NeoRestau lot 1, Daniel, 01.11: « Oui, les deux modes »): the restaurant's setting and its two choices, the tags of the dishes sent ahead on the kitchen's tickets, the toast of the call and the refusals of the server.
+# //// Neoffice — French for the service rhythm (NeoResto lot 1, Daniel, 01.11: « Oui, les deux modes »): the restaurant's setting and its two choices, the tags of the dishes sent ahead on the kitchen's tickets, the toast of the call and the refusals of the server.
 #. Label of a Section Break field in DocType 'Restaurant'
 #. Label of a Select field in DocType 'Restaurant'
 #: pos_next/pos_next/doctype/restaurant/restaurant.json
@@ -20642,7 +20642,7 @@ msgstr "À l'avance, en attente de l'appel"
 msgid "Next course ordered"
 msgstr "Suite commandée"
 
-# //// Neoffice — the device's choice to fold the courses that are all delivered in the cart of a table's order (NeoRestau lot 1, Daniel's request of 01.11).
+# //// Neoffice — the device's choice to fold the courses that are all delivered in the cart of a table's order (NeoResto lot 1, Daniel's request of 01.11).
 #: POS/src/components/sale/InvoiceCart.vue
 msgid "Fold delivered courses"
 msgstr "Replier les services livrés"

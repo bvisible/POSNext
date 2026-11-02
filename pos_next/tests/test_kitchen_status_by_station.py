@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""The main button of a kitchen ticket acts on the station chosen (NeoRestau lot 1, task 23, fix round 1, ruling 79).
+"""The main button of a kitchen ticket acts on the station chosen (NeoResto lot 1, task 23, fix round 1, ruling 79).
 
 An order is one invoice, and its dishes are cooked at several stations (the Bar's drinks, the Kitchen's plates). The
 kitchen screen is opened on one station (a tablet at the bar, or the station chosen on the screen) or on all of them.

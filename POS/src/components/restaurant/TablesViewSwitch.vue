@@ -1,7 +1,7 @@
 <template>
 	<div data-test="view-switch" role="group" :aria-label="__('Show the tables as')" :class="size === 'phone' ? 'flex' : 'inline-flex flex-shrink-0'">
 		<!-- //// Neoffice — added file (no upstream equivalent). The switch of the till's tables between the list and the
-		     //// floor plan (NeoRestau lot 1, task 26). On a phone, under the ink bar, two halves of 44 px, « List » first, as
+		     //// floor plan (NeoResto lot 1, task 26). On a phone, under the ink bar, two halves of 44 px, « List » first, as
 		     //// the waiter mockup draws it; on the floor plan's line of a tablet or a PC, a small « Plan | List » of 32 px,
 		     //// the height of the line's chips (Ruling 44). The one shown is in ink. -->
 		<button
@@ -55,7 +55,7 @@ const LINE =
 	"inline-flex items-center h-8 px-3 border text-sm font-medium whitespace-nowrap touch-manipulation"
 const FIRST = { phone: "rounded-s-[10px]", line: "rounded-s-lg" }
 const LAST = { phone: "rounded-e-[10px] -ms-px", line: "rounded-e-lg -ms-px" }
-//// Neoffice — dark mode (NeoRestau lot 1, smoke-test fix): the half in use is the bright paper one in dark (« on dark, primary becomes a bright paper button », the design system's dark scope), the other a quiet card with the secondary text colour; the line's small switch already had its dark classes for the half not in use.
+//// Neoffice — dark mode (NeoResto lot 1, smoke-test fix): the half in use is the bright paper one in dark (« on dark, primary becomes a bright paper button », the design system's dark scope), the other a quiet card with the secondary text colour; the line's small switch already had its dark classes for the half not in use.
 const ON =
 	"relative z-[1] bg-[#141414] border-[#141414] text-[#FFFDF8] font-bold dark:bg-ds-paper dark:border-ds-paper dark:text-ds-ink"
 const OFF = {

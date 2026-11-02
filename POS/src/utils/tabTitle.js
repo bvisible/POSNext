@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The title of the browser tab, written in ONE place (NeoRestau lot 1).
+//// Neoffice — added file (no upstream equivalent). The title of the browser tab, written in ONE place (NeoResto lot 1).
 //// Every tab of the app was titled "Neopos" (index.html), so with the till, the runner and the kitchen open side by side
 //// nobody knew which tab was which. Now each screen names its tab, "<screen> · Neopos":
 ////

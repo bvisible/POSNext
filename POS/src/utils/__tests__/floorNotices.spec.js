@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). What a guest's order or payment makes of a notice on the till (NeoRestau lot 1, Daniel, 01.11: « regarde comment la caisse sommelier reçoit l'info »),
+ * //// Neoffice — added file (no upstream equivalent). What a guest's order or payment makes of a notice on the till (NeoResto lot 1, Daniel, 01.11: « regarde comment la caisse sommelier reçoit l'info »),
  * //// written once and tested without a screen: the notice a realtime event makes (what it says, what it names), ONE notice per table (a newer one replaces the older; two orders waiting for the waiter's
  * //// validation on one table are one notice that counts them), the lines a notice names (three, then « +N »), and when a notice waiting for validation is handled.
  */

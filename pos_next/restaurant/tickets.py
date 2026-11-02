@@ -1,4 +1,4 @@
-# //// Neoffice — added file (no upstream equivalent). The ticket number of a restaurant order (NeoRestau lot 1, task 38b,
+# //// Neoffice — added file (no upstream equivalent). The ticket number of a restaurant order (NeoResto lot 1, task 38b,
 # //// rulings 122 and 124). A draft Sales Invoice takes its FA number at its first save, in an order nobody chose, with a
 # //// gap for each draft deleted; the kitchen, the runner and the provisional ticket must not show it. The restaurant gives
 # //// the order a TICKET number instead, at that first save, counted per restaurant and per business day.

@@ -1,7 +1,7 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The « ⋯ » at the end of the order screen's card row lists the
  * //// cards the hours keep off the till, and the floor plan opens the same list in a dialog from its own « ⋯ » menu
- * //// (NeoRestau lot 1, task 25). Both draw one list and pick through one composable. The menu behaves as the floor
+ * //// (NeoResto lot 1, task 25). Both draw one list and pick through one composable. The menu behaves as the floor
  * //// plan's does: a tap outside only closes it.
  * @vitest-environment jsdom
  */

@@ -23,7 +23,7 @@ import frappe
 # //// remove coupon_code from JSON, create programmatically for v15 — 3571c41
 from pos_next.hooks import _has_native_coupon_code_field
 
-# //// Neoffice — the field of an offered row (« Offert », NeoRestau lot 1, task 24), made at install and at each migrate.
+# //// Neoffice — the field of an offered row (« Offert », NeoResto lot 1, task 24), made at install and at each migrate.
 from pos_next.offered import ensure_offered_field
 
 # Configure logger
@@ -43,7 +43,7 @@ def after_install():
 		# Ensure coupon_code custom field exists on v15 (native on v16+)
 		ensure_coupon_code_field()
 
-		# //// Neoffice — the field that flags an offered row (« Offert », NeoRestau lot 1, task 24).
+		# //// Neoffice — the field that flags an offered row (« Offert », NeoResto lot 1, task 24).
 		ensure_offered_field()
 
 		# Setup default print format for POS Profiles
@@ -52,7 +52,7 @@ def after_install():
 		# //// Neoffice — the cashier's permissions, formerly a fixture (see grant_cashier_permissions).
 		grant_cashier_permissions()
 
-		# //// Neoffice — the restaurant's roles and rules (NeoRestau lot 1, task 3): see grant_restaurant_rights.
+		# //// Neoffice — the restaurant's roles and rules (NeoResto lot 1, task 3): see grant_restaurant_rights.
 		grant_restaurant_rights()
 
 		# Clear cache to ensure changes take effect
@@ -91,12 +91,12 @@ def after_migrate():
 		# //// Neoffice — the cashier's permissions, formerly a fixture (see grant_cashier_permissions).
 		grant_cashier_permissions()
 
-		# //// Neoffice — the restaurant's roles and rules (NeoRestau lot 1, task 3): see grant_restaurant_rights.
+		# //// Neoffice — the restaurant's roles and rules (NeoResto lot 1, task 3): see grant_restaurant_rights.
 		grant_restaurant_rights()
 
-		# //// Neoffice — NeoRestau's page and menu entry (NeoRestau lot 1, task 6): see make_neorestau_menu_entry, which never
-		# //// fails the migrate. Not at install: a new restaurant client's provisioning calls neorestau.setup itself.
-		make_neorestau_menu_entry()
+		# //// Neoffice — NeoResto's page and menu entry (NeoResto lot 1, task 6): see make_neoresto_menu_entry, which never
+		# //// fails the migrate. Not at install: a new restaurant client's provisioning calls neoresto.setup itself.
+		make_neoresto_menu_entry()
 
 		# Clear cache
 		frappe.clear_cache()
@@ -249,7 +249,7 @@ def grant_cashier_permissions():
 			frappe.log_error(f"POS Next: cashier permission on {doctype}", frappe.get_traceback())
 
 
-# //// Neoffice — added function (no upstream equivalent). Restaurant management is its managers' (NeoRestau lot 1,
+# //// Neoffice — added function (no upstream equivalent). Restaurant management is its managers' (NeoResto lot 1,
 # //// task 3; maintenance#1967): the two roles of the restaurant (`Restaurant Manager`, `Restaurant Kitchen` with no
 # //// desk access), and the rules its doctypes' JSON gives them carried over to a site that customized those doctypes.
 # //// At every migrate and install, since a fresh site's doctype sync makes the roles with desk access.
@@ -261,26 +261,28 @@ def grant_restaurant_rights():
 	grant_restaurant_permissions()
 
 
-# //// Neoffice — added function (no upstream equivalent). NeoRestau's page and menu entry (NeoRestau lot 1, task 6,
-# //// pos_next.restaurant.neorestau.setup) are made at every migrate where the site runs NeoRestau and has the theme, and a
+# //// Neoffice — added function (no upstream equivalent). NeoResto's page and menu entry (NeoResto lot 1, task 6,
+# //// pos_next.restaurant.neoresto.setup) are made at every migrate where the site runs NeoResto and has the theme, and a
 # //// menu entry is never a reason to fail a migrate: whatever a migrate seeds must not raise, since an exception in this
 # //// hook rolls the whole migrate back and exits it non-zero, and a fleet update stops on it. setup() itself stays loud (the
 # //// provisioning of a restaurant client runs it with `bench execute` and wants to see a failure), so the guard is here, at
 # //// its call: a savepoint, so that what a failed setup() half made (the page without its entry) is undone and never
 # //// committed, and the next migrate makes both ("made once" repairs it), and an Error Log row that says why.
-def make_neorestau_menu_entry():
-	"""Make NeoRestau's page and menu entry where the site runs it, and never fail the migrate for it."""
-	save_point = "neorestau_menu_entry"
+def make_neoresto_menu_entry():
+	"""Make NeoResto's page and menu entry where the site runs it, and never fail the migrate for it."""
+	save_point = "neoresto_menu_entry"
 	frappe.db.savepoint(save_point)
 	try:
-		from pos_next.restaurant import neorestau
+		# //// Neoffice — the module is `neoresto` since NeoRestau became NeoResto (02.11.2026)
+		from pos_next.restaurant import neoresto
 
-		neorestau.setup()
+		neoresto.setup()
 	except Exception:
 		# Undone before the Error Log row is written: a row written first would go with the rest
 		frappe.db.rollback(save_point=save_point)
-		frappe.log_error("POS Next: NeoRestau menu entry", frappe.get_traceback())
-		log_message("POS Next: NeoRestau menu entry not made, see the Error Log", level="warning")
+		# //// Neoffice — the Error Log title and the message follow the product's new name (02.11.2026)
+		frappe.log_error("POS Next: NeoResto menu entry", frappe.get_traceback())
+		log_message("POS Next: NeoResto menu entry not made, see the Error Log", level="warning")
 
 
 def log_message(message, level="info", indent=0):

@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The background refresh of the stock quantities is always on,
- * //// every minute, with no switch and no interval to set (NeoRestau lot 1, task 13, ruling 84): a till with nothing
+ * //// every minute, with no switch and no interval to set (NeoResto lot 1, task 13, ruling 84): a till with nothing
  * //// stored starts it; a device that kept `{ enabled: false }` (or a longer interval) from the old switch starts it
  * //// at 60 s and forgets the key. The till's page calls this and reads nothing from the storage any more.
  * @vitest-environment jsdom

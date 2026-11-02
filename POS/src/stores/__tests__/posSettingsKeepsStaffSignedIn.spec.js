@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The boot of the till keeps its staff signed in (NeoRestau lot 1, product
+ * //// Neoffice — added file (no upstream equivalent). The boot of the till keeps its staff signed in (NeoResto lot 1, product
  * //// owner, 01.11.2026): the moment the till's profile is known, however its settings arrive (handed over by the bootstrap,
  * //// or fetched on their own) and whoever loads them (the page's start, a shift opened later), the endpoint is called ONCE with
  * //// the profile; a call that fails never stops the settings from loading.

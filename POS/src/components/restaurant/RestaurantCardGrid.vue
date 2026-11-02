@@ -1,7 +1,7 @@
 <!-- //// Neoffice — added file (no upstream equivalent). The grid of a restaurant card at the till: its categories -->
 <!-- //// and its tiles (the dishes and the menus of the card, with their picture, colour or name, their stock and -->
 <!-- //// their price). It stood inside POSSale.vue (f2392119, 2026-03-22 "restaurant card system"; 26f5a3f1 the -->
-<!-- //// colours) and moved here when the number of tiles per row became a setting of the till (NeoRestau lot 1, task -->
+<!-- //// colours) and moved here when the number of tiles per row became a setting of the till (NeoResto lot 1, task -->
 <!-- //// 13; product owner, 30.10.2026). « Automatic » keeps the columns by the width of the screen; a number from 3 -->
 <!-- //// to 8 fixes them, and a tile without a picture then shows its name in a shorter well, once, its price whole. -->
 <template>

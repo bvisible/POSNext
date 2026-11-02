@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). What the runner's page hands to a ticket's header (NeoRestau lot 1, task 38b, rulings 122, 124, 126, 130): the
+ * //// Neoffice — added file (no upstream equivalent). What the runner's page hands to a ticket's header (NeoResto lot 1, task 38b, rulings 122, 124, 126, 130): the
  * //// ticket number the server counted, written with the digits it tells (0007), the code of the room it tells, and the takeaway flag, with the number a takeaway has
  * //// had until now where it has no ticket. The invoice's own name is NEVER a number: it stays in the card for the calls the card makes.
  * @vitest-environment jsdom

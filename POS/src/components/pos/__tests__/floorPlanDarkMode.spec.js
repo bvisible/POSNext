@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The till's floor plan in DARK mode (NeoRestau lot 1, smoke-test fix). Measured on a real till: the canvas stayed a
+ * //// Neoffice — added file (no upstream equivalent). The till's floor plan in DARK mode (NeoResto lot 1, smoke-test fix). Measured on a real till: the canvas stayed a
  * //// light sheet (an inline style, which no dark class can reach) while the names of the tables were written in the dark mode's near-white, on a pale tint of the
  * //// state's colour: 1.13:1, the names were invisible; « Cleaning » was white on pale green; the walls, a fixed dark slate, would have vanished on a dark canvas.
  * //// The canvas is a class now (the light sheet in light, the ground the till's dark remap gives `bg-gray-50` with faint dots in dark), the words of every state

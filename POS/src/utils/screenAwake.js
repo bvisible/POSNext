@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The settings of "keep the screen on" and "rest the screen" (NeoRestau lot 1, task 47): the
+//// Neoffice — added file (no upstream equivalent). The settings of "keep the screen on" and "rest the screen" (NeoResto lot 1, task 47): the
 //// product owner's tablet fell asleep by itself in the kitchen. Two different things are settled here, and told apart:
 //// (1) KEEP THE SCREEN ON: the browser's Screen Wake Lock keeps the physical screen from going to sleep (useScreenAwake asks for it);
 //// (2) REST: a web page cannot switch the physical screen off nor dim it, so after N minutes without a touch the page draws a near-black layer by

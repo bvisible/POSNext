@@ -207,7 +207,7 @@ import DisplayAuth from "@/components/customer-display/DisplayAuth.vue"
 import DisplayHeader from "@/components/customer-display/DisplayHeader.vue"
 import DisplayCart from "@/components/customer-display/DisplayCart.vue"
 import CreateCustomerModal from "@/components/customer-display/CreateCustomerModal.vue"
-//// Neoffice — the Screen Wake Lock of the restaurant screens (NeoRestau lot 1, task 47)
+//// Neoffice — the Screen Wake Lock of the restaurant screens (NeoResto lot 1, task 47)
 import { useScreenAwake } from "@/composables/useScreenAwake"
 
 const displayStore = useCustomerDisplayStore()
@@ -314,7 +314,7 @@ function handleFullscreenChange() {
 	isFullscreen.value = !!document.fullscreenElement
 }
 
-//// Neoffice — the screen is kept awake by the Screen Wake Lock composable of the restaurant screens (NeoRestau lot 1, task 47), in place of the lock this page asked for by itself:
+//// Neoffice — the screen is kept awake by the Screen Wake Lock composable of the restaurant screens (NeoResto lot 1, task 47), in place of the lock this page asked for by itself:
 //// it asks again after a release and after a rejection (a low battery), not only when the page becomes visible, and it follows the device's setting « keep the screen on ».
 //// `rest: false`: nobody touches this screen, so it is never drawn dark.
 useScreenAwake("display", { rest: false })

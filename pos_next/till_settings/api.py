@@ -1,4 +1,4 @@
-# //// Neoffice — added file (no upstream equivalent). The till's settings screen reads and saves here (NeoRestau
+# //// Neoffice — added file (no upstream equivalent). The till's settings screen reads and saves here (NeoResto
 # //// lot 1, task 13; product owner, 30.10.2026): the settings of the list (pos_next.till_settings.registry) that
 # //// the user may see, with their values, and one save that writes POS Settings, the till's POS Profile and its
 # //// Restaurant together, in one transaction, after checking who saves: the till manager the till's settings,

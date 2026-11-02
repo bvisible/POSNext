@@ -1,5 +1,5 @@
 <!-- //// Neoffice — added file (no upstream equivalent). One setting of the till's settings screen, drawn from -->
-<!-- //// its entry in the list the server sends (NeoRestau lot 1, task 13): a box to tick, a number, a choice of a -->
+<!-- //// its entry in the list the server sends (NeoResto lot 1, task 13): a box to tick, a number, a choice of a -->
 <!-- //// few options in one line, a link chosen in a short list or searched, a list of links, lines of a table, a -->
 <!-- //// text. Every setting carries its help behind the lightbulb; a setting whose condition is off stays visible, -->
 <!-- //// greyed and closed (product owner, 30.10.2026); a setting the user may not change is shown closed. -->

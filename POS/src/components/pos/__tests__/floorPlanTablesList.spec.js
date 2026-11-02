@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The floor plan of the restaurant till shows its tables as a list
- * //// or as the plan (NeoRestau lot 1, task 26; product owner, 31.10.2026: « on the phone, show the list of the tables
+ * //// or as the plan (NeoResto lot 1, task 26; product owner, 31.10.2026: « on the phone, show the list of the tables
  * //// by default rather than the plan », « on phones the table's QR code must be easy to reach »). On a phone it opens
  * //// on the list, under the mockup's top (« Tables », the user, the time, « List | Floor plan »); on a tablet and a
  * //// PC on the plan, as before, with a small « Plan | List » before the « ⋯ ». The list reads what the plan reads and

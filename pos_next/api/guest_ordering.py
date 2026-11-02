@@ -18,7 +18,7 @@ from frappe import _
 from frappe.utils import now_datetime, flt
 
 from pos_next.restaurant import permissions, scope, tickets
-from pos_next.restaurant.mode import require_neorestau
+from pos_next.restaurant.mode import require_neoresto
 from pos_next.restaurant.settings import get_restaurant_settings_for_profile
 from pos_next.restaurant.text import plain_text
 
@@ -433,14 +433,14 @@ def _broadcast_order_update(table_name, event_type, data):
 
 # //// Neoffice — added (no upstream equivalent): a realtime event reaches every till of the site, and with several
 # //// restaurants on one site a till only knows the tables of its own. The event names the restaurant of the table
-# //// it is about (NeoRestau lot 1, task 2), and a till ignores the alerts of another restaurant (restaurant store).
+# //// it is about (NeoResto lot 1, task 2), and a till ignores the alerts of another restaurant (restaurant store).
 def _publish_to_the_tills(event, table_name, payload):
 	"""Tell every till of the site about a guest event on a table, saying which restaurant that table is in."""
 	restaurant = scope.restaurant_of_record("Restaurant Table", table_name)
 	frappe.publish_realtime(event, {"restaurant": restaurant, **payload})
 
 
-# //// Neoffice — added (no upstream equivalent): the lines of a guest's order in the alert the tills get (NeoRestau lot 1, Daniel, 01.11: « regarde comment la caisse
+# //// Neoffice — added (no upstream equivalent): the lines of a guest's order in the alert the tills get (NeoResto lot 1, Daniel, 01.11: « regarde comment la caisse
 # //// sommelier reçoit l'info »). The waiter's till shows « Table 2 — le client commande : 3 x Verre de vin » and never reads the table to name the lines, so the alert carries
 # //// them. The till names three lines and counts the rest; five are sent so that the count and the names are never out of step, and `count` is how many there really are.
 MAX_ALERT_LINES = 5
@@ -483,7 +483,7 @@ def validate_token(token):
 	"""
 	Validate a guest token and return table + settings info.
 	Used on guest app mount to check session validity.
-	Not behind the guard of NeoRestau (mode.require_neorestau): the page a payment sends the diner back to calls it
+	Not behind the guard of NeoResto (mode.require_neoresto): the page a payment sends the diner back to calls it
 	first, and the payment must be recordable whatever the flag says.
 	"""
 	token_doc = _require_valid_token(token)
@@ -546,7 +546,7 @@ def get_guest_menu(token):
 	Return the guest menu (categories + items) for a valid token.
 	Uses time-slot based card selection (same as Opening Hours), falling back to
 	settings.guest_menu or the card flagged as_guest_menu.
-	Not behind the guard of NeoRestau (mode.require_neorestau): the page a payment sends the diner back to calls it
+	Not behind the guard of NeoResto (mode.require_neoresto): the page a payment sends the diner back to calls it
 	right after validate_token, before it can mount the checkout that records the payment.
 	"""
 	token_doc = _require_valid_token(token)
@@ -591,9 +591,9 @@ def submit_guest_order(token, items):
 	Creates a new draft invoice if none exists yet.
 	Respects the qr_order_validation setting (direct or server-approval).
 	"""
-	# A new order starts something: nothing of the restaurant shows where the site does not run NeoRestau (NeoRestau lot 1,
+	# A new order starts something: nothing of the restaurant shows where the site does not run NeoResto (NeoResto lot 1,
 	# task 4). What a payment's return goes through has no guard (see validate_token).
-	require_neorestau()
+	require_neoresto()
 
 	token_doc = _require_valid_token(token)
 
@@ -690,7 +690,7 @@ def submit_guest_order(token, items):
 		if is_new_invoice:
 			invoice_doc.insert()
 			# A guest's order of a table is an order like the waiter's: it takes its ticket number at its first save
-			# (NeoRestau lot 1, task 38b), so that the kitchen reads a number and never the draft's invoice number
+			# (NeoResto lot 1, task 38b), so that the kitchen reads a number and never the draft's invoice number
 			tickets.give_ticket_number(invoice_doc.name)
 			# Link invoice to token
 			token_doc.invoice = invoice_doc.name
@@ -717,7 +717,7 @@ def submit_guest_order(token, items):
 
 		# Notify all POS clients (global, not room-scoped); they ignore the tables of another restaurant
 		# //// Neoffice — the alerts name the lines of this order (`items`, `count`) and say whether the waiter must validate them (`validation_mode`), so that the
-		# //// till tells the waiter with the words of the order without reading the table (NeoRestau lot 1, Daniel, 01.11). Keys are only added: the keys the alerts
+		# //// till tells the waiter with the words of the order without reading the table (NeoResto lot 1, Daniel, 01.11). Keys are only added: the keys the alerts
 		# //// always had are unchanged for the submitted one; the pending one carried the guest's raw lines as `items` (no listener has ever read them), which are now the named lines.
 		lines, count = _lines_of_this_order(added_rows)
 		_publish_to_the_tills("guest_order_submitted", token_doc.table, {
@@ -776,7 +776,7 @@ def get_order_status(token):
 		item_fields.append("kds_batch")
 	if frappe.db.has_column("Sales Invoice Item", "posa_special_instructions"):
 		item_fields.append("posa_special_instructions")
-	# An offered row (« Offert », NeoRestau lot 1, task 24): the guest's page reads it as such
+	# An offered row (« Offert », NeoResto lot 1, task 24): the guest's page reads it as such
 	from pos_next.offered import FIELD as OFFERED
 	from pos_next.offered import offered_label
 
@@ -907,9 +907,9 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 	Post-merger: goes through ``payments.api.intent.create_intent`` on the
 	``wallee_web`` channel (hosted payment page) — see ADR-005.
 	"""
-	# A new order starts something: nothing of the restaurant shows where the site does not run NeoRestau (NeoRestau lot 1,
+	# A new order starts something: nothing of the restaurant shows where the site does not run NeoResto (NeoResto lot 1,
 	# task 4). What a payment's return goes through has no guard (see validate_token).
-	require_neorestau()
+	require_neoresto()
 
 	token_doc = _require_valid_token(token)
 	invoice_doc = _get_or_create_invoice(token_doc)
@@ -1225,13 +1225,13 @@ def create_table_token(table, pos_profile):
 	whoever the till shows the floor to may press QR for a table of that till's restaurant, no wider and no narrower. That is
 	a desk account that may read the restaurant of the till the call names (`permissions.require_floor_access`: the roles that
 	read a Restaurant, and the per-restaurant User Permissions, which keep a user of restaurant B from the live code of
-	restaurant A whatever till he names), on a site that runs NeoRestau, for a table that is on the floor of that till. Not
+	restaurant A whatever till he names), on a site that runs NeoResto, for a table that is on the floor of that till. Not
 	asked on top: an assignment to the till, a right on the table, the right to create a Guest Order Token (the code is made
 	with the authority of that check).
 	Returns the token value and the guest URL.
 	"""
-	# Where the site does not run NeoRestau nothing of the restaurant shows: no code is made for a guest to use
-	require_neorestau()
+	# Where the site does not run NeoResto nothing of the restaurant shows: no code is made for a guest to use
+	require_neoresto()
 	# A name is a string: a dict from a JSON body would be read as filters by the lookups below
 	if not (isinstance(table, str) and table and isinstance(pos_profile, str) and pos_profile):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
@@ -1323,7 +1323,7 @@ def create_takeaway_token():
 	Create a Guest Order Token for a takeaway web order (no table binding).
 	Called when a visitor starts a takeaway order.
 	Rate-limited: max 10 tokens per IP per hour.
-	Not behind the guard of NeoRestau (mode.require_neorestau): the takeaway page asks for its token on every mount, the
+	Not behind the guard of NeoResto (mode.require_neoresto): the takeaway page asks for its token on every mount, the
 	return from a payment included. The restaurant's own web-takeaway setting closes it.
 	"""
 	# Rate limiting: max 10 takeaway tokens per IP per hour
@@ -1368,7 +1368,7 @@ def submit_takeaway_order(token, items, customer=None):
 	Finalize a takeaway order after payment.
 	Creates a POS Invoice flagged as takeaway.
 	Payment must be completed before this endpoint will finalize the order.
-	Not behind the guard of NeoRestau (mode.require_neorestau): it finishes an order that a payment already paid.
+	Not behind the guard of NeoResto (mode.require_neoresto): it finishes an order that a payment already paid.
 	"""
 	token_doc = _require_valid_token(token)
 
@@ -1457,7 +1457,7 @@ def submit_takeaway_order(token, items, customer=None):
 	invoice_doc.flags.ignore_permissions = True
 	with _as_the_system():
 		invoice_doc.insert()
-		# A web takeaway order takes its ticket number like the till's (NeoRestau lot 1, task 38b)
+		# A web takeaway order takes its ticket number like the till's (NeoResto lot 1, task 38b)
 		tickets.give_ticket_number(invoice_doc.name)
 
 		token_doc.invoice = invoice_doc.name

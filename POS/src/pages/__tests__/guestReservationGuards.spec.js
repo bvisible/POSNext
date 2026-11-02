@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The public booking page (/pos/reservation) tells a guest when
- * //// the server refused his booking (NeoRestau lot 1, task 18): a site that hides its tracebacks answers a refusal
+ * //// the server refused his booking (NeoResto lot 1, task 18): a site that hides its tracebacks answers a refusal
  * //// with an HTTP error and a message but no `exc`, and the page read that as a success. It also carries the field
  * //// only a script fills, which the server answers like any booking and then drops.
  * @vitest-environment jsdom

@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The printer button on the kitchen screen and on the runner screen (NeoRestau lot 1, task 44), through the real
+ * //// Neoffice — added file (no upstream equivalent). The printer button on the kitchen screen and on the runner screen (NeoResto lot 1, task 44), through the real
  * //// pages, bands and cards, with a fake server that only answers: the kitchen's button is drawn on the tickets whose station has a printer (the server says which
  * //// have one), the runner's only once its setting is switched on; one tap asks the SERVER to print a copy on the printer of the station the screen is opened on,
  * //// once; a station that turns out to have no printer loses its button; the choices (the button, what prints, the COPY mark) are the device's, made from the

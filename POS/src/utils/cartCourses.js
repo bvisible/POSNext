@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The cart of a table's order, grouped by course like the kitchen's ticket (NeoRestau lot 1, Daniel, 01.11: « il faut la même
+//// Neoffice — added file (no upstream equivalent). The cart of a table's order, grouped by course like the kitchen's ticket (NeoResto lot 1, Daniel, 01.11: « il faut la même
 //// logique que dans la cuisine sur le ticket de la table, il faut barrer et réduire pour laisser que ce qu'il reste visible, ce sera plus pratique visuellement »).
 ////
 //// The lines are drawn under a header per course, in the order of the meal (Drink, Starter, Main, Dessert). A line with no family stays after them, under no header. A course

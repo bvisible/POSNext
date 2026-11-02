@@ -1,5 +1,5 @@
 //// Neoffice — added file (no upstream equivalent). « Block a sale beyond the stock » means what it says at the till
-//// too (NeoRestau lot 1, task 13, ruling 82): where the site allows negative stock the till's box decides whether an
+//// too (NeoResto lot 1, task 13, ruling 82): where the site allows negative stock the till's box decides whether an
 //// item beyond the stock is refused when it is added; where the site refuses negative stock the till refuses it
 //// whatever the box says (ERPNext would refuse to book the sale). Upstream's guard read the site's setting only.
 // @vitest-environment jsdom

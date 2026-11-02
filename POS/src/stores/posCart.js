@@ -32,7 +32,7 @@ import {
 	withCarvedQtyRestored,
 } from "@/utils/gwpSameItemFreeRows";
 import { offlineState } from "@/utils/offline/offlineState";
-//// Neoffice — « Offert » (NeoRestau lot 1, task 24): an offered row is never a paid line the cart addresses by item code.
+//// Neoffice — « Offert » (NeoResto lot 1, task 24): an offered row is never a paid line the cart addresses by item code.
 import { isOfferedRow } from "@/utils/offeredRows";
 //// Neoffice — added import. CHF has no coin below 0.05, so the cart computes a rounded grand
 //// total plus the rounding-adjustment line shown beside it; upstream charges the raw total
@@ -48,7 +48,7 @@ import {
 } from "@/utils/uomPricingLock";
 //// Neoffice — a line that has left for the kitchen takes no new unit and is no line to merge into (task 22, fix round 1).
 import { hasLeftForTheKitchen } from "@/utils/lineKitchenState";
-//// Neoffice — the service family of a cart line (NeoRestau lot 1): the group's family given to a line when it is added, and the waiter's own choice for one line.
+//// Neoffice — the service family of a cart line (NeoResto lot 1): the group's family given to a line when it is added, and the waiter's own choice for one line.
 import { SERVICE_FAMILIES, canChangeFamily, familyOfGroup } from "@/utils/serviceFamilies";
 import { useToast } from "@/composables/useToast";
 import { call } from "frappe-ui";
@@ -176,7 +176,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		//// pass restaurant_table to submit_invoice via useInvoice (was missing,… — 45435e4
 		restaurantTable: baseRestaurantTable,
 		//// Neoffice — the takeaway order and its number are useInvoice's refs, exposed below as the store's own: the
-		//// lines are taxed and the sale paid there, at the takeaway rates and with the order's flag and number (NeoRestau
+		//// lines are taxed and the sale paid there, at the takeaway rates and with the order's flag and number (NeoResto
 		//// lot 1, task 11). The cart's VAT per account and the payment's takeaway fields come from there too.
 		isTakeaway,
 		takeawayNumber,
@@ -341,7 +341,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 		//// Neoffice — a line takes the service family of its article's group when it is added, whichever way it is added (the item
 		//// grid, a card, a menu, a scan): the till is handed the resolved family of every group once and never walks the group tree.
-		//// A family the item already carries (an order read back, the waiter's choice) is kept (NeoRestau lot 1, service families).
+		//// A family the item already carries (an order read back, the waiter's choice) is kept (NeoResto lot 1, service families).
 		if (!item.service_family) {
 			const family = familyOfGroup(item.item_group);
 			if (family) item = { ...item, service_family: family };
@@ -361,7 +361,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	//// Neoffice — fix round 2: the changes of the details dialog whose raise of a sent line has been applied. The cart applies the
 	//// dialog's change itself and hands the same object to its parent, which applies it again: on a line that waits that is
 	//// harmless, on a sent line the second pass added the units a second time. Keyed by the change object, so a later raise
-	//// made with a new object adds its own units (NeoRestau lot 1, task 22).
+	//// made with a new object adds its own units (NeoResto lot 1, task 22).
 	const appliedRaises = new WeakSet();
 
 	//// Neoffice — fix round 3: the changes of the details dialog already dealt with, applied or reported. A row handed over that the cart
@@ -374,7 +374,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	}
 
 	//// Neoffice — units added to a line that has left for the kitchen: they go on a line of their own, as a plain add of the same
-	//// dish, never on the line the kitchen has; the new line has no status, so the kitchen dialog offers it (NeoRestau lot 1,
+	//// dish, never on the line the kitchen has; the new line has no status, so the kitchen dialog offers it (NeoResto lot 1,
 	//// task 22, fix round 1). Fix round 2: the unit is billed as the line it comes from (its rate set by hand, its discount),
 	//// so it is merged only into a line that waits and bills the same way, and a new line takes those terms. The caller has
 	//// checked the stock for the raise, so this is the add without that check.
@@ -441,7 +441,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			item.posa_special_instructions = instructions;
 			//// Neoffice — the adjustment the line carries is replaced by the new one, either way: a lowering (« no
 			//// side − 1.50 ») was applied only when it replaced an earlier adjustment, never as the first one
-			//// nor after the options went back to zero, so the dish kept its full price (NeoRestau lot 1, task 27).
+			//// nor after the options went back to zero, so the dish kept its full price (NeoResto lot 1, task 27).
 			const applied = Number(item._modifiers_applied) || 0;
 			const adjustment = Number(priceAdjustment) || 0;
 			if (adjustment !== applied) {
@@ -482,7 +482,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		const item =
 			//// Neoffice — the row the cart means, when it hands it over: the same dish can sit twice in a table's cart (the
 			//// line the kitchen has, the line that waits), and the first line of that item and unit is not always the one
-			//// whose stepper was pressed. A caller with no row keeps the lookup (NeoRestau lot 1, task 22, fix round 1).
+			//// whose stepper was pressed. A caller with no row keeps the lookup (NeoResto lot 1, task 22, fix round 1).
 			row
 				? row
 				: uom
@@ -527,7 +527,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		//// Neoffice — a line that has left for the kitchen never takes a new unit: raised from 4 to 5, the 5th was billed on a
 		//// line the kitchen had already, and never sent. The difference goes on a line of its own (addItem merges it into the
 		//// line that waits when there is one), which the kitchen dialog offers; the sent line stays at what the kitchen has
-		//// (NeoRestau lot 1, task 22, fix round 1).
+		//// (NeoResto lot 1, task 22, fix round 1).
 		if (hasLeftForTheKitchen(item) && newQty > item.quantity) {
 			addUnitsOnANewLine(item, newQty - item.quantity);
 			return;
@@ -537,7 +537,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		if (carved.length) {
 			invoiceItems.value = invoiceItems.value.filter((i) => !carved.includes(i));
 		}
-		//// Neoffice — the line is handed over, so the base update changes THAT line (NeoRestau lot 1, task 22, fix round 1).
+		//// Neoffice — the line is handed over, so the base update changes THAT line (NeoResto lot 1, task 22, fix round 1).
 		baseUpdateItemQuantity(itemCode, quantity, uom, item);
 		hasUnsentChanges.value = true;
 	}
@@ -632,7 +632,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	const loyaltyData = ref(null);
 	const restaurantTable = ref(null);
 	//// Neoffice — isTakeaway and takeawayNumber are no longer the store's own refs: they are useInvoice's (destructured
-	//// at the top of the store), where the lines are taxed and the sale is paid (NeoRestau lot 1, task 11).
+	//// at the top of the store), where the lines are taxed and the sale is paid (NeoResto lot 1, task 11).
 	const kdsStatus = ref("Pending");
 	const hasUnsentChanges = ref(false);
 	const guestPaidAmount = ref(0);
@@ -1039,7 +1039,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	);
 
 	//// Neoffice — `keepUndecided`: a line the waiter has not decided (no kitchen status) goes to the server as it is, so that the
-	//// server decides it by the rule of the service families; otherwise it goes as Pending, as it always did (NeoRestau lot 1).
+	//// server decides it by the rule of the service families; otherwise it goes as Pending, as it always did (NeoResto lot 1).
 	function buildOfferEvaluationPayload(currentProfile, { keepUndecided = false } = {}) {
 		// Use toRaw() to ensure we get current, non-reactive values (prevents stale cached quantities)
 		// Carved same-SKU free units count as paid demand (see withCarvedQtyRestored)
@@ -1082,9 +1082,9 @@ export const usePOSCartStore = defineStore("posCart", () => {
 					posa_item_modifiers: item.posa_item_modifiers || "",
 					preparation_station: item.preparation_station || "",
 					kds_status: item.kds_status || (keepUndecided ? "" : "Pending"),
-					//// Neoffice — the course the line belongs to rides with it (NeoRestau lot 1, service families).
+					//// Neoffice — the course the line belongs to rides with it (NeoResto lot 1, service families).
 					service_family: item.service_family || "",
-					//// Neoffice — the mark of a line sent ahead of its course (the kitchen prepares ahead) goes with it; the server keeps it only for a food line it would have sent ahead itself, and stamps the call alone (NeoRestau lot 1, the service rhythm)
+					//// Neoffice — the mark of a line sent ahead of its course (the kitchen prepares ahead) goes with it; the server keeps it only for a food line it would have sent ahead itself, and stamps the call alone (NeoResto lot 1, the service rhythm)
 					kds_ahead: item.kds_ahead ? 1 : 0,
 					price_list_rate: item.price_list_rate || item.rate,
 					discount_percentage: pre.discount_percentage || 0,
@@ -2224,7 +2224,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	 */
 	function findCartItem(itemCode, uom = null, isFreeItem = undefined, row = null) {
 		//// Neoffice — the row the caller means, when it hands it over (the dish can sit twice in a table's cart); a caller with
-		//// no row keeps the lookup by item and unit (NeoRestau lot 1, task 22, fix round 1).
+		//// no row keeps the lookup by item and unit (NeoResto lot 1, task 22, fix round 1).
 		//// Neoffice — fix round 2: a row that was handed over and is no longer in the cart (the first of two applications of the
 		//// same change merged it away) finds nothing: the lookup by item and unit would land on another line, a sent one.
 		if (row) return invoiceItems.value.indexOf(row) >= 0 ? row : undefined;
@@ -2254,7 +2254,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	function findItemWithUom(itemCode, targetUom, excludeItem = null) {
 		//// Neoffice — a line that has left for the kitchen is no line to merge into, nor one to merge away: its units are
 		//// the kitchen's, a merge would move them onto a line that is sent again or hide new ones in a sent line
-		//// (NeoRestau lot 1, task 22, fix round 1).
+		//// (NeoResto lot 1, task 22, fix round 1).
 		if (hasLeftForTheKitchen(excludeItem)) return undefined;
 		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		return invoiceItems.value.find(
@@ -2329,11 +2329,11 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		}
 
 		//// Neoffice — the factor the line had is handed over: it was already overwritten above, and the offline answer for an item the
-		//// till keeps no copy of divided by the NEW factor and multiplied by it again (NeoRestau lot 1, task 22, fix round 1).
+		//// till keeps no copy of divided by the NEW factor and multiplied by it again (NeoResto lot 1, task 22, fix round 1).
 		const pricing = await resolveUomPricing(cartItem, newUom, conversionFactor, qty, oldConversion);
 		//// Neoffice — a unit nobody priced answers 0, which is no price: a dish priced by its card (not by the price list) took 0 for
 		//// the new rate, or kept the rate of the first unit while the factor, and the stock taken, grew with the new one. The rate is
-		//// scaled by the two factors, as a rate that must be kept is just above (NeoRestau lot 1, task 22, fix round 1).
+		//// scaled by the two factors, as a rate that must be kept is just above (NeoResto lot 1, task 22, fix round 1).
 		if (!(Number(pricing?.rate) > 0)) {
 			cartItem.rate = scaleRateForUomChange(cartItem.rate, oldConversion, conversionFactor);
 			cartItem.price_list_rate = scaleRateForUomChange(
@@ -2352,7 +2352,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	 * @param {string} itemCode - Item code
 	 * @param {string} newUom - New UOM to change to
 	 * @param {string|null} currentUom - Current UOM (required when same item has multiple UOMs)
-	 * @param {Object|null} [row] - //// Neoffice — the cart line to change, when the caller has it: a table's cart can hold the same dish twice (NeoRestau lot 1, task 22, fix round 1)
+	 * @param {Object|null} [row] - //// Neoffice — the cart line to change, when the caller has it: a table's cart can hold the same dish twice (NeoResto lot 1, task 22, fix round 1)
 	 */
 	async function changeItemUOM(itemCode, newUom, currentUom = null, row = null) {
 		try {
@@ -2390,7 +2390,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	 * @param {string} itemCode - Item code
 	 * @param {Object} updates - Updated details
 	 * @param {string|null} currentUom - Current UOM (required when same item has multiple UOMs)
-	 * @param {Object|null} [row] - //// Neoffice — the cart line to update, when the caller has it: a table's cart can hold the same dish twice (NeoRestau lot 1, task 22, fix round 1)
+	 * @param {Object|null} [row] - //// Neoffice — the cart line to update, when the caller has it: a table's cart can hold the same dish twice (NeoResto lot 1, task 22, fix round 1)
 	 */
 	async function updateItemDetails(itemCode, updates, currentUom = null, row = null) {
 		try {
@@ -2443,7 +2443,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			}
 
 			//// Neoffice — a quantity raised on a line that has left for the kitchen is not written on that line: the difference goes on
-			//// a line of its own below, and the sent line keeps what the kitchen has (NeoRestau lot 1, task 22, fix round 1). Fix round 2:
+			//// a line of its own below, and the sent line keeps what the kitchen has (NeoResto lot 1, task 22, fix round 1). Fix round 2:
 			//// the raise of a change that was already applied (see appliedRaises) is not applied, nor checked against the stock, again.
 			const raisesSentLine =
 				updates.quantity !== undefined &&
@@ -2502,7 +2502,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			}
 			if (updates.serial_no !== undefined) cartItem.serial_no = updates.serial_no;
 			//// Neoffice — the course of the line, chosen in the details dialog: the same field the chip on the line changes, and a line the
-			//// kitchen has keeps the one it was sent under (service families, NeoRestau lot 1).
+			//// kitchen has keeps the one it was sent under (service families, NeoResto lot 1).
 			if (updates.service_family !== undefined && updates.service_family !== cartItem.service_family)
 				setServiceFamily(cartItem, updates.service_family);
 			// Track manual rate edits for audit purposes
@@ -3197,7 +3197,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		restaurantTable,
 		isTakeaway,
 		takeawayNumber,
-		//// Neoffice — the cart's VAT per account, and the takeaway fields a sale saved offline carries (NeoRestau lot 1,
+		//// Neoffice — the cart's VAT per account, and the takeaway fields a sale saved offline carries (NeoResto lot 1,
 		//// task 11; POSSale.vue's offline payment).
 		taxesByAccount,
 		takeawaySaleFields,
@@ -3209,7 +3209,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		guestTipAmount,
 		updateItemInstructions,
 		updateItemModifiers,
-		//// Neoffice — the waiter's own course for one line (service families, NeoRestau lot 1).
+		//// Neoffice — the waiter's own course for one line (service families, NeoResto lot 1).
 		setServiceFamily,
 		setRestaurantTable,
 		setKdsStatus,

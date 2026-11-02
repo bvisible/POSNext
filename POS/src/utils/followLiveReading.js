@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). How a service screen keeps up with the room (NeoRestau lot 1, Daniel, 01.11: « le délai entre l'envoi de la suite et la réception à la cuisine prend environ 10 secondes »).
+//// Neoffice — added file (no upstream equivalent). How a service screen keeps up with the room (NeoResto lot 1, Daniel, 01.11: « le délai entre l'envoi de la suite et la réception à la cuisine prend environ 10 secondes »).
 ////
 //// The server tells the screens the moment an order changes (`kds_update`, `table_update`) and the screen reads again. Measured on osiris: the save takes about 1.6 s, the signal reaches a connected page in under a second, the
 //// kitchen's reading takes 0.2 s. What made it ten seconds is a signal that arrives while the tablet's connection is down (a restart of the server, a page that sleeps, the Wi-Fi): it is lost, and the screen only found the order

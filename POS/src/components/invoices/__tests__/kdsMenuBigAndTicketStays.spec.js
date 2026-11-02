@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The kitchen test of 01.11 afternoon (NeoRestau lot 1): the menu of a dish is much bigger, with a cross to
+ * //// Neoffice — added file (no upstream equivalent). The kitchen test of 01.11 afternoon (NeoResto lot 1): the menu of a dish is much bigger, with a cross to
  * //// close it and a way back for a dish being prepared (« Annuler le démarrage »), the selected dish is read from across the pass, and a ticket with no dish left
  * //// to cook stays on the screen with a quiet pill instead of a button (« Chez le runner », « La suite à venir »). The French comes from the real catalogue.
  * @vitest-environment jsdom

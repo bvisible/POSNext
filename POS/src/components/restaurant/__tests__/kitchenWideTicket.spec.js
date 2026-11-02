@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The WIDE card in the kitchen's bands (NeoRestau lot 1, task 38a-3, ruling 107 layer 2). A ticket with more than 12 dishes, in the band of
+ * //// Neoffice — added file (no upstream equivalent). The WIDE card in the kitchen's bands (NeoResto lot 1, task 38a-3, ruling 107 layer 2). A ticket with more than 12 dishes, in the band of
  * //// the tickets IN PREPARATION (a column of the side-by-side layout, or the lane of the other), takes TWO columns of its grid; its dishes stay in one list. It never spans more than the
  * //// room there is: where the band holds fewer than three columns of tickets (a narrow screen, a big text size) it stays one width. The band of the tickets waiting never has one.
  * //// jsdom has no layout engine: the width of the band's area is given by hand.

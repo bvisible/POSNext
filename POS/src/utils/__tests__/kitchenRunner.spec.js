@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The kitchen's last action follows the station's runner setting (NeoRestau
+ * //// Neoffice — added file (no upstream equivalent). The kitchen's last action follows the station's runner setting (NeoResto
  * //// lot 1, task 38a-1, ruling 112). A station with a runner (the default): the cook stops at "Ready", the dish LEAVES the
  * //// kitchen screen and waits for the runner, who delivers it; the kitchen keeps the information in a count of what waits at the
  * //// pass. A station with none (a small bistro where the cook walks the plate to the table): the cook delivers, and "Ready" and
@@ -568,7 +568,7 @@ describe("what waits at the pass, with lines cooked in part", () => {
 	})
 })
 
-//// Neoffice — where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11): « Prêt d'avance » is a state of its own on the ticket, not the pass, and the runner is offered a dish only once it is called
+//// Neoffice — where the kitchen prepares ahead (NeoResto lot 1, the service rhythm, Daniel, 01.11): « Prêt d'avance » is a state of its own on the ticket, not the pass, and the runner is offered a dish only once it is called
 describe("a dish finished ahead of its course", () => {
 	const CALL = "2026-10-30 12:30:00.000000"
 	const SENT = "2026-10-30 12:00:00.000000"

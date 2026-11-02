@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The Listen buttons of the kitchen alerts in the till's settings (NeoRestau lot 1, Daniel, 01.11: « choisir le son avec des choix »).
+ * //// Neoffice — added file (no upstream equivalent). The Listen buttons of the kitchen alerts in the till's settings (NeoResto lot 1, Daniel, 01.11: « choisir le son avec des choix »).
  * //// The five settings are ordinary lines of the settings list; what the list cannot draw is the button that PLAYS the sound chosen above it, at the volume chosen above it. One button
  * //// per sound, off while the sound is « None », and the press is also the touch that unlocks the browser's audio.
  * @vitest-environment jsdom

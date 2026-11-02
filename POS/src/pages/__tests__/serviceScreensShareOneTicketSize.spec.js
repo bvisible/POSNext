@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The runner and the kitchen screen show their tickets at ONE size
- * //// (NeoRestau lot 1, task 9c): the same grid (the same columns and gap at every width) and the same ticket frame (the
+ * //// (NeoResto lot 1, task 9c): the same grid (the same columns and gap at every width) and the same ticket frame (the
  * //// padding, the title, the order number, the timer and the item lines). The product owner measured 365 px against
  * //// 450 px at 1900 px wide. Each screen keeps its own content: the runner its "Mark Delivered" button, the kitchen
  * //// its per-item status and "Delivered".

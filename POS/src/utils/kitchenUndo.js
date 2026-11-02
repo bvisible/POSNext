@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The five seconds in which a mis-tap on « Ready » or « Deliver » can be taken back (NeoRestau lot 1, task 38a-2,
+//// Neoffice — added file (no upstream equivalent). The five seconds in which a mis-tap on « Ready » or « Deliver » can be taken back (NeoResto lot 1, task 38a-2,
 //// ruling 112). A ticket that is marked ready leaves the cook's screen and one that is delivered leaves everyone's, so a finger that slipped was a ticket gone with
 //// no way back but the list of what waits at the pass. A small toast says what just happened and offers « Undo » for five seconds; undoing puts each dish back in
 //// the state it was in, one call per item (the server moves the lines of one item at a time, and back as well as forward, as the call-back to preparation does).

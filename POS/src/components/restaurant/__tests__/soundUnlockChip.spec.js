@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The discreet chip of the kitchen and runner screens that says a sound is enabled but the browser has not been touched yet (NeoRestau lot 1, Daniel, 01.11):
+ * //// Neoffice — added file (no upstream equivalent). The discreet chip of the kitchen and runner screens that says a sound is enabled but the browser has not been touched yet (NeoResto lot 1, Daniel, 01.11):
  * //// a page may not make a sound before somebody touches it, and a tablet in a kitchen is left alone for hours, so the screen says « Touch the screen to enable the sound » until it is touched.
  * @vitest-environment jsdom
  */

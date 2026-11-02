@@ -178,7 +178,7 @@
    "description": "Show address fields in the customer creation form (both on display and in POS)"
   },
   {
-   "depends_on": "eval:frappe.boot.neorestau_active",
+   "depends_on": "eval:frappe.boot.neoresto_active",
    "fieldname": "section_break_restaurant",
    "fieldtype": "Section Break",
    "label": "Restaurant"
@@ -228,7 +228,7 @@
   },
   {
    "collapsible": 1,
-   "depends_on": "eval:frappe.boot.neorestau_active",
+   "depends_on": "eval:frappe.boot.neoresto_active",
    "fieldname": "section_break_kitchen_alerts",
    "fieldtype": "Section Break",
    "label": "Kitchen alerts"
@@ -277,7 +277,7 @@
   },
   {
    "collapsible": 1,
-   "depends_on": "eval:frappe.boot.neorestau_active",
+   "depends_on": "eval:frappe.boot.neoresto_active",
    "fieldname": "section_break_floor_alerts",
    "fieldtype": "Section Break",
    "label": "Floor alerts"

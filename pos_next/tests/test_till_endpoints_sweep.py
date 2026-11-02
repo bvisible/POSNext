@@ -71,13 +71,13 @@ MANAGER_ROLE = "Nexus POS Manager"
 PROFILE = "_PNXT tillsweep till"
 OTHER_PROFILE = "_PNXT tillsweep other till"
 NONE = "tillsweep-no-such-name"
-# The kitchen's and the runner's tablets (NeoRestau lot 1, task 16): the calls of the sweep each one's device account is
+# The kitchen's and the runner's tablets (NeoResto lot 1, task 16): the calls of the sweep each one's device account is
 # answered, for its own restaurant (none is named); every other call refuses it, as it refuses any portal account. The
 # preparation stations are asked for a made-up station, which is no station of a tablet's restaurant: refused as well.
 # `my_screen` answers a tablet whichever screen it was paired for (task 48: a tablet started from its home-screen icon asks
 # where its screen is) and nobody else.
 TABLET_SCREENS = {
-	# //// Neoffice — the kitchen's tablet reads its restaurant's alerts and service rhythm the way the runner's reads its runner switch (NeoRestau lot 1, Daniel, 01.11)
+	# //// Neoffice — the kitchen's tablet reads its restaurant's alerts and service rhythm the way the runner's reads its runner switch (NeoResto lot 1, Daniel, 01.11)
 	"Kitchen": {"get_tables", "get_kds_orders", "get_restaurant_settings", "my_screen"},
 	"Runner": {"get_tables", "get_runner_orders", "get_restaurant_settings", "my_screen"},
 }
@@ -207,11 +207,11 @@ def _set_user(user):
 	frappe.local.form_dict = form
 
 
-def _where_neorestau_runs(call):
-	"""``call`` made on a site that runs NeoRestau: the restaurant's entry points ask the site's flag first."""
+def _where_neoresto_runs(call):
+	"""``call`` made on a site that runs NeoResto: the restaurant's entry points ask the site's flag first."""
 
 	def run():
-		with patch.dict(frappe.conf, {"neorestau_active": 1}):
+		with patch.dict(frappe.conf, {"neoresto_active": 1}):
 			return call()
 
 	return run
@@ -370,7 +370,7 @@ class TestTillEndpointsSweep(FrappeTestCase):
 			("get_tips", lambda: restaurant.get_tips()),
 			("broadcast_cfd_update", lambda: restaurant.broadcast_cfd_update("{}")),
 			# What the till reads of its restaurant, and the service's own writes (a table's status, the
-			# reservations): the restaurant doctypes' rules, which a cashier holds (NeoRestau lot 1, task 3). A
+			# reservations): the restaurant doctypes' rules, which a cashier holds (NeoResto lot 1, task 3). A
 			# made-up table or reservation is past the gate when it is reported missing.
 			("get_restaurant_settings", lambda: restaurant.get_restaurant_settings()),
 			("get_restaurant_cards", lambda: restaurant.get_restaurant_cards()),
@@ -398,14 +398,14 @@ class TestTillEndpointsSweep(FrappeTestCase):
 				"update_reservation_status",
 				_past_the_gate(lambda: reservations.update_reservation_status(NONE, "Seated")),
 			),
-			# The service's reads: whoever reads the restaurant's doctypes, as every cashier does (NeoRestau lot 1,
+			# The service's reads: whoever reads the restaurant's doctypes, as every cashier does (NeoResto lot 1,
 			# task 3; until then any signed-in account, a portal account included)
 			("get_station_items_map", lambda: restaurant.get_station_items_map()),
 			("get_station_details", _past_the_gate(lambda: restaurant.get_station_details(NONE))),
 			("get_product_options", lambda: restaurant.get_product_options(NONE)),
 			("get_all_product_option_groups", restaurant.get_all_product_option_groups),
 			("get_active_cards", lambda: restaurant.get_active_cards()),
-			# The cards the opening hours hide and the one a cashier fetches from the « ⋯ » (NeoRestau lot 1, task 25)
+			# The cards the opening hours hide and the one a cashier fetches from the « ⋯ » (NeoResto lot 1, task 25)
 			("get_other_cards", lambda: restaurant.get_other_cards()),
 			("open_card_outside_hours", _past_the_gate(lambda: restaurant.open_card_outside_hours(NONE))),
 			("get_active_menus", lambda: restaurant.get_active_menus()),
@@ -430,7 +430,7 @@ class TestTillEndpointsSweep(FrappeTestCase):
 				"open_table",
 				_past_the_gate(lambda: restaurant.open_table(NONE, PROFILE), frappe.ValidationError),
 			),
-			# //// Neoffice — the room's call of a course (the service rhythm, NeoRestau lot 1): the waiter's gesture on an order of the till
+			# //// Neoffice — the room's call of a course (the service rhythm, NeoResto lot 1): the waiter's gesture on an order of the till
 			# //// the caller works at; a made-up order is past the gate when it is reported missing
 			("call_next_course", _past_the_gate(lambda: restaurant.call_next_course(NONE))),
 		]
@@ -447,14 +447,14 @@ class TestTillEndpointsSweep(FrappeTestCase):
 		return [
 			(
 				"create_table_token",
-				_where_neorestau_runs(
+				_where_neoresto_runs(
 					_past_the_gate(lambda: guest_ordering.create_table_token(NONE, PROFILE), frappe.ValidationError)
 				),
 			),
 		]
 
 	def _restaurant_management_calls(self):
-		"""The restaurant's set-up: refused to a cashier, answered to the restaurant's managers (NeoRestau lot 1, task 3;
+		"""The restaurant's set-up: refused to a cashier, answered to the restaurant's managers (NeoResto lot 1, task 3;
 		maintenance#1967). A made-up name is past the gate when it is reported missing."""
 		return [
 			("delete_table", _past_the_gate(lambda: restaurant.delete_table(NONE))),
@@ -525,7 +525,7 @@ class TestTillEndpointsSweep(FrappeTestCase):
 				_past_the_gate(lambda: restaurant.search_food_images("tillsweep"), frappe.ValidationError),
 			),
 			("search_items_for_options", lambda: restaurant.search_items_for_options("tillsweep")),
-			# The restaurant's tablets (NeoRestau lot 1, task 16): a made-up restaurant, or tablet, is past the gate when
+			# The restaurant's tablets (NeoResto lot 1, task 16): a made-up restaurant, or tablet, is past the gate when
 			# it is reported missing
 			(
 				"create_pairing_code",
@@ -548,7 +548,7 @@ class TestTillEndpointsSweep(FrappeTestCase):
 		]
 
 	def _tablet_calls(self):
-		"""What only a restaurant's tablet asks: where its screen is (NeoRestau lot 1, task 48). Refused to everyone else,
+		"""What only a restaurant's tablet asks: where its screen is (NeoResto lot 1, task 48). Refused to everyone else,
 		the restaurant's managers included: it answers the session of a device account, not a right."""
 		return [("my_screen", restaurant_devices.my_screen)]
 
@@ -772,10 +772,10 @@ class TestTillEndpointsSweep(FrappeTestCase):
 			self._served(DESK, label, call)
 
 	def test_a_tablet_is_refused_everywhere_but_on_its_screen(self):
-		# A device account is a portal account bound to one screen of one restaurant (NeoRestau lot 1, task 16): the calls
+		# A device account is a portal account bound to one screen of one restaurant (NeoResto lot 1, task 16): the calls
 		# of its screen answer it, every other call refuses it, and a refused call writes nothing
 		with (
-			patch.dict(frappe.conf, {"neorestau_active": 1}),
+			patch.dict(frappe.conf, {"neoresto_active": 1}),
 			patch.object(Restaurant, "_ensure_tip_account"),
 			patch.object(Restaurant, "_ensure_tip_item"),
 		):
@@ -1006,7 +1006,7 @@ class TestTillEndpointsSweep(FrappeTestCase):
 
 		frappe.db.set_value("Sales Invoice", invoice, {"is_pos": 1, "is_takeaway": 1}, update_modified=False)
 		# A service gesture: the till's cashier sets it, a desk account that reads no preparation station does not
-		# (NeoRestau lot 1, task 3)
+		# (NeoResto lot 1, task 3)
 		self._refused(DESK, "update_takeaway_status", mark("Ready"))
 		self.assertEqual(self._served(TILL, "update_takeaway_status", mark("Ready")), {"status": "success"})
 		self.assertEqual(frappe.db.get_value("Sales Invoice", invoice, "kds_status"), "Ready")

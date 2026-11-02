@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The till's colour mode, in ONE place (NeoRestau lot 1, task 38a-2, ruling 131). The mode (system, light,
+//// Neoffice — added file (no upstream equivalent). The till's colour mode, in ONE place (NeoResto lot 1, task 38a-2, ruling 131). The mode (system, light,
 //// dark) is the cockpit's own: it lives in localStorage under `neocockpit-colormode`, the desk's NeoCockpit toggle writes the same key, and the till
 //// paints it on the page (`data-theme` and the `dark` class of <html>). Three places needed it and each had its own copy: main.js, which adopts it before
 //// the app mounts and follows the system and the other tabs; the user menu of the till, which sets it; and now the theme button of the kitchen and the

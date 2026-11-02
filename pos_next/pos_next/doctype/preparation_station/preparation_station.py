@@ -5,7 +5,7 @@
 # Copyright (c) 2024, BrainWise and contributors
 # For license information, please see license.txt
 
-# //// Neoffice — it belongs to a restaurant, and its name only has to be unique within that restaurant (NeoRestau
+# //// Neoffice — it belongs to a restaurant, and its name only has to be unique within that restaurant (NeoResto
 # //// lot 1, task 2). A station is named by a hash from now on: invoice lines link to it by name, and a name that is
 # //// also the label could not be changed, nor shared by two restaurants.
 import frappe

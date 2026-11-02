@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The look of the list of tables (NeoRestau lot 1, task 26), shared by
+//// Neoffice — added file (no upstream equivalent). The look of the list of tables (NeoResto lot 1, task 26), shared by
 //// its card, its rows and its top: the colours are the waiter mockup's, which takes them from the design system (ink
 //// #141414, paper #FAF3EA / #FFFDF8, clay #D68A59, the sand ramp). One place, so that a card and a row say a state in
 //// the same colour. The status colours are the design system's tokens (tokens/colors.css, fix round 1): success
@@ -10,7 +10,7 @@ export const ICON_QR =
 
 // The badge of a card, by its tone (tablesOfTheService says the tone): ready at the pass in clay, as the mockup; a QR
 // order to accept as quiet text, as the mockup; the other states in a soft pill of the design system's tones
-//// Neoffice — dark mode (NeoRestau lot 1, smoke-test fix): the list was cream whatever the colour mode. Each colour below has its dark counterpart from the design system's dark scope
+//// Neoffice — dark mode (NeoResto lot 1, smoke-test fix): the list was cream whatever the colour mode. Each colour below has its dark counterpart from the design system's dark scope
 //// (tokens/colors.css, and the dark ramp of readme 9.1 for the status colours; the names are tailwind.config.js's `ds-*`): the text on paper, the secondary text, the success, warning
 //// and danger of the dark ramp, and the soft wash of the paper colour (`--color-primary-soft`, `rgba(255, 251, 245, 0.10)`) where the light mode has a pale pill. The clay "ready"
 //// pill is ink on clay in both modes (6.9:1), so it keeps its classes. Every pair reads at 4.5:1 or more on the dark card (this fix's spec computes them).

@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). On a phone the options of a dish open in a sheet from the
- * //// bottom of the screen, as the waiter mockup draws it (NeoRestau lot 1, task 27): each option group with
+ * //// bottom of the screen, as the waiter mockup draws it (NeoResto lot 1, task 27): each option group with
  * //// « required », « choose one » or « optional », its choices as buttons, a remark for the kitchen that can be
  * //// dictated, the number of portions, and « Add » with the price, which waits for the required groups. It adds to
  * //// the order through the till's own cart (a local write: it works offline), and edits a line in place when the

@@ -12,7 +12,7 @@
 	<!-- //// know the unit. Not a bare `h-dvh` beside it: Tailwind writes `.h-dvh` BEFORE `.h-screen` in the stylesheet (measured -->
 	<!-- //// in a browser), so `h-screen` would win everywhere; a `supports-` variant is written after the plain utilities. -->
 	<!-- //// Neoffice — the text size is a set of CSS variables on the root (task 38a-1, ruling 109): the cards read them, whatever the band they are in -->
-	<!-- //// Neoffice — the phone (NeoRestau lot 1, smoke-test fix): below 768 px the root never widens the page (`max-md:overflow-x-hidden`). The bar's controls used to push the page to 657 px at 390 px, and a page wider than the phone widens the layout viewport of a mobile browser, which stretched the full-screen ticket (a fixed panel) past the screen with its × and its main button. The bar wraps now (ServiceTopBar), so nothing sticks out; this keeps it so whatever a screen adds later. -->
+	<!-- //// Neoffice — the phone (NeoResto lot 1, smoke-test fix): below 768 px the root never widens the page (`max-md:overflow-x-hidden`). The bar's controls used to push the page to 657 px at 390 px, and a page wider than the phone widens the layout viewport of a mobile browser, which stretched the full-screen ticket (a fixed panel) past the screen with its × and its main button. The bar wraps now (ServiceTopBar), so nothing sticks out; this keeps it so whatever a screen adds later. -->
 	<div class="flex flex-col h-screen supports-[height:100dvh]:h-dvh bg-gray-100 dark:bg-gray-900 max-md:overflow-x-hidden" :style="textSizeStyle" :data-text-size="textSize" data-test="kitchen-screen">
 		<!-- //// Neoffice — ONE top bar instead of a header of two lines and a line of chips (task 38a-2, rulings 128 and 129). Row 1: the title names the -->
 		<!-- //// station the screen is opened on (« Bar », « Cuisine », « Toutes les préparations »), the count on the same line, and at the right the chip of what -->
@@ -51,7 +51,7 @@
 				<PrintCopySettings v-if="hasCopyPrinters" screen="Kitchen" :settings="copySettings" @change="setCopySetting" />
 			</template>
 			<template #chip>
-				<!-- //// Neoffice — a sound is on but the browser has not been touched yet: it can make none before (NeoRestau lot 1, Daniel, 01.11) -->
+				<!-- //// Neoffice — a sound is on but the browser has not been touched yet: it can make none before (NeoResto lot 1, Daniel, 01.11) -->
 				<SoundUnlockChip :enabled="nextCourseSoundOn" />
 				<!-- The switch of the layout moves up to row 1 when row 2 has no chip left to hold it: a screen bound to its station must not pay a row for it -->
 				<KitchenLayoutSwitch v-if="canSplit && !filtersShown" :layout="layout" @update:layout="chooseLayout" />
@@ -81,7 +81,7 @@
 					@update:selected-station="selectedStation = $event"
 				>
 					<!-- //// Neoffice — the switch of the layout (bands one above the other, or side by side) ends the filter line, -->
-					<!-- //// on the line it already has (NeoRestau lot 1, task 23). Offered only where two ticket columns fit. -->
+					<!-- //// on the line it already has (NeoResto lot 1, task 23). Offered only where two ticket columns fit. -->
 					<template v-if="canSplit && filtersShown" #end>
 						<KitchenLayoutSwitch :layout="layout" @update:layout="chooseLayout" />
 					</template>
@@ -89,7 +89,7 @@
 			</template>
 		</ServiceTopBar>
 
-		<!-- //// Neoffice — the table that has just ordered its next course (NeoRestau lot 1, Daniel, 01.11: « il doit y avoir un popup à la cuisine »): a notice per table under the bar, in the page's column, never over a ticket -->
+		<!-- //// Neoffice — the table that has just ordered its next course (NeoResto lot 1, Daniel, 01.11: « il doit y avoir un popup à la cuisine »): a notice per table under the bar, in the page's column, never over a ticket -->
 
 		<!-- //// Neoffice — was ONE grid of tickets, oldest first, with "No Active Orders" in place of it when there was none. -->
 		<!-- //// The product owner asked for what is waiting apart from what is in preparation (task 23): two bands, always on -->
@@ -182,13 +182,13 @@ import RestaurantScreenSwitch from "@/components/restaurant/RestaurantScreenSwit
 import { SCREEN_PREPARATION } from "@/utils/restaurantScreens"
 import { useDocumentTitle } from "@/composables/useDocumentTitle"
 import { onDark } from "@/utils/stationColors"
-//// Neoffice — the two bands, their layouts and their switch (NeoRestau lot 1, task 23); the ticket card is drawn by the band
+//// Neoffice — the two bands, their layouts and their switch (NeoResto lot 1, task 23); the ticket card is drawn by the band
 import KitchenBand from "@/components/restaurant/KitchenBand.vue"
 import KDSOrderCard from "@/components/invoices/KDSOrderCard.vue"
 import KitchenLayoutSwitch from "@/components/restaurant/KitchenLayoutSwitch.vue"
 import { useKitchenLayout } from "@/composables/useKitchenLayout"
 import { useKitchenTextSize } from "@/composables/useKitchenTextSize"
-//// Neoffice — keep the screen on, and let it rest on purpose (NeoRestau lot 1, task 47)
+//// Neoffice — keep the screen on, and let it rest on purpose (NeoResto lot 1, task 47)
 import ScreenAwakeSettings from "@/components/restaurant/ScreenAwakeSettings.vue"
 import ScreenRestLayer from "@/components/restaurant/ScreenRestLayer.vue"
 import { useScreenAwake } from "@/composables/useScreenAwake"
@@ -198,7 +198,7 @@ import { useCourseOrder } from "@/composables/useCourseOrder"
 import { useTicketSide } from "@/composables/useTicketSide"
 //// Neoffice — the tickets whose dishes are all with the runner, kept at the end of the column or left off this screen (the device's choice, Daniel, 01.11)
 import { useRunnerTickets } from "@/composables/useRunnerTickets"
-//// Neoffice — the printer button of the tickets: a copy of the ticket for the pass, printed by the server (NeoRestau lot 1, task 44)
+//// Neoffice — the printer button of the tickets: a copy of the ticket for the pass, printed by the server (NeoResto lot 1, task 44)
 import PrintCopySettings from "@/components/restaurant/PrintCopySettings.vue"
 import { usePrintCopy } from "@/composables/usePrintCopy"
 import { ticketCounts } from "@/utils/screenAwake"
@@ -210,10 +210,10 @@ import {
 	readyForTheRunner,
 	stationUsesRunner,
 } from "@/utils/kitchenRunner"
-//// Neoffice — the popup and the sound when the next course of a table is ordered, set in the till's settings (NeoRestau lot 1, Daniel, 01.11)
+//// Neoffice — the popup and the sound when the next course of a table is ordered, set in the till's settings (NeoResto lot 1, Daniel, 01.11)
 import SoundUnlockChip from "@/components/restaurant/SoundUnlockChip.vue"
 import { useKitchenAlertSettings } from "@/composables/useKitchenAlertSettings"
-//// Neoffice — the restaurant's service rhythm (NeoRestau lot 1, Daniel, 01.11): where the kitchen prepares ahead the order of the meal is off, and the tickets say so
+//// Neoffice — the restaurant's service rhythm (NeoResto lot 1, Daniel, 01.11): where the kitchen prepares ahead the order of the meal is off, and the tickets say so
 import { SERVICE_RHYTHM_KEY, isPreparedAhead } from "@/utils/serviceRhythm"
 //// Neoffice — whether a dish waits behind the course before it, the way the cards grey it (utils/courseOrder)
 import { followsTheOrderOfTheMeal, isHeldByCourse } from "@/utils/courseOrder"
@@ -282,7 +282,7 @@ const inTheRoom = (order) =>
 const ordersOfTheRoom = computed(() => orders.value.filter(inTheRoom))
 const allOrdersOfTheRoom = computed(() => allOrders.value.filter(inTheRoom))
 
-//// Neoffice — the next course of a table is ordered (NeoRestau lot 1, Daniel, 01.11: « quand on commande la suite il doit y avoir un popup à la cuisine, et aussi un son »). Each reading of the orders below goes through the rule
+//// Neoffice — the next course of a table is ordered (NeoResto lot 1, Daniel, 01.11: « quand on commande la suite il doit y avoir un popup à la cuisine, et aussi un son »). Each reading of the orders below goes through the rule
 //// (utils/nextCourseWatch): a ticket already on the screen with a newer send. What is done about it is the till's setting (POS Settings, "Kitchen alerts"), read for the restaurant of the screen: a sound, and the ticket flashing in the « To do » band
 //// until the kitchen starts it (no banner: the ticket is the alert). A table of a room the screen does not show is neither flashed nor rung for.
 const { settings: alertSettings, rhythm: serviceRhythm } = useKitchenAlertSettings({ restaurant: ofTheRestaurant })
@@ -504,7 +504,7 @@ async function loadOrders() {
 		} else {
 			orders.value = allOrders.value
 		}
-		//// Neoffice — a next course ordered at a table already on the screen (NeoRestau lot 1, Daniel, 01.11)
+		//// Neoffice — a next course ordered at a table already on the screen (NeoResto lot 1, Daniel, 01.11)
 		if (readOf === selectedStation.value) nextCourses.read(orders.value, { station: readOf || "" })
 	} catch (error) {
 		// A tablet disconnected at the till, or whose session ended: it is shown how to pair it again
@@ -563,7 +563,7 @@ onMounted(async () => {
 })
 
 watch(selectedStation, () => {
-	//// Neoffice — another station is another set of dishes: its first reading is a baseline, not a comparison with the last station's (NeoRestau lot 1, Daniel, 01.11)
+	//// Neoffice — another station is another set of dishes: its first reading is a baseline, not a comparison with the last station's (NeoResto lot 1, Daniel, 01.11)
 	nextCourses.reset()
 	loadOrders()
 })

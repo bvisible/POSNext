@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The switch between the restaurant's screens (NeoRestau lot 1, task 38a-2, ruling 132). The
+ * //// Neoffice — added file (no upstream equivalent). The switch between the restaurant's screens (NeoResto lot 1, task 38a-2, ruling 132). The
  * //// kitchen screen let its user hop from the bar to the kitchen and never to the runner, while the runner could go to either: the screen and the
  * //// filter were mixed. One segmented control, the same on both screens (Preparation, Runner, Floor plan), goes from one screen to another and the
  * //// filters ride along in the address, so that the bar's kitchen leads to the runner of the bar. A tablet paired for its screen keeps that one only.

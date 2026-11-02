@@ -1,4 +1,4 @@
-# //// Neoffice — added file (no upstream equivalent). The public menu of a restaurant (NeoRestau lot 1, task 17): one QR
+# //// Neoffice — added file (no upstream equivalent). The public menu of a restaurant (NeoResto lot 1, task 17): one QR
 # //// code on the tables, the same for all of them, opens `/pos/menu/<restaurant>`, a page that shows the restaurant's
 # //// guest card to read and lets nobody order. Upstream POSNext is a retail till with no guest surface at all. The QR
 # //// a waiter brings to a table (a token tied to the table's draft ticket, guest_ordering.py) stays as it is: this
@@ -10,9 +10,9 @@ no others, instead of loading a record and removing what must not leave. A dish 
 picture, spice level and badges; a section says its label. Nothing of stock, cost, an item's code, a warehouse or a
 price list is ever read, so nothing of it can leave by mistake.
 
-It publishes only where the restaurant switched it on (`Restaurant.enable_public_menu`) and the site runs NeoRestau, and
+It publishes only where the restaurant switched it on (`Restaurant.enable_public_menu`) and the site runs NeoResto, and
 only a card that is the restaurant's own guest card, active and in its dates. Every refusal is the same sentence, so that
-it does not tell whether a restaurant exists, runs NeoRestau or chose to publish.
+it does not tell whether a restaurant exists, runs NeoResto or chose to publish.
 
 Two ways in, one set of rules: `public_menu()` is the rules in process (the gate, the kept card, the build; None for a menu
 that is not public), which the website's menu block calls; `get_public_menu()` is the endpoint, which wraps it for the 404
@@ -34,11 +34,11 @@ from frappe.rate_limiter import rate_limit
 from frappe.utils import cint, cstr, flt, getdate, nowdate
 
 from pos_next.restaurant import settings as restaurant_settings
-from pos_next.restaurant.mode import neorestau_active
+from pos_next.restaurant.mode import neoresto_active
 from pos_next.restaurant.text import plain_text
 
 # How long a restaurant's built card is kept. A change of a price or a dish shows within this time; the switch of the
-# option and of NeoRestau are read on every call, before the card is looked up, so they take effect at once.
+# option and of NeoResto are read on every call, before the card is looked up, so they take effect at once.
 CACHE_SECONDS = 60
 CACHE_PREFIX = "pos_next:public_menu"
 # What one address may ask per window. Every guest of a restaurant is behind the same public address (its Wi-Fi), so the
@@ -73,7 +73,7 @@ def cache_key(restaurant: str, lang: str | None = None) -> str:
 def public_menu(restaurant) -> dict | None:
 	"""A restaurant's public menu, or None when it is not public: the rules, for whoever calls in process.
 
-	The website's menu block calls this, the endpoint wraps it. The gate (the site runs NeoRestau, the restaurant exists,
+	The website's menu block calls this, the endpoint wraps it. The gate (the site runs NeoResto, the restaurant exists,
 	is enabled and switched its public menu on) is read on every call, before the kept card, so that it takes effect at
 	once; the card itself is kept for a minute per restaurant and per language. The answer is `{restaurant: {name, logo},
 	currency, card: {name, description} | None, sections: [{label, items: [{name, description, price, price_text, image,
@@ -118,7 +118,7 @@ def get_public_menu(restaurant=None):
 
 def _published(restaurant) -> frappe._dict | None:
 	"""The restaurant's row when it publishes its menu, else None. Read on every call, never from the kept card."""
-	if not neorestau_active() or not isinstance(restaurant, str) or not restaurant.strip():
+	if not neoresto_active() or not isinstance(restaurant, str) or not restaurant.strip():
 		return None
 	# A filter, not the bare name: the name of a doctype read as a name means its single in Frappe's `get_value`
 	row = frappe.db.get_value(

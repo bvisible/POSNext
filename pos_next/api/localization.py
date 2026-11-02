@@ -39,7 +39,7 @@ def _keep_till_senses(messages):
 
 
 # //// Neoffice — the dictionary is public text (the strings are in the open-source repo), and the page a guest opens from the QR code of a table needs it in the
-# //// guest's language: it stayed in English (NeoRestau lot 1, Daniel's test, 01.11). A guest is answered in the language the request asks for.
+# //// guest's language: it stayed in English (NeoResto lot 1, Daniel's test, 01.11). A guest is answered in the language the request asks for.
 @frappe.whitelist(allow_guest=True)
 def get_app_translations():
 	"""
@@ -70,7 +70,7 @@ def _dictionary():
 	)
 
 
-# //// Neoffice — added (NeoRestau lot 1, kitchen test of 01.11). A phone that kept a dictionary fetched before a French word was added showed that word in
+# //// Neoffice — added (NeoResto lot 1, kitchen test of 01.11). A phone that kept a dictionary fetched before a French word was added showed that word in
 # //// English for up to 24 hours: a release that only carries new words does not change the front build the cache is keyed by. The till now asks for this
 # //// short stamp of the dictionary (cheap: Frappe caches the merged dictionary) and fetches the dictionary itself only when the stamp is not the one it holds.
 @frappe.whitelist(allow_guest=True)

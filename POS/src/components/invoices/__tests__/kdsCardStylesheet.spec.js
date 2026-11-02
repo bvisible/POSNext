@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The classes the kitchen card sizes itself with compile to real rules
- * //// (NeoRestau lot 1, task 38a-1). The card reads its sizes from CSS variables the size chosen sets on the screen
+ * //// (NeoResto lot 1, task 38a-1). The card reads its sizes from CSS variables the size chosen sets on the screen
  * //// (`--kds-fs`, `--kds-btn-h`, ...), through Tailwind's arbitrary values: a class that is mistyped, or whose value Tailwind
  * //// cannot read (`text-[var(--x)]` is a colour to Tailwind, `text-[length:var(--x)]` a size), compiles to NOTHING and the element
  * //// silently keeps the browser's size. So the card's source is compiled by the till's own configuration and the rules are read.

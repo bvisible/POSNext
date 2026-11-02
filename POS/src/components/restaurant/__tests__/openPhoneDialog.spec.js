@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). « Open a smartphone » at the till (NeoRestau lot 1, kitchen test 01.11): a waiter's
+ * //// Neoffice — added file (no upstream equivalent). « Open a smartphone » at the till (NeoResto lot 1, kitchen test 01.11): a waiter's
  * //// phone has no pairing to do, it signs in with its owner's own account. The manager only needs somewhere to GIVE the till's address,
  * //// so that nobody types it for the first time: a QR code to scan, and the same link to copy and send.
  * @vitest-environment jsdom

@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). What a service screen needs to put the PRINTER BUTTON on its cards (NeoRestau lot 1, task 44): the
+ * //// Neoffice — added file (no upstream equivalent). What a service screen needs to put the PRINTER BUTTON on its cards (NeoResto lot 1, task 44): the
  * //// device's settings, the stations that have a printer (asked of the server, again every minute at most), whether a card draws its button, and the print.
  * @vitest-environment jsdom
  */

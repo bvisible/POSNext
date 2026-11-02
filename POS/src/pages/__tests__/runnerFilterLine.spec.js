@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The runner's room filter and station filter are ONE line
- * //// (NeoRestau lot 1, task 9c): the rooms on the left, the stations on the right, each keeping its counts (the dishes
+ * //// (NeoResto lot 1, task 9c): the rooms on the left, the stations on the right, each keeping its counts (the dishes
  * //// that are ready in each room, the dishes that are ready at each station). The counts of the rooms are those of
  * //// every room whichever room is chosen: the line is where the runner sees which room to go to.
  * @vitest-environment jsdom
@@ -9,7 +9,7 @@ import { flushPromises, mount } from "@vue/test-utils"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const call = vi.hoisted(() => vi.fn())
-// The runner's "new ready dishes" beep goes through the shared alert-sound player (utils/alertSoundPlayer, NeoRestau lot 1, Daniel, 01.11):
+// The runner's "new ready dishes" beep goes through the shared alert-sound player (utils/alertSoundPlayer, NeoResto lot 1, Daniel, 01.11):
 // one call per beep, so a count of the calls is a count of beeps. It used to open an AudioContext of its own for each beep.
 const beeps = vi.hoisted(() => ({ count: 0, last: null }))
 const restaurantStore = vi.hoisted(() => ({

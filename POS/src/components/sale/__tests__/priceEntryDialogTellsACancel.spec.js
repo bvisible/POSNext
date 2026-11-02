@@ -2,7 +2,7 @@
  * //// Neoffice — added file (no upstream equivalent). The price of an open-price dish is typed on a numpad
  * //// (PriceEntryDialog). A dish a waiter's long press added on a phone waits in the order at 0.00 for that price: when
  * //// the price is cancelled, the till takes the dish back, as a touch on such a dish never leaves one at 0.00
- * //// (NeoRestau lot 1, task 27, fix round 1). The dialog says so to whoever opened it, and only then.
+ * //// (NeoResto lot 1, task 27, fix round 1). The dialog says so to whoever opened it, and only then.
  * @vitest-environment jsdom
  */
 import { mount } from "@vue/test-utils"

@@ -3,7 +3,7 @@ import { call } from "@/utils/apiWrapper";
 import { userData } from "@/data/user";
 import { usePOSCartStore } from "@/stores/posCart";
 import { offlineState } from "@/utils/offline/offlineState";
-//// Neoffice — the personal code of the till (NeoRestau lot 1, product owner, 01.11.2026): the lock also opens with a short code.
+//// Neoffice — the personal code of the till (NeoResto lot 1, product owner, 01.11.2026): the lock also opens with a short code.
 import { TILL_CODE_HASH_KEY, TILL_CODE_METHODS, forgetTillCodeState } from "@/composables/useTillCode";
 
 // Throttle: ignore activity events within 1 second of last reset
@@ -15,7 +15,7 @@ const DEFER_MS = 30 * 1000;
 let lockEnabled = true;
 let lockTimeoutMs = 5 * 60 * 1000;
 //// Neoffice — whether leaving the screen (the tab hidden, the phone asleep) locks AT ONCE. True until the till's settings say
-//// otherwise, which is what every lock did before this setting existed (POS Settings.session_lock_on_leave, NeoRestau lot 1). When
+//// otherwise, which is what every lock did before this setting existed (POS Settings.session_lock_on_leave, NeoResto lot 1). When
 //// false the lock waits for its delay without use: a waiter whose phone sleeps between two tables does not type a code each time.
 let lockOnLeave = true;
 //// Neoffice — the lock was made by the user's own hand ("Lock" in the menu): it holds whatever the auto-lock setting says, also
@@ -63,7 +63,7 @@ function clearPersistedLock() {
 }
 
 //// Neoffice — the moment of the last use, kept across page loads (a phone drops a tab it has not shown for a while and loads it
-//// again): "N minutes without use" has to hold for a page that was not there. Added with the personal code of the till (NeoRestau lot 1).
+//// again): "N minutes without use" has to hold for a page that was not there. Added with the personal code of the till (NeoResto lot 1).
 const LAST_ACTIVE_KEY = "pos_last_active";
 
 function rememberActivity(at) {
@@ -464,7 +464,7 @@ async function unlock(password) {
 	}
 }
 
-//// Neoffice — added block (no upstream equivalent): unlocking with the PERSONAL CODE of the till (NeoRestau lot 1, product owner,
+//// Neoffice — added block (no upstream equivalent): unlocking with the PERSONAL CODE of the till (NeoResto lot 1, product owner,
 //// 01.11.2026). A waiter's phone stays signed in for 30 days; the counterpart is this lock, opened by four to six digits of the
 //// waiter's own instead of the long account password.
 ////

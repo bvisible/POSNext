@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). « Replier les services livrés » (NeoRestau lot 1, Daniel, 01.11): the cart of a table's order draws its lines by course and folds
+//// Neoffice — added file (no upstream equivalent). « Replier les services livrés » (NeoResto lot 1, Daniel, 01.11): the cart of a table's order draws its lines by course and folds
 //// the courses that are all delivered (utils/cartCourses). Whether it does is a choice of the DEVICE, like the size of the kitchen's text: a waiter who wants the flat list, every
 //// delivered line greyed in its place, turns it off. ON unless the device says otherwise. Storage that is missing or refuses leaves the choice to the page for as long as it is open.
 

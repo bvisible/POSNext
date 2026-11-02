@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The card editor's « edit the schedule » opens the till's
- * //// settings on their « Hours and cards » tab, for whoever may set the restaurant's hours (NeoRestau lot 1, task
+ * //// settings on their « Hours and cards » tab, for whoever may set the restaurant's hours (NeoResto lot 1, task
  * //// 13): the hours are the restaurant's settings, which its manager sets too, not only the till manager. And the
  * //// other way round: the settings' « Edit » of a card opens the till's card editor on that card.
  * @vitest-environment node

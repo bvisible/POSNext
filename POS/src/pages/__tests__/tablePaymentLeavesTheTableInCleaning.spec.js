@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). A table payment never sends « Empty » (NeoRestau lot 1, task 9f, fix
+ * //// Neoffice — added file (no upstream equivalent). A table payment never sends « Empty » (NeoResto lot 1, task 9f, fix
  * //// round 2, Ruling 75). Since 2026-03-29 (df6270eb) the SERVER sends a paid table to Cleaning, when the invoice is
  * //// submitted (invoices.py, and the on_submit hook): the Cleaning dialog and « Free the tables being cleaned » rely on it.
  * //// The till used to set the table to Empty itself right after the payment, through the store's updateTableStatus, but

@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The kitchen card says ACTIONS on its buttons and STATES on its badges
- * //// (NeoRestau lot 1, task 38a-1, ruling 113). The French comes from the real catalogue (pos_next/locale/fr.po) through the
+ * //// (NeoResto lot 1, task 38a-1, ruling 113). The French comes from the real catalogue (pos_next/locale/fr.po) through the
  * //// real translate(), and the bare words are given other values, so that the card can only read right through the contexts
  * //// « Kitchen action » and « Kitchen order status ». A cook taps « Commencer », then « C'est prêt »; what is ready at the
  * //// pass is « À livrer »; a takeaway is « Remettre ».

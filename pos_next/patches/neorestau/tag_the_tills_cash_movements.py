@@ -1,6 +1,6 @@
 # //// Neoffice — added file (no upstream equivalent). The till's drawer movements and the closing's
 # //// withdrawals were found again by their remark (« POS Cash Entry|<shift>|<in/out>|<template>|<note> »,
-# //// « POS Cash Withdrawal|<closing>|<amount>|<template> »). Since NeoRestau lot 1 (task 15) they carry
+# //// « POS Cash Withdrawal|<closing>|<amount>|<template> »). Since NeoResto lot 1 (task 15) they carry
 # //// link fields of ours instead (posa_cash_movement*), which the closing and the reports read: this tags
 # //// the entries written before, once, from their remark. The drawer's direction and the cash account are
 # //// read from the entry's own rows on the till's cash account, not from the remark, whose direction the

@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The top of the till's tables on a phone, as the waiter mockup
- * //// draws it (NeoRestau lot 1, task 26): « Tables » in Forum on the ink bar, the till user's first name and the time
+ * //// draws it (NeoResto lot 1, task 26): « Tables » in Forum on the ink bar, the till user's first name and the time
  * //// on the right; under it « List | Floor plan », two halves of 44 px, ink for the one shown. On a tablet and a PC the
  * //// floor plan keeps its line, where a small « Plan | List » switch of 32 px (the line's chips, Ruling 44) does the same.
  * @vitest-environment jsdom

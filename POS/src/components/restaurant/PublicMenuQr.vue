@@ -1,6 +1,6 @@
 <template>
 	<!-- //// Neoffice — added file (no upstream equivalent). « Print the menu QR »: the entry that prints the sheet -->
-	<!-- //// with the QR code of the restaurant's public menu, to stand on the tables (NeoRestau lot 1, task 17). -->
+	<!-- //// with the QR code of the restaurant's public menu, to stand on the tables (NeoResto lot 1, task 17). -->
 	<!-- //// It is a menu entry of its own, to be mounted in the floor plan's « ⋯ » menu: it is there only where -->
 	<!-- //// the restaurant switched the public menu on, and only for who may set the restaurant up (the till's -->
 	<!-- //// `manage_settings` right, told by the server). Upstream POSNext has no guest surface. -->

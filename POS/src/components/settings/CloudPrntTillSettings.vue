@@ -2,7 +2,7 @@
 <!-- //// network printer of this till's receipts, whether it prints them by itself when a sale is validated, when -->
 <!-- //// the cash drawer opens (`part="receipt"`), and the printer of each preparation station (`part="stations"`). -->
 <!-- //// They live on the printer rows of the cloudprnt app; the screen keeps the choices in a draft and its one -->
-<!-- //// « Save » writes them through that app, with the rest (NeoRestau lot 1, task 13: they were saved at each -->
+<!-- //// « Save » writes them through that app, with the rest (NeoResto lot 1, task 13: they were saved at each -->
 <!-- //// change before). Upstream prints through QZ Tray or the browser only (maintenance#1935). -->
 <template>
 	<div class="flex flex-col gap-[7px]">

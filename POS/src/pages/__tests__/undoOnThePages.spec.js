@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The toast of the five seconds lives on the PAGE (NeoRestau lot 1, task 38a-2, ruling 112): the ticket's card is gone from its
+ * //// Neoffice — added file (no upstream equivalent). The toast of the five seconds lives on the PAGE (NeoResto lot 1, task 38a-2, ruling 112): the ticket's card is gone from its
  * //// band when it is pressed. The kitchen and the runner draw it, and read their tickets again once a move is put back.
  * @vitest-environment jsdom
  */

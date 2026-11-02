@@ -1,7 +1,7 @@
 //// Neoffice — added file (no upstream equivalent). The till's own screens of the restaurant (the preparation
-//// display /kds, the runner /runner, the takeaway counter /takeaway) open only where the site runs NeoRestau
-//// (NeoRestau lot 1, task 4, fix round 1; nothing of the restaurant shows where it is off). The /pos page says
-//// whether it does (window.posnext_neorestau_active), which is known at once for a screen that may load with no
+//// display /kds, the runner /runner, the takeaway counter /takeaway) open only where the site runs NeoResto
+//// (NeoResto lot 1, task 4, fix round 1; nothing of the restaurant shows where it is off). The /pos page says
+//// whether it does (window.posnext_neoresto_active), which is known at once for a screen that may load with no
 //// till profile and no session; where it does not, the router sends the visitor back to the till.
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest"
@@ -37,17 +37,17 @@ async function visit(path) {
 describe("the restaurant's own screens of the till", () => {
 	beforeEach(() => {
 		session.isLoggedIn = true
-		window.posnext_neorestau_active = true
+		window.posnext_neoresto_active = true
 	})
 
-	it.each(SCREENS)("%s opens where the site runs NeoRestau", async (path, name) => {
+	it.each(SCREENS)("%s opens where the site runs NeoResto", async (path, name) => {
 		const route = await visit(path)
 
 		expect(route.name).toBe(name)
 	})
 
-	it.each(SCREENS)("%s sends back to the till where the site does not run NeoRestau", async (path) => {
-		window.posnext_neorestau_active = false
+	it.each(SCREENS)("%s sends back to the till where the site does not run NeoResto", async (path) => {
+		window.posnext_neoresto_active = false
 
 		const route = await visit(path)
 
@@ -56,7 +56,7 @@ describe("the restaurant's own screens of the till", () => {
 	})
 
 	it.each(SCREENS)("%s stays shut when the page did not say (nothing to show on a doubt)", async (path) => {
-		window.posnext_neorestau_active = undefined
+		window.posnext_neoresto_active = undefined
 
 		const route = await visit(path)
 
@@ -64,7 +64,7 @@ describe("the restaurant's own screens of the till", () => {
 	})
 
 	it("sends a visitor who is not signed in to the login, not to the restaurant's screen", async () => {
-		window.posnext_neorestau_active = false
+		window.posnext_neoresto_active = false
 		session.isLoggedIn = false
 
 		const route = await visit("/kds")
@@ -73,7 +73,7 @@ describe("the restaurant's own screens of the till", () => {
 	})
 
 	it("leaves the screens that are not the restaurant's alone", async () => {
-		window.posnext_neorestau_active = false
+		window.posnext_neoresto_active = false
 
 		const route = await visit("/display")
 

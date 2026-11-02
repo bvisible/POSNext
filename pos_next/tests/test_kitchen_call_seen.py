@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""A call of the next course taken up on one kitchen screen is taken up on the others (NeoRestau lot 1, Daniel, 01.11).
+"""A call of the next course taken up on one kitchen screen is taken up on the others (NeoResto lot 1, Daniel, 01.11).
 
 A kitchen may have several tablets. When the next course of a table is ordered, the ticket blinks on each of them until a cook
 starts its dishes (that is already shared: the dishes' status is the server's) or says « to do » (the ticket's button), which

@@ -1,5 +1,5 @@
 <!-- //// Neoffice — added file (no upstream equivalent). The restaurant card as buttons, as the waiter mockup draws it -->
-<!-- //// (NeoRestau lot 1, task 27; design § G: « the card as buttons, not a list; no pictures by default; three -->
+<!-- //// (NeoResto lot 1, task 27; design § G: « the card as buttons, not a list; no pictures by default; three -->
 <!-- //// buttons per row; one colour per type; touch = +1, long press = options; the count already ordered; sold -->
 <!-- //// out »). Each button: the name (two lines at most), the price under it, a top border and a soft -->
 <!-- //// background in its colour, the count already in the order as an ink pill, struck and shut when the dish cannot -->

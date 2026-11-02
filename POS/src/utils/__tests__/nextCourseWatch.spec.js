@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The kitchen's notice that the next course is ordered (NeoRestau lot 1, Daniel, 01.11: « quand on commande la suite il doit y avoir un popup à la cuisine, et
+ * //// Neoffice — added file (no upstream equivalent). The kitchen's notice that the next course is ordered (NeoResto lot 1, Daniel, 01.11: « quand on commande la suite il doit y avoir un popup à la cuisine, et
  * //// aussi un son »). No new realtime event: the screen compares each reading of its orders with the one before. This is the rule, read without a screen: an order that was already on the screen, with dishes
  * //// sent before, whose latest send is newer than the last reading.
  */
@@ -288,7 +288,7 @@ describe("the stations this screen shows", () => {
 	})
 })
 
-//// Neoffice — where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11): the next course does not arrive, it is CALLED, and the notice goes off on the call
+//// Neoffice — where the kitchen prepares ahead (NeoResto lot 1, the service rhythm, Daniel, 01.11): the next course does not arrive, it is CALLED, and the notice goes off on the call
 describe("the call of a course sent ahead", () => {
 	const CALL = "2026-11-01 12:50:00.000000"
 	const aheadDish = (family, status, calledAt = null, extra = {}) =>

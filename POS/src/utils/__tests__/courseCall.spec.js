@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The call of a course where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11):
+ * //// Neoffice — added file (no upstream equivalent). The call of a course where the kitchen prepares ahead (NeoResto lot 1, the service rhythm, Daniel, 01.11):
  * //// which lines are sent ahead and not called yet, and the time a line counts from. Read without a screen.
  */
 import { describe, expect, it } from "vitest"

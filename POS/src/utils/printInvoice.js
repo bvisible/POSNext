@@ -6,7 +6,7 @@ import { getOfflineReceiptPayload } from "@/utils/offline/offlineReceiptCache";
 import { getOfflineInvoiceByOfflineId } from "@/utils/offline/sync";
 import { offlineWorker } from "@/utils/offline/workerClient";
 import { printHTML as qzPrintHTML } from "@/utils/qzTray";
-//// Neoffice — « Offert » (NeoRestau lot 1, task 24): an offered line prints 0.00 and « Offert » under it.
+//// Neoffice — « Offert » (NeoResto lot 1, task 24): an offered line prints 0.00 and « Offert » under it.
 import { OFFER_CONTEXT, isOfferedRow } from "@/utils/offeredRows";
 
 //// use frappe-ui call instead of window.frappe.call in payment driver — cb23e1a8

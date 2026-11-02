@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""The tip line's msgid has a context of its own, so HRMS keeps "Gratification" (NeoRestau lot 1, task 1).
+"""The tip line's msgid has a context of its own, so HRMS keeps "Gratification" (NeoResto lot 1, task 1).
 
 HRMS translates the plain msgid "Gratuity" (its payroll doctype of that name, a tab, a section) as "Gratification".
 Frappe merges the apps' catalogues in installed-app order and the last one wins, so a plain "Gratuity" of ours

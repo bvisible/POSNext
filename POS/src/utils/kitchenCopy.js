@@ -1,5 +1,5 @@
 //// Neoffice — added file (no upstream equivalent). The printer button of the kitchen's and the runner's cards prints a COPY of the ticket
-//// (NeoRestau lot 1, task 44). One tap asks the SERVER to print (pos_next.api.kitchen_events.print_kitchen_copy: the browser prints nothing),
+//// (NeoResto lot 1, task 44). One tap asks the SERVER to print (pos_next.api.kitchen_events.print_kitchen_copy: the browser prints nothing),
 //// on the printer of the station the screen is opened on, marked COPY and the time. The button then says where the paper stands as the bill's
 //// printer button does (provisionalTicket.js, ruling 97): sending, printing, printed, printer offline, not printed. A station with no printer
 //// is told by the server and the screen hides its button; a tap while the copy is on its way, or twice in a row, prints once (the server

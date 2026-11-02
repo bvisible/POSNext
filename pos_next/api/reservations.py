@@ -8,7 +8,7 @@
 # //// and 0e3f3fcd the same day — MySQL rejects a Duration default and stores it as seconds).
 # //// The public form gives a visitor which tables are free and nothing of the other guests, counts
 # //// the bookings it mails per visitor, per address and per site, and a booking its guest never
-# //// confirms expires instead of holding its tables (NeoRestau lot 1, task 18).
+# //// confirms expires instead of holding its tables (NeoResto lot 1, task 18).
 import frappe
 from frappe import _
 from frappe.utils import (
@@ -29,7 +29,7 @@ from pos_next.pos_next.doctype.restaurant_reservation.restaurant_reservation imp
 	hold_has_expired,
 )
 from pos_next.restaurant import permissions, scope
-from pos_next.restaurant.mode import require_neorestau
+from pos_next.restaurant.mode import require_neoresto
 from pos_next.restaurant.settings import get_restaurant_settings, restaurant_of
 import hashlib
 import hmac
@@ -86,7 +86,7 @@ PAGE_DATE = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
 @frappe.whitelist()
 def get_reservations(date=None, area=None, status=None, restaurant=None):
 	"""Get the reservations of one restaurant (the till's own unless one is named) for a date, with optional filters."""
-	# Whoever reads the reservations (a cashier, a manager), from a desk account (NeoRestau lot 1, task 3)
+	# Whoever reads the reservations (a cashier, a manager), from a desk account (NeoResto lot 1, task 3)
 	permissions.require("Restaurant Reservation", "read")
 
 	restaurant = restaurant or scope.current_restaurant()
@@ -335,8 +335,8 @@ def get_available_slots(date: str, restaurant: str | None = None):
 	A visitor names no restaurant on a site with one; the default restaurant answers. The arguments are strings: Frappe
 	checks the annotations, and a list or a dict in a JSON body would otherwise be read as a filter on the restaurants.
 	"""
-	# Nothing of the restaurant shows where the site does not run NeoRestau (NeoRestau lot 1, task 4)
-	require_neorestau()
+	# Nothing of the restaurant shows where the site does not run NeoResto (NeoResto lot 1, task 4)
+	require_neoresto()
 
 	settings = get_restaurant_settings(restaurant or scope.current_restaurant())
 	if not settings.enable_reservations or not settings.enable_online_reservations:
@@ -370,8 +370,8 @@ def get_available_tables(
 	the guests who hold the others (VISITOR_TABLE_FIELDS); whoever reads the restaurant's reservations from a desk
 	account sees who holds them, at any time and for any duration. The date, the time and the restaurant are strings.
 	"""
-	# Nothing of the restaurant shows where the site does not run NeoRestau (NeoRestau lot 1, task 4)
-	require_neorestau()
+	# Nothing of the restaurant shows where the site does not run NeoResto (NeoResto lot 1, task 4)
+	require_neoresto()
 
 	restaurant = restaurant or scope.current_restaurant()
 	settings = get_restaurant_settings(restaurant)
@@ -445,8 +445,8 @@ def submit_guest_reservation(
 	answered like any other, and nothing is written nor mailed. A refused booking writes nothing, mails nothing and
 	tells no till. The answer never names the booking.
 	"""
-	# Nothing of the restaurant shows where the site does not run NeoRestau (NeoRestau lot 1, task 4)
-	require_neorestau()
+	# Nothing of the restaurant shows where the site does not run NeoResto (NeoResto lot 1, task 4)
+	require_neoresto()
 
 	settings = get_restaurant_settings(restaurant or scope.current_restaurant())
 	if not settings.enable_reservations or not settings.enable_online_reservations:

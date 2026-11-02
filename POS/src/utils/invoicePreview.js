@@ -1,6 +1,6 @@
 // //// Neoffice — added file (no upstream equivalent).
 /**
- * What a row of the invoice history says about its ticket (NeoRestau lot 1, task 29).
+ * What a row of the invoice history says about its ticket (NeoResto lot 1, task 29).
  *
  * « 2× Pizza Margherita · 1× Coca-Cola 33 cl · 1× Tiramisu », then « +2 items » when the ticket has more
  * dishes than the three shown: one sees at a glance what a sale or a table's order was, and the eye icon of the

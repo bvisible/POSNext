@@ -1,5 +1,5 @@
 //// Neoffice — added file (no upstream equivalent). How the restaurant till shows its tables: as the list of the tables
-//// or as the floor plan (NeoRestau lot 1, task 26). On a phone the till opens on the list (product owner, 31.10.2026:
+//// or as the floor plan (NeoResto lot 1, task 26). On a phone the till opens on the list (product owner, 31.10.2026:
 //// « on the phone, show the list of the tables by default rather than the plan »); on a tablet and a PC it opens on
 //// the plan, as before, and a small switch on the plan's line lets them use the list too. The waiter's choice is kept
 //// on THIS device, in the browser's storage: a phone that chose the plan opens on the plan the next time.

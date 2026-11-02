@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). Three kinds of text on a kitchen ticket (NeoRestau lot 1, task 38a-1, ruling 123): the OPTIONS
+//// Neoffice — added file (no upstream equivalent). Three kinds of text on a kitchen ticket (NeoResto lot 1, task 38a-1, ruling 123): the OPTIONS
 //// of a dish (« → Saignant, Sans sel »), a REMARK or instruction (« Servir en même temps que la table 4 »), and an ALLERGY (« Allergie : arachides,
 //// noix »). The information on a ticket is as important as the dish, and an allergy is not to be taken for a remark: each kind has its own look
 //// (ink, accent, the one red), drawn by the card. What tells an allergy from a remark is here: the server keeps a remark as free text

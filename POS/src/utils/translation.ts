@@ -193,7 +193,7 @@ function applyMessages(messages: Messages) {
 	}, 100)
 }
 
-//// Neoffice — added (NeoRestau lot 1, kitchen test of 01.11). A phone that kept a dictionary fetched before a French word was added showed it in English for
+//// Neoffice — added (NeoResto lot 1, kitchen test of 01.11). A phone that kept a dictionary fetched before a French word was added showed it in English for
 //// up to 24 hours: a release that only carries new words does not change the build the cache is keyed by, and the clock alone says "fresh". The till asks the
 //// server for a short stamp of its dictionary at start-up and when it comes back to the screen after a while, and fetches the dictionary only when the stamp
 //// is not the one it holds. Offline, or on any failure, it keeps what it holds.

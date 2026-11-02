@@ -1,5 +1,5 @@
 //// Neoffice — added file (no upstream equivalent). What a user may manage of the restaurant comes with the till's
-//// settings (`restaurant_can`, NeoRestau lot 1, task 3) and is that user's. The path the app runs: a user signs in
+//// settings (`restaurant_can`, NeoResto lot 1, task 3) and is that user's. The path the app runs: a user signs in
 //// (the page's bootstrap preloads his settings), signs out (utils/sessionCleanup), and another one signs in in the
 //// same tab without a reload: the next user is told his own rights, never the previous user's.
 // @vitest-environment jsdom

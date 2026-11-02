@@ -21,7 +21,7 @@
 	<!-- //// Neoffice — the card has TWO forms (task 38a-3, ruling 107 layer 3): the card of the board, and the same ticket opened FULL SCREEN over it (`fullscreen`), which the board's card draws by rendering itself -->
 	<!-- //// inside TicketFullScreen. One component, so the dishes, the buttons, the menus and the calls are written once and the two can never disagree. The panel is bigger (its own CSS variables, `fullScreenVariables`), -->
 	<!-- //// has an × beside its buttons, and lays its dishes out in columns side by side. -->
-	<!-- //// Neoffice — the card carries the name of its order (`data-order`: the screen finds the ticket of a table that ordered its next course by it, to scroll to it), and wears the signal's ring while that ticket is highlighted (NeoRestau lot 1, Daniel, 01.11). The panel opened full screen is the same ticket drawn bigger and is not highlighted. -->
+	<!-- //// Neoffice — the card carries the name of its order (`data-order`: the screen finds the ticket of a table that ordered its next course by it, to scroll to it), and wears the signal's ring while that ticket is highlighted (NeoResto lot 1, Daniel, 01.11). The panel opened full screen is the same ticket drawn bigger and is not highlighted. -->
 	<div class="bg-white dark:bg-gray-800 flex flex-1 flex-col min-h-0"
 		:class="[borderColorClass, fullscreen ? ['rounded-2xl border-l-[6px] overflow-hidden shadow-xl', FULLSCREEN_FRAME.card] : 'rounded-xl shadow-sm border-l-4 max-h-[var(--ticket-max-h,none)]', ringed ? 'ring-4 ring-inset ring-[#F55D1A] kds-ticket-flash' : '']"
 		:style="fullscreen ? fullVariables : undefined"
@@ -267,7 +267,7 @@
 										<span v-if="stateWord(item)" data-test="ticket-line-state"
 											class="mr-1.5 inline-block rounded-full px-1.5 align-[0.1em] text-[length:var(--kds-fs-ref,11px)] font-bold leading-[1.4] whitespace-nowrap"
 											:class="itemStatusClass(item.kds_status)">{{ stateWord(item) }}</span>
-										<!-- //// Neoffice — a dish sent AHEAD of its course and not called yet wears a small dashed « À l'avance » tag (the service rhythm, NeoRestau lot 1, Daniel, 01.11); one already finished says « Prêt d'avance » in the pill above instead -->
+										<!-- //// Neoffice — a dish sent AHEAD of its course and not called yet wears a small dashed « À l'avance » tag (the service rhythm, NeoResto lot 1, Daniel, 01.11); one already finished says « Prêt d'avance » in the pill above instead -->
 										<span v-if="isUncalled(item) && item.kds_status !== 'Ready'" data-test="ticket-line-ahead"
 											class="mr-1.5 inline-block rounded-full border border-dashed border-gray-400 px-1.5 align-[0.1em] text-[length:var(--kds-fs-ref,11px)] font-bold leading-[1.4] whitespace-nowrap text-gray-700 dark:border-gray-500 dark:text-gray-200">{{ __("Ahead", null, "Kitchen order status") }}</span>
 										<!-- //// Neoffice — what already left of a line cooked in part, told by a small pill in the look of a delivered dish (struck through, faded): « 4 of 6 sent » (kitchen test of 01.11) -->
@@ -446,7 +446,7 @@ import { TINT_CLASS, inSections, sectionLabel, tintStyle } from "@/utils/ticketF
 import { useCourseOrder } from "@/composables/useCourseOrder"
 import { followsTheOrderOfTheMeal, isHeldByCourse } from "@/utils/courseOrder"
 import { familyOf } from "@/utils/serviceFamilies"
-//// Neoffice — where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11): a dish sent ahead of its course and not called yet is told « à l'avance », can be started and finished, and counts for nothing until the room calls it
+//// Neoffice — where the kitchen prepares ahead (NeoResto lot 1, the service rhythm, Daniel, 01.11): a dish sent ahead of its course and not called yet is told « à l'avance », can be started and finished, and counts for nothing until the room calls it
 import { isUncalled } from "@/utils/courseCall"
 import { CALLED_BY_THE_ROOM, SERVICE_RHYTHM_KEY } from "@/utils/serviceRhythm"
 //// Neoffice — the ticket opened full screen over the board (task 38a-3, ruling 107 layer 3): its shell, the size it is drawn in, and the length it says
@@ -537,7 +537,7 @@ const props = defineProps({
 		type: Boolean,
 		default: false,
 	},
-	//// Neoffice — the table of this ticket has ordered its next course and the kitchen has not taken it up yet (NeoRestau lot 1, Daniel, 01.11): the kitchen screen makes the ticket FLASH, with the signal's ring
+	//// Neoffice — the table of this ticket has ordered its next course and the kitchen has not taken it up yet (NeoResto lot 1, Daniel, 01.11): the kitchen screen makes the ticket FLASH, with the signal's ring
 	highlighted: {
 		type: Boolean,
 		default: false,
@@ -571,7 +571,7 @@ const fullVariables = computed(() => fullScreenVariables(textSize.value))
 //// Neoffice — a takeaway is handed over, not delivered to a table (task 38a-1)
 const isTakeaway = computed(() => !!props.order.is_takeaway)
 
-//// Neoffice — the service rhythm (NeoRestau lot 1, Daniel, 01.11): the restaurant's kitchen prepares ahead, or the room calls each course. The screen hands it down; the card only needs it to know that the order of the meal is off
+//// Neoffice — the service rhythm (NeoResto lot 1, Daniel, 01.11): the restaurant's kitchen prepares ahead, or the room calls each course. The screen hands it down; the card only needs it to know that the order of the meal is off
 const serviceRhythm = inject(SERVICE_RHYTHM_KEY, ref(CALLED_BY_THE_ROOM))
 //// Neoffice — the dishes still to cook or at the pass, none of them delivered: what a ticket is about
 const LIVE_STATUSES = new Set(["Pending", "Preparing", "Ready"])
@@ -1386,7 +1386,7 @@ async function doUpdateStatus(newStatus) {
 }
 </script>
 
-<!-- //// Neoffice — the ticket that has to be taken up BLINKS (NeoRestau lot 1, Daniel, 01.11: « faut la laisser clignoter jusqu'à ce qu'on ait validé »): the signal's ring comes and goes, inside the card like the still ring, until the cook starts the dishes or closes the notice. A screen asked to keep still keeps the still ring. -->
+<!-- //// Neoffice — the ticket that has to be taken up BLINKS (NeoResto lot 1, Daniel, 01.11: « faut la laisser clignoter jusqu'à ce qu'on ait validé »): the signal's ring comes and goes, inside the card like the still ring, until the cook starts the dishes or closes the notice. A screen asked to keep still keeps the still ring. -->
 <style scoped>
 @keyframes kds-ticket-flash {
 	0%,

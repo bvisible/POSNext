@@ -5,7 +5,7 @@
 # Copyright (c) 2024, BrainWise and contributors
 # For license information, please see license.txt
 
-# //// Neoffice — it belongs to a restaurant, and its name only has to be unique within that restaurant (NeoRestau
+# //// Neoffice — it belongs to a restaurant, and its name only has to be unique within that restaurant (NeoResto
 # //// lot 1, task 2). A room is named by a hash from now on: its tables, its stations and the tills' default room
 # //// link to it by name, and a name that is also the label could not be changed, nor shared by two restaurants.
 import frappe
@@ -18,7 +18,7 @@ from pos_next.restaurant.settings import default_restaurant
 
 class RestaurantArea(Document):
 	def validate(self):
-		# //// Neoffice — the short code of the room is written in capitals, without the spaces round it (NeoRestau lot 1, task 38b).
+		# //// Neoffice — the short code of the room is written in capitals, without the spaces round it (NeoResto lot 1, task 38b).
 		self.short_code = (self.get("short_code") or "").strip().upper()
 		scope.attach_to_restaurant(self)
 		scope.validate_label_unique_in_restaurant(self, "area_name")

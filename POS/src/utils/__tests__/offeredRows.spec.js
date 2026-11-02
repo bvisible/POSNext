@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). « Offert » (NeoRestau lot 1, task 24): the cashier offers some or
+ * //// Neoffice — added file (no upstream equivalent). « Offert » (NeoResto lot 1, task 24): the cashier offers some or
  * //// all of a line's quantity. The offered part is a row of its own, of the same dish (item, unit, options, remark, kitchen
  * //// state), that keeps its list price at a 100 % discount; the cart shows it under its paid line.
  */

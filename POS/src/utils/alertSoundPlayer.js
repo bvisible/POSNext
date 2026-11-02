@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The player of the alert sounds (NeoRestau lot 1, Daniel's request of 01.11). It turns a schedule of notes (utils/alertSounds) into Web Audio oscillators,
+//// Neoffice — added file (no upstream equivalent). The player of the alert sounds (NeoResto lot 1, Daniel's request of 01.11). It turns a schedule of notes (utils/alertSounds) into Web Audio oscillators,
 //// and owns the one thing a browser makes difficult: a page may not make a sound before somebody has touched it (the autoplay policy), and a kitchen tablet is left alone for hours.
 ////
 //// - ONE shared audio context for the whole page. It is created and resumed from the first touch of the page (`listenForFirstTouch`), never before: a context made on load would only log the browser's

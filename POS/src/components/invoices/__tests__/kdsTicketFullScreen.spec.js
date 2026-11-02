@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The kitchen ticket opened FULL SCREEN over the board (NeoRestau lot 1, task 38a-3, ruling 107 layer 3: « on force par-dessus »). A tap on the
+ * //// Neoffice — added file (no upstream equivalent). The kitchen ticket opened FULL SCREEN over the board (NeoResto lot 1, task 38a-3, ruling 107 layer 3: « on force par-dessus »). A tap on the
  * //// card's « +N lines » strip opens the same ticket in a panel that takes the screen: the same header, the SAME action row with the main button at the TOP (the cook acts without closing), the
  * //// dishes in large text in as many columns as they need, side by side. It is closed by an ×, a tap outside, or Escape; it follows the theme; the board behind keeps updating (the panel
  * //// follows its ticket, and closes with it when the ticket leaves); the focus stays inside and goes back where it was. A dish line keeps opening its own status menu. jsdom has no layout engine: the

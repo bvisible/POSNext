@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""Editing a table edits it, and saving a station from the till keeps what the desk set (NeoRestau lot 1, task 9).
+"""Editing a table edits it, and saving a station from the till keeps what the desk set (NeoResto lot 1, task 9).
 
 "Edit table" on the floor plan called `create_table`: renaming a table made another one beside it, and nothing could
 change the label or the seats of a table that existed. `update_table` edits the record in place, for whoever may lay
@@ -37,7 +37,7 @@ PORTAL = "table-edits-portal@yopmail.com"
 CASHIER_ROLE = "POSNext Cashier"
 SAVEPOINT = "table_and_station_edits"
 # What the floor plan reads of a table beside the orders it adds to the row (`get_tables`): the open order's summary,
-# its lines on hold, and those of a guest's QR order waiting for the waiter (the list of tables, NeoRestau lot 1, task 26)
+# its lines on hold, and those of a guest's QR order waiting for the waiter (the list of tables, NeoResto lot 1, task 26)
 ORDER_FIELDS = ("order_summary", "waiting_items_count", "qr_waiting_count")
 # What a number of seats that is not a whole number of at least 1 is told
 SEATS_REFUSED = "whole number of at least 1"

@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The runner's ticket opened FULL SCREEN over the board (NeoRestau lot 1, task 38a-3, ruling 107 layer 3, ruling 130): the card has the kitchen's
+ * //// Neoffice — added file (no upstream equivalent). The runner's ticket opened FULL SCREEN over the board (NeoResto lot 1, task 38a-3, ruling 107 layer 3, ruling 130): the card has the kitchen's
  * //// anatomy, so it has the kitchen's way out of a long ticket. A tap on the « +N lines » strip opens the same card in a panel that takes the screen, with « Deliver » at the TOP, the dishes in
  * //// large text in columns side by side, closed by an ×, a tap outside or Escape; the board keeps updating behind it. jsdom has no layout engine: the boxes are given by hand.
  * @vitest-environment jsdom

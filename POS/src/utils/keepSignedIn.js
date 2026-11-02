@@ -1,5 +1,5 @@
 //// Neoffice — added file (no upstream equivalent). The till keeps its staff signed in for the number of days its POS Settings
-//// say (`keep_signed_in_days`, NeoRestau lot 1, product owner, 01.11.2026: a waiter's phone must not ask for a password every
+//// say (`keep_signed_in_days`, NeoResto lot 1, product owner, 01.11.2026: a waiter's phone must not ask for a password every
 //// morning). The length is the till's own setting, not the ERP's: the server stamps the session with it (pos_next.api.session).
 ////
 //// The till asks ONCE per page load, as soon as its POS Profile is known (posSettings.loadSettings, which both the page's

@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The text size of the kitchen screen (NeoRestau lot 1, task 38a-1, ruling 109): the
+ * //// Neoffice — added file (no upstream equivalent). The text size of the kitchen screen (NeoResto lot 1, task 38a-1, ruling 109): the
  * //// screen ships DENSE (Compact), a small « Aa » button in its header cycles Compact, Normal, Large, Extra large, the choice is kept on
  * //// the DEVICE, and the sizes reach the tickets as CSS variables on the page's root (font sizes, paddings, button heights).
  * @vitest-environment jsdom

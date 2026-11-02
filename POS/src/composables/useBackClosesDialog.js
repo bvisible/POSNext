@@ -1,5 +1,5 @@
 //// Neoffice — added file (no upstream equivalent). The Back of a phone closes the dialog it is showing instead of leaving the till
-//// (NeoRestau lot 1). A waiter shows the table's QR code full screen on his phone, and what a hand reaches for to get rid of
+//// (NeoResto lot 1). A waiter shows the table's QR code full screen on his phone, and what a hand reaches for to get rid of
 //// a full-screen thing on a phone is the Back: the Android Back button, the iOS edge swipe. Both leave the page, and the till
 //// with it: the cart on screen, mid-scan. So a dialog that is a phone's takes ONE entry of the browser's history while it is
 //// shown, and the Back that follows consumes that entry instead of the page's: the dialog closes, the page stays.

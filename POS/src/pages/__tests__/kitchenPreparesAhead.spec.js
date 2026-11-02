@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The kitchen screen of a restaurant that prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11: « Oui, les deux modes »). The later courses are on the
+ * //// Neoffice — added file (no upstream equivalent). The kitchen screen of a restaurant that prepares ahead (NeoResto lot 1, the service rhythm, Daniel, 01.11: « Oui, les deux modes »). The later courses are on the
  * //// tickets from « Valider », marked ahead, so the next course is not SENT, it is CALLED: the popup and the sound go off on the call (the room stamps `kds_called_at`), not when a course merely arrives. The restaurant's
  * //// rhythm is read with the kitchen alerts, handed to the tickets, and turns the device's « follow the order of the meal » off.
  * @vitest-environment jsdom

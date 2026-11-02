@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The price terms of a cart line: whether two lines bill one unit the
- * //// same way, and what a unit added to a line takes from it (NeoRestau lot 1, task 22, fix round 2).
+ * //// same way, and what a unit added to a line takes from it (NeoResto lot 1, task 22, fix round 2).
  * @vitest-environment node
  */
 import { describe, expect, it } from "vitest"

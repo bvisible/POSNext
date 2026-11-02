@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The till asks the server to keep its staff signed in for the days its
- * //// POS Settings say (NeoRestau lot 1, product owner, 01.11.2026): once per page load for a profile, again after a sign-in
+ * //// POS Settings say (NeoResto lot 1, product owner, 01.11.2026): once per page load for a profile, again after a sign-in
  * //// or a sign-out, fire-and-forget, and a failure never reaches the till (it is tried again the next time).
  * @vitest-environment jsdom
  */

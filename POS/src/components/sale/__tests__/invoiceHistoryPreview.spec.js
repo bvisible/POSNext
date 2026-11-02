@@ -1,6 +1,6 @@
 // //// Neoffice — added file (no upstream equivalent).
 /**
- * Each row of « Historique des factures » says what its ticket holds (NeoRestau lot 1, task 29).
+ * Each row of « Historique des factures » says what its ticket holds (NeoResto lot 1, task 29).
  *
  * The row shows the first three dishes of the ticket ("2× Pizza Margherita · 1× Coca-Cola 33 cl · …"), then
  * "+n items" when there are more, so that one sees at a glance what a sale or a table's order was; the eye

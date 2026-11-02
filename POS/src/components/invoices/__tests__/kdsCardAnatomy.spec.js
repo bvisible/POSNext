@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The anatomy of a kitchen card (NeoRestau lot 1, task 38a-1, rulings 107,
+ * //// Neoffice — added file (no upstream equivalent). The anatomy of a kitchen card (NeoResto lot 1, task 38a-1, rulings 107,
  * //// 122, 125, 126, 127): ONE line for the header (the room's code, the table big and bold, the ticket's number, the timer at the
  * //// right), the main button right under it and never scrolling, the dishes below inside the card, and NOTHING at the bottom.
  * //// The invoice's own name is not a ticket number and is never shown; the state is not written in a band's header (the left

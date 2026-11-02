@@ -1,11 +1,11 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""Opening a restaurant till from NeoRestau (NeoRestau lot 1, task 5).
+"""Opening a restaurant till from NeoResto (NeoResto lot 1, task 5).
 
-A shift is opened through one of two doors. NeoRestau's button opens the restaurant door (`/pos?mode=restaurant`), which
+A shift is opened through one of two doors. NeoResto's button opens the restaurant door (`/pos?mode=restaurant`), which
 offers the user's restaurant tills; the usual entry offers the others. The door only decides which tills are OFFERED:
 whichever door a user came through, the till they choose is a restaurant till or not by its own setting. A user who has
 tills never sees an empty list at either door: where the door has none for them they get their whole list, and where the
-site does not run NeoRestau no till is a restaurant till, so the restaurant door is the usual one.
+site does not run NeoResto no till is a restaurant till, so the restaurant door is the usual one.
 
 Every test builds what it needs (the users, a restaurant, the tills and their POS Settings rows) and commits nothing: the
 clone of a working site holds real tills, a fresh CI site holds none. The users are written once for the class, a test
@@ -23,12 +23,12 @@ from pymysql.err import OperationalError
 from pos_next.api.pos_profile import get_pos_profiles
 from pos_next.pos_next.doctype.restaurant.restaurant import Restaurant
 from pos_next.restaurant import settings as restaurant_settings
-from pos_next.tests.test_restaurant_mode_comes_from_the_till import ABSENT, a_site_where_neorestau_is
+from pos_next.tests.test_restaurant_mode_comes_from_the_till import ABSENT, a_site_where_neoresto_is
 from pos_next.tests.test_till_writes_need_the_till import CASHIER_ROLE, OTHER_TILL, TILL, _till_fixture, _user
 
 RESTAURANT = "_Test Door Restaurant"
 SECOND_RESTAURANT_TILL = "_Test Door second restaurant till"
-SAVEPOINT = "neorestau_door_test"
+SAVEPOINT = "neoresto_door_test"
 # Two users: one holds the counter till and both restaurant tills, the other (a waiter) both restaurant tills only
 MIXED = TILL
 WAITER = OTHER_TILL
@@ -163,8 +163,8 @@ class Tills:
 		frappe.db.savepoint(SAVEPOINT)
 		self.addCleanup(frappe.db.rollback, save_point=SAVEPOINT)
 		self.addCleanup(frappe.set_user, "Administrator")
-		# The site runs NeoRestau unless a test says otherwise
-		flag = a_site_where_neorestau_is(1)
+		# The site runs NeoResto unless a test says otherwise
+		flag = a_site_where_neoresto_is(1)
 		flag.__enter__()
 		self.addCleanup(flag.__exit__, None, None, None)
 
@@ -217,14 +217,14 @@ class TestOpeningARestaurantTill(Tills, FrappeTestCase):
 				with self.subTest(user=user, door=door):
 					self.assertTrue(self.names(user, **door))
 
-	def test_where_neorestau_is_off_the_restaurant_door_is_the_usual_door(self):
+	def test_where_neoresto_is_off_the_restaurant_door_is_the_usual_door(self):
 		# No till is a restaurant till there: every user gets all their tills at either door, none of them a restaurant
 		held = {MIXED: self.in_order(*self.tills), WAITER: self.in_order(*self.restaurant_tills)}
 		for value in (0, ABSENT):
-			with a_site_where_neorestau_is(value):
+			with a_site_where_neoresto_is(value):
 				for user, tills in held.items():
 					for door in ({}, {"mode": "restaurant"}):
-						with self.subTest(neorestau=value, user=user, door=door):
+						with self.subTest(neoresto=value, user=user, door=door):
 							answer = self.offered(user, **door)
 							self.assertEqual([till["name"] for till in answer], tills)
 							for till in answer:
@@ -300,9 +300,9 @@ class TestOpeningARestaurantTill(Tills, FrappeTestCase):
 			self.offered(MIXED, mode="restaurant")
 		self.assertEqual(len(the_reads_of_the_settings(statements)), 1, statements)
 
-	def test_the_settings_are_not_read_where_neorestau_is_off(self):
+	def test_the_settings_are_not_read_where_neoresto_is_off(self):
 		# Off, no till is a restaurant till: there is nothing to look up
-		with a_site_where_neorestau_is(0), the_statements_run() as statements:
+		with a_site_where_neoresto_is(0), the_statements_run() as statements:
 			self.offered(MIXED, mode="restaurant")
 		self.assertEqual(the_reads_of_the_settings(statements), [])
 

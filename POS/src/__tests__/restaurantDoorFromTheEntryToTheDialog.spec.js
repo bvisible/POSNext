@@ -1,5 +1,5 @@
-//// Neoffice — added file (no upstream equivalent). The whole way of the restaurant door on the front end (NeoRestau lot 1,
-//// task 5): NeoRestau's button opens /pos?mode=restaurant; a visitor who is not signed in is sent to the login with his query
+//// Neoffice — added file (no upstream equivalent). The whole way of the restaurant door on the front end (NeoResto lot 1,
+//// task 5): NeoResto's button opens /pos?mode=restaurant; a visitor who is not signed in is sent to the login with his query
 //// string by the app's own router; the shift dialog, opened on the login page as on the till, asks the server for the
 //// restaurant's tills. The real router and the real dialog, with the pages and the network left out.
 // @vitest-environment jsdom
@@ -95,7 +95,7 @@ describe("the restaurant door, from the entry route to the shift dialog", () => 
 
 	beforeEach(() => {
 		session.isLoggedIn = false
-		window.posnext_neorestau_active = true
+		window.posnext_neoresto_active = true
 	})
 	afterEach(() => {
 		wrapper?.unmount()

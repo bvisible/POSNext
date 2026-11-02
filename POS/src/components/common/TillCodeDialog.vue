@@ -1,4 +1,4 @@
-<!-- //// Neoffice — added file (no upstream equivalent). The small dialog of the user's menu (NeoRestau lot 1, product owner,
+<!-- //// Neoffice — added file (no upstream equivalent). The small dialog of the user's menu (NeoResto lot 1, product owner,
      01.11.2026): "Set my till code" asks the CURRENT account password, the new code and the code again; "Remove my code" asks the
      password. The server checks both (pos_next.api.till_code); nothing typed here is kept once the dialog is done, written to the
      console or stored. It is mounted once by the page, outside the user's menu, and opened through useTillCode. -->

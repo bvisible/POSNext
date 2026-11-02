@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The Back of a phone closes the dialog it is showing instead of leaving
- * //// the till (NeoRestau lot 1). A waiter shows the table's QR code full screen on his phone; the Android Back button and the
+ * //// the till (NeoResto lot 1). A waiter shows the table's QR code full screen on his phone; the Android Back button and the
  * //// iOS edge swipe are what a hand reaches for to get rid of it, and they leave the page. While such a dialog is on screen it
  * //// takes one entry of the browser's history (`useBackClosesDialog`): the Back that follows consumes that entry, the dialog
  * //// closes and the page stays; a dialog closed by its own button gives its entry back.

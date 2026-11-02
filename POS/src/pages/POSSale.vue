@@ -98,8 +98,8 @@
 			<!-- //// Neoffice — the header emits no restaurant event and takes no toggle prop: it has no -->
 			<!-- //// restaurant switch any more. A till is a restaurant till or a counter till by its own POS -->
 			<!-- //// Settings (the tick on the desk's POS Settings form, counted only where the site runs -->
-			<!-- //// NeoRestau: the mode the server sends is the effective one), a device switch is not wanted. -->
-			<!-- //// The header only labels a restaurant till, from that mode (NeoRestau lot 1, task 4). -->
+			<!-- //// NeoResto: the mode the server sends is the effective one), a device switch is not wanted. -->
+			<!-- //// The header only labels a restaurant till, from that mode (NeoResto lot 1, task 4). -->
 			<!-- //// Neoffice — the till's CloudPRNT printer (its state on the printer button) and its cash -->
 			<!-- //// drawer button reach the header through cloudPrntStore (maintenance#1935). The chip that asks for a touch to enable the floor alerts' sound is drawn by the header while the till has such a sound (Daniel, 01.11). -->
 			<POSHeader
@@ -349,7 +349,7 @@
 						<span>{{ __("Keyboard shortcuts") }}</span>
 					</button>
 					<hr class="my-1 border-gray-100" />
-					<!-- //// Neoffice — the entries of the lock (NeoRestau lot 1, product owner, 01.11.2026): "Lock" (at once, whatever the auto-lock -->
+					<!-- //// Neoffice — the entries of the lock (NeoResto lot 1, product owner, 01.11.2026): "Lock" (at once, whatever the auto-lock -->
 					<!-- //// setting says; it replaces upstream's "Lock Screen" button, which called lock() directly), "Set my till code" and -->
 					<!-- //// "Remove my code". The dialog they open is mounted below, outside this menu, which closes on every click. -->
 					<TillLockMenuItems />
@@ -402,7 +402,7 @@
 				</template>
 			</POSHeader>
 
-			<!-- //// Neoffice — the notices of a guest who orders or pays from the QR code of a table (NeoRestau lot 1, Daniel, 01.11: « regarde comment la caisse sommelier reçoit l'info (popup et autre) »). They stand in the page's -->
+			<!-- //// Neoffice — the notices of a guest who orders or pays from the QR code of a table (NeoResto lot 1, Daniel, 01.11: « regarde comment la caisse sommelier reçoit l'info (popup et autre) »). They stand in the page's -->
 			<!-- //// column between the header and the work, never over the cart or the floor, and draw nothing when there is none. « View table » opens the table the way a tap in the list does (composables/useSeeFloorNotice). -->
 			<FloorNotices
 				v-if="restaurantStore.isEnabled"
@@ -534,7 +534,7 @@
 									!cartStore.isTakeaway
 								"
 							>
-								<!-- //// Neoffice — a phone's tables open on their list, whose top names the user and reads the site's clock, and a table's QR code is asked for from the floor (NeoRestau lot 1, task 26): handleShowTableQR -->
+								<!-- //// Neoffice — a phone's tables open on their list, whose top names the user and reads the site's clock, and a table's QR code is asked for from the floor (NeoResto lot 1, task 26): handleShowTableQR -->
 								<FloorPlanEditor
 									:user-name="userName"
 									:site-timezone="bootstrapStore.data?.system_timezone || ''"
@@ -551,7 +551,7 @@
 							<template v-else>
 								<!-- //// Neoffice — the banner of the open table is TableHeaderBar: the name, the lines, the kitchen status and, on the right, -->
 								<!-- //// the QR button of the table beside "Back" — always in view, a 44 px target, at every width. The QR button used to sit -->
-								<!-- //// at the right end of the row of the cards below, where a few cards pushed it off a phone's screen (NeoRestau lot 1). -->
+								<!-- //// at the right end of the row of the cards below, where a few cards pushed it off a phone's screen (NeoResto lot 1). -->
 								<!-- Restaurant table / takeaway banner -->
 								<TableHeaderBar
 									v-if="
@@ -579,7 +579,7 @@
 
 								<!-- Restaurant Card Display (replaces items grid when cards are active) -->
 								<!-- //// Neoffice — the cards on the till are the store's shownCards: those of the hours, and the ones a -->
-								<!-- //// cashier opened by hand (NeoRestau lot 1, task 25). -->
+								<!-- //// cashier opened by hand (NeoResto lot 1, task 25). -->
 								<div
 									v-if="
 										restaurantStore.isEnabled &&
@@ -588,7 +588,7 @@
 									"
 									class="flex flex-col flex-1 min-h-0 overflow-hidden"
 								>
-									<!-- //// Neoffice — the row of card buttons is a component since NeoRestau lot 1, task 25: it marks the cards -->
+									<!-- //// Neoffice — the row of card buttons is a component since NeoResto lot 1, task 25: it marks the cards -->
 									<!-- //// opened by hand and ends with the « ⋯ » that fetches a card the opening hours keep off the till. -->
 									<RestaurantCardTabs
 										:cards="restaurantStore.shownCards"
@@ -706,7 +706,7 @@
 										</div>
 									</div>
 									<!-- Items display -->
-									<!-- //// Neoffice — not drawn while the phone's order screen covers it (NeoRestau lot 1, task 27, -->
+									<!-- //// Neoffice — not drawn while the phone's order screen covers it (NeoResto lot 1, task 27, -->
 									<!-- //// fix round 1): mounted underneath, the card loaded every picture for nobody to see. -->
 									<div
 										v-if="!phoneOrderShown"
@@ -715,7 +715,7 @@
 									>
 										<!-- Grid view -->
 										<!-- //// Neoffice — the card's grid is a component of its own since its number of tiles per row became the -->
-										<!-- //// till's setting (POS Settings.tiles_per_row, NeoRestau lot 1, task 13): same tiles, same clicks. -->
+										<!-- //// till's setting (POS Settings.tiles_per_row, NeoResto lot 1, task 13): same tiles, same clicks. -->
 										<RestaurantCardGrid
 											v-if="cardViewMode === 'grid'"
 											:groups="filteredCardGroups"
@@ -940,7 +940,7 @@
 								</div>
 
 								<!-- Items Selector (default view, hidden when card is active) -->
-								<!-- //// Neoffice — shownCards, like the row of cards above (NeoRestau lot 1, task 25). -->
+								<!-- //// Neoffice — shownCards, like the row of cards above (NeoResto lot 1, task 25). -->
 								<ItemsSelector
 									v-if="
 										!showMenus &&
@@ -1112,7 +1112,7 @@
 
 					<!-- //// Neoffice — on a phone (below 768 px) the order of an open table is taken on a screen of its -->
 					<!-- //// own, as the waiter mockup draws it: the card as coloured buttons, a touch adding through the -->
-					<!-- //// card grid's own path, a long press opening the options sheet, the order one tap away (NeoRestau -->
+					<!-- //// card grid's own path, a long press opening the options sheet, the order one tap away (NeoResto -->
 					<!-- //// lot 1, task 27). Teleported over the till; a tablet and a computer keep the screen above. -->
 					<!-- //// Neoffice — it lists the store's shownCards, like the row of cards above: the cards of the hours and those -->
 					<!-- //// a cashier opened by hand from the floor plan's « ⋯ » (task 25 with task 27). -->
@@ -1361,7 +1361,7 @@
 			<!-- //// "Phase 4B - restaurant menus with course selection dialog"). -->
 			<!-- Item Modifiers Dialog -->
 			<!-- //// Neoffice — on a phone the options open in a sheet from the bottom instead of this dialog, under the -->
-			<!-- //// same handle, so every path that opens the dialog opens the sheet there (NeoRestau lot 1, task 27). -->
+			<!-- //// same handle, so every path that opens the dialog opens the sheet there (NeoResto lot 1, task 27). -->
 			<PhoneOptionsSheet v-if="phoneLayout" ref="itemModifiersRef" @saved="handleModifiersSaved" />
 			<ItemModifiersDialog v-else ref="itemModifiersRef" @saved="handleModifiersSaved" />
 			<PriceEntryDialog ref="priceEntryRef" @price-confirmed="handlePriceConfirmed" />
@@ -1482,7 +1482,7 @@
 				v-if="showProductOptionsEditor"
 				v-model="showProductOptionsEditor"
 			/>
-			<!-- //// Neoffice — initial-card: the card the till's settings asked for (NeoRestau lot 1, task 13). -->
+			<!-- //// Neoffice — initial-card: the card the till's settings asked for (NeoResto lot 1, task 13). -->
 			<CardEditor
 				v-if="showCardEditor"
 				v-model="showCardEditor"
@@ -2011,7 +2011,7 @@
 		<!-- //// included (07d0d493 2026-03-29, 2aad6b2a + 34751a29 + 6bfa3117 2026-03-30, -->
 		<!-- //// ddf510f6 2026-03-31, 3b805c88 2026-03-29). The question that used to stand before the -->
 		<!-- //// QR (a Dialog since f3affeaa, before that a raw window.confirm) is gone: the QR button -->
-		<!-- //// shows the code at once, and the dialog says what it is for (NeoRestau lot 1). -->
+		<!-- //// shows the code at once, and the dialog says what it is for (NeoResto lot 1). -->
 		<!-- QR Code Dialog for Guest Ordering -->
 		<TableQRCode
 			v-if="showQRDialog"
@@ -2135,7 +2135,7 @@
 		</Dialog>
 		<!-- //// Neoffice — ▲▲▲ end of the QR / table-lifecycle dialog region opened above. -->
 
-		<!-- //// Neoffice — fetch another card: the dialog the floor plan's « ⋯ » menu opens (NeoRestau lot 1, task 25). The -->
+		<!-- //// Neoffice — fetch another card: the dialog the floor plan's « ⋯ » menu opens (NeoResto lot 1, task 25). The -->
 		<!-- //// « ⋯ » of the card row, below the floor plan, draws its own list in its menu. -->
 		<CardPickerDialog v-if="restaurantStore.isEnabled" />
 	</div>
@@ -2156,7 +2156,7 @@ import ShiftClosingDialog from "@/components/ShiftClosingDialog.vue";
 import ShiftOpeningDialog from "@/components/ShiftOpeningDialog.vue";
 import ClearCacheOverlay from "@/components/common/ClearCacheOverlay.vue";
 import SessionLockScreen from "@/components/common/SessionLockScreen.vue";
-//// Neoffice — the entries of the user's menu for the lock, and the dialog of the personal till code (NeoRestau lot 1, 01.11.2026).
+//// Neoffice — the entries of the user's menu for the lock, and the dialog of the personal till code (NeoResto lot 1, 01.11.2026).
 import TillCodeDialog from "@/components/common/TillCodeDialog.vue";
 import TillLockMenuItems from "@/components/common/TillLockMenuItems.vue";
 //// Neoffice — `import POSFooter from "@/components/common/POSFooter.vue";` was
@@ -2207,31 +2207,31 @@ import ItemsSelector from "@/components/sale/ItemsSelector.vue";
 //// not the catalogue (0ebfda03 2026-03-20 "Phase 2 - visual floor plan editor"; c5208ba7
 //// 2026-03-28 "QR button on table view"). The list of tables this block also imported
 //// (TableSelector.vue) was never rendered: the floor plan selects the table. It is gone, with
-//// its import (NeoRestau lot 1, task 9; see NEOFFICE_FORK_MARKERS.md).
+//// its import (NeoResto lot 1, task 9; see NEOFFICE_FORK_MARKERS.md).
 import FloorPlanEditor from "@/components/pos/FloorPlanEditor.vue";
 //// Neoffice — the notices of a guest's order or payment, and what « View table » does (Daniel, 01.11).
 import FloorNotices from "@/components/restaurant/FloorNotices.vue";
 import { useFloorNoticesStore } from "@/stores/floorNotices";
 import { useSeeFloorNotice } from "@/composables/useSeeFloorNotice";
-//// Neoffice — the row of card buttons, and the dialog the floor plan's « ⋯ » menu opens to fetch another card (NeoRestau lot 1, task 25).
+//// Neoffice — the row of card buttons, and the dialog the floor plan's « ⋯ » menu opens to fetch another card (NeoResto lot 1, task 25).
 import RestaurantCardTabs from "@/components/restaurant/RestaurantCardTabs.vue";
 import CardPickerDialog from "@/components/restaurant/CardPickerDialog.vue";
 import TableQRCode from "@/components/restaurant/TableQRCode.vue";
-//// Neoffice — the banner of the open table, with its QR button (NeoRestau lot 1): it left this file, and the row of the cards.
+//// Neoffice — the banner of the open table, with its QR button (NeoResto lot 1): it left this file, and the row of the cards.
 import TableHeaderBar from "@/components/restaurant/TableHeaderBar.vue";
-//// Neoffice — the click path of the QR button of a table: ask for its code and show it at once (NeoRestau lot 1).
+//// Neoffice — the click path of the QR button of a table: ask for its code and show it at once (NeoResto lot 1).
 import { useTableQR } from "@/composables/useTableQR";
-//// Neoffice — the tab of the till carries the till's name once a shift is open (NeoRestau lot 1; utils/tabTitle.js).
+//// Neoffice — the tab of the till carries the till's name once a shift is open (NeoResto lot 1; utils/tabTitle.js).
 import { useTillTabTitle } from "@/composables/useTillTabTitle";
-//// Neoffice — the status badge of the open table is a label under its own context (NeoRestau lot 1, task 9)
+//// Neoffice — the status badge of the open table is a label under its own context (NeoResto lot 1, task 9)
 import { kitchenStatusLabel } from "@/utils/kitchenStatus";
 //// Neoffice — the cart line of a card entry or of a menu course item, and the units it carries, are built in one place that a
-//// test can reach (NeoRestau lot 1, task 22).
+//// test can reach (NeoResto lot 1, task 22).
 import { cardItemToCartItem, menuItemToCartItem, withKnownUnits } from "@/utils/cartLineUnits";
-//// Neoffice — « Commander la suite » / « Tout commander » release the courses a table holds back (service families, NeoRestau lot 1).
+//// Neoffice — « Commander la suite » / « Tout commander » release the courses a table holds back (service families, NeoResto lot 1).
 import { orderHeldLines } from "@/composables/useHeldCourses";
 import { storedRowTerms } from "@/utils/linePriceTerms";
-//// Neoffice — the cart line an item stands for, for the price dialog (NeoRestau lot 1, task 22, fix round 2).
+//// Neoffice — the cart line an item stands for, for the price dialog (NeoResto lot 1, task 22, fix round 2).
 import { cartLineOf } from "@/utils/cartRow";
 import OffersDialog from "@/components/sale/OffersDialog.vue";
 import OfflineInvoicesDialog from "@/components/sale/OfflineInvoicesDialog.vue";
@@ -2245,10 +2245,10 @@ import ReturnInvoiceDialog from "@/components/sale/ReturnInvoiceDialog.vue";
 import ExpenseDialog from "@/components/sale/ExpenseDialog.vue";
 import WarehouseAvailabilityDialog from "@/components/sale/WarehouseAvailabilityDialog.vue";
 import POSSettings from "@/components/settings/POSSettings.vue";
-//// Neoffice — the grid of a restaurant card, drawn by its own component (NeoRestau lot 1, task 13).
+//// Neoffice — the grid of a restaurant card, drawn by its own component (NeoResto lot 1, task 13).
 import RestaurantCardGrid from "@/components/restaurant/RestaurantCardGrid.vue";
 //// Neoffice — on a phone, the order of an open table on a screen of its own and the options of a dish in a sheet
-//// from the bottom, as the waiter mockup draws them (NeoRestau lot 1, task 27).
+//// from the bottom, as the waiter mockup draws them (NeoResto lot 1, task 27).
 import PhoneOrderScreen from "@/components/restaurant/phone/PhoneOrderScreen.vue";
 import PhoneOptionsSheet from "@/components/restaurant/phone/PhoneOptionsSheet.vue";
 import { PHONE_MAX_WIDTH, phoneOrderShown as tillShowsPhoneOrder } from "@/utils/phoneCard";
@@ -2282,7 +2282,7 @@ import { useUserData } from "@/data/user";
 import { parseError } from "@/utils/errorHandler";
 import { cleanupUserSession } from "@/utils/sessionCleanup";
 import { offlineWorker } from "@/utils/offline/workerClient";
-//// Neoffice — the stock refresh is always on, every minute (NeoRestau lot 1, task 13, ruling 84).
+//// Neoffice — the stock refresh is always on, every minute (NeoResto lot 1, task 13, ruling 84).
 import { startAlwaysOnStockSync } from "@/utils/alwaysOnStockSync";
 //// Neoffice — getItemWithPrice: the units the till keeps of an item, for the rows of an offline invoice taken back (task 22).
 import { deductCachedBatchQty, getItemWithPrice } from "@/utils/offline/items";
@@ -2355,7 +2355,7 @@ import {
 	countCashMovementsKeepingTheShiftOpen,
 } from "@/utils/offline/cashMovements";
 import { shouldValidateItemStock } from "@/utils/stockValidator";
-//// Neoffice — « Offert » (NeoRestau lot 1, task 24): the offered rows of a ticket, their approval before the payment, the
+//// Neoffice — « Offert » (NeoResto lot 1, task 24): the offered rows of a ticket, their approval before the payment, the
 //// draft loaders keeping them offered, and the kitchen taking them with their dish.
 import { useOfferedItemsStore } from "@/stores/offeredItems";
 import { kitchenFollowers, offeredSourceFields } from "@/utils/offeredRows";
@@ -2375,7 +2375,7 @@ const { getStockStatus } = useStock();
 const customerSearchStore = useCustomerSearchStore();
 //// Neoffice — restaurant store instance for this page (87f168fe, 2026-03-20).
 const restaurantStore = useRestaurantStore();
-//// Neoffice — the floor alerts (NeoRestau lot 1, Daniel, 01.11): the notices of a guest's order or payment, and « View table ». A paid table goes where tapping a paid table goes (the payment summary).
+//// Neoffice — the floor alerts (NeoResto lot 1, Daniel, 01.11): the notices of a guest's order or payment, and « View table ». A paid table goes where tapping a paid table goes (the payment summary).
 const floorNotices = useFloorNoticesStore();
 const { see: seeFloorNotice } = useSeeFloorNotice({
 	onPaid: handleCleaningTableClicked,
@@ -2429,7 +2429,7 @@ const {
 } = usePOSEvents();
 
 //// Neoffice — the till's settings screen changed what it sells (its price list, item groups, brands, the unavailable
-//// items, the variants, the pricing rules, its warehouse: NeoRestau lot 1, task 13): its items are fetched from the
+//// items, the variants, the pricing rules, its warehouse: NeoResto lot 1, task 13): its items are fetched from the
 //// server, as its refresh button does (handleRefresh; see useCatalogueRefresh). Upstream changed none of these from
 //// the till.
 useCatalogueRefresh();
@@ -2451,7 +2451,7 @@ const itemsSelectorRef = ref(null);
 const invoiceCartRef = ref(null);
 //// Neoffice — the quantity typed in a field of the cart that is still focused is not in the cart yet (it is applied when the field is left):
 //// everything that pays, sends or prints from the cart commits it first. F9 and Ctrl/Cmd+Enter run from that field, and a tap on a
-//// phone does not always leave it (NeoRestau lot 1, task 22, fix round 3).
+//// phone does not always leave it (NeoResto lot 1, task 22, fix round 3).
 function commitTypedQuantity() {
 	invoiceCartRef.value?.commitTypedQuantity?.();
 }
@@ -2501,7 +2501,7 @@ const selectedCard = ref(null);
 const selectedCardCategory = ref(null);
 
 // QR Self-Ordering state
-//// Neoffice — the QR button of a table shows the table's code at once (NeoRestau lot 1): the dialog that shows it and the
+//// Neoffice — the QR button of a table shows the table's code at once (NeoResto lot 1): the dialog that shows it and the
 //// click path come from useTableQR, which asks the server at every press; the till keeps no copy of the codes it showed
 //// (it kept one per table, which a table freed from another device left stale). The confirmation dialog that used to
 //// come first, and its state, are gone.
@@ -2546,7 +2546,7 @@ const cardItemGroups = computed(() => {
 	if (current.items.length > 0 || current.category) groups.push(current);
 	return groups;
 });
-//// Neoffice — shownCards, not activeCards: a card opened by hand is a card of the row (NeoRestau lot 1, task 25).
+//// Neoffice — shownCards, not activeCards: a card opened by hand is a card of the row (NeoResto lot 1, task 25).
 const selectedCardItems = computed(() => {
 	if (!selectedCard.value) return [];
 	const card = restaurantStore.shownCards.find((c) => c.name === selectedCard.value);
@@ -2554,7 +2554,7 @@ const selectedCardItems = computed(() => {
 });
 
 watch(
-	//// Neoffice — shownCards, not activeCards (NeoRestau lot 1, task 25)
+	//// Neoffice — shownCards, not activeCards (NeoResto lot 1, task 25)
 	() => restaurantStore.shownCards,
 	(cards) => {
 		//// Neoffice — a selected card that left the list (its time slot ended, it was deactivated) kept the grid
@@ -2568,7 +2568,7 @@ watch(
 );
 
 //// Neoffice — the cards a cashier opened by hand from the « ⋯ » belong to the shift: the store drops them when it closes
-//// (NeoRestau lot 1, task 25). It is told the shift here, where the till knows it.
+//// (NeoResto lot 1, task 25). It is told the shift here, where the till knows it.
 watch(
 	() => shiftStore.currentShift?.name || null,
 	(name) => restaurantStore.setTillShift(name),
@@ -2576,7 +2576,7 @@ watch(
 );
 
 //// Neoffice — a card opened by hand, from the « ⋯ » of the row or of the floor plan, is the one the cashier wants next:
-//// it is selected, so that the next table opened shows it (NeoRestau lot 1, task 25).
+//// it is selected, so that the next table opened shows it (NeoResto lot 1, task 25).
 watch(
 	() => restaurantStore.lastOpenedCard,
 	(opened) => {
@@ -2604,12 +2604,12 @@ function getCardItemBgStyle(item) {
 	if (item.custom_color) return { backgroundColor: item.custom_color };
 	return { backgroundColor: "#F3F4F6" };
 }
-//// Neoffice — the name of a dish over its well is drawn by RestaurantCardGrid.vue since NeoRestau lot 1, task 13
+//// Neoffice — the name of a dish over its well is drawn by RestaurantCardGrid.vue since NeoResto lot 1, task 13
 //// (the helper that classed it here, getCardItemTextClasses, went with the grid).
 
 function handleCardItemClick(cardItem) {
 	if (isCardItemOutOfStock(cardItem)) return;
-	//// Neoffice — was an inline object that carried no unit at all: see cardItemToCartItem (NeoRestau lot 1, task 22).
+	//// Neoffice — was an inline object that carried no unit at all: see cardItemToCartItem (NeoResto lot 1, task 22).
 	const item = cardItemToCartItem(cardItem);
 	const stationInfo = restaurantStore.getStationForItem(item.item_code, item.item_group);
 	if (stationInfo) {
@@ -2710,7 +2710,7 @@ function openSettingsTab(tab) {
 	showPOSSettings.value = true;
 }
 
-//// Neoffice — the card editor opened on one card by the till's settings (their « Edit », NeoRestau lot 1, task 13);
+//// Neoffice — the card editor opened on one card by the till's settings (their « Edit », NeoResto lot 1, task 13);
 //// opened from the rail, it opens on its first card as before.
 const cardEditorCard = ref("");
 
@@ -2745,7 +2745,7 @@ watch(
 onUnmounted(() => cloudPrntStore.stop());
 
 //// Neoffice — the tab of the till says which till it is once a shift is open, "Restaurant till · Neopos", so that the till,
-//// the runner and the kitchen open side by side can be told apart (NeoRestau lot 1). It is the same name the CloudPRNT watcher
+//// the runner and the kitchen open side by side can be told apart (NeoResto lot 1). It is the same name the CloudPRNT watcher
 //// above follows; utils/tabTitle.js is the one place that writes the title.
 useTillTabTitle();
 
@@ -2867,7 +2867,7 @@ let bodyStyleSnapshot = null;
 //// Neoffice — no toggle handlers and no purge dialog: they cleared the cart and called
 //// reset_all_tables (every table Empty) to flip the mode from the header, which is gone.
 
-//// Neoffice — the phone's layout (below 768 px) and its order screen (NeoRestau lot 1, task 27): on the order tab of
+//// Neoffice — the phone's layout (below 768 px) and its order screen (NeoResto lot 1, task 27): on the order tab of
 //// an open table or takeaway order of a restaurant till with cards, a phone shows PhoneOrderScreen where a tablet
 //// shows the card grid; it steps aside while the table's QR code shows, which TableQRCode draws under it.
 const phoneLayout = computed(() => uiStore.windowWidth < PHONE_MAX_WIDTH);
@@ -3413,7 +3413,7 @@ onUnmounted(() => {
  */
 async function setupPeriodicStockSync(warehouse) {
 	try {
-		//// Neoffice — always on, every minute, with no switch and no interval (NeoRestau lot 1, task 13, ruling 84).
+		//// Neoffice — always on, every minute, with no switch and no interval (NeoResto lot 1, task 13, ruling 84).
 		//// Upstream read `pos_stock_sync_settings` from the browser's storage and started the sync only when the
 		//// till had switched it on, so the quantities on screen stayed as old as the till's last sale. The key an
 		//// older till wrote is forgotten, not read (alwaysOnStockSync).
@@ -3702,7 +3702,7 @@ async function markTableAvailable() {
 //// (handleQRButtonClick, and the second step that followed the confirmation dialog) lives in
 //// composables/useTableQR.js, taken above, where a test can reach it (this page is too large to mount in one).
 
-//// Neoffice — a table's QR code asked for from the floor (NeoRestau lot 1, task 26): the list's QR button, a long press on
+//// Neoffice — a table's QR code asked for from the floor (NeoResto lot 1, task 26): the list's QR button, a long press on
 //// the plan. It goes through the order view's own entry, for the table pressed. The one line to reconnect at the merge
 //// with useTableQR (Task 9d+9e): its click path takes the table it is handed, and this calls it with that table.
 function handleShowTableQR(table) {
@@ -3766,7 +3766,7 @@ function handleLoadServerDraft(order) {
 		for (const item of order.items) {
 			// Calculate modifier price adjustment from saved JSON
 			//// Neoffice — read by the one helper every path that loads a line uses (utils/modifiersPrice.js;
-			//// NeoRestau lot 1, task 27, fix round 1): same sum as the loop it replaces.
+			//// NeoResto lot 1, task 27, fix round 1): same sum as the loop it replaces.
 			const modifierPriceAdjustment = modifiersPriceAdjustment(item.posa_item_modifiers);
 			cartStore.addItem(
 				{
@@ -3853,7 +3853,7 @@ async function handleSendSingleItem(item) {
 let isSendingToKitchen = false;
 const isProcessingPayment = ref(false);
 //// Neoffice — answers whether the order went (a release of held courses holds them again when it did not), and sends a line the
-//// waiter has not decided as it is, so that the server decides it by the rhythm of the meal (service families, NeoRestau lot 1).
+//// waiter has not decided as it is, so that the server decides it by the rhythm of the meal (service families, NeoResto lot 1).
 async function handleSendToKitchen() {
 	if (cartStore.invoiceItems.length === 0) return false;
 	if (isSendingToKitchen) return false;
@@ -3862,7 +3862,7 @@ async function handleSendToKitchen() {
 	try {
 		// Build invoice data for server-side draft creation
 		const currentProfile = shiftStore.currentProfile;
-		//// Neoffice — a line the waiter has not decided goes as it is, for the server to decide (service families, NeoRestau lot 1).
+		//// Neoffice — a line the waiter has not decided goes as it is, for the server to decide (service families, NeoResto lot 1).
 		const invoiceData = cartStore.buildOfferEvaluationPayload(currentProfile, { keepUndecided: true });
 		invoiceData.kds_status = "Pending";
 		invoiceData.is_pos = 1;
@@ -3893,7 +3893,7 @@ async function handleSendToKitchen() {
 		// Return to floor plan and refresh table data for badges
 		cartStore.clearCart();
 		restaurantStore.fetchFromNetwork();
-		//// Neoffice — the order went (service families, NeoRestau lot 1: see the note above the function).
+		//// Neoffice — the order went (service families, NeoResto lot 1: see the note above the function).
 		return true;
 	} catch (error) {
 		console.error("Failed to send to kitchen:", error);
@@ -3906,7 +3906,7 @@ async function handleSendToKitchen() {
 }
 
 //// Neoffice — where the kitchen prepares ahead, the course is already at the kitchen: the gesture CALLS it (the server stamps the call, the kitchen's popup and sound go off) and the order is not sent a second time, so the
-//// page does what a send does at its end: it says so and goes back to the floor plan (NeoRestau lot 1, the service rhythm, Daniel, 01.11).
+//// page does what a send does at its end: it says so and goes back to the floor plan (NeoResto lot 1, the service rhythm, Daniel, 01.11).
 async function afterCallingTheNextCourse() {
 	showSuccess(__("Next course ordered"));
 	cartStore.clearCart();
@@ -3914,7 +3914,7 @@ async function afterCallingTheNextCourse() {
 }
 
 //// Neoffice — « Commander la suite » (`next`) and « Tout commander » (`all`): the waiter releases the courses the table holds
-//// back. The server names the lines, by the rule that held them; each release is a send of its own (NeoRestau lot 1, service families).
+//// back. The server names the lines, by the rule that held them; each release is a send of its own (NeoResto lot 1, service families).
 async function handleOrderHeldLines(which) {
 	commitTypedQuantity();
 	try {
@@ -3923,7 +3923,7 @@ async function handleOrderHeldLines(which) {
 			cartStore,
 			call,
 			send: handleSendToKitchen,
-			//// Neoffice — what the page does once a course sent ahead is called (the service rhythm, NeoRestau lot 1)
+			//// Neoffice — what the page does once a course sent ahead is called (the service rhythm, NeoResto lot 1)
 			finish: afterCallingTheNextCourse,
 			// A held line was given its station when it was added; one that has none yet gets it as the dialog gives it
 			prepare: (row) => {
@@ -4125,7 +4125,7 @@ function handleItemSelected(item, autoAdd = false) {
 	}
 }
 
-//// Neoffice — the cart hands over the row it edited: the update is applied to THAT line (NeoRestau lot 1, task 22, fix round 1).
+//// Neoffice — the cart hands over the row it edited: the update is applied to THAT line (NeoResto lot 1, task 22, fix round 1).
 async function handleEditItem(updatedItem, row = null) {
 	await cartStore.updateItemDetails(updatedItem.item_code, updatedItem, null, row);
 }
@@ -4141,7 +4141,7 @@ function handlePriceConfirmed({ item, price }) {
 	//// the one just appended at rate 0; find() wrote the amount the cashier typed onto the
 	//// FIRST line with that item_code instead — a second gift card at 100 rewrote the first
 	//// one, which was already priced at 30, and the till was short.
-	//// Neoffice — and not findLast either (NeoRestau lot 1, task 22, fix round 2): the line to price is the item itself when the
+	//// Neoffice — and not findLast either (NeoResto lot 1, task 22, fix round 2): the line to price is the item itself when the
 	//// dialog was opened on a line of the cart (modifiers first). A dish tapped again with an earlier line of it in the cart
 	//// (maybe one already sent) had THAT line's rate rewritten and got no unit. A fresh item is added with the price, and
 	//// addItem merges it only into a line that waits at that very price.
@@ -4175,7 +4175,7 @@ function handlePriceConfirmed({ item, price }) {
 	}
 }
 
-//// Neoffice — `how` says the phone's options sheet added this dish by a long press (NeoRestau lot 1, task 27, fix
+//// Neoffice — `how` says the phone's options sheet added this dish by a long press (NeoResto lot 1, task 27, fix
 //// round 1): a price cancelled for it takes the dish back, as a touch on an open-price dish never leaves one at 0.00.
 function handleModifiersSaved(cartItem, how) {
 	// After modifiers are saved, if the item's rate is still 0, open price entry
@@ -4213,7 +4213,7 @@ function handleOpenModifiers(item) {
 function handleMenuConfirmed(menuItems) {
 	for (const menuItem of menuItems) {
 		//// Neoffice — the line of a course item is made in cartLineUnits, with the item's units (get_active_menus), so the
-		//// invoice and the edit dialog agree on its unit (NeoRestau lot 1, task 22).
+		//// invoice and the edit dialog agree on its unit (NeoResto lot 1, task 22).
 		cartStore.addItem(menuItemToCartItem(menuItem), 1);
 	}
 }
@@ -4430,7 +4430,7 @@ async function handlePaymentCompleted(paymentData) {
 				payments: JSON.parse(JSON.stringify(cartStore.payments)),
 				sales_team: JSON.parse(JSON.stringify(cartStore.salesTeam || [])),
 				//// Neoffice — a takeaway sale made offline carries its flag and number, so that once synced its invoice
-				//// takes the takeaway tax category its cart and receipt were taxed with (NeoRestau lot 1, task 11).
+				//// takes the takeaway tax category its cart and receipt were taxed with (NeoResto lot 1, task 11).
 				...cartStore.takeawaySaleFields(),
 				//// Neoffice — and the manager's approval of its offered rows, where a rule asks for one (task 24).
 				...offeredItems.authorizationFields(cartStore.invoiceItems),
@@ -4707,7 +4707,7 @@ async function handlePaymentCompleted(paymentData) {
 				//// the Cleaning dialog and « Free the tables being cleaned » rely on, and the till must not
 				//// override it. That call used to fail silently (the offline copy threw before the server
 				//// was told); once the copy was written it would have skipped Cleaning for every table paid
-				//// at the till (NeoRestau lot 1, Ruling 75).
+				//// at the till (NeoResto lot 1, Ruling 75).
 				if (restaurantTableName) {
 					restaurantStore.fetchFromNetwork();
 				}
@@ -4985,7 +4985,7 @@ async function handleCloseShift() {
 		return;
 	}
 
-	//// Neoffice — the same for the drawer movements queued offline (NeoRestau lot 1, task 15): this shift's and
+	//// Neoffice — the same for the drawer movements queued offline (NeoResto lot 1, task 15): this shift's and
 	//// this cashier's, those the closing would not count.
 	if (!canCloseShiftWithPendingCashMovements(await cashMovementsKeepingTheShiftOpen())) {
 		showError(
@@ -4999,7 +4999,7 @@ async function handleCloseShift() {
 	uiStore.showCloseShiftDialog = true;
 }
 
-//// Neoffice — added (NeoRestau lot 1, task 15): the queued drawer movements that keep this shift open.
+//// Neoffice — added (NeoResto lot 1, task 15): the queued drawer movements that keep this shift open.
 function cashMovementsKeepingTheShiftOpen() {
 	return countCashMovementsKeepingTheShiftOpen(shiftStore.currentShift?.name || cartStore.posOpeningShift);
 }
@@ -5072,7 +5072,7 @@ async function logoutWithCloseShift() {
 		return;
 	}
 
-	//// Neoffice — the same for the drawer movements queued offline (NeoRestau lot 1, task 15), as above.
+	//// Neoffice — the same for the drawer movements queued offline (NeoResto lot 1, task 15), as above.
 	if (!canCloseShiftWithPendingCashMovements(await cashMovementsKeepingTheShiftOpen())) {
 		uiStore.showLogoutDialog = false;
 		showError(
@@ -5364,7 +5364,7 @@ async function handleEditOfflineInvoice(invoice) {
 				// Use autoAdd=true to skip stock validation when loading saved invoices
 				// Check both quantity and qty fields since items are stored with 'quantity'
 				//// Neoffice — the rate of a queued row is net of its discount: put back with the percentage too, a rate set by hand
-				//// was discounted a second time (NeoRestau lot 1, task 15, money review of 01.11).
+				//// was discounted a second time (NeoResto lot 1, task 15, money review of 01.11).
 				cartStore.addItem(
 					storedRowTerms(item),
 					item.quantity || item.qty || 1,
@@ -5409,7 +5409,7 @@ async function handleSyncClick() {
 		return;
 	}
 
-	//// Neoffice — the drawer movements' queue is sent the same way (NeoRestau lot 1, task 15).
+	//// Neoffice — the drawer movements' queue is sent the same way (NeoResto lot 1, task 15).
 	if (offlineStore.hasPendingExpenses || offlineStore.hasPendingCashMovements) {
 		await handleSyncAll();
 		return;
@@ -5783,7 +5783,7 @@ async function handlePrintInvoice(invoiceData) {
 //// restaurant table view"); total is the CHF-rounded one (4fdb5df4, 2026-04-04).
 //// Neoffice — it prints where the till's receipts print: a till with a CloudPRNT printer has the server
 //// print the order as shown, without saving it; the browser only without a printer or when the server
-//// cannot be reached (utils/provisionalTicket.js, NeoRestau lot 1 task 28a; it always opened the browser).
+//// cannot be reached (utils/provisionalTicket.js, NeoResto lot 1 task 28a; it always opened the browser).
 function handlePrintProvisionalTicket() {
 	//// Neoffice — the ticket shows the quantity typed in a field still focused, see commitTypedQuantity (fix round 3).
 	commitTypedQuantity();

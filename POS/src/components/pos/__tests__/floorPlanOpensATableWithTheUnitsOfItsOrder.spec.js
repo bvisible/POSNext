@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). Opening a table on the floor plan puts the lines of its order in
- * //// the cart with their units (NeoRestau lot 1, task 22, fix round 1). The read answers the unit of each line, its
+ * //// the cart with their units (NeoResto lot 1, task 22, fix round 1). The read answers the unit of each line, its
  * //// stock unit, its factor and the item's other units; the floor plan makes the cart line of each row, and a row it
  * //// forgot to hand over left the line without them (« Nos » and an empty unit select in the dialog), with nothing
  * //// failing. Two rounds of the same dish that the server holds as two rows stay two lines.
@@ -249,7 +249,7 @@ describe("opening a table puts the lines of its order in the cart with their uni
 		])
 	})
 
-	//// Neoffice — where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11): a table reopened must hand its lines their mark and their call back, as it hands the family. The omission
+	//// Neoffice — where the kitchen prepares ahead (NeoResto lot 1, the service rhythm, Daniel, 01.11): a table reopened must hand its lines their mark and their call back, as it hands the family. The omission
 	//// of the family already cost a release (a reopened table lost its courses); the same omission here would leave the next course to call unnamed.
 	it("gives each line whether it left ahead of its course and when the room called it, so that the next course to call can be named from any till", async () => {
 		order.value = structuredClone(ORDER)

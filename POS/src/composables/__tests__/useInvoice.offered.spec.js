@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). An offered row (NeoRestau lot 1, task 24) survives every way the
+ * //// Neoffice — added file (no upstream equivalent). An offered row (NeoResto lot 1, task 24) survives every way the
  * //// cart is refilled: a table's draft opened from the floor plan or from the drafts (addItem, the loader adding the
  * //// row's flag and list price), a guest's order reloaded (replaceAllItems), a held cart (addItem with the stored row).
  * //// It stays a row of its own, at its list price, 100 % off; and it reaches the server flagged.

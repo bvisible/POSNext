@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""A takeaway sale takes the restaurant's takeaway tax category (NeoRestau lot 1, task 10).
+"""A takeaway sale takes the restaurant's takeaway tax category (NeoResto lot 1, task 10).
 
 In Switzerland food to take away is taxed at 2.6 % instead of 8.1 % on site, and alcohol stays at 8.1 % even to take
 away: the rate is the item's, not the sale's. ERPNext's own mechanism carries the rule and is reused as it is: a Tax
@@ -169,8 +169,8 @@ class TakeawayTill:
 		commit = patch.object(frappe.db, "commit")
 		commit.start()
 		cls.addClassCleanup(commit.stop)
-		# The site runs NeoRestau, as the configuration reads: no site_config.json is written
-		site = patch.dict(frappe.conf, {"neorestau_active": 1})
+		# The site runs NeoResto, as the configuration reads: no site_config.json is written
+		site = patch.dict(frappe.conf, {"neoresto_active": 1})
 		site.start()
 		cls.addClassCleanup(site.stop)
 		# Tip provisioning (an item and an account) is the restaurant doctype's own test: switched off here
@@ -358,8 +358,8 @@ class TestTakeawayTaxCategory(TakeawayTill, FrappeTestCase):
 		self.assertEqual(self.vat_rate(inv, self.food), 8.1)
 		self.assertFalse(inv.tax_category)
 
-	def test_where_neorestau_is_off_a_takeaway_sale_keeps_the_usual_rates(self):
-		with patch.dict(frappe.conf, {"neorestau_active": 0}):
+	def test_where_neoresto_is_off_a_takeaway_sale_keeps_the_usual_rates(self):
+		with patch.dict(frappe.conf, {"neoresto_active": 0}):
 			self.assertIsNone(takeaway_tax_category(self.till))
 			inv = self.pos_invoice(is_takeaway=1, items=[self.food])
 		self.assertEqual(self.vat_rate(inv, self.food), 8.1)

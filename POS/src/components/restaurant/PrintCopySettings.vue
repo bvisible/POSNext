@@ -1,6 +1,6 @@
 <template>
 	<!-- //// Neoffice — added file (no upstream equivalent). The control of the print button's settings, in the top bar of the kitchen and runner screens beside the awake settings -->
-	<!-- //// (NeoRestau lot 1, task 44): the printer button of a ticket prints a COPY of it for the pass. Four choices, each with its default and ONE line of help: the button on THIS screen -->
+	<!-- //// (NeoResto lot 1, task 44): the printer button of a ticket prints a COPY of it for the pass. Four choices, each with its default and ONE line of help: the button on THIS screen -->
 	<!-- //// (the kitchen's is on where the station has a printer, the runner's is off), what prints (this station's lines on the ticket, or the whole order), and the COPY mark with the -->
 	<!-- //// time. One icon button of 44 px that opens a small panel, never a new bar. The panel holds nothing the page keeps: it shows the settings it is given and says what the person -->
 	<!-- //// changed; the device keeps them (usePrintCopy). The screen draws it only where a station has a printer: with none, the choices would change nothing. -->

@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""The popup and the sound of the till itself when a guest orders or pays from the QR code of a table are settings of the till (NeoRestau lot 1, Daniel, 01.11).
+"""The popup and the sound of the till itself when a guest orders or pays from the QR code of a table are settings of the till (NeoResto lot 1, Daniel, 01.11).
 
 Daniel asked how the sommelier's till is told that a guest ordered a drink from the QR code of a table: a notice at the top of the till and a sound, set in the till's
 own settings beside the kitchen's alerts. The three settings live on the till's POS Settings (one row per POS Profile) and the till reads them with the rest of its

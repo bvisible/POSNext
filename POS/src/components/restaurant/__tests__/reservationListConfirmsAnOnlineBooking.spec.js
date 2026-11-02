@@ -2,7 +2,7 @@
  * //// Neoffice — added file (no upstream equivalent). The till confirms an online booking whose guest has not confirmed
  * //// it from the e-mail (he phoned, say): the day's list offers the confirm button on such a booking even where it is
  * //// already Confirmed (a restaurant that does not validate online bookings), and the server then keeps it for good
- * //// instead of letting it expire (NeoRestau lot 1, task 18).
+ * //// instead of letting it expire (NeoResto lot 1, task 18).
  * @vitest-environment jsdom
  */
 import { mount } from "@vue/test-utils"

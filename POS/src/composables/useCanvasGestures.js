@@ -12,7 +12,7 @@
  * Transform model: translate(panX, panY) scale(zoomLevel)  with origin 0 0
  */
 import { ref, computed, onMounted, onUnmounted, toValue } from "vue"
-// A pan begins past the slop a tap is allowed (NeoRestau lot 1, task 26, fix round 1): a table opens when the finger lifts
+// A pan begins past the slop a tap is allowed (NeoResto lot 1, task 26, fix round 1): a table opens when the finger lifts
 // and its pointer goes on to these gestures, and a tap that shook 4 px moved the plan by 4 px, and saved it
 import { SLOP_PX } from "@/utils/pointerSlop"
 

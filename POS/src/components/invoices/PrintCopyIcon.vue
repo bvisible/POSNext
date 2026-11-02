@@ -1,5 +1,5 @@
 <template>
-	<!-- //// Neoffice — added file (no upstream equivalent). What the print button of a kitchen or runner ticket draws (NeoRestau lot 1, task 44), as the bill's printer button does (InvoiceCart,
+	<!-- //// Neoffice — added file (no upstream equivalent). What the print button of a kitchen or runner ticket draws (NeoResto lot 1, task 44), as the bill's printer button does (InvoiceCart,
 	     ruling 97): a spinner while the copy is sent and printed, a tick once printed, a warning when the printer is off or the copy did not come out, the printer when nothing is on its way. -->
 	<svg v-if="phase === 'sending' || phase === 'printing'" data-test="print-copy-icon" data-icon="spinner" class="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
 		<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />

@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). « Offert » on what the guest reads (NeoRestau lot 1, task 24): the
+ * //// Neoffice — added file (no upstream equivalent). « Offert » on what the guest reads (NeoResto lot 1, task 24): the
  * //// receipt the till prints itself (offline, or when the server print cannot open) and the table's provisional bill show
  * //// the offered line at its list price, 0.00 charged, and « Offert » under it, never as a discount.
  */

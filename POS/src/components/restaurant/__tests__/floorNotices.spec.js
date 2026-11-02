@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The stack of notices at the top of the till when a guest orders or pays from the QR code of a table (NeoRestau lot 1, Daniel, 01.11: « regarde comment la
+ * //// Neoffice — added file (no upstream equivalent). The stack of notices at the top of the till when a guest orders or pays from the QR code of a table (NeoResto lot 1, Daniel, 01.11: « regarde comment la
  * //// caisse sommelier reçoit l'info (popup et autre) »): one per table, « {Table} — the guest is ordering » with the lines of the order beneath (three, then « +N »), a button that opens the table, a dismiss
  * //// button of 44 px at least, an order to validate drawn stronger and kept in view, at most three on the screen so that the till keeps its room (1366 x 768).
  * @vitest-environment jsdom

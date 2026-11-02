@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The five seconds in which a mis-tap on « Ready » or « Deliver » can be taken back (NeoRestau lot 1, task 38a-2,
+ * //// Neoffice — added file (no upstream equivalent). The five seconds in which a mis-tap on « Ready » or « Deliver » can be taken back (NeoResto lot 1, task 38a-2,
  * //// ruling 112): WHAT is put back, read without a screen. Each dish that moved goes back to the state it had, one call per item.
  */
 import { describe, expect, it, vi } from "vitest"

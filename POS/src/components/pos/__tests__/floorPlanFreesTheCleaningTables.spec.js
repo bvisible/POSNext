@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). « Free the tables being cleaned » (NeoRestau lot 1, Ruling 48), the
+ * //// Neoffice — added file (no upstream equivalent). « Free the tables being cleaned » (NeoResto lot 1, Ruling 48), the
  * //// whole way on the till's side: the real restaurant store and the real floor plan, against a server that does what
  * //// `free_cleaning_tables` does (the Python suite proves the endpoint itself). A cashier, who may set the status of a
  * //// table and not lay out the floor, taps the item: the tables of the room shown that are being cleaned are free on the

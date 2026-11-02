@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The two buttons that order the next course, as Daniel asked on his phone (NeoRestau lot 1, 01.11: « il faut mettre les 2 boutons de commande plus
+ * //// Neoffice — added file (no upstream equivalent). The two buttons that order the next course, as Daniel asked on his phone (NeoResto lot 1, 01.11: « il faut mettre les 2 boutons de commande plus
  * //// visibles »): « Commander la suite » is a SOLID ink button, « Tout commander » keeps a white face under a thick ink outline, as tall as the Validate and Pay buttons under them (36 px, Daniel's « aligne les boutons sur la taille Valider / Payer ») with bold words, stacked at full width on a phone and side by
  * //// side from 640px. The cart is mounted for real, with the stores of the sale page; jsdom has no media queries, so the phone rules are read from the classes they ride on (`sm:` starts at 640px).
  * @vitest-environment jsdom

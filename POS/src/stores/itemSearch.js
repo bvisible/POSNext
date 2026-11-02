@@ -2493,7 +2493,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 		}
 	}
 
-	//// Neoffice — the till's own settings screen can change the groups of THIS till (NeoRestau lot 1, task 13): they
+	//// Neoffice — the till's own settings screen can change the groups of THIS till (NeoResto lot 1, task 13): they
 	//// are read again for the same profile, which setPosProfile skips once the items are fresh. Upstream never changed
 	//// a profile from the till. Unlike setPosProfile, the profile's realtime listener is left in place and the new
 	//// groups go through its own handler: the items of a group no longer offered leave the browser's copy, and the

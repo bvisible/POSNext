@@ -125,7 +125,7 @@ class TestAppTranslationsPrecedence(unittest.TestCase):
 		self.assertEqual(merged["Clear"], "واضح")
 
 
-# //// Neoffice — added (NeoRestau lot 1, kitchen test of 01.11). A phone that kept a dictionary fetched before a French word was added showed it in
+# //// Neoffice — added (NeoResto lot 1, kitchen test of 01.11). A phone that kept a dictionary fetched before a French word was added showed it in
 # //// English for up to 24 hours, because a release that only carries new words does not change the front build the cache is keyed by. The till asks
 # //// for a short stamp of the dictionary first and fetches the dictionary only when the stamp is not the one it holds.
 class TestTranslationsStamp(unittest.TestCase):

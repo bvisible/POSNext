@@ -1,6 +1,6 @@
 <template>
-	<!-- //// Neoffice — the phone (NeoRestau lot 1, smoke-test fix): below 768 px the buttons are 40 px high, the touch minimum (38 px and 32 px from 768 px, as they were). -->
-	<!-- //// Neoffice — added file (no upstream equivalent). The segmented control of the restaurant's service screens (NeoRestau lot 1, task 38a-2, rulings 129 and 132): a row -->
+	<!-- //// Neoffice — the phone (NeoResto lot 1, smoke-test fix): below 768 px the buttons are 40 px high, the touch minimum (38 px and 32 px from 768 px, as they were). -->
+	<!-- //// Neoffice — added file (no upstream equivalent). The segmented control of the restaurant's service screens (NeoResto lot 1, task 38a-2, rulings 129 and 132): a row -->
 	<!-- //// of buttons in one outline, the chosen one lit in the clay of the design system. The same piece draws the SWITCH BETWEEN THE SCREENS (Preparation, Runner, -->
 	<!-- //// Floor plan: where the user goes, `navigation`, the current one marked `aria-current`) and the DISPLAY MODES of a screen (by table, by station, on the plan: -->
 	<!-- //// how one screen shows, `aria-pressed`), so that the two never look like each other's twin without being the same widget. `small` is the 32 px one. -->

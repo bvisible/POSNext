@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""The short code of a room (NeoRestau lot 1, task 38b, rulings 124 and 126).
+"""The short code of a room (NeoResto lot 1, task 38b, rulings 124 and 126).
 
 A kitchen can feed several rooms, so a ticket opens with the room as a small chip: « S01 · Table 15 · 0007 ». The code is
 typed on the room (`Restaurant Area.short_code`, from the floor plan's room dialog) and, when it is not, derived from the

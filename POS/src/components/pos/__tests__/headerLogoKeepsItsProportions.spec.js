@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The logo in the till's header keeps its proportions (NeoRestau lot 1, smoke-test fix). The picture was `h-8 w-auto` in
+ * //// Neoffice — added file (no upstream equivalent). The logo in the till's header keeps its proportions (NeoResto lot 1, smoke-test fix). The picture was `h-8 w-auto` in
  * //// the 64 px column of the header (48 px of room, the column's padding taken away): the browser shrank the box to 48 x 32 for a picture of 300 x 71, and a picture drawn
  * //// into a box of another shape is stretched. The box keeps its 48 x 32 hit area (the logo is the way out of the till, and a finger needs room), and the picture is fitted
  * //// inside it, never stretched.

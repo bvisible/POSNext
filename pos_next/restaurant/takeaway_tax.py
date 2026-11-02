@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent). A takeaway sale takes the takeaway tax category of the
-# //// restaurant its till works for (NeoRestau lot 1, task 10). In Switzerland food to take away is taxed at 2.6 %
+# //// restaurant its till works for (NeoResto lot 1, task 10). In Switzerland food to take away is taxed at 2.6 %
 # //// instead of 8.1 % on site, and alcohol stays at 8.1 % even to take away: the rate is the item's, not the sale's.
 # //// ERPNext's own mechanism carries that rule and is reused as it is, the one the desk invoices already use: a Tax
 # //// Category on the invoice and, on the item or on its item group (which its items inherit, up the tree), an Item
@@ -21,7 +21,7 @@ def takeaway_tax_category(pos_profile: str | None) -> str | None:
 	its restaurant names none.
 
 	Only a till that works as a restaurant till has one (`effective_restaurant_mode` of its POS Settings: its tick,
-	NeoRestau on the site and the restaurant it names): a counter till, or any till of a site where NeoRestau is off,
+	NeoResto on the site and the restaurant it names): a counter till, or any till of a site where NeoResto is off,
 	sells at the usual rates, whatever its sales say about taking away. A sale with no till names no restaurant either:
 	it never falls back on the default restaurant.
 	"""
@@ -209,7 +209,7 @@ def _item_tax_rows(item_codes: list[str]) -> dict[str, list]:
 
 
 def attach_item_tax_rates(items: list[dict], pos_profile: str | None) -> list[dict]:
-	"""Give each item the till loads its VAT rates, as its invoice will charge them (NeoRestau lot 1, task 11).
+	"""Give each item the till loads its VAT rates, as its invoice will charge them (NeoResto lot 1, task 11).
 
 	- `item_tax_rate`: the JSON map account -> rate of the template ERPNext's lookup gives the item for the till's own
 	  tax category (`item_tax_template`), "{}" when it has none;

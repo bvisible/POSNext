@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The control of the print button's settings, in the top bar of the kitchen and runner screens beside the
- * //// awake settings (NeoRestau lot 1, task 44): the button of THIS screen, what prints (this station's lines or the whole order) and the COPY mark, each with a
+ * //// awake settings (NeoResto lot 1, task 44): the button of THIS screen, what prints (this station's lines or the whole order) and the COPY mark, each with a
  * //// one-line help. One icon button of 44 px that opens a small panel; the panel holds nothing the page keeps: it shows the settings it is given and says what the
  * //// person changed.
  * @vitest-environment jsdom

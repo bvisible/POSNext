@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The runner's sound when dishes come up ready is a setting of the till (NeoRestau lot 1, Daniel, 01.11): POS Settings, "Kitchen alerts", read for the restaurant of
+ * //// Neoffice — added file (no upstream equivalent). The runner's sound when dishes come up ready is a setting of the till (NeoResto lot 1, Daniel, 01.11): POS Settings, "Kitchen alerts", read for the restaurant of
  * //// the screen through get_restaurant_settings (a pass tablet has no till). The default is the beep this screen has always made, at the volume it always had; the shared alert-sound player plays it once somebody has touched
  * //// the page, and the bar says so until then.
  * @vitest-environment jsdom

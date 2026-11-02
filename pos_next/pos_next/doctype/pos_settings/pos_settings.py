@@ -74,13 +74,13 @@ class POSSettings(Document):
 					)
 				)
 
-		# //// Neoffice — how long the till keeps its staff signed in (pos_next.api.session, NeoRestau lot 1, product
+		# //// Neoffice — how long the till keeps its staff signed in (pos_next.api.session, NeoResto lot 1, product
 		# //// owner, 01.11.2026): 0 to 90 days, and 30 for a till that becomes a restaurant till. Upstream has no such
 		# //// setting.
 		self.validate_keep_signed_in_days()
-		# //// Neoffice — how long the kitchen's popup stays (NeoRestau lot 1, Daniel, 01.11.2026): 0 to ten minutes. Upstream has no such setting.
+		# //// Neoffice — how long the kitchen's popup stays (NeoResto lot 1, Daniel, 01.11.2026): 0 to ten minutes. Upstream has no such setting.
 		self.validate_kitchen_popup_seconds()
-		# //// Neoffice — and how long the till's own popup stays when a guest orders (NeoRestau lot 1, Daniel, 01.11.2026): the same range.
+		# //// Neoffice — and how long the till's own popup stays when a guest orders (NeoResto lot 1, Daniel, 01.11.2026): the same range.
 		self.validate_floor_popup_seconds()
 
 	# //// Neoffice — added method (no upstream equivalent). `keep_signed_in_days` is 0 (the site's session length) to 90.
@@ -205,7 +205,7 @@ def get_pos_settings(pos_profile):
 	profile = frappe.get_cached_doc("POS Profile", pos_profile)
 	settings["disable_rounded_total"] = cint(profile.disable_rounded_total)
 	# //// Neoffice — the till's « Block a sale beyond the stock » (its POS Profile's box), which its stock
-	# //// guard reads where the site allows negative stock (NeoRestau lot 1, task 13, ruling 82); no value:
+	# //// guard reads where the site allows negative stock (NeoResto lot 1, task 13, ruling 82); no value:
 	# //// blocks.
 	block_sale = profile.get("posa_block_sale_beyond_available_qty")
 	settings["posa_block_sale_beyond_available_qty"] = 1 if block_sale is None else cint(block_sale)
@@ -234,7 +234,7 @@ def create_default_settings(pos_profile):
 	return doc.as_dict()
 
 
-# //// Neoffice — no longer a web endpoint (NeoRestau lot 1, task 13, fix round 1): the till's settings screen
+# //// Neoffice — no longer a web endpoint (NeoResto lot 1, task 13, fix round 1): the till's settings screen
 # //// saves through pos_next.till_settings.api.save_till_settings, which checks each setting against the list
 # //// (shown at this till, the user's to change, within what the screen offers). Upstream's dialog was the
 # //// only caller of this door, which wrote any field of POS Settings, the office's included, with none of
@@ -254,8 +254,8 @@ def update_pos_settings(pos_profile, settings):
 	if isinstance(settings, str):
 		settings = json.loads(settings)
 	# //// Neoffice — the tick that makes a till a restaurant till, and the restaurant it works for, are ticked and chosen
-	# //// on the desk's POS Settings form and nowhere else (product owner, 30.10.2026; NeoRestau lot 1, task 4). The till
-	# //// reads its settings as they EFFECTIVELY are (pos_next.restaurant.mode: where the site does not run NeoRestau a
+	# //// on the desk's POS Settings form and nowhere else (product owner, 30.10.2026; NeoResto lot 1, task 4). The till
+	# //// reads its settings as they EFFECTIVELY are (pos_next.restaurant.mode: where the site does not run NeoResto a
 	# //// ticked till reads as a counter till) and sends them back whole when one setting changes: writing the tick back
 	# //// would switch it off at the first unrelated save. Upstream never had such a tick.
 	from pos_next.restaurant.mode import DESK_ONLY_FIELDS
@@ -293,8 +293,8 @@ def update_pos_settings(pos_profile, settings):
 		doc.insert()
 
 	# //// Neoffice — the answer is the settings as the till reads them, through the same seam as the reads (the effective
-	# //// restaurant mode, whether the site runs NeoRestau, what the user may manage): the dialog merges it back into its
-	# //// own state, and must never be handed the stored tick, which is the desk's (NeoRestau lot 1, task 4).
+	# //// restaurant mode, whether the site runs NeoResto, what the user may manage): the dialog merges it back into its
+	# //// own state, and must never be handed the stored tick, which is the desk's (NeoResto lot 1, task 4).
 	from pos_next.integrations.registry import extend_bootstrap_settings
 
 	answer = doc.as_dict()

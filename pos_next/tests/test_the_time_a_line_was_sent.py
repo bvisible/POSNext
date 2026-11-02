@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""The time each line of a table's order left for the kitchen (NeoRestau lot 1, Daniel's test of 01.11: « au sommet, on voit que le temps
+"""The time each line of a table's order left for the kitchen (NeoResto lot 1, Daniel's test of 01.11: « au sommet, on voit que le temps
 est toujours le temps de départ […] il faudrait afficher le temps maintenant du départ du dessert »).
 
 The timer at the head of a kitchen ticket counted from the order's last change, so a table that had eaten for three hours still read

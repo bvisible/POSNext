@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The short code of a room on a kitchen ticket (NeoRestau lot 1, task
+ * //// Neoffice — added file (no upstream equivalent). The short code of a room on a kitchen ticket (NeoResto lot 1, task
  * //// 38a-1, ruling 126): a kitchen can feed several rooms, so the room opens the line of the ticket as a small chip, then the
  * //// table. The default code is « the letters of the name and the number in it on two digits »: « Salle 1 » is S01, « Salle 2 »
  * //// S02; a room with no number takes its first three letters (« Terrasse » is TER); a takeaway is EMP. The client derives it

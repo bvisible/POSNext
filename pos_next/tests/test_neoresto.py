@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""NeoRestau, the restaurant's business application, declared to the theme (NeoRestau lot 1, task 6).
+"""NeoResto, the restaurant's business application, declared to the theme (NeoResto lot 1, task 6).
 
 The declaration is NeoAuto's (the garage's, `neoffice_activity/test_neoauto.py`): off unless the site switches it on, then a
 space of the restaurant's tabs at the top of the menu, with its overview figures, and a menu entry made once where it runs.
@@ -27,8 +27,8 @@ from frappe.utils import add_days, getdate, now_datetime, nowdate
 from pymysql.err import OperationalError
 
 from pos_next import install
-from pos_next.restaurant import mode, neorestau
-from pos_next.restaurant.neorestau import business_apps, setup, tabs
+from pos_next.restaurant import mode, neoresto
+from pos_next.restaurant.neoresto import business_apps, setup, tabs
 from pos_next.tests.test_opening_a_restaurant_till import (
 	BAD_FIELD_ERROR,
 	MIXED,
@@ -37,13 +37,13 @@ from pos_next.tests.test_opening_a_restaurant_till import (
 	a_read_of_the_settings_that_fails,
 	the_statements_run,
 )
-from pos_next.tests.test_restaurant_mode_comes_from_the_till import ABSENT, a_site_where_neorestau_is
+from pos_next.tests.test_restaurant_mode_comes_from_the_till import ABSENT, a_site_where_neoresto_is
 from pos_next.tests.test_till_writes_need_the_till import _user
 
 EXPECTED_SPEC = {
-	"name": "neorestau",
-	"title": "NeoRestau",
-	"workspaces": ["NeoRestau"],
+	"name": "neoresto",
+	"title": "NeoResto",
+	"workspaces": ["NeoResto"],
 	"follows": "Retail",
 	"gestures": ["invoice", "payment", "search"],
 	"active_by_default": 0,
@@ -72,16 +72,16 @@ OUR_LISTS = {
 }
 
 # What a test makes under names of its own, so that a real menu entry, page or restaurant is never touched
-TEST_APP = "_test_neorestau"
-TEST_WORKSPACE = "_Test NeoRestau"
-FOLLOWED = "_Test NeoRestau followed page"
-FOLLOWER = "_test_neorestau_follower"
-CONTROL = "_Test NeoRestau export control"
-EARLIER_STEP = "_Test NeoRestau work of an earlier step of the migrate"
+TEST_APP = "_test_neoresto"
+TEST_WORKSPACE = "_Test NeoResto"
+FOLLOWED = "_Test NeoResto followed page"
+FOLLOWER = "_test_neoresto_follower"
+CONTROL = "_Test NeoResto export control"
+EARLIER_STEP = "_Test NeoResto work of an earlier step of the migrate"
 SECOND_RESTAURANT = "_Test Second Restaurant"
 # The Error Log title of a menu entry that could not be made at a migrate
-MENU_ENTRY_ERROR = "POS Next: NeoRestau menu entry"
-THE_BLIND_READER = "neorestau-blind-reader@yopmail.com"
+MENU_ENTRY_ERROR = "POS Next: NeoResto menu entry"
+THE_BLIND_READER = "neoresto-blind-reader@yopmail.com"
 
 # The flags that tell Frappe a save is the system's (install, patch, migrate, a test run): a workspace saved while one is
 # set is never written into its app's files (frappe/desk/doctype/workspace/workspace.py, disable_saving_as_public)
@@ -126,7 +126,7 @@ def a_site_without_the_theme():
 
 @contextmanager
 def a_migrate_of_which_only_the_menu_entry_is_real(earlier_step=lambda: None):
-	"""`install.after_migrate()` with the steps that are not NeoRestau's replaced by nothing (`earlier_step` stands for the
+	"""`install.after_migrate()` with the steps that are not NeoResto's replaced by nothing (`earlier_step` stands for the
 	work of the one before it) and nothing committed: yields the commit, to see that the migrate went on to it."""
 	with (
 		patch.multiple(
@@ -153,46 +153,46 @@ class TestTheDeclaration(FrappeTestCase):
 		super().tearDown()
 
 	def test_off_until_the_site_switches_it_on(self):
-		with patch.dict(frappe.conf, {"neorestau_active": 0}):
-			self.assertFalse(neorestau.active())
+		with patch.dict(frappe.conf, {"neoresto_active": 0}):
+			self.assertFalse(neoresto.active())
 			self.assertEqual(tabs(), {})
-		with patch.dict(frappe.conf, {"neorestau_active": 1}):
-			self.assertTrue(neorestau.active())
+		with patch.dict(frappe.conf, {"neoresto_active": 1}):
+			self.assertTrue(neoresto.active())
 		self.assertEqual(business_apps(), [EXPECTED_SPEC])
 
 	def test_a_site_that_does_not_say_so_does_not_run_it(self):
-		with a_site_where_neorestau_is(ABSENT):
-			self.assertFalse(neorestau.active())
+		with a_site_where_neoresto_is(ABSENT):
+			self.assertFalse(neoresto.active())
 			self.assertEqual(tabs(), {})
 
 	def test_the_switch_is_the_one_the_till_reads(self):
 		for value in (0, 1, "1", ABSENT):
-			with self.subTest(value=value), a_site_where_neorestau_is(value):
-				self.assertEqual(neorestau.active(), mode.neorestau_active())
+			with self.subTest(value=value), a_site_where_neoresto_is(value):
+				self.assertEqual(neoresto.active(), mode.neoresto_active())
 
 	def test_the_app_declares_itself_in_its_hooks(self):
 		hooks = frappe.get_hooks(app_name="pos_next")
-		self.assertEqual(hooks["neoffice_business_apps"], ["pos_next.restaurant.neorestau.business_apps"])
-		self.assertEqual(hooks["neoffice_workspace_tabs"], ["pos_next.restaurant.neorestau.tabs"])
-		self.assertIs(frappe.get_attr("pos_next.restaurant.neorestau.business_apps"), business_apps)
-		self.assertIs(frappe.get_attr("pos_next.restaurant.neorestau.tabs"), tabs)
+		self.assertEqual(hooks["neoffice_business_apps"], ["pos_next.restaurant.neoresto.business_apps"])
+		self.assertEqual(hooks["neoffice_workspace_tabs"], ["pos_next.restaurant.neoresto.tabs"])
+		self.assertIs(frappe.get_attr("pos_next.restaurant.neoresto.business_apps"), business_apps)
+		self.assertIs(frappe.get_attr("pos_next.restaurant.neoresto.tabs"), tabs)
 
 	def test_the_theme_reads_the_declaration(self):
 		guard = theme_or_skip("neoffice_theme.workspace_guard", "declared_business_apps")
 		access_model = theme_or_skip("neoffice_theme.access_model", "with_declared")
 		frappe.local.neo_declared_business_apps = None
 		declared = guard.declared_business_apps()
-		self.assertIn("neorestau", declared)
-		self.assertEqual(declared["neorestau"]["workspaces"], ["NeoRestau"])
-		with patch.dict(frappe.conf, {"neorestau_active": 0}):
-			self.assertFalse(guard.app_switched_on("neorestau"))
-			self.assertIn("neorestau", guard.get_hidden_owning_apps())
-		with patch.dict(frappe.conf, {"neorestau_active": 1}):
-			self.assertTrue(guard.app_switched_on("neorestau"))
-			self.assertNotIn("neorestau", guard.get_hidden_owning_apps())
-		# Whoever holds the point of sale holds NeoRestau: the restaurant's cashier opens it from the menu
-		self.assertIn("NeoRestau", access_model.with_declared({"Retail"}))
-		self.assertNotIn("NeoRestau", access_model.with_declared({"Activities"}))
+		self.assertIn("neoresto", declared)
+		self.assertEqual(declared["neoresto"]["workspaces"], ["NeoResto"])
+		with patch.dict(frappe.conf, {"neoresto_active": 0}):
+			self.assertFalse(guard.app_switched_on("neoresto"))
+			self.assertIn("neoresto", guard.get_hidden_owning_apps())
+		with patch.dict(frappe.conf, {"neoresto_active": 1}):
+			self.assertTrue(guard.app_switched_on("neoresto"))
+			self.assertNotIn("neoresto", guard.get_hidden_owning_apps())
+		# Whoever holds the point of sale holds NeoResto: the restaurant's cashier opens it from the menu
+		self.assertIn("NeoResto", access_model.with_declared({"Retail"}))
+		self.assertNotIn("NeoResto", access_model.with_declared({"Activities"}))
 
 	def test_a_migrate_makes_the_menu_entry_and_the_roles_once_each(self):
 		# The roles are made by the migrate already (task 3): the menu entry does not make them a second time
@@ -208,7 +208,7 @@ class TestTheDeclaration(FrappeTestCase):
 			patch.object(frappe.db, "commit"),
 			patch("pos_next.restaurant.permissions.ensure_restaurant_roles") as roles,
 			patch("pos_next.restaurant.permissions.grant_restaurant_permissions"),
-			patch("pos_next.restaurant.neorestau.setup") as menu_entry,
+			patch("pos_next.restaurant.neoresto.setup") as menu_entry,
 		):
 			install.after_migrate()
 		menu_entry.assert_called_once_with()
@@ -229,23 +229,23 @@ class TestTheTabs(FrappeTestCase):
 		super().setUp()
 		frappe.set_user("Administrator")
 		self.addCleanup(setattr, frappe.local, "neo_declared_business_apps", None)
-		# The site runs NeoRestau unless a test says otherwise
-		flag = a_site_where_neorestau_is(1)
+		# The site runs NeoResto unless a test says otherwise
+		flag = a_site_where_neoresto_is(1)
 		flag.__enter__()
 		self.addCleanup(flag.__exit__, None, None, None)
 
 	def space(self):
-		return {tab["key"]: tab for tab in tabs()["NeoRestau"]}
+		return {tab["key"]: tab for tab in tabs()["NeoResto"]}
 
 	def test_the_restaurant_tabs(self):
-		space = tabs()["NeoRestau"]
+		space = tabs()["NeoResto"]
 		self.assertEqual([t["key"] for t in space], TAB_KEYS)
-		self.assertTrue(all(t["bundle"][0] == "NeoRestau" for t in space))
+		self.assertTrue(all(t["bundle"][0] == "NeoResto" for t in space))
 		self.assertEqual({t["key"] for t in space if t.get("essential")}, ESSENTIAL)
 
 	def test_the_space_is_the_declared_one(self):
 		declared = business_apps()[0]
-		self.assertEqual(list(tabs()), [neorestau.SPACE])
+		self.assertEqual(list(tabs()), [neoresto.SPACE])
 		overview = self.space()["overview"]
 		self.assertEqual(overview["archetype"], "overview")
 		self.assertEqual(overview["workspace"], declared["workspaces"][0])
@@ -264,7 +264,7 @@ class TestTheTabs(FrappeTestCase):
 		# The door the tills' list answers to (get_pos_profiles(mode="restaurant"), task 5)
 		route = urlparse(overview["action"]["route"])
 		self.assertEqual((route.path, parse_qs(route.query)), ("/pos", {"mode": ["restaurant"]}))
-		self.assertIs(overview["figures"], neorestau.overview_figures)
+		self.assertIs(overview["figures"], neoresto.overview_figures)
 
 	def test_the_restaurants_own_lists(self):
 		space = self.space()
@@ -316,11 +316,11 @@ class TestTheTabs(FrappeTestCase):
 		sales = space["sales"]
 		for field in ("archetype", "doctype", "base", "views", "figures"):
 			self.assertEqual(sales[field], invoices[field], field)
-		self.assertEqual(sales["bundle"], ["NeoRestau", *invoices["bundle"]])
+		self.assertEqual(sales["bundle"], ["NeoResto", *invoices["bundle"]])
 		self.assertTrue(sales["essential"])
 		self.assertEqual(sales["label"], _("Sales"))
 		self.assertEqual(space["items"]["doctype"], "Item")
-		self.assertEqual(space["items"]["bundle"], ["NeoRestau", *items["bundle"]])
+		self.assertEqual(space["items"]["bundle"], ["NeoResto", *items["bundle"]])
 		self.assertFalse(space["items"]["essential"])
 		# Borrowing copies: the theme's tabs are as they were
 		self.assertEqual(
@@ -344,9 +344,9 @@ class TestTheTabs(FrappeTestCase):
 		wt = theme_or_skip("neoffice_theme.workspace_tabs", "_code_catalogue")
 		frappe.local.neo_declared_business_apps = None
 		catalogue = wt._code_catalogue()
-		self.assertEqual([t["key"] for t in catalogue["NeoRestau"]], TAB_KEYS)
+		self.assertEqual([t["key"] for t in catalogue["NeoResto"]], TAB_KEYS)
 		# Every list of the space opens for a reader who holds everything, the settings' groups with their entries
-		visible = {t["key"]: t for t in wt._visible_tabs("NeoRestau", with_reports=False)}
+		visible = {t["key"]: t for t in wt._visible_tabs("NeoResto", with_reports=False)}
 		self.assertTrue(set(TAB_KEYS) - {"overview"} <= set(visible), set(visible))
 		# ... the cards with the way to the menus, which a reader of the menus is offered
 		link = wt._view_link(visible["cards"])
@@ -356,18 +356,18 @@ class TestTheTabs(FrappeTestCase):
 			[group["label"] for group in panel["groups"]], [_("Restaurants"), _("Tills"), _("Preparation")]
 		)
 		self.assertEqual(panel["groups"][0]["items"][0]["route"], "/app/restaurant")
-		# A site that does not run NeoRestau has no such space
-		with a_site_where_neorestau_is(0):
-			self.assertNotIn("NeoRestau", wt._code_catalogue())
+		# A site that does not run NeoResto has no such space
+		with a_site_where_neoresto_is(0):
+			self.assertNotIn("NeoResto", wt._code_catalogue())
 
 	def test_the_theme_draws_the_overview_with_the_figures_and_the_door(self):
 		wt = theme_or_skip("neoffice_theme.workspace_tabs", "get_overview")
 		frappe.local.neo_declared_business_apps = None
 		self.addCleanup(
 			frappe.cache().delete_value,
-			f"{wt.CACHE_PREFIX}:overview:NeoRestau:{frappe.local.lang}:{frappe.session.user}",
+			f"{wt.CACHE_PREFIX}:overview:NeoResto:{frappe.local.lang}:{frappe.session.user}",
 		)
-		overview = wt.get_overview(space="NeoRestau", fresh=1)
+		overview = wt.get_overview(space="NeoResto", fresh=1)
 		self.assertTrue(overview["enabled"])
 		self.assertEqual(overview["action"]["route"], "/pos?mode=restaurant")
 		# The overview's row has room for three figures beside the door
@@ -388,11 +388,11 @@ class TestTheMenuEntry(FrappeTestCase):
 	def setUp(self):
 		super().setUp()
 		frappe.set_user("Administrator")
-		# The entry and the page of the test's own: a real NeoRestau of the site is never touched
-		names = patch.multiple(neorestau, APP=TEST_APP, WORKSPACE=TEST_WORKSPACE)
+		# The entry and the page of the test's own: a real NeoResto of the site is never touched
+		names = patch.multiple(neoresto, APP=TEST_APP, WORKSPACE=TEST_WORKSPACE)
 		names.start()
 		self.addCleanup(names.stop)
-		flag = a_site_where_neorestau_is(1)
+		flag = a_site_where_neoresto_is(1)
 		flag.__enter__()
 		self.addCleanup(flag.__exit__, None, None, None)
 
@@ -412,7 +412,7 @@ class TestTheMenuEntry(FrappeTestCase):
 
 	@staticmethod
 	def the_page_followed_and_its_entry(logo, **entry):
-		"""A page NeoRestau follows, and the menu entry that lists it (the point of sale's), with the given icon."""
+		"""A page NeoResto follows, and the menu entry that lists it (the point of sale's), with the given icon."""
 		frappe.get_doc(
 			{"doctype": "Workspace", "label": FOLLOWED, "title": FOLLOWED, "public": 1, "content": "[]"}
 		).insert(ignore_permissions=True)
@@ -429,12 +429,12 @@ class TestTheMenuEntry(FrappeTestCase):
 			}
 		).insert(ignore_permissions=True)
 
-	def test_the_menu_entry_is_made_once_where_neorestau_runs(self):
-		with patch.dict(frappe.conf, {"neorestau_active": 0}):
+	def test_the_menu_entry_is_made_once_where_neoresto_runs(self):
+		with patch.dict(frappe.conf, {"neoresto_active": 0}):
 			setup()
 			self.assertFalse(frappe.db.exists("App Customization", TEST_APP))
 			self.assertFalse(frappe.db.exists("Workspace", TEST_WORKSPACE))
-		with patch.dict(frappe.conf, {"neorestau_active": 1}):
+		with patch.dict(frappe.conf, {"neoresto_active": 1}):
 			setup()
 			self.assertTrue(frappe.db.exists("Workspace", TEST_WORKSPACE))
 			self.assertEqual(frappe.db.get_value("App Customization", TEST_APP, "is_virtual"), 1)
@@ -450,7 +450,7 @@ class TestTheMenuEntry(FrappeTestCase):
 		entry = frappe.get_doc("App Customization", TEST_APP)
 		self.assertEqual(
 			(entry.app_name, entry.app_title, entry.is_virtual, entry.is_installed_app, entry.enabled),
-			(TEST_APP, "NeoRestau", 1, 0, 1),
+			(TEST_APP, "NeoResto", 1, 0, 1),
 		)
 		self.assertEqual((entry.interface_mode, entry.sort_order), ("Tous", 49))
 		self.assertEqual(
@@ -474,7 +474,7 @@ class TestTheMenuEntry(FrappeTestCase):
 		)
 
 	def test_it_takes_the_icon_of_the_point_of_sale(self):
-		with patch.object(neorestau, "FOLLOWS", FOLLOWED):
+		with patch.object(neoresto, "FOLLOWS", FOLLOWED):
 			self.the_page_followed_and_its_entry(logo="_TestPointOfSaleIcon")
 			setup()
 		self.assertEqual(
@@ -483,28 +483,28 @@ class TestTheMenuEntry(FrappeTestCase):
 
 	def test_without_the_icon_of_the_point_of_sale_it_has_the_default_one(self):
 		# No entry lists the page it follows ...
-		with patch.object(neorestau, "FOLLOWS", FOLLOWED):
+		with patch.object(neoresto, "FOLLOWS", FOLLOWED):
 			setup()
 		self.assertEqual(frappe.db.get_value("App Customization", TEST_APP, "app_logo"), "Activites")
 		# ... or the one that does is switched off, or has no icon of its own
 		for entry in ({"enabled": 0}, {"app_logo": ""}):
 			with self.subTest(entry=entry):
 				self.forget_what_was_made()
-				with patch.object(neorestau, "FOLLOWS", FOLLOWED):
+				with patch.object(neoresto, "FOLLOWS", FOLLOWED):
 					self.the_page_followed_and_its_entry(**{"logo": "_TestPointOfSaleIcon", **entry})
 					setup()
 				self.assertEqual(frappe.db.get_value("App Customization", TEST_APP, "app_logo"), "Activites")
 
-	def test_where_the_site_does_not_run_neorestau_nothing_is_made_and_nothing_is_deleted(self):
+	def test_where_the_site_does_not_run_neoresto_nothing_is_made_and_nothing_is_deleted(self):
 		setup()
 		for value in (0, ABSENT):
-			with self.subTest(value=value), a_site_where_neorestau_is(value):
+			with self.subTest(value=value), a_site_where_neoresto_is(value):
 				setup()
-				# Switching NeoRestau off hides it (the theme) without deleting anything
+				# Switching NeoResto off hides it (the theme) without deleting anything
 				self.assertTrue(frappe.db.exists("App Customization", TEST_APP))
 				self.assertTrue(frappe.db.exists("Workspace", TEST_WORKSPACE))
 		self.forget_what_was_made()
-		with a_site_where_neorestau_is(0):
+		with a_site_where_neoresto_is(0):
 			setup()
 		self.assertFalse(frappe.db.exists("App Customization", TEST_APP))
 		self.assertFalse(frappe.db.exists("Workspace", TEST_WORKSPACE))
@@ -534,7 +534,7 @@ class TestTheMenuEntry(FrappeTestCase):
 			setup()
 
 	def test_the_page_is_never_exported_into_the_app(self):
-		"""`bench execute pos_next.restaurant.neorestau.setup`, right after the site's config gets the flag: no migrate, no
+		"""`bench execute pos_next.restaurant.neoresto.setup`, right after the site's config gets the flag: no migrate, no
 		install, no test flag, and a developer site (a development instance, and every new instance until it is set up).
 		Frappe writes a public workspace that has a module into its app's files on a developer site unless one of the
 		system flags is set, and a JSON file under apps/pos_next makes the next `git pull` of the app refuse."""
@@ -542,7 +542,7 @@ class TestTheMenuEntry(FrappeTestCase):
 		with (
 			patch("frappe.desk.doctype.workspace.workspace.export_to_files", export),
 			patch("frappe.desk.doctype.workspace.workspace.delete_folder", delete),
-			patch.dict(frappe.conf, {"neorestau_active": 1, "developer_mode": 1}),
+			patch.dict(frappe.conf, {"neoresto_active": 1, "developer_mode": 1}),
 			none_of_the_system_flags(),
 		):
 			# The control: a page of a module saved the usual way is written out in these very conditions
@@ -602,7 +602,7 @@ class TestTheMenuEntry(FrappeTestCase):
 		self.assertEqual(frappe.db.count("Error Log", {"method": MENU_ENTRY_ERROR}), logged)
 
 	def test_setup_itself_stays_loud_and_the_half_it_made_is_for_its_caller_to_undo(self):
-		with patch.object(neorestau, "_logo", side_effect=RuntimeError("the icon cannot be read")):
+		with patch.object(neoresto, "_logo", side_effect=RuntimeError("the icon cannot be read")):
 			with self.assertRaises(RuntimeError):
 				setup()
 		# It made the page before it failed, and not the entry: the half-made state the migrate's guard undoes
@@ -613,7 +613,7 @@ class TestTheMenuEntry(FrappeTestCase):
 		logged = frappe.db.count("Error Log", {"method": MENU_ENTRY_ERROR})
 		with (
 			a_migrate_of_which_only_the_menu_entry_is_real() as commit,
-			patch.object(neorestau, "_logo", side_effect=RuntimeError("the icon cannot be read")),
+			patch.object(neoresto, "_logo", side_effect=RuntimeError("the icon cannot be read")),
 		):
 			install.after_migrate()
 		# The migrate went on to its commit, and said why in the Error Log
@@ -639,7 +639,7 @@ class TestTheMenuEntry(FrappeTestCase):
 		self.addCleanup(frappe.db.delete, "ToDo", {"description": EARLIER_STEP})
 		with (
 			a_migrate_of_which_only_the_menu_entry_is_real(work_of_an_earlier_step),
-			patch.object(neorestau, "_logo", side_effect=RuntimeError("the icon cannot be read")),
+			patch.object(neoresto, "_logo", side_effect=RuntimeError("the icon cannot be read")),
 		):
 			install.after_migrate()
 		self.assertTrue(frappe.db.exists("ToDo", {"description": EARLIER_STEP}))
@@ -790,8 +790,8 @@ class TestTheOverviewFigures(Tills, FrappeTestCase):
 
 	def figures(self, restaurant, today=None):
 		"""The overview's figures for a reader who works for `restaurant`, by their label."""
-		with patch.object(neorestau, "current_restaurant", return_value=restaurant):
-			return {f["label"]: f for f in neorestau.overview_figures(today or self.today)}
+		with patch.object(neoresto, "current_restaurant", return_value=restaurant):
+			return {f["label"]: f for f in neoresto.overview_figures(today or self.today)}
 
 	@staticmethod
 	def labels():
@@ -842,12 +842,12 @@ class TestTheOverviewFigures(Tills, FrappeTestCase):
 		self.assertEqual(yesterday[label["taken"]]["value"], money(7))
 		self.assertEqual(yesterday[label["coming"]]["value"], counted(0))
 
-	def test_where_neorestau_is_off_no_till_is_a_restaurant_till(self):
+	def test_where_neoresto_is_off_no_till_is_a_restaurant_till(self):
 		from neoffice_theme.workspace_spaces.common import counted, money
 
 		self.a_service()
 		label = self.labels()
-		with a_site_where_neorestau_is(0):
+		with a_site_where_neoresto_is(0):
 			off = self.figures(self.restaurant)
 		self.assertEqual(off[label["taken"]]["value"], money(0))
 		self.assertEqual(off[label["sessions"]]["value"], counted(0))
@@ -863,7 +863,7 @@ class TestTheOverviewFigures(Tills, FrappeTestCase):
 			with self.subTest(till=till):
 				# Administrator opens the till now: his latest shift is the one the till reads him at
 				a_shift(till)
-				found = {f["label"]: f for f in neorestau.overview_figures(self.today)}
+				found = {f["label"]: f for f in neoresto.overview_figures(self.today)}
 				self.assertEqual(found[label["tables"]]["value"], counted(tables))
 				self.assertEqual(found[label["taken"]]["value"], money(takings))
 				# His own session is one of the open sessions of the restaurant
@@ -878,8 +878,8 @@ class TestTheOverviewFigures(Tills, FrappeTestCase):
 		a_shift(self.grocery_till)
 		# A counter till belongs to no restaurant (the lists of a till are empty for it), and the default restaurant is the
 		# first one here
-		with patch.object(neorestau, "default_restaurant", return_value=self.restaurant):
-			found = {f["label"]: f for f in neorestau.overview_figures(self.today)}
+		with patch.object(neoresto, "default_restaurant", return_value=self.restaurant):
+			found = {f["label"]: f for f in neoresto.overview_figures(self.today)}
 		self.assertEqual(list(found), list(self.labels().values()))
 		self.assertEqual(found[label["tables"]]["value"], counted(3))
 		self.assertEqual(found[label["taken"]]["value"], money(30))
@@ -893,8 +893,8 @@ class TestTheOverviewFigures(Tills, FrappeTestCase):
 		self.a_service()
 		label = self.labels()
 		a_shift(self.second_restaurant_till)
-		with patch.object(neorestau, "default_restaurant", return_value=self.restaurant):
-			found = {f["label"]: f for f in neorestau.overview_figures(self.today)}
+		with patch.object(neoresto, "default_restaurant", return_value=self.restaurant):
+			found = {f["label"]: f for f in neoresto.overview_figures(self.today)}
 		self.assertEqual(found[label["tables"]]["value"], counted(2))
 
 	def test_a_figure_is_there_only_for_a_reader_of_its_documents(self):
@@ -922,34 +922,34 @@ class TestTheOverviewFigures(Tills, FrappeTestCase):
 		self.assertEqual(len(self.figures(self.restaurant)), 4)
 		frappe.set_user(THE_BLIND_READER)
 		try:
-			self.assertEqual(neorestau.overview_figures(self.today), [])
+			self.assertEqual(neoresto.overview_figures(self.today), [])
 		finally:
 			frappe.set_user("Administrator")
 
 	def test_the_tills_of_a_restaurant_are_its_restaurant_tills(self):
-		self.assertEqual(neorestau.restaurant_tills(self.restaurant), [self.restaurant_till])
-		self.assertEqual(neorestau.restaurant_tills(self.other), [self.second_restaurant_till])
-		self.assertEqual(neorestau.restaurant_tills(None), [])
+		self.assertEqual(neoresto.restaurant_tills(self.restaurant), [self.restaurant_till])
+		self.assertEqual(neoresto.restaurant_tills(self.other), [self.second_restaurant_till])
+		self.assertEqual(neoresto.restaurant_tills(None), [])
 		# Its tick off, its settings disabled: not a restaurant till
 		self.change_settings(self.second_restaurant_till, enable_restaurant_mode=0)
-		self.assertEqual(neorestau.restaurant_tills(self.other), [])
+		self.assertEqual(neoresto.restaurant_tills(self.other), [])
 		self.change_settings(self.second_restaurant_till, enable_restaurant_mode=1, enabled=0)
-		self.assertEqual(neorestau.restaurant_tills(self.other), [])
+		self.assertEqual(neoresto.restaurant_tills(self.other), [])
 		self.change_settings(self.second_restaurant_till, enabled=1)
-		self.assertEqual(neorestau.restaurant_tills(self.other), [self.second_restaurant_till])
-		# ... and none is one where the site does not run NeoRestau
-		with a_site_where_neorestau_is(0):
-			self.assertEqual(neorestau.restaurant_tills(self.restaurant), [])
+		self.assertEqual(neoresto.restaurant_tills(self.other), [self.second_restaurant_till])
+		# ... and none is one where the site does not run NeoResto
+		with a_site_where_neoresto_is(0):
+			self.assertEqual(neoresto.restaurant_tills(self.restaurant), [])
 
 	def test_which_tills_are_restaurant_tills_is_the_doors_answer(self):
 		# Said once, by the door (task 5); this module only keeps the tills of the restaurant it is asked for
 		with patch.object(
-			neorestau,
+			neoresto,
 			"restaurants_of_the_restaurant_tills",
 			return_value={"A till": self.restaurant, "Another": self.other, "A third": self.restaurant},
 		) as door:
-			self.assertEqual(neorestau.restaurant_tills(self.restaurant), ["A third", "A till"])
-			self.assertEqual(neorestau.restaurant_tills(self.other), ["Another"])
+			self.assertEqual(neoresto.restaurant_tills(self.restaurant), ["A third", "A till"])
+			self.assertEqual(neoresto.restaurant_tills(self.other), ["Another"])
 		# Every till of the site is asked about, in one call each time
 		self.assertEqual(door.call_count, 2)
 		for call in door.call_args_list:
@@ -959,22 +959,22 @@ class TestTheOverviewFigures(Tills, FrappeTestCase):
 		# The code is updated and the site is not migrated yet: the settings have no column for the restaurant
 		missing = OperationalError(BAD_FIELD_ERROR, "Unknown column 'restaurant' in 'field list'")
 		with a_read_of_the_settings_that_fails(missing):
-			self.assertEqual(neorestau.restaurant_tills(self.restaurant), [])
+			self.assertEqual(neoresto.restaurant_tills(self.restaurant), [])
 		# Any other failure is not hidden
 		with a_read_of_the_settings_that_fails(RuntimeError("the database is down")):
 			with self.assertRaises(RuntimeError):
-				neorestau.restaurant_tills(self.restaurant)
+				neoresto.restaurant_tills(self.restaurant)
 
 	def test_the_scope_and_the_tills_are_worked_out_only_for_the_figures_that_need_them(self):
 		def what_it_costs(*readable):
 			"""(figures, times the scope was worked out, times the tills were looked up, reads of POS Profile)."""
 			with (
 				patch("neoffice_theme.permitted.readable", side_effect=lambda name: name in readable),
-				patch.object(neorestau, "current_restaurant", wraps=neorestau.current_restaurant) as scope,
-				patch.object(neorestau, "restaurant_tills", wraps=neorestau.restaurant_tills) as tills,
+				patch.object(neoresto, "current_restaurant", wraps=neoresto.current_restaurant) as scope,
+				patch.object(neoresto, "restaurant_tills", wraps=neoresto.restaurant_tills) as tills,
 				the_statements_run() as statements,
 			):
-				found = neorestau.overview_figures(self.today)
+				found = neoresto.overview_figures(self.today)
 			profiles = [statement for statement in statements if "tabPOS Profile" in statement]
 			return len(found), scope.call_count, tills.call_count, len(profiles)
 
@@ -992,7 +992,7 @@ class TestTheOverviewFigures(Tills, FrappeTestCase):
 
 	def test_the_views_of_the_lists_split_them_the_way_the_figures_count(self):
 		self.a_service()
-		space = {tab["key"]: tab for tab in tabs()["NeoRestau"]}
+		space = {tab["key"]: tab for tab in tabs()["NeoResto"]}
 		restaurants = ["restaurant", "in", [self.restaurant, self.other]]
 
 		def counts(key):

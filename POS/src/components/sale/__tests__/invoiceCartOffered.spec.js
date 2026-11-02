@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The cart shows an offered row (« Offert », NeoRestau lot 1, task 24)
+ * //// Neoffice — added file (no upstream equivalent). The cart shows an offered row (« Offert », NeoResto lot 1, task 24)
  * //// under its paid line: « Offert », 0.00 charged, its value struck through; « Annuler l'offert » hands the cart row
  * //// behind the copy shown back to the cart (cartRowOf, the pitfall « Le panier de la caisse »). A whole line offered
  * //// reads « Offert » on its own. The line dialog is told whether the line may be offered.

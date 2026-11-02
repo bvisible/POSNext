@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The Printing tab lists the preparation stations of the till's
- * //// restaurant with the printer of each (NeoRestau lot 1, task 2). A new station is named by a hash, so the tab
+ * //// restaurant with the printer of each (NeoResto lot 1, task 2). A new station is named by a hash, so the tab
  * //// shows its label, and keeps the printer under the name the printer rows keep. Since task 13 the choice goes
  * //// into the screen's draft, saved with the rest by its one « Save », no longer on each change.
  * @vitest-environment jsdom

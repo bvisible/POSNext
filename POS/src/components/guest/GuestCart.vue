@@ -50,7 +50,7 @@
 								</p>
 							</div>
 							<div class="flex items-center gap-2 flex-shrink-0">
-								<!-- An offered line (NeoRestau lot 1, task 24) reads « Offert », in the guest's language (the server's word) -->
+								<!-- An offered line (NeoResto lot 1, task 24) reads « Offert », in the guest's language (the server's word) -->
 								<span v-if="oItem.posa_is_offered" class="text-xs font-semibold text-[#A15A2E]">{{ oItem.offered_label }}</span>
 								<span v-else class="text-xs text-gray-500">{{ formatPrice(oItem.amount ?? oItem.qty * oItem.rate) }}</span>
 								<!-- KDS Status Badge -->

@@ -121,7 +121,7 @@
 			<div class="w-8 border-t border-gray-200 my-1"></div>
 
 			<!-- Cards / Menu -->
-			<!-- //// Neoffice — each restaurant entry shows to whoever the server lets manage it (restaurant_can, NeoRestau lot 1, task 3) -->
+			<!-- //// Neoffice — each restaurant entry shows to whoever the server lets manage it (restaurant_can, NeoResto lot 1, task 3) -->
 			<button
 				v-if="restaurantCan.manage_cards"
 				@click="handleMenuClick('cards')"
@@ -233,7 +233,7 @@
 
 		<!-- Settings -->
 		<!-- //// Neoffice — a till's settings are its managers' (product owner, 30.10.2026): the entry shows to whoever the server lets save them (restaurant_can.manage_till_settings) -->
-		<!-- //// and, on a restaurant till, to the restaurant's manager, for the restaurant's tabs (NeoRestau lot 1, task 13) -->
+		<!-- //// and, on a restaurant till, to the restaurant's manager, for the restaurant's tabs (NeoResto lot 1, task 13) -->
 		<button
 			v-if="canOpenSettings"
 			@click="handleMenuClick('settings')"
@@ -282,11 +282,11 @@ const activeMenu = ref("");
 //// Restaurant Tip + Tips panel in POS sidebar").
 const isRestaurantMode = computed(() => restaurantStore.isEnabled);
 const isTipsEnabled = computed(() => restaurantStore.tipsEnabled);
-//// Neoffice — what the user may manage of the restaurant, as the server told the till (NeoRestau lot 1, task 3): an
+//// Neoffice — what the user may manage of the restaurant, as the server told the till (NeoResto lot 1, task 3): an
 //// entry he may not use is not shown, and the server refuses its writes whatever the till shows.
 const restaurantCan = computed(() => restaurantStore.can || {});
 //// Neoffice — who opens the till's settings: its manager, and on a restaurant till whoever may write ITS restaurant
-//// (the server shows him the restaurant's tabs only, NeoRestau lot 1, task 13). Both are the server's rights for
+//// (the server shows him the restaurant's tabs only, NeoResto lot 1, task 13). Both are the server's rights for
 //// this till (manage_till_settings, manage_restaurant_settings): a right on some restaurant is not this one's.
 const canOpenSettings = computed(
 	() =>

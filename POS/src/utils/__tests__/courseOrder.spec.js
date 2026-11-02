@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The order of the meal on a kitchen ticket (NeoRestau lot 1, Daniel, 01.11: « on commence évidemment par les entrées. On ne peut pas
+ * //// Neoffice — added file (no upstream equivalent). The order of the meal on a kitchen ticket (NeoResto lot 1, Daniel, 01.11: « on commence évidemment par les entrées. On ne peut pas
  * //// lancer les plats si on n'a pas fait les entrées. Les plats viennent disponibles quand on a fini les entrées »). A course waits, greyed, while a course before it still has a dish to
  * //// cook; the drinks, and a dish with no family, never wait and never make another wait. Read without a screen.
  */
@@ -127,7 +127,7 @@ describe("the choice a device keeps", () => {
 	})
 })
 
-//// Neoffice — where the kitchen prepares ahead the rule is off (NeoRestau lot 1, the service rhythm, Daniel, 01.11)
+//// Neoffice — where the kitchen prepares ahead the rule is off (NeoResto lot 1, the service rhythm, Daniel, 01.11)
 describe("the order of the meal where the kitchen prepares ahead", () => {
 	it("is followed on a device that chose it, in the room's rhythm", () => {
 		expect(followsTheOrderOfTheMeal(true, "Called by the room")).toBe(true)

@@ -1,7 +1,7 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The cart of a table's order shows the course of each line as a small chip
  * //// the waiter can tap to give the line another course, and offers « Commander la suite » when courses are held back
- * //// (NeoRestau lot 1, service families). Only a table's order: a takeaway, a counter order and a site with no family show
+ * //// (NeoResto lot 1, service families). Only a table's order: a takeaway, a counter order and a site with no family show
  * //// none of it. The cart is mounted for real, with the stores of the sale page.
  * @vitest-environment jsdom
  */
@@ -261,7 +261,7 @@ describe("the cart of a table's order, for the rhythm of the meal", () => {
 		})
 	})
 
-	//// Neoffice — where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11): the later courses are not held, they left ahead; the same button calls the next one
+	//// Neoffice — where the kitchen prepares ahead (NeoResto lot 1, the service rhythm, Daniel, 01.11): the later courses are not held, they left ahead; the same button calls the next one
 	describe("the button where the kitchen prepares ahead", () => {
 		const aheadTable = (extra = {}) => {
 			cart.setRestaurantTable({ name: "T1" })

@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The kitchen and runner screens on a PHONE (NeoRestau lot 1, smoke-test fix). At 390 px the kitchen page
+ * //// Neoffice — added file (no upstream equivalent). The kitchen and runner screens on a PHONE (NeoResto lot 1, smoke-test fix). At 390 px the kitchen page
  * //// was 657 px wide and the runner's 797 px (measured in a browser): « To deliver », the size of the text, the theme, the refresh, the way back and the
  * //// runner's display modes were off the screen, the page scrolled sideways, and the full-screen ticket, a fixed panel, was stretched past the screen with
  * //// its × and its main button (a page wider than the phone widens the layout viewport of a mobile browser). Below 768 px the top bar is now three lines

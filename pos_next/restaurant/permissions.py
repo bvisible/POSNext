@@ -1,4 +1,4 @@
-# //// Neoffice — added file (no upstream equivalent). Who may manage a restaurant (NeoRestau lot 1, task 3;
+# //// Neoffice — added file (no upstream equivalent). Who may manage a restaurant (NeoResto lot 1, task 3;
 # //// maintenance#1967). Lot 0 made every till endpoint check WHO calls it: a portal account reaches nothing, a
 # //// cashier works at a till of his. What he may DO there was still open: the floor plan and its tables, the
 # //// preparation stations and workflows, the option groups, the cards, their prices, items, badges and design were
@@ -184,7 +184,7 @@ def grant_restaurant_permissions() -> list[str]:
 
 	A rule the site has for a role is the site's, whatever it grants: it is never changed, never widened (a customer
 	may have narrowed it on purpose), never removed. One exception, the customer's administrator (`Admin`), who manages
-	everything (NeoRestau spec, § C). His read-only rule on these doctypes is our theme's, which gives him read on
+	everything (NeoResto spec, § C). His read-only rule on these doctypes is our theme's, which gives him read on
 	every doctype, not the customer's choice, so it is widened to the rights the JSON grants him (never narrowed). A
 	doctype the site did not customize reads its JSON: nothing to do. Returns the doctypes given or widened a rule.
 	"""

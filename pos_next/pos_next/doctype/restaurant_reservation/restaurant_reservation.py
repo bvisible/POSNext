@@ -6,7 +6,7 @@
 # //// online booking, and email notifications"; duration parsing hardened for int / float / HH:MM:SS
 # //// by ac07efed, same day). Upstream POSNext has no table service, so nothing to book.
 # //// An online booking holds its tables only until the deadline its guest has to confirm it from the e-mail, then
-# //// it expires: it never blocks a table nor ends as a no-show (NeoRestau lot 1, task 18).
+# //// it expires: it never blocks a table nor ends as a no-show (NeoResto lot 1, task 18).
 import frappe
 from frappe import _
 from frappe.model.document import Document
@@ -30,7 +30,7 @@ from pos_next.restaurant.settings import get_restaurant_settings, restaurant_of
 # `verification_deadline`, is set by the public form and cleared when a manager confirms the booking himself.
 HOLD_STATUSES = ("Pending", "Confirmed")
 # What such a booking becomes when its guest has not confirmed it in time: it holds no table, is no no-show, and is
-# not one of the restaurant's bookings any more (NeoRestau lot 1, task 18)
+# not one of the restaurant's bookings any more (NeoResto lot 1, task 18)
 EXPIRED = "Expired"
 
 

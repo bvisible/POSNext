@@ -1,6 +1,6 @@
 //// Neoffice — added file (no upstream equivalent). A kitchen's or a runner's tablet signs in by scanning the QR code a
-//// manager shows at the till (NeoRestau lot 1, task 16): the page it opens is a visitor's (the tablet has no session
-//// yet), only where the site runs NeoRestau. A kitchen's or runner's screen whose tablet is signed out is sent to that
+//// manager shows at the till (NeoResto lot 1, task 16): the page it opens is a visitor's (the tablet has no session
+//// yet), only where the site runs NeoResto. A kitchen's or runner's screen whose tablet is signed out is sent to that
 //// page, which says how to get a new code, rather than to a password the tablet does not have.
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest"
@@ -30,7 +30,7 @@ async function visit(path) {
 describe("the page a tablet is paired on", () => {
 	beforeEach(() => {
 		session.isLoggedIn = false
-		window.posnext_neorestau_active = true
+		window.posnext_neoresto_active = true
 	})
 
 	it("opens to a visitor, the code in the fragment of its address", async () => {
@@ -48,8 +48,8 @@ describe("the page a tablet is paired on", () => {
 		expect(route.name).toBe("PairDevice")
 	})
 
-	it("stays shut where the site does not run NeoRestau", async () => {
-		window.posnext_neorestau_active = false
+	it("stays shut where the site does not run NeoResto", async () => {
+		window.posnext_neoresto_active = false
 
 		const route = await visit("/pair#Zx3_kQ-9aaaa")
 

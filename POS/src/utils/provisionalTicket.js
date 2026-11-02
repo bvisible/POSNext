@@ -1,6 +1,6 @@
 //// Neoffice — added file (no upstream equivalent). The provisional ticket of a table or takeaway order (the priced
 //// summary a restaurant hands the table before cashing in, marked "THIS IS NOT A RECEIPT") prints where the till
-//// prints its receipts (NeoRestau lot 1, task 28a). The printer button of the cart called printProvisionalTicket
+//// prints its receipts (NeoResto lot 1, task 28a). The printer button of the cart called printProvisionalTicket
 //// (printInvoice.js, March), which always opened the browser's print window, also on a till with a CloudPRNT receipt
 //// printer. Now one tap sends the order AS THE SCREEN SHOWS IT, shaped as the till's payment sends it, to the server
 //// (cloudprnt app, provisional_ticket.print_provisional_ticket), which prices it with ERPNext without saving anything

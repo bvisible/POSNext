@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The runner's tickets are STACKED (NeoRestau lot 1, task 38a-2, ruling 130). They stood in one row of
+ * //// Neoffice — added file (no upstream equivalent). The runner's tickets are STACKED (NeoResto lot 1, task 38a-2, ruling 130). They stood in one row of
  * //// full-height columns, so a ticket of two dishes left most of its column empty while the next ticket sat off the screen. A short ticket now stacks under
  * //// the one before it in the same column (oldest first, top to bottom, then the next column), a long ticket keeps a column of its own, and the setting
  * //// « stack short tickets » (on by default) turns it back into one ticket per column. jsdom has no layout engine: the flow is read from its classes.

@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The kitchen screen shows the tickets waiting and the tickets in
- * //// preparation apart, each in order of arrival (NeoRestau lot 1, task 23), in one of two layouts the cook chooses: the
+ * //// preparation apart, each in order of arrival (NeoResto lot 1, task 23), in one of two layouts the cook chooses: the
  * //// bands one above the other, or side by side. The product owner asked for it on 30.10, then for it to hold thirty
  * //// tickets in a band on a tablet. This spec reads the screen as the cook meets it; the split and the order themselves are
  * //// tested apart (utils/__tests__/kitchenBands.spec.js).

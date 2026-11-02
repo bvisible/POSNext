@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The list of the till's tables, and the pieces around it, in DARK mode (NeoRestau
+ * //// Neoffice — added file (no upstream equivalent). The list of the till's tables, and the pieces around it, in DARK mode (NeoResto
  * //// lot 1, smoke-test fix). The list was cream whatever the colour mode: a cream ground, white cards and ink text beside a dark cart. Every
  * //// surface, line and text colour of the list, its cards, its rows, its bar, the sheet « Open a table », the strip under the phone's top and
  * //// the switch « List | Floor plan » now has a dark class beside the light one, from the design system's dark scope; the light mode

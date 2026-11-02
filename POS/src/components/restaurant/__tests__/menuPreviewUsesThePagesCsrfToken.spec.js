@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The menu designer's preview was blank (NeoRestau lot 1, Daniel 01.11: « je clique sur le design PDF, tout a pété, on voit rien »): it posted with `fetch` and read its
+ * //// Neoffice — added file (no upstream equivalent). The menu designer's preview was blank (NeoResto lot 1, Daniel 01.11: « je clique sur le design PDF, tout a pété, on voit rien »): it posted with `fetch` and read its
  * //// CSRF token from a `csrf_token` COOKIE, which Frappe does not set, so the header was empty, the server refused (400) and the preview got no HTML. The token is the page's own (`window.csrf_token`), asked of
  * //// utils/csrf.js. The preview is mounted for real, with a cookie jar that holds no token.
  * @vitest-environment jsdom

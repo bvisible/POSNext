@@ -1,4 +1,4 @@
-# //// Neoffice — added file (no upstream equivalent). The service families of a restaurant order (NeoRestau lot 1, the first
+# //// Neoffice — added file (no upstream equivalent). The service families of a restaurant order (NeoResto lot 1, the first
 # //// slice of Daniel's « famille de service »): which course a line belongs to, and what a send puts on the pass and what it
 # //// holds back. The rule lives HERE and nowhere else on the server; the till's copy (POS/src/utils/serviceFamilies.js) only
 # //// serves the kitchen dialog's pre-ticked boxes, and both are tested against one table of examples
@@ -22,7 +22,7 @@
 A line is a mapping with `service_family` and `kds_status` (empty: not sent yet, `Waiting`: held, anything else: left).
 
 The SERVICE RHYTHM of the restaurant (`Restaurant.service_rhythm`) changes what a send does with the lines it would hold back
-(NeoRestau lot 1, Daniel, 01.11: « Oui, les deux modes »):
+(NeoResto lot 1, Daniel, 01.11: « Oui, les deux modes »):
 
 - `Called by the room` (the default): the line is held (`Waiting`) until the waiter orders its course, as above;
 - `Prepared ahead`: the line LEAVES with the rest, marked `kds_ahead`, so that the kitchen may start and finish it; the waiter's call
@@ -42,7 +42,7 @@ import frappe
 from frappe.utils import cint
 
 FIELD = "service_family"
-# //// Neoffice — the category color of the tickets (NeoRestau lot 1, Daniel's request of 01.11)
+# //// Neoffice — the category color of the tickets (NeoResto lot 1, Daniel's request of 01.11)
 COLOR_FIELD = "service_color"
 _COLOR = re.compile(r"#[0-9A-Fa-f]{6}")
 DRINK = "Drink"
@@ -57,7 +57,7 @@ LEFT = "left"
 # //// Neoffice — a line that would be held, in a restaurant that prepares ahead: it leaves marked ahead instead
 AHEAD = "ahead"
 
-# //// Neoffice — the service rhythm of a restaurant (NeoRestau lot 1, Daniel, 01.11: « Oui, les deux modes »), the Select `service_rhythm` of the Restaurant:
+# //// Neoffice — the service rhythm of a restaurant (NeoResto lot 1, Daniel, 01.11: « Oui, les deux modes »), the Select `service_rhythm` of the Restaurant:
 # //// the room calls each course (the default: the later courses are held back until the waiter orders them), or the kitchen prepares ahead (everything leaves at
 # //// « Valider », the later courses arrive marked as ahead, and the waiter's call only tells the kitchen to serve them now)
 CALLED_BY_THE_ROOM = "Called by the room"
@@ -95,7 +95,7 @@ def _is_new(line) -> bool:
 	return not (line.get("kds_status") or "") if line else False
 
 
-# //// Neoffice — the lines that left AHEAD of their course (NeoRestau lot 1, the service rhythm, Daniel, 01.11)
+# //// Neoffice — the lines that left AHEAD of their course (NeoResto lot 1, the service rhythm, Daniel, 01.11)
 def is_ahead(line) -> bool:
 	"""Whether a line left for the kitchen before its course was called (`kds_ahead`)."""
 	return bool(cint(line.get("kds_ahead"))) if line else False

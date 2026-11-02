@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""Managing a restaurant needs the right, and the server checks it (NeoRestau lot 1, task 3; maintenance#1967).
+"""Managing a restaurant needs the right, and the server checks it (NeoResto lot 1, task 3; maintenance#1967).
 
 Lot 0 made every till endpoint check WHO calls it: a portal account reaches nothing, a cashier works at a till of his.
 What a cashier may DO there was left open: the floor plan, the preparation stations and workflows, the option groups,
@@ -114,7 +114,7 @@ CASHIER_ROLE = "POSNext Cashier"
 RESTAURANT = "_Test Rights Restaurant"
 IMAGE = (b"\xff\xd8\xff", "jpg")
 # What the till is told: the restaurant's rights, the ERP's on items and prices, who opens the till's settings (its
-# own, its restaurant's: NeoRestau lot 1, task 13; per till when the till is named, see test_till_settings)
+# own, its restaurant's: NeoResto lot 1, task 13; per till when the till is named, see test_till_settings)
 EVERY_RIGHT = {*permissions.RIGHTS, "manage_till_settings", "manage_restaurant_settings"}
 # A restaurant's manager without the ERP's item rights, at a till he does not manage
 MANAGER_IS_TOLD = {
@@ -813,9 +813,9 @@ class TestTheRolesAndTheRules(RestaurantRights):
 					grant_cashier_permissions=lambda: None,
 				),
 				patch.object(frappe, "clear_cache"),
-				# The migrate also makes NeoRestau's menu entry (task 6, tested in test_neorestau): this hook commits, and
+				# The migrate also makes NeoResto's menu entry (task 6, tested in test_neoresto): this hook commits, and
 				# the entry is not what this test builds
-				patch("pos_next.restaurant.neorestau.setup"),
+				patch("pos_next.restaurant.neoresto.setup"),
 				patch("pos_next.restaurant.permissions.ensure_restaurant_roles") as roles,
 				patch("pos_next.restaurant.permissions.grant_restaurant_permissions") as rules,
 			):

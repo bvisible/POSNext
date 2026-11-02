@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The till reads the family of every Item Group once, with the rest of the
- * //// restaurant (NeoRestau lot 1, service families), and keeps it for the cart: it never walks the group tree itself.
+ * //// restaurant (NeoResto lot 1, service families), and keeps it for the cart: it never walks the group tree itself.
  * @vitest-environment jsdom
  */
 import { createPinia, setActivePinia } from "pinia"

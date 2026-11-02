@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The till's colour mode in ONE place (NeoRestau lot 1, task 38a-2, ruling 131). main.js adopted it,
+ * //// Neoffice — added file (no upstream equivalent). The till's colour mode in ONE place (NeoResto lot 1, task 38a-2, ruling 131). main.js adopted it,
  * //// the till's user menu set it, and the kitchen and runner screens now have a theme button: three copies of the same logic would drift, so they all go
  * //// through utils/colorMode. The key is the cockpit's (`neocockpit-colormode`), the desk's own toggle writes it too.
  * @vitest-environment jsdom

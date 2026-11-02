@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The page a phone opens from the QR code of a table speaks the guest's language (NeoRestau lot 1,
+ * //// Neoffice — added file (no upstream equivalent). The page a phone opens from the QR code of a table speaks the guest's language (NeoResto lot 1,
  * //// Daniel's test of 01.11: « Order Summary », « Send Order » in English on a French phone). A guest has no user and no boot language, and the device
  * //// has kept no choice: the language of the browser stands in, and the dictionary is asked in it (`_lang`), the first thing Frappe reads.
  * @vitest-environment jsdom

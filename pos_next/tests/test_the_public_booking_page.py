@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""The public booking page (/pos/reservation): what a visitor learns, asks and leaves behind (NeoRestau lot 1, task 18).
+"""The public booking page (/pos/reservation): what a visitor learns, asks and leaves behind (NeoResto lot 1, task 18).
 
 1. A visitor learns which tables are free for a time the page offers, for the restaurant's own duration, and nothing of
    the guests who hold the others: no name, phone, address, remark, booking nor time. A staff account sees who holds
@@ -44,7 +44,7 @@ from frappe.utils import add_days, get_datetime, getdate, now_datetime, nowdate,
 
 from pos_next.api import reservations
 from pos_next.pos_next.doctype.restaurant_reservation.restaurant_reservation import check_overlap
-from pos_next.restaurant.neorestau import reservation_views
+from pos_next.restaurant.neoresto import reservation_views
 from pos_next.tests.test_till_writes_need_the_till import CASHIER_ROLE, _user
 
 API = "pos_next.api.reservations."
@@ -186,9 +186,9 @@ class OnlineBooking:
 		for patcher in (
 			# The jobs commit: nothing of a test may stay
 			patch.object(frappe.db, "commit"),
-			# The guest entry points refuse to start anything where the site does not run NeoRestau (task 4), and the
+			# The guest entry points refuse to start anything where the site does not run NeoResto (task 4), and the
 			# site's own flag is not the test's to know; the limits are out of reach unless a test sets one
-			patch.dict(frappe.conf, {"neorestau_active": 1, "guest_reservation_limits": dict(NO_LIMITS)}),
+			patch.dict(frappe.conf, {"neoresto_active": 1, "guest_reservation_limits": dict(NO_LIMITS)}),
 		):
 			patcher.start()
 			self.addCleanup(patcher.stop)

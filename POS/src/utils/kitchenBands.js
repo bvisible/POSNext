@@ -1,12 +1,12 @@
 //// Neoffice — added file (no upstream equivalent). The kitchen screen splits its tickets into two bands, the ones WAITING
-//// (nothing begun on them) and the ones IN PREPARATION (at least one dish begun), each in order of arrival (NeoRestau
+//// (nothing begun on them) and the ones IN PREPARATION (at least one dish begun), each in order of arrival (NeoResto
 //// lot 1, task 23). The split and the order are written ONCE, here, and only read by the screen, so that a rule is
 //// changed in one place and tested without a screen.
 
 //// Neoffice — the parser of the server's datetimes and the time the course at the kitchen left are shared with the ticket's timer (utils/courseTimer)
 import { courseSentAt } from "@/utils/courseTimer"
 import { timeOf } from "@/utils/serverDateTime"
-//// Neoffice — a dish sent ahead of its course and not called yet is not what a ticket waits for (the service rhythm, NeoRestau lot 1, Daniel, 01.11)
+//// Neoffice — a dish sent ahead of its course and not called yet is not what a ticket waits for (the service rhythm, NeoResto lot 1, Daniel, 01.11)
 import { isUncalled } from "@/utils/courseCall"
 
 export const BAND_WAITING = "waiting"
@@ -86,7 +86,7 @@ export function kitchenStatusOf(order) {
 		return lines.some((line) => line?.kds_status === "Delivered")
 			? "Delivered"
 			: "Pending"
-	//// Neoffice — where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11), a dish that left ahead of its course and is not called yet is at the kitchen, which may start and finish it, but it is not
+	//// Neoffice — where the kitchen prepares ahead (NeoResto lot 1, the service rhythm, Daniel, 01.11), a dish that left ahead of its course and is not called yet is at the kitchen, which may start and finish it, but it is not
 	//// what the ticket waits for: while some other dish is live the ticket follows the others alone (the server's `_order_status_of`, the same table of examples, `ahead_cases`). When only such dishes are live the ticket is Pending
 	//// until one is begun and Preparing after that, never Ready: nothing waits at the pass for a course nobody called.
 	const called = live.filter((line) => !isUncalled(line))

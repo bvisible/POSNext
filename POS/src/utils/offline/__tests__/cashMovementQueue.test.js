@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The till's drawer movements made offline (NeoRestau lot 1,
+//// Neoffice — added file (no upstream equivalent). The till's drawer movements made offline (NeoResto lot 1,
 //// task 15): queued like an offline sale, sent once, in the order they were made, never twice.
 /**
  * @vitest-environment jsdom

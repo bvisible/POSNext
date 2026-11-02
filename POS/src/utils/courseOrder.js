@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The order of the meal on a kitchen ticket (NeoRestau lot 1, Daniel, 01.11: « on commence évidemment par les entrées. On ne peut pas lancer les
+//// Neoffice — added file (no upstream equivalent). The order of the meal on a kitchen ticket (NeoResto lot 1, Daniel, 01.11: « on commence évidemment par les entrées. On ne peut pas lancer les
 //// plats si on n'a pas fait les entrées. Les plats viennent disponibles quand on a fini les entrées. Les entrées viennent grisées [barrées] […] et puis on avance comme ça »).
 ////
 //// A ticket's dishes come in courses (utils/serviceFamilies: Starter, Main, Dessert after the drinks). The kitchen follows the order of the meal: a course WAITS, greyed and not to be touched,
@@ -7,7 +7,7 @@
 //// at once turns it off), kept on the device like the size of the text, and ON by default: it is what the product owner asked.
 
 import { COURSES, familyOf } from "@/utils/serviceFamilies"
-//// Neoffice — the rule is without effect where the kitchen prepares ahead (the service rhythm, NeoRestau lot 1, Daniel, 01.11)
+//// Neoffice — the rule is without effect where the kitchen prepares ahead (the service rhythm, NeoResto lot 1, Daniel, 01.11)
 import { isPreparedAhead } from "@/utils/serviceRhythm"
 
 /** The rule is on unless a device says otherwise. */

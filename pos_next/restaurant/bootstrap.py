@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent). The till is told what its user may manage of the restaurant
-# //// (NeoRestau lot 1, task 3), to show only that: the floor plan's Edit button, and the cards, option groups,
+# //// (NeoResto lot 1, task 3), to show only that: the floor plan's Edit button, and the cards, option groups,
 # //// workflows and tips of the management rail. The server refuses the rest whatever the till shows
 # //// (pos_next.restaurant.permissions).
 """What the till shows of the restaurant's management, for the user who opens it."""

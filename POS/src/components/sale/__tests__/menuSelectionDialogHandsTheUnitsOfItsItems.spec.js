@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). A menu course item is made into a cart line in the unit of its
- * //// item (NeoRestau lot 1, task 22): the dialog hands the units that get_active_menus answered with each item to the
+ * //// item (NeoResto lot 1, task 22): the dialog hands the units that get_active_menus answered with each item to the
  * //// cart, which makes the line of them.
  * @vitest-environment jsdom
  */

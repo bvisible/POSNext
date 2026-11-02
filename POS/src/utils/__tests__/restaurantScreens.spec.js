@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The screens of the restaurant and the way from one to another (NeoRestau lot 1, task 38a-2,
+ * //// Neoffice — added file (no upstream equivalent). The screens of the restaurant and the way from one to another (NeoResto lot 1, task 38a-2,
  * //// ruling 132): which screens a session may go to, and where each one is with the filters the user has on.
  */
 import { describe, expect, it } from "vitest"

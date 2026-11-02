@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The layer a screen at rest is drawn as (NeoRestau lot 1, task 47). A web page cannot switch the physical
+ * //// Neoffice — added file (no upstream equivalent). The layer a screen at rest is drawn as (NeoResto lot 1, task 47). A web page cannot switch the physical
  * //// screen off nor dim it, so a screen nobody touched for a while is covered by a near-black layer: a small clock, how many orders are waiting, and a moon,
  * //// in a dim warm grey readable in the dark. It is the same dark whatever the colour mode, it holds nothing to press (a touch wakes the screen, the page
  * //// swallows it), and it draws nothing at all when the screen is awake.

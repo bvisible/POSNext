@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The service rhythm in French (NeoRestau lot 1, Daniel, 01.11: « Oui, les deux modes »): the product owner speaks French, and everything a person reads about the rhythm
+ * //// Neoffice — added file (no upstream equivalent). The service rhythm in French (NeoResto lot 1, Daniel, 01.11: « Oui, les deux modes »): the product owner speaks French, and everything a person reads about the rhythm
  * //// (the tag « À l'avance » and the pills of the kitchen's tickets, the toast of the call, the setting and its two choices, the refusals of the server) goes through the real catalogue (pos_next/locale/fr.po) and the
  * //// real `translate`. The catalogue template (main.pot) carries the same messages, so that the next extraction does not drop them.
  * @vitest-environment jsdom

@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The ticket of a table that has just ordered its next course (NeoRestau lot 1, Daniel, 01.11): the kitchen screen highlights it for a few seconds and scrolls it into
+ * //// Neoffice — added file (no upstream equivalent). The ticket of a table that has just ordered its next course (NeoResto lot 1, Daniel, 01.11): the kitchen screen highlights it for a few seconds and scrolls it into
  * //// view, so the card carries the name of its order (`data-order`, what the screen finds it by) and a signal ring while it is the one in question. The ring goes with the highlight and changes nothing else of the card.
  * @vitest-environment jsdom
  */

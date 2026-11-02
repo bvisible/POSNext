@@ -4,9 +4,9 @@
 		class="flex items-stretch gap-1 rounded-[12px] bg-[#FFFDF8] dark:bg-[#1c1f26]"
 		:class="entry.tier === 'ready' ? 'border-2 border-[#D68A59]' : 'border border-[#ECE7DE] dark:border-[rgba(255,251,245,0.14)]'"
 	>
-		<!-- //// Neoffice — dark mode (NeoRestau lot 1, smoke-test fix): the card, its title, its details and its QR button have dark classes beside the light ones (the card's ground, its line, the paper and the secondary text of the design system's dark scope; the badge's are in tablesListLook.js); the clay edge of a table whose dishes are ready is the same in both modes. -->
+		<!-- //// Neoffice — dark mode (NeoResto lot 1, smoke-test fix): the card, its title, its details and its QR button have dark classes beside the light ones (the card's ground, its line, the paper and the secondary text of the design system's dark scope; the badge's are in tablesListLook.js); the clay edge of a table whose dishes are ready is the same in both modes. -->
 		<!-- //// Neoffice — added file (no upstream equivalent). One table of the list of tables, as the waiter mockup draws
-		     //// it (NeoRestau lot 1, task 26): a white card, the table's name in 18 px bold, a badge on the right that says
+		     //// it (NeoResto lot 1, task 26): a white card, the table's name in 18 px bold, a badge on the right that says
 		     //// what needs the waiter, one muted line under it (how long the table has been seated, the total of its order,
 		     //// the lines on hold). A tap on the card opens the table; the QR button beside it shows the table's code. -->
 		<button

@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The line of filters the runner and the kitchen screen share
- * //// (NeoRestau lot 1, task 9c): the rooms on the left, the preparation stations on the right, ONE row (it wraps only
+ * //// (NeoResto lot 1, task 9c): the rooms on the left, the preparation stations on the right, ONE row (it wraps only
  * //// when the screen is too narrow for it), with the counts each screen keeps. The product owner asked for the two
  * //// filters of the runner on a single line and for the same room filter on the kitchen screen.
  * @vitest-environment jsdom

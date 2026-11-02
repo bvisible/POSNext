@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The units of a cart line, from whichever source added it
- * //// (NeoRestau lot 1, task 22).
+ * //// (NeoResto lot 1, task 22).
  * @vitest-environment node
  */
 import { describe, expect, it, vi } from "vitest"

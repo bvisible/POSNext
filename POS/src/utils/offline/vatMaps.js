@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). An item's VAT maps are the till's (NeoRestau lot 1, task 11): the
+//// Neoffice — added file (no upstream equivalent). An item's VAT maps are the till's (NeoResto lot 1, task 11): the
 //// server computes `item_tax_rate` for the till's own tax category and `takeaway_item_tax_rate` for its restaurant's
 //// takeaway category (pos_next.restaurant.takeaway_tax.attach_item_tax_rates) and stamps the till they are for
 //// (`vat_maps_pos_profile`). The offline item cache is keyed by item code only and shared by every till of a browser,

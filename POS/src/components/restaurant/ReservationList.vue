@@ -77,7 +77,7 @@
 				</div>
 				<div class="row-actions" @click.stop>
 					<!-- The two ✓ actions say what they do in words: a title is never seen on a touch screen, and a -->
-					<!-- Confirmed booking that waits for its guest carries both (NeoRestau lot 1, task 18) -->
+					<!-- Confirmed booking that waits for its guest carries both (NeoResto lot 1, task 18) -->
 					<button
 						v-if="res.status === 'Confirmed'"
 						class="action-btn labelled-btn seat-btn"
@@ -88,7 +88,7 @@
 						<span>{{ __("Arrived") }}</span>
 					</button>
 					<!-- An online booking whose guest has not confirmed it from the e-mail can be confirmed for him (he -->
-					<!-- phoned), Pending or already Confirmed: it then never expires (NeoRestau lot 1, task 18) -->
+					<!-- phoned), Pending or already Confirmed: it then never expires (NeoResto lot 1, task 18) -->
 					<button
 						v-if="res.status === 'Pending' || res.awaits_guest"
 						class="action-btn labelled-btn confirm-btn"

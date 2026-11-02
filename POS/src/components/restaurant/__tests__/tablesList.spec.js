@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The list of tables as the waiter mockup draws it (NeoRestau lot 1,
+ * //// Neoffice — added file (no upstream equivalent). The list of tables as the waiter mockup draws it (NeoResto lot 1,
  * //// task 26): a white card per table with something going on, its name in 18 px bold, a badge on the right and one
  * //// muted line under it; the reservations arriving under « Soon », dashed; then the other tables, one line each. A
  * //// tap on a card opens the table as a tap on the plan does; the table's QR code is one tap away, on the card. On a

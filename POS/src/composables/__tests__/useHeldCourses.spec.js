@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). « Commander la suite » and « Tout commander » (NeoRestau lot 1, service
+ * //// Neoffice — added file (no upstream equivalent). « Commander la suite » and « Tout commander » (NeoResto lot 1, service
  * //// families): the waiter's gesture that releases what the table's order holds back. The server says WHICH lines (the same
  * //// rule that held them), the till marks them and sends the order; each release is a send of its own. If the send fails the
  * //// lines are held again, so that the cart never shows as sent what the kitchen has not got.
@@ -288,7 +288,7 @@ describe("ordering what the table's order holds back", () => {
 	})
 })
 
-//// Neoffice — where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11): « Commander la suite » does not release anything, the course is already at the kitchen. It CALLS it: one atomic call of
+//// Neoffice — where the kitchen prepares ahead (NeoResto lot 1, the service rhythm, Daniel, 01.11): « Commander la suite » does not release anything, the course is already at the kitchen. It CALLS it: one atomic call of
 //// the server, no second send of the order. A restaurant called by the room keeps releasing, byte for byte as above.
 describe("calling the next course where the kitchen prepares ahead", () => {
 	let cart

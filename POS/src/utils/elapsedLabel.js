@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The time a ticket has waited, as the kitchen's and the pass's tickets write it (NeoRestau
+//// Neoffice — added file (no upstream equivalent). The time a ticket has waited, as the kitchen's and the pass's tickets write it (NeoResto
 //// lot 1): minutes and seconds up to the hour, then hours and minutes. The tickets counted minutes only, so that a ticket left open since
 //// the day before read « 1107:52 », which nobody reads.
 

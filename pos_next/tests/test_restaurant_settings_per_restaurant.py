@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""Restaurant settings belong to a restaurant, not to the site (NeoRestau lot 1, task 1).
+"""Restaurant settings belong to a restaurant, not to the site (NeoResto lot 1, task 1).
 
 The opening hours, the tips, the QR and takeaway ordering and the reservation rules used to live in one
 single, ``Restaurant Settings``. They now live on the ``Restaurant`` doctype, one set per restaurant, and the
@@ -55,9 +55,9 @@ READ_BY_THE_TILL = {
 	"takeaway_menu",
 	"default_reservation_duration",
 	"reservation_channels",
-	# //// Neoffice — the popup and the sound of the kitchen alerts, resolved from the till's POS Settings (NeoRestau lot 1, 01.11)
+	# //// Neoffice — the popup and the sound of the kitchen alerts, resolved from the till's POS Settings (NeoResto lot 1, 01.11)
 	"kitchen_alerts",
-	# //// Neoffice — how the courses reach the kitchen (the restaurant's service rhythm, NeoRestau lot 1, Daniel, 01.11): the till plans a send and orders the next course by it
+	# //// Neoffice — how the courses reach the kitchen (the restaurant's service rhythm, NeoResto lot 1, Daniel, 01.11): the till plans a send and orders the next course by it
 	"service_rhythm",
 }
 # What only the server uses: the call answers any signed-in user, so none of it may leave

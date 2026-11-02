@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The till's Cash In/Out dialog (NeoRestau lot 1, task 15):
+ * //// Neoffice — added file (no upstream equivalent). The till's Cash In/Out dialog (NeoResto lot 1, task 15):
  * //// a movement the server refused (its shift was closed elsewhere while the tablet was offline) is shown with
  * //// its reason and two choices, never sent again; « Without VAT » is offered only where the server allows it
  * //// (an expense paid out whose VAT is split, never an income).

@@ -1,5 +1,5 @@
 //// Neoffice — added file (no upstream equivalent). A touch and a long press on the same button, told apart from a
-//// scroll (NeoRestau lot 1, task 27: on the phone's card a touch is +1, a long press opens the options). The till's
+//// scroll (NeoResto lot 1, task 27: on the phone's card a touch is +1, a long press opens the options). The till's
 //// useLongPress cannot do it: it ignores the finger's movement, so a waiter scrolling the card with a finger resting
 //// on a dish would open its options. Here a press that moves more than a few pixels is a scroll, and adds nothing
 //// either, however long the finger stays. The touch itself is the button's click (a keyboard's Enter included); a

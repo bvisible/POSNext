@@ -1,6 +1,6 @@
 <template>
 	<!-- //// Neoffice — added file (no upstream equivalent). The small chip on a cart line that says which course the line belongs
-	     to (Boisson, Entrée, Plat, Dessert); a tap opens the four choices (« une entrée prise en plat », NeoRestau lot 1). A line the
+	     to (Boisson, Entrée, Plat, Dessert); a tap opens the four choices (« une entrée prise en plat », NeoResto lot 1). A line the
 	     kitchen already has keeps the family it was sent under: its chip is only a label. -->
 	<div ref="root" class="relative inline-flex" @click.stop>
 		<span

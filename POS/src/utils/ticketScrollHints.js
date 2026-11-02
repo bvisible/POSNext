@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). What is out of sight on the kitchen screen (NeoRestau lot 1, task 23).
+//// Neoffice — added file (no upstream equivalent). What is out of sight on the kitchen screen (NeoResto lot 1, task 23).
 //// A lane (or a column) of tickets that holds more than the screen shows, and a ticket that holds more dishes than its
 //// body shows, must SAY how much is out of sight: a cook who has to scroll to find out that thirty tickets are waiting
 //// has already lost the time the screen was there to save. The counts are read from the boxes of the elements on the

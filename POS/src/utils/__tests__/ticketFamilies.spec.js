@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The sections of a ticket by service family, and the pale tint of a category
- * //// (NeoRestau lot 1, Daniel's request of 01.11). The dishes still to cook are cut into sections in the order of the meal (Drink,
+ * //// (NeoResto lot 1, Daniel's request of 01.11). The dishes still to cook are cut into sections in the order of the meal (Drink,
  * //// Starter, Main, Dessert); a dish whose family is unknown stands loose at the top, under no label; a ticket that carries no family
  * //// at all is one loose section and is drawn as it always was. A category's colour is user data that ends up in a style: only a
  * //// strict `#RRGGBB` is ever used.

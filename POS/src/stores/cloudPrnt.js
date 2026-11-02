@@ -82,7 +82,7 @@ export const useCloudPrntStore = defineStore("cloudPrnt", () => {
 
 	// The provisional ticket of `order`, the order the till shows (utils/provisionalTicket.js orderToPrint): priced by
 	// the server without saving anything and queued for the receipt printer of the till it names. It never opens the
-	// cash drawer, and the caller cannot choose the printer (NeoRestau task 28a).
+	// cash drawer, and the caller cannot choose the printer (NeoResto task 28a).
 	function printProvisionalTicket(order) {
 		return call("cloudprnt.provisional_ticket.print_provisional_ticket", {
 			order: JSON.stringify(order),

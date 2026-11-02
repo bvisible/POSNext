@@ -1,10 +1,10 @@
 //// Neoffice — removeItem follows a shown copy back to its cart row (utils/cartRow.js).
 import { cartRowOf } from "@/utils/cartRow";
-//// Neoffice — what the options of a reloaded line add to its price (replaceAllItems; NeoRestau lot 1, task 27).
+//// Neoffice — what the options of a reloaded line add to its price (replaceAllItems; NeoResto lot 1, task 27).
 import { modifiersPriceAdjustment } from "@/utils/modifiersPrice";
 import { promoApi } from "@/utils/promoApi";
 import { createResource } from "frappe-ui";
-//// Neoffice — watch: the lines of an order that turns to take away are taxed again (NeoRestau lot 1, task 11).
+//// Neoffice — watch: the lines of an order that turns to take away are taxed again (NeoResto lot 1, task 11).
 import { computed, ref, toRaw, watch } from "vue";
 import { isOffline, getCachedItem } from "@/utils/offline";
 //// enhance serial number management in POS — 7367119
@@ -18,13 +18,13 @@ import { preCouponLineDiscount } from "@/utils/couponLines";
 import { getPrecision } from "@/utils/currency";
 import { calculateTaxesAndTotals } from "@/utils/invoiceTaxes";
 import { vatMapsFor } from "@/utils/offline/vatMaps";
-//// Neoffice — a cart line carries its real units, completed from what its source knows (NeoRestau lot 1, task 22).
+//// Neoffice — a cart line carries its real units, completed from what its source knows (NeoResto lot 1, task 22).
 import { unitsOf } from "@/utils/cartLineUnits";
 //// Neoffice — a line that has left for the kitchen takes no new unit (task 22, fix round 1).
 import { hasLeftForTheKitchen } from "@/utils/lineKitchenState";
-//// Neoffice — the price terms a new unit carries from the line it extends (NeoRestau lot 1, task 22, fix round 2).
+//// Neoffice — the price terms a new unit carries from the line it extends (NeoResto lot 1, task 22, fix round 2).
 import { carriedPriceTerms, samePriceTerms } from "@/utils/linePriceTerms";
-//// Neoffice — « Offert » (NeoRestau lot 1, task 24): an offered row is a row of its own, flagged, 100 % off
+//// Neoffice — « Offert » (NeoResto lot 1, task 24): an offered row is a row of its own, flagged, 100 % off
 //// (utils/offeredRows.js); the payment carries the manager's approval when a rule asks for one (utils/offerApproval.js).
 import { isOfferedRow, offeredLineFields, withoutOfferedRows } from "@/utils/offeredRows";
 import { authorizationFieldsFor } from "@/utils/offerApproval";
@@ -76,7 +76,7 @@ export function useInvoice() {
 	const couponCode = ref(null);
 	const taxRules = ref([]); // Tax rules from POS Profile
 	const taxInclusive = ref(false); // Tax inclusive setting from POS Settings
-	//// Neoffice — the cart is a takeaway order, and its number (NeoRestau lot 1, task 11). They live here, where the
+	//// Neoffice — the cart is a takeaway order, and its number (NeoResto lot 1, task 11). They live here, where the
 	//// lines are taxed and the sale is paid: a takeaway order's lines take their takeaway VAT, and its payment carries
 	//// the flag and the number to the server, which gives the invoice the restaurant's takeaway tax category. posCart
 	//// exposes these two refs as its own: the floor plan's takeaway button patches them, its clearCart resets them.
@@ -164,7 +164,7 @@ export function useInvoice() {
 	 * @param {string} uom - Target UOM
 	 * @param {number} conversionFactor - UOM conversion factor
 	 * @param {number} qty - Quantity for pricing
-	 * @param {number|null} [fromConversion] - //// Neoffice — the factor the line had before the unit changed (NeoRestau lot 1, task 22, fix round 1)
+	 * @param {number|null} [fromConversion] - //// Neoffice — the factor the line had before the unit changed (NeoResto lot 1, task 22, fix round 1)
 	 * @returns {Promise<{rate: number, price_list_rate: number}>}
 	 */
 	async function resolveUomPricing(item, uom, conversionFactor, qty, fromConversion = null) {
@@ -203,7 +203,7 @@ export function useInvoice() {
 			const baseRate = source.price_list_rate || source.rate || 0;
 			//// Neoffice — the rate of a cart line is per the unit it was in: when the line itself is the source (the till keeps no copy
 			//// of the item) its factor is the one it had, handed over by the caller, not the new one it was just given
-			//// (NeoRestau lot 1, task 22, fix round 1).
+			//// (NeoResto lot 1, task 22, fix round 1).
 			const currentConversion = (cachedItem ? source.conversion_factor : fromConversion ?? source.conversion_factor) || 1;
 			rate = (baseRate / currentConversion) * conversionFactor;
 		}
@@ -304,7 +304,7 @@ export function useInvoice() {
 	//// Neoffice — `options.sameTermsOnly`: the item brings the price terms of the line it extends or of the price typed for it (a
 	//// rate set by hand, a discount), so it is merged only into a line that waits and bills the same way, and a new line takes
 	//// those terms. An item with a rate set by hand always does: a second dish typed at another price was merged into the line
-	//// of the first and billed at its price (NeoRestau lot 1, task 22, fix round 2).
+	//// of the first and billed at its price (NeoResto lot 1, task 22, fix round 2).
 	function addItem(item, quantity = 1, options = {}) {
 		const carriesPriceTerms = Boolean(options.sameTermsOnly) || item.is_rate_manually_edited === 1;
 		const itemUom = item.uom || item.stock_uom;
@@ -335,7 +335,7 @@ export function useInvoice() {
 						//// Neoffice — a line that has left for the kitchen never absorbs a new unit: a second round of the same
 						//// drink became « x5 » on a line already Pending, billed and never sent to the bar. The new unit is a line
 						//// of its own, which the kitchen dialog offers; a line not sent yet (no status, or Waiting) still merges
-						//// (NeoRestau lot 1, task 22, fix round 1).
+						//// (NeoResto lot 1, task 22, fix round 1).
 						!hasLeftForTheKitchen(i) &&
 						//// Neoffice — and only into a line that bills the same way when the item brings its terms (fix round 2).
 						(!carriesPriceTerms || samePriceTerms(i, item))
@@ -385,7 +385,7 @@ export function useInvoice() {
 				discount_amount: 0,
 				discount_percentage: 0,
 				//// Neoffice — the terms of the line this one extends: the rate set by hand and the discount in percent
-				//// (NeoRestau lot 1, task 22, fix round 2).
+				//// (NeoResto lot 1, task 22, fix round 2).
 				...(carriesPriceTerms ? carriedPriceTerms(item) : {}),
 				tax_amount: 0,
 				amount: quantity * (item.rate || item.price_list_rate || 0),
@@ -401,7 +401,7 @@ export function useInvoice() {
 				//// a source that knew only some of them (a restaurant card entry, a menu course, an order read
 				//// back from the server) made a line the edit dialog could not read: « Nos » in its header and
 				//// an empty unit select. The missing part is derived from the rest, never invented, and
-				//// item_uoms (below) comes with it (NeoRestau lot 1, task 22).
+				//// item_uoms (below) comes with it (NeoResto lot 1, task 22).
 				...unitsOf(item),
 				warehouse: item.warehouse,
 				actual_batch_qty: item.actual_batch_qty || 0,
@@ -435,10 +435,10 @@ export function useInvoice() {
 				posa_item_modifiers: item.posa_item_modifiers || "",
 				preparation_station: item.preparation_station || "",
 				kds_status: item.kds_status || "",
-				//// Neoffice — the course the line belongs to (NeoRestau lot 1, service families): from the article's group, or the
+				//// Neoffice — the course the line belongs to (NeoResto lot 1, service families): from the article's group, or the
 				//// waiter's choice for this line, or the order read back from the server.
 				service_family: item.service_family || "",
-				//// Neoffice — whether the line left ahead of its course (the kitchen prepares ahead) and when the room called it (NeoRestau lot 1, the service rhythm, Daniel, 01.11):
+				//// Neoffice — whether the line left ahead of its course (the kitchen prepares ahead) and when the room called it (NeoResto lot 1, the service rhythm, Daniel, 01.11):
 				//// the cart names the next course to call from them. The server stamps the call; the cart only reads it.
 				kds_ahead: item.kds_ahead ? 1 : 0,
 				kds_called_at: item.kds_called_at || null,
@@ -555,13 +555,13 @@ export function useInvoice() {
 	 * @param {string|null} uom - Optional UOM to match when same item exists with different UOMs.
 	 *                            If provided, only updates the item with matching item_code AND uom.
 	 *                            If null, updates the first item matching item_code.
-	 * @param {Object|null} [row] - //// Neoffice — the exact line to update, when the caller has it (NeoRestau lot 1, task 22, fix round 1)
+	 * @param {Object|null} [row] - //// Neoffice — the exact line to update, when the caller has it (NeoResto lot 1, task 22, fix round 1)
 	 */
 	function updateItemQuantity(itemCode, quantity, uom = null, row = null) {
 		let item;
 		//// Neoffice — the row the caller means, when it hands it over: the same dish can sit twice in a table's
 		//// cart (the line the kitchen has and the line that waits), and the first of them is not always the one
-		//// whose stepper was pressed (NeoRestau lot 1, task 22, fix round 1).
+		//// whose stepper was pressed (NeoResto lot 1, task 22, fix round 1).
 		if (row && invoiceItems.value.indexOf(row) >= 0) {
 			item = row;
 		} else if (uom) {
@@ -782,7 +782,7 @@ export function useInvoice() {
 		rebuildIncrementalCache();
 	}
 
-	//// Neoffice — the invoice's taxes and totals, as ERPNext computes them (NeoRestau lot 1, tasks 10-11, Ruling 70: the
+	//// Neoffice — the invoice's taxes and totals, as ERPNext computes them (NeoResto lot 1, tasks 10-11, Ruling 70: the
 	//// screen, the provisional ticket and the receipt printed offline equal the submitted invoice, to the cent). Upstream
 	//// added up the rates of the till's tax rows and taxed every line at that one rate (calculateTotalTaxRate, removed
 	//// here), each line rounded on its own and before the header discount: no item's own rate was ever read, a Swiss till
@@ -999,7 +999,7 @@ export function useInvoice() {
 			item._requested_discount_amount = undefined;
 		}
 
-		//// Neoffice — the line as the invoice holds it (NeoRestau lot 1, Ruling 70). The till sends a unit rate at the cent,
+		//// Neoffice — the line as the invoice holds it (NeoResto lot 1, Ruling 70). The till sends a unit rate at the cent,
 		//// as ERPNext's rate field holds it (invoiceUnitRate), and ERPNext makes the line of it: amount = rate × quantity,
 		//// rounded. Upstream showed its own line (the list price less a rounded discount) and sent a rate rounded apart, a
 		//// cent away from it (7 % off 3 × 10.81: 30.16 shown, 30.15 invoiced), and an inclusive till sent the list price
@@ -1025,7 +1025,7 @@ export function useInvoice() {
 		item.amount = line.amount;
 	}
 
-	//// Neoffice — added function (NeoRestau lot 1, Ruling 70): the unit rate the till sends for a line, at the cent like
+	//// Neoffice — added function (NeoResto lot 1, Ruling 70): the unit rate the till sends for a line, at the cent like
 	//// ERPNext's rate field. A percentage takes ERPNext's own formula (calculate_item_values: list price × (1 − %)), an
 	//// amount is spread over the units; a free line is sold at 0.
 	function invoiceUnitRate(item, unitPrice, discountAmount) {
@@ -1343,7 +1343,7 @@ export function useInvoice() {
 		return result?.data || result;
 	}
 
-	//// Neoffice — added function (no upstream equivalent), NeoRestau lot 1, task 11. What a takeaway sale's payment
+	//// Neoffice — added function (no upstream equivalent), NeoResto lot 1, task 11. What a takeaway sale's payment
 	//// carries to the server: the order's flag and number, which give the invoice the takeaway tax category of the till's
 	//// restaurant (pos_next.restaurant.takeaway_tax), the very rates its lines were taxed at here. Nothing for a sale on
 	//// site. The draft the payment saves first never carries them: a takeaway draft is a kitchen ticket to the kitchen
@@ -1750,27 +1750,27 @@ export function useInvoice() {
 				quantity: item.qty || 1,
 				//// Neoffice — the unit of the line as the server holds it, with the item's others: the line
 				//// used to be given « Nos » when its row named no unit, and carried no stock unit nor other
-				//// unit at all (NeoRestau lot 1, task 22).
+				//// unit at all (NeoResto lot 1, task 22).
 				...unitsOf(item),
 				image: item.image || "",
 				kds_status: item.kds_status || "Pending",
 				posa_item_modifiers: item.posa_item_modifiers || "",
 				posa_special_instructions: item.posa_special_instructions || "",
 				preparation_station: item.preparation_station || "",
-				//// Neoffice — the course the line was ordered under, as the server holds it (NeoRestau lot 1, service families).
+				//// Neoffice — the course the line was ordered under, as the server holds it (NeoResto lot 1, service families).
 				service_family: item.service_family || "",
-				//// Neoffice — whether the line left ahead of its course and when the room called it, as the server holds them (the service rhythm, NeoRestau lot 1)
+				//// Neoffice — whether the line left ahead of its course and when the room called it, as the server holds them (the service rhythm, NeoResto lot 1)
 				kds_ahead: item.kds_ahead ? 1 : 0,
 				kds_called_at: item.kds_called_at || null,
 				//// Neoffice — the server's rate already holds the options: the line knows how much of it they make, so
 				//// saving them again moves the price by the change only (was 0: a « no side −1.50 » re-saved with a remark
-				//// took the 1.50 off a second time; NeoRestau lot 1, task 27, fix round 1).
+				//// took the 1.50 off a second time; NeoResto lot 1, task 27, fix round 1).
 				_modifiers_applied: modifiersPriceAdjustment(item.posa_item_modifiers),
 				tax_rate: 0,
 				tax_amount: 0,
 				discount_percentage: 0,
 				discount_amount: 0,
-				//// Neoffice — the line's VAT maps for this till when the server sends them (NeoRestau lot 1, task 11).
+				//// Neoffice — the line's VAT maps for this till when the server sends them (NeoResto lot 1, task 11).
 				item_tax_rate: vatMapsFor(item, posProfile.value)?.item_tax_rate,
 				takeaway_item_tax_rate: vatMapsFor(item, posProfile.value)?.takeaway_item_tax_rate,
 			};
@@ -1807,7 +1807,7 @@ export function useInvoice() {
 		taxRules,
 		taxInclusive,
 		//// Neoffice — the takeaway order and its number (posCart exposes them as its own), the cart's VAT per account,
-		//// and what a takeaway sale's payment carries (NeoRestau lot 1, task 11).
+		//// and what a takeaway sale's payment carries (NeoResto lot 1, task 11).
 		isTakeaway,
 		takeawayNumber,
 		taxesByAccount,

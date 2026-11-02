@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). The short code of a room on a kitchen ticket (NeoRestau lot 1, task
+//// Neoffice — added file (no upstream equivalent). The short code of a room on a kitchen ticket (NeoResto lot 1, task
 //// 38a-1, ruling 126). A kitchen can feed several rooms, so the line of a ticket opens with the room as a small chip, then
 //// the table, which is the big word. The default code is « the letters of the name and the number in it on two digits »:
 //// « Salle 1 » is S01, « Salle 2 » is S02. A room with no number takes its first three letters (« Terrasse » is TER) and a

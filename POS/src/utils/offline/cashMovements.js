@@ -1,5 +1,5 @@
 //// Neoffice — added file (no upstream equivalent). The offline side of the till's drawer movements
-//// (« Entrées/Sorties de caisse », pos_next.api.cash_entry), NeoRestau lot 1 task 15. It follows the till's
+//// (« Entrées/Sorties de caisse », pos_next.api.cash_entry), NeoResto lot 1 task 15. It follows the till's
 //// own offline machinery: the same IndexedDB database (db.js, its `cash_movement_queue` store), the same
 //// coalescing mutex and API wrapper as the offline sales and upstream's offline expenses, the same trigger
 //// (posSync.syncPending on the way back online), and the same server-side guarantee: each movement carries an

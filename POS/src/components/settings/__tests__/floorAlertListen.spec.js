@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The Listen button of the floor alerts in the till's settings (NeoRestau lot 1, Daniel, 01.11: « regarde comment la caisse sommelier reçoit l'info »): the same
+ * //// Neoffice — added file (no upstream equivalent). The Listen button of the floor alerts in the till's settings (NeoResto lot 1, Daniel, 01.11: « regarde comment la caisse sommelier reçoit l'info »): the same
  * //// component as the kitchen's buttons, asked for the till's own sound. It plays the sound chosen above it, at the volume of the kitchen alerts, and the press is also the touch that unlocks the browser's audio.
  * @vitest-environment jsdom
  */

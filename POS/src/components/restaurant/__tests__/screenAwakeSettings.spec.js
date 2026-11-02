@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The control of the screen's four awake settings, in the top bar of the kitchen and runner screens,
- * //// beside the size of the text (NeoRestau lot 1, task 47): keep the screen on, rest after N minutes, wake on a new ticket, let the tablet sleep after N
+ * //// beside the size of the text (NeoResto lot 1, task 47): keep the screen on, rest after N minutes, wake on a new ticket, let the tablet sleep after N
  * //// more minutes of rest, each with a one-line help. One icon button of 44 px that opens a small panel; the panel holds nothing the page keeps: it shows
  * //// the settings it is given and says what the person changed.
  * @vitest-environment jsdom

@@ -413,7 +413,7 @@ import ItemEditPanel from "@/components/restaurant/ItemEditPanel.vue"
 import MenuDesignerDialog from "@/components/restaurant/MenuDesignerDialog.vue"
 import { cardLabel } from "@/utils/cardLabel"
 
-// initialCard: the card the editor opens on (the till's settings' « Edit » of a card, NeoRestau lot 1, task 13)
+// initialCard: the card the editor opens on (the till's settings' « Edit » of a card, NeoResto lot 1, task 13)
 const props = defineProps({ modelValue: Boolean, initialCard: { type: String, default: "" } })
 const emit = defineEmits([
 	"update:modelValue",
@@ -717,7 +717,7 @@ function openDesigner() {
 	showDesigner.value = true
 }
 
-// The opening hours are the till's settings' « Hours and cards » tab (NeoRestau lot 1, task 13)
+// The opening hours are the till's settings' « Hours and cards » tab (NeoResto lot 1, task 13)
 function openScheduleSettings() {
 	show.value = false
 	emit("open-settings", "hours")

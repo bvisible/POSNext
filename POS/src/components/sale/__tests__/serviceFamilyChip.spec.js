@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The chip on a cart line that says which course the line belongs to,
- * //// and the four choices a tap on it opens (NeoRestau lot 1, service families). The same four choices are in the line's edit
+ * //// and the four choices a tap on it opens (NeoResto lot 1, service families). The same four choices are in the line's edit
  * //// dialogs. The French comes from the real catalogue (pos_next/locale/fr.po).
  * @vitest-environment jsdom
  */

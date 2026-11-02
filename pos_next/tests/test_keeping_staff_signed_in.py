@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""A till keeps its staff signed in for as long as the till says (NeoRestau lot 1, product owner, 01.11.2026).
+"""A till keeps its staff signed in for as long as the till says (NeoResto lot 1, product owner, 01.11.2026).
 
 The setting is the till's own, on its POS Settings (`keep_signed_in_days`, 0 = the site's session rule), not the site's
 System Settings. The till calls `pos_next.api.session.keep_signed_in` once its profile is known; the endpoint stamps

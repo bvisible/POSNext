@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The service family of a cart line (NeoRestau lot 1): a line takes the
+ * //// Neoffice — added file (no upstream equivalent). The service family of a cart line (NeoResto lot 1): a line takes the
  * //// family of its article's group when it is added, the waiter may give one line another until the line has left for the
  * //// kitchen, and the family rides with the line to the server. The till never walks the group tree: it is handed the
  * //// resolved family of every group once (get_group_families).
@@ -232,7 +232,7 @@ describe("the service family of a cart line", () => {
 		})
 	})
 
-	//// Neoffice — where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11): a line carries whether it left ahead of its course and when the room called it
+	//// Neoffice — where the kitchen prepares ahead (NeoResto lot 1, the service rhythm, Daniel, 01.11): a line carries whether it left ahead of its course and when the room called it
 	describe("the lines sent ahead of their course", () => {
 		it("are read back from the order of a table, with the call the room made", () => {
 			cart.replaceAllItems([

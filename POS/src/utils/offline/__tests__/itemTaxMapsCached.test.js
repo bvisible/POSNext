@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The offline item cache keeps each item's two VAT maps
- * //// (NeoRestau lot 1, task 11): `item_tax_rate`, for the till's own tax category, and `takeaway_item_tax_rate`, for a
+ * //// (NeoResto lot 1, task 11): `item_tax_rate`, for the till's own tax category, and `takeaway_item_tax_rate`, for a
  * //// takeaway order. A till offline taxes its cart with them, and a line added without them (a dish from the
  * //// restaurant's card) reads them back from this cache (useInvoice).
  * @vitest-environment jsdom

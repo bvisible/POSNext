@@ -1,7 +1,7 @@
 # //// Neoffice — added file (no upstream equivalent). The restaurant's opening hours decide which cards the till
 # //// shows; a cashier may fetch another card from the « ⋯ » of the card row (pos_next.api.restaurant), and what a
 # //// lunch card sells at dinner is the owner's call, so opening it goes through upstream's authorization gate under
-# //// an action of its own (NeoRestau lot 1, task 25). The gate is opt-in: nothing is asked until a POS Authorization
+# //// an action of its own (NeoResto lot 1, task 25). The gate is opt-in: nothing is asked until a POS Authorization
 # //// Rule names « Open a card outside its hours ».
 """« Open a card outside its hours »: a manager's approval to open, at the till, a card the opening hours keep off it.
 

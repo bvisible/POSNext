@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The public menu page (NeoRestau lot 1, task 17): what the one QR
+ * //// Neoffice — added file (no upstream equivalent). The public menu page (NeoResto lot 1, task 17): what the one QR
  * //// code on a restaurant's tables opens. It shows the restaurant's guest card to read and nothing to order; where the
  * //// restaurant does not publish its menu, whatever the reason, it says so politely and shows nothing the server said.
  * @vitest-environment jsdom

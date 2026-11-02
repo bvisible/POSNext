@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The offline copy of the floor (NeoRestau lot 1, fix round 1): the
+ * //// Neoffice — added file (no upstream equivalent). The offline copy of the floor (NeoResto lot 1, fix round 1): the
  * //// store keeps the rooms and the tables in IndexedDB so that a dining room stays usable when the counter's network
  * //// drops. IndexedDB structured-clones what it is given, and a reactive proxy cannot be cloned (DataCloneError): the
  * //// store handed it proxies, its catch swallowed the error, and the copy never got a change of status, of position, nor

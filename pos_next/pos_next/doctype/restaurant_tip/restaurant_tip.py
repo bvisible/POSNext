@@ -11,7 +11,7 @@ from pos_next.restaurant.settings import restaurant_for_profile
 
 class RestaurantTip(Document):
 	def validate(self):
-		# //// Neoffice — a tip belongs to the restaurant it was taken in (NeoRestau lot 1, task 2): the one of its
+		# //// Neoffice — a tip belongs to the restaurant it was taken in (NeoResto lot 1, task 2): the one of its
 		# //// table, else of the till that rang up its invoice, else the default restaurant (also when that till is
 		# //// not a restaurant till, as for any record that names none).
 		if self.restaurant:

@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent). The popup and the sound of the kitchen's and the runner's screens
-# //// (NeoRestau lot 1, Daniel, 01.11: « quand on commande la suite il doit y avoir un popup à la cuisine, et aussi un son
+# //// (NeoResto lot 1, Daniel, 01.11: « quand on commande la suite il doit y avoir un popup à la cuisine, et aussi un son
 # //// pour aviser […] dans les réglages de la caisse »).
 """The kitchen alerts a till sets, as the kitchen's and the runner's tablets read them.
 

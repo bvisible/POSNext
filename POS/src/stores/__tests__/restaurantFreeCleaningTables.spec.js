@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The « Free the tables being cleaned » item of the floor plan's menu
- * //// (NeoRestau lot 1, Ruling 48) frees every table of the room shown that is being cleaned, in one call to the server,
+ * //// (NeoResto lot 1, Ruling 48) frees every table of the room shown that is being cleaned, in one call to the server,
  * //// for the till's restaurant. The store sends the call and shows the tables the server freed Empty at once, without
  * //// waiting for the realtime update; the server decides which tables are freed, so the store touches only those.
  * @vitest-environment jsdom

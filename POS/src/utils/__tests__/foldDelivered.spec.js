@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). « Replier les services livrés » (NeoRestau lot 1, Daniel, 01.11): a device's choice to fold, in the cart of a table's order,
+ * //// Neoffice — added file (no upstream equivalent). « Replier les services livrés » (NeoResto lot 1, Daniel, 01.11): a device's choice to fold, in the cart of a table's order,
  * //// the courses that are all delivered. ON unless the device says otherwise; kept on the device like the kitchen's text size, and a device whose storage is missing or refuses keeps it
  * //// for the page only.
  * @vitest-environment jsdom

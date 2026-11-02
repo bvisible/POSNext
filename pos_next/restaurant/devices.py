@@ -1,4 +1,4 @@
-# //// Neoffice — added file (no upstream equivalent). The kitchen's and the runner's tablets (NeoRestau lot 1, task 16):
+# //// Neoffice — added file (no upstream equivalent). The kitchen's and the runner's tablets (NeoResto lot 1, task 16):
 # //// a manager shows a QR code at the till, the tablet scans it and opens its screen with no password typed. The tablet
 # //// signs in with an account of its own, bound to one restaurant and one screen: the kitchen (every station, or one)
 # //// or the runner. This module holds the rules: the one-time token, the device account and the guards that keep it
@@ -46,7 +46,7 @@ from frappe import _
 from frappe.utils import add_to_date, get_datetime, get_fullname, now_datetime, time_diff_in_seconds
 
 from pos_next.restaurant import scope
-from pos_next.restaurant.mode import neorestau_active
+from pos_next.restaurant.mode import neoresto_active
 
 DEVICE = "Restaurant Device"
 PAIRING = "Restaurant Device Pairing"
@@ -497,7 +497,7 @@ def screen_device(*screens: str) -> frappe._dict | None:
 
 	A device account (made here) is never handed to those gates: whatever it may have become (a desk role, a password,
 	another user type, disabled), it is refused and its sessions are ended; so is a tablet that is disconnected, bound to
-	another screen, on a site that no longer runs NeoRestau, or a session older than its last disconnection. The tablet's
+	another screen, on a site that no longer runs NeoResto, or a session older than its last disconnection. The tablet's
 	last visit is noted on its row (at most once a minute: it polls its screen).
 	"""
 	user = frappe.session.user
@@ -506,7 +506,7 @@ def screen_device(*screens: str) -> frappe._dict | None:
 	if not is_clean_device_account(user):
 		end_sessions(user, _("Tablet account changed"))
 		_refuse()
-	if not neorestau_active():
+	if not neoresto_active():
 		_refuse()
 	try:
 		device = frappe.db.get_value(
@@ -592,7 +592,7 @@ def screen_settings(restaurant: str) -> dict:
 	return {
 		"restaurant": restaurant,
 		"enable_runner": bool(frappe.db.get_value("Restaurant", restaurant, "enable_runner")),
-		# //// Neoffice — the kitchen greys the later courses by the order of the meal only where the room calls them; where the kitchen prepares ahead it does not (NeoRestau lot 1, Daniel, 01.11)
+		# //// Neoffice — the kitchen greys the later courses by the order of the meal only where the room calls them; where the kitchen prepares ahead it does not (NeoResto lot 1, Daniel, 01.11)
 		"service_rhythm": service_families.rhythm_of_restaurant(restaurant),
 		"kitchen_alerts": kitchen_alerts.kitchen_alert_settings(restaurant),
 		"opening_hours": [],
@@ -648,7 +648,7 @@ def own_screen_path() -> str:
 	A tablet installed as an app starts at the till's address (the manifest's start_url), not at the screen its pairing
 	opened: it asks which screen is its own. Only a tablet has one. `screen_device` holds the whole gate (a clean device
 	account made here, a tablet that is not disconnected, a session newer than its last disconnection, a site that runs
-	NeoRestau); anyone else, a manager and the administrator included, is refused, never answered with a screen. The address
+	NeoResto); anyone else, a manager and the administrator included, is refused, never answered with a screen. The address
 	is `screen_path`'s, the one the pairing answers with.
 	"""
 	device = screen_device(KITCHEN, RUNNER)

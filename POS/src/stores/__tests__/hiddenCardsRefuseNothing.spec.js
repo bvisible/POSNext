@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). Nothing in the till may refuse something because the card a line
- * //// came from is hidden by the opening hours (NeoRestau lot 1, task 25, as the product owner amended it on
+ * //// came from is hidden by the opening hours (NeoResto lot 1, task 25, as the product owner amended it on
  * //// 31.10.2026): a table opened at 13:00 on the noon card is still edited, sent to the kitchen, printed and PAID at
  * //// 14:30, when the hours have taken that card off the till.
  * ////

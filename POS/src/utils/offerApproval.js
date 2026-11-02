@@ -1,5 +1,5 @@
 // //// Neoffice — added file (no upstream equivalent). The manager's approval of what a ticket offers (« Offer an item »,
-// //// NeoRestau lot 1, task 24), where a rule of the authorization gate asks for it (off by default). The PIN is checked
+// //// NeoResto lot 1, task 24), where a rule of the authorization gate asks for it (off by default). The PIN is checked
 // //// by the server (request_grant), which answers a grant: a short-lived token bound to the cashier, the till and the
 // //// value approved. The till keeps the one it holds for the ticket and sends it with the payment; the server's gate
 // //// spends it on that invoice (before_submit), so it is the server that decides, whatever the till sends.

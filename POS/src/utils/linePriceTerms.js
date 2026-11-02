@@ -1,5 +1,5 @@
 //// Neoffice — added file (no upstream equivalent). The price terms of a cart line: a rate set by hand and a discount
-//// (NeoRestau lot 1, task 22, fix round 2). Units added to a line that has left for the kitchen go on a line of their
+//// (NeoResto lot 1, task 22, fix round 2). Units added to a line that has left for the kitchen go on a line of their
 //// own, and that line must bill them as the first one does: a sent line at a hand-set 25 (list price 29) took a « + » as
 //// a unit billed at 29, and a 10 % discount was lost on it. The same terms decide whether a new unit may be merged into
 //// a line that waits: only into one that bills the same way.

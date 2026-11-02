@@ -1,5 +1,5 @@
 //// Neoffice — added file (no upstream equivalent). The layout of the kitchen screen's two bands as a screen holds it
-//// (NeoRestau lot 1, task 23): the cook's pick, kept on the device; the way the tablet is held; whether the window is wide
+//// (NeoResto lot 1, task 23): the cook's pick, kept on the device; the way the tablet is held; whether the window is wide
 //// enough for two ticket columns side by side. The rules are in utils/kitchenLayout and tested there; this only wires them
 //// to the window and keeps them alive for as long as the screen is.
 import { computed, onMounted, onUnmounted, ref } from "vue"

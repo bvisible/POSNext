@@ -1,4 +1,4 @@
-# //// Neoffice — added file (no upstream equivalent). The short code of a room on a kitchen ticket (NeoRestau lot 1, task 38b,
+# //// Neoffice — added file (no upstream equivalent). The short code of a room on a kitchen ticket (NeoResto lot 1, task 38b,
 # //// rulings 124 and 126). A kitchen can feed several rooms, so the room opens the line of a ticket as a small chip, then the
 # //// table: « S01 · Table 15 · 0007 ». The code of a room is its `short_code`, and when the restaurant typed none it is
 # //// derived from the room's name by the rule below, which the client util `POS/src/utils/kitchenRoomCode.js` has too (the

@@ -325,7 +325,7 @@ const emit = defineEmits(["saved", "close"])
 const { loadMenuBadges, getBadgesByType, getBadgeIconUrl } = useBadges()
 const { showSuccess, showError } = useToast()
 const shiftStore = usePOSShiftStore()
-// What the server lets the user change (NeoRestau lot 1, task 3): the card's price, availability, badges and spice
+// What the server lets the user change (NeoResto lot 1, task 3): the card's price, availability, badges and spice
 // level with the cards; the item sheet and the price list with the ERP's own rights on them
 const restaurantStore = useRestaurantStore()
 const can = computed(() => restaurantStore.can || {})

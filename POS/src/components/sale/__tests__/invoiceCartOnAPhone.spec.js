@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The cart on a phone (NeoRestau lot 1, kitchen test of 01.11): the cart tab was forced 75px wider than a
+ * //// Neoffice — added file (no upstream equivalent). The cart on a phone (NeoResto lot 1, kitchen test of 01.11): the cart tab was forced 75px wider than a
  * //// 375px screen (a 450px minimum meant for the desktop panel), a dish with no photo drew a grey square, « 1 × CHF 21.50 » repeated the line's total, and the
  * //// quantity, the subtotal and the tax took three rows. jsdom has no media queries, so the phone rules are read from the classes they ride on (`max-sm:` is
  * //// under 640px); the page's own minimum width is read from its source.

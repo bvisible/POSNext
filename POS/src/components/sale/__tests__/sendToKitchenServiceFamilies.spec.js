@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The kitchen dialog's boxes are ticked by the rhythm of the meal
- * //// (NeoRestau lot 1, service families): at a table, the drinks and the first food family present are ticked, the other food
+ * //// (NeoResto lot 1, service families): at a table, the drinks and the first food family present are ticked, the other food
  * //// is not (the dialog then holds it back); at the counter, on a takeaway and on a site that sets no family, everything is
  * //// ticked, as before. The boxes stay editable: the dialog is the waiter's escape hatch. The rule is the one the server
  * //// decides by (utils/serviceFamilies.js, tested against the same table of examples).
@@ -37,7 +37,7 @@ vi.mock("@/utils/offline", () => ({
 vi.mock("@/stores/posSettings", () => ({
 	usePOSSettingsStore: () => ({ shouldEnforceStockValidation: () => false }),
 }))
-//// Neoffice — the restaurant's service rhythm is the store's (NeoRestau lot 1, Daniel, 01.11); a test changes it
+//// Neoffice — the restaurant's service rhythm is the store's (NeoResto lot 1, Daniel, 01.11); a test changes it
 const restaurantStore = vi.hoisted(() => ({
 	stationLabel: (station) => station,
 	getStationForItem: () => null,
@@ -243,7 +243,7 @@ describe("the kitchen dialog, for the rhythm of a meal", () => {
 		})
 	})
 
-	//// Neoffice — where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11): everything is ticked, and what would have been held is sent marked ahead
+	//// Neoffice — where the kitchen prepares ahead (NeoResto lot 1, the service rhythm, Daniel, 01.11): everything is ticked, and what would have been held is sent marked ahead
 	describe("where the kitchen prepares ahead", () => {
 		beforeEach(() => {
 			restaurantStore.serviceRhythm = "Prepared ahead"

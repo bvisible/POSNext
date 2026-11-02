@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The runner's card has the anatomy of the kitchen's (NeoRestau lot 1, task 38a-2, ruling 130). A
+ * //// Neoffice — added file (no upstream equivalent). The runner's card has the anatomy of the kitchen's (NeoResto lot 1, task 38a-2, ruling 130). A
  * //// runner screen with a long ticket hid its « Mark delivered » button at the foot of the card, under the dishes, which is the one button the runner
  * //// needs. Top to bottom now: a HEADER of one line (room chip, table, number, timer: no invoice name, no « Ready » pill), the ACTION ROW directly under it
  * //// (« Deliver », « Hand over » for a takeaway, the slot of the print button), then the DISHES, which scroll inside the card.

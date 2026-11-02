@@ -1,5 +1,5 @@
 import { db, getSetting, setSetting } from "./db";
-//// Neoffice — the VAT maps are kept by till (vatMaps.js; NeoRestau lot 1, task 11).
+//// Neoffice — the VAT maps are kept by till (vatMaps.js; NeoResto lot 1, task 11).
 import { withVatMapsByTill } from "./vatMaps";
 
 // Cache items in IndexedDB

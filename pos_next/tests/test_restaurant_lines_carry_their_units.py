@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""What the till reads of the restaurant carries the units of the items (NeoRestau lot 1, task 22).
+"""What the till reads of the restaurant carries the units of the items (NeoResto lot 1, task 22).
 
 A dish added from a restaurant card opened « Edit Item Details » with « Nos » in the header and an empty unit select: the
 card read named the item and its price, not its unit, so the cart line was made without one. A cart line made from a card

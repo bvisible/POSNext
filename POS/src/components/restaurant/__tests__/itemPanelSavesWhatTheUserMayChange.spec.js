@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The item panel of the card editor saves what the user may
- * //// change, and only what changed (NeoRestau lot 1, task 3). The card's price and availability, the badges and the
+ * //// change, and only what changed (NeoResto lot 1, task 3). The card's price and availability, the badges and the
  * //// spice level the card prints, are the restaurant's; the item sheet (description, image, colour) and the price
  * //// list are the ERP's, with its own rights. A restaurant manager without the ERP's item rights still saves the rest
  * //// of the panel: until then every save began with the item sheet, which the server now refuses him.

@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The till's settings screen (NeoRestau lot 1, task 13; product
+ * //// Neoffice — added file (no upstream equivalent). The till's settings screen (NeoResto lot 1, task 13; product
  * //// owner, 30.10.2026) is drawn from the list the server sends: the tabs of the till (the restaurant's four first,
  * //// on a restaurant till only), every setting with its help behind the lightbulb, a setting greyed while its
  * //// condition is off, and ONE Save that sends what changed and nothing else. A restaurant manager gets the

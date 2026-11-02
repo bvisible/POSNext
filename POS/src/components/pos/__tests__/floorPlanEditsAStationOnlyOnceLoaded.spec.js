@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The station dialog of the floor plan saves what it read
- * //// (NeoRestau lot 1, task 9, fix round 1). When the station's details did not load, it used to open on the basic
+ * //// (NeoResto lot 1, task 9, fix round 1). When the station's details did not load, it used to open on the basic
  * //// data of the plan with empty lists and Save wrote them: the station's items, its item groups, its workflow and its
  * //// toggles were wiped. A dialog whose details did not load shows the failure, keeps Save off and sends nothing.
  * @vitest-environment jsdom

@@ -1,4 +1,4 @@
-//// Neoffice — added file (no upstream equivalent). What the kitchen screen does when the next course is ordered (NeoRestau lot 1, Daniel, 01.11: « quand on commande la suite il doit y avoir un popup à la
+//// Neoffice — added file (no upstream equivalent). What the kitchen screen does when the next course is ordered (NeoResto lot 1, Daniel, 01.11: « quand on commande la suite il doit y avoir un popup à la
 //// cuisine, et aussi un son pour aviser », then « enlever le bandeau et afficher la carte [à faire] »). The screen hands every reading of its orders to `read`; the rule that tells a next course from two readings is
 //// utils/nextCourseWatch. What is done about it follows the till's settings (POS Settings, "Kitchen alerts"; composables/useKitchenAlertSettings):
 ////

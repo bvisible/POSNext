@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The small dialog of the user's menu: "Set my till code" (the current
- * //// password, the new code, the code again) and "Remove my code" (the current password) — NeoRestau lot 1, product owner,
+ * //// password, the new code, the code again) and "Remove my code" (the current password) — NeoResto lot 1, product owner,
  * //// 01.11.2026. The server checks the password and the code; the dialog never keeps either once it is done, and never
  * //// writes them to the console.
  * @vitest-environment jsdom

@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The order of the meal on a kitchen ticket (NeoRestau lot 1, Daniel, 01.11): « on peut prendre un objet ou tous les objets concernant le groupe », « on commence évidemment
+ * //// Neoffice — added file (no upstream equivalent). The order of the meal on a kitchen ticket (NeoResto lot 1, Daniel, 01.11): « on peut prendre un objet ou tous les objets concernant le groupe », « on commence évidemment
  * //// par les entrées, on ne peut pas lancer les plats si on n'a pas fait les entrées », « quand les entrées sont finies, qu'elles sont toutes barrées, on peut réduire la partie entrée […] un chevron ». The card is mounted for real.
  * @vitest-environment jsdom
  */

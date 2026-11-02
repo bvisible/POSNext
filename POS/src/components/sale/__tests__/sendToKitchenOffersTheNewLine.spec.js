@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The kitchen dialog offers the new unit of a dish that has already
- * //// been sent, on a line of its own, and marks that line when it is sent (NeoRestau lot 1, task 22, fix round 1).
+ * //// been sent, on a line of its own, and marks that line when it is sent (NeoResto lot 1, task 22, fix round 1).
  * //// The extra unit used to be added to the line the kitchen already had: billed, never offered, never sent. And the
  * //// dialog found the line to mark by the item and its unit alone, so with two lines of the same dish (the one sent,
  * //// the one that waits) it marked the first.

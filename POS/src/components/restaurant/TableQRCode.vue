@@ -4,7 +4,7 @@
 	<!-- //// Upstream POSNext has no guest ordering. (3939a848, 2026-03-28 "QR self-ordering and -->
 	<!-- //// takeaway web ordering"; 28eff1d9 switches to v-show so the canvas is already in the -->
 	<!-- //// DOM when the code is drawn — with v-if it rendered nothing.) The QR button of a table shows this -->
-	<!-- //// dialog at once, with no question first, so it says in one line what the code is for (NeoRestau lot 1). -->
+	<!-- //// dialog at once, with no question first, so it says in one line what the code is for (NeoResto lot 1). -->
 	<!-- //// A waiter shows the code on his PHONE to the guests, who scan it: below Tailwind's `sm` the dialog is the -->
 	<!-- //// whole screen, the code as large as the width allows (never under 300 px), the table's name large, a "Close" -->
 	<!-- //// button in ink within thumb reach, no "Print", and the screen kept awake while the code is shown. On a tablet -->

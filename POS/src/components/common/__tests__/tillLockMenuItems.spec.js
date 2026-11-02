@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The user's avatar menu offers "Lock", "Set my till code" and, for a user who
- * //// has a code, "Remove my code" (NeoRestau lot 1, product owner, 01.11.2026). The entries are drawn by TillLockMenuItems, which
+ * //// has a code, "Remove my code" (NeoResto lot 1, product owner, 01.11.2026). The entries are drawn by TillLockMenuItems, which
  * //// the till's menu holds in its slot; the dialog they open lives OUTSIDE the menu, because the menu closes on every click.
  * @vitest-environment jsdom
  */

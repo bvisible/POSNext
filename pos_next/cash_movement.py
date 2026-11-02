@@ -3,7 +3,7 @@
 # //// caisse ») and the withdrawal made when a shift is closed. Both book exactly what their Journal Entry
 # //// Template declares (neoffice_theme's structure: a totalization and a counterparty account, Credit or
 # //// Debit), and the drawer's direction is read from what happens to the till's cash account, never
-# //// guessed from where that account sits in the template (NeoRestau lot 1, task 15; study
+# //// guessed from where that account sits in the template (NeoResto lot 1, task 15; study
 # //// cash-movements-study.md, defect D1). The movements are tagged on the Journal Entry with link fields
 # //// of ours (posa_cash_movement*, fixtures/custom_field.json), which the closing, the cash control report
 # //// and the Neopos register read; upstream's POS expense fields (posa_pos_opening_shift, ...) stay theirs.

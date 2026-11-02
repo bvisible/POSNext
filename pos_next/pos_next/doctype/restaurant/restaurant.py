@@ -2,7 +2,7 @@
 # //// one set of settings belong to — opening hours, tips, QR and web ordering, reservations — so that a
 # //// site can run several of them (a restaurant with a bar of its own, two places of the same owner).
 # //// Those settings used to be the site-wide single `Restaurant Settings`; the fields keep their names,
-# //// and the single is moved into a default restaurant by a patch (NeoRestau lot 1, task 1).
+# //// and the single is moved into a default restaurant by a patch (NeoResto lot 1, task 1).
 # //// Like the single before it, a restaurant PROVISIONS what tipping needs the first time tips are
 # //// enabled — a TIP service item (0% VAT template, is_internal_item so it never shows up in a
 # //// client's item list) and a transit account 2211 — because a Swiss tip is a pass-through

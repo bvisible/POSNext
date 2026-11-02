@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The till's setting « Tiles per row » (NeoRestau lot 1, task
+ * //// Neoffice — added file (no upstream equivalent). The till's setting « Tiles per row » (NeoResto lot 1, task
  * //// 13; product owner, 30.10.2026): « Automatic » keeps the grids as they always were, a number from 3 to 8 fixes
  * //// the row, and anything else is read as automatic. A till that never chose reads « Automatic ».
  * @vitest-environment jsdom
