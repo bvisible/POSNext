@@ -31,9 +31,11 @@ from pos_next.restaurant.mode import neoresto_active
 from pos_next.restaurant.scope import current_restaurant, restaurant_or_filters
 from pos_next.restaurant.settings import default_restaurant
 
-# The application, its page and its space, as the theme names them: one name, three uses
+# The application, its page and its space, as the theme names them. The page's NAME is its link, `/app/resto`, short like the other modules' (`/app/retail`, `/app/fitness`);
+# its TITLE is what the menu and the page say (Daniel, 02.11.2026: « le lien du workspace /resto et pas /neoresto »)
 APP = "neoresto"
-SPACE = WORKSPACE = TITLE = "NeoResto"
+SPACE = WORKSPACE = "Resto"
+TITLE = "NeoResto"
 # The page NeoResto follows: whoever holds it holds NeoResto (the theme's access_model.with_declared)
 FOLLOWS = "Retail"
 # Among the applications of their own: NeoAuto stands at 48, Construction at 50, Fitness at 55
@@ -397,7 +399,7 @@ def _make_the_page():
 		{
 			"doctype": "Workspace",
 			"label": WORKSPACE,
-			"title": WORKSPACE,
+			"title": TITLE,
 			"module": MODULE,
 			"public": 1,
 			"content": "[]",

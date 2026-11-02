@@ -43,7 +43,7 @@ from pos_next.tests.test_till_writes_need_the_till import _user
 EXPECTED_SPEC = {
 	"name": "neoresto",
 	"title": "NeoResto",
-	"workspaces": ["NeoResto"],
+	"workspaces": ["Resto"],
 	"follows": "Retail",
 	"gestures": ["invoice", "payment", "search"],
 	"active_by_default": 0,
@@ -183,7 +183,7 @@ class TestTheDeclaration(FrappeTestCase):
 		frappe.local.neo_declared_business_apps = None
 		declared = guard.declared_business_apps()
 		self.assertIn("neoresto", declared)
-		self.assertEqual(declared["neoresto"]["workspaces"], ["NeoResto"])
+		self.assertEqual(declared["neoresto"]["workspaces"], ["Resto"])
 		with patch.dict(frappe.conf, {"neoresto_active": 0}):
 			self.assertFalse(guard.app_switched_on("neoresto"))
 			self.assertIn("neoresto", guard.get_hidden_owning_apps())
@@ -191,8 +191,8 @@ class TestTheDeclaration(FrappeTestCase):
 			self.assertTrue(guard.app_switched_on("neoresto"))
 			self.assertNotIn("neoresto", guard.get_hidden_owning_apps())
 		# Whoever holds the point of sale holds NeoResto: the restaurant's cashier opens it from the menu
-		self.assertIn("NeoResto", access_model.with_declared({"Retail"}))
-		self.assertNotIn("NeoResto", access_model.with_declared({"Activities"}))
+		self.assertIn("Resto", access_model.with_declared({"Retail"}))
+		self.assertNotIn("Resto", access_model.with_declared({"Activities"}))
 
 	def test_a_migrate_makes_the_menu_entry_and_the_roles_once_each(self):
 		# The roles are made by the migrate already (task 3): the menu entry does not make them a second time
@@ -235,12 +235,12 @@ class TestTheTabs(FrappeTestCase):
 		self.addCleanup(flag.__exit__, None, None, None)
 
 	def space(self):
-		return {tab["key"]: tab for tab in tabs()["NeoResto"]}
+		return {tab["key"]: tab for tab in tabs()["Resto"]}
 
 	def test_the_restaurant_tabs(self):
-		space = tabs()["NeoResto"]
+		space = tabs()["Resto"]
 		self.assertEqual([t["key"] for t in space], TAB_KEYS)
-		self.assertTrue(all(t["bundle"][0] == "NeoResto" for t in space))
+		self.assertTrue(all(t["bundle"][0] == "Resto" for t in space))
 		self.assertEqual({t["key"] for t in space if t.get("essential")}, ESSENTIAL)
 
 	def test_the_space_is_the_declared_one(self):
@@ -316,11 +316,11 @@ class TestTheTabs(FrappeTestCase):
 		sales = space["sales"]
 		for field in ("archetype", "doctype", "base", "views", "figures"):
 			self.assertEqual(sales[field], invoices[field], field)
-		self.assertEqual(sales["bundle"], ["NeoResto", *invoices["bundle"]])
+		self.assertEqual(sales["bundle"], ["Resto", *invoices["bundle"]])
 		self.assertTrue(sales["essential"])
 		self.assertEqual(sales["label"], _("Sales"))
 		self.assertEqual(space["items"]["doctype"], "Item")
-		self.assertEqual(space["items"]["bundle"], ["NeoResto", *items["bundle"]])
+		self.assertEqual(space["items"]["bundle"], ["Resto", *items["bundle"]])
 		self.assertFalse(space["items"]["essential"])
 		# Borrowing copies: the theme's tabs are as they were
 		self.assertEqual(
@@ -344,9 +344,9 @@ class TestTheTabs(FrappeTestCase):
 		wt = theme_or_skip("neoffice_theme.workspace_tabs", "_code_catalogue")
 		frappe.local.neo_declared_business_apps = None
 		catalogue = wt._code_catalogue()
-		self.assertEqual([t["key"] for t in catalogue["NeoResto"]], TAB_KEYS)
+		self.assertEqual([t["key"] for t in catalogue["Resto"]], TAB_KEYS)
 		# Every list of the space opens for a reader who holds everything, the settings' groups with their entries
-		visible = {t["key"]: t for t in wt._visible_tabs("NeoResto", with_reports=False)}
+		visible = {t["key"]: t for t in wt._visible_tabs("Resto", with_reports=False)}
 		self.assertTrue(set(TAB_KEYS) - {"overview"} <= set(visible), set(visible))
 		# ... the cards with the way to the menus, which a reader of the menus is offered
 		link = wt._view_link(visible["cards"])
@@ -358,7 +358,7 @@ class TestTheTabs(FrappeTestCase):
 		self.assertEqual(panel["groups"][0]["items"][0]["route"], "/app/restaurant")
 		# A site that does not run NeoResto has no such space
 		with a_site_where_neoresto_is(0):
-			self.assertNotIn("NeoResto", wt._code_catalogue())
+			self.assertNotIn("Resto", wt._code_catalogue())
 
 	def test_the_theme_draws_the_overview_with_the_figures_and_the_door(self):
 		wt = theme_or_skip("neoffice_theme.workspace_tabs", "get_overview")
@@ -367,7 +367,7 @@ class TestTheTabs(FrappeTestCase):
 			frappe.cache().delete_value,
 			f"{wt.CACHE_PREFIX}:overview:NeoResto:{frappe.local.lang}:{frappe.session.user}",
 		)
-		overview = wt.get_overview(space="NeoResto", fresh=1)
+		overview = wt.get_overview(space="Resto", fresh=1)
 		self.assertTrue(overview["enabled"])
 		self.assertEqual(overview["action"]["route"], "/pos?mode=restaurant")
 		# The overview's row has room for three figures beside the door
@@ -470,7 +470,7 @@ class TestTheMenuEntry(FrappeTestCase):
 		)
 		self.assertEqual(
 			(page.label, page.title, page.module, page.public, page.content, page.for_user or ""),
-			(TEST_WORKSPACE, TEST_WORKSPACE, "POS Next", 1, "[]", ""),
+			(TEST_WORKSPACE, neoresto.TITLE, "POS Next", 1, "[]", ""),
 		)
 
 	def test_it_takes_the_icon_of_the_point_of_sale(self):
@@ -992,7 +992,7 @@ class TestTheOverviewFigures(Tills, FrappeTestCase):
 
 	def test_the_views_of_the_lists_split_them_the_way_the_figures_count(self):
 		self.a_service()
-		space = {tab["key"]: tab for tab in tabs()["NeoResto"]}
+		space = {tab["key"]: tab for tab in tabs()["Resto"]}
 		restaurants = ["restaurant", "in", [self.restaurant, self.other]]
 
 		def counts(key):

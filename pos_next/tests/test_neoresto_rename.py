@@ -13,6 +13,7 @@ import unittest
 from unittest.mock import patch
 
 import frappe
+from frappe.desk.utils import slug
 from frappe.tests.utils import FrappeTestCase
 
 from pos_next.patches.neoresto import rename_what_neorestau_made
@@ -22,7 +23,7 @@ from pos_next.tests.test_restaurant_mode_comes_from_the_till import ABSENT, a_si
 OLD_PAGE = "_Test NeoRestau"
 OLD_APP = "_test_neorestau"
 OLD_TITLE = "_Test NeoRestau title"
-NEW_PAGE = "_Test NeoResto"
+NEW_PAGE = "_Test Resto"
 NEW_APP = "_test_neoresto"
 NEW_TITLE = "_Test NeoResto title"
 ROLE = "System Manager"
@@ -92,11 +93,30 @@ class TestTheNamesTheSiteHolds(FrappeTestCase):
 		self.assertFalse(frappe.db.exists("Workspace", OLD_PAGE))
 		self.assertFalse(frappe.db.exists("App Customization", OLD_APP))
 		page = frappe.get_doc("Workspace", NEW_PAGE)
-		self.assertEqual((page.label, page.title), (NEW_PAGE, NEW_PAGE))
+		# The page's name is its link; its title is the product's
+		self.assertEqual((page.label, page.title), (NEW_PAGE, NEW_TITLE))
 		self.assertEqual([row.role for row in page.roles], [ROLE])
 		entry = frappe.get_doc("App Customization", NEW_APP)
 		self.assertEqual((entry.app_name, entry.app_title), (NEW_APP, NEW_TITLE))
 		self.assertEqual([row.workspace_name for row in entry.workspaces], [NEW_PAGE])
+		# The link of the entry follows the page's new name: `/app/resto`, not `/app/neoresto`
+		self.assertEqual(entry.app_route, f"/app/{slug(NEW_PAGE)}")
+
+	def test_a_page_title_an_administrator_wrote_stays(self):
+		self.made_under_the_old_name()
+		frappe.db.set_value("Workspace", OLD_PAGE, "title", "Notre salle", update_modified=False)
+
+		self.run_patch()
+
+		self.assertEqual(frappe.db.get_value("Workspace", NEW_PAGE, "title"), "Notre salle")
+
+	def test_an_entry_that_opens_a_page_of_its_own_keeps_its_link(self):
+		self.made_under_the_old_name()
+		frappe.db.set_value("App Customization", OLD_APP, "app_route", "/pos", update_modified=False)
+
+		self.run_patch()
+
+		self.assertEqual(frappe.db.get_value("App Customization", NEW_APP, "app_route"), "/pos")
 
 	def test_the_next_setup_makes_nothing_more(self):
 		self.made_under_the_old_name()
