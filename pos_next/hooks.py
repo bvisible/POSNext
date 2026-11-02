@@ -186,6 +186,9 @@ _custom_field_names = [
 	# //// is kept. The fixture file ships them at every migrate; the names are listed here so that an export does not drop them.
 	"Item-is_restaurant_supply",
 	"Item-supply_place",
+	# //// Neoffice — the ingredients of a dish (NeoResto purchases, lot E): a reminder, never a bill of materials.
+	"Item-dish_ingredients_section",
+	"Item-dish_ingredients",
 	"Item Supplier-supply_uom",
 	# //// Neoffice — how the restaurant orders from a supplier (NeoResto purchases, lot B): by e-mail, by phone or on site.
 	"Supplier-restaurant_purchases_section",

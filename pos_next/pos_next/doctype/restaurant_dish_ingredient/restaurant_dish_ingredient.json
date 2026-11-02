@@ -1,0 +1,50 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-11-02 22:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "modified": "2026-11-02 22:00:00.000000",
+ "module": "POS Next",
+ "owner": "Administrator",
+ "states": [],
+ "name": "Restaurant Dish Ingredient",
+ "istable": 1,
+ "editable_grid": 1,
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "field_order": [
+  "item",
+  "qty_per_portion",
+  "unit_text"
+ ],
+ "fields": [
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "label": "Ingredient",
+   "options": "Item",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "An article the restaurant buys: what the dish needs."
+  },
+  {
+   "fieldname": "qty_per_portion",
+   "fieldtype": "Float",
+   "label": "Quantity per Portion",
+   "in_list_view": 1,
+   "non_negative": 1,
+   "description": "Optional, in the unit the article is counted in (kg, litre, piece). Without it, adding the dish puts the ingredient on the list without a calculation."
+  },
+  {
+   "fieldname": "unit_text",
+   "fieldtype": "Data",
+   "label": "Unit",
+   "in_list_view": 1,
+   "read_only": 1,
+   "fetch_from": "item.stock_uom",
+   "description": "The unit of the quantity: the one the article is counted in."
+  }
+ ]
+}

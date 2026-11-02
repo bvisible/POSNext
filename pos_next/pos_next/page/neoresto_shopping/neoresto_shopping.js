@@ -89,6 +89,12 @@
 		this.page.add_inner_button(__("Add a free line"), function () {
 			self.add_free();
 		});
+		this.page.add_inner_button(__("Add a dish"), function () {
+			self.add_dish();
+		});
+		this.page.add_inner_button(__("Stores round"), function () {
+			self.stores_round();
+		});
 		this.$root = $('<div class="nps"></div>').appendTo(this.page.main);
 		this.$root.on("change", ".nps-list", function () {
 			self.list = $(this).val() || null;
@@ -532,6 +538,233 @@
 			},
 		});
 		d.show();
+	};
+
+	// « I am making lasagnes »: the dish's ingredients (a reminder kept on the dish) are put on the list, worked out when the dish says how
+	// much each portion takes, one packaging each when it does not
+	NeorestoShopping.prototype.add_dish = function () {
+		var self = this;
+		var d = new frappe.ui.Dialog({
+			title: __("Add a dish"),
+			size: "large",
+			fields: [
+				{
+					fieldname: "dish",
+					fieldtype: "Link",
+					options: "Item",
+					label: __("Dish"),
+					reqd: 1,
+					get_query: function () {
+						return { filters: { is_sales_item: 1, disabled: 0 } };
+					},
+					change: function () {
+						var dish = d.get_value("dish");
+						if (!dish) return;
+						frappe
+							.call({ method: API + "get_dish_ingredients", args: { dish: dish } })
+							.then(function (r) {
+								d.set_value("ingredients", r.message || []);
+							});
+					},
+				},
+				{
+					fieldname: "portions",
+					fieldtype: "Float",
+					label: __("Portions"),
+					default: 1,
+					reqd: 1,
+				},
+				{
+					fieldname: "ingredients",
+					fieldtype: "Table",
+					label: __("Ingredients"),
+					description: __(
+						"What the dish needs, from what you buy. The quantity per portion is optional."
+					),
+					data: [],
+					fields: [
+						{
+							fieldname: "item",
+							fieldtype: "Link",
+							options: "Item",
+							label: __("Ingredient"),
+							in_list_view: 1,
+							reqd: 1,
+							get_query: function () {
+								return { filters: { is_restaurant_supply: 1, disabled: 0 } };
+							},
+						},
+						{
+							fieldname: "qty_per_portion",
+							fieldtype: "Float",
+							label: __("Quantity per portion"),
+							in_list_view: 1,
+						},
+					],
+				},
+			],
+			primary_action_label: __("Add the ingredients to the list"),
+			primary_action: function (values) {
+				var rows = (values.ingredients || []).map(function (r) {
+					return { item: r.item, qty_per_portion: r.qty_per_portion || null };
+				});
+				self.ensure_list().then(function () {
+					frappe
+						.call({
+							method: API + "set_dish_ingredients",
+							args: { dish: values.dish, ingredients: JSON.stringify(rows) },
+							freeze: true,
+						})
+						.then(function () {
+							return frappe.call({
+								method: API + "add_dish",
+								args: {
+									list_name: self.list,
+									dish: values.dish,
+									portions: values.portions,
+								},
+								freeze: true,
+							});
+						})
+						.then(function (r) {
+							d.hide();
+							var said = (r.message || [])
+								.map(function (x) {
+									return (
+										"<li>" +
+										esc(x.item_name) +
+										": " +
+										(x.calculated
+											? esc(__("{0} {1} needed", [x.needed, x.unit || ""])) +
+											  " → " +
+											  esc(x.packs) +
+											  " × " +
+											  esc(x.uom || "")
+											: esc(__("1 packaging, to complete"))) +
+										"</li>"
+									);
+								})
+								.join("");
+							frappe.msgprint({
+								title: __("Added to the list"),
+								message: "<ul>" + said + "</ul>",
+								indicator: "green",
+							});
+							self.refresh();
+						});
+				});
+			},
+		});
+		d.show();
+	};
+
+	// « Ça je commande, ça j'ai, ça c'est bon »: the regular articles one after the other, two answers each
+	NeorestoShopping.prototype.stores_round = function () {
+		var self = this;
+		var rows = [];
+		var d = new frappe.ui.Dialog({
+			title: __("Stores round"),
+			size: "large",
+			fields: [
+				{
+					fieldname: "place",
+					fieldtype: "Select",
+					label: __("Where"),
+					options: [{ value: "", label: __("All places") }],
+					change: function () {
+						draw();
+					},
+				},
+				{ fieldname: "body", fieldtype: "HTML" },
+			],
+			primary_action_label: __("Done"),
+			primary_action: function () {
+				d.hide();
+				self.refresh();
+			},
+		});
+		function draw() {
+			var place = d.get_value("place") || "";
+			var html = rows
+				.filter(function (r) {
+					return !place || (r.place || "") === place;
+				})
+				.map(function (r) {
+					var usual =
+						r.packs.filter(function (p) {
+							return p.usual;
+						})[0] ||
+						r.packs[0] ||
+						{};
+					return (
+						'<div class="nps-round" data-item="' +
+						esc(r.item) +
+						'" style="display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #F6F3ED">' +
+						'<div style="flex:1"><strong>' +
+						esc(r.item_name) +
+						"</strong>" +
+						(usual.uom
+							? '<span style="display:block;color:#6F665A;font-size:12.5px">' +
+							  esc(usual.supplier + " · " + usual.uom) +
+							  "</span>"
+							: "") +
+						"</div>" +
+						(r.answer
+							? '<span class="nps-pill done">' +
+							  esc(r.answer === "order" ? __("To order") : __("Already in stock")) +
+							  "</span>"
+							: '<button type="button" class="nps-btn" data-answer="order">' +
+							  esc(__("To order")) +
+							  "</button>" +
+							  '<button type="button" class="nps-btn" data-answer="enough">' +
+							  esc(__("I have enough")) +
+							  "</button>") +
+						"</div>"
+					);
+				})
+				.join("");
+			d.fields_dict.body.$wrapper.html(
+				html || '<div class="nps-empty">' + esc(__("No article yet.")) + "</div>"
+			);
+		}
+		d.show();
+		self.ensure_list().then(function () {
+			frappe
+				.call({ method: SUPPLIES + "get_supply_catalogue", args: {} })
+				.then(function (r) {
+					rows = (r.message && r.message.rows) || [];
+					var places = [];
+					rows.forEach(function (x) {
+						if (x.place && places.indexOf(x.place) < 0) places.push(x.place);
+					});
+					d.set_df_property(
+						"place",
+						"options",
+						[{ value: "", label: __("All places") }].concat(
+							places.map(function (x) {
+								return { value: x, label: x };
+							})
+						)
+					);
+					draw();
+				});
+		});
+		d.$wrapper.on("click", "[data-answer]", function () {
+			var $row = $(this).closest(".nps-round");
+			var item = $row.attr("data-item");
+			var answer = $(this).attr("data-answer");
+			frappe
+				.call({
+					method: API + "round_answer",
+					args: { list_name: self.list, item: item, answer: answer },
+				})
+				.then(function () {
+					rows.forEach(function (x) {
+						if (x.item === item) x.answer = answer;
+					});
+					draw();
+				});
+		});
 	};
 
 	frappe.pages["neoresto-shopping"].on_page_load = function (wrapper) {

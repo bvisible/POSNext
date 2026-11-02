@@ -234,6 +234,26 @@ def remove_line(list_name: str, row_name: str) -> None:
 	doc.save()
 
 
+def round_answer(list_name: str, item: str, answer: str) -> str:
+	"""One answer of the stores round (« I order that, I have this, that one is fine »): `order` puts the article on the list, in
+	its usual packaging; `enough` notes that it was looked at and is in stock (a state of the line, never a quantity), and puts
+	aside what was already asked for. Answers the line's name."""
+	if answer not in ("order", "enough"):
+		frappe.throw(_("{0} is not an answer of the stores round.").format(answer))
+	if answer == "order":
+		return add_article_line(list_name, item, 1, origin="Stores round")
+	doc = _list(list_name)
+	asked = [row for row in doc.lines if row.item == item and row.line_state not in ("Bought",)]
+	if not asked:
+		row = add_article_line(list_name, item, 1, origin="Stores round")
+		set_state(list_name, row, "Already in stock")
+		return row
+	for row in asked:
+		row.line_state = "Already in stock"
+	doc.save()
+	return asked[0].name
+
+
 def grouped(list_name: str) -> dict:
 	"""The list as the screen and the paper show it: one block per supplier (those without one last), each with how it is
 	ordered from, its lines and what they are worth, and the list's own estimate with the number of lines it rests on."""

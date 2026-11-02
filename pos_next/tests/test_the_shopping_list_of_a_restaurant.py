@@ -196,6 +196,34 @@ class TestTheShoppingListOfARestaurant(FrappeTestCase):
 		with self.assertRaises(frappe.PermissionError):
 			shopping.add_article_line(name, self.wine, 1)
 
+	# -- the stores round --------------------------------------------------------------------------------------------
+
+	def test_the_stores_round_orders_or_notes_there_is_enough(self):
+		name = self._new()
+		shopping.round_answer(name, self.wine, "order")
+		shopping.round_answer(name, self.salad, "enough")
+		lines = {line.item: line for line in self._lines(name)}
+		self.assertEqual((lines[self.wine].line_state, lines[self.wine].origin), ("To order", "Stores round"))
+		self.assertEqual(
+			(lines[self.salad].line_state, lines[self.salad].origin), ("Already in stock", "Stores round")
+		)
+		doc = frappe.get_doc("Restaurant Shopping List", name)
+		self.assertEqual(
+			(doc.counted_lines, doc.estimated_total), (1, 52.5), "what is in stock is in no count"
+		)
+
+	def test_enough_puts_aside_what_was_already_asked_for(self):
+		name = self._new()
+		shopping.add_article_line(name, self.wine, 2)
+		shopping.round_answer(name, self.wine, "enough")
+		(line,) = self._lines(name)
+		self.assertEqual((line.qty, line.line_state), (2, "Already in stock"))
+
+	def test_an_answer_of_the_round_is_one_of_two(self):
+		name = self._new()
+		with self.assertRaises(frappe.ValidationError):
+			shopping.round_answer(name, self.wine, "maybe")
+
 	# -- on paper ----------------------------------------------------------------------------------------------------
 
 	def test_the_list_prints_on_a_page_grouped_by_supplier(self):
