@@ -195,3 +195,18 @@ class TestTheShoppingListOfARestaurant(FrappeTestCase):
 		shopping.add_free_line(name, "napkins", 2)
 		with self.assertRaises(frappe.PermissionError):
 			shopping.add_article_line(name, self.wine, 1)
+
+	# -- on paper ----------------------------------------------------------------------------------------------------
+
+	def test_the_list_prints_on_a_page_grouped_by_supplier(self):
+		name = self._new()
+		shopping.add_article_line(name, self.wine, 2)
+		shopping.add_free_line(name, "gift wrap", 3, "rolls", MARKET)
+		row = shopping.add_article_line(name, self.salad, 1)
+		shopping.set_state(name, row, "Already in stock")
+		frappe.set_user(OWNER)
+		html = frappe.get_print("Restaurant Shopping List", name, print_format="Restaurant Shopping List")
+		for expected in (CELLAR, MARKET, "gift wrap", "_PNXT shop wine", 'class="check'):
+			self.assertIn(expected, html)
+		self.assertLess(html.index(CELLAR), html.index(MARKET), "suppliers in order")
+		self.assertIn("1 of 2", html.replace("\n", " "), "the estimate says on how many lines it rests")

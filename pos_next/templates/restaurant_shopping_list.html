@@ -1,0 +1,54 @@
+{#- //// Neoffice — added file (no upstream equivalent). The shopping list of a restaurant on A4 (NeoResto purchases, lot B): one
+    block per supplier, a box to tick, and what was taken and paid left to write. The rules are pos_next/restaurant/shopping.py; the template groups the lines itself. -#}
+{% set suppliers = [] %}
+{% for line in doc.lines %}{% if line.supplier and line.supplier not in suppliers %}{% set _ = suppliers.append(line.supplier) %}{% endif %}{% endfor %}
+{% set groups = suppliers | sort %}
+{% set currency = frappe.db.get_value("Company", doc.company, "default_currency") %}
+{% set modes = {"Email": _("By e-mail"), "Phone": _("By phone"), "On site": _("On site")} %}
+<style>
+	@page { size: A4; margin: 14mm; }
+	.npl { font-family: 'Karla', 'DejaVu Sans', Arial, sans-serif; color: #141414; font-size: 12px; }
+	.npl h1 { font-family: 'Forum', Georgia, serif; font-weight: 400; font-size: 26px; margin: 0 0 2px; }
+	.npl h2 { font-size: 15px; margin: 18px 0 2px; }
+	.npl .sub { color: #6F665A; font-size: 11px; margin: 0 0 4px; }
+	.npl .mode { font-size: 10.5px; font-weight: 600; border: 1px solid #DCD4C7; border-radius: 10px; padding: 0 7px; margin-left: 6px; }
+	.npl table { width: 100%; border-collapse: collapse; }
+	.npl td { padding: 5px 6px; border-bottom: 1px solid #ECE7DE; vertical-align: middle; }
+	.npl td.box { width: 8mm; }
+	.npl .check { display: inline-block; width: 4.5mm; height: 4.5mm; border: 1.4px solid #141414; border-radius: 1mm; }
+	.npl .check.on { background: #141414; }
+	.npl td.n { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+	.npl td.blank { color: #6F665A; white-space: nowrap; }
+	.npl tr.aside td { color: #6F665A; text-decoration: line-through; }
+	.npl .free { font-size: 10.5px; color: #6F665A; margin-left: 6px; }
+	.npl .total { margin-top: 16px; font-size: 14px; }
+</style>
+<div class="npl">
+	<h1>{{ _("Shopping list") }}</h1>
+	<p class="sub">{{ frappe.utils.formatdate(doc.list_date) }} · {{ doc.name }}</p>
+	{% for supplier in groups + [""] %}
+	{% set lines = doc.lines | selectattr("supplier", "equalto", supplier) | list if supplier else doc.lines | rejectattr("supplier") | list %}
+	{% if lines %}
+	{% set mode = (frappe.db.get_value("Supplier", supplier, "order_mode") if supplier else "") or "On site" %}
+	{% set delivery = frappe.db.get_value("Supplier", supplier, "usual_delivery") if supplier else "" %}
+	<h2>{{ supplier or _("No supplier yet") }}{% if supplier %}<span class="mode">{{ modes[mode] }}</span>{% endif %}</h2>
+	{% if delivery %}<p class="sub">{{ delivery }}</p>{% endif %}
+	<table>
+		{% for line in lines %}
+		<tr{% if line.line_state in ("Not needed", "Already in stock") %} class="aside"{% endif %}>
+			<td class="box"><span class="check{% if line.line_state in ('Bought', 'Ordered') %} on{% endif %}"></span></td>
+			<td>{{ line.item_name or line.free_text }}{% if not line.item %}<span class="free">{{ _("Free line") }}</span>{% endif %}</td>
+			<td>{{ line.qty|int if line.qty == line.qty|int else line.qty }} {{ line.uom or line.unit_text or "" }}</td>
+			<td class="n">{% if line.estimated_rate %}{{ frappe.utils.fmt_money(line.estimated_rate * line.qty, currency=currency) }}{% endif %}</td>
+			<td class="blank">{{ _("taken") }} ____ · {{ _("paid") }} ____</td>
+		</tr>
+		{% endfor %}
+	</table>
+	{% endif %}
+	{% endfor %}
+	<p class="total">
+		{% if doc.priced_lines %}{{ _("Estimated total") }} <strong>{{ frappe.utils.fmt_money(doc.estimated_total, currency=currency) }}</strong>
+		<span class="sub">{{ _("estimated on {0} of {1} lines").format(doc.priced_lines, doc.counted_lines) }}</span>
+		{% else %}<span class="sub">{{ _("No price known yet: no estimate") }}</span>{% endif %}
+	</p>
+</div>
