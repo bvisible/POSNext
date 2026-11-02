@@ -76,6 +76,18 @@ def catalogue(search=None, supplier=None, item_group=None, scope=None, limit=LIM
 	}
 
 
+def item_packs(item: str) -> list[dict]:
+	"""The packagings of ONE article, as the catalogue shows them: who sells it, in which unit, at what price (the shopping
+	list reads them to pick a packaging and a supplier for a line)."""
+	permissions.require("Item", "read", item)
+	row = frappe.get_all(
+		"Item",
+		filters={"name": item},
+		fields=["name", "item_name", "item_group", "stock_uom", "is_sales_item", "supply_place"],
+	)
+	return _with_packs(row)[0]["packs"] if row else []
+
+
 def _facets(doctype, field, filters):
 	return [
 		{"name": row[field], "count": row.n}

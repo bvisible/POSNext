@@ -40,11 +40,13 @@ class TestThePurchasesShowOnlyWhereTheSiteShowsThem(FrappeTestCase):
 		with self._flag(True), patch(NEORESTO, return_value=True), patch(SUPPLY_NEORESTO, return_value=True):
 			keys = _keys()
 			self.assertIn("purchases", keys)
+			self.assertIn("shopping", keys)
 			tab = next(t for t in neoresto.tabs()[neoresto.SPACE] if t["key"] == "purchases")
 			self.assertEqual(tab["route"], "/app/neoresto-purchases")
 			self.assertEqual(tab["requires"], ["Item"])
 		with self._flag(False), patch(NEORESTO, return_value=True), patch(SUPPLY_NEORESTO, return_value=True):
 			self.assertNotIn("purchases", _keys())
+			self.assertNotIn("shopping", _keys())
 
 	def test_the_calls_refuse_where_the_purchases_do_not_show(self):
 		with self._flag(False), patch(SUPPLY_NEORESTO, return_value=True):

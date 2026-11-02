@@ -94,6 +94,7 @@ def tabs():
 	# //// tab ships dark: where `neoresto_purchases_active` is off, the space is the one it was.
 	if supply_catalogue.purchases_active():
 		space.append(_ours(purchases_tab()))
+		space.append(_ours(shopping_tab()))
 	if items:
 		# Simple mode keeps the floor, the cards, the reservations and the sales of a restaurant's day: the items are one
 		# "Show all" away
@@ -182,6 +183,21 @@ def purchases_tab():
 		"route": "/app/neoresto-purchases",
 		"requires": ["Item"],
 		"page": "neoresto-purchases",
+	}
+
+
+def shopping_tab():
+	"""The shopping list of the restaurant: what it is going to buy, by supplier, with an estimate."""
+	from neoffice_theme.workspace_spaces.common import LINK
+
+	return {
+		"key": "shopping",
+		"label": _("Shopping list"),
+		"archetype": LINK,
+		"essential": True,
+		"route": "/app/neoresto-shopping",
+		"requires": ["Restaurant Shopping List"],
+		"page": "neoresto-shopping",
 	}
 
 

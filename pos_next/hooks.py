@@ -187,6 +187,11 @@ _custom_field_names = [
 	"Item-is_restaurant_supply",
 	"Item-supply_place",
 	"Item Supplier-supply_uom",
+	# //// Neoffice — how the restaurant orders from a supplier (NeoResto purchases, lot B): by e-mail, by phone or on site.
+	"Supplier-restaurant_purchases_section",
+	"Supplier-order_mode",
+	"Supplier-order_email",
+	"Supplier-usual_delivery",
 ]
 if not _has_native_coupon_code_field():
 	_custom_field_names.insert(3, "Sales Invoice-coupon_code")

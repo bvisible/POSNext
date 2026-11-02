@@ -1,0 +1,136 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-11-02 20:30:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "modified": "2026-11-02 20:30:00.000000",
+ "module": "POS Next",
+ "owner": "Administrator",
+ "states": [],
+ "name": "Restaurant Shopping List Line",
+ "istable": 1,
+ "editable_grid": 1,
+ "field_order": [
+  "item",
+  "free_text",
+  "item_name",
+  "qty",
+  "uom",
+  "unit_text",
+  "supplier",
+  "line_state",
+  "estimated_rate",
+  "taken_qty",
+  "paid_rate",
+  "origin",
+  "purchase_order",
+  "purchase_invoice"
+ ],
+ "fields": [
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "label": "Item",
+   "options": "Item",
+   "in_list_view": 1,
+   "description": "Empty on a free line (something that is not an article)."
+  },
+  {
+   "fieldname": "free_text",
+   "fieldtype": "Small Text",
+   "label": "Free Text",
+   "description": "What to buy when it is not an article: written as the owner says it."
+  },
+  {
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "label": "Article",
+   "fetch_from": "item.item_name",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "qty",
+   "fieldtype": "Float",
+   "label": "Quantity",
+   "default": "1",
+   "reqd": 1,
+   "in_list_view": 1,
+   "non_negative": 1
+  },
+  {
+   "fieldname": "uom",
+   "fieldtype": "Link",
+   "label": "Packaging",
+   "options": "UOM",
+   "in_list_view": 1,
+   "description": "A unit of the article: the packaging counted in. Left blank on a free line."
+  },
+  {
+   "fieldname": "unit_text",
+   "fieldtype": "Data",
+   "label": "Unit (free line)",
+   "description": "The unit of a free line, as written (rolls, pieces…)."
+  },
+  {
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "label": "Supplier",
+   "options": "Supplier",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "line_state",
+   "fieldtype": "Select",
+   "label": "State",
+   "options": "To order\nOrdered\nTo buy\nBought\nNot needed\nAlready in stock\nNot found",
+   "default": "To buy",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "estimated_rate",
+   "fieldtype": "Currency",
+   "label": "Estimated Price",
+   "read_only": 1,
+   "description": "The price of one packaging at this supplier when the line was added or its supplier changed: the last price paid, else the catalogue price. Empty when none is known."
+  },
+  {
+   "fieldname": "taken_qty",
+   "fieldtype": "Float",
+   "label": "Quantity Taken",
+   "description": "What was actually taken, when it differs from the quantity."
+  },
+  {
+   "fieldname": "paid_rate",
+   "fieldtype": "Currency",
+   "label": "Price Paid",
+   "description": "Optional: the price paid for one packaging."
+  },
+  {
+   "fieldname": "origin",
+   "fieldtype": "Select",
+   "label": "Origin",
+   "options": "Manual\nDish\nStores round",
+   "default": "Manual",
+   "read_only": 1
+  },
+  {
+   "fieldname": "purchase_order",
+   "fieldtype": "Link",
+   "label": "Purchase Order",
+   "options": "Purchase Order",
+   "read_only": 1
+  },
+  {
+   "fieldname": "purchase_invoice",
+   "fieldtype": "Link",
+   "label": "Purchase Invoice",
+   "options": "Purchase Invoice",
+   "read_only": 1
+  }
+ ],
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}
