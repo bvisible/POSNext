@@ -2656,7 +2656,8 @@ const countableCodes = computed(() => {
 function readPortions() {
 	portionsStore.refresh(countableCodes.value, cartStore.currentDraftId || null);
 }
-watch([countableCodes, () => cartStore.currentDraftId], readPortions, { immediate: true });
+//// Neoffice — the key, not the list: the list is a new array at every change of the cards, and the page asked for the same products ten times while it loaded (NeoResto lot 1, 02.11.2026)
+watch(() => `${countableCodes.value.join(",")}|${cartStore.currentDraftId || ""}`, readPortions, { immediate: true });
 let portionsDebounce = null;
 function onPortionsUpdated() {
 	clearTimeout(portionsDebounce);
