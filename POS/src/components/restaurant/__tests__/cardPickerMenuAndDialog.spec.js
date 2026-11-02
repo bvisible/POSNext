@@ -100,6 +100,30 @@ describe("the « ⋯ » at the end of the card row", () => {
 		expect(wrapper.find('[data-test="card-more"]').exists()).toBe(false)
 	})
 
+	//// Neoffice — Daniel, 02.11: he could not find the « ⋯ » (small and grey, at the far end of the row). Where the row holds no card of the hours (the afternoon between two services), the row hands it a label:
+	//// the button says what it opens, in words, and keeps its list.
+	it("says what it opens in words when the row has no card of the hours, and is the small quiet one otherwise", () => {
+		wrapper = mount(CardPickerMenu, { props: { labelled: true }, attachTo: document.body, global: { mocks: { __: globalThis.__ } } })
+		const button = wrapper.find('[data-test="card-more"]')
+
+		expect(button.text()).toBe("Open another card")
+		expect(button.classes()).toContain("h-9")
+		expect(button.classes()).not.toContain("w-8")
+		wrapper.unmount()
+
+		theMenu()
+		expect(wrapper.find('[data-test="card-more"]').text()).toBe("")
+		expect(wrapper.find('[data-test="card-more"]').classes()).toContain("w-8")
+	})
+
+	it("opens the same list when it carries the label", async () => {
+		wrapper = mount(CardPickerMenu, { props: { labelled: true }, attachTo: document.body, global: { mocks: { __: globalThis.__ } } })
+
+		await wrapper.get('[data-test="card-more"]').trigger("click")
+
+		expect(options()).toHaveLength(2)
+	})
+
 	it("is a quiet button that says what it opens, and the list is closed", () => {
 		theMenu()
 

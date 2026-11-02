@@ -8,7 +8,12 @@
 		<button
 			type="button"
 			data-test="card-more"
-			class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-gray-800 transition-colors touch-manipulation"
+			:class="[
+				'inline-flex items-center justify-center rounded-lg transition-colors touch-manipulation',
+				labelled
+					? 'h-9 gap-1.5 px-2.5 text-sm font-medium whitespace-nowrap text-gray-700 bg-gray-100 hover:bg-gray-200 dark:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700'
+					: 'w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-gray-800',
+			]"
 			aria-haspopup="menu"
 			:aria-expanded="open"
 			:aria-label="__('Open another card')"
@@ -18,6 +23,7 @@
 			<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ICON_MORE" />
 			</svg>
+			<span v-if="labelled">{{ __("Open another card") }}</span>
 		</button>
 		<div
 			v-if="open"
@@ -34,6 +40,9 @@
 import { nextTick, onBeforeUnmount, ref, watch } from "vue"
 import { useCardPicker } from "@/composables/useCardPicker"
 import CardPickerList from "./CardPickerList.vue"
+
+//// Neoffice — `labelled`: the button says what it opens in words (the row has no card of the hours)
+defineProps({ labelled: { type: Boolean, default: false } })
 
 const picker = useCardPicker()
 const { cards, available } = picker

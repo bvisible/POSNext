@@ -106,7 +106,8 @@
 				</div>
 				<slot name="trailing" />
 			</div>
-			<CardPickerMenu />
+			<!-- //// Neoffice — where the row holds no card of the hours (only the permanent one, or cards opened by hand), the « ⋯ » says in words what it opens (Daniel, 02.11: he could not find it) -->
+			<CardPickerMenu :labelled="!cards.some((card) => !card.is_permanent && !card.opened_by_hand)" />
 		</div>
 	</div>
 </template>

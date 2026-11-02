@@ -17,7 +17,8 @@ vi.hoisted(() => {
 vi.mock("../CardPickerMenu.vue", () => ({
 	default: {
 		name: "CardPickerMenu",
-		template: '<div data-test="card-more-menu-stub" />',
+		props: ["labelled"],
+		template: '<div data-test="card-more-menu-stub" :data-labelled="labelled ? \'yes\' : \'no\'" />',
 	},
 }))
 
@@ -146,6 +147,20 @@ describe("a card opened by hand", () => {
 })
 
 describe("the end of the row", () => {
+	//// Neoffice — where no card of the hours stands in the row (only the permanent one, or none), the « ⋯ » is given a label so that it is found (Daniel, 02.11)
+	it("asks the « ⋯ » to say what it opens when the row holds no card of the hours", () => {
+		theRow({ cards: [PERMANENT], selected: "Permanent items" })
+		expect(wrapper.get('[data-test="card-more-menu-stub"]').attributes("data-labelled")).toBe("yes")
+		wrapper.unmount()
+
+		theRow({ cards: [SATURDAY, PERMANENT] })
+		expect(wrapper.get('[data-test="card-more-menu-stub"]').attributes("data-labelled")).toBe("yes")
+		wrapper.unmount()
+
+		theRow({ cards: [LUNCH, PERMANENT] })
+		expect(wrapper.get('[data-test="card-more-menu-stub"]').attributes("data-labelled")).toBe("no")
+	})
+
 	it("carries the « ⋯ » that fetches another card, after the buttons", () => {
 		theRow()
 

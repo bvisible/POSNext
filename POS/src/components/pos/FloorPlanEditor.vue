@@ -1049,6 +1049,7 @@ import { openScreen } from "@/utils/openScreen"
 import TablesPhoneTop from "@/components/restaurant/TablesPhoneTop.vue"
 import TablesViewSwitch from "@/components/restaurant/TablesViewSwitch.vue"
 import { useTablesView } from "@/composables/useTablesView"
+import { openAnotherCardMenuItem } from "@/composables/useCardPicker"
 import { isFinger, useTablePress } from "@/composables/useTablePress"
 import {
 	ALL_ROOMS,
@@ -1234,6 +1235,8 @@ const menuItems = computed(() =>
 			visible: canSetTableStatus.value && shownView.value === "plan",
 			run: freeCleaningTables,
 		},
+		//// Neoffice — another card, the one the opening hours keep off the till (Daniel, 02.11: no such entry in this menu): built by the card picker, seen by every cashier where a card is hidden
+		openAnotherCardMenuItem(),
 		{
 			key: "open-a-tablet",
 			label: __("Open a tablet"),

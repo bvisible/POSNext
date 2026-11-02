@@ -496,6 +496,74 @@ describe("the « ⋯ » menu of the floor plan's line", () => {
 		})
 	})
 
+	//// Neoffice — « Open another card » (Daniel, 02.11: « sur les trois petits points du plan de salle je n'ai pas l'option de la carte »): the entry the card picker has built since task 25 was never put in the menu.
+	//// It is seen where a card is hidden by the opening hours, by every cashier, and stands after the plan's own items.
+	describe("« Open another card » (a card the hours keep off the till)", () => {
+		const CARD = { name: "Dinner", card_name: "Dinner", description: "", image: null }
+		const cardItem = () => wrapper.find('[data-test="menu-open-another-card"]')
+		const labels = () => items().map((item) => item.text())
+
+		it("is an item of the menu for a cashier who has no other right, and makes the « ⋯ » appear for it", async () => {
+			await floorPlan({ manage_floor: false, set_table_status: false, manage_settings: false }, { isEnabled: true, pickableCards: [CARD] })
+
+			expect(more().exists()).toBe(true)
+			await more().trigger("click")
+			expect(labels()).toEqual(["Open another card"])
+		})
+
+		it("is not an item when the hours hide no card, and a cashier then has no « ⋯ »", async () => {
+			await floorPlan({ manage_floor: false, set_table_status: false, manage_settings: false }, { isEnabled: true, pickableCards: [] })
+
+			expect(more().exists()).toBe(false)
+		})
+
+		it("is not an item outside restaurant mode", async () => {
+			await floorPlan({ manage_floor: true }, { isEnabled: false, pickableCards: [CARD] })
+			await more().trigger("click")
+
+			expect(cardItem().exists()).toBe(false)
+		})
+
+		it("comes after the plan's own items and before the tablets", async () => {
+			await floorPlan({ manage_floor: true, set_table_status: true, manage_settings: true }, { isEnabled: true, pickableCards: [CARD] })
+
+			expect(wrapper.vm.menuItems.map((item) => item.key)).toEqual([
+				"edit-floor-plan",
+				"free-cleaning-tables",
+				"open-another-card",
+				"open-a-tablet",
+				"open-a-smartphone",
+			])
+		})
+
+		it("appears when the hours hide a card after the plan was drawn, and goes when the card is opened", async () => {
+			await floorPlan({ manage_floor: true }, { isEnabled: true, pickableCards: [] })
+			expect(wrapper.vm.menuItems.map((item) => item.key)).toEqual(["edit-floor-plan"])
+
+			live.store.pickableCards = [CARD]
+			await flushPromises()
+			expect(wrapper.vm.menuItems.map((item) => item.key)).toEqual(["edit-floor-plan", "open-another-card"])
+
+			live.store.pickableCards = []
+			await flushPromises()
+			expect(wrapper.vm.menuItems.map((item) => item.key)).toEqual(["edit-floor-plan"])
+		})
+
+		it("closes the menu and opens the list of the cards when it is pressed", async () => {
+			const { useCardPicker } = await import("@/composables/useCardPicker")
+			await floorPlan({ manage_floor: false }, { isEnabled: true, pickableCards: [CARD] })
+			useCardPicker().closeDialog()
+
+			await more().trigger("click")
+			await cardItem().trigger("click")
+			await flushPromises()
+
+			expect(menu().exists()).toBe(false)
+			expect(useCardPicker().state.open).toBe(true)
+			useCardPicker().closeDialog()
+		})
+	})
+
 	describe("« Open a smartphone » (kitchen test, 01.11)", () => {
 		const phoneItem = () => wrapper.find('[data-test="menu-open-a-smartphone"]')
 		const dialog = () => wrapper.find('[data-test="open-phone-dialog"]')
