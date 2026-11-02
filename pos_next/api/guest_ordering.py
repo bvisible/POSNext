@@ -17,7 +17,7 @@ import frappe
 from frappe import _
 from frappe.utils import now_datetime, flt
 
-from pos_next.restaurant import permissions, portions, scope, tickets
+from pos_next.restaurant import guest_account, permissions, portions, scope, tickets
 from pos_next.restaurant.mode import require_neoresto
 from pos_next.restaurant.settings import get_restaurant_settings_for_profile
 from pos_next.restaurant.text import plain_text
@@ -104,6 +104,27 @@ def _get_or_create_invoice(token_doc):
 			return frappe.get_doc("Sales Invoice", existing)
 
 	return None
+
+
+# //// Neoffice — the customer behind a guest's phone (NeoResto lot 1, Daniel, 02.11.2026): see pos_next.restaurant.guest_account.
+def _account_of(token_doc, invoice_doc=None):
+	"""What the page reads of the customer of its session (the table's draft order decides when the till put a customer on it), or None."""
+	if invoice_doc is None:
+		invoice_doc = _get_or_create_invoice(token_doc)
+	elif invoice_doc.docstatus != 0:
+		invoice_doc = None
+	return guest_account.describe(token_doc, invoice_doc)
+
+
+def _account_is_required(settings):
+	return (settings.guest_account_mode or "Not Proposed") == "Mandatory"
+
+
+def _require_accounts_proposed(token_doc):
+	"""A restaurant that does not propose an account has no sign-in: nothing is mailed, nothing is made."""
+	mode = _get_restaurant_settings(token_doc.pos_profile).guest_account_mode or "Not Proposed"
+	if mode == "Not Proposed":
+		frappe.throw(_("Accounts are not proposed here."), frappe.PermissionError)
 
 
 def _get_timeslot_cards(settings):
@@ -375,11 +396,12 @@ def _apply_pricing_rules_to_items(invoice_doc, items):
 	return items
 
 
-def _apply_pricing_rules_to_menu(pos_profile, categories):
+def _apply_pricing_rules_to_menu(pos_profile, categories, customer=None):
 	"""Annotate menu items with discount info from pricing rules.
 
 	Calls apply_offers with the POS profile's default customer so the guest
 	menu shows discounted prices and discount badges before ordering.
+	//// Neoffice — with the customer the guest signed in as (or the till put on the table) when there is one: the rules of that customer's group apply (Daniel, 02.11.2026).
 	"""
 	# Collect all menu items across categories
 	all_items = []
@@ -398,7 +420,7 @@ def _apply_pricing_rules_to_menu(pos_profile, categories):
 		from pos_next.api.invoices import apply_offers
 
 		profile = frappe.get_cached_doc("POS Profile", pos_profile)
-		customer = profile.customer or frappe.db.get_single_value("Selling Settings", "customer") or "Guest"
+		customer = customer or profile.customer or frappe.db.get_single_value("Selling Settings", "customer") or "Guest"
 
 		invoice_data = {
 			"doctype": "Sales Invoice",
@@ -558,6 +580,8 @@ def validate_token(token):
 		"has_loyalty_program": bool(
 			scope.till_settings(token_doc.pos_profile, ["enable_loyalty_program"]).enable_loyalty_program
 		),
+		# //// Neoffice — who the session is (the customer the till put on the table, or the one a guest signed in as): None for nobody
+		"account": _account_of(token_doc),
 	}
 
 
@@ -597,7 +621,11 @@ def get_guest_menu(token):
 
 	# Apply pricing rules to menu items so guest sees discounts before ordering
 	if token_doc.pos_profile:
-		_apply_pricing_rules_to_menu(token_doc.pos_profile, all_categories)
+		# //// Neoffice — priced for the customer of the session when it has one
+		account = _account_of(token_doc)
+		_apply_pricing_rules_to_menu(
+			token_doc.pos_profile, all_categories, customer=account["customer"] if account else None
+		)
 
 	return {
 		"card": {"card_name": ", ".join(card_names), "description": "", "image": ""},
@@ -633,6 +661,11 @@ def submit_guest_order(token, items):
 	invoice_doc = _get_or_create_invoice(token_doc)
 	is_new_invoice = not invoice_doc
 
+	# //// Neoffice — a restaurant that requires an account takes no order from a session nobody is identified in (the till's customer on the table counts as identified)
+	customer_of_the_table, _source = guest_account.customer_of(token_doc, invoice_doc)
+	if _account_is_required(settings) and not customer_of_the_table:
+		frappe.throw(_("Please sign in to order."))
+
 	if is_new_invoice:
 		# Create a new draft invoice
 		if not token_doc.pos_profile:
@@ -645,7 +678,11 @@ def submit_guest_order(token, items):
 			"pos_profile": token_doc.pos_profile,
 			"company": pos_profile_doc.company,
 			"currency": pos_profile_doc.currency or frappe.defaults.get_global_default("currency"),
-			"customer": pos_profile_doc.customer or frappe.db.get_single_value("Selling Settings", "customer") or "Guest",
+			# //// Neoffice — the customer the guest signed in as, else the till's default customer
+			"customer": customer_of_the_table
+			or pos_profile_doc.customer
+			or frappe.db.get_single_value("Selling Settings", "customer")
+			or "Guest",
 			"items": [],
 		}
 		if token_doc.table:
@@ -791,7 +828,7 @@ def get_order_status(token):
 			invoice_doc = frappe.get_doc("Sales Invoice", submitted)
 
 	if not invoice_doc:
-		return {"invoice": None, "items": [], "grand_total": 0, "net_total": 0}
+		return {"invoice": None, "items": [], "grand_total": 0, "net_total": 0, "account": _account_of(token_doc)}
 
 	item_fields = ["item_code", "item_name", "qty", "rate", "amount"]
 	if frappe.db.has_column("Sales Invoice Item", "kds_status"):
@@ -859,7 +896,59 @@ def get_order_status(token):
 		"total_taxes_and_charges": tax_amount,
 		"company": invoice_doc.company or "",
 		"posting_date": str(invoice_doc.posting_date or invoice_doc.creation),
+		# //// Neoffice — who the session is: the customer of the table's order (see _account_of)
+		"account": _account_of(token_doc, invoice_doc),
 	}
+
+
+# //// Neoffice — the sign-in of the QR page (NeoResto lot 1, Daniel, 02.11.2026): a code mailed to an address proves it, the customer of
+# //// the address is the customer of the table, a new customer is made after the proof. See pos_next.restaurant.guest_account.
+@frappe.whitelist(allow_guest=True, methods=["POST"])
+def request_guest_code(token, email):
+	"""Mail a sign-in code to `email` for this session. The answer is the same whether the address belongs to a customer or not."""
+	require_neoresto()
+	token_doc = _require_valid_token(token)
+	_require_accounts_proposed(token_doc)
+	with _as_the_system():
+		return guest_account.request_code(token_doc, email)
+
+
+def _signed_in(token_doc, customer):
+	"""Bind `customer` to the session and the table's draft order; what the page reads of them."""
+	with _as_the_system():
+		invoice_doc = _get_or_create_invoice(token_doc)
+		guest_account.bind(token_doc, customer, invoice_doc)
+	if token_doc.table:
+		# The waiter's till reads it as an alert and refreshes the order of the table
+		_publish_to_the_tills("guest_signed_in", token_doc.table, {"table": token_doc.table, "customer": customer})
+	return {"status": "signed_in", "account": _account_of(token_doc)}
+
+
+@frappe.whitelist(allow_guest=True, methods=["POST"])
+def confirm_guest_code(token, email, code):
+	"""Prove `email` with the code that was mailed to it: the customer of that address is signed in, or, when the address belongs to nobody,
+	{"status": "needs_registration"} and the name is asked for (`register_guest_account`)."""
+	require_neoresto()
+	token_doc = _require_valid_token(token)
+	_require_accounts_proposed(token_doc)
+	email = guest_account.clean_email(email)
+	guest_account.check_code(token_doc, email, code)
+	customer = guest_account.customer_by_email(email)
+	if customer:
+		return _signed_in(token_doc, customer)
+	guest_account.keep_the_proof(token_doc, email)
+	return {"status": "needs_registration"}
+
+
+@frappe.whitelist(allow_guest=True, methods=["POST"])
+def register_guest_account(token, email, customer_name, mobile_no=None):
+	"""Make the customer of an address this session proved, the way the till makes one, and sign them in."""
+	require_neoresto()
+	token_doc = _require_valid_token(token)
+	_require_accounts_proposed(token_doc)
+	with _as_the_system():
+		customer = guest_account.register(token_doc, email, customer_name, mobile_no)
+	return _signed_in(token_doc, customer)
 
 
 @frappe.whitelist(allow_guest=True)

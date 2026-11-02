@@ -288,7 +288,7 @@ detail is in the sections above.
 
 | Path | Fields |
 |---|---|
-| `pos_next/pos_next/doctype/guest_order_token/guest_order_token.json` | 11: `token`, `status`, `mode`, `column_break_1`, `table`, `pos_profile`, `pos_opening`, `section_break_2`, `created_by_user`, `expires_at`, `invoice` |
+| `pos_next/pos_next/doctype/guest_order_token/guest_order_token.json` | 12: `token`, `status`, `mode`, `column_break_1`, `table`, `pos_profile`, `pos_opening`, `section_break_2`, `created_by_user`, `expires_at`, `invoice`, `customer` (the customer a guest signed in as on the QR page) |
 | `pos_next/pos_next/doctype/item_badge/item_badge.json` | 2: `menu_badge`, `badge_type` |
 | `pos_next/pos_next/doctype/menu_badge/menu_badge.json` | 8: `badge_name`, `badge_type`, `column_break_1`, `icon`, `color`, `section_break_2`, `is_active`, `description` |
 | `pos_next/pos_next/doctype/menu_design_template/menu_design_template.json` | 28: `template_name`, `style_theme`, `column_break_fonts`, `font_header`, `font_body`, `section_break_layout`, `columns`, `paper_format`, `column_break_layout2`, `custom_width_mm`, `custom_height_mm`, `price_alignment`, `section_break_display`, `show_descriptions` … |

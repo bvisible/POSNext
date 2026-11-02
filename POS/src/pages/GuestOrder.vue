@@ -71,22 +71,41 @@
 							</p>
 						</div>
 					</div>
-					<!-- Cart badge shortcut -->
-					<button
-						v-if="activeTab !== 'cart' && !isOrderLocked"
-						@click="activeTab = 'cart'"
-						class="relative p-2"
-					>
-						<svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
-						</svg>
-						<span
-							v-if="guestStore.cartItemCount > 0"
-							class="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center"
+					<!-- //// Neoffice — who the guest is, and the way to sign in (NeoResto lot 1, Daniel, 02.11.2026): the name and the points of the customer of the table, or « Sign in » when the restaurant proposes an account -->
+					<div class="flex items-center gap-1">
+						<button
+							v-if="guestStore.account"
+							class="px-2.5 py-1.5 rounded-full bg-gray-100 text-xs font-medium text-gray-700 max-w-[11rem] truncate"
+							data-test="account-chip"
+							@click="showAccount = true"
 						>
-							{{ guestStore.cartItemCount > 9 ? '9+' : guestStore.cartItemCount }}
-						</span>
-					</button>
+							{{ guestStore.account.customer_name }}<template v-if="guestStore.settings?.has_loyalty_program && guestStore.account.loyalty_program"> · {{ __('{0} pts', [guestStore.account.loyalty_points]) }}</template>
+						</button>
+						<button
+							v-else-if="guestStore.canSignIn && !isOrderLocked"
+							class="px-2.5 py-1.5 rounded-full border border-gray-300 text-xs font-medium text-gray-700"
+							data-test="sign-in"
+							@click="showAccount = true"
+						>
+							{{ __('Sign in') }}
+						</button>
+						<!-- Cart badge shortcut -->
+						<button
+							v-if="activeTab !== 'cart' && !isOrderLocked"
+							@click="activeTab = 'cart'"
+							class="relative p-2"
+						>
+							<svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+							</svg>
+							<span
+								v-if="guestStore.cartItemCount > 0"
+								class="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center"
+							>
+								{{ guestStore.cartItemCount > 9 ? '9+' : guestStore.cartItemCount }}
+							</span>
+						</button>
+					</div>
 				</div>
 			</div>
 
@@ -96,8 +115,9 @@
 				<GuestCart
 					v-show="activeTab === 'cart'"
 					@order-sent="handleOrderSent"
+					@sign-in-needed="showAccount = true"
 				/>
-				<GuestCheckout v-show="activeTab === 'pay'" />
+				<GuestCheckout v-show="activeTab === 'pay'" @sign-in="showAccount = true" />
 			</div>
 
 			<!-- Bottom Navigation -->
@@ -165,6 +185,9 @@
 			</div>
 		</template>
 
+		<!-- //// Neoffice — the sign-in of the QR page -->
+		<GuestAccountSheet v-if="showAccount && !tokenError" @close="showAccount = false" />
+
 		<!-- Order Sent Confirmation Dialog -->
 		<div v-if="showOrderSentDialog" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
 			<div class="bg-white rounded-2xl shadow-xl w-full max-w-xs p-6 text-center">
@@ -192,6 +215,7 @@ import { useTabTitle } from "@/composables/useTabTitle"
 import GuestMenuView from "@/components/guest/GuestMenuView.vue"
 import GuestCart from "@/components/guest/GuestCart.vue"
 import GuestCheckout from "@/components/guest/GuestCheckout.vue"
+import GuestAccountSheet from "@/components/guest/GuestAccountSheet.vue"
 
 const route = useRoute()
 const guestStore = useGuestOrderStore()
@@ -255,6 +279,8 @@ onUnmounted(() => {
 })
 
 const showOrderSentDialog = ref(false)
+// The sign-in sheet: opened by the chip of the header, by the Send button of a restaurant that requires an account, or by the Pay tab
+const showAccount = ref(false)
 
 function handleOrderSent() {
 	// Show confirmation popup and stay on cart

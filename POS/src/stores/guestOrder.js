@@ -15,6 +15,16 @@ import { ref, computed } from "vue"
 // Helper to make API calls to guest endpoints (no Frappe session required)
 // Guest API calls: no CSRF header needed for allow_guest=True endpoints
 // Sending an invalid/stale CSRF causes 417 errors, so we don't send one at all
+// The first message a refused call carries (Frappe packs them as a JSON list of JSON strings), without its markup
+function serverMessage(body) {
+	try {
+		const first = JSON.parse(JSON.parse(body?._server_messages || "[]")[0] || "null")
+		return String(first?.message || "").replace(/<[^>]*>/g, "").trim()
+	} catch {
+		return ""
+	}
+}
+
 async function guestFetch(method, args = {}) {
 	const response = await fetch(`/api/method/${method}`, {
 		method: "POST",
@@ -24,7 +34,8 @@ async function guestFetch(method, args = {}) {
 
 	if (!response.ok) {
 		const err = await response.json().catch(() => ({}))
-		throw new Error(err?.exc_type || err?.message || `HTTP ${response.status}`)
+		// //// Neoffice — what the server said (« Wrong code. », « Mozzarella is sold out ») and not the name of its exception class: the guest reads it on the page
+		throw new Error(serverMessage(err) || err?.exc_type || err?.message || `HTTP ${response.status}`)
 	}
 
 	const data = await response.json()
@@ -55,6 +66,9 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 	const restaurantName = ref("")
 	const invoiceName = ref("")
 	const postingDate = ref("")
+	// Who the session is: the customer the till put on the table, or the one the guest signed in as (null for nobody).
+	// //// Neoffice — the sign-in of the QR page (NeoResto lot 1, Daniel, 02.11.2026): { customer, customer_name, source, loyalty_points, loyalty_value, loyalty_program }
+	const account = ref(null)
 
 	// Getters
 	const cartTotal = computed(() => {
@@ -73,6 +87,12 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 		return orderTotal.value > 0 && paidAmount.value >= orderTotal.value
 	})
 
+	// What the restaurant decided: not proposed, optional or required
+	const accountMode = computed(() => settings.value?.guest_account_mode || "Not Proposed")
+	const canSignIn = computed(() => accountMode.value !== "Not Proposed")
+	// An account is required and nobody is identified yet: nothing can be ordered
+	const mustSignIn = computed(() => accountMode.value === "Mandatory" && !account.value)
+
 	// Actions
 	async function validateToken(tokenValue) {
 		isLoading.value = true
@@ -83,6 +103,7 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 				{ token: tokenValue },
 			)
 			token.value = tokenValue
+			account.value = result.account || null
 			tableInfo.value = result.table || null
 			settings.value = {
 				qr_order_validation: result.qr_order_validation,
@@ -193,6 +214,8 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 				"pos_next.api.guest_ordering.get_order_status",
 				{ token: token.value },
 			)
+			// The till may put a customer on the table (or take it off) while the page is open
+			if ("account" in result) account.value = result.account || null
 			orderItems.value = result.items || []
 			orderTotal.value = result.grand_total || 0
 			paidAmount.value = result.paid_amount || 0
@@ -228,6 +251,32 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 		} finally {
 			isLoading.value = false
 		}
+	}
+
+	// The sign-in: a code is mailed to the address, the code proves it, and a customer that does not exist yet is made with its name
+	async function requestCode(email) {
+		return guestFetch("pos_next.api.guest_ordering.request_guest_code", { token: token.value, email })
+	}
+
+	async function confirmCode(email, code) {
+		const result = await guestFetch("pos_next.api.guest_ordering.confirm_guest_code", {
+			token: token.value,
+			email,
+			code,
+		})
+		if (result?.account) account.value = result.account
+		return result
+	}
+
+	async function registerAccount(email, customerName, mobileNo) {
+		const result = await guestFetch("pos_next.api.guest_ordering.register_guest_account", {
+			token: token.value,
+			email,
+			customer_name: customerName,
+			mobile_no: mobileNo || null,
+		})
+		if (result?.account) account.value = result.account
+		return result
 	}
 
 	let _paymentConfirmed = false
@@ -297,6 +346,7 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 		restaurantName.value = ""
 		invoiceName.value = ""
 		postingDate.value = ""
+		account.value = null
 		_realtimeSubscribed = false
 	}
 
@@ -322,7 +372,11 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 		restaurantName,
 		invoiceName,
 		postingDate,
+		account,
 		// Getters
+		accountMode,
+		canSignIn,
+		mustSignIn,
 		cartTotal,
 		cartItemCount,
 		remainingAmount,
@@ -338,6 +392,9 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 		refreshOrderStatus,
 		createPayment,
 		confirmPayment,
+		requestCode,
+		confirmCode,
+		registerAccount,
 		subscribeToRealtime,
 		reset,
 	}

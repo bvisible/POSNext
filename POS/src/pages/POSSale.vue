@@ -1125,6 +1125,7 @@
 						:cards="restaurantStore.shownCards"
 						:stock-of="getCardItemStock"
 						:grey-out="greyOutSoldOut"
+						:counted-by="isCountedByPortions"
 						@pick="
 							(item) =>
 								item.item_type === 'Menu'

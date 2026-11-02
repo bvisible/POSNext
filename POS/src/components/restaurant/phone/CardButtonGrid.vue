@@ -16,7 +16,7 @@
 			:key="button.key"
 			type="button"
 			data-card-button
-			:disabled="button.soldOut"
+			:disabled="button.soldOut && !button.addable"
 			:class="['card-button', button.soldOut ? 'card-button--sold-out' : '']"
 			:style="button.soldOut ? null : faceOf(button)"
 			@pointerdown="gesture.down(button, $event)"
@@ -40,7 +40,7 @@
 				<s v-if="button.soldOut">{{ button.name }}</s>
 				<template v-else>{{ button.name }}</template>
 			</span>
-			<span v-if="button.soldOut" data-sold-out class="card-button__sold-out">{{ __("Sold out") }}</span>
+			<span v-if="button.soldOut" data-sold-out class="card-button__sold-out">{{ button.addable ? __("Add portions") : __("Sold out") }}</span>
 			<span v-else data-button-price class="card-button__price"
 				>{{ button.price }}<template v-if="button.detail"> · {{ button.detail }}</template></span
 			>
@@ -62,7 +62,7 @@ import { usePressGesture } from "@/composables/usePressGesture"
 import { NEUTRAL_EDGE, NEUTRAL_FACE, formatCount, softTint } from "@/utils/phoneCard"
 
 defineProps({
-	// The buttons to show: { key, entry, name, price, detail, color, count, soldOut, image }
+	// The buttons to show: { key, entry, name, price, detail, color, count, soldOut, addable, image }
 	buttons: { type: Array, default: () => [] },
 	// The till's « with pictures »: a dish's picture above its name
 	pictures: { type: Boolean, default: false },
@@ -73,9 +73,10 @@ defineProps({
 const emit = defineEmits(["tap", "press"])
 
 // A dish that cannot be sold answers nothing, whatever reaches its button (some browsers still send pointer events to a
-// disabled button)
+// disabled button). //// Neoffice — except a sold-out dish the kitchen counts by portions (`addable`): a touch on it asks for more portions
+// (NeoResto lot 1, Daniel, 02.11.2026: « la cuisine dit tu peux encore en faire 2, 3, 5 »)
 const gesture = usePressGesture({
-	onTap: (button) => button.soldOut || emit("tap", button),
+	onTap: (button) => (button.soldOut && !button.addable) || emit("tap", button),
 	onLongPress: (button) => button.soldOut || emit("press", button),
 })
 

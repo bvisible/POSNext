@@ -210,6 +210,8 @@ const props = defineProps({
 	stockOf: { type: Function, default: () => null },
 	//// Neoffice — a sold-out button is disabled only where the restaurant greys sold-out dishes out (NeoResto lot 1, Daniel, 02.11.2026); otherwise a tap takes the order and the till warns
 	greyOut: { type: Boolean, default: true },
+	//// Neoffice — whether the kitchen counts an item by portions (an entry of the card answers): a sold-out one stays touchable, the touch asks for more portions
+	countedBy: { type: Function, default: () => false },
 })
 
 const emit = defineEmits(["update:selectedCard", "back", "qr", "pick", "options", "open-order"])
@@ -262,6 +264,7 @@ const buttons = computed(() =>
 			detail: detailOf(entry),
 			count: isItem ? ordered.value.get(entry.item) || 0 : 0,
 			soldOut: props.greyOut && stock !== null && stock !== undefined && Number(stock) <= 0,
+			addable: isItem && props.greyOut && stock !== null && stock !== undefined && Number(stock) <= 0 && props.countedBy(entry),
 			image: entry.image || null,
 		}
 	}),

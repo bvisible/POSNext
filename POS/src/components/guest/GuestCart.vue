@@ -127,6 +127,9 @@
 			<div v-if="guestStore.error" class="mb-3 p-2 bg-red-50 border border-red-200 rounded-lg">
 				<p class="text-xs text-red-600">{{ guestStore.error }}</p>
 			</div>
+			<p v-if="guestStore.mustSignIn && !props.hideSendOrder" class="mb-3 text-xs text-gray-600" data-test="cart-sign-in-notice">
+				{{ __('Please sign in to order.') }}
+			</p>
 			<button
 				v-if="!props.hideSendOrder"
 				@click="handleSendOrder"
@@ -154,7 +157,7 @@ const props = defineProps({
 	},
 })
 
-const emit = defineEmits(["order-sent"])
+const emit = defineEmits(["order-sent", "sign-in-needed"])
 const guestStore = useGuestOrderStore()
 
 const cart = computed(() => guestStore.cart)
@@ -191,6 +194,11 @@ function getStatusStyle(status) {
 }
 
 async function handleSendOrder() {
+	// //// Neoffice — a restaurant that requires an account takes no order before the guest signed in: the sign-in opens instead (the server refuses it too)
+	if (guestStore.mustSignIn) {
+		emit("sign-in-needed")
+		return
+	}
 	try {
 		await guestStore.submitOrder()
 		emit("order-sent")
