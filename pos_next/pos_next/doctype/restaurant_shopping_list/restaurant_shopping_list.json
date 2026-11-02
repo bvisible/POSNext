@@ -9,8 +9,8 @@
  "owner": "Administrator",
  "states": [],
  "name": "Restaurant Shopping List",
- "autoname": "format:SHOP-{YYYY}-{MM}-{####}",
- "naming_rule": "Expression",
+ "autoname": "SHL-.YYYY.-.MM.-.####",
+ "naming_rule": "Expression (old style)",
  "field_order": [
   "list_date",
   "status",

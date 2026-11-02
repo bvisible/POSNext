@@ -21425,3 +21425,296 @@ msgstr "{0} désigne déjà {1} {2} sur l'article {3} : donnez un autre nom à c
 #, python-brace-format
 msgid "{0} is the unit the article is counted in: name the packaging differently."
 msgstr "{0} est l'unité dans laquelle l'article se compte : donnez un autre nom à l'emballage."
+
+#. Description of the 'Packaging' (Link) field in DocType 'Restaurant Shopping
+#. List Line'
+#: pos_next/pos_next/doctype/restaurant_shopping_list_line/restaurant_shopping_list_line.json:68
+msgid "A unit of the article: the packaging counted in. Left blank on a free line."
+msgstr "Une unité de l'article : l'emballage qui sert à le compter. Reste vide sur une ligne libre."
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:89
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:452
+msgid "Add a free line"
+msgstr "Ajouter une ligne libre"
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:420
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:482
+msgid "Add to the list"
+msgstr "Ajouter à la liste"
+
+#. Option for the 'State' (Select) field in DocType 'Restaurant Shopping List
+#. Line'
+#: pos_next/pos_next/doctype/restaurant_shopping_list_line/restaurant_shopping_list_line.json:87
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:60
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:302
+msgid "Already in stock"
+msgstr "Déjà en réserve"
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:510
+msgid "Buy it elsewhere"
+msgstr "Acheter ailleurs"
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:309
+msgid "Buy it elsewhere…"
+msgstr "Acheter ailleurs…"
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:68
+#: pos_next/templates/restaurant_shopping_list.html:7
+msgid "By e-mail"
+msgstr "Par e-mail"
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:68
+#: pos_next/templates/restaurant_shopping_list.html:7
+msgid "By phone"
+msgstr "Par téléphone"
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:520
+msgid "Change the supplier"
+msgstr "Changer de fournisseur"
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:191
+msgid "Choose a list"
+msgstr "Choisir une liste"
+
+#. Description of the 'Estimated Total' (Currency) field in DocType 'Restaurant
+#. Shopping List'
+#: pos_next/pos_next/doctype/restaurant_shopping_list/restaurant_shopping_list.json:81
+msgid "Counts only the lines whose price is known, and says on how many."
+msgstr "Ne compte que les lignes dont le prix est connu, et indique sur combien."
+
+#. Option for the 'Origin' (Select) field in DocType 'Restaurant Shopping List
+#. Line'
+#: pos_next/pos_next/doctype/restaurant_shopping_list_line/restaurant_shopping_list_line.json:114
+msgid "Dish"
+msgstr "Plat"
+
+#. Description of the 'Item' (Link) field in DocType 'Restaurant Shopping List
+#. Line'
+#: pos_next/pos_next/doctype/restaurant_shopping_list_line/restaurant_shopping_list_line.json:37
+msgid "Empty on a free line (something that is not an article)."
+msgstr "Reste vide sur une ligne libre (quelque chose qui n'est pas un article)."
+
+#. Label of a Link field in DocType 'Restaurant Shopping List'
+#: pos_next/pos_next/doctype/restaurant_shopping_list/restaurant_shopping_list.json:56
+msgid "Establishment"
+msgstr "Établissement"
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:225
+#: pos_next/templates/restaurant_shopping_list.html:51
+#, python-brace-format
+msgid "estimated on {0} of {1} lines"
+msgstr "estimé sur {0} lignes sur {1}"
+
+#. Label of a Currency field in DocType 'Restaurant Shopping List'
+#: pos_next/pos_next/doctype/restaurant_shopping_list/restaurant_shopping_list.json:79
+msgid "Estimated Total"
+msgstr "Total estimé"
+
+#. Label of a Small Text field in DocType 'Restaurant Shopping List Line'
+#: pos_next/pos_next/doctype/restaurant_shopping_list_line/restaurant_shopping_list_line.json:42
+msgid "Free Text"
+msgstr "Texte libre"
+
+#. Label of a Int field in DocType 'Restaurant Shopping List'
+#: pos_next/pos_next/doctype/restaurant_shopping_list/restaurant_shopping_list.json:92
+msgid "Lines Still To Buy"
+msgstr "Lignes restant à acheter"
+
+#. Label of a Int field in DocType 'Restaurant Shopping List'
+#: pos_next/pos_next/doctype/restaurant_shopping_list/restaurant_shopping_list.json:86
+msgid "Lines With a Price"
+msgstr "Lignes avec un prix"
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:289
+msgid "Mark bought"
+msgstr "Marquer acheté"
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:289
+msgid "Mark ordered"
+msgstr "Marquer commandé"
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:296
+msgid "More…"
+msgstr "Plus…"
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:213
+msgid "New list"
+msgstr "Nouvelle liste"
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:191
+msgid "No list yet"
+msgstr "Aucune liste pour l'instant"
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:400
+msgid "No packaging yet"
+msgstr "Aucun emballage pour l'instant"
+
+#: pos_next/templates/restaurant_shopping_list.html:52
+msgid "No price known yet: no estimate"
+msgstr "Aucun prix connu pour l'instant : pas d'estimation"
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:226
+msgid "no price known yet: no estimate"
+msgstr "aucun prix connu pour l'instant : pas d'estimation"
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:247
+#: pos_next/templates/restaurant_shopping_list.html:34
+msgid "No supplier yet"
+msgstr "Aucun fournisseur pour l'instant"
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:472
+msgid "Optional: rolls, pieces…"
+msgstr "Facultatif : rouleaux, pièces…"
+
+#. Description of the 'Price Paid' (Currency) field in DocType 'Restaurant
+#. Shopping List Line'
+#: pos_next/pos_next/doctype/restaurant_shopping_list_line/restaurant_shopping_list_line.json:108
+msgid "Optional: the price paid for one packaging."
+msgstr "Facultatif : le prix payé pour un emballage."
+
+#. Label of a Link field in DocType 'Restaurant Shopping List Line'
+#: pos_next/pos_next/doctype/restaurant_shopping_list_line/restaurant_shopping_list_line.json:65
+msgid "Packaging"
+msgstr "Emballage"
+
+#. Label of a Currency field in DocType 'Restaurant Shopping List Line'
+#: pos_next/pos_next/doctype/restaurant_shopping_list_line/restaurant_shopping_list_line.json:107
+msgid "Price Paid"
+msgstr "Prix payé"
+
+#. Label of a Float field in DocType 'Restaurant Shopping List Line'
+#: pos_next/pos_next/doctype/restaurant_shopping_list_line/restaurant_shopping_list_line.json:101
+msgid "Quantity Taken"
+msgstr "Quantité prise"
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:311
+msgid "Remove from the list"
+msgstr "Retirer de la liste"
+
+#. Name of a DocType
+#: pos_next/pos_next/doctype/restaurant_shopping_list/restaurant_shopping_list.json:11
+msgid "Restaurant Shopping List"
+msgstr "Liste de courses du restaurant"
+
+#. Name of a DocType
+#: pos_next/pos_next/doctype/restaurant_shopping_list_line/restaurant_shopping_list_line.json:11
+msgid "Restaurant Shopping List Line"
+msgstr "Ligne de la liste de courses du restaurant"
+
+#: pos_next/restaurant/shopping.py:50
+#, python-brace-format
+msgid "Row {0}: name an article or write what to buy."
+msgstr "Ligne {0} : indiquez un article ou écrivez ce qu'il faut acheter."
+
+#: pos_next/restaurant/shopping.py:52
+#, python-brace-format
+msgid "Row {0}: the quantity must be more than zero."
+msgstr "Ligne {0} : la quantité doit être supérieure à zéro."
+
+#: pos_next/restaurant/shopping.py:73
+msgid "Say which company the list is for."
+msgstr "Indiquez la société concernée par la liste."
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:540
+#: pos_next/restaurant/neoresto.py:195
+#: pos_next/templates/restaurant_shopping_list.html:27
+msgid "Shopping list"
+msgstr "Liste de courses"
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:459
+msgid "Something that is not an article: written as you say it."
+msgstr "Quelque chose qui n'est pas un article : écrivez-le comme vous le dites."
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:219
+msgid "Start a list, then add what you are going to buy."
+msgstr "Créez une liste, puis ajoutez ce que vous allez acheter."
+
+#. Option for the 'Origin' (Select) field in DocType 'Restaurant Shopping List
+#. Line'
+#: pos_next/pos_next/doctype/restaurant_shopping_list_line/restaurant_shopping_list_line.json:114
+msgid "Stores round"
+msgstr "Tour des réserves"
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:416
+msgid "Supplier and packaging"
+msgstr "Fournisseur et emballage"
+
+#: pos_next/restaurant/shopping.py:97
+msgid "That line is no longer on the list."
+msgstr "Cette ligne n'est plus sur la liste."
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:240
+msgid "The list is empty."
+msgstr "La liste est vide."
+
+#: pos_next/restaurant/shopping.py:90
+#, python-brace-format
+msgid "The list {0} does not exist."
+msgstr "La liste {0} n'existe pas."
+
+#. Description of the 'Estimated Price' (Currency) field in DocType 'Restaurant
+#. Shopping List Line'
+#: pos_next/pos_next/doctype/restaurant_shopping_list_line/restaurant_shopping_list_line.json:96
+msgid "The price of one packaging at this supplier when the line was added or its supplier changed: the last price paid, else the catalogue price. Empty when none is known."
+msgstr "Le prix d'un emballage chez ce fournisseur au moment où la ligne a été ajoutée ou où son fournisseur a changé : le dernier prix payé, sinon le prix du catalogue. Vide tant qu'aucun prix n'est connu."
+
+#. Description of the 'Establishment' (Link) field in DocType 'Restaurant
+#. Shopping List'
+#: pos_next/pos_next/doctype/restaurant_shopping_list/restaurant_shopping_list.json:58
+msgid "The restaurant this list is for (its cost center): several restaurants of one company each have their own list."
+msgstr "L'établissement de cette liste (son centre de coût) : plusieurs établissements d'une même société ont chacun leur liste."
+
+#. Description of the 'Unit (free line)' (Data) field in DocType 'Restaurant
+#. Shopping List Line'
+#: pos_next/pos_next/doctype/restaurant_shopping_list_line/restaurant_shopping_list_line.json
+msgid "The unit of a free line, as written (rolls, pieces…)."
+msgstr "L'unité d'une ligne libre, telle qu'écrite (rouleaux, pièces…)."
+
+#. Option for the 'State' (Select) field in DocType 'Restaurant Shopping List
+#. Line'
+#: pos_next/pos_next/doctype/restaurant_shopping_list_line/restaurant_shopping_list_line.json:87
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:57
+msgid "To buy"
+msgstr "À acheter"
+
+#. Label of a Data field in DocType 'Restaurant Shopping List Line'
+#: pos_next/pos_next/doctype/restaurant_shopping_list_line/restaurant_shopping_list_line.json:73
+msgid "Unit (free line)"
+msgstr "Unité (ligne libre)"
+
+#. Label of a Section Break field in DocType 'Restaurant Shopping List'
+#: pos_next/pos_next/doctype/restaurant_shopping_list/restaurant_shopping_list.json:63
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:457
+msgid "What to buy"
+msgstr "Ce qu'il faut acheter"
+
+#. Description of the 'Free Text' (Small Text) field in DocType 'Restaurant
+#. Shopping List Line'
+#: pos_next/pos_next/doctype/restaurant_shopping_list_line/restaurant_shopping_list_line.json:43
+msgid "What to buy when it is not an article: written as the owner says it."
+msgstr "Ce qu'il faut acheter lorsque ce n'est pas un article : tel que le restaurateur le formule."
+
+#. Description of the 'Quantity Taken' (Float) field in DocType 'Restaurant
+#. Shopping List Line'
+#: pos_next/pos_next/doctype/restaurant_shopping_list_line/restaurant_shopping_list_line.json:102
+msgid "What was actually taken, when it differs from the quantity."
+msgstr "Ce qui a réellement été pris, lorsque cela diffère de la quantité."
+
+#: pos_next/restaurant/shopping.py:174
+msgid "Write what to buy."
+msgstr "Écrivez ce qu'il faut acheter."
+
+#: pos_next/restaurant/shopping.py:213
+#, python-brace-format
+msgid "{0} is not a state of a line."
+msgstr "{0} n'est pas un état possible pour une ligne."
+
+#: pos_next/restaurant/shopping.py:111
+#, python-brace-format
+msgid "{0} is not a unit of the article {1}."
+msgstr "{0} n'est pas une unité de l'article {1}."
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:254
+#, python-brace-format
+msgid "{0} of {1} lines priced"
+msgstr "{0} lignes sur {1} avec un prix"
