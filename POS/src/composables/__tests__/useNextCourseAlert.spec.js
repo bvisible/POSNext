@@ -355,3 +355,83 @@ describe("a course held behind another", () => {
 		expect(alert.flashing.value).toEqual(["A"])
 	})
 })
+
+//// Neoffice — a kitchen may have several tablets (Daniel, 01.11: « évidemment, on peut avoir imaginé plusieurs tablettes en cuisine »): the « to do » of one is told to the server, and the others stop blinking with their next
+//// reading. A call is named by the key of the send the screen was told of; the reading says (`call_seen`) which key was taken up for the screen's station.
+describe("a call taken up on another screen of the kitchen", () => {
+	/** The key a screen gives the call of `send` on a table it already held (what it tells the server, what the server hands back). */
+	function callKey(name, send) {
+		const probe = useNextCourseAlert({ settings: ref({ ...DEFAULTS, nextCourseSound: "none" }), scrollTo: () => {} })
+		probe.read([before(name)])
+		return probe.read([send])[0].key
+	}
+
+	it("tells which call was taken up, with the key of the send it was told of", () => {
+		const onAcknowledge = vi.fn()
+		start({ options: { onAcknowledge } })
+		alert.read([before("A")])
+		const [told] = alert.read([after("A")])
+
+		alert.acknowledge("A")
+
+		expect(onAcknowledge).toHaveBeenCalledTimes(1)
+		expect(onAcknowledge).toHaveBeenCalledWith("A", told.key)
+		expect(told.key).toBe(callKey("A", after("A")))
+	})
+
+	it("tells nothing for a ticket that does not blink", () => {
+		const onAcknowledge = vi.fn()
+		start({ options: { onAcknowledge } })
+		alert.read([before("A")])
+
+		alert.acknowledge("A")
+		alert.acknowledge("nothing")
+
+		expect(onAcknowledge).not.toHaveBeenCalled()
+	})
+
+	it("stops blinking when a reading says that call was taken up elsewhere, and brings the next ticket that blinks into view", () => {
+		start()
+		alert.read([before("A"), before("B")])
+		alert.read([after("A"), after("B", LATER)])
+		expect(alert.flashing.value).toEqual(["A", "B"])
+		scrolled.length = 0
+
+		alert.read([{ ...after("A"), call_seen: callKey("A", after("A")) }, after("B", LATER)])
+
+		expect(alert.flashing.value).toEqual(["B"])
+		expect(scrolled).toEqual(["B"])
+	})
+
+	it("keeps blinking for a newer send than the one that was taken up", () => {
+		start()
+		alert.read([before("A")])
+		alert.read([after("A")])
+		alert.acknowledge("A")
+		const later = after("A", LATER, "Main")
+		alert.read([{ ...later, call_seen: callKey("A", after("A")) }])
+
+		expect(alert.flashing.value).toEqual(["A"])
+	})
+
+	it("does not blink for a call already taken up elsewhere before this screen read it", () => {
+		start()
+		alert.read([before("A")])
+
+		alert.read([{ ...after("A"), call_seen: callKey("A", after("A")) }])
+
+		expect(alert.flashing.value).toEqual([])
+	})
+
+	it("is not told twice: the reading that carries the call taken up here changes nothing", () => {
+		const onAcknowledge = vi.fn()
+		start({ options: { onAcknowledge } })
+		alert.read([before("A")])
+		alert.read([after("A")])
+		alert.acknowledge("A")
+		alert.read([{ ...after("A"), call_seen: callKey("A", after("A")) }])
+
+		expect(onAcknowledge).toHaveBeenCalledTimes(1)
+		expect(alert.flashing.value).toEqual([])
+	})
+})

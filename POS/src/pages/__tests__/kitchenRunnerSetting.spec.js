@@ -35,6 +35,7 @@ vi.mock("@/stores/restaurant", () => ({
 vi.mock("@/socket", () => ({ initSocket: () => null }))
 
 const { default: KDS } = await import("../KDS.vue")
+const { useRunnerTickets } = await import("@/composables/useRunnerTickets")
 
 const TABLES = "pos_next.api.restaurant.get_tables"
 const STATIONS_READ = "pos_next.api.restaurant.get_preparation_stations"
@@ -104,6 +105,8 @@ beforeEach(() => {
 })
 afterEach(() => {
 	opened.forEach((wrapper) => wrapper.unmount())
+	// The device's choice is one value for the page, kept between mounts: put it back
+	useRunnerTickets().setShowRunnerTickets(true)
 })
 
 // A band with no ticket is not drawn (Daniel, 01.11): what it holds is nothing
@@ -273,6 +276,70 @@ describe("with a runner", () => {
 
 		expect(chip.attributes("aria-pressed")).toBe("false")
 		expect(wrapper.find('[data-test="bands"]').exists()).toBe(true)
+	})
+})
+
+//// Neoffice — the tickets whose dishes are all with the runner stay at the end of the column; a device may leave them off its screen (Daniel, 01.11: « voire pour carrément enlever ? »), by a switch of the screen's panel
+describe("the tickets with the runner, on this device", () => {
+	const panelSwitch = (wrapper) => wrapper.find('[data-test="runner-tickets"]')
+	async function openPanel(wrapper) {
+		await wrapper.get('[data-test="awake-settings"]').trigger("click")
+		await flushPromises()
+	}
+
+	it("are kept by default, after the tickets being cooked, and the panel offers the switch, on", async () => {
+		ORDERS = [
+			ticket("RUN", [["Ready"]], { kds_status: "Ready", modified: "2026-10-30 12:00:00.000000" }),
+			ticket("COOK", [["Preparing"]], { modified: "2026-10-30 12:30:00.000000" }),
+		]
+		const wrapper = await open()
+		await openPanel(wrapper)
+
+		expect(titlesIn(wrapper, "production")).toEqual(["T-COOK", "T-RUN"])
+		expect(panelSwitch(wrapper).attributes("aria-checked")).toBe("true")
+	})
+
+	it("leave the screen when the switch is turned off, and come back when it is turned on", async () => {
+		ORDERS = [
+			ticket("RUN", [["Ready"]], { kds_status: "Ready" }),
+			ticket("COOK", [["Preparing"]]),
+		]
+		const wrapper = await open()
+		await openPanel(wrapper)
+
+		await panelSwitch(wrapper).trigger("click")
+		await flushPromises()
+		expect(titlesIn(wrapper, "production")).toEqual(["T-COOK"])
+		expect(panelSwitch(wrapper).attributes("aria-checked")).toBe("false")
+		expect(window.localStorage.getItem("pos_next_kitchen_runner_tickets")).toBe("hidden")
+		// the count of the bar follows what the screen holds
+		expect(wrapper.text()).toContain("1 order")
+
+		await panelSwitch(wrapper).trigger("click")
+		await flushPromises()
+		expect(titlesIn(wrapper, "production")).toEqual(["T-COOK", "T-RUN"])
+		expect(wrapper.text()).toContain("2 orders")
+	})
+
+	it("do not touch the dishes that wait at the pass: the chip « to deliver » still counts them", async () => {
+		ORDERS = [ticket("RUN", [["Ready"]], { kds_status: "Ready" })]
+		const wrapper = await open()
+		await openPanel(wrapper)
+
+		await panelSwitch(wrapper).trigger("click")
+		await flushPromises()
+
+		expect(titlesIn(wrapper, "production")).toEqual([])
+		expect(countOnChip(wrapper)).toBe("1")
+	})
+
+	it("have no switch where no station has a runner: nothing would ever be with it", async () => {
+		STATIONS = [station("kit", 0), station("bar", 0)]
+		ORDERS = [ticket("A", [["Preparing"]])]
+		const wrapper = await open()
+		await openPanel(wrapper)
+
+		expect(panelSwitch(wrapper).exists()).toBe(false)
 	})
 })
 

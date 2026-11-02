@@ -14,7 +14,9 @@ from frappe import _
 from frappe.utils import cint, flt
 
 # //// Neoffice — `kitchen_alerts` joined the import: the popup and the sound a till sets for the kitchen and the runner (NeoRestau lot 1, Daniel, 01.11)
+# //// Neoffice — so did `call_seen`: the call of the next course the screens of a station took up, carried by each reading of the orders (Daniel, 01.11)
 from pos_next.restaurant import (
+	call_seen,
 	devices,
 	item_units,
 	kitchen_alerts,
@@ -1111,6 +1113,9 @@ def get_kds_orders(station=None, restaurant=None):
 	# //// Neoffice — every line says its family and the color of its category (Daniel, 01.11: « séparer entrée, plat, dessert » and a
 	# //// pastel background for the categories). One read of the items and of the group tree for ALL the lines of the call.
 	service_families.stamp_lines(item for order in orders for item in order.get("items", []))
+
+	# //// Neoffice — the call of the next course that the screens of this station took up (`call_seen`): a ticket stops blinking on every tablet that shows the same thing (Daniel, 01.11)
+	call_seen.stamp(orders, station)
 
 	return orders
 

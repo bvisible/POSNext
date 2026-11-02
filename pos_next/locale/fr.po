@@ -20746,3 +20746,9 @@ msgstr "{0} à traiter"
 
 msgid "Guests scan this code to order from their phone."
 msgstr "Les convives scannent ce code pour commander depuis leur téléphone."
+
+msgid "Show the tickets with the runner"
+msgstr "Afficher les tickets chez le runner"
+
+msgid "A ticket whose dishes are all with the runner stays at the end of the column. Turned off, it leaves this screen."
+msgstr "Un ticket dont tous les plats sont chez le runner reste en fin de colonne. Désactivé, il quitte cet écran."

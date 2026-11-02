@@ -92,6 +92,8 @@ TABLET_METHODS = frozenset(
 		"pos_next.api.kitchen_events.print_kitchen_copy",
 		"pos_next.api.kitchen_events.kitchen_copy_status",
 		"pos_next.api.kitchen_events.kitchen_copy_stations",
+		# //// Neoffice — the « to do » of a blinking ticket is shared with the other screens of the kitchen (Daniel, 01.11); it checks the tablet's screen, restaurant and station itself
+		"pos_next.api.kitchen_events.acknowledge_kitchen_call",
 		"pos_next.api.restaurant_devices.redeem_pairing_code",
 		# Where its own screen is: asked by a tablet started from its home-screen icon (task 48)
 		"pos_next.api.restaurant_devices.my_screen",

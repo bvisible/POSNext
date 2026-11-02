@@ -8,7 +8,7 @@
 import frappe
 from frappe import _
 
-from pos_next.restaurant import devices, permissions, scope
+from pos_next.restaurant import call_seen, devices, permissions, scope
 
 HOOK = "pos_next_kitchen_send"
 #: print a COPY of a ticket: listener(invoice, station=None, whole_order=False, mark_copy=True) answers
@@ -158,3 +158,17 @@ def kitchen_copy_stations(screen=devices.KITCHEN, restaurant=None, station=None)
 		pluck="name",
 	)
 	return {"stations": sorted(printing.intersection(of_the_restaurant))}
+
+
+# A tap changes what the other screens show: POST only, so that a link opened on a tablet (a top-level GET carries its cookie) takes up nothing.
+@frappe.whitelist(methods=["POST"])
+def acknowledge_kitchen_call(invoice, call, station=None):
+	"""The « to do » of a blinking ticket: the screen took up `call` of order `invoice` (the key of the send it was told of, built by the
+	screen). The other screens that show the same station, or all of them, read it with their next reading of the orders (`call_seen`) and
+	stop blinking; a screen of another station keeps blinking (pos_next.restaurant.call_seen). A tablet takes up for its own station.
+	"""
+	_restaurant, station = _open_to(devices.KITCHEN, invoice, station)
+	call_seen.remember(invoice, station, call)
+	# The other screens read again at once, not at their next timed reading
+	frappe.publish_realtime("kds_update")
+	return {"seen": call}

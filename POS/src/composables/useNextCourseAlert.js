@@ -34,9 +34,10 @@ export function scrollToTicket(order) {
  *   holds?: (line: Object, lines: Object[]) => boolean,
  * }} options - `settings`: the till's kitchen alerts; `accept`: whether the screen shows an order (its room), a table it does not show is neither flashed nor rung for; `scrollTo`: brings a ticket into view;
  *   `holds`: whether a dish waits behind the course before it (the order of the meal, utils/courseOrder) and cannot be started yet: such a dish does not make its ticket blink
+ *   `onAcknowledge`: told (order, key of the call) when the cook leaves a ticket « to do », so that the page tells the server and the other screens of the kitchen stop blinking too (pos_next.api.kitchen_events.acknowledge_kitchen_call)
  * @returns {{ flashing: import("vue").Ref<string[]>, read: Function, reset: Function, acknowledge: Function }}
  */
-export function useNextCourseAlert({ settings, accept = () => true, scrollTo = scrollToTicket, holds = () => false }) {
+export function useNextCourseAlert({ settings, accept = () => true, scrollTo = scrollToTicket, holds = () => false, onAcknowledge = null }) {
 	// The orders whose tickets FLASH: a table that has ordered its next course, until the cook takes its dishes up
 	const flashing = ref([])
 	// order name -> the key of the send that was told
@@ -61,7 +62,11 @@ export function useNextCourseAlert({ settings, accept = () => true, scrollTo = s
 	/** Which of the watched tickets blink after a reading: the ones still on the screen with a dish that can be started. */
 	function updateFlashing(orders, station, { quiet = false } = {}) {
 		const byName = new Map((orders || []).map((order) => [order?.name, order]))
-		for (const name of [...watched.keys()]) if (!stillToStart(byName.get(name), station)) watched.delete(name)
+		//// Neoffice — a call another screen of the kitchen took up stops blinking here too (Daniel, 01.11): the reading says which call was taken up for this station (`call_seen`), and a newer send has another key
+		for (const name of [...watched.keys()]) {
+			const order = byName.get(name)
+			if (!stillToStart(order, station) || order?.call_seen === watched.get(name)) watched.delete(name)
+		}
 		const next = [...watched.keys()].filter((name) => canStart(byName.get(name), station))
 		const dealtWith = next.length < flashing.value.length
 		if (next.length !== flashing.value.length || next.some((name, at) => name !== flashing.value[at])) flashing.value = next
@@ -98,10 +103,13 @@ export function useNextCourseAlert({ settings, accept = () => true, scrollTo = s
 	 * a later send of the same table flashes again.
 	 */
 	function acknowledge(order) {
+		//// Neoffice — the page tells the server which call was taken up, so that the other screens of the kitchen stop blinking (Daniel, 01.11: several tablets in a kitchen)
+		const key = watched.get(order)
 		watched.delete(order)
 		flashing.value = flashing.value.filter((name) => name !== order)
 		// The tickets that blink are dealt with one after the other (Daniel, 01.11): the screen brings the next one into view, the oldest call first
 		if (flashing.value.length) scrollTo(flashing.value[0])
+		if (key !== undefined) onAcknowledge?.(order, key)
 	}
 
 	/** Begins again: the next reading is only what the following ones are compared with (the screen changed what it shows). */

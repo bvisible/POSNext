@@ -127,6 +127,32 @@ describe("the two choices of the kitchen's screen, in the same panel (Daniel, 01
 	})
 })
 
+//// Neoffice — the tickets that are with the runner, kept or left off this screen (Daniel, 01.11): drawn only where the page hands the value (the kitchen's screen, where a station has a runner)
+describe("the tickets with the runner, in the same panel", () => {
+	it("is not drawn where the page hands no value", async () => {
+		const wrapper = await openMenu({ courseOrder: true, oldestRight: false })
+
+		expect(wrapper.find('[data-test="runner-tickets"]').exists()).toBe(false)
+	})
+
+	it("shows a switch as it is, with its line of help", async () => {
+		const wrapper = await openMenu({ runnerTickets: true })
+
+		expect(wrapper.get('[data-test="runner-tickets"]').attributes("aria-checked")).toBe("true")
+		expect(wrapper.text()).toContain("Show the tickets with the runner")
+		expect(wrapper.get('[data-test="runner-tickets-help"]').text().length).toBeGreaterThan(10)
+	})
+
+	it("says what it was turned to, and keeps the panel open", async () => {
+		const wrapper = await openMenu({ runnerTickets: true })
+
+		await wrapper.get('[data-test="runner-tickets"]').trigger("click")
+
+		expect(wrapper.emitted("runner-tickets")).toEqual([[false]])
+		expect(menu(wrapper).exists()).toBe(true)
+	})
+})
+
 describe("the four settings", () => {
 	it("are listed with their name and a line of help each", async () => {
 		const wrapper = await openMenu()

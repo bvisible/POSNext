@@ -586,6 +586,26 @@ describe("the tickets that are with the runner, last in the band in preparation"
 		expect(names(production)).toEqual(["A", "R1", "DONE"])
 	})
 
+	//// Neoffice — the device may leave them off the screen (Daniel, 01.11: « voire pour carrément enlever ? »): the option is `withTheRunner`, kept by default
+	it("leaves them out when the device keeps none, and nothing else", () => {
+		const delivered = order(["Delivered"], { name: "DONE", kds_status: "Delivered", modified: "2026-10-30 12:05:00" })
+		const nextCourse = order(["Delivered"], { name: "NEXT", kds_status: "Delivered", view_state: "next-course", modified: "2026-10-30 12:12:00" })
+
+		const { production, waiting } = splitIntoBands([cooking("A", "10"), withTheRunner("R1", "15"), nextCourse, delivered], {
+			includeDelivered: true,
+			withTheRunner: false,
+		})
+
+		expect(names(production)).toEqual(["A", "NEXT", "DONE"])
+		expect(waiting).toEqual([])
+	})
+
+	it("keeps them when the option is not given", () => {
+		const { production } = splitIntoBands([cooking("A", "10"), withTheRunner("R1", "15")], { includeDelivered: true })
+
+		expect(names(production)).toEqual(["A", "R1"])
+	})
+
 	it("changes nothing for the tickets without a runner: a ticket ready for the cook to deliver keeps its place", () => {
 		const ready = order(["Ready"], { name: "READY", kds_status: "Ready", modified: "2026-10-30 12:15:00" })
 

@@ -96,6 +96,17 @@
 					<span :class="[THUMB, courseOrder ? 'translate-x-5' : 'translate-x-0']"></span>
 				</button>
 			</div>
+
+			<!-- //// Neoffice — the tickets whose dishes are all with the runner, kept at the end of the column or left off the screen (Daniel, 01.11). Drawn only where the page hands the value (the kitchen's screen, where a station has a runner) -->
+			<div v-if="runnerTickets !== undefined" class="flex items-start gap-3 border-t border-gray-200 px-2 py-1.5 dark:border-gray-600">
+				<div class="min-w-0 flex-1">
+					<div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ __("Show the tickets with the runner") }}</div>
+					<p data-test="runner-tickets-help" class="text-xs text-gray-700">{{ __("A ticket whose dishes are all with the runner stays at the end of the column. Turned off, it leaves this screen.") }}</p>
+				</div>
+				<button type="button" role="switch" data-test="runner-tickets" :class="SWITCH" :aria-checked="runnerTickets ? 'true' : 'false'" :aria-label="__('Show the tickets with the runner')" @click.stop="emit('runner-tickets', !runnerTickets)">
+					<span :class="[THUMB, runnerTickets ? 'translate-x-5' : 'translate-x-0']"></span>
+				</button>
+			</div>
 		</div>
 	</div>
 </template>
@@ -118,8 +129,10 @@ const props = defineProps({
 	courseOrder: { type: Boolean, default: undefined },
 	//// Neoffice — the side where the oldest ticket stands (useTicketSide); left out, the panel does not draw it
 	oldestRight: { type: Boolean, default: undefined },
+	//// Neoffice — whether the tickets whose dishes are all with the runner are kept on this screen (useRunnerTickets); left out, the panel does not draw it
+	runnerTickets: { type: Boolean, default: undefined },
 })
-const emit = defineEmits(["change", "course-order", "oldest-right"])
+const emit = defineEmits(["change", "course-order", "oldest-right", "runner-tickets"])
 
 const title = computed(() => __("Screen: keep on and rest"))
 

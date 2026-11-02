@@ -46,7 +46,7 @@
 			</template>
 			<!-- //// Neoffice — the awake settings of THIS device, beside the size of the text (task 47): keep the screen on, rest after N minutes, wake on a new ticket, let the tablet sleep -->
 			<template #screen>
-				<ScreenAwakeSettings :settings="awakeSettings" :wake-lock-supported="wakeLockSupported" :course-order="preparesAhead ? undefined : courseOrder" :oldest-right="oldestRight" @change="setAwakeSetting" @course-order="setCourseOrder" @oldest-right="setOldestRight" />
+				<ScreenAwakeSettings :settings="awakeSettings" :wake-lock-supported="wakeLockSupported" :course-order="preparesAhead ? undefined : courseOrder" :oldest-right="oldestRight" :runner-tickets="hasRunnerStation ? showRunnerTickets : undefined" @change="setAwakeSetting" @course-order="setCourseOrder" @oldest-right="setOldestRight" @runner-tickets="setShowRunnerTickets" />
 				<!-- //// Neoffice — the choices of the printer button of the tickets (task 44): the button, what prints, the COPY mark. Drawn where a station has a printer; with none the choices would change nothing -->
 				<PrintCopySettings v-if="hasCopyPrinters" screen="Kitchen" :settings="copySettings" @change="setCopySetting" />
 			</template>
@@ -196,6 +196,8 @@ import { useScreenAwake } from "@/composables/useScreenAwake"
 import { useCourseOrder } from "@/composables/useCourseOrder"
 //// Neoffice — and the side where the oldest ticket stands, the device's choice too (Daniel, 01.11)
 import { useTicketSide } from "@/composables/useTicketSide"
+//// Neoffice — the tickets whose dishes are all with the runner, kept at the end of the column or left off this screen (the device's choice, Daniel, 01.11)
+import { useRunnerTickets } from "@/composables/useRunnerTickets"
 //// Neoffice — the printer button of the tickets: a copy of the ticket for the pass, printed by the server (NeoRestau lot 1, task 44)
 import PrintCopySettings from "@/components/restaurant/PrintCopySettings.vue"
 import { usePrintCopy } from "@/composables/usePrintCopy"
@@ -292,6 +294,10 @@ const nextCourses = useNextCourseAlert({
 	settings: alertSettings,
 	accept: (order) => !order || inTheRoom(order),
 	holds: (line, lines) => followsTheOrderOfTheMeal(courseOrder.value, serviceRhythm.value) && isHeldByCourse(line, lines, true),
+	//// Neoffice — the « to do » of a blinking ticket is told to the server, so that the other tablets of the kitchen that show the same station stop blinking with their next reading (Daniel, 01.11: several tablets in a kitchen). Best effort: this screen has already stopped
+	onAcknowledge: (invoice, key) => {
+		call("pos_next.api.kitchen_events.acknowledge_kitchen_call", { invoice, call: key, station: selectedStation.value || undefined }).catch(() => {})
+	},
 })
 const { flashing: flashingOrders, acknowledge: acknowledgeNextCourse } = nextCourses
 const nextCourseSoundOn = computed(() => alertSettings.value.nextCourseSound !== "none")
@@ -331,7 +337,7 @@ const roomNameOf = (order) =>
 
 //// Neoffice — the tickets that blink stand first in their band, in the order they were called (Daniel, 01.11: the second one was out of sight in a long column): the cook takes them one after the other from the head
 const bands = computed(() => {
-	const split = splitIntoBands(kitchenOrders.value, { includeDelivered: showDelivered.value })
+	const split = splitIntoBands(kitchenOrders.value, { includeDelivered: showDelivered.value, withTheRunner: showRunnerTickets.value })
 	return {
 		waiting: pinFlashing(split.waiting, flashingOrders.value),
 		production: pinFlashing(split.production, flashingOrders.value),
@@ -354,7 +360,7 @@ const pageTitle = computed(() => {
 	)
 })
 const commandCount = computed(() => {
-	const held = splitIntoBands(kitchenOrders.value)
+	const held = splitIntoBands(kitchenOrders.value, { withTheRunner: showRunnerTickets.value })
 	return held.waiting.length + held.production.length
 })
 const commandCountLabel = computed(() =>
@@ -394,6 +400,7 @@ const {
 } = useScreenAwake("kitchen")
 const { courseOrder, setCourseOrder } = useCourseOrder()
 const { oldestRight, setOldestRight } = useTicketSide()
+const { showRunnerTickets, setShowRunnerTickets } = useRunnerTickets()
 //// Neoffice — the printer button of the tickets (task 44): it prints on the printer of the station the screen is opened on, and is drawn where the setting is on and that station has a printer (the server says which have one)
 const printCopy = usePrintCopy("Kitchen", { station: selectedStation, restaurant: ofTheRestaurant })
 const { settings: copySettings, hasPrinters: hasCopyPrinters, setSetting: setCopySetting } = printCopy

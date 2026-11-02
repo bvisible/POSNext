@@ -33,6 +33,7 @@ vi.mock("@/utils/alertSoundPlayer", async () => {
 })
 
 const { default: KDS } = await import("../KDS.vue")
+const { latestSendAt } = await import("@/utils/courseTimer")
 
 const STARTERS = "2026-11-01 12:00:00.000000"
 const DESSERTS = "2026-11-01 13:30:00.000000"
@@ -370,5 +371,78 @@ describe("the chip « touch the screen to enable the sound »", () => {
 		const wrapper = await open()
 
 		expect(wrapper.find('[data-test="sound-unlock"]').exists()).toBe(false)
+	})
+})
+
+//// Neoffice — a kitchen may have several tablets (Daniel, 01.11: « évidemment, on peut avoir imaginé plusieurs tablettes en cuisine »): the « To do » of one tablet is told to the server with the key of the call, the reading carries
+//// it back, and the other tablets that show the same station stop blinking
+describe("the kitchen with several tablets", () => {
+	const SEEN = "pos_next.api.kitchen_events.acknowledge_kitchen_call"
+	const keyOf = (name) => `${name}|${latestSendAt(withDesserts(name).items)}`
+	const asked = () => call.mock.calls.filter(([method]) => method === SEEN)
+
+	async function blinking() {
+		ORDERS = [starters("A")]
+		const wrapper = await open()
+		ORDERS = [withDesserts("A")]
+		await readAgain(wrapper)
+		expect(highlighted(wrapper)).toEqual(["A"])
+		return wrapper
+	}
+
+	it("tells the server which call was taken up when « To do » is pressed", async () => {
+		const wrapper = await blinking()
+
+		await wrapper.get('[data-test="ticket-todo"]').trigger("click")
+		await flushPromises()
+
+		expect(asked()).toHaveLength(1)
+		expect(asked()[0][1]).toEqual({ invoice: "A", call: keyOf("A"), station: undefined })
+	})
+
+	it("names the station the screen is opened on: another station's screen is not told", async () => {
+		ORDERS = [starters("A")]
+		const wrapper = await open("?station=kit")
+		ORDERS = [withDesserts("A")]
+		await readAgain(wrapper)
+
+		await wrapper.get('[data-test="ticket-todo"]').trigger("click")
+		await flushPromises()
+
+		expect(asked()[0][1]).toMatchObject({ invoice: "A", station: "kit" })
+	})
+
+	it("stops blinking when a reading says another screen took that call up, without telling the server again", async () => {
+		const wrapper = await blinking()
+
+		ORDERS = [withDesserts("A", { call_seen: keyOf("A") })]
+		await readAgain(wrapper)
+
+		expect(highlighted(wrapper)).toEqual([])
+		expect(asked()).toHaveLength(0)
+		expect(wrapper.findAll(".ticket").map((el) => el.attributes("data-name"))).toContain("A")
+	})
+
+	it("keeps blinking when what was taken up is an older call of the table", async () => {
+		const wrapper = await blinking()
+
+		ORDERS = [withDesserts("A", { call_seen: "A|1" })]
+		await readAgain(wrapper)
+
+		expect(highlighted(wrapper)).toEqual(["A"])
+	})
+
+	it("stops blinking here all the same when the server cannot be reached", async () => {
+		const wrapper = await blinking()
+		const served = call.getMockImplementation()
+		call.mockImplementation(async (method, params) => {
+			if (method === SEEN) throw new Error("offline")
+			return served(method, params)
+		})
+
+		await wrapper.get('[data-test="ticket-todo"]').trigger("click")
+		await flushPromises()
+
+		expect(highlighted(wrapper)).toEqual([])
 	})
 })

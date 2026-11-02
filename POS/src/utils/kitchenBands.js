@@ -139,27 +139,30 @@ export function byArrival(a, b) {
  * a status pressed) and the screen has to see it.
  *
  * @param {object[]} orders
- * @param {{ includeDelivered?: boolean }} [options] - Bring the delivered orders back, at the end of the production band,
- *   after the ones in hand (they are not part of the work: the screen dims them and does not count them)
+ * @param {{ includeDelivered?: boolean, withTheRunner?: boolean }} [options] - Bring the delivered orders back, at the end of the production band,
+ *   after the ones in hand (they are not part of the work: the screen dims them and does not count them). `withTheRunner: false` leaves off the
+ *   tickets whose dishes are all with the runner (the device's choice, utils/runnerTickets); they are kept by default.
  * @returns {{ waiting: object[], production: object[] }}
  */
-export function splitIntoBands(orders, { includeDelivered = false } = {}) {
+export function splitIntoBands(orders, { includeDelivered = false, withTheRunner = true } = {}) {
 	const waiting = []
 	const production = []
 	const delivered = []
 	for (const order of orders || []) {
 		const band = bandOf(order)
 		if (band === BAND_WAITING) waiting.push(order)
-		else if (band === BAND_PRODUCTION) production.push(order)
-		else if (includeDelivered) delivered.push(order)
+		//// Neoffice — the device may leave the tickets with the runner off the screen (Daniel, 01.11), see utils/runnerTickets
+		else if (band === BAND_PRODUCTION) {
+			if (withTheRunner || order?.view_state !== "at-the-pass") production.push(order)
+		} else if (includeDelivered) delivered.push(order)
 	}
 	//// Neoffice — a ticket whose dishes are ALL with the runner has nothing left for the kitchen: it stays on the screen but goes to the END of the band, after the tickets still being cooked (Daniel, 01.11: « la table quinze
 	//// chez le runner reste affichée entre deux plats en préparation »). The tickets stay in order of arrival among themselves.
 	const sorted = production.sort(byArrival)
-	const withTheRunner = sorted.filter((order) => order?.view_state === "at-the-pass")
+	const atThePass = sorted.filter((order) => order?.view_state === "at-the-pass")
 	return {
 		waiting: waiting.sort(byArrival),
-		production: [...sorted.filter((order) => order?.view_state !== "at-the-pass"), ...withTheRunner, ...delivered.sort(byArrival)],
+		production: [...sorted.filter((order) => order?.view_state !== "at-the-pass"), ...atThePass, ...delivered.sort(byArrival)],
 	}
 }
 
