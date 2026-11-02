@@ -11,9 +11,9 @@ from pos_next.utils import get_build_version
 def _has_native_coupon_code_field():
 	"""Check if ERPNext has a native coupon_code field on Sales Invoice (v16+)."""
 	try:
+		import importlib
 		import json
 		import os
-		import importlib
 
 		erpnext_mod = importlib.import_module("erpnext")
 		erpnext_dir = os.path.dirname(erpnext_mod.__file__)
@@ -47,7 +47,7 @@ app_license = "agpl-3.0"
 # //// app is a hard dependency: without it pos_next.api.payments has nothing to call (9ff7305f,
 # //// 2026-05-13 "Phase 3 — wire POSNext into unified Payments app").
 # //// Phase 3 — wire POSNext into unified Payments app — 9ff7305
-# The unified payments app provides the Provider × Channel × Driver layer that
+# The unified payments app provides the Provider x Channel x Driver layer that
 # POSNext uses via `pos_next.api.payments.*` (see ADR-001 in
 # `/Users/jeremy/GitHub/payments/docs/adr/ADR-001-unification-paiements.md`).
 required_apps = ["payments"]
@@ -182,6 +182,11 @@ _custom_field_names = [
 	"Sales Invoice Item-service_family",
 	# //// Neoffice — the color of an Item Group on the kitchen and runner tickets (NeoResto lot 1, Daniel's request of 01.11)
 	"Item Group-service_color",
+	# //// Neoffice — the purchases of a restaurant (NeoResto, purchases lot A): an article the restaurant buys regularly, and where it
+	# //// is kept. The fixture file ships them at every migrate; the names are listed here so that an export does not drop them.
+	"Item-is_restaurant_supply",
+	"Item-supply_place",
+	"Item Supplier-supply_uom",
 ]
 if not _has_native_coupon_code_field():
 	_custom_field_names.insert(3, "Sales Invoice-coupon_code")
@@ -304,9 +309,15 @@ doc_events = {
 		# //// f0c960ff 2026-03-21).
 		# //// Neoffice — the tills hear of an order that holds a counted product (the portions the kitchen made, NeoResto lot 1,
 		# //// Daniel, 02.11.2026), saved, cancelled or deleted, so that a sold-out dish follows the room.
-		"on_update": ["pos_next.api.restaurant.on_invoice_update", "pos_next.restaurant.portions.invoice_changed"],
+		"on_update": [
+			"pos_next.api.restaurant.on_invoice_update",
+			"pos_next.restaurant.portions.invoice_changed",
+		],
 		# //// Neoffice — a table's draft order that had been at the kitchen and is deleted is told to the kitchen's printers, which cancel it on paper
-		"on_trash": ["pos_next.restaurant.portions.invoice_changed", "pos_next.api.kitchen_events.void_on_trash"],
+		"on_trash": [
+			"pos_next.restaurant.portions.invoice_changed",
+			"pos_next.api.kitchen_events.void_on_trash",
+		],
 		# //// Neoffice — everything booked on submit except the stock event and upstream's one-time
 		# //// offer record (v2.0.0, last line) is ours: ERPNext's
 		# //// coupon usage counter (coupons moved onto the native Coupon Code — 9bc096de,
@@ -523,7 +534,6 @@ on_login = ["pos_next.restaurant.devices.guard_device_login"]
 # default_log_clearing_doctypes = {
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
-
 
 
 # Extension points consumed by POS Next, implemented by optional apps
