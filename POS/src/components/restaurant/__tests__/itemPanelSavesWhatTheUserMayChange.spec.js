@@ -65,7 +65,7 @@ async function panel(can) {
 	)
 	const wrapper = mount(ItemEditPanel, {
 		props: { itemCode: "Pasta", itemName: "Pasta", localPrice: 10, cardName: "Lunch" },
-		global: { stubs: { ImageSearchDialog: true, ItemSaveConfirmDialog: true }, mocks: { __: globalThis.__ } },
+		global: { stubs: { ImageSearchDialog: true, ItemSaveConfirmDialog: true, ItemPortionsSection: true }, mocks: { __: globalThis.__ } },
 	})
 	await flushPromises()
 	return wrapper

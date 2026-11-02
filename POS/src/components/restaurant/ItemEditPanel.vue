@@ -202,6 +202,9 @@
 				</div>
 			</div>
 
+			<!-- //// Neoffice — the portions the kitchen makes of this product (NeoResto lot 1, Daniel, 02.11.2026) -->
+			<ItemPortionsSection v-if="can.manage_cards" :item-code="itemCode" />
+
 			<!-- Production Options: for whoever manages the option groups -->
 			<div v-if="can.manage_options && originalData.all_option_groups?.length">
 				<label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{{ __('Product Options') }}</label>
@@ -299,6 +302,7 @@ import { useRestaurantStore } from "@/stores/restaurant"
 import { ITEM_COLOR_PALETTE } from "@/utils/itemColors"
 import ImageSearchDialog from "./ImageSearchDialog.vue"
 import ItemSaveConfirmDialog from "./ItemSaveConfirmDialog.vue"
+import ItemPortionsSection from "./ItemPortionsSection.vue" //// Neoffice — the portions the kitchen makes (NeoResto lot 1, Daniel, 02.11.2026)
 
 const colorPalette = ITEM_COLOR_PALETTE
 

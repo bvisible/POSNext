@@ -39,12 +39,19 @@
 							v-for="item in course.items"
 							:key="item.item"
 							@click="selectCourseItem(course.course_name, item)"
+							:disabled="greyedOut(item)"
+							:data-sold-out="soldOut(item) || null"
 							class="px-3 py-3 text-sm font-medium rounded-lg border-2 transition-all text-left"
-							:class="selectedItems[course.course_name]?.item === item.item
-								? 'border-blue-500 bg-blue-50 text-blue-700'
-								: 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'"
+							:class="[
+								selectedItems[course.course_name]?.item === item.item
+									? 'border-blue-500 bg-blue-50 text-blue-700'
+									: 'border-gray-200 bg-white text-gray-700 hover:border-gray-300',
+								greyedOut(item) ? 'opacity-50 cursor-not-allowed' : '',
+							]"
 						>
 							{{ item.item_name }}
+							<!-- //// Neoffice — a dish the kitchen has no portion of left (NeoResto lot 1, Daniel, 02.11.2026) -->
+							<span v-if="soldOut(item)" class="block text-xs font-bold text-red-600">{{ __("Sold out") }}</span>
 						</button>
 					</div>
 				</div>
@@ -75,7 +82,20 @@ import {
 	formatCurrency as formatCurrencyUtil,
 } from "@/utils/currency"
 
+const props = defineProps({
+	//// Neoffice — the portions left of a dish (null: nothing limits it) and whether a sold-out dish is refused (NeoResto lot 1, Daniel, 02.11.2026)
+	leftOf: { type: Function, default: () => null },
+	greyOut: { type: Boolean, default: true },
+})
 const emit = defineEmits(["menu-confirmed"])
+
+function soldOut(item) {
+	const left = props.leftOf(item.item)
+	return left !== null && left !== undefined && left <= 0
+}
+function greyedOut(item) {
+	return props.greyOut && soldOut(item)
+}
 
 const show = ref(false)
 const menu = ref(null)

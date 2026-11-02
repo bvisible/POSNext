@@ -4,6 +4,8 @@
 <!-- //// colours) and moved here when the number of tiles per row became a setting of the till (NeoResto lot 1, task -->
 <!-- //// 13; product owner, 30.10.2026). « Automatic » keeps the columns by the width of the screen; a number from 3 -->
 <!-- //// to 8 fixes them, and a tile without a picture then shows its name in a shorter well, once, its price whole. -->
+<!-- //// A product counted by its portions (NeoResto lot 1, Daniel, 02.11.2026) has a « + » to add portions when the kitchen can make more; -->
+<!-- //// a sold-out tile is greyed out only where the restaurant says so, and then shows « Sold out ». -->
 <template>
 	<template v-for="(group, groupIndex) in groups" :key="'g' + groupIndex">
 		<div
@@ -29,13 +31,24 @@
 				data-card-tile
 				:class="[
 					'group relative bg-white border border-gray-200 rounded-neo-md p-1.5 sm:p-2.5 touch-manipulation transition-[border-color,box-shadow] duration-100',
-					outOfStock(item)
-						? 'opacity-50 cursor-not-allowed'
+					greyedOut(item)
+						? 'opacity-50 ' + (counted(item) ? 'cursor-pointer' : 'cursor-not-allowed')
 						: 'cursor-pointer hover:border-blue-400 hover:shadow-neo-md',
 					fixed && isText(item) ? 'tile--text' : '',
 				]"
 				@click="emit('pick', item)"
 			>
+				<button
+					v-if="counted(item)"
+					type="button"
+					data-add-portions
+					:title="__('Add portions')"
+					:aria-label="__('Add portions')"
+					class="absolute -top-1.5 -start-1.5 sm:-top-2 sm:-start-2 z-20 h-6 w-6 rounded-full border-2 border-white bg-gray-900 text-white text-sm font-bold leading-none shadow-lg touch-manipulation"
+					@click.stop="emit('add-portions', item)"
+				>
+					+
+				</button>
 				<!-- Stock Badge -->
 				<div
 					v-if="stockOf(item) !== null"
@@ -50,6 +63,12 @@
 				>
 					{{ Math.floor(stockOf(item)) }}
 				</div>
+				<span
+					v-if="outOfStock(item)"
+					data-sold-out
+					class="absolute top-1/3 left-1/2 z-10 -translate-x-1/2 rounded-md bg-red-600 px-2 py-0.5 text-[10px] sm:text-xs font-bold text-white select-none whitespace-nowrap"
+					>{{ __("Sold out") }}</span
+				>
 				<div
 					:class="[
 						'relative aspect-square rounded-neo-sm mb-1.5 sm:mb-2 overflow-hidden',
@@ -125,9 +144,13 @@ const props = defineProps({
 	// The stock of an entry to show (null: no stock to show), and how a price reads
 	stockOf: { type: Function, default: () => null },
 	formatPrice: { type: Function, default: (amount) => String(amount) },
+	// Is the entry counted by its portions (the kitchen's count, not the stock's)? Such a tile has its « + »
+	countedBy: { type: Function, default: () => false },
+	// A sold-out tile is greyed out and refused (the restaurant's choice); off, it only shows it is sold out
+	greyOut: { type: Boolean, default: true },
 })
 
-const emit = defineEmits(["pick"])
+const emit = defineEmits(["pick", "add-portions"])
 
 const { getStockStatus } = useStock()
 const fixed = computed(() => fixedCount(props.tilesPerRow) !== null)
@@ -135,6 +158,14 @@ const fixed = computed(() => fixedCount(props.tilesPerRow) !== null)
 function outOfStock(item) {
 	const stock = props.stockOf(item)
 	return stock !== null && stock <= 0
+}
+
+function counted(item) {
+	return item.item_type !== "Menu" && props.countedBy(item)
+}
+
+function greyedOut(item) {
+	return props.greyOut && outOfStock(item)
 }
 
 // A dish without a picture: its name is its face

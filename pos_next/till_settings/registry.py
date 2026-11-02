@@ -317,6 +317,22 @@ SETTINGS = (
 		),
 		applies=APPLIES_RESTAURANT,
 	),
+	# //// Neoffice — what a sold-out dish does at the till (NeoResto lot 1, Daniel, 02.11: « c'est pas nous qui décidons, mais c'est le patron. Si
+	# //// on le grise ou pas »): a field of the Restaurant, so the restaurant's own choice.
+	Setting(
+		"grey_out_sold_out",
+		"service",
+		_lt("Grey out sold-out dishes"),
+		_lt(
+			"On: a dish with no portion left is greyed out at the till and cannot be added. Off: it stays available"
+			" and the till only warns that none is left. A product counted by its portions (or by its stock) is sold out"
+			" when none is left; whoever works at the till adds portions when the kitchen can make more."
+		),
+		"check",
+		doctype=RESTAURANT,
+		till=RESTAURANT_TILL,
+		applies=APPLIES_RESTAURANT,
+	),
 	# //// Neoffice — the digits of the ticket number (NeoResto lot 1, task 38b), added to the list when this task's registry
 	# //// met the field; the server holds the same 1..9 range (Restaurant._check_ticket_number_digits).
 	Setting(

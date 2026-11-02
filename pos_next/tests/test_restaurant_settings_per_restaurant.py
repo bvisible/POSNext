@@ -59,6 +59,7 @@ READ_BY_THE_TILL = {
 	"kitchen_alerts",
 	# //// Neoffice — how the courses reach the kitchen (the restaurant's service rhythm, NeoResto lot 1, Daniel, 01.11): the till plans a send and orders the next course by it
 	"service_rhythm",
+	"grey_out_sold_out",
 }
 # What only the server uses: the call answers any signed-in user, so none of it may leave
 ONLY_THE_SERVER_USES = (

@@ -39,6 +39,8 @@ RESTAURANT_ONLY_SETTINGS = (
 	"enable_public_menu",
 	# How the courses of a meal reach the kitchen: called by the room, or prepared ahead (pos_next.restaurant.service_families)
 	"service_rhythm",
+	# What a dish with no portion left does at the till: greyed out and refused (the default), or only a warning (pos_next.restaurant.portions)
+	"grey_out_sold_out",
 )
 
 

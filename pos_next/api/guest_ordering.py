@@ -17,7 +17,7 @@ import frappe
 from frappe import _
 from frappe.utils import now_datetime, flt
 
-from pos_next.restaurant import permissions, scope, tickets
+from pos_next.restaurant import permissions, portions, scope, tickets
 from pos_next.restaurant.mode import require_neoresto
 from pos_next.restaurant.settings import get_restaurant_settings_for_profile
 from pos_next.restaurant.text import plain_text
@@ -169,6 +169,7 @@ def _build_menu_from_card(card_name, warehouse=None):
 
 	categories = []
 	current_category = {"label": "", "menu_items": []}
+	counted_items = []
 
 	for ci in card_items:
 		if ci.get("disabled"):
@@ -214,9 +215,16 @@ def _build_menu_from_card(card_name, warehouse=None):
 			item_data["actual_qty"] = float(stock_qty)
 
 		current_category["menu_items"].append(item_data)
+		counted_items.append(item_data)
 
 	if current_category["menu_items"]:
 		categories.append(current_category)
+
+	# //// Neoffice — the portions the kitchen made of a product (NeoResto lot 1, Daniel, 02.11): a counted dish says how many are left, and the guest page shows "sold out" at zero
+	left = portions.state([dish["item_code"] for dish in counted_items])
+	for dish in counted_items:
+		if dish["item_code"] in left and left[dish["item_code"]]["left"] is not None:
+			dish["portions_left"] = left[dish["item_code"]]["left"]
 
 	# Drop empty categories
 	categories = [c for c in categories if c["menu_items"]]

@@ -88,6 +88,8 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		enable_runner: true,
 		//// Neoffice — how the courses reach the kitchen (NeoResto lot 1, Daniel, 01.11): the room calls them unless the restaurant says its kitchen prepares ahead
 		service_rhythm: "Called by the room",
+		//// Neoffice — a dish with no portion left is greyed out and refused unless the restaurant switched this off (NeoResto lot 1, Daniel, 02.11)
+		grey_out_sold_out: true,
 		enable_takeaway: false,
 		takeaway_card: null,
 		enable_qr_ordering: false,

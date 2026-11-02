@@ -344,6 +344,8 @@ function formatPrice(amount) {
 }
 
 function isOutOfStock(item) {
+	//// Neoffice — a dish the kitchen counts by portions is sold out when none is left (NeoResto lot 1, Daniel, 02.11.2026); a guest is never offered a dish that is sold out
+	if (item.portions_left != null && item.portions_left <= 0) return true
 	return item.is_stock_item && item.actual_qty != null && item.actual_qty <= 0
 }
 

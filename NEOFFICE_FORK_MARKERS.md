@@ -320,6 +320,7 @@ detail is in the sections above.
 | `pos_next/pos_next/doctype/restaurant_table/restaurant_table.json` | 10: `table_name`, `area`, `restaurant`, `capacity`, `status`, `pos_x`, `pos_y`, `width`, `height`, `shape` |
 | `pos_next/pos_next/doctype/restaurant_ticket_counter/restaurant_ticket_counter.json` | 4: `counter_key`, `restaurant`, `business_day`, `last_number` |
 | `pos_next/pos_next/doctype/restaurant_tip/restaurant_tip.json` | 13: `restaurant`, `tip_date`, `sales_invoice`, `restaurant_table`, `column_break_1`, `server`, `amount`, `payment_method`, `section_distribution`, `status`, `column_break_2`, `distributed_to`, `distribution_date` |
+| `pos_next/pos_next/doctype/restaurant_portion/restaurant_portion.json` | 4: `item`, `counted`, `service_date`, `made` (the portions the kitchen made of a product, NeoResto lot 1) |
 
 ### Already detailed above
 

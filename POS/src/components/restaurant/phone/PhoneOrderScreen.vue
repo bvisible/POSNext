@@ -208,6 +208,8 @@ const props = defineProps({
 	selectedCard: { type: String, default: "" },
 	// The stock of a card item, null when not counted: the card grid's rule (POSSale.vue, getCardItemStock)
 	stockOf: { type: Function, default: () => null },
+	//// Neoffice — a sold-out button is disabled only where the restaurant greys sold-out dishes out (NeoResto lot 1, Daniel, 02.11.2026); otherwise a tap takes the order and the till warns
+	greyOut: { type: Boolean, default: true },
 })
 
 const emit = defineEmits(["update:selectedCard", "back", "qr", "pick", "options", "open-order"])
@@ -259,7 +261,7 @@ const buttons = computed(() =>
 			price: formatCurrencyNumber(Number(entry.price || entry.default_price || 0)),
 			detail: detailOf(entry),
 			count: isItem ? ordered.value.get(entry.item) || 0 : 0,
-			soldOut: stock !== null && stock !== undefined && Number(stock) <= 0,
+			soldOut: props.greyOut && stock !== null && stock !== undefined && Number(stock) <= 0,
 			image: entry.image || null,
 		}
 	}),

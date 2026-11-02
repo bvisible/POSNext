@@ -2457,6 +2457,8 @@ def get_restaurant_settings(restaurant=None):
 		"enable_runner": bool(settings.enable_runner),
 		# //// Neoffice — how the courses reach the kitchen, the restaurant's choice (NeoResto lot 1, Daniel, 01.11: « Oui, les deux modes »)
 		"service_rhythm": service_families.normalise_rhythm(settings.get("service_rhythm")),
+		# //// Neoffice — what a sold-out dish does at the till, the restaurant's choice (NeoResto lot 1, Daniel, 02.11: « c'est le patron qui décide si on grise ou pas »); on unless the restaurant switched it off
+		"grey_out_sold_out": settings.get("grey_out_sold_out") in (None, 1, True, "1"),
 		"enable_takeaway": bool(till.enable_takeaway),
 		"takeaway_card": till.takeaway_card or None,
 		"enable_tips": bool(settings.enable_tips),

@@ -291,7 +291,10 @@ doc_events = {
 		# //// table flips to Occupied / Cleaning from the invoice's own lifecycle — otherwise a till
 		# //// that crashed or went offline left tables stuck (458d81a9 2026-03-20, restored by
 		# //// f0c960ff 2026-03-21).
-		"on_update": "pos_next.api.restaurant.on_invoice_update",
+		# //// Neoffice — the tills hear of an order that holds a counted product (the portions the kitchen made, NeoResto lot 1,
+		# //// Daniel, 02.11.2026), saved, cancelled or deleted, so that a sold-out dish follows the room.
+		"on_update": ["pos_next.api.restaurant.on_invoice_update", "pos_next.restaurant.portions.invoice_changed"],
+		"on_trash": "pos_next.restaurant.portions.invoice_changed",
 		# //// Neoffice — everything booked on submit except the stock event and upstream's one-time
 		# //// offer record (v2.0.0, last line) is ours: ERPNext's
 		# //// coupon usage counter (coupons moved onto the native Coupon Code — 9bc096de,
@@ -320,6 +323,8 @@ doc_events = {
 			"pos_next.api.gift_cards.process_gift_card_on_cancel",
 			"pos_next.api.restaurant.on_invoice_update",
 			"pos_next.api.sales_invoice_hooks.release_one_time_offer_usage",
+			# //// Neoffice — a cancelled order gives its portions back: the tills hear of it (NeoResto lot 1, Daniel, 02.11.2026).
+			"pos_next.restaurant.portions.invoice_changed",
 		],
 		"after_insert": "pos_next.realtime_events.emit_invoice_created_event",
 	},

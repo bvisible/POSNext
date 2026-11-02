@@ -18,6 +18,8 @@
   "enable_runner",
   "section_service_rhythm",
   "service_rhythm",
+  "section_sold_out",
+  "grey_out_sold_out",
   "section_tickets",
   "ticket_number_digits",
   "ticket_number_reset",
@@ -131,6 +133,18 @@
    "fieldtype": "Select",
    "label": "Service Rhythm",
    "options": "Called by the room\nPrepared ahead"
+  },
+  {
+   "fieldname": "section_sold_out",
+   "fieldtype": "Section Break",
+   "label": "Sold-out Dishes"
+  },
+  {
+   "default": "1",
+   "description": "On: a dish with no portion left is greyed out at the till and cannot be added. Off: it stays available and the till only warns that none is left.",
+   "fieldname": "grey_out_sold_out",
+   "fieldtype": "Check",
+   "label": "Grey out sold-out dishes"
   },
   {
    "fieldname": "section_tickets",

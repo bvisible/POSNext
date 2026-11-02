@@ -722,6 +722,8 @@
 											:show-categories="!selectedCardCategory"
 											:tiles-per-row="posSettingsStore.settings.tiles_per_row"
 											:stock-of="getCardItemStock"
+											:counted-by="isCountedByPortions"
+											:grey-out="greyOutSoldOut"
 											:format-price="formatCurrency"
 											@pick="
 												(item) =>
@@ -729,6 +731,7 @@
 														? handleCardMenuClick(item)
 														: handleCardItemClick(item)
 											"
+											@add-portions="openAddPortions"
 										/>
 
 										<!-- List view -->
@@ -1121,6 +1124,7 @@
 						v-model:selected-card="selectedCard"
 						:cards="restaurantStore.shownCards"
 						:stock-of="getCardItemStock"
+						:grey-out="greyOutSoldOut"
 						@pick="
 							(item) =>
 								item.item_type === 'Menu'
@@ -1367,7 +1371,13 @@
 			<PriceEntryDialog ref="priceEntryRef" @price-confirmed="handlePriceConfirmed" />
 
 			<!-- Menu Selection Dialog -->
-			<MenuSelectionDialog ref="menuSelectionRef" @menu-confirmed="handleMenuConfirmed" />
+			<!-- //// Neoffice — a dish the kitchen has no portion left of shows sold out in the menu's courses (NeoResto lot 1, Daniel, 02.11.2026). -->
+			<MenuSelectionDialog
+				ref="menuSelectionRef"
+				:left-of="(code) => portionsStore.leftOf(code, stockStore.reserved.get(code) || 0)"
+				:grey-out="greyOutSoldOut"
+				@menu-confirmed="handleMenuConfirmed"
+			/>
 
 			<!-- Invoice History Dialog -->
 			<InvoiceHistoryDialog
@@ -2138,6 +2148,7 @@
 		<!-- //// Neoffice — fetch another card: the dialog the floor plan's « ⋯ » menu opens (NeoResto lot 1, task 25). The -->
 		<!-- //// « ⋯ » of the card row, below the floor plan, draws its own list in its menu. -->
 		<CardPickerDialog v-if="restaurantStore.isEnabled" />
+		<AddPortionsDialog :item="portionsToAdd" @close="portionsToAdd = null" />
 	</div>
 </template>
 
@@ -2216,6 +2227,7 @@ import { useSeeFloorNotice } from "@/composables/useSeeFloorNotice";
 //// Neoffice — the row of card buttons, and the dialog the floor plan's « ⋯ » menu opens to fetch another card (NeoResto lot 1, task 25).
 import RestaurantCardTabs from "@/components/restaurant/RestaurantCardTabs.vue";
 import CardPickerDialog from "@/components/restaurant/CardPickerDialog.vue";
+import AddPortionsDialog from "@/components/restaurant/AddPortionsDialog.vue"; //// Neoffice — adds portions to a counted product (NeoResto lot 1, Daniel, 02.11.2026)
 import TableQRCode from "@/components/restaurant/TableQRCode.vue";
 //// Neoffice — the banner of the open table, with its QR button (NeoResto lot 1): it left this file, and the row of the cards.
 import TableHeaderBar from "@/components/restaurant/TableHeaderBar.vue";
@@ -2331,6 +2343,8 @@ import { useCustomerSearchStore } from "@/stores/customerSearch";
 import { useItemSearchStore } from "@/stores/itemSearch";
 import { useSerialNumberStore } from "@/stores/serialNumber";
 import { useStockStore } from "@/stores/stock";
+import { whatATapDoes } from "@/utils/portions";
+import { usePortionsStore } from "@/stores/portions"; //// Neoffice — the portions the kitchen made (NeoResto lot 1, Daniel, 02.11.2026)
 //// Neoffice — used to decide from the CARD data whether a line is a stock item, instead
 //// of inferring it from the stock store being populated (1a0abef1, 2026-03-31; import
 //// blamed to 02f74451, 2026-03-31).
@@ -2589,6 +2603,10 @@ watch(
 // Card item stock helpers
 function getCardItemStock(cardItem) {
 	if (!cardItem.item || cardItem.item_type !== "Item") return null;
+	//// Neoffice — a product the kitchen counts by portions (NeoResto lot 1, Daniel, 02.11.2026) shows what is left of them, the cart's quantity taken off;
+	//// a product whose stock is managed keeps the stock's count, and the server never counts the two together.
+	const portionsLeft = portionsStore.leftOf(cardItem.item, stockStore.reserved.get(cardItem.item) || 0);
+	if (portionsLeft !== null) return portionsLeft;
 	if (!cardItem.is_stock_item) return null;
 	return stockStore.getDisplayStock(cardItem.item);
 }
@@ -2597,6 +2615,52 @@ function isCardItemOutOfStock(cardItem) {
 	if (stock === null) return false; // non-stock items are always available
 	return stock <= 0;
 }
+
+//// Neoffice — the portions the kitchen made (NeoResto lot 1, Daniel, 02.11.2026). The store holds what the server says is left, the order on the
+//// screen left out (its lines are in the cart); the tills are told when a portion is taken or added, and the page asks again when the card, the
+//// order on screen or the list of products changes.
+const portionsStore = usePortionsStore();
+const greyOutSoldOut = computed(() => restaurantStore.restaurantSettings.grey_out_sold_out !== false);
+function isCountedByPortions(cardItem) {
+	return !!cardItem.item && cardItem.item_type === "Item" && portionsStore.isCounted(cardItem.item);
+}
+const portionsToAdd = ref(null);
+function openAddPortions(cardItem) {
+	portionsToAdd.value = {
+		code: cardItem.item,
+		name: cardItem.item_name || cardItem.label || cardItem.item,
+		left: getCardItemStock(cardItem) ?? 0,
+	};
+}
+const countableCodes = computed(() => {
+	const codes = new Set();
+	for (const card of restaurantStore.shownCards) {
+		for (const entry of card.items || []) {
+			if (entry.item_type === "Item" && entry.item && !entry.is_stock_item) codes.add(entry.item);
+		}
+	}
+	// The dishes a menu offers for its courses are counted like the others
+	for (const menu of restaurantStore.activeMenus) {
+		for (const course of menu.courses || []) {
+			for (const dish of course.items || []) if (dish.item) codes.add(dish.item);
+		}
+	}
+	return [...codes];
+});
+function readPortions() {
+	portionsStore.refresh(countableCodes.value, cartStore.currentDraftId || null);
+}
+watch([countableCodes, () => cartStore.currentDraftId], readPortions, { immediate: true });
+let portionsDebounce = null;
+function onPortionsUpdated() {
+	clearTimeout(portionsDebounce);
+	portionsDebounce = setTimeout(readPortions, 300);
+}
+onMounted(() => window.frappe?.realtime?.on("pos_portions_updated", onPortionsUpdated));
+onUnmounted(() => {
+	clearTimeout(portionsDebounce);
+	window.frappe?.realtime?.off("pos_portions_updated", onPortionsUpdated);
+});
 
 // Card item display helpers (image / color / name fallback)
 function getCardItemBgStyle(item) {
@@ -2608,7 +2672,19 @@ function getCardItemBgStyle(item) {
 //// (the helper that classed it here, getCardItemTextClasses, went with the grid).
 
 function handleCardItemClick(cardItem) {
-	if (isCardItemOutOfStock(cardItem)) return;
+	//// Neoffice — what a sold-out dish does is the restaurant's choice (NeoResto lot 1, Daniel, 02.11.2026: « c'est le patron qui décide si on grise ou pas »):
+	//// greyed out, it is refused, and a counted one opens the dialog that adds portions (the kitchen can make more); not greyed out, the order is
+	//// taken and the till only says that none is left.
+	const tap = whatATapDoes({
+		soldOut: isCardItemOutOfStock(cardItem),
+		greyOut: greyOutSoldOut.value,
+		counted: isCountedByPortions(cardItem),
+	});
+	if (tap === "add-portions") return openAddPortions(cardItem);
+	if (tap === "refuse") return;
+	if (tap === "warn-and-order") {
+		showWarning(__("{0}: none left", [cardItem.item_name || cardItem.label || cardItem.item]));
+	}
 	//// Neoffice — was an inline object that carried no unit at all: see cardItemToCartItem (NeoResto lot 1, task 22).
 	const item = cardItemToCartItem(cardItem);
 	const stationInfo = restaurantStore.getStationForItem(item.item_code, item.item_group);

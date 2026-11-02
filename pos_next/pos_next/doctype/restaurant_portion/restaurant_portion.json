@@ -1,0 +1,66 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:item",
+ "creation": "2026-11-02 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "item",
+  "counted",
+  "service_date",
+  "made"
+ ],
+ "fields": [
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item",
+   "options": "Item",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "default": "1",
+   "description": "The portions of this product are counted: the kitchen says how many it made, the orders take them one by one.",
+   "fieldname": "counted",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Count the portions"
+  },
+  {
+   "description": "The day the portions below were made. Portions made on another day limit nothing.",
+   "fieldname": "service_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Made on"
+  },
+  {
+   "default": "0",
+   "description": "Portions the kitchen has made that day, those added later included.",
+   "fieldname": "made",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Portions made"
+  }
+ ],
+ "links": [],
+ "modified": "2026-11-02 12:00:00.000000",
+ "module": "POS Next",
+ "name": "Restaurant Portion",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {"create": 1, "delete": 1, "read": 1, "report": 1, "role": "System Manager", "share": 1, "write": 1},
+  {"create": 1, "delete": 1, "read": 1, "report": 1, "role": "Sales Manager", "share": 1, "write": 1},
+  {"create": 1, "delete": 1, "read": 1, "report": 1, "role": "Restaurant Manager", "share": 1, "write": 1},
+  {"create": 1, "delete": 1, "read": 1, "report": 1, "role": "Admin", "share": 1, "write": 1},
+  {"create": 1, "delete": 1, "read": 1, "report": 1, "role": "Nexus POS Manager", "share": 1, "write": 1},
+  {"read": 1, "role": "POSNext Cashier"}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
