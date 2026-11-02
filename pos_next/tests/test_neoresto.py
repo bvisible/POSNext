@@ -42,7 +42,8 @@ from pos_next.tests.test_till_writes_need_the_till import _user
 
 EXPECTED_SPEC = {
 	"name": "neoresto",
-	"title": "NeoResto",
+	# The menu says Resto, beside Auto, Chantier and Sport (22a24a91, Daniel, 02.11.2026); NeoResto is the name outside, on its own site
+	"title": "Resto",
 	"workspaces": ["Resto"],
 	"follows": "Retail",
 	"gestures": ["invoice", "payment", "search"],
@@ -450,7 +451,7 @@ class TestTheMenuEntry(FrappeTestCase):
 		entry = frappe.get_doc("App Customization", TEST_APP)
 		self.assertEqual(
 			(entry.app_name, entry.app_title, entry.is_virtual, entry.is_installed_app, entry.enabled),
-			(TEST_APP, "NeoResto", 1, 0, 1),
+			(TEST_APP, neoresto.TITLE, 1, 0, 1),
 		)
 		self.assertEqual((entry.interface_mode, entry.sort_order), ("Tous", 49))
 		self.assertEqual(
