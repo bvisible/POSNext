@@ -20767,3 +20767,377 @@ msgstr "Afficher 1 autre avis"
 
 msgid "Show the {0} other notices"
 msgstr "Afficher les {0} autres avis"
+
+#. Description of the 'Disconnected' (Check) field in DocType 'Restaurant
+#. Device'
+#: pos_next/pos_next/doctype/restaurant_device/restaurant_device.json:104
+msgid "A disconnected tablet is refused everywhere until it scans a new code."
+msgstr "Une tablette déconnectée n'est acceptée nulle part tant qu'elle n'a pas scanné un nouveau code."
+
+#. Description of a DocType
+#: pos_next/pos_next/doctype/restaurant_device_pairing/restaurant_device_pairing.json:6
+msgid "A one-time token that pairs a tablet with the kitchen or runner screen of a restaurant. Only the token's SHA-256 hash is kept."
+msgstr "Un jeton à usage unique qui appaire une tablette à l'écran de la cuisine ou à celui des runners d'un restaurant. Seule l'empreinte SHA-256 du jeton est conservée."
+
+#. Description of the 'Device Account' (Link) field in DocType 'Restaurant
+#. Device'
+#: pos_next/pos_next/doctype/restaurant_device/restaurant_device.json:74
+msgid "A portal account with no role and no password, used by this tablet only."
+msgstr "Un compte portail sans rôle ni mot de passe, utilisé par cette tablette seulement."
+
+#. Description of the 'Disconnected At' (Datetime) field in DocType 'Restaurant
+#. Device'
+#: pos_next/pos_next/doctype/restaurant_device/restaurant_device.json:112
+msgid "A session opened before this moment is refused, even after the tablet is paired again."
+msgstr "Une session ouverte avant ce moment est refusée, même après un nouvel appairage de la tablette."
+
+#. Description of a DocType
+#: pos_next/pos_next/doctype/restaurant_device/restaurant_device.json:6
+msgid "A tablet that opens the kitchen screen or the runner screen of a restaurant with an account of its own, paired by a QR code shown at the till."
+msgstr "Une tablette qui ouvre l'écran de la cuisine ou celui des runners d'un restaurant avec un compte qui lui est propre, appairée grâce à un code QR affiché à la caisse."
+
+#: POS/src/components/restaurant/AddPortionsDialog.vue:10
+#: POS/src/components/restaurant/RestaurantCardGrid.vue:45
+#: POS/src/components/restaurant/RestaurantCardGrid.vue:46
+msgid "Add portions"
+msgstr "Ajouter des portions"
+
+#. Description of the 'Unconfirmed Online Reservation Expiry (minutes)' (Int)
+#. field in DocType 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:362
+msgid "An online reservation the guest has not confirmed from the e-mail within this time expires: its tables are free again and it never counts as a no-show"
+msgstr "Une réservation en ligne que le client n'a pas confirmée par l'e-mail dans ce délai expire : ses tables sont à nouveau libres, et elle n'est jamais comptée comme un no-show."
+
+#: POS/src/components/restaurant/AddPortionsDialog.vue:52
+msgid "Another number"
+msgstr "Autre quantité"
+
+#. Label of a Section Break field in DocType 'POS Closing Shift'
+#. Label of a Table field in DocType 'POS Closing Shift'
+#: pos_next/pos_next/doctype/pos_closing_shift/pos_closing_shift.json:270
+msgid "Cash Movements"
+msgstr "Mouvements de caisse"
+
+#: pos_next/i18n_anchors.py:32
+msgctxt "Menu Badge"
+msgid "Celery"
+msgstr "Céleri"
+
+#. Label of a Check field in DocType 'Restaurant Portion'
+#: pos_next/pos_next/doctype/restaurant_portion/restaurant_portion.json:30
+msgid "Count the portions"
+msgstr "Compter les portions"
+
+#: POS/src/components/restaurant/ItemPortionsSection.vue:19
+msgid "Count the portions the kitchen makes"
+msgstr "Compter les portions que prépare la cuisine"
+
+#: pos_next/i18n_anchors.py:25
+msgctxt "Menu Badge"
+msgid "Crustaceans"
+msgstr "Crustacés"
+
+#. Label of a Link field in DocType 'Restaurant Device'
+#: pos_next/pos_next/doctype/restaurant_device/restaurant_device.json:77
+msgid "Device Account"
+msgstr "Compte de l'appareil"
+
+#. Label of a Data field in DocType 'Restaurant Device'
+#: pos_next/pos_next/doctype/restaurant_device/restaurant_device.json:65
+msgid "Device Key"
+msgstr "Clé de l'appareil"
+
+#: POS/src/components/pos/CashInOutDialog.vue:294
+#: POS/src/components/pos/CashInOutDialog.vue:427
+msgctxt "Set aside a refused cash movement"
+msgid "Discard"
+msgstr "Mettre de côté"
+
+#: POS/src/components/restaurant/OpenTabletDialog.vue:100
+msgctxt "Tablet"
+msgid "Disconnected"
+msgstr "Déconnectée"
+
+#. Label of a Datetime field in DocType 'Restaurant Device'
+#: pos_next/pos_next/doctype/restaurant_device/restaurant_device.json:115
+msgid "Disconnected At"
+msgstr "Date de déconnexion"
+
+#: pos_next/i18n_anchors.py:26
+msgctxt "Menu Badge"
+msgid "Eggs"
+msgstr "Œufs"
+
+#: POS/src/components/pos/CashInOutDialog.vue:761
+#: pos_next/public/pos/assets/POSSale-CiNVDCK0.js:2
+msgid "Failed to delete"
+msgstr "Échec de la suppression"
+
+#: pos_next/i18n_anchors.py:27
+msgctxt "Menu Badge"
+msgid "Fish"
+msgstr "Poisson"
+
+#. Label of a Check field in DocType 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:147
+#: pos_next/till_settings/registry.py:325
+msgid "Grey out sold-out dishes"
+msgstr "Griser les plats épuisés"
+
+#: pos_next/i18n_anchors.py:43
+msgctxt "Menu Badge"
+msgid "Homemade"
+msgstr "Fait maison"
+
+#: POS/src/components/restaurant/AddPortionsDialog.vue:27
+msgid "How many more portions can the kitchen make?"
+msgstr "Combien de portions supplémentaires la cuisine peut-elle encore préparer ?"
+
+#: pos_next/i18n_anchors.py:42
+msgctxt "Menu Badge"
+msgid "Kosher"
+msgstr "Casher"
+
+#: pos_next/i18n_anchors.py:40
+msgctxt "Menu Badge"
+msgid "Lactose Free"
+msgstr "Sans lactose"
+
+#: pos_next/i18n_anchors.py:44
+msgctxt "Menu Badge"
+msgid "Local"
+msgstr "Produit local"
+
+#: POS/src/components/restaurant/ItemPortionsSection.vue:30
+msgid "Made today"
+msgstr "Préparées aujourd'hui"
+
+#: pos_next/i18n_anchors.py:30
+msgctxt "Menu Badge"
+msgid "Milk"
+msgstr "Lait"
+
+#: pos_next/i18n_anchors.py:37
+msgctxt "Menu Badge"
+msgid "Mollusks"
+msgstr "Mollusques"
+
+#: pos_next/i18n_anchors.py:33
+msgctxt "Menu Badge"
+msgid "Mustard"
+msgstr "Moutarde"
+
+#. Description of the 'Popup stays (seconds)' (Int) field in DocType 'POS
+#. Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:245
+msgid "No longer used: the ticket flashes until the kitchen starts it or leaves it to do"
+msgstr "Plus utilisé : le ticket clignote jusqu'à ce que la cuisine le démarre ou le laisse en attente."
+
+#: POS/src/components/restaurant/ItemPortionsSection.vue:45
+msgid "No portions announced today: nothing limits this product."
+msgstr "Aucune portion annoncée aujourd'hui : rien ne limite ce produit."
+
+#: POS/src/utils/tablesOfTheService.js:345
+#: pos_next/public/pos/assets/POSSale-CiNVDCK0.js:18
+msgid "No table"
+msgstr "Aucune table"
+
+#. Description of the 'Grey out sold-out dishes' (Check) field in DocType
+#. 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:144
+msgid "On: a dish with no portion left is greyed out at the till and cannot be added. Off: it stays available and the till only warns that none is left."
+msgstr "Oui : un plat dont il ne reste plus aucune portion est grisé à la caisse et ne peut pas être ajouté. Non : il reste disponible, et la caisse prévient seulement qu'il n'en reste plus."
+
+#: pos_next/till_settings/registry.py:327
+msgid "On: a dish with no portion left is greyed out at the till and cannot be added. Off: it stays available and the till only warns that none is left. A product counted by its portions (or by its stock) is sold out when none is left; whoever works at the till adds portions when the kitchen can make more."
+msgstr "Oui : un plat dont il ne reste plus aucune portion est grisé à la caisse et ne peut pas être ajouté. Non : il reste disponible, et la caisse prévient seulement qu'il n'en reste plus. Un produit compté par ses portions (ou par son stock) est épuisé quand il n'en reste plus ; le personnel de caisse ajoute des portions dès que la cuisine peut en préparer davantage."
+
+#. Description of the 'Device Key' (Data) field in DocType 'Restaurant Device'
+#: pos_next/pos_next/doctype/restaurant_device/restaurant_device.json:61
+msgid "One row per screen of a restaurant: two tablets pairing the same screen at the same instant make one row."
+msgstr "Une ligne par écran d'un restaurant : deux tablettes qui appairent le même écran au même instant ne forment qu'une seule ligne."
+
+#. Option for the 'Action' (Select) field in DocType 'POS Authorization Rule'
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_rule/pos_authorization_rule.json:24
+msgid "Open a card outside its hours"
+msgstr "Ouvrir une carte en dehors de ses horaires"
+
+#: pos_next/i18n_anchors.py:45
+msgctxt "Menu Badge"
+msgid "Organic"
+msgstr "Bio"
+
+#. Label of a Datetime field in DocType 'Restaurant Device'
+#: pos_next/pos_next/doctype/restaurant_device/restaurant_device.json:93
+msgid "Paired At"
+msgstr "Date d'appairage"
+
+#. Label of a Link field in DocType 'Restaurant Device'
+#: pos_next/pos_next/doctype/restaurant_device/restaurant_device.json:86
+msgid "Paired By"
+msgstr "Appairé par"
+
+#: pos_next/i18n_anchors.py:28
+msgctxt "Menu Badge"
+msgid "Peanuts"
+msgstr "Arachides"
+
+#: pos_next/restaurant/portions.py:115
+msgid "Portions are added in whole numbers above zero"
+msgstr "Les portions s'ajoutent en nombres entiers supérieurs à zéro."
+
+#. Label of a Float field in DocType 'Restaurant Portion'
+#: pos_next/pos_next/doctype/restaurant_portion/restaurant_portion.json:45
+msgid "Portions made"
+msgstr "Portions préparées"
+
+#. Description of the 'Portions made' (Float) field in DocType 'Restaurant
+#. Portion'
+#: pos_next/pos_next/doctype/restaurant_portion/restaurant_portion.json:41
+msgid "Portions the kitchen has made that day, those added later included."
+msgstr "Portions préparées par la cuisine ce jour-là, y compris celles ajoutées plus tard."
+
+#: pos_next/i18n_anchors.py:34
+msgctxt "Menu Badge"
+msgid "Sesame"
+msgstr "Sésame"
+
+#: POS/src/components/pos/CashInOutDialog.vue:566
+#: pos_next/public/pos/assets/POSSale-CiNVDCK0.js:2
+#, python-brace-format
+msgid "Shift {0}"
+msgstr "Service {0}"
+
+#. Description of the 'Public menu (QR)' (Check) field in DocType 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:243
+msgid "Shows the Guest Menu card, to read only, on a page that a QR code on the tables opens. Guests cannot order from it. Off: nothing is public."
+msgstr "Affiche la carte Guest Menu, en lecture seule, sur une page ouverte par un code QR posé sur les tables. Les clients ne peuvent pas y commander. Non : rien n'est rendu public."
+
+#. Label of a Section Break field in DocType 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:140
+msgid "Sold-out Dishes"
+msgstr "Plats épuisés"
+
+#: pos_next/i18n_anchors.py:29
+msgctxt "Menu Badge"
+msgid "Soy"
+msgstr "Soja"
+
+#. Description of the 'Takeaway tax category' (Link) field in DocType
+#. 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:106
+msgid "Takeaway sales take this tax category. Each item takes the takeaway rate of its own row for this category, else the one of its item group or of a parent group; an item with none keeps its usual rate. An item without a row of its own inherits its group's: alcohol filed under a group with a takeaway rate takes that rate, unless it has its own row for this category at its usual rate."
+msgstr "Les ventes à emporter utilisent cette catégorie de taxe. Chaque article prend le taux à emporter de sa propre ligne pour cette catégorie, sinon celui de son groupe d'articles ou d'un groupe parent ; un article sans taux garde son taux habituel. Un article sans ligne propre hérite de celle de son groupe : un alcool rangé dans un groupe qui a un taux à emporter prend ce taux, sauf s'il a sa propre ligne pour cette catégorie, à son taux habituel."
+
+#. Label of a Link field in DocType 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:109
+msgid "Takeaway tax category"
+msgstr "Catégorie de taxe à emporter"
+
+#. Description of the 'Made on' (Date) field in DocType 'Restaurant Portion'
+#: pos_next/pos_next/doctype/restaurant_portion/restaurant_portion.json:33
+msgid "The day the portions below were made. Portions made on another day limit nothing."
+msgstr "Le jour où les portions ci-dessous ont été préparées. Des portions préparées un autre jour ne limitent rien."
+
+#: POS/src/components/restaurant/AddPortionsDialog.vue:115
+#: pos_next/public/pos/assets/POSSale-CiNVDCK0.js:18
+msgid "The portions could not be added"
+msgstr "Les portions n'ont pas pu être ajoutées"
+
+#: POS/src/components/restaurant/ItemPortionsSection.vue:77
+#: pos_next/public/pos/assets/POSSale-CiNVDCK0.js:2
+msgid "The portions could not be read"
+msgstr "Les portions n'ont pas pu être chargées"
+
+#: POS/src/components/restaurant/ItemPortionsSection.vue:86
+#: pos_next/public/pos/assets/POSSale-CiNVDCK0.js:2
+msgid "The portions could not be saved"
+msgstr "Les portions n'ont pas pu être enregistrées"
+
+#: pos_next/restaurant/portions.py:93
+msgid "The portions made cannot be below zero"
+msgstr "Les portions préparées ne peuvent pas être inférieures à zéro"
+
+#. Description of the 'Count the portions' (Check) field in DocType 'Restaurant
+#. Portion'
+#: pos_next/pos_next/doctype/restaurant_portion/restaurant_portion.json:26
+msgid "The portions of this product are counted: the kitchen says how many it made, the orders take them one by one."
+msgstr "Les portions de ce produit sont comptées : la cuisine indique combien elle en a préparé, et les commandes les prennent une à une."
+
+#: pos_next/restaurant/portions.py:120
+msgid "The portions of this product are not counted"
+msgstr "Les portions de ce produit ne sont pas comptées"
+
+#: pos_next/api/portions.py:19
+msgid "The products must be a list of item codes"
+msgstr "Les produits doivent être une liste de codes articles"
+
+#. Description of the 'Preparation Station' (Link) field in DocType 'Restaurant
+#. Device'
+#: pos_next/pos_next/doctype/restaurant_device/restaurant_device.json:53
+msgid "The station the kitchen screen shows. Empty: every station."
+msgstr "Le poste que montre l'écran de la cuisine. Vide : tous les postes."
+
+#: pos_next/api/portions.py:60 pos_next/restaurant/portions.py:118
+msgid "The stock of this product is managed: its stock counts it, not its portions"
+msgstr "Le stock de ce produit est géré : c'est le stock qui le compte, et non ses portions"
+
+#: POS/src/components/restaurant/ItemPortionsSection.vue:8
+msgid "The stock of this product is managed: its stock counts it, not its portions."
+msgstr "Le stock de ce produit est géré : c'est le stock qui le compte, et non ses portions."
+
+#: pos_next/restaurant/call_seen.py:34
+msgid "This is not a call of the kitchen."
+msgstr "Ce n'est pas un appel de la cuisine."
+
+#: POS/src/pages/PairDevice.vue:40
+#: pos_next/public/pos/assets/PairDevice-BcLDNFlL.js:1
+msgid "Too many attempts"
+msgstr "Trop de tentatives"
+
+#: pos_next/i18n_anchors.py:31
+msgctxt "Menu Badge"
+msgid "Tree Nuts"
+msgstr "Fruits à coque"
+
+#. Label of a Int field in DocType 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:365
+msgid "Unconfirmed Online Reservation Expiry (minutes)"
+msgstr "Expiration d'une réservation en ligne non confirmée (minutes)"
+
+#. Label of a Datetime field in DocType 'Restaurant Device Pairing'
+#: pos_next/pos_next/doctype/restaurant_device_pairing/restaurant_device_pairing.json:76
+msgid "Used At"
+msgstr "Date d'utilisation"
+
+#: pos_next/i18n_anchors.py:39
+msgctxt "Menu Badge"
+msgid "Vegan"
+msgstr "Végan"
+
+#: pos_next/i18n_anchors.py:38
+msgctxt "Menu Badge"
+msgid "Vegetarian"
+msgstr "Végétarien"
+
+#. Label of a Datetime field in DocType 'Restaurant Reservation'
+#: pos_next/pos_next/doctype/restaurant_reservation/restaurant_reservation.json:184
+msgid "Verification Deadline"
+msgstr "Échéance de confirmation"
+
+#. Option for the 'Action' (Select) field in DocType 'POS Authorization Rule'
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_rule/pos_authorization_rule.json:24
+msgid "Void Cash Movement"
+msgstr "Annuler un mouvement de caisse"
+
+#. Description of the 'Cashier' (Data) field in DocType 'POS Closing Shift Cash
+#. Movement'
+#: pos_next/pos_next/doctype/pos_closing_shift_cash_movement/pos_closing_shift_cash_movement.json:55
+msgid "Who recorded the movement (the Journal Entry's owner), by name: display only."
+msgstr "La personne qui a enregistré le mouvement (propriétaire de l'écriture de journal), indiquée par son nom : affichage seulement."
+
+#: POS/src/pages/POSSale.vue:2692
+#: pos_next/public/pos/assets/POSSale-CiNVDCK0.js:37
+#, python-brace-format
+msgid "{0}: none left"
+msgstr "{0} : il n'en reste plus"
