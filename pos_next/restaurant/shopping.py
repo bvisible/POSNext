@@ -23,6 +23,8 @@ from pos_next.restaurant import permissions, supply_catalogue
 
 DOCTYPE = "Restaurant Shopping List"
 LINE_STATES = ("To order", "Ordered", "To buy", "Bought", "Not needed", "Already in stock", "Not found")
+# A line that is bought or put aside is closed: asking for the article again is a new line, not more of that one
+CLOSED_STATES = ("Bought", "Not needed", "Already in stock")
 # Lines that are no longer to be bought: they are in no count and in no estimate
 OUT_OF_COUNT = ("Not needed", "Already in stock")
 ORDERED_STATES = ("To order", "Ordered")
@@ -124,7 +126,7 @@ def add_article_line(
 	"""Put an article on the list, in a packaging and at a supplier; answers the line's name.
 
 	Neither given: the usual supplier's first packaging. The same article, packaging and supplier already on the list (and not
-	yet bought) takes the quantity instead of a second line.
+	closed: bought, or put aside) takes the quantity instead of a second line.
 	"""
 	doc = _list(list_name)
 	packs = supply_catalogue.item_packs(item)
@@ -140,7 +142,7 @@ def add_article_line(
 			if r.item == item
 			and r.uom == uom
 			and (r.supplier or None) == (supplier or None)
-			and r.line_state not in ("Bought",)
+			and r.line_state not in CLOSED_STATES
 		),
 		None,
 	)

@@ -544,6 +544,8 @@
 	// much each portion takes, one packaging each when it does not
 	NeorestoShopping.prototype.add_dish = function () {
 		var self = this;
+		// What the dish said when it was chosen: written back only when the owner changed it, and never as an empty table
+		var loaded = [];
 		var d = new frappe.ui.Dialog({
 			title: __("Add a dish"),
 			size: "large",
@@ -563,7 +565,17 @@
 						frappe
 							.call({ method: API + "get_dish_ingredients", args: { dish: dish } })
 							.then(function (r) {
-								d.set_value("ingredients", r.message || []);
+								loaded = (r.message || []).map(function (x) {
+									return {
+										item: x.item,
+										qty_per_portion: x.qty_per_portion || null,
+									};
+								});
+								var field = d.fields_dict.ingredients;
+								field.df.data = loaded.map(function (x) {
+									return Object.assign({}, x);
+								});
+								field.grid.refresh();
 							});
 					},
 				},
@@ -608,13 +620,16 @@
 				var rows = (values.ingredients || []).map(function (r) {
 					return { item: r.item, qty_per_portion: r.qty_per_portion || null };
 				});
+				var changed = rows.length && JSON.stringify(rows) !== JSON.stringify(loaded);
 				self.ensure_list().then(function () {
-					frappe
-						.call({
-							method: API + "set_dish_ingredients",
-							args: { dish: values.dish, ingredients: JSON.stringify(rows) },
-							freeze: true,
-						})
+					(changed
+						? frappe.call({
+								method: API + "set_dish_ingredients",
+								args: { dish: values.dish, ingredients: JSON.stringify(rows) },
+								freeze: true,
+						  })
+						: $.Deferred().resolve().promise()
+					)
 						.then(function () {
 							return frappe.call({
 								method: API + "add_dish",

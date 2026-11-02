@@ -85,6 +85,20 @@ class TestTheShoppingListOfARestaurant(FrappeTestCase):
 		(line,) = self._lines(name)
 		self.assertEqual(line.qty, 3)
 
+	def test_an_article_asked_for_again_is_not_added_to_a_line_put_aside_or_bought(self):
+		name = self._new()
+		row = shopping.add_article_line(name, self.wine, 2)
+		shopping.set_state(name, row, "Already in stock")
+		shopping.add_article_line(name, self.wine, 1)
+		shopping.set_state(name, self._lines(name)[1].name, "Bought")
+		shopping.add_article_line(name, self.wine, 3)
+		states = [(line.qty, line.line_state) for line in self._lines(name)]
+		self.assertEqual(
+			states,
+			[(2, "Already in stock"), (1, "Bought"), (3, "To order")],
+			"each ask is its own line, to buy",
+		)
+
 	def test_a_line_can_be_bought_elsewhere(self):
 		name = self._new()
 		row = shopping.add_article_line(name, self.wine, 1)
