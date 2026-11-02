@@ -93,3 +93,11 @@ class TestAPaperOnlyStationHasNoScreen(TwoRestaurants, FrappeTestCase):
 
 		self.assertEqual((before["station"], before["paper_only"]), (self.bar, 0))
 		self.assertEqual((after["station"], after["paper_only"]), (self.bar, 1))
+
+	def test_the_floor_plan_is_told_which_stations_work_on_paper_alone_so_that_it_draws_no_chip_for_them(self):
+		self.paper(self.bar)
+
+		stations = {s["name"]: s for s in restaurant_api.get_tables(restaurant=self.a)["stations"]}
+
+		self.assertEqual(stations[self.bar]["paper_only"], 1)
+		self.assertEqual(stations[self.kitchen]["paper_only"], 0)

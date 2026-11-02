@@ -189,6 +189,14 @@ describe("the top of the floor plan is one line", () => {
 		expect(wrapper.findAll(".border-b")).toHaveLength(1)
 	})
 
+	// //// Neoffice — Daniel, 02.11.2026: a station that works on paper alone has no kitchen screen to open, so the line draws no chip for it
+	it("draws no chip for a station that works on paper alone", async () => {
+		await floorPlan({ floorStations: [BAR, { ...KITCHEN, paper_only: 1 }] })
+
+		const chips = actions().findAll('[data-test="station-chip"]')
+		expect(chips.map((chip) => chip.find(".font-semibold").text())).toEqual(["Bar"])
+	})
+
 	it("is a flex row that wraps only when the width falls short, with the right side kept to the right edge", async () => {
 		await floorPlan()
 

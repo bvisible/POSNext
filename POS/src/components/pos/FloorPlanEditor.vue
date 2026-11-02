@@ -1561,10 +1561,12 @@ async function loadKdsOrders() {
 
 // All stations sorted: current area first, then others
 const allStations = computed(() => {
-	const current = localStations.value.filter(
+	//// Neoffice — the chips open a station's kitchen screen: a station that works on paper alone has none, so no chip (NeoResto lot 1, Daniel, 02.11.2026)
+	const shown = localStations.value.filter((s) => !Number(s.paper_only))
+	const current = shown.filter(
 		(s) => s.area === selectedArea.value,
 	)
-	const others = localStations.value.filter(
+	const others = shown.filter(
 		(s) => s.area !== selectedArea.value,
 	)
 	return [...current, ...others]

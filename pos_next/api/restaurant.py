@@ -170,7 +170,8 @@ def get_tables(restaurant=None):
 				"Preparation Station",
 				filters={"is_active": 1, "show_on_floor_plan": 1},
 				or_filters=of_the_restaurant,
-				fields=["name", "station_name", "station_type", "color", "area", "pos_x", "pos_y", "width", "height"],
+				# //// Neoffice — `paper_only`: the floor plan draws no chip for a station that works on paper alone (NeoResto lot 1, Daniel, 02.11.2026)
+				fields=["name", "station_name", "station_type", "color", "area", "pos_x", "pos_y", "width", "height", *_paper_only_field()],
 			),
 			restaurant,
 		)
