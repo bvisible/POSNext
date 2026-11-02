@@ -1223,8 +1223,8 @@
   integrity sha512-oTXEIha4SsuXdTA4Iyskj0kpdx2yVXdhd75c2v3xGrHFfVMsbhTPZU/nMPL4sWKo4pBHm3aucLaqGlF696dTyQ==
 
 "@neoffice/nora-learn-react@git+https://github.com/bvisible/nora-learn-react.git":
-  version "1.0.0"
-  resolved "git+https://github.com/bvisible/nora-learn-react.git#7f5b233f4f6400a06af3e481526ac295f6f6db2b"
+  version "1.1.0"
+  resolved "git+https://github.com/bvisible/nora-learn-react.git#448f0988a5715999a17693ed6eab218ebfc1f8a3"
 
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
