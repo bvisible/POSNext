@@ -2064,6 +2064,58 @@
 					<span>{{ __("Pay") }}</span>
 				</button>
 
+				<!-- //// Neoffice — the kitchen ticket of the table, printed again by the server (NeoResto lot 1, Daniel, 02.11.2026: a kitchen with tickets only): drawn where a station that has lines at the kitchen has a printer (utils/tillKitchenTicket.js) -->
+				<button
+					v-if="kitchenTicket?.available"
+					type="button"
+					data-kitchen-ticket
+					@click="printKitchenTicket"
+					class="w-10 py-2.5 rounded-neo-md text-white transition-all flex items-center justify-center touch-manipulation bg-gray-600 hover:bg-gray-700 active:bg-gray-800 shadow-neo-md hover:shadow-neo-lg active:scale-[0.98]"
+					:title="__('Print the kitchen ticket again')"
+					:aria-label="__('Print the kitchen ticket again')"
+				>
+					<span class="relative flex items-center justify-center">
+						<svg
+							v-if="kitchenTicket.phase === 'sending' || kitchenTicket.phase === 'printing'"
+							class="w-4 h-4 animate-spin"
+							fill="none"
+							viewBox="0 0 24 24"
+						>
+							<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+							<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+						</svg>
+						<svg v-else-if="kitchenTicket.phase === 'printed'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+							<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+						</svg>
+						<svg
+							v-else-if="kitchenTicket.phase === 'offline' || kitchenTicket.phase === 'failed'"
+							class="w-4 h-4"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+							stroke-width="2.5"
+						>
+							<path stroke-linecap="round" stroke-linejoin="round" d="M12 8v5m0 3.5v.01M12 3l9.5 17h-19L12 3z" />
+						</svg>
+						<!-- A receipt: the paper that goes to the kitchen (the printer is the bill's) -->
+						<svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+							<path stroke-linecap="round" stroke-linejoin="round" d="M7 3h10a2 2 0 012 2v16l-3-2-2 2-2-2-2 2-2-2-3 2V5a2 2 0 012-2zM9 8h6M9 12h6" />
+						</svg>
+						<span
+							v-if="kitchenTicket.phase !== 'idle' && kitchenTicket.text"
+							role="status"
+							aria-live="polite"
+							data-kitchen-ticket-state
+							:class="[
+								'absolute bottom-full right-0 mb-3 w-max max-w-[16rem] rounded-neo-md px-2 py-1 text-right text-[11px] font-semibold leading-tight shadow-neo-md',
+								kitchenTicketStateClass,
+							]"
+						>
+							{{ kitchenTicket.text }}
+						</span>
+					</span>
+				</button>
+
 				<!-- Print Provisional Ticket Button (compact - gray) -->
 				<!-- //// Neoffice — the ticket shows the quantity typed in a field that is still focused (fix round 3). -->
 				<button
@@ -2372,6 +2424,11 @@ const props = defineProps({
 		type: Array,
 		default: () => [],
 	},
+	//// Neoffice — the till's kitchen-ticket button of the table's order: { available, phase, text } (utils/tillKitchenTicket.js)
+	kitchenTicket: {
+		type: Object,
+		default: () => ({ available: false, phase: "idle", text: "" }),
+	},
 	customer: Object,
 	subtotal: {
 		type: Number,
@@ -2453,6 +2510,8 @@ const emit = defineEmits([
 	//// pre-payment ticket the waiter drops on the table (87f168fe, 71050faf).
 	"open-modifiers", // (item) - Open special instructions dialog (restaurant mode)
 	"print-provisional-ticket", // () - Print provisional ticket (restaurant mode)
+	//// Neoffice — print the kitchen ticket of the table's order again, by the server (NeoResto lot 1, Daniel, 02.11.2026)
+	"print-kitchen-ticket", // () - Print a copy of the kitchen ticket (restaurant mode)
 	"view-shift", // () - View current shift details
 	"show-drafts", // () - Show draft/held orders
 	"show-history", // () - Show invoice history
@@ -3491,6 +3550,21 @@ function openKitchenDialog() {
 function printProvisionalTicket() {
 	commitTypedQuantity();
 	emit("print-provisional-ticket");
+}
+
+//// Neoffice — the kitchen ticket of the table, printed again (NeoResto lot 1, Daniel, 02.11.2026)
+const kitchenTicketStateClass = computed(
+	() =>
+		({
+			printed: "bg-green-600 text-white",
+			offline: "bg-amber-500 text-white",
+			failed: "bg-red-600 text-white",
+		})[props.kitchenTicket?.phase] || "bg-gray-800 text-white"
+);
+
+function printKitchenTicket() {
+	commitTypedQuantity();
+	emit("print-kitchen-ticket");
 }
 
 //// Neoffice — what updateQuantity did with each value typed, now also what a sent line does once with the whole of it (fix round 2).

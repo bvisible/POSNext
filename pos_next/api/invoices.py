@@ -1785,8 +1785,10 @@ def update_invoice(data):
 										batch,
 										update_modified=False,
 									)
-				# //// Neoffice — lines are at the kitchen: tell the kitchen-send listeners, which act once per line.
-				if sent_to_kitchen:
+				# //// Neoffice — lines are at the kitchen: tell the kitchen-send listeners, which act once per line. Also when the order had
+				# //// been at the kitchen and this save has nothing left at it: a printer that printed a dish cancels it on paper when it is
+				# //// taken off (NeoResto lot 1, Daniel, 02.11.2026: a kitchen with tickets only).
+				if sent_to_kitchen or any_sent_before:
 					from pos_next.api.kitchen_events import kitchen_send
 
 					kitchen_send(invoice_doc.name, next_batch)

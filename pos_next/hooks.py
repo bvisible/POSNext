@@ -294,7 +294,8 @@ doc_events = {
 		# //// Neoffice — the tills hear of an order that holds a counted product (the portions the kitchen made, NeoResto lot 1,
 		# //// Daniel, 02.11.2026), saved, cancelled or deleted, so that a sold-out dish follows the room.
 		"on_update": ["pos_next.api.restaurant.on_invoice_update", "pos_next.restaurant.portions.invoice_changed"],
-		"on_trash": "pos_next.restaurant.portions.invoice_changed",
+		# //// Neoffice — a table's draft order that had been at the kitchen and is deleted is told to the kitchen's printers, which cancel it on paper
+		"on_trash": ["pos_next.restaurant.portions.invoice_changed", "pos_next.api.kitchen_events.void_on_trash"],
 		# //// Neoffice — everything booked on submit except the stock event and upstream's one-time
 		# //// offer record (v2.0.0, last line) is ours: ERPNext's
 		# //// coupon usage counter (coupons moved onto the native Coupon Code — 9bc096de,

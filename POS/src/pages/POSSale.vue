@@ -1039,6 +1039,8 @@
 								@send-to-kitchen="handleSendToKitchen"
 								@open-kitchen-dialog="kitchenDialogRef?.open()"
 								@print-provisional-ticket="handlePrintProvisionalTicket"
+								:kitchen-ticket="kitchenTicket"
+								@print-kitchen-ticket="handlePrintKitchenTicket"
 								@send-item-to-kitchen="handleSendSingleItem"
 								@order-next-course="handleOrderHeldLines('next')"
 								@order-everything="handleOrderHeldLines('all')"
@@ -2319,6 +2321,8 @@ import { useInstallEntry } from "@/composables/usePWAInstall";
 import { qzConnected, connect as qzConnect, disconnect as qzDisconnect } from "@/utils/qzTray";
 //// Neoffice — the provisional ticket prints on the till's CloudPRNT printer, through the server (task 28a).
 import { printProvisionalTicketFromTill } from "@/utils/provisionalTicket";
+//// Neoffice — the kitchen ticket of the table's order, printed again from the till (utils/tillKitchenTicket.js).
+import { kitchenTicketButton, printKitchenTicketFromTill, stationsWithAPrinter } from "@/utils/tillKitchenTicket";
 
 //// Neoffice — FeatherIcon added to the frappe-ui import: the Neoffice header, the table
 //// banner and the reworked success dialog draw their icons with it (87f168fe 2026-03-20
@@ -5877,6 +5881,28 @@ function handlePrintProvisionalTicket() {
 		shiftStore,
 		printInBrowser: printProvisionalTicket,
 	});
+}
+
+//// Neoffice — the kitchen ticket of the table's order, printed again from the till (NeoResto lot 1, Daniel, 02.11.2026: a kitchen with tickets
+//// only « peut imprimer un ticket s'il en a besoin »): the button is drawn where a station that has lines at the kitchen has a printer, and the server
+//// prints a COPY on the printer of each such station (utils/tillKitchenTicket.js).
+const kitchenPrinterStations = ref([]);
+async function refreshKitchenPrinterStations() {
+	if (!restaurantStore.isEnabled) return;
+	kitchenPrinterStations.value = await stationsWithAPrinter(restaurantStore.tillRestaurant);
+}
+const kitchenTicket = computed(() =>
+	kitchenTicketButton({
+		invoice: cartStore.currentDraftId || "",
+		items: cartStore.invoiceItems,
+		printerStations: kitchenPrinterStations.value,
+	}),
+);
+// A printer is plugged in or out while the till is open: asked again whenever a table is opened
+watch(() => cartStore.restaurantTable?.name, refreshKitchenPrinterStations, { immediate: true });
+function handlePrintKitchenTicket() {
+	commitTypedQuantity();
+	return printKitchenTicketFromTill(cartStore.currentDraftId);
 }
 
 // Note: handleLoadDraft already exists above, will delegate to it

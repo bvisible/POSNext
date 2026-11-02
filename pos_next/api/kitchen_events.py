@@ -18,6 +18,8 @@ HOOK_REPRINT = "pos_next_kitchen_reprint"
 HOOK_REPRINT_STATUS = "pos_next_kitchen_reprint_status"
 #: the stations some printer prints for: listener() answers a list of station names
 HOOK_PRINTERS = "pos_next_kitchen_printers"
+#: a table's draft order that had been at the kitchen is deleted: listener(invoice) cancels on paper what its printers printed
+HOOK_VOID = "pos_next_kitchen_void"
 
 
 def kitchen_send(invoice, batch):
@@ -31,6 +33,26 @@ def kitchen_send(invoice, batch):
 			frappe.get_attr(method)(invoice, int(batch))
 		except Exception:
 			frappe.log_error(f"POS Next: kitchen-send listener {method} failed", frappe.get_traceback())
+
+
+def kitchen_void(invoice):
+	"""Table order `invoice`, a draft that had lines at the kitchen, is being deleted: call every listener of HOOK_VOID with (invoice).
+	A listener's failure is logged and never stops the deletion."""
+	for listener in _listeners(HOOK_VOID):
+		try:
+			listener(invoice)
+		except Exception:
+			frappe.log_error("POS Next: kitchen-void listener failed", frappe.get_traceback())
+
+
+def void_on_trash(doc, method=None):
+	"""Hook of a Sales Invoice deleted: a draft table or takeaway order that had lines at the kitchen tells the kitchen's printers. A
+	sale that is paid (submitted) and cancelled later is no business of the kitchen's, and a draft whose lines were all held back never
+	left."""
+	if doc.docstatus != 0 or not (doc.get("restaurant_table") or doc.get("is_takeaway")):
+		return
+	if any((row.get("kds_status") or "") not in ("", "Waiting") for row in doc.get("items") or []):
+		kitchen_void(doc.name)
 
 
 def _listeners(hook):
