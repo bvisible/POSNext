@@ -9,6 +9,8 @@ from unittest.mock import patch
 import frappe
 from erpnext.controllers.sales_and_purchase_return import make_return_doc
 from frappe.query_builder.functions import Sum
+# //// Neoffice — the people a test acts as (neoffice-maintenance#2125).
+from frappe.tests.roles import as_role
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import flt
 
@@ -88,7 +90,10 @@ class TestLinkedReturnCredit(FrappeTestCase):
 		return flt(query.where((gle.against_voucher == name) & (gle.is_cancelled == 0)).run()[0][0])
 
 	def _credit_sources(self, *names):
-		sources = credit_sales.get_available_credit(CUSTOMER, self.company.name)
+		# //// Neoffice — the cashier reads and redeems a customer's credit, never Administrator
+		# //// (neoffice-maintenance#2125). The sales and the returns before it are the scenery.
+		with as_role("cashier"):
+			sources = credit_sales.get_available_credit(CUSTOMER, self.company.name)
 		return [(s["credit_origin"], s["available_credit"]) for s in sources if s["credit_origin"] in names]
 
 	def test_linked_pos_return_credit_is_offered_on_the_original_invoice(self):
@@ -108,21 +113,25 @@ class TestLinkedReturnCredit(FrappeTestCase):
 		# //// Neoffice — redeeming credit is a till endpoint in our fork (cash_entry.require_till_access
 		# //// on the invoice's POS Profile) and this bare invoice has no till; who may redeem is proven
 		# //// by tests/test_till_endpoints_sweep.py, so the gate is lifted here and the ledgers stay the point.
-		with patch("pos_next.api.cash_entry.require_till_access"):
+		with patch("pos_next.api.cash_entry.require_till_access"), as_role("cashier"):
 			credit_sales.redeem_customer_credit(
 				sale.name, [{"type": "Invoice", "credit_origin": source, "credit_to_redeem": 100}]
 			)
 
 		self.assertEqual([self._gl_balance(n) for n in (original.name, ret.name, sale.name)], [0, 0, 0])
 		self.assertEqual(self._credit_sources(original.name, ret.name), [])
-		self.assertEqual(
-			str(credit_sales.get_customer_balance(CUSTOMER, self.company.name)["total_credit"]), "0.0"
-		)
+		# //// Neoffice — the cashier reads the customer's balance, never Administrator (neoffice-maintenance#2125).
+		with as_role("cashier"):
+			self.assertEqual(
+				str(credit_sales.get_customer_balance(CUSTOMER, self.company.name)["total_credit"]), "0.0"
+			)
 
 	def test_customer_balance_counts_linked_return_credit_once(self):
 		self._linked_return(self._pos_sale(paid=True))
 
-		balance = credit_sales.get_customer_balance(CUSTOMER, self.company.name)
+		# //// Neoffice — the cashier reads the customer's balance, never Administrator (neoffice-maintenance#2125).
+		with as_role("cashier"):
+			balance = credit_sales.get_customer_balance(CUSTOMER, self.company.name)
 
 		self.assertEqual((balance["total_credit"], balance["total_outstanding"]), (100, 0))
 

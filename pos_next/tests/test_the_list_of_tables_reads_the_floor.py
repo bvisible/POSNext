@@ -21,6 +21,8 @@ The suite builds its own two restaurants, tills, tables and orders, relies on no
 import json
 
 import frappe
+# //// Neoffice — the people a test acts as (neoffice-maintenance#2125).
+from frappe.tests.roles import as_role
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import flt
 
@@ -228,9 +230,11 @@ class TestTheListOfTablesReadsTheFloor(TwoRestaurants, FrappeTestCase):
 			}
 		).insert(ignore_permissions=True)
 
-		guest_ordering.submit_guest_order(
-			token.token, json.dumps([{"item_code": self.fx.item, "qty": 1, "rate": 5}])
-		)
+		# //// Neoffice — a guest scanning a table has no account at all: never Administrator (#2125).
+		with as_role("Guest"):
+			guest_ordering.submit_guest_order(
+				token.token, json.dumps([{"item_code": self.fx.item, "qty": 1, "rate": 5}])
+			)
 
 		table = self.table_on_the_floor(self.table_two)
 		self.assertEqual(table["status"], "Occupied")
@@ -247,9 +251,11 @@ class TestTheListOfTablesReadsTheFloor(TwoRestaurants, FrappeTestCase):
 			}
 		).insert(ignore_permissions=True)
 
-		guest_ordering.submit_guest_order(
-			token.token, json.dumps([{"item_code": self.fx.item, "qty": 1, "rate": 5}])
-		)
+		# //// Neoffice — a guest scanning a table has no account at all: never Administrator (#2125).
+		with as_role("Guest"):
+			guest_ordering.submit_guest_order(
+				token.token, json.dumps([{"item_code": self.fx.item, "qty": 1, "rate": 5}])
+			)
 
 		table = self.table_on_the_floor(self.table_two)
 		self.assertEqual((table["qr_waiting_count"], table["waiting_items_count"]), (0, 0))

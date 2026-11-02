@@ -12,6 +12,8 @@ import json
 import unittest
 
 import frappe
+# //// Neoffice — the people a test acts as (neoffice-maintenance#2125).
+from frappe.tests.roles import as_role
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import flt
 
@@ -332,6 +334,12 @@ class TestClosingShiftExpenseAggregation(FrappeTestCase):
 		cls.MODE_OF_PAYMENT = fx.mode_of_payment
 		cls.PROFILE = fx.pos_profile
 
+	def setUp(self):
+		super().setUp()
+		# //// Neoffice — the shift's cashier opens, spends and closes, never Administrator, whom no right
+		# //// refuses (neoffice-maintenance#2125).
+		self.enterContext(as_role("cashier"))
+
 	def tearDown(self):
 		frappe.db.rollback()
 		super().tearDown()
@@ -411,7 +419,10 @@ class TestClosingShiftExpenseAggregation(FrappeTestCase):
 			flt(self._cash_row(before)["expected_amount"]), self.OPENING_AMOUNT - self.EXPENSE_AMOUNT
 		)
 
-		frappe.get_doc("Journal Entry", je_name).cancel()
+		# //// Neoffice — the head accountant cancels it from the desk: a cashier holds no cancel on a Journal
+		# //// Entry, and is rightly refused (their way is cancel_pos_expense, with its own gate).
+		with as_role("head_accountant"):
+			frappe.get_doc("Journal Entry", je_name).cancel()
 
 		after = self._closing_from(shift)
 		self.assertEqual(flt(after["total_pos_expenses"]), 0)

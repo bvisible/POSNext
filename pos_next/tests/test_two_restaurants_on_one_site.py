@@ -16,6 +16,8 @@ from contextlib import contextmanager
 from unittest.mock import patch
 
 import frappe
+# //// Neoffice — the people a test acts as (neoffice-maintenance#2125).
+from frappe.tests.roles import as_role
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import add_days, nowdate
 
@@ -1033,7 +1035,8 @@ class TestOrdersBelongToTheRestaurantOfTheirTable(TwoRestaurants, FrappeTestCase
 			"Restaurant", self.b, {"enable_qr_ordering": 1, "qr_order_validation": "Server Approval"}
 		)
 		frappe.clear_document_cache("Restaurant")
-		with patch.object(frappe, "publish_realtime") as published:
+		# //// Neoffice — a guest scanning a table has no account at all: never Administrator (#2125).
+		with patch.object(frappe, "publish_realtime") as published, as_role("Guest"):
 			guest_ordering.submit_guest_order(
 				token.token, json.dumps([{"item_code": self.fx.item, "qty": 1, "rate": 5}])
 			)
