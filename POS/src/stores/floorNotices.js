@@ -2,7 +2,7 @@
 //// guest: « regarde comment la caisse sommelier reçoit l'info (popup et autre) »). The realtime events reach the restaurant store (stores/restaurant), which hands them to `tell`; the rules of what a notice says and
 //// how notices stack are utils/floorNotices; the stack is drawn by components/restaurant/FloorNotices. What is done follows the till's settings (POS Settings, "Floor alerts"; utils/floorAlerts):
 ////
-//// - a NOTICE per table, newest on top, until it is dismissed or until the settings' seconds run out (0 = until dismissed). An order the waiter has to VALIDATE has no seconds: it stays until it is handled or dismissed;
+//// - a NOTICE per table, in the order they came, until somebody has seen it (the default) or until the settings' seconds run out, when a till sets some. An order the waiter has to VALIDATE has no seconds: it stays until it is handled or dismissed;
 //// - the SOUND the till chose, once per event, at the volume it set, on the shared player (utils/alertSoundPlayer). With the popup off only the sound remains, with the sound on none only the notice.
 import { defineStore } from "pinia"
 import { computed, ref } from "vue"
@@ -14,7 +14,7 @@ import { usePOSSettingsStore } from "./posSettings"
 export const useFloorNoticesStore = defineStore("floorNotices", () => {
 	const posSettingsStore = usePOSSettingsStore()
 
-	// Newest first, one per table
+	// In the order they came (the oldest first), one per table
 	const notices = ref([])
 	const alerts = computed(() => readFloorAlerts(posSettingsStore.settings))
 	// Whether the till has a sound to play: the chip that asks for a touch is there while it has and the page has not been touched

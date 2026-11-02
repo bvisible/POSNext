@@ -18636,3 +18636,23 @@ msgstr ""
 #: pos_next/till_settings/registry.py
 msgid "Listen to the sound"
 msgstr ""
+
+#: POS/src/components/restaurant/FloorNotices.vue
+msgid "Seen"
+msgstr ""
+
+#: POS/src/components/restaurant/FloorNotices.vue
+msgid "Seen: {0}"
+msgstr ""
+
+#: POS/src/components/restaurant/FloorNotices.vue
+msgid "Show fewer"
+msgstr ""
+
+#: POS/src/components/restaurant/FloorNotices.vue
+msgid "Show the 1 other notice"
+msgstr ""
+
+#: POS/src/components/restaurant/FloorNotices.vue
+msgid "Show the {0} other notices"
+msgstr ""

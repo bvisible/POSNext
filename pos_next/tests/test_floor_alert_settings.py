@@ -27,7 +27,8 @@ class TestTheFieldsOfPOSSettings(TillSettingsCase):
 		meta = frappe.get_meta("POS Settings")
 		expected = {
 			"floor_guest_popup": ("Check", "1"),
-			"floor_popup_seconds": ("Int", "30"),
+			# 0 = until somebody has seen the notice (Daniel, 02.11.2026: the glass of wine ordered at table 7 went away on its own)
+			"floor_popup_seconds": ("Int", "0"),
 			"floor_guest_sound": ("Select", "Chime"),
 		}
 		for fieldname, (fieldtype, default) in expected.items():
@@ -51,7 +52,7 @@ class TestTheFieldsOfPOSSettings(TillSettingsCase):
 		)
 
 		self.assertEqual(
-			(stored.floor_guest_popup, stored.floor_popup_seconds, stored.floor_guest_sound), (1, 30, "Chime")
+			(stored.floor_guest_popup, stored.floor_popup_seconds, stored.floor_guest_sound), (1, 0, "Chime")
 		)
 
 	def test_the_seconds_are_refused_out_of_range(self):
@@ -88,7 +89,7 @@ class TestTheTillReadsThem(TillSettingsCase):
 				DEFAULT_POS_SETTINGS["floor_guest_sound"],
 				DEFAULT_POS_SETTINGS["kitchen_alert_volume"],
 			),
-			(1, 30, "Chime", "Medium"),
+			(1, 0, "Chime", "Medium"),
 		)
 
 	def test_the_bootstrap_hands_them_to_the_till(self):
@@ -175,7 +176,7 @@ class TestTheSettingsScreen(TillSettingsCase):
 				answer["values"]["floor_popup_seconds"],
 				answer["values"]["floor_guest_sound"],
 			),
-			(1, 30, "Chime"),
+			(1, 0, "Chime"),
 		)
 
 	def test_a_shop_till_is_not_served_them_and_is_refused_them(self):
@@ -211,3 +212,31 @@ class TestTheSettingsScreen(TillSettingsCase):
 
 		with self.assertRaises(frappe.ValidationError):
 			save_till_settings(self.restaurant_till, {"floor_popup_seconds": 601})
+
+
+class TestTheTillsThatKeptTheOldDefault(TillSettingsCase):
+	"""The default moved from 30 seconds to 0 (until somebody has seen the notice): a till that was given 30 by the old default takes the new one, a till that chose another number keeps it."""
+
+	def stored_seconds(self):
+		return frappe.db.get_value("POS Settings", {"pos_profile": self.restaurant_till}, "floor_popup_seconds")
+
+	def run_patch(self):
+		from pos_next.patches.neoresto import floor_notices_stay_until_seen
+
+		floor_notices_stay_until_seen.execute()
+
+	def test_a_till_on_the_old_default_stays_until_the_notice_is_seen(self):
+		frappe.db.set_value("POS Settings", {"pos_profile": self.restaurant_till}, "floor_popup_seconds", 30)
+
+		self.run_patch()
+
+		self.assertEqual(self.stored_seconds(), 0)
+
+	def test_a_till_that_chose_its_seconds_keeps_them(self):
+		for seconds in (12, 45, 0):
+			with self.subTest(seconds=seconds):
+				frappe.db.set_value("POS Settings", {"pos_profile": self.restaurant_till}, "floor_popup_seconds", seconds)
+
+				self.run_patch()
+
+				self.assertEqual(self.stored_seconds(), seconds)

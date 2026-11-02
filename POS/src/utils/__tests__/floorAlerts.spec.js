@@ -7,8 +7,9 @@ import { describe, expect, it } from "vitest"
 import { DEFAULT_FLOOR_ALERTS, readFloorAlerts } from "../floorAlerts"
 
 describe("the floor alerts a till reads", () => {
-	it("defaults to a popup of 30 seconds, the chime, at medium volume", () => {
-		expect(DEFAULT_FLOOR_ALERTS).toEqual({ popup: true, popupSeconds: 30, guestSound: "chime", volume: "medium" })
+	//// Neoffice — the notice stays until somebody has seen it (Daniel, 02.11: « il faut le laisser afficher de telle manière que quelqu'un valide »): 0 seconds is « until it is dismissed »
+	it("defaults to a popup that stays until somebody has seen it, the chime, at medium volume", () => {
+		expect(DEFAULT_FLOOR_ALERTS).toEqual({ popup: true, popupSeconds: 0, guestSound: "chime", volume: "medium" })
 		expect(readFloorAlerts(undefined)).toEqual(DEFAULT_FLOOR_ALERTS)
 		expect(readFloorAlerts(null)).toEqual(DEFAULT_FLOOR_ALERTS)
 		expect(readFloorAlerts({})).toEqual(DEFAULT_FLOOR_ALERTS)
@@ -28,7 +29,7 @@ describe("the floor alerts a till reads", () => {
 	})
 
 	it("holds the seconds to a whole number from 0 to 600", () => {
-		for (const [given, expected] of [[-4, 0], [12.6, 13], [9999, 600], ["45", 45], ["junk", 30], [null, 30], ["", 30]]) {
+		for (const [given, expected] of [[-4, 0], [12.6, 13], [9999, 600], ["45", 45], ["junk", 0], [null, 0], ["", 0]]) {
 			expect(readFloorAlerts({ floor_popup_seconds: given }).popupSeconds, String(given)).toBe(expected)
 		}
 	})

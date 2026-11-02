@@ -109,10 +109,20 @@ describe("the buttons", () => {
 		expect(button.classes()).toContain("h-11")
 		expect(button.classes().join(" ")).toMatch(/min-w-\[?44px|min-w-11|w-11/)
 		expect(button.attributes("aria-label")).toContain("T2")
-		expect(button.text()).toBe("Dismiss")
+		// A notice that only tells is « Seen » (Daniel, 02.11: it stays until somebody has seen it)
+		expect(button.text()).toBe("Seen")
 
 		await button.trigger("click")
 		expect(wrapper.emitted("dismiss")).toEqual([["t-2|1"]])
+	})
+
+	it("says « Dismiss » on an order waiting for validation, which stays until it is handled: leaving it is not seeing it", () => {
+		const wrapper = show([notice("t-2", { kind: "pending", orders: 1 }), notice("t-3", { kind: "payment", items: [], count: 0 })])
+
+		expect(rows(wrapper)[0].get("[data-test='notice-dismiss']").text()).toBe("Dismiss")
+		expect(rows(wrapper)[0].get("[data-test='notice-dismiss']").attributes("aria-label")).toBe("Dismiss: T2")
+		expect(rows(wrapper)[1].get("[data-test='notice-dismiss']").text()).toBe("Seen")
+		expect(rows(wrapper)[1].get("[data-test='notice-dismiss']").attributes("aria-label")).toBe("Seen: Table 3")
 	})
 
 	it("has a « View table » button of at least 44 px that says which notice to open", async () => {
@@ -139,14 +149,45 @@ describe("the buttons", () => {
 })
 
 describe("the stack", () => {
-	it("shows the newest three and counts the others, so that the till keeps its room", () => {
+	//// Neoffice — the notices stay until somebody has seen them (Daniel, 02.11), one under the other in the order they came: the three that have waited longest stand in view, the others are one press away
+	it("shows the three that have waited longest and counts the others, so that the till keeps its room", () => {
 		const wrapper = show([notice("a"), notice("b"), notice("c"), notice("d"), notice("e")])
 
-		expect(rows(wrapper)).toHaveLength(3)
+		expect(rows(wrapper).map((row) => row.attributes("data-notice-table"))).toEqual(["a", "b", "c"])
 		expect(wrapper.find("[data-test='notices-more']").text()).toBe("+2")
 	})
 
-	it("shows the next one when one is dismissed", async () => {
+	it("shows all of them when the count is pressed, and the three again when it is pressed once more", async () => {
+		const wrapper = show([notice("a"), notice("b"), notice("c"), notice("d"), notice("e")])
+
+		await wrapper.get("[data-test='notices-more']").trigger("click")
+		expect(rows(wrapper).map((row) => row.attributes("data-notice-table"))).toEqual(["a", "b", "c", "d", "e"])
+		expect(wrapper.get("[data-test='notices-less']").text()).toBe("Show fewer")
+		expect(wrapper.find("[data-test='notices-more']").exists()).toBe(false)
+
+		await wrapper.get("[data-test='notices-less']").trigger("click")
+		expect(rows(wrapper)).toHaveLength(3)
+		expect(wrapper.get("[data-test='notices-more']").text()).toBe("+2")
+	})
+
+	it("has a count of at least 44 px that says what it opens", () => {
+		const button = show([notice("a"), notice("b"), notice("c"), notice("d")]).get("[data-test='notices-more']")
+
+		expect(button.element.tagName).toBe("BUTTON")
+		expect(button.classes()).toContain("h-11")
+		expect(button.attributes("aria-expanded")).toBe("false")
+		expect(button.attributes("aria-label")).toBe("Show the 1 other notice")
+	})
+
+	it("puts a new notice at the bottom: the ones in view do not move", async () => {
+		const wrapper = show([notice("a"), notice("b")])
+
+		await wrapper.setProps({ notices: [notice("a"), notice("b"), notice("c")] })
+
+		expect(rows(wrapper).map((row) => row.attributes("data-notice-table"))).toEqual(["a", "b", "c"])
+	})
+
+	it("shows the next one when one is seen", async () => {
 		const wrapper = show([notice("a"), notice("b"), notice("c"), notice("d")])
 		expect(wrapper.find("[data-test='notices-more']").text()).toBe("+1")
 
@@ -154,6 +195,16 @@ describe("the stack", () => {
 
 		expect(rows(wrapper)).toHaveLength(3)
 		expect(wrapper.find("[data-test='notices-more']").exists()).toBe(false)
+	})
+
+	it("closes the list by itself when the others are seen, and the next crowd starts closed", async () => {
+		const wrapper = show([notice("a"), notice("b"), notice("c"), notice("d")])
+		await wrapper.get("[data-test='notices-more']").trigger("click")
+
+		await wrapper.setProps({ notices: [notice("a"), notice("b")] })
+		await wrapper.setProps({ notices: [notice("a"), notice("b"), notice("c"), notice("d"), notice("e")] })
+
+		expect(rows(wrapper)).toHaveLength(3)
 	})
 
 	it("is announced to a screen reader without stealing the focus", () => {

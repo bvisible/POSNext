@@ -33,7 +33,7 @@ describe("the kitchen alerts a screen reads", () => {
 
 	// The floor alerts of the till read their seconds the same way (the kitchen has none any more: its ticket flashes until it is started)
 	it("holds the seconds of a popup to a whole number from 0 to 600", () => {
-		for (const [given, expected] of [[-4, 0], [12.6, 13], [9999, 600], ["45", 45], ["junk", 30], [null, 30]]) {
+		for (const [given, expected] of [[-4, 0], [12.6, 13], [9999, 600], ["45", 45], ["junk", 0], [null, 0]]) {
 			expect(secondsOf(given), String(given)).toBe(expected)
 		}
 	})

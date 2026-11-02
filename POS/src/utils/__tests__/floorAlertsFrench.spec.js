@@ -67,6 +67,12 @@ const STRINGS = [
 	"Seconds the notice stays on the till. 0 = until somebody dismisses it. An order waiting for the waiter to validate it always stays until it is handled or dismissed",
 	"Sound of the till when a guest orders or pays from the QR code of a table. It plays at the alert volume set above",
 	"Listen to the sound",
+	// The notices stay until somebody has seen them (Daniel, 02.11): « Vu », and the others one press away
+	"Seen",
+	"Seen: {0}",
+	"Show fewer",
+	"Show the 1 other notice",
+	"Show the {0} other notices",
 ]
 // Words the notices share with the rest of the till, already in the catalogue
 const SHARED = ["Dismiss", "Dismiss: {0}", "+{0}", "Listen", "Listen to the sound: {0}", "Touch the screen to enable the sound", "Popup stays (seconds)"]
@@ -132,7 +138,23 @@ describe("the screens, read in French", () => {
 		expect(text).toContain("Table 7 — le client a payé")
 		expect(text).toContain("T9 — le client a payé une partie de l'addition")
 		expect(text).toContain("Voir la table")
+		// An order waiting for validation is closed (« Fermer »), the notices that only tell are « Vu »
 		expect(text).toContain("Fermer")
+		expect(text).toContain("Vu")
+	})
+
+	it("says the count of the other notices and its two ways in French", async () => {
+		const { default: FloorNotices } = await import("@/components/restaurant/FloorNotices.vue")
+		const notice = (table) => ({ key: `${table}|1`, kind: "order", table, items: [], count: 0, orders: 1, partial: false })
+		const wrapper = mount(FloorNotices, {
+			props: { notices: ["a", "b", "c", "d"].map(notice), labelOf: (table) => table },
+			global: { mocks: { __: globalThis.__ } },
+		})
+
+		expect(wrapper.get("[data-test='notices-more']").attributes("aria-label")).toBe("Afficher 1 autre avis")
+		await wrapper.get("[data-test='notices-more']").trigger("click")
+		expect(wrapper.get("[data-test='notices-less']").text()).toBe("Afficher moins")
+		expect(wrapper.get("[data-test='notice-dismiss']").attributes("aria-label")).toBe("Vu : a")
 	})
 
 	it("says the Listen button of the floor alerts in French", async () => {

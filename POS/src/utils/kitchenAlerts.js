@@ -4,7 +4,8 @@
 
 import { DEFAULT_NEXT_COURSE_SOUND, DEFAULT_RUNNER_SOUND, DEFAULT_VOLUME, normaliseSound, normaliseVolume } from "@/utils/alertSounds"
 
-export const DEFAULT_POPUP_SECONDS = 30
+//// Neoffice — 0 = until somebody has seen the notice (Daniel, 02.11): the floor alerts of the till stay until they are dismissed, unless a till asks for seconds
+export const DEFAULT_POPUP_SECONDS = 0
 // The longest a popup may stay, ten minutes: the same range the server holds
 export const MAX_POPUP_SECONDS = 600
 

@@ -20752,3 +20752,18 @@ msgstr "Afficher les tickets chez le runner"
 
 msgid "A ticket whose dishes are all with the runner stays at the end of the column. Turned off, it leaves this screen."
 msgstr "Un ticket dont tous les plats sont chez le runner reste en fin de colonne. Désactivé, il quitte cet écran."
+
+msgid "Seen"
+msgstr "Vu"
+
+msgid "Seen: {0}"
+msgstr "Vu : {0}"
+
+msgid "Show fewer"
+msgstr "Afficher moins"
+
+msgid "Show the 1 other notice"
+msgstr "Afficher 1 autre avis"
+
+msgid "Show the {0} other notices"
+msgstr "Afficher les {0} autres avis"

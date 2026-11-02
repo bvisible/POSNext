@@ -2,7 +2,7 @@
 	<!-- //// Neoffice — added file (no upstream equivalent). The notices at the top of the till when a guest orders or pays from the QR code of a table (NeoResto lot 1, Daniel, 01.11, after ordering a drink from the QR code of a table as a guest: « regarde comment la caisse sommelier reçoit l'info (popup et autre) »). -->
 	<!-- //// ONE notice per table, « T2 — the guest is ordering » with the lines of the order beneath (three, then « +N »), a button that opens the table and a button that dismisses. It stands in the page's column, between the header and the work, not over it (nothing is drawn over the cart or the floor: it would hide its buttons): the work gives -->
 	<!-- //// it the room it takes, and at most three stand at a time (the others are counted) so that a busy minute never takes the till from the waiter. An order the waiter has to VALIDATE is drawn stronger (an ink ring round the field) and -->
-	<!-- //// kept in view before the others. The design system: the signal is a FIELD and a gesture, with ink on it (5.7:1), and every action is ink: the notice is the signal's field, its buttons ink ones, in light and in dark alike. -->
+	<!-- //// kept in view before the others. The notices stay until somebody has seen them (Daniel, 02.11: the glass of wine ordered at table 7 went away on its own): they stand one under the other in the order they came, the three that have waited longest in view and the others one press away (a new one never moves the ones under the finger). The design system: the signal is a FIELD and a gesture, with ink on it (5.7:1), and every action is ink: the notice is the signal's field, its buttons ink ones, in light and in dark alike. -->
 	<section v-if="notices.length" data-test="floor-notices" role="status" aria-live="polite" class="flex flex-none flex-col gap-2 px-3 pt-2">
 		<TransitionGroup name="floor-notice" tag="div" class="flex flex-col gap-2">
 			<div
@@ -39,21 +39,41 @@
 						type="button"
 						data-test="notice-dismiss"
 						class="inline-flex h-11 min-w-[44px] flex-none touch-manipulation items-center justify-center gap-1.5 rounded-[10px] bg-[#141414] px-3 text-sm font-bold text-[#FFFDF8] active:bg-[#2b2b2b] max-md:flex-1"
-						:aria-label="__('Dismiss: {0}', [tableTitleOf(notice)])"
+						:aria-label="notice.kind === 'pending' ? __('Dismiss: {0}', [tableTitleOf(notice)]) : __('Seen: {0}', [tableTitleOf(notice)])"
 						@click="emit('dismiss', notice.key)"
 					>
 						<LucideX class="h-5 w-5" aria-hidden="true" />
-						<span>{{ __("Dismiss") }}</span>
+						<span>{{ notice.kind === "pending" ? __("Dismiss") : __("Seen") }}</span>
 					</button>
 				</div>
 			</div>
 		</TransitionGroup>
-		<p v-if="hidden > 0" data-test="notices-more" class="self-start rounded-full bg-[#141414] px-2.5 text-xs font-bold leading-5 text-[#FFFDF8]">{{ __("+{0}", [hidden]) }}</p>
+		<button
+			v-if="hidden > 0"
+			type="button"
+			data-test="notices-more"
+			:aria-expanded="'false'"
+			:aria-label="hidden === 1 ? __('Show the 1 other notice') : __('Show the {0} other notices', [hidden])"
+			class="inline-flex h-11 min-w-[44px] flex-none touch-manipulation items-center justify-center self-start rounded-full bg-[#141414] px-3.5 text-sm font-bold text-[#FFFDF8] active:bg-[#2b2b2b]"
+			@click="expanded = true"
+		>
+			{{ __("+{0}", [hidden]) }}
+		</button>
+		<button
+			v-else-if="expanded && notices.length > max"
+			type="button"
+			data-test="notices-less"
+			:aria-expanded="'true'"
+			class="inline-flex h-11 min-w-[44px] flex-none touch-manipulation items-center justify-center self-start rounded-full bg-[#141414] px-3.5 text-sm font-bold text-[#FFFDF8] active:bg-[#2b2b2b]"
+			@click="expanded = false"
+		>
+			{{ __("Show fewer") }}
+		</button>
 	</section>
 </template>
 
 <script setup>
-import { computed } from "vue"
+import { computed, ref, watch } from "vue"
 import LucideBellRing from "~icons/lucide/bell-ring"
 import LucideCircleCheck from "~icons/lucide/circle-check"
 import LucideEye from "~icons/lucide/eye"
@@ -78,8 +98,16 @@ const emit = defineEmits(["see", "dismiss"])
 
 // An order to validate must not be hidden behind newer ones: it is drawn first, the others keep their order
 const ordered = computed(() => [...props.notices.filter((n) => n.kind === KIND_PENDING), ...props.notices.filter((n) => n.kind !== KIND_PENDING)])
-const shown = computed(() => ordered.value.slice(0, props.max))
-const hidden = computed(() => Math.max(0, props.notices.length - props.max))
+// The others are one press away; the list closes by itself once the crowd has gone
+const expanded = ref(false)
+watch(
+	() => props.notices.length,
+	(count) => {
+		if (count <= props.max) expanded.value = false
+	},
+)
+const shown = computed(() => (expanded.value ? ordered.value : ordered.value.slice(0, props.max)))
+const hidden = computed(() => (expanded.value ? 0 : Math.max(0, props.notices.length - props.max)))
 
 // The table by its label; a label that is only a number is « Table 3 », as a waiter says it
 function tableTitleOf(notice) {

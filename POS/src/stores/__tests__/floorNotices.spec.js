@@ -75,7 +75,8 @@ describe("a guest orders", () => {
 		store.tell("order", order({ table: "t-2" }))
 
 		expect(player.play).toHaveBeenCalledTimes(2)
-		expect(store.notices.map((notice) => notice.table)).toEqual(["t-2", "t-1"])
+		// In the order they came: the oldest on top
+		expect(store.notices.map((notice) => notice.table)).toEqual(["t-1", "t-2"])
 	})
 
 	it("is silent for a sound of none, and still shows the notice", () => {
@@ -124,12 +125,14 @@ describe("a guest orders", () => {
 })
 
 describe("how long a notice stays", () => {
-	it("30 seconds by default", () => {
+	//// Neoffice — until somebody has seen it, by default (Daniel, 02.11: the glass of wine ordered at table 7 disappeared on its own)
+	it("until somebody has seen it, by default: a day later it is still there", () => {
 		store.tell("order", order())
 
-		vi.advanceTimersByTime(29_999)
+		vi.advanceTimersByTime(24 * 3600 * 1000)
+
 		expect(store.notices).toHaveLength(1)
-		vi.advanceTimersByTime(1)
+		store.dismiss(store.notices[0].key)
 		expect(store.notices).toEqual([])
 	})
 
@@ -165,6 +168,7 @@ describe("how long a notice stays", () => {
 	})
 
 	it("forgets the timer of a notice that another took the place of: one live timer per notice on the screen", () => {
+		tillSettings.floor_popup_seconds = 30
 		store.tell("order", order({ table: "t-1" }))
 		store.tell("order", order({ table: "t-1", items: [{ item_name: "Pizza", qty: 1 }] }))
 		store.tell("order", order({ table: "t-1", items: [{ item_name: "Soupe", qty: 1 }] }))
@@ -174,11 +178,20 @@ describe("how long a notice stays", () => {
 	})
 
 	it("a payment stays as long as an order", () => {
+		tillSettings.floor_popup_seconds = 30
 		store.tell("payment", { table: "t-2", submitted: true })
 
 		vi.advanceTimersByTime(30_000)
 
 		expect(store.notices).toEqual([])
+	})
+
+	it("a payment stays until somebody has seen it, by default, as an order does", () => {
+		store.tell("payment", { table: "t-2", submitted: true })
+
+		vi.advanceTimersByTime(24 * 3600 * 1000)
+
+		expect(store.notices).toHaveLength(1)
 	})
 
 	it("an order the waiter has to validate stays until it is handled or dismissed, whatever the seconds", () => {

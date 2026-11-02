@@ -53,3 +53,6 @@ pos_next.patches.neorestau.keep_restaurant_staff_signed_in
 # //// Neoffice — NeoResto: a lock now locks at once on leaving the screen only if the till says so (`session_lock_on_leave`,
 # //// default off, product owner, 01.11.2026); the tills that already lock keep locking at once. Runs after the doctype sync.
 pos_next.patches.neorestau.keep_the_screen_lock_of_the_tills_that_lock
+# //// Neoffice — NeoResto: the notice of a guest's order stays on the till until somebody has seen it (the default of `floor_popup_seconds` moves from 30 seconds to 0, Daniel, 02.11.2026); the tills that
+# //// kept the old default take the new one. It runs after the doctype sync, which is what makes the column on a site that has none yet.
+pos_next.patches.neoresto.floor_notices_stay_until_seen

@@ -290,7 +290,7 @@
    "label": "Popup when a guest orders"
   },
   {
-   "default": "30",
+   "default": "0",
    "depends_on": "floor_guest_popup",
    "description": "Seconds the notice stays on the till. 0 = until somebody dismisses it. An order waiting for the waiter to validate it always stays until it is handled or dismissed",
    "fieldname": "floor_popup_seconds",

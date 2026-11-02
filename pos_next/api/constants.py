@@ -166,7 +166,8 @@ DEFAULT_POS_SETTINGS = {
 	"phone_card_pictures": 0,
 	# //// Neoffice — mirrors POS_SETTINGS_FIELDS: the doctype's defaults (a popup of 30 seconds and a chime), so that a site not migrated yet rings as a migrated one.
 	"floor_guest_popup": 1,
-	"floor_popup_seconds": 30,
+	# //// Neoffice — the notice of a guest's order stays until somebody has seen it (Daniel, 02.11.2026)
+	"floor_popup_seconds": 0,
 	"floor_guest_sound": "Chime",
 	"kitchen_alert_volume": "Medium",
 }

@@ -98,19 +98,31 @@ describe("the notice of a guest's payment", () => {
 describe("one notice per table", () => {
 	const at = (table, seq, kind = "order", over = {}) => noticeOf("order", order({ table, validation_mode: kind === "pending" ? "Server Approval" : "Direct to Kitchen", ...over }), seq)
 
-	it("puts the newest on top", () => {
+	//// Neoffice — the notices stay until somebody has seen them (Daniel, 02.11), so they stand in the order they came: the one that has waited longest on top, and a new one never moves the ones under the waiter's finger
+	it("keeps them in the order they came: the oldest on top, the newest at the bottom", () => {
 		const list = putNotice(putNotice([], at("t-1", 1)), at("t-2", 2))
 
-		expect(list.map((notice) => notice.table)).toEqual(["t-2", "t-1"])
+		expect(list.map((notice) => notice.table)).toEqual(["t-1", "t-2"])
 	})
 
-	it("replaces the notice a table already has, and takes the top", () => {
+	it("replaces the notice a table already has, in the place it had", () => {
 		let list = putNotice([], at("t-1", 1))
 		list = putNotice(list, at("t-2", 2))
-		list = putNotice(list, at("t-1", 3))
+		list = putNotice(list, at("t-3", 3))
+		list = putNotice(list, at("t-2", 4))
 
-		expect(list.map((notice) => notice.table)).toEqual(["t-1", "t-2"])
-		expect(list[0].key).toBe(at("t-1", 3).key)
+		expect(list.map((notice) => notice.table)).toEqual(["t-1", "t-2", "t-3"])
+		expect(list[1].key).toBe(at("t-2", 4).key)
+	})
+
+	it("counts the orders of a table waiting for validation in the place its notice had", () => {
+		let list = putNotice([], at("t-1", 1))
+		list = putNotice(list, at("t-2", 2, "pending", { items: [WINE], count: 1 }))
+		list = putNotice(list, at("t-3", 3))
+		list = putNotice(list, at("t-2", 4, "pending", { items: [SOUP], count: 1 }))
+
+		expect(list.map((notice) => notice.table)).toEqual(["t-1", "t-2", "t-3"])
+		expect(list[1]).toMatchObject({ orders: 2, count: 2 })
 	})
 
 	it("counts the orders a table has waiting for validation in ONE notice, with all their lines", () => {

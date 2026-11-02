@@ -4,8 +4,10 @@
 ////
 //// - The server tells the till of a guest event in realtime (pos_next.api.guest_ordering): `guest_order_submitted` (both modes of the restaurant; it names the lines of THIS order and says the mode) and
 ////   `guest_payment_received`. `guest_order_pending` says nothing more than the first in the mode that holds the lines for the waiter, so the till does not act on it: it would be told twice.
-//// - There is ONE notice per table, newest on top: a newer one replaces the older. Orders waiting for the waiter's validation are the exception: they are still waiting, so a second order of the table joins the
-////   notice and the notice counts them. Such a notice stays until it is handled (the table has no line to validate any more) or dismissed.
+//// - There is ONE notice per table: a newer one replaces the older, IN THE PLACE the older had. Orders waiting for the waiter's validation are the exception: they are still waiting, so a second order of the table
+////   joins the notice and the notice counts them. Such a notice stays until it is handled (the table has no line to validate any more) or dismissed.
+//// - The notices stay until somebody has seen them (Daniel, 02.11: the glass of wine ordered at table 7 went away on its own), so they stand in the ORDER THEY CAME: the one that has waited longest on top, a new one
+////   at the bottom. A new one never moves the notices under the waiter's finger, and the first to be handled is the first to be read.
 
 export const KIND_ORDER = "order"
 export const KIND_PENDING = "pending"
@@ -60,24 +62,25 @@ export function noticeOf(event, data, seq) {
 }
 
 /**
- * Puts a notice in the list: ONE per table, newest on top. A notice replaces the one its table has, except orders waiting for validation, which add up.
+ * Puts a notice in the list: ONE per table, in the order they came. A notice replaces the one its table has, in its place, except orders waiting for validation, which add up.
  *
  * @returns {Array<Object>} A new list; the one handed in is not changed
  */
 export function putNotice(notices, notice) {
-	const same = notices.find((other) => other.table === notice.table)
-	const rest = notices.filter((other) => other.table !== notice.table)
-	if (same?.kind === KIND_PENDING && notice.kind === KIND_PENDING) {
-		const joined = {
+	const at = notices.findIndex((other) => other.table === notice.table)
+	if (at < 0) return [...notices, notice]
+	const same = notices[at]
+	let next = notice
+	if (same.kind === KIND_PENDING && notice.kind === KIND_PENDING) {
+		next = {
 			...notice,
 			orders: same.orders + notice.orders,
 			count: same.count + notice.count,
 			items: [...same.items, ...notice.items].slice(0, LINES_KEPT),
 		}
-		if (same.seenWaiting) joined.seenWaiting = true
-		return [joined, ...rest]
+		if (same.seenWaiting) next.seenWaiting = true
 	}
-	return [notice, ...rest]
+	return notices.map((other, index) => (index === at ? next : other))
 }
 
 /** The lines a notice names, and how many it leaves out (« +2 »): three at most, never fewer than it hides. */
