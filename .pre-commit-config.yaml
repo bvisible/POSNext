@@ -80,7 +80,7 @@ repos:
 
   # //// Neoffice — a new test does not play a business act as Administrator (neoffice-maintenance#2125).
   - repo: https://github.com/bvisible/neoffice-ci
-    rev: f9d4168a1a4f9363f7e0adb64b24d5b8d51c19c9
+    rev: 3aed43d9d58272e2e5ae4e1b4939b8a6bebacdbc
     hooks:
       - id: check-test-roles
 
