@@ -108,8 +108,30 @@ describe("after « Mark ready » on the kitchen's card", () => {
 			"Table 15 · Ready",
 		)
 		expect(wrapper.get('[data-test="undo-button"]').text()).toBe("Undo")
-		// The button is 44 px high, like every button of the screens
-		expect(wrapper.get('[data-test="undo-button"]').classes()).toContain("h-11")
+		// The button is 56 px high: well above the 44 px of the screens, it is the one thing to press for five seconds
+		expect(wrapper.get('[data-test="undo-button"]').classes()).toContain("h-14")
+	})
+
+	// //// Neoffice — product owner, 02.11.2026: the first banner (ink on paper) went unseen; it must be a solid red, the same in light and dark
+	it("is a solid red banner with a big white button, and uses no class the dark remap would turn grey", async () => {
+		const wrapper = screen(KDSOrderCard, {
+			order: kitchenOrder(),
+			showStationBadge: false,
+		})
+
+		await press(wrapper, '[data-test="ticket-main"]')
+
+		const banner = toast(wrapper).classes()
+		expect(banner).toContain("bg-ds-red-600")
+		expect(banner).toContain("text-ds-paper")
+		expect(banner).not.toContain("bg-gray-800")
+		const button = wrapper.get('[data-test="undo-button"]').classes()
+		// `bg-white` is rewritten to a grey in the dark mode of the till (index.css): the system's paper white is not
+		expect(button).toContain("bg-ds-paper")
+		expect(button).toContain("text-ds-red-700")
+		expect(button).not.toContain("bg-white")
+		// the bar that runs out is thick enough to be seen from across a kitchen
+		expect(wrapper.get('[data-test="undo-bar"]').classes()).toContain("h-1.5")
 	})
 
 	it("puts every dish back in the state it had when it is pressed, one call per item, and tells the page to read its tickets again", async () => {

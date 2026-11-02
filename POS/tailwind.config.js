@@ -64,6 +64,9 @@ export default {
 						warning: "#E6A93B", // warning, dark ramp: the lighter orange of a slow timer
 						danger: "#FF6369", // destructive, dark ramp: the lighter red of a late timer
 						"danger-soft": "#F6D2C9", // --red-100: the pale phase of the late timer's pulse
+						//// Neoffice — the two solid reds of the « Undo » banner of the kitchen and runner screens (white text on the first is 5.5:1, the second on white 8:1)
+						"red-600": "#C1372C", // --red-600: the banner
+						"red-700": "#9C2920", // --red-700: the text of its white button
 					},
 				};
 			})(),
