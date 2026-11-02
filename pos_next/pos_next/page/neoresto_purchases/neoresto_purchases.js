@@ -20,7 +20,7 @@
 		".npp-label{font-size:13px;color:#6F665A;margin-right:2px}" +
 		".npp-sep{width:1px;height:26px;background:#DCD4C7;margin:0 6px}" +
 		".npp-table{border:1px solid #ECE7DE;border-radius:14px;overflow:hidden;background:#fff}" +
-		".npp-head,.npp-row{display:grid;grid-template-columns:minmax(180px,1.4fr) minmax(320px,3fr) 150px;gap:14px;align-items:start;padding:12px 16px}" +
+		".npp-head,.npp-row{display:grid;grid-template-columns:minmax(180px,1.4fr) minmax(320px,3fr) 190px;gap:14px;align-items:start;padding:12px 16px}" +
 		".npp-head{background:#F6F3ED;font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6F665A}" +
 		".npp-row{border-top:1px solid #F6F3ED}" +
 		".npp-name{font-weight:600}" +
