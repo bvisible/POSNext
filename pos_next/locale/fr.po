@@ -21141,3 +21141,125 @@ msgstr "La personne qui a enregistré le mouvement (propriétaire de l'écriture
 #, python-brace-format
 msgid "{0}: none left"
 msgstr "{0} : il n'en reste plus"
+
+#: pos_next/api/guest_ordering.py:127
+msgid "Accounts are not proposed here."
+msgstr "Aucun compte n'est proposé ici."
+
+#: POS/src/components/guest/GuestAccountSheet.vue:114
+msgid "Create my account"
+msgstr "Créer mon compte"
+
+#: pos_next/restaurant/guest_account.py:188
+msgid "Please confirm your email address first."
+msgstr "Veuillez d'abord confirmer votre adresse e-mail."
+
+#: pos_next/restaurant/guest_account.py:197
+msgid "Please enter your name."
+msgstr "Veuillez indiquer votre nom."
+
+#: POS/src/components/guest/GuestCart.vue:131
+#: pos_next/api/guest_ordering.py:667
+#: pos_next/public/pos/assets/GuestCheckout-N26npjQF.js:1
+msgid "Please sign in to order."
+msgstr "Veuillez vous connecter pour commander."
+
+#: POS/src/components/sale/InvoiceCart.vue:2077
+#: POS/src/components/sale/InvoiceCart.vue:2078
+msgid "Print the kitchen ticket again"
+msgstr "Réimprimer le ticket de cuisine"
+
+#: POS/src/components/guest/GuestAccountSheet.vue:85
+msgid "Send a new code"
+msgstr "Envoyer un nouveau code"
+
+#: POS/src/components/guest/GuestAccountSheet.vue:57
+#: pos_next/public/pos/assets/GuestOrder-DC8XJK9h.js:1
+msgid "Send me a code"
+msgstr "Envoyez-moi un code"
+
+#: POS/src/components/guest/GuestCheckout.vue:270
+msgid "Sign in for next time"
+msgstr "Se connecter pour la prochaine fois"
+
+#: POS/src/components/guest/GuestAccountSheet.vue:38
+#: pos_next/public/pos/assets/GuestOrder-DC8XJK9h.js:1
+msgid "Sign in to earn and use your loyalty points. We send you a code by email, no password needed."
+msgstr "Connectez-vous pour gagner et utiliser vos points de fidélité. Nous vous envoyons un code par e-mail, aucun mot de passe n'est nécessaire."
+
+#: POS/src/components/guest/GuestCheckout.vue:269
+msgid "Sign in to earn loyalty points"
+msgstr "Connectez-vous pour gagner des points de fidélité"
+
+#: POS/src/components/guest/GuestCheckout.vue:267
+msgid "Sign in to pay"
+msgstr "Connectez-vous pour payer"
+
+#: POS/src/components/guest/GuestAccountSheet.vue:39
+#: pos_next/public/pos/assets/GuestOrder-DC8XJK9h.js:1
+msgid "Sign in with your email address. We send you a code, no password needed."
+msgstr "Connectez-vous avec votre adresse e-mail. Nous vous envoyons un code, aucun mot de passe n'est nécessaire."
+
+#. Description of the 'Customer' (Link) field in DocType 'Guest Order Token'
+#: pos_next/pos_next/doctype/guest_order_token/guest_order_token.json:93
+msgid "The customer this session signed in as (or registered as) on the QR page; the table's order follows it"
+msgstr "Le client sous lequel cette session s'est connectée (ou inscrite) sur la page QR ; la commande de la table le suit."
+
+#: pos_next/restaurant/guest_account.py:150
+msgid "This code has expired. Please ask for a new one."
+msgstr "Ce code a expiré. Veuillez en demander un nouveau."
+
+#: pos_next/restaurant/guest_account.py:217
+msgid "This table is already linked to another customer account."
+msgstr "Cette table est déjà liée à un autre compte client."
+
+#: pos_next/restaurant/guest_account.py:51
+msgid "Too many codes asked for. Please try again later."
+msgstr "Trop de codes demandés. Veuillez réessayer plus tard."
+
+#: pos_next/restaurant/guest_account.py:153
+msgid "Too many wrong codes. Please ask for a new one."
+msgstr "Trop de codes erronés. Veuillez en demander un nouveau."
+
+#: POS/src/components/guest/GuestAccountSheet.vue:84
+msgid "Use another address"
+msgstr "Utiliser une autre adresse"
+
+#: POS/src/components/guest/GuestAccountSheet.vue:63
+#: pos_next/public/pos/assets/GuestOrder-DC8XJK9h.js:1
+#, python-brace-format
+msgid "We sent a code to {0}."
+msgstr "Nous avons envoyé un code à {0}."
+
+#: POS/src/components/guest/GuestAccountSheet.vue:91
+msgid "Welcome! Tell us your name to create your account."
+msgstr "Bienvenue ! Indiquez-nous votre nom pour créer votre compte."
+
+#: POS/src/components/guest/GuestAccountSheet.vue:26
+#: pos_next/public/pos/assets/GuestOrder-DC8XJK9h.js:1
+#, python-brace-format
+msgid "Worth {0}"
+msgstr "Valeur {0}"
+
+#: pos_next/restaurant/guest_account.py:158
+msgid "Wrong code."
+msgstr "Code incorrect."
+
+#: POS/src/components/guest/GuestAccountSheet.vue:20
+#: pos_next/public/pos/assets/GuestOrder-DC8XJK9h.js:1
+msgid "Your server linked this table to your account."
+msgstr "Votre serveur a lié cette table à votre compte."
+
+#: pos_next/restaurant/guest_account.py:135
+msgid "Your sign-in code"
+msgstr "Votre code de connexion"
+
+#: pos_next/restaurant/guest_account.py:136
+#, python-brace-format
+msgid "Your sign-in code is {0}. It is valid for {1} minutes."
+msgstr "Votre code de connexion est {0}. Il est valable pendant {1} minutes."
+
+#: pos_next/api/guest_ordering.py:273
+#, python-brace-format
+msgid "{0} is sold out"
+msgstr "{0} : il n'en reste plus"
