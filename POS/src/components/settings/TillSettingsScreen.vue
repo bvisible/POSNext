@@ -427,6 +427,7 @@ import { usePOSEvents } from "@/composables/usePOSEvents"
 import { useQzTray } from "@/composables/useQzTray"
 import { useToast } from "@/composables/useToast"
 import { useCloudPrntStore } from "@/stores/cloudPrnt"
+import { printingChangesOf } from "@/utils/printingChanges"
 import { usePOSShiftStore } from "@/stores/posShift"
 import { useRestaurantStore } from "@/stores/restaurant"
 import { formatTime } from "@/utils/currency"
@@ -477,7 +478,7 @@ const read = ref({})
 const draft = reactive({})
 // The cloudprnt printing as read, and as edited
 const printingRead = ref(null)
-const printingDraft = ref({ receipt_printer: null, auto_print: 0, open_drawer: "Cash payments", stations: {} })
+const printingDraft = ref({ receipt_printer: null, auto_print: 0, open_drawer: "Cash payments", stations: {}, paper_only: {} })
 const roleHelpOpen = ref(false)
 const groupHelp = reactive({})
 
@@ -595,28 +596,8 @@ const documentChanges = computed(() => changedValues(screen.value?.settings, rea
 const deviceChanged = computed(() =>
 	DEVICE_KEYS.some((key) => key in draft && JSON.stringify(draft[key]) !== JSON.stringify(read.value[key]))
 )
-const printingChanges = computed(() => {
-	if (!printingRead.value) return null
-	const before = printingRead.value
-	const after = printingDraft.value
-	const stations = Object.fromEntries(
-		Object.entries(after.stations || {}).filter(
-			([station, printer]) => (before.stationPrinters?.[station] || null) !== (printer || null)
-		)
-	)
-	const changed =
-		(before.receipt_printer || null) !== (after.receipt_printer || null) ||
-		Number(before.auto_print || 0) !== Number(after.auto_print || 0) ||
-		before.open_drawer !== after.open_drawer ||
-		Object.keys(stations).length > 0
-	if (!changed) return null
-	return {
-		receipt_printer: after.receipt_printer || null,
-		auto_print: Number(after.auto_print || 0),
-		open_drawer: after.open_drawer,
-		...(Object.keys(stations).length ? { stations } : {}),
-	}
-})
+//// Neoffice — the rule of what differs lives in a file of its own (utils/printingChanges.js), with the stations that work on paper alone
+const printingChanges = computed(() => printingChangesOf(printingRead.value, printingDraft.value))
 const dirty = computed(
 	() => Object.keys(documentChanges.value).length > 0 || deviceChanged.value || Boolean(printingChanges.value)
 )
@@ -677,12 +658,14 @@ async function loadPrinting() {
 		auto_print: Number(config.auto_print || 0),
 		open_drawer: config.open_drawer,
 		stationPrinters: Object.fromEntries((config.stations || []).map((row) => [row.station, row.printer || null])),
+		stationPaperOnly: Object.fromEntries((config.stations || []).map((row) => [row.station, Number(row.paper_only || 0)])),
 	}
 	printingDraft.value = {
 		receipt_printer: printingRead.value.receipt_printer,
 		auto_print: printingRead.value.auto_print,
 		open_drawer: printingRead.value.open_drawer,
 		stations: {},
+		paper_only: {},
 	}
 }
 

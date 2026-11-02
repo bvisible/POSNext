@@ -733,6 +733,20 @@ def broadcast_cfd_update(payload):
 	frappe.publish_realtime("cfd_update", payload)
 	return {"status": "success"}
 
+# //// Neoffice — added functions (no upstream equivalent). The stations that work on paper alone (NeoResto lot 1, Daniel, 02.11.2026): their cooks read a
+# //// ticket and talk to the room, so no kitchen screen shows their lines and the tables show nothing of their kitchen.
+def _paper_only_field():
+	"""The `paper_only` column of the stations, as a list to spread into a field list: empty until the migration has made it."""
+	return ["paper_only"] if frappe.db.has_column("Preparation Station", "paper_only") else []
+
+
+def paper_only_stations():
+	"""The names of the preparation stations that work on paper alone."""
+	if not _paper_only_field():
+		return set()
+	return set(frappe.get_all("Preparation Station", filters={"paper_only": 1}, pluck="name"))
+
+
 @frappe.whitelist()
 def get_preparation_stations(restaurant=None, station=None):
 	"""Fetch the active preparation stations of the restaurant (the till's own unless one is named).
@@ -763,7 +777,9 @@ def get_preparation_stations(restaurant=None, station=None):
 			or_filters=scope.restaurant_or_filters(restaurant),
 			# `use_runner`: the kitchen screen's last button follows it (task 38a-1): with a runner the cook stops at "Ready",
 			# without one the cook delivers
-			fields=["name", "station_name", "station_type", "color", "use_runner"],
+			# //// Neoffice — `paper_only`: a station that works on paper alone has no screen, and the tables show nothing of its kitchen
+			# //// (NeoResto lot 1, Daniel, 02.11.2026); the column is read only once the migration has made it
+			fields=["name", "station_name", "station_type", "color", "use_runner", *_paper_only_field()],
 			order_by="station_name",
 		),
 		restaurant,
@@ -779,7 +795,7 @@ def get_station_items_map(restaurant=None):
 		"Preparation Station",
 		filters={"is_active": 1},
 		or_filters=scope.restaurant_or_filters(restaurant),
-		fields=["name", "station_name", "color"]
+		fields=["name", "station_name", "color", *_paper_only_field()]
 	)
 	items_map = {}
 	groups_map = {}
@@ -788,7 +804,9 @@ def get_station_items_map(restaurant=None):
 		station_info = {
 			"station": station.name,
 			"station_name": station.station_name,
-			"color": station.color
+			"color": station.color,
+			# //// Neoffice — the cart shows no kitchen state on the lines of a station that works on paper alone (NeoResto lot 1, Daniel, 02.11.2026)
+			"paper_only": station.get("paper_only") or 0,
 		}
 
 		# Individual items mapping
@@ -1050,6 +1068,8 @@ def get_kds_orders(station=None, restaurant=None):
 			if _sg.item_group not in _group_station_map:
 				_group_station_map[_sg.item_group] = _st.name
 
+	# //// Neoffice — the lines of a station that works on paper alone are on no kitchen screen (NeoResto lot 1, Daniel, 02.11.2026)
+	paper = paper_only_stations()
 	for order in orders:
 		items = frappe.get_all(
 			"Sales Invoice Item",
@@ -1083,6 +1103,12 @@ def get_kds_orders(station=None, restaurant=None):
 		if station:
 			items = [i for i in items if i.get("preparation_station") == station]
 
+		# //// Neoffice — an order whose every line belongs to such a station has nothing to show: it leaves the list (see below)
+		if paper:
+			kept = [i for i in items if i.get("preparation_station") not in paper]
+			order["paper_only_order"] = bool(items) and not kept
+			items = kept
+
 		# A line saved before the counters existed has none: it counts as 0 (nothing cooked, nothing delivered)
 		if has_unit_counters:
 			for item in items:
@@ -1090,6 +1116,9 @@ def get_kds_orders(station=None, restaurant=None):
 				item["kds_delivered_qty"] = flt(item.get("kds_delivered_qty"), _QTY_PRECISION)
 
 		order["items"] = items
+
+	# //// Neoffice — an order with nothing but paper-only lines is not a ticket of any screen
+	orders = [o for o in orders if not o.pop("paper_only_order", False)]
 
 	# Remove orders with no items after station filtering
 	if station:

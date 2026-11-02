@@ -18,6 +18,7 @@
   "is_active",
   "workflow",
   "use_runner",
+  "paper_only",
   "section_break_floor_plan",
   "show_on_floor_plan",
   "area",
@@ -86,6 +87,13 @@
    "fieldname": "use_runner",
    "fieldtype": "Check",
    "label": "Use Runner"
+  },
+  {
+   "default": "0",
+   "description": "No screen at this station: the ticket is all the kitchen reads. The ticket holds the whole meal, the courses held back too, and nothing is followed on the screens or at the tables. Needs a printer.",
+   "fieldname": "paper_only",
+   "fieldtype": "Check",
+   "label": "Paper only"
   },
   {
    "fieldname": "section_break_floor_plan",

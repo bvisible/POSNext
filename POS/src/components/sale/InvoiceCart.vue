@@ -1538,7 +1538,7 @@
 									v-if="
 										item.posa_special_instructions ||
 										(item.preparation_station && restaurantStore.isEnabled) ||
-										(cartStore.restaurantTable && item.kds_status) ||
+										(cartStore.restaurantTable && lineShowsKitchenState(item)) ||
 										showFamilyChip(item)
 									"
 									class="flex flex-wrap items-center gap-1 mt-0.5"
@@ -1569,8 +1569,9 @@
 										{{ getStationDisplayName(item.preparation_station) }}
 									</span>
 									<!-- KDS Item Status Badge -->
+									<!-- //// Neoffice — none for a line of a station that works on paper alone (lineShowsKitchenState) -->
 									<span
-										v-if="cartStore.restaurantTable && item.kds_status"
+										v-if="cartStore.restaurantTable && lineShowsKitchenState(item)"
 										class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold flex-shrink-0"
 										:class="kdsStatusBadgeClass(item.kds_status)"
 									>
@@ -2315,7 +2316,7 @@ import { isLightColor } from "@/utils/itemColors";
 //// Neoffice — the row actions hand over the cart row behind a shown copy (utils/cartRow.js).
 import { cartRowOf, rowKeyOf } from "@/utils/cartRow";
 //// Neoffice — which lines have left for the kitchen: their typed quantity waits for the end of the typing (NeoResto lot 1, task 22, fix round 2)
-import { hasLeftForTheKitchen } from "@/utils/lineKitchenState";
+import { hasLeftForTheKitchen, showsKitchenState } from "@/utils/lineKitchenState";
 //// Neoffice — the badge of a dish sent to the kitchen shows its status through kitchenStatusLabel (NeoResto lot 1, task 9)
 import { kitchenStatusLabel } from "@/utils/kitchenStatus";
 import { DEFAULT_CURRENCY, formatCurrency as formatCurrencyUtil } from "@/utils/currency";
@@ -2368,6 +2369,8 @@ const offersStore = usePOSOffersStore(); // Pinia store for offers/promotions
 const customerSearchStore = useCustomerSearchStore(); // Pinia store for customer search
 //// Neoffice — feat: Phase 1 restaurant module - header toggle, UI cleanup, multi-room tabs (8aa35c29, 2026-03-20).
 const restaurantStore = useRestaurantStore(); // Pinia store for restaurant features
+//// Neoffice — whether the table shows the kitchen's state on a line: not for a station that works on paper alone (NeoResto lot 1, Daniel, 02.11.2026)
+const lineShowsKitchenState = (item) => showsKitchenState(item, restaurantStore.isPaperOnly);
 const { formatQuantity, formatDate } = useFormatters(); // Quantity and date formatting utilities
 
 function handleProceedToPayment() {

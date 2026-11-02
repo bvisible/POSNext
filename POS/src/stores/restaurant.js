@@ -769,6 +769,18 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 
 	// A room, a table or a station is shown by its label, never by its name: a new one is named by a hash, and the
 	// name is only what the invoices and the other records link to.
+	//// Neoffice — a station that works on paper alone: its lines show no kitchen state at the table (NeoResto lot 1, Daniel, 02.11.2026)
+	function isPaperOnly(stationId) {
+		if (!stationId) return false
+		for (const info of [
+			...Object.values(stationItemsMap.value),
+			...Object.values(stationGroupsMap.value),
+		]) {
+			if (info.station === stationId) return Boolean(Number(info.paper_only))
+		}
+		return false
+	}
+
 	function stationLabel(stationId) {
 		if (!stationId) return ""
 		const floorStation = floorStations.value.find((s) => s.name === stationId)
@@ -918,6 +930,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		ofTheRestaurant,
 		restaurantName,
 		stationLabel,
+		isPaperOnly,
 		tableLabel,
 		areaLabel,
 		fetchRestaurantSettings,

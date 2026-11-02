@@ -449,13 +449,16 @@ const filterRooms = computed(() =>
 		count: orders.value.filter((o) => o.area === area.name).length,
 	})),
 )
+//// Neoffice — a station that works on paper alone has no screen, so it gets no chip (NeoResto lot 1, Daniel, 02.11.2026)
 const filterStations = computed(() =>
-	stations.value.map((station) => ({
-		name: station.name,
-		label: station.station_name,
-		color: station.color || "#d68a59",
-		count: getStationOrderCount(station.name),
-	})),
+	stations.value
+		.filter((station) => !Number(station.paper_only))
+		.map((station) => ({
+			name: station.name,
+			label: station.station_name,
+			color: station.color || "#d68a59",
+			count: getStationOrderCount(station.name),
+		})),
 )
 
 function selectArea(area) {

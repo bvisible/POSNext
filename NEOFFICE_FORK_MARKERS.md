@@ -296,7 +296,7 @@ detail is in the sections above.
 | `pos_next/pos_next/doctype/pos_cash_entry_template/pos_cash_entry_template.json` | 1: `journal_entry_template` |
 | `pos_next/pos_next/doctype/pos_payment_driver_mapping/pos_payment_driver_mapping.json` | 10: `pos_profile`, `mode_of_payment`, `enabled`, `column_break_1`, `provider`, `channel`, `default_device`, `section_break_options`, `auto_attach_device`, `options_json` |
 | `pos_next/pos_next/doctype/pos_profile_payment_device/pos_profile_payment_device.json` | 3: `mode_of_payment`, `payment_device`, `is_default` |
-| `pos_next/pos_next/doctype/preparation_station/preparation_station.json` | 21: `section_break_main`, `restaurant`, `station_name`, `station_type`, `column_break_1`, `color`, `is_active`, `workflow`, `use_runner`, `section_break_floor_plan`, `show_on_floor_plan`, `area`, `column_break_fp`, `pos_x`, `pos_y` … |
+| `pos_next/pos_next/doctype/preparation_station/preparation_station.json` | 22: `section_break_main`, `restaurant`, `station_name`, `station_type`, `column_break_1`, `color`, `is_active`, `workflow`, `use_runner`, `paper_only`, `section_break_floor_plan`, `show_on_floor_plan`, `area`, `column_break_fp`, `pos_x`, `pos_y` … |
 | `pos_next/pos_next/doctype/preparation_station_item/preparation_station_item.json` | 5: `item`, `item_name`, `prep_time`, `priority`, `workflow` |
 | `pos_next/pos_next/doctype/preparation_station_item_group/preparation_station_item_group.json` | 3: `item_group`, `prep_time`, `priority` |
 | `pos_next/pos_next/doctype/preparation_workflow/preparation_workflow.json` | 6: `workflow_name`, `is_default`, `section_steps`, `steps`, `section_items`, `applicable_items` |

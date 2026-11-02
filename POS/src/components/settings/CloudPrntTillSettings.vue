@@ -136,6 +136,25 @@
 					<p v-if="openHelp[`station:${station.station}`]" :class="HELP_CLASS">
 						{{ textOf("station_printers").help }}
 					</p>
+					<!-- //// Neoffice — a station may work on paper alone: no screen, the ticket is all the kitchen reads (Daniel, 02.11.2026). Needs a printer. -->
+					<div :class="[SUB_CLASS, stationPrinter(station) ? '' : GREYED_CLASS]" data-setting="station_paper_only">
+						<div class="flex min-h-[30px] items-center gap-2.5">
+							<input
+								:id="`cloudprnt-paper-${station.station}`"
+								type="checkbox"
+								class="h-[18px] w-[18px] flex-none rounded-[5px] accent-pos-ink text-pos-ink"
+								:checked="stationPaperOnly(station)"
+								:disabled="!config.can_configure || !stationPrinter(station)"
+								@change="changePaperOnly(station.station, $event.target.checked)"
+							/>
+							<label :for="`cloudprnt-paper-${station.station}`" class="text-[13.5px] text-pos-ink">{{
+								__("Paper only: no screen")
+							}}</label>
+						</div>
+						<p class="ml-7 text-[12px] leading-[1.4] text-pos-muted">
+							{{ __("The ticket holds the whole meal and nothing is followed on a screen or at the tables.") }}
+						</p>
+					</div>
 				</div>
 			</template>
 		</template>
@@ -204,7 +223,21 @@ function stationPrinter(station) {
 }
 
 function changeStation(station, printer) {
-	change({ stations: { ...(draft.value.stations || {}), [station]: printer } })
+	const values = { stations: { ...(draft.value.stations || {}), [station]: printer } }
+	// A station with no printer has its screen and nothing else: it cannot work on paper alone
+	if (!printer) values.paper_only = { ...(draft.value.paper_only || {}), [station]: 0 }
+	change(values)
+}
+
+// A station works on paper alone as this screen says, else as it does today; never without a printer
+function stationPaperOnly(station) {
+	if (!stationPrinter(station)) return false
+	const chosen = draft.value.paper_only || {}
+	return station.station in chosen ? Boolean(chosen[station.station]) : Boolean(Number(station.paper_only))
+}
+
+function changePaperOnly(station, on) {
+	change({ paper_only: { ...(draft.value.paper_only || {}), [station]: on ? 1 : 0 } })
 }
 
 async function testPrint() {

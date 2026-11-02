@@ -13,3 +13,18 @@
 export function hasLeftForTheKitchen(line) {
 	return Boolean(line?.kds_status) && line.kds_status !== "Waiting"
 }
+
+/**
+ * Whether the table shows the kitchen's state on a line (« En préparation », « Prêt »…). A line of a station that works on paper alone shows none:
+ * its cooks read a ticket and talk to the room, nobody marks anything on a screen, so a state would say « pending » for ever (Daniel, 02.11.2026:
+ * « on n'a plus cette notion du tout affichée sur les tables »). « Waiting » is not the kitchen's: it is the waiter's own hold on a course, shown as ever.
+ *
+ * @param {Object|null|undefined} line - A cart line
+ * @param {(station: string) => boolean} [isPaperOnly] - Whether a preparation station works on paper alone
+ * @returns {boolean}
+ */
+export function showsKitchenState(line, isPaperOnly) {
+	if (!line?.kds_status) return false
+	if (line.kds_status === "Waiting") return true
+	return !isPaperOnly?.(line.preparation_station)
+}
