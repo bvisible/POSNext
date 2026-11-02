@@ -20,6 +20,8 @@ Run with: bench --site [site] run-tests --app pos_next --module pos_next.tests.t
 
 import frappe
 import unittest
+# //// Neoffice — the people a test acts as (neoffice-maintenance#2125).
+from frappe.tests.roles import as_role
 from frappe.utils import nowdate, add_months, flt
 
 
@@ -249,11 +251,13 @@ class TestCouponInvoiceIntegration(unittest.TestCase):
 			}],
 		})
 
-		invoice.insert(ignore_permissions=True)
-		self.created_invoices.append(invoice.name)
+		# //// Neoffice — the accountant bills, never Administrator, whom no right refuses (#2125).
+		with as_role("accountant"):
+			invoice.insert()
+			self.created_invoices.append(invoice.name)
 
-		if submit:
-			invoice.submit()
+			if submit:
+				invoice.submit()
 
 		return invoice
 
@@ -302,7 +306,9 @@ class TestCouponInvoiceIntegration(unittest.TestCase):
 		used_after_submit = frappe.db.get_value("Coupon Code", self.test_coupon_name, "used")
 
 		# Cancel the invoice
-		invoice.cancel()
+		# //// Neoffice — cancelling a sent invoice is the head accountant's (#2125).
+		with as_role("head_accountant"):
+			invoice.cancel()
 
 		# Check usage count decreased
 		used_after_cancel = frappe.db.get_value("Coupon Code", self.test_coupon_name, "used")
@@ -342,9 +348,11 @@ class TestCouponInvoiceIntegration(unittest.TestCase):
 				"income_account": self.income_account,
 			}],
 		})
-		invoice.insert(ignore_permissions=True)
-		self.created_invoices.append(invoice.name)
-		invoice.submit()
+		# //// Neoffice — the accountant bills, never Administrator, whom no right refuses (#2125).
+		with as_role("accountant"):
+			invoice.insert()
+			self.created_invoices.append(invoice.name)
+			invoice.submit()
 
 		# Check usage count unchanged
 		new_used = frappe.db.get_value("Coupon Code", self.test_coupon_name, "used")

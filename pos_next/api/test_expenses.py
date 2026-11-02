@@ -16,6 +16,8 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import frappe
+# //// Neoffice — the people a test acts as (neoffice-maintenance#2125).
+from frappe.tests.roles import as_role
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import flt
 
@@ -741,6 +743,12 @@ class TestPOSExpenseJournalEntry(FrappeTestCase):
 		cls.PROFILE = fx.pos_profile
 		cls.PAYMENT_ACCOUNT = fx.payment_account
 
+	def setUp(self):
+		super().setUp()
+		# //// Neoffice — the shift's cashier records an expense, never Administrator, whom no right refuses
+		# //// (neoffice-maintenance#2125).
+		self.enterContext(as_role("cashier"))
+
 	def tearDown(self):
 		frappe.db.rollback()
 		super().tearDown()
@@ -1173,6 +1181,12 @@ class TestOfflineExpenseJournalEntry(FrappeTestCase):
 		frappe.db.set_value("POS Profile", cls.PROFILE, "posa_maximum_expense_amount", 10000)
 		# Ensure allowed account whitelist is empty (= all expense accounts) or includes ours
 		frappe.db.commit()
+
+	def setUp(self):
+		super().setUp()
+		# //// Neoffice — the shift's cashier records an expense, never Administrator, whom no right refuses
+		# //// (neoffice-maintenance#2125).
+		self.enterContext(as_role("cashier"))
 
 	def tearDown(self):
 		frappe.db.rollback()

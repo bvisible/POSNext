@@ -32,6 +32,8 @@ from types import SimpleNamespace
 
 import frappe
 from erpnext.stock.doctype.stock_entry.test_stock_entry import make_stock_entry
+# //// Neoffice — the people a test acts as (neoffice-maintenance#2125).
+from frappe.tests.roles import as_role, make_persona
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import add_days, flt, nowdate
 
@@ -417,6 +419,16 @@ def _line(ctx, item_code, qty=1, price_list_rate=None):
 	}
 
 
+# //// Neoffice — added function (no upstream equivalent): the account the till is given to, a real cashier.
+def _till_cashier(pos_profile):
+	cashier = make_persona("cashier")
+	if not frappe.db.exists("POS Profile User", {"parent": pos_profile, "user": cashier}):
+		profile = frappe.get_doc("POS Profile", pos_profile)
+		profile.append("applicable_for_users", {"user": cashier})
+		profile.save(ignore_permissions=True)
+	return cashier
+
+
 def _apply_offers_and_stamp(payload, selected_offers):
 	"""Run apply_offers and stamp the response back onto the cart payload, mirroring
 	the frontend's applyDiscountsFromServer + recalculateItem + formatItemsForSubmission
@@ -424,10 +436,13 @@ def _apply_offers_and_stamp(payload, selected_offers):
 	"""
 	import json
 
-	resp = apply_offers(
-		invoice_data=json.dumps(payload),
-		selected_offers=json.dumps(selected_offers) if selected_offers else None,
-	)
+	# //// Neoffice — the cashier applies the offers, never Administrator, whom no right refuses
+	# //// (neoffice-maintenance#2125).
+	with as_role(_till_cashier(payload["pos_profile"])):
+		resp = apply_offers(
+			invoice_data=json.dumps(payload),
+			selected_offers=json.dumps(selected_offers) if selected_offers else None,
+		)
 	response_items = resp.get("items") or []
 
 	for idx, ri in enumerate(response_items):
@@ -490,13 +505,16 @@ def _submit_invoice(ctx, payload, paid_amount):
 
 	payload["payments"] = [{"mode_of_payment": ctx.mode_of_payment, "amount": flt(paid_amount)}]
 
-	draft = update_invoice(json.dumps(payload))
-	inv_name = draft["name"]
+	# //// Neoffice — the sale is the cashier's, as at the till (neoffice-maintenance#2125).
+	with as_role(_till_cashier(ctx.pos_profile)):
+		draft = update_invoice(json.dumps(payload))
+		inv_name = draft["name"]
 
-	submit_invoice(
-		invoice=json.dumps(draft, default=str),
-		data=json.dumps({"change_amount": 0, "write_off_amount": 0}),
-	)
+		# //// Neoffice — submitted by the same cashier.
+		submit_invoice(
+			invoice=json.dumps(draft, default=str),
+			data=json.dumps({"change_amount": 0, "write_off_amount": 0}),
+		)
 
 	return frappe.get_doc("Sales Invoice", inv_name)
 

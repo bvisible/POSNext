@@ -78,6 +78,12 @@ repos:
         pass_filenames: false
         stages: [pre-commit]
 
+  # //// Neoffice — a new test does not play a business act as Administrator (neoffice-maintenance#2125).
+  - repo: https://github.com/bvisible/neoffice-ci
+    rev: f9d4168a1a4f9363f7e0adb64b24d5b8d51c19c9
+    hooks:
+      - id: check-test-roles
+
 ci:
     autoupdate_schedule: weekly
     skip: []
