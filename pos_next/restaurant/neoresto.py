@@ -26,6 +26,7 @@ from functools import cache
 import frappe
 from frappe import _
 
+from pos_next.restaurant import supply_catalogue
 from pos_next.restaurant.door import restaurants_of_the_restaurant_tills
 from pos_next.restaurant.mode import neoresto_active
 from pos_next.restaurant.scope import current_restaurant, restaurant_or_filters
@@ -89,6 +90,10 @@ def tabs():
 	items = _borrowed(operations.tabs(), "items")
 	sales = _borrowed(retail.tabs(), "invoices")
 	space = [overview_tab(), _ours(floor_tab()), _ours(cards_tab())]
+	# //// Neoffice — the purchases of the restaurant (NeoResto purchases, lot A): the Achats page, once the site shows them. The
+	# //// tab ships dark: where `neoresto_purchases_active` is off, the space is the one it was.
+	if supply_catalogue.purchases_active():
+		space.append(_ours(purchases_tab()))
 	if items:
 		# Simple mode keeps the floor, the cards, the reservations and the sales of a restaurant's day: the items are one
 		# "Show all" away
@@ -162,6 +167,21 @@ def cards_tab():
 			"route": "/app/restaurant-menu",
 			"doctype": "Restaurant Menu",
 		},
+	}
+
+
+def purchases_tab():
+	"""The purchases of the restaurant: the articles it buys regularly, who sells them, in which packaging, at what price."""
+	from neoffice_theme.workspace_spaces.common import LINK
+
+	return {
+		"key": "purchases",
+		"label": _("Purchases"),
+		"archetype": LINK,
+		"essential": True,
+		"route": "/app/neoresto-purchases",
+		"requires": ["Item"],
+		"page": "neoresto-purchases",
 	}
 
 
