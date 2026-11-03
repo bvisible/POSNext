@@ -374,3 +374,9 @@ those edits are recorded here (the code edits are marked in place with `//// Neo
 
 - `pos_next/locale/fr.po` — the entry `articles` is dropped: the code asks for `items` now, which already existed with the same French. The Vue component is marked in place.
 - Left as it is on purpose: `GuestCheckout.vue` keeps `__('TVA')`: the QR self-ordering page is used by a guest and the translation endpoint of the POS is not open to guests, so an English msgid would show `VAT` to a French guest.
+
+## Auto-marked (fork-markers workflow)
+
+- `pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.json` — new Page, no upstream equivalent (title "Purchases", roles Restaurant Manager / Item Manager / Admin / System Manager) — the Achats page, NeoResto purchases lot A (439df202 "feat(neoresto-purchases): the supplies a restaurant buys are written in the ERP's own fiches, and the Achats page reads them")
+- `pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.json` — new Page, no upstream equivalent (title "Shopping list", same four roles) — the shopping list page, NeoResto purchases lot B (b8a324b7 "feat(neoresto-purchases): the shopping list of a restaurant, grouped by supplier, with an estimate that says on how many lines it rests")
+- `pos_next/pos_next/print_format/restaurant_shopping_list/restaurant_shopping_list.json` — new Print Format, no upstream equivalent (Jinja, includes `pos_next/templates/restaurant_shopping_list.html`) — prints the shopping list on A4, one block per supplier (1846ec56 "feat(neoresto-purchases): the shopping list prints on A4, one block per supplier with a box to tick")

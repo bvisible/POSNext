@@ -11,6 +11,7 @@ from pos_next.utils import get_build_version
 def _has_native_coupon_code_field():
 	"""Check if ERPNext has a native coupon_code field on Sales Invoice (v16+)."""
 	try:
+		# //// Neoffice — TO REVIEW: "feat(neoresto-purchases): the supplies a restaurant buys are written in the ERP's own fiches, and the Achats page reads them" (439df202) — reason not stated in the commit
 		import importlib
 		import json
 		import os
