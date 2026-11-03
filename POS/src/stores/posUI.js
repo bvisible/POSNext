@@ -91,6 +91,9 @@ export const usePOSUIStore = defineStore("posUI", () => {
 	//// Neoffice — what the customer still owes on that invoice (credit or partial sale), shown
 	//// under "Paid" by the success dialog. Read from the server's outstanding_amount.
 	const lastDueAmount = ref(0);
+	//// Neoffice — the change handed back to the customer, shown under "Paid" by the success dialog
+	//// (neoffice-maintenance#2163: 100 paid for 88 read « Paid: 100.00 » with 12 handed back).
+	const lastChangeAmount = ref(0);
 	/** Full receipt payload for invoices not yet on the server (offline queue) */
 	const lastOfflinePrintDoc = ref(null);
 
@@ -144,11 +147,15 @@ export const usePOSUIStore = defineStore("posUI", () => {
 		showErrorDialog.value = false;
 	}
 
-	//// Neoffice — dueAmount added (the amount still owed, 0 for a paid or offline sale).
-	function showSuccess(invoiceName, total, paidAmount = null, dueAmount = 0) {
+	//// Neoffice — dueAmount added (the amount still owed, 0 for a paid or offline sale), and
+	//// changeAmount (the change handed back): "Paid" is what the customer left, the tendered amount
+	//// minus the change, never the note he handed over (neoffice-maintenance#2163).
+	function showSuccess(invoiceName, total, paidAmount = null, dueAmount = 0, changeAmount = 0) {
 		lastInvoiceName.value = invoiceName;
 		lastInvoiceTotal.value = total;
-		lastPaidAmount.value = paidAmount !== null ? paidAmount : total;
+		//// Neoffice — see lastChangeAmount above.
+		lastChangeAmount.value = Number(changeAmount) > 0 ? Number(changeAmount) : 0;
+		lastPaidAmount.value = (paidAmount !== null ? paidAmount : total) - lastChangeAmount.value;
 		//// Neoffice — see lastDueAmount above.
 		lastDueAmount.value = Number(dueAmount) > 0 ? Number(dueAmount) : 0;
 		showSuccessDialog.value = true;
@@ -290,6 +297,8 @@ export const usePOSUIStore = defineStore("posUI", () => {
 		lastPaidAmount,
 		//// Neoffice — see lastDueAmount above.
 		lastDueAmount,
+		//// Neoffice — see lastChangeAmount above.
+		lastChangeAmount,
 		lastOfflinePrintDoc,
 		initialCustomerName,
 		//// Neoffice — the customer record created on the display, exported for the acknowledgement

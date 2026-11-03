@@ -1585,13 +1585,18 @@ export function useInvoice() {
 			return;
 		}
 
+		//// Neoffice — what the cart holds while the profile's customer is asked: an answer that comes back after a customer was
+		//// set in between (a table opened, whose order has its own customer: the cart is cleared, then filled) leaves that
+		//// customer in place. It replaced it with the till's default customer, or left the header with no name (neoffice-maintenance#2163).
+		const placeholder = customer.value;
 		try {
 			const result = await getDefaultCustomerResource.submit({
 				pos_profile: posProfile.value,
 			});
 
 			// Set the default customer if one is configured
-			if (result && result.customer) {
+			//// Neoffice — `customer.value === placeholder`: see placeholder above.
+			if (result && result.customer && customer.value === placeholder) {
 				defaultCustomerName.value = result.customer;
 				// Create customer object matching the structure from customer selection
 				customer.value = {
@@ -1608,7 +1613,8 @@ export function useInvoice() {
 			//// feedback"). Upstream develop's offline fallback onto the cached profile's customer is kept.
 			// Offline or request failed: use the default customer from the cached POS Profile
 			const fallback = shiftState.value.pos_profile?.customer;
-			if (fallback) {
+			//// Neoffice — `customer.value === placeholder`: see placeholder above.
+			if (fallback && customer.value === placeholder) {
 				customer.value = { name: fallback, customer_name: fallback };
 			}
 			//// Neoffice — no `else` branch here, unlike upstream: it logged "No default customer set in POS Profile",

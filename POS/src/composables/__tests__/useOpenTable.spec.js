@@ -92,6 +92,16 @@ describe("opening a table", () => {
 		expect(cart.invoiceItems.map((line) => line.item_code)).toEqual(["soup"])
 	})
 
+	//// Neoffice — the customer of the table by his name, as a customer the till picked is (neoffice-maintenance#2163: the header showed
+	//// no name on a table opened again)
+	it("names the customer of the table by his name", async () => {
+		answer.value = { ...structuredClone(ORDER), customer: "CUST-0007", customer_name: "Marie Dupont" }
+
+		await useOpenTable().openTable(TABLE)
+
+		expect(cart.customer).toMatchObject({ name: "CUST-0007", customer_name: "Marie Dupont" })
+	})
+
 	it("opens a table that has no order yet with an empty cart", async () => {
 		answer.value = {}
 

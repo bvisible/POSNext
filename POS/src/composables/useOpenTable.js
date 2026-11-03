@@ -10,6 +10,16 @@ import { modifiersPriceAdjustment } from "@/utils/modifiersPrice"
 // « Offert » (NeoResto lot 1, task 24): what an offered row of a table's draft keeps when the table is opened
 import { offeredSourceFields } from "@/utils/offeredRows"
 
+/**
+ * The customer of a table's order as the cart holds a customer the till picked: his record's name and his name.
+ *
+ * @param {{ customer: string, customer_name?: string }} order - The order of a table, as the server answers it
+ * @returns {{ name: string, customer_name: string }}
+ */
+export function customerOfTheOrder(order) {
+	return { name: order.customer, customer_name: order.customer_name || order.customer }
+}
+
 export function useOpenTable() {
 	const cartStore = usePOSCartStore()
 	const shiftStore = usePOSShiftStore()
@@ -79,7 +89,9 @@ export function useOpenTable() {
 					guestPaidAmount: res.paid_amount || 0,
 					guestTipAmount: res.tip_total || 0,
 				})
-				if (res.customer) cartStore.setCustomer(res.customer)
+				//// Neoffice — the customer as a customer the till picked is (his record's name and his name): the cart's header names him,
+				//// a code on a site that numbers its customers was no name, and a bare string read as no name at all (neoffice-maintenance#2163)
+				if (res.customer) cartStore.setCustomer(customerOfTheOrder(res))
 			}
 			return true
 		} catch (e) {

@@ -1843,18 +1843,27 @@
 				v-model="uiStore.showSuccessDialog"
 				:options="{ title: __('Invoice Created Successfully'), size: 'md' }"
 			>
-				<template #body-content>
-					<div class="relative text-center py-6">
-						<!-- //// Neoffice — a close cross a finger can hit (kitchen test, 01.11): the dialog's own is a few pixels wide. 44 px, at the top right of the receipt window. -->
+				<!-- //// Neoffice — ONE close cross (neoffice-maintenance#2163: the receipt window had two, the dialog's own and ours). The -->
+				<!-- //// header is the dialog's, its title in its DialogTitle, with the 44 px cross a finger can hit (kitchen test, 01.11) -->
+				<!-- //// in place of the dialog's own, a few pixels wide. -->
+				<template #body-header>
+					<div class="mb-6 flex items-center justify-between gap-2">
+						<DialogTitle as="h3" class="text-2xl font-semibold leading-6 text-ink-gray-9">
+							{{ __("Invoice Created Successfully") }}
+						</DialogTitle>
 						<button
 							type="button"
 							data-test="success-close"
-							class="absolute -top-2 end-0 flex h-11 w-11 items-center justify-center rounded-full text-gray-600 hover:bg-gray-100 active:bg-gray-200"
+							class="-me-2 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-gray-600 hover:bg-gray-100 active:bg-gray-200"
 							:aria-label="__('Close')"
 							@click="uiStore.showSuccessDialog = false"
 						>
 							<FeatherIcon name="x" class="h-6 w-6" />
 						</button>
+					</div>
+				</template>
+				<template #body-content>
+					<div class="text-center py-6">
 						<!-- //// Neoffice — bigger success tick (h-12 -> h-14) and the whole icon collapsed -->
 						<!-- //// from six lines to three. Cosmetic half of the success-dialog rework -->
 						<!-- //// (548757f7, 2026-03-24 "improve payment UX ... better success dialog with -->
@@ -1886,6 +1895,14 @@
 						</h3>
 						<p class="mt-2 text-sm text-gray-500">
 							{{ __("Paid: {0}", [formatCurrency(uiStore.lastPaidAmount)]) }}
+						</p>
+						<!-- //// Neoffice — the change handed back, below what the customer paid (neoffice-maintenance#2163). -->
+						<p
+							v-if="uiStore.lastChangeAmount > 0"
+							data-test="success-change"
+							class="mt-1 text-sm font-medium text-gray-700"
+						>
+							{{ __("Change given: {0}", [formatCurrency(uiStore.lastChangeAmount)]) }}
 						</p>
 						<!-- //// Neoffice — on a credit or partial sale, what the customer still owes. -->
 						<p v-if="uiStore.lastDueAmount > 0" class="mt-1 text-sm font-medium text-amber-700">
@@ -2113,10 +2130,9 @@
 							class="flex justify-between text-sm font-bold pt-1 border-t border-gray-200"
 						>
 							<span class="text-gray-900">{{ __("Total collected") }}</span>
+							<!-- //// Neoffice — what the drawer kept, the change handed back taken off and the tip already in it (neoffice-maintenance#2163: 100 paid for 88 read « 100.00 »); see get_table_payment_summary -->
 							<span class="text-green-700">{{
-								formatCleaningPrice(
-									tablePaymentSummary.paid_amount + tablePaymentSummary.tip_total
-								)
+								formatCleaningPrice(tablePaymentSummary.collected_amount)
 							}}</span>
 						</div>
 					</div>
@@ -2328,6 +2344,10 @@ import { kitchenTicketButton, printKitchenTicketFromTill, stationsWithAPrinter }
 //// banner and the reworked success dialog draw their icons with it (87f168fe 2026-03-20
 //// "align POS design with Neoffice theme"; 548757f7 2026-03-24).
 import { Button, Dialog, FeatherIcon, createResource } from "frappe-ui";
+//// Neoffice — the title of the receipt window, in the header that carries its one close cross (neoffice-maintenance#2163)
+import { DialogTitle } from "reka-ui";
+//// Neoffice — a table's customer by his name, as the opening of a table gives it (neoffice-maintenance#2163)
+import { customerOfTheOrder } from "@/composables/useOpenTable";
 import { call } from "@/utils/apiWrapper";
 //// Neoffice — reads the cash rounding step again once a shift is open (see utils/cashRounding.js).
 import { ensureCashRounding } from "@/utils/cashRounding";
@@ -3038,7 +3058,8 @@ onMounted(async () => {
 						guestTipAmount: orderData.tip_total || 0,
 						kdsStatus: orderData.kds_status || "Pending",
 					});
-					if (orderData.customer) cartStore.setCustomer(orderData.customer);
+					//// Neoffice — the customer by his name, as a table opens (composables/useOpenTable, neoffice-maintenance#2163)
+					if (orderData.customer) cartStore.setCustomer(customerOfTheOrder(orderData));
 				}
 			} catch {
 				/* ignore */
@@ -4658,7 +4679,14 @@ async function handlePaymentCompleted(paymentData) {
 					);
 				} catch (error) {
 					log.error("Offline auto-print error:", error);
-					uiStore.showSuccess(offlineReceiptName, grandTotal, paymentData.paid_amount);
+					//// Neoffice — the change handed back: "Paid" is what the customer left, not the note tendered (neoffice-maintenance#2163)
+					uiStore.showSuccess(
+						offlineReceiptName,
+						grandTotal,
+						paymentData.paid_amount,
+						0,
+						paymentData.change_amount
+					);
 					showWarning(
 						__(
 							"Invoice {0} saved offline but print failed — open Print from the success dialog",
@@ -4667,7 +4695,14 @@ async function handlePaymentCompleted(paymentData) {
 					);
 				}
 			} else {
-				uiStore.showSuccess(offlineReceiptName, grandTotal, paymentData.paid_amount);
+				//// Neoffice — the change handed back (neoffice-maintenance#2163)
+				uiStore.showSuccess(
+					offlineReceiptName,
+					grandTotal,
+					paymentData.paid_amount,
+					0,
+					paymentData.change_amount
+				);
 				showSuccess(__("Invoice saved offline. Will sync when online"));
 			}
 		} else {
@@ -4846,8 +4881,15 @@ async function handlePaymentCompleted(paymentData) {
 						showWarning(__("Invoice {0} created but print failed", [invoiceName]));
 					}
 				} else {
-					//// Neoffice — dueAmount passed for the "Remaining" line of the success dialog.
-					uiStore.showSuccess(invoiceName, invoiceTotal, paidAmount, dueAmount);
+					//// Neoffice — dueAmount passed for the "Remaining" line of the success dialog, and the change
+					//// handed back for its "Change given" line: "Paid" is the tendered amount minus it (neoffice-maintenance#2163).
+					uiStore.showSuccess(
+						invoiceName,
+						invoiceTotal,
+						paidAmount,
+						dueAmount,
+						paymentData.change_amount
+					);
 					showSuccess(__("Invoice {0} created successfully", [invoiceName]));
 				}
 
