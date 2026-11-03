@@ -34,7 +34,7 @@
 		".npp-btn{min-height:36px;padding:0 14px;border-radius:10px;border:1px solid #141414;background:#fff;color:#141414;font-weight:600;cursor:pointer}" +
 		".npp-empty{padding:32px 16px;text-align:center;color:#6F665A}" +
 		".npp-foot{display:flex;justify-content:space-between;padding:12px 16px;border-top:1px solid #ECE7DE;font-size:14px;color:#6F665A}" +
-		"@media (max-width:1000px),(pointer:coarse){" +
+		"@media (max-width:1100px),(pointer:coarse){" +
 		".npp-bar label{display:flex;flex:1 1 100%;gap:8px;align-items:center}.npp-bar label select{flex:1;min-height:46px}" +
 		".npp-bar .npp-search{flex:1 1 100%;min-height:46px}" +
 		".npp-chip{min-height:44px}" +
