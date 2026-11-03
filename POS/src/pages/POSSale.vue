@@ -1980,6 +1980,17 @@
 			@close="showQRDialog = false"
 		/>
 
+		<!-- //// Neoffice — the question « Back » asks when a dish that had left for the kitchen was taken off the order (NeoResto lot 1, product owner, 03.11.2026): the removal was dropped without a word and the kitchen cooked the dish. -->
+		<LeaveTableDialog
+			v-if="leaveTable.asking.value"
+			:removed="leaveTable.removed.value"
+			:can-put-back="leaveTable.canPutBack.value"
+			:busy="leaveTable.busy.value"
+			@send="leaveTable.sendCancellation"
+			@put-back="leaveTable.putTheOrderBack"
+			@stay="leaveTable.stay"
+		/>
+
 		<!-- Paid/Cleaning Table Dialog -->
 		<Dialog
 			v-model="showCleaningDialog"
@@ -2281,7 +2292,11 @@ import { Button, Dialog, FeatherIcon, createResource } from "frappe-ui";
 //// Neoffice — the title of the receipt window, in the header that carries its one close cross (neoffice-maintenance#2163)
 import { DialogTitle } from "reka-ui";
 //// Neoffice — a table's customer by his name, as the opening of a table gives it (neoffice-maintenance#2163)
-import { customerOfTheOrder } from "@/composables/useOpenTable";
+import { customerOfTheOrder, useOpenTable } from "@/composables/useOpenTable";
+//// Neoffice — « Back » asks before it drops a dish taken off after it had left for the kitchen (NeoResto lot 1, product owner, 03.11.2026).
+import LeaveTableDialog from "@/components/restaurant/LeaveTableDialog.vue";
+import { useLeaveTable } from "@/composables/useLeaveTable";
+import { linesOfTheSavedOrder } from "@/utils/removedSentLines";
 import { call } from "@/utils/apiWrapper";
 //// Neoffice — reads the cash rounding step again once a shift is open (see utils/cashRounding.js).
 import { ensureCashRounding } from "@/utils/cashRounding";
@@ -2969,6 +2984,8 @@ onMounted(async () => {
 					await cartStore.clearCart();
 					cartStore.setRestaurantTable(table);
 					cartStore.replaceAllItems(orderData.items);
+					//// Neoffice — the order read back is what the kitchen has now: a removal is measured against it (NeoResto lot 1, 03.11.2026).
+					cartStore.rememberSentLines();
 					cartStore.$patch({
 						currentDraftId: orderData.name,
 						hasUnsentChanges: false,
@@ -3830,8 +3847,49 @@ function handleLoadServerDraft(order) {
 	cartStore.markChangesSent();
 }
 
+//// Neoffice — « Back » from a table, on the tablet's header and on the phone's screen alike: with a dish taken off after it had left for the kitchen it asks first (see composables/useLeaveTable), else it clears the cart as it always did.
+const { openTable } = useOpenTable();
+const leaveTable = useLeaveTable({
+	cartStore,
+	send: sendCancellationToKitchen,
+	putBack: () => openTable(cartStore.restaurantTable),
+	leave: () => cartStore.clearCart(),
+});
+
 function closeTable() {
-	cartStore.clearCart();
+	return leaveTable.requestLeave();
+}
+
+//// Neoffice — the order saved without the dishes taken off, which is how the kitchen is told (a printer that had the dish cancels it on paper; the screen drops it). Only the lines the saved order has go with it: a line not sent yet
+//// is not sent by a cancellation, and a course held back stays (the order is rebuilt from the lines it is handed). The order's own kitchen status is left as the cart has it.
+async function sendCancellationToKitchen() {
+	if (isSendingToKitchen) return false;
+	isSendingToKitchen = true;
+	try {
+		const invoiceData = cartStore.buildOfferEvaluationPayload(shiftStore.currentProfile, { keepUndecided: true });
+		invoiceData.items = linesOfTheSavedOrder(invoiceData.items);
+		// Nothing would remain: the kitchen cannot be told by an order with no line
+		if (invoiceData.items.length === 0) {
+			showError(__("Failed to send order to kitchen"));
+			return false;
+		}
+		invoiceData.is_pos = 1;
+		invoiceData.docstatus = 0;
+		invoiceData.posa_pos_opening_shift = cartStore.posOpeningShift;
+		if (cartStore.currentDraftId) invoiceData.name = cartStore.currentDraftId;
+		await call("pos_next.api.invoices.update_invoice", { data: JSON.stringify(invoiceData) });
+		showSuccess(__("Cancellation sent to the kitchen"));
+		cartStore.markChangesSent();
+		cartStore.clearCart();
+		restaurantStore.fetchFromNetwork();
+		return true;
+	} catch (error) {
+		console.error("Failed to send the cancellation to the kitchen:", error);
+		showError(__("Failed to send order to kitchen"));
+		return false;
+	} finally {
+		isSendingToKitchen = false;
+	}
 }
 
 async function handleItemsSentToKitchen() {

@@ -48,6 +48,8 @@ import {
 } from "@/utils/uomPricingLock";
 //// Neoffice — a line that has left for the kitchen takes no new unit and is no line to merge into (task 22, fix round 1).
 import { hasLeftForTheKitchen } from "@/utils/lineKitchenState";
+//// Neoffice — the dishes taken off an order after they had left for the kitchen (NeoResto lot 1, product owner, 03.11.2026: « Back » after the removal of a sent dish lost it without a word).
+import { removedSentLines as removedSentLinesOf, sentLinesOf } from "@/utils/removedSentLines";
 //// Neoffice — the service family of a cart line (NeoResto lot 1): the group's family given to a line when it is added, and the waiter's own choice for one line.
 import { SERVICE_FAMILIES, canChangeFamily, familyOfGroup } from "@/utils/serviceFamilies";
 import { useToast } from "@/composables/useToast";
@@ -600,6 +602,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		takeawayNumber.value = "";
 		kdsStatus.value = "Pending";
 		hasUnsentChanges.value = false;
+		//// Neoffice — a cleared cart holds no dish that had left for the kitchen.
+		sentLinesAtOpen.value = [];
 		guestPaidAmount.value = 0;
 		guestTipAmount.value = 0;
 
@@ -635,6 +639,10 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	//// at the top of the store), where the lines are taxed and the sale is paid (NeoResto lot 1, task 11).
 	const kdsStatus = ref("Pending");
 	const hasUnsentChanges = ref(false);
+	//// Neoffice — what had left for the kitchen when the order of the table was read back (NeoResto lot 1, product owner, 03.11.2026): a dish taken off since is known by comparing
+	//// the cart with it (`removedSentLines`), and « Back » asks before it drops the removal. See utils/removedSentLines.
+	const sentLinesAtOpen = ref([]);
+	const removedSentLines = computed(() => removedSentLinesOf(sentLinesAtOpen.value, invoiceItems.value));
 	const guestPaidAmount = ref(0);
 	const guestTipAmount = ref(0);
 
@@ -674,6 +682,11 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 	function markChangesSent() {
 		hasUnsentChanges.value = false;
+	}
+
+	//// Neoffice — called once the order of a table has been put in the cart: the lines the kitchen has now are the ones a removal is measured against (see `removedSentLines`).
+	function rememberSentLines() {
+		sentLinesAtOpen.value = sentLinesOf(invoiceItems.value);
 	}
 
 	async function submitInvoice(options = {}) {
@@ -3205,6 +3218,9 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		applyDiscountOn,
 		kdsStatus,
 		hasUnsentChanges,
+		//// Neoffice — the dishes taken off since the table was opened, and the call that remembers what the kitchen had (see above).
+		removedSentLines,
+		rememberSentLines,
 		guestPaidAmount,
 		guestTipAmount,
 		updateItemInstructions,

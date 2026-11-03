@@ -93,6 +93,8 @@ export function useOpenTable() {
 				//// a code on a site that numbers its customers was no name, and a bare string read as no name at all (neoffice-maintenance#2163)
 				if (res.customer) cartStore.setCustomer(customerOfTheOrder(res))
 			}
+			//// Neoffice — what the kitchen has of this order, remembered: « Back » asks before it drops a dish taken off since (NeoResto lot 1, product owner, 03.11.2026)
+			cartStore.rememberSentLines()
 			return true
 		} catch (e) {
 			console.error("[FloorPlan] Failed to open table:", e)
