@@ -300,11 +300,23 @@ const buttons = computed(() =>
 // A category chosen shows its own dishes and those of its sub-categories; a sub-category chosen, its own
 const topOf = computed(() => new Map(sections.value.buttons.map(({ key, top }) => [key, top])))
 const shownButtons = computed(() => {
-	if (activeChip.value === null) return buttons.value
 	const isSub = sections.value.chips.some((one) => one.key === activeChip.value && one.parent)
-	return buttons.value.filter((button) =>
-		isSub ? button.chip === activeChip.value : topOf.value.get(button.key) === activeChip.value,
-	)
+	const shown =
+		activeChip.value === null
+			? buttons.value
+			: buttons.value.filter((button) =>
+					isSub ? button.chip === activeChip.value : topOf.value.get(button.key) === activeChip.value,
+				)
+	// //// Neoffice — a sub-category chosen needs no heading (its chip says it); otherwise each sub-category opens with its own, over its first button (NeoResto lot 1, product owner, 03.11.2026)
+	if (isSub) return shown
+	const subs = new Map(sections.value.chips.filter((one) => one.parent).map((one) => [one.key, one]))
+	if (subs.size === 0) return shown
+	let last = null
+	return shown.map((button) => {
+		const heading = button.chip !== last && subs.has(button.chip) ? subs.get(button.chip) : null
+		last = button.chip
+		return heading ? { ...button, heading: { label: heading.label, color: heading.color } } : button
+	})
 })
 
 const orderName = computed(() =>

@@ -11,9 +11,13 @@
 		class="grid gap-1.5 content-start"
 		:style="{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }"
 	>
+		<template v-for="button in buttons" :key="button.key">
+		<!-- //// Neoffice — the heading of a sub-category, over its first button (NeoResto lot 1, product owner, 03.11.2026: « une petite ligne de séparation entre les sous-familles, comme sur la caisse »): its colour, its name and a thin rule to the edge -->
+		<div v-if="button.heading" data-sub-heading role="heading" aria-level="3" class="card-heading">
+			<span v-if="button.heading.color" class="card-heading__dot" :style="{ backgroundColor: button.heading.color }" />
+			<span class="card-heading__label">{{ button.heading.label }}</span>
+		</div>
 		<button
-			v-for="button in buttons"
-			:key="button.key"
 			type="button"
 			data-card-button
 			:disabled="button.soldOut && !button.addable"
@@ -54,6 +58,7 @@
 				>{{ formatCount(button.count) }}</span
 			>
 		</button>
+		</template>
 	</div>
 </template>
 
@@ -62,7 +67,7 @@ import { usePressGesture } from "@/composables/usePressGesture"
 import { NEUTRAL_EDGE, NEUTRAL_FACE, formatCount, softTint } from "@/utils/phoneCard"
 
 defineProps({
-	// The buttons to show: { key, entry, name, price, detail, color, count, soldOut, addable, image }
+	// The buttons to show: { key, entry, name, price, detail, color, count, soldOut, addable, image, heading? } (`heading`: { label, color } over the first button of a sub-category)
 	buttons: { type: Array, default: () => [] },
 	// The till's « with pictures »: a dish's picture above its name
 	pictures: { type: Boolean, default: false },
@@ -114,6 +119,37 @@ function faceOf(button) {
 	transition:
 		transform 120ms ease,
 		filter 120ms ease;
+}
+
+/* The heading of a sub-category: a dot in its colour, its name, and a rule that runs to the edge of the row */
+.card-heading {
+	grid-column: 1 / -1;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 8px;
+	color: #6f665a;
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 1.2;
+}
+
+.card-heading:first-child {
+	margin-top: 0;
+}
+
+.card-heading::after {
+	content: "";
+	flex: 1 1 auto;
+	height: 1px;
+	background: #ece7de;
+}
+
+.card-heading__dot {
+	flex: none;
+	width: 8px;
+	height: 8px;
+	border-radius: 9999px;
 }
 
 .card-button:active:not(:disabled) {
