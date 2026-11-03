@@ -26,8 +26,12 @@ function serverMessage(body) {
 }
 
 async function guestFetch(method, args = {}) {
+	//// Neoffice — no session at all: `credentials: "omit"`. A browser that is signed in at the till (a waiter or the owner scanning the code of a table with their own phone, a test)
+	//// sent its session cookie, and Frappe then asks a CSRF token of the call, which a guest page never has: « Invalid request » on every call, shown as « Link invalid or expired »
+	//// (product owner, 03.11.2026). A guest call is the table's token and nothing else, so it is sent as the guest's, whoever holds the phone.
 	const response = await fetch(`/api/method/${method}`, {
 		method: "POST",
+		credentials: "omit",
 		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify(args),
 	})

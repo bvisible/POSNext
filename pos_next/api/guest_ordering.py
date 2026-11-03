@@ -1387,6 +1387,17 @@ def create_table_token(table, pos_profile):
 			frappe.db.set_value("Guest Order Token", t_name, "status", "Expired")
 			frappe.log_error("Token expire fallback", f"Token {t_name}: {str(e)}")
 
+	# //// Neoffice — a code made by a till that no longer belongs to this restaurant (the shop's till of before the restaurant had its own) finds no restaurant, so no guest menu:
+	# //// its page read « Invalid or expired » on a phone (product owner, 03.11.2026, the QR of a table made on 12.10 and printed since). The code is the one placed on the
+	# //// table, so it stays; its till becomes the one that asks. A till of the same restaurant keeps its code as it was.
+	if token_doc is not None and scope.current_restaurant(token_doc.pos_profile) != restaurant:
+		frappe.db.set_value(
+			"Guest Order Token",
+			token_doc.name,
+			{"pos_profile": pos_profile, "pos_opening": _get_active_pos_opening(pos_profile)},
+		)
+		token_doc.reload()
+
 	if token_doc is None:
 		# Find the current open POS opening
 		pos_opening = _get_active_pos_opening(pos_profile)

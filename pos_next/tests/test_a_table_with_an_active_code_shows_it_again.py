@@ -189,6 +189,19 @@ class TestTheQrButtonOfATable(TheQrButton, Tills, FrappeTestCase):
 		self.assertEqual(placed.status, "Active")
 		self.assertTrue(placed.is_valid())
 
+	def test_a_code_of_a_till_that_is_no_longer_of_the_restaurant_is_brought_to_the_till_that_asks(self):
+		# The shop's till that made this code before the restaurant had its own finds no restaurant: its guests read « No guest menu is configured »
+		stale = self.place_a_token()
+		frappe.db.set_value("Guest Order Token", stale, "pos_profile", self.fx.other_profile)
+		placed = frappe.db.get_value("Guest Order Token", stale, "token")
+
+		code = self.press_qr()
+
+		self.assertEqual(code["token"], placed, "the code placed on the table is the one shown")
+		self.assertEqual(frappe.db.get_value("Guest Order Token", stale, "pos_profile"), self.fx.profile)
+		self.assertEqual(self.tokens_of(self.table), 1)
+		self.assertEqual(self.active_tokens(), [placed])
+
 	def test_another_till_of_the_restaurant_gets_the_code_of_the_table(self):
 		make_a_till_of(self.fx.other_profile, self.restaurant)
 		first = self.press_qr()
