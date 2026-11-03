@@ -22108,3 +22108,38 @@ msgstr "Il ne reste plus aucun plat : toute la commande sera annulée."
 #: pos_next/api/restaurant.py:462
 msgid "This order already holds a payment: it cannot be cancelled here"
 msgstr "Cette commande contient déjà un paiement : elle ne peut pas être annulée ici"
+
+#: POS/src/components/guest/GuestAccountSheet.vue:99
+#, python-brace-format
+msgid "Send a new code in {0} s"
+msgstr "Envoyer un nouveau code dans {0} s"
+
+#: pos_next/restaurant/guest_account.py:46
+#: pos_next/restaurant/guest_account.py:153
+msgid "Signing in with a code is not available here."
+msgstr "La connexion avec un code n'est pas disponible ici."
+
+#: pos_next/api/guest_ordering.py:1512
+msgid "The payment of this order is not recorded yet. Please try again."
+msgstr "Le paiement de cette commande n'est pas encore enregistré. Veuillez réessayer."
+
+#: pos_next/api/guest_ordering.py:1077
+msgid "This account cannot be used to order here."
+msgstr "Ce compte ne peut pas être utilisé pour commander ici."
+
+#: pos_next/restaurant/guest_account.py:193
+msgid "This confirmation has expired. Please ask for a new code."
+msgstr "Cette confirmation a expiré. Demandez un nouveau code."
+
+#: POS/src/components/guest/GuestAccountSheet.vue:49
+msgid "We send you a code by email, no password needed."
+msgstr "Nous vous envoyons un code par e-mail, aucun mot de passe n'est nécessaire."
+
+#: pos_next/restaurant/guest_account.py:186
+msgid "Wrong code, or the code has expired. Please check it or ask for a new one."
+msgstr "Code incorrect, ou code expiré. Veuillez le vérifier ou en demander un nouveau."
+
+#: POS/src/stores/guestOrder.js:309
+#: pos_next/public/pos/assets/GuestAccountSheet-BxLd-v-z.js:1
+msgid "Your payment is not confirmed yet. Please reload this page in a moment."
+msgstr "Votre paiement n'est pas encore confirmé. Veuillez recharger cette page dans un instant."
