@@ -73,17 +73,19 @@
 							:key="ii"
 							@click="!isOutOfStock(item) && openItemModal(item)"
 							:class="[
-								'group relative bg-white border border-gray-200 rounded-neo-md p-1.5 sm:p-2.5 touch-manipulation transition-[border-color,box-shadow] duration-100',
-								isOutOfStock(item) ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:border-blue-400 hover:shadow-neo-md'
+								'group relative border rounded-neo-md p-1.5 sm:p-2.5 touch-manipulation transition-[border-color,box-shadow] duration-100',
+								itemColor(item) ? 'tile--colored' : 'bg-white border-gray-200',
+								isOutOfStock(item) ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:shadow-neo-md ' + (itemColor(item) ? '' : 'hover:border-blue-400')
 							]"
+							:style="colorStyle(item)"
 						>
 							<div v-if="isOutOfStock(item)" class="absolute inset-0 z-5 flex items-end justify-center rounded-neo-md pb-8">
 								<span class="text-[10px] font-bold text-red-600 bg-white/90 px-2 py-1 rounded shadow-sm">{{ __('Unavailable') }}</span>
 							</div>
-							<div class="relative aspect-square rounded-neo-sm mb-1.5 sm:mb-2 overflow-hidden bg-gray-100">
+							<div :class="['relative aspect-square rounded-neo-sm mb-1.5 sm:mb-2 overflow-hidden', itemColor(item) && !item.image ? '' : 'bg-gray-100']">
 								<img v-if="item.image" :src="item.image" class="w-full h-full object-cover" />
 								<div v-else class="w-full h-full flex items-center justify-center p-2">
-									<span class="text-[9px] sm:text-[10px] font-bold text-gray-500 text-center leading-tight">
+									<span :class="['text-center leading-tight font-bold', itemColor(item) ? 'text-[11px] sm:text-xs text-gray-800' : 'text-[9px] sm:text-[10px] text-gray-500']">
 										{{ item.item_name }}
 									</span>
 								</div>
@@ -113,15 +115,15 @@
 						@click="!isOutOfStock(item) && openItemModal(item)"
 						:class="[
 							'flex items-center gap-3 px-2 py-2 border-b border-gray-100 bg-white transition-colors',
+							itemColor(item) ? 'row--colored' : '',
 							isOutOfStock(item) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-50 cursor-pointer'
 						]"
+						:style="colorStyle(item)"
 					>
 						<div class="relative flex-shrink-0">
 							<img v-if="item.image" :src="item.image" class="w-10 h-10 rounded-lg object-cover" />
-							<div v-else class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
-								<span class="text-[7px] font-bold text-gray-500 leading-tight text-center px-0.5">
-									{{ (item.item_name || '').substring(0, 6) }}
-								</span>
+							<div v-else class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center" style="background-color: var(--tile-soft, #F3F4F6)">
+								<span class="text-sm font-bold text-gray-700 leading-none">{{ initialOf(item) }}</span>
 							</div>
 						</div>
 						<div class="flex-1 min-w-0">
@@ -246,6 +248,7 @@
 <script setup>
 import { ref, computed } from "vue"
 import { useGuestOrderStore } from "@/stores/guestOrder"
+import { cardColor, softTint } from "@/utils/phoneCard"
 
 const guestStore = useGuestOrderStore()
 
@@ -343,6 +346,21 @@ function formatPrice(amount) {
 	}).format(amount)
 }
 
+// //// Neoffice — the colour of a dish's item group, which the server hands as `service_color` (a till that switched the colours off sends none): the pale face and the edge
+// //// of the tile are the till's and the waiter's phone's, and a dish with no picture shows its name or its first letter on it, not six cut letters (product owner, 03.11.2026)
+function itemColor(item) {
+	return cardColor(item.service_color)
+}
+
+function colorStyle(item) {
+	const color = itemColor(item)
+	return color ? { "--tile-edge": color, "--tile-soft": softTint(color) } : {}
+}
+
+function initialOf(item) {
+	return (item.item_name || "").trim().charAt(0).toUpperCase()
+}
+
 function isOutOfStock(item) {
 	//// Neoffice — a dish the kitchen counts by portions is sold out when none is left (NeoResto lot 1, Daniel, 02.11.2026); a guest is never offered a dish that is sold out
 	if (item.portions_left != null && item.portions_left <= 0) return true
@@ -420,6 +438,17 @@ function addToCartAndClose() {
 </script>
 
 <style scoped>
+/* //// Neoffice — the colour of a dish's family on the guest's page: a pale face and a 4 px top edge on a tile of the grid, a 4 px edge at the left of a row of the list */
+.tile--colored {
+	border-color: var(--tile-edge);
+	border-top-width: 4px;
+	background-color: var(--tile-soft);
+}
+
+.row--colored {
+	border-left: 4px solid var(--tile-edge);
+}
+
 .scrollbar-hide::-webkit-scrollbar {
 	display: none;
 }

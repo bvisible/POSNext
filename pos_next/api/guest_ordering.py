@@ -15,9 +15,9 @@ from contextlib import contextmanager
 
 import frappe
 from frappe import _
-from frappe.utils import now_datetime, flt
+from frappe.utils import cint, now_datetime, flt
 
-from pos_next.restaurant import guest_account, permissions, portions, scope, tickets
+from pos_next.restaurant import guest_account, permissions, portions, scope, service_families, tickets
 from pos_next.restaurant.mode import require_neoresto
 from pos_next.restaurant.settings import get_restaurant_settings_for_profile
 from pos_next.restaurant.text import plain_text
@@ -178,8 +178,18 @@ def _get_guest_menu_card(settings):
 	return names[0] if names else None
 
 
-def _build_menu_from_card(card_name, warehouse=None):
-	"""Build menu structure (categories + items) from a Restaurant Card."""
+def _tile_colors_on(pos_profile):
+	"""Whether the till of `pos_profile` lets the tiles of its card take a colour (POS Settings.tile_colors, on by default and where the till has no row or the site is not migrated yet)."""
+	if not pos_profile or not frappe.db.has_column("POS Settings", "tile_colors"):
+		return True
+	value = frappe.db.get_value("POS Settings", {"pos_profile": pos_profile}, "tile_colors")
+	return value is None or bool(cint(value))
+
+
+def _build_menu_from_card(card_name, warehouse=None, colors=None):
+	"""Build menu structure (categories + items) from a Restaurant Card. `colors` maps an Item Group to its colour (`service_families.group_colors`): each dish carries
+	its group's as `service_color`, for the guest's page to tint it."""
+	colors = colors or {}
 	card = frappe.get_doc("Restaurant Card", card_name)
 	card_items = frappe.get_all(
 		"Restaurant Card Item",
@@ -218,6 +228,8 @@ def _build_menu_from_card(card_name, warehouse=None):
 			"price": float(price),
 			"image": item_doc.get("image") or "",
 			"product_options": _get_item_product_options(ci.item),
+			# //// Neoffice — the colour of the dish's item group, as the till's tiles and the waiter's phone show it (product owner, 03.11.2026: « la même chose pour la page du client »)
+			"service_color": colors.get(item_doc.get("item_group"), ""),
 		}
 
 		# Add stock info for stock items
@@ -613,10 +625,13 @@ def get_guest_menu(token):
 	if not card_names:
 		frappe.throw(_("No guest menu is configured. Please contact staff."))
 
+	# //// Neoffice — the families' colours, unless the till of this table switched the colours of its tiles off
+	colors = service_families.group_colors() if _tile_colors_on(token_doc.pos_profile) else {}
+
 	# Build menu from all matching cards (merge if multiple)
 	all_categories = []
 	for card_name in card_names:
-		result = _build_menu_from_card(card_name, warehouse=warehouse)
+		result = _build_menu_from_card(card_name, warehouse=warehouse, colors=colors)
 		all_categories.extend(result.get("categories", []))
 
 	# Apply pricing rules to menu items so guest sees discounts before ordering
