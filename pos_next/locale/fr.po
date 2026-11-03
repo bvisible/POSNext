@@ -21963,3 +21963,15 @@ msgstr "{0} réservations"
 #, python-brace-format
 msgid "{0} seated"
 msgstr "{0} à table"
+
+#: POS/src/components/restaurant/ReservationList.vue:278
+#: pos_next/public/pos/assets/POSSale-go9KRF9N.js:2
+#, python-brace-format
+msgid "{0} guest"
+msgstr "{0} personne"
+
+#: POS/src/components/restaurant/ReservationList.vue:277
+#: pos_next/public/pos/assets/POSSale-go9KRF9N.js:2
+#, python-brace-format
+msgid "{0} reservation"
+msgstr "{0} réservation"
