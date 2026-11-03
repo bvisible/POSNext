@@ -942,6 +942,32 @@ SETTINGS = (
 		doctype=POS_SETTINGS,
 		till=RESTAURANT_TILL,
 	),
+	# How the restaurant card's tiles look at the till (NeoResto lot 1, product owner, 03.11.2026: « voir comment ça donne sans images »
+	# and « des couleurs par famille, pour retrouver vite un produit »)
+	Setting(
+		"till_card_pictures",
+		"items",
+		_lt("Pictures on the till"),
+		_lt(
+			"On the till, each tile of the restaurant's card shows the item's picture. Off: the name on the tile's"
+			" colour, so that more tiles fit."
+		),
+		"check",
+		doctype=POS_SETTINGS,
+		till=RESTAURANT_TILL,
+	),
+	Setting(
+		"tile_colors",
+		"items",
+		_lt("Colours of the tiles"),
+		_lt(
+			"Each tile of the restaurant's card takes the colour of its item, else of its item group (the Service Colour"
+			" of the group, set at the desk), on the till and on a phone."
+		),
+		"check",
+		doctype=POS_SETTINGS,
+		till=RESTAURANT_TILL,
+	),
 	Setting(
 		"display_item_code",
 		"items",

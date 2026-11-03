@@ -107,11 +107,17 @@ function fromHsl(hue, saturation, lightness) {
 		.toUpperCase()}`
 }
 
+// The colour of an item: its own, else its item group's (`service_color`, handed by the server) unless the till asks for no family colours
+function colourOf(entry, familyColours) {
+	if (entry.item_type !== "Item") return null
+	return cardColor(entry.custom_color) || (familyColours ? cardColor(entry.service_color) : null)
+}
+
 // The colour most of the items carry; the first one met wins a tie
-function commonColour(entries) {
+function commonColour(entries, familyColours = true) {
 	const counts = new Map()
 	for (const entry of entries) {
-		const colour = entry.item_type === "Item" ? cardColor(entry.custom_color) : null
+		const colour = colourOf(entry, familyColours)
 		if (colour) counts.set(colour, (counts.get(colour) || 0) + 1)
 	}
 	let best = null
@@ -125,10 +131,11 @@ function commonColour(entries) {
  * takes the colour most of its items carry; each button its item's own colour, else its chip's, else none.
  *
  * @param {Array<Object>} entries - The rows of a card as the server lists them (Category, Item, Menu)
+ * @param {{ familyColours?: boolean }} [options] - `familyColours` (on): an item with no colour of its own takes its item group's
  * @returns {{ chips: Array<{key: string, label: string, color: string|null}>,
  *             buttons: Array<{key: string, entry: Object, chip: string|null, color: string|null}> }}
  */
-export function cardSections(entries) {
+export function cardSections(entries, { familyColours = true } = {}) {
 	const rows = Array.isArray(entries) ? entries : []
 	const byCategory = rows.some((row) => row.item_type === "Category")
 	const sections = new Map()
@@ -151,10 +158,10 @@ export function cardSections(entries) {
 	})
 	const chips = [...sections.values()]
 		.filter((section) => section.entries.length > 0)
-		.map((section) => ({ key: section.key, label: section.label, color: commonColour(section.entries) }))
+		.map((section) => ({ key: section.key, label: section.label, color: commonColour(section.entries, familyColours) }))
 	const colourOfChip = new Map(chips.map((chip) => [chip.key, chip.color]))
 	for (const button of buttons) {
-		const own = button.entry.item_type === "Item" ? cardColor(button.entry.custom_color) : null
+		const own = colourOf(button.entry, familyColours)
 		button.color = own || colourOfChip.get(button.chip) || null
 	}
 	return { chips, buttons }

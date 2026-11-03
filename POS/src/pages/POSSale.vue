@@ -721,6 +721,8 @@
 											:groups="filteredCardGroups"
 											:show-categories="!selectedCardCategory"
 											:tiles-per-row="posSettingsStore.settings.tiles_per_row"
+											:pictures="settingIsOn(posSettingsStore.settings.till_card_pictures)"
+											:colors="settingIsOn(posSettingsStore.settings.tile_colors)"
 											:stock-of="getCardItemStock"
 											:counted-by="isCountedByPortions"
 											:grey-out="greyOutSoldOut"
@@ -2648,6 +2650,8 @@ function isCardItemOutOfStock(cardItem) {
 //// order on screen or the list of products changes.
 const portionsStore = usePortionsStore();
 const greyOutSoldOut = computed(() => restaurantStore.restaurantSettings.grey_out_sold_out !== false);
+// //// Neoffice — the two looks of the card's tiles (POS Settings: till_card_pictures, tile_colors), on unless the till switched them off; a till not migrated yet sends none: on
+const settingIsOn = (value) => value === undefined || value === null || Boolean(Number(value));
 function isCountedByPortions(cardItem) {
 	return !!cardItem.item && cardItem.item_type === "Item" && portionsStore.isCounted(cardItem.item);
 }

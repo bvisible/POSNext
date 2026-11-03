@@ -329,3 +329,45 @@ describe("the phone's order screen", () => {
 		expect(phoneOrderShown({ ...open, qrShown: true })).toBe(false)
 	})
 })
+
+describe("the colour of a button of an item group", () => {
+	const category_ = (label) => ({ item_type: "Category", label })
+
+	it("is the colour of its item group when the item has none of its own", () => {
+		const { buttons } = cardSections([category_("Drinks"), dish("Water", { service_color: "#5B9BD5" })])
+
+		expect(buttons[0].color).toBe("#5B9BD5")
+	})
+
+	it("is the item's own colour before its group's", () => {
+		const { buttons } = cardSections([category_("Drinks"), dish("Cola", { custom_color: "#EF4444", service_color: "#5B9BD5" })])
+
+		expect(buttons[0].color).toBe("#EF4444")
+	})
+
+	it("is the colour of the chip, taken from the groups of its dishes", () => {
+		const { chips } = cardSections([category_("Drinks"), dish("Water", { service_color: "#5B9BD5" }), dish("Cola", { service_color: "#5B9BD5" })])
+
+		expect(chips[0].color).toBe("#5B9BD5")
+	})
+
+	it("is none when the till asks for no family colours", () => {
+		const { buttons, chips } = cardSections([category_("Drinks"), dish("Water", { service_color: "#5B9BD5" })], { familyColours: false })
+
+		expect(buttons[0].color).toBeNull()
+		expect(chips[0].color).toBeNull()
+	})
+
+	it("keeps the item's own colour when the till asks for no family colours", () => {
+		const { buttons } = cardSections([category_("Drinks"), dish("Cola", { custom_color: "#EF4444", service_color: "#5B9BD5" })], { familyColours: false })
+
+		expect(buttons[0].color).toBe("#EF4444")
+	})
+
+	it("is none for a colour that is no colour", () => {
+		const { buttons } = cardSections([category_("Drinks"), dish("Water", { service_color: "blue" })])
+
+		expect(buttons[0].color).toBeNull()
+	})
+})
+

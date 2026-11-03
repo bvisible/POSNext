@@ -68,6 +68,8 @@
   "display_item_code",
   "tiles_per_row",
   "phone_card_pictures",
+  "till_card_pictures",
+  "tile_colors",
   "show_customer_balance",
   "column_break_display",
   "hide_expected_amount",
@@ -561,6 +563,22 @@
    "fieldname": "phone_card_pictures",
    "fieldtype": "Check",
    "label": "Pictures on a phone"
+  },
+  {
+   "default": "1",
+   "depends_on": "eval:doc.enable_restaurant_mode",
+   "description": "On the till, each tile of the restaurant's card shows the item's picture. Off: the name on the tile's colour, so that more tiles fit.",
+   "fieldname": "till_card_pictures",
+   "fieldtype": "Check",
+   "label": "Pictures on the till"
+  },
+  {
+   "default": "1",
+   "depends_on": "eval:doc.enable_restaurant_mode",
+   "description": "Each tile of the restaurant's card takes the colour of its item, else of its item group (the Service Colour of the group, set at the desk), on the till and on a phone.",
+   "fieldname": "tile_colors",
+   "fieldtype": "Check",
+   "label": "Colours of the tiles"
   },
   {
    "default": "0",

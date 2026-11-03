@@ -85,6 +85,10 @@ POS_SETTINGS_FIELDS = [
 	# //// Neoffice — whether a phone shows the pictures on the restaurant card's buttons (NeoResto lot 1, task 27):
 	# //// missing here, a phone would show none whatever the manager chose.
 	"phone_card_pictures",
+	# //// Neoffice — how the restaurant card's tiles look at the till (NeoResto lot 1, Daniel, 03.11.2026): whether the tile shows the item's picture, and whether it takes the
+	# //// colour of its item or of its item group. Missing here, the till would read the defaults whatever the manager chose.
+	"till_card_pictures",
+	"tile_colors",
 	# //// Neoffice — same whitelist: the till's own popup and sound when a guest orders or pays from the QR code of a table (NeoResto lot 1, Daniel, 01.11), and the
 	# //// volume it rings at, which is the kitchen alerts' (the tablets read that one from get_restaurant_settings, the till reads it here). Missing here, a till would
 	# //// ring Chime for 30 s whatever the manager chose.
@@ -164,6 +168,9 @@ DEFAULT_POS_SETTINGS = {
 	"tiles_per_row": "Automatic",
 	# //// Neoffice — mirrors POS_SETTINGS_FIELDS: no pictures on a phone's card until a manager asks (task 27).
 	"phone_card_pictures": 0,
+	# //// Neoffice — mirrors POS_SETTINGS_FIELDS: today's till (pictures shown) and the new colours on until a manager says otherwise (Daniel, 03.11.2026).
+	"till_card_pictures": 1,
+	"tile_colors": 1,
 	# //// Neoffice — mirrors POS_SETTINGS_FIELDS: the doctype's defaults (a popup of 30 seconds and a chime), so that a site not migrated yet rings as a migrated one.
 	"floor_guest_popup": 1,
 	# //// Neoffice — the notice of a guest's order stays until somebody has seen it (Daniel, 02.11.2026)

@@ -2237,6 +2237,9 @@ def _cards_with_items(cards):
 			)
 		}
 	units = item_units.units_of(item_codes, {name: row.stock_uom for name, row in item_rows.items()})
+	# //// Neoffice — the colour of each dish's item group (its own, else the nearest up the tree), read once for the call: the till's and the phone's tiles take it
+	# //// when the dish has no colour of its own (neoffice-maintenance#2163 follow-up; product owner, 03.11.2026: « des couleurs par famille, pour retrouver vite un produit »)
+	colors = service_families.group_colors() if item_rows else {}
 
 	for card, items in shown:
 		for ci in items:
@@ -2247,6 +2250,7 @@ def _cards_with_items(cards):
 					ci["image"] = item_data.image
 					ci["custom_color"] = item_data.custom_color
 					ci["item_group"] = item_data.item_group
+					ci["service_color"] = colors.get(item_data.item_group, "")
 					ci["default_price"] = item_data.standard_rate or 0
 					ci["is_stock_item"] = item_data.is_stock_item
 					ci["stock_uom"] = units[ci.item]["stock_uom"]

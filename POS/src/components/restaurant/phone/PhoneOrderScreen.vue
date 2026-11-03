@@ -223,7 +223,12 @@ const shiftStore = usePOSShiftStore()
 
 // The card shown: the one chosen, else the first one
 const card = computed(() => props.cards.find((one) => one.name === props.selectedCard) || props.cards[0] || null)
-const sections = computed(() => cardSections(card.value?.items || []))
+// //// Neoffice — a button takes its item group's colour when its item has none, unless the till switched the colours of the tiles off (POS Settings.tile_colors, on by default)
+const familyColours = computed(() => {
+	const value = settingsStore.settings?.tile_colors
+	return value === undefined || value === null || Boolean(Number(value))
+})
+const sections = computed(() => cardSections(card.value?.items || [], { familyColours: familyColours.value }))
 
 // The type chosen (null: all); back to all when the card changes
 const chip = ref(null)
