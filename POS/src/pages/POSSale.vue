@@ -3857,6 +3857,7 @@ const { openTable } = useOpenTable();
 const leaveTable = useLeaveTable({
 	cartStore,
 	send: sendCancellationToKitchen,
+	//// Neoffice — wires the lines-kept restore below into the leave-table flow (5d45e4eb "putting an order back as it was keeps the lines added and not sent")
 	putBack: putTheTableBack,
 	leave: () => cartStore.clearCart(),
 });
