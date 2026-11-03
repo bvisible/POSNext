@@ -3,15 +3,17 @@
 	<!-- //// task 25), taken out of POSSale.vue so that it can be tested: one button per card; a card opened by hand carries -->
 	<!-- //// a small mark and a « × » that closes it; the « ⋯ » that fetches a card the opening hours keep off the till ends -->
 	<!-- //// the row. -->
+	<!-- //// Neoffice — the row is a wrapping line of two groups (NeoResto lot 1, product owner, 03.11.2026: « quatre lignes au sommet avant d'avoir les articles »): the card buttons with their « ⋯ », and the `aside` slot, where the order screen puts the search and the grid / list switch. Side by side where the pane is wide enough for both, the second under the first where it is not. -->
 	<div
 		data-test="card-tabs"
-		class="px-1.5 sm:px-3 pt-1.5 sm:pt-3 pb-1.5 sm:pb-2 bg-white border-b border-gray-200"
+		class="px-1.5 sm:px-3 py-1.5 sm:py-2 bg-white border-b border-gray-200"
 	>
-		<div class="flex items-center gap-1">
+		<div class="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+			<div class="flex min-w-0 flex-[1_1_260px] items-center gap-1">
 			<!-- The buttons scroll; the « ⋯ » stays out of the scroller, whose edge would cut its list off -->
 			<div
 				data-test="card-tabs-scroller"
-				class="flex items-center gap-1 sm:gap-2 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory min-w-0 flex-1"
+				class="flex items-center gap-1 sm:gap-2 overflow-x-auto scrollbar-hide snap-x snap-mandatory min-w-0 flex-1"
 			>
 				<div
 					v-for="card in cards"
@@ -108,6 +110,10 @@
 			</div>
 			<!-- //// Neoffice — where the row holds no card of the hours (only the permanent one, or cards opened by hand), the « ⋯ » says in words what it opens (Daniel, 02.11: he could not find it) -->
 			<CardPickerMenu :labelled="!cards.some((card) => !card.is_permanent && !card.opened_by_hand)" />
+			</div>
+			<div v-if="$slots.aside" data-test="card-tabs-aside" class="flex min-w-0 max-w-[380px] flex-[1_1_300px] items-center">
+				<slot name="aside" />
+			</div>
 		</div>
 	</div>
 </template>
@@ -119,7 +125,7 @@ import CardPickerMenu from "./CardPickerMenu.vue"
 /**
  * The cards of the row, in the order they are shown ([{ name, card_name, is_permanent?, opened_by_hand? }]) and the one
  * that is selected. It says what was picked (`select`) and what was closed (`close-card`); the screen adds its own
- * buttons at the end of the row through the `trailing` slot.
+ * buttons at the end of the row through the `trailing` slot, and what goes at the end of the line (the search) through the `aside` slot.
  */
 defineProps({
 	cards: { type: Array, default: () => [] },

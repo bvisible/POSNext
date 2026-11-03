@@ -55,9 +55,9 @@
 		<div v-else class="list-container">
 			<div class="summary" data-summary>
 				<span class="chip">
-					<LucideCalendarDays class="chip-icon" aria-hidden="true" />{{ __("{0} reservations", [summary.reservations]) }}
+					<LucideCalendarDays class="chip-icon" aria-hidden="true" />{{ reservationsText(summary.reservations) }}
 				</span>
-				<span class="chip"><LucideUsers class="chip-icon" aria-hidden="true" />{{ __("{0} guests", [summary.covers]) }}</span>
+				<span class="chip"><LucideUsers class="chip-icon" aria-hidden="true" />{{ guestsText(summary.covers) }}</span>
 				<span v-if="summary.seated" class="chip">
 					<LucideArmchair class="chip-icon" aria-hidden="true" />{{ __("{0} seated", [summary.seated]) }}
 				</span>
@@ -66,7 +66,7 @@
 			<section v-for="service in services" :key="service.key" class="service" :data-service="service.key">
 				<h3 class="service-title">
 					{{ service.label }}
-					<span class="service-count">{{ __("{0} reservations", [service.count]) }} · {{ __("{0} guests", [service.covers]) }}</span>
+					<span class="service-count">{{ reservationsText(service.count) }} · {{ guestsText(service.covers) }}</span>
 				</h3>
 				<div class="cards">
 					<article
@@ -90,7 +90,7 @@
 						<p class="card-name">{{ res.guest_name }}</p>
 
 						<div class="card-meta">
-							<span class="tag"><LucideUsers class="tag-icon" aria-hidden="true" />{{ __("{0} guests", [res.no_of_guests]) }}</span>
+							<span class="tag"><LucideUsers class="tag-icon" aria-hidden="true" />{{ guestsText(res.no_of_guests) }}</span>
 							<span v-if="tablesOf(res)" class="tag">
 								<LucideArmchair class="tag-icon" aria-hidden="true" />{{ tablesOf(res) }}
 							</span>
@@ -272,6 +272,10 @@ const services = computed(() => {
 			covers: coversOf(service.items),
 		}))
 })
+
+// « 1 reservation », « 2 reservations »: the singular is a sentence of its own, the catalogue having no plural
+const reservationsText = (count) => (Number(count) === 1 ? __("{0} reservation", [count]) : __("{0} reservations", [count]))
+const guestsText = (count) => (Number(count) === 1 ? __("{0} guest", [count]) : __("{0} guests", [count]))
 
 const statusKey = (res) => (res.status || "").toLowerCase().replace(" ", "-")
 const isOver = (res) => OVER.includes(res.status)

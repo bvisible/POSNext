@@ -590,6 +590,8 @@
 								>
 									<!-- //// Neoffice — the row of card buttons is a component since NeoResto lot 1, task 25: it marks the cards -->
 									<!-- //// opened by hand and ends with the « ⋯ » that fetches a card the opening hours keep off the till. -->
+									<!-- //// Neoffice — three lines above the dishes instead of four (NeoResto lot 1, product owner, 03.11.2026: « une, deux, trois, quatre lignes au sommet avant d'avoir les articles »): -->
+									<!-- //// the card buttons carry the search and the grid / list switch at their end (the `aside` slot; they wrap under it on a narrow pane), then the families, as big as a card button. -->
 									<RestaurantCardTabs
 										:cards="restaurantStore.shownCards"
 										:selected="selectedCard"
@@ -598,140 +600,29 @@
 											selectedCardCategory = null;
 										"
 										@close-card="restaurantStore.closeCardOpenedByHand($event)"
-									/>
+									>
+										<template #aside>
+											<CardSearchBar
+												v-model:query="cardSearchQuery"
+												v-model:view="cardViewMode"
+											/>
+										</template>
+									</RestaurantCardTabs>
 									<!-- Category sub-filters -->
-									<div
+									<CardFamilyChips
 										v-if="cardCategories.length > 0"
-										class="px-1.5 sm:px-3 py-1 bg-white border-b border-gray-100"
-									>
-										<div
-											class="flex items-center gap-1 overflow-x-auto scrollbar-hide"
-										>
-											<button
-												@click="selectedCardCategory = null"
-												class="px-2 py-1 rounded text-[10px] sm:text-xs font-medium whitespace-nowrap transition-colors"
-												:class="
-													!selectedCardCategory
-														? 'bg-amber-100 text-amber-800'
-														: 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-												"
-											>
-												{{ __("All") }}
-											</button>
-											<button
-												v-for="cat in cardCategories"
-												:key="cat"
-												@click="selectedCardCategory = cat"
-												class="px-2 py-1 rounded text-[10px] sm:text-xs font-medium whitespace-nowrap transition-colors"
-												:class="
-													selectedCardCategory === cat
-														? 'bg-amber-100 text-amber-800'
-														: 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-												"
-											>
-												{{ cat }}
-											</button>
-										</div>
-									</div>
+										:families="cardCategories"
+										:selected="selectedCardCategory"
+										@select="selectedCardCategory = $event"
+									/>
 									<!-- //// Neoffice — the sub-categories of the category chosen, one level under its chip (NeoResto lot 1, product owner, 03.11.2026): « Boissons » then « Bières », « Vins blancs »… -->
-									<div
+									<CardFamilyChips
 										v-if="cardSubcategories.length > 0"
-										class="px-1.5 sm:px-3 py-1 bg-white border-b border-gray-100"
-										data-card-subchips
-									>
-										<div class="flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
-											<button
-												@click="selectedCardSub = null"
-												class="px-3 py-1 rounded-full border text-[10px] sm:text-xs font-medium whitespace-nowrap transition-colors"
-												:class="!selectedCardSub ? 'border-gray-400 bg-gray-100 text-gray-800' : 'border-gray-200 text-gray-500 hover:bg-gray-50'"
-											>
-												{{ __("All") }}
-											</button>
-											<button
-												v-for="sub in cardSubcategories"
-												:key="sub.label"
-												@click="selectedCardSub = sub.label"
-												class="px-3 py-1 rounded-full border text-[10px] sm:text-xs font-medium whitespace-nowrap transition-colors inline-flex items-center gap-1.5"
-												:class="selectedCardSub === sub.label ? 'border-gray-400 bg-gray-100 text-gray-800' : 'border-gray-200 text-gray-500 hover:bg-gray-50'"
-												:style="sub.color && selectedCardSub === sub.label ? { borderColor: sub.color, borderWidth: '2px' } : null"
-											>
-												<span v-if="sub.color" class="h-2 w-2 rounded-full" :style="{ backgroundColor: sub.color }" />
-												{{ sub.label }}
-											</button>
-										</div>
-									</div>
-									<!-- Search + view toggle -->
-									<div
-										class="px-1.5 sm:px-3 py-1.5 sm:py-2 bg-white border-b border-gray-200"
-									>
-										<div class="flex items-center gap-1 sm:gap-2">
-											<div class="flex-1 relative min-w-0">
-												<svg
-													class="absolute start-2 sm:start-3 top-1/2 -translate-y-1/2 w-3.5 sm:w-4 h-3.5 sm:h-4 text-gray-400 pointer-events-none"
-													fill="none"
-													stroke="currentColor"
-													viewBox="0 0 24 24"
-												>
-													<path
-														stroke-linecap="round"
-														stroke-linejoin="round"
-														stroke-width="2"
-														d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-													/>
-												</svg>
-												<input
-													v-model="cardSearchQuery"
-													type="text"
-													:placeholder="__('Search in card...')"
-													class="w-full text-[11px] sm:text-sm border border-gray-300 rounded-neo-sm px-2 sm:px-3 py-2 ps-7 sm:ps-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-												/>
-											</div>
-											<div
-												class="flex items-center gap-0.5 bg-gray-100 rounded-neo-sm p-0.5 flex-shrink-0"
-											>
-												<button
-													@click="cardViewMode = 'grid'"
-													class="p-1.5 sm:p-2 rounded transition-[background-color,box-shadow] duration-75 touch-manipulation"
-													:class="
-														cardViewMode === 'grid'
-															? 'bg-white shadow-sm'
-															: 'hover:bg-gray-200'
-													"
-												>
-													<svg
-														class="w-3.5 sm:w-4 h-3.5 sm:h-4 text-gray-600"
-														fill="currentColor"
-														viewBox="0 0 20 20"
-													>
-														<path
-															d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
-														/>
-													</svg>
-												</button>
-												<button
-													@click="cardViewMode = 'list'"
-													class="p-1.5 sm:p-2 rounded transition-[background-color,box-shadow] duration-75 touch-manipulation"
-													:class="
-														cardViewMode === 'list'
-															? 'bg-white shadow-sm'
-															: 'hover:bg-gray-200'
-													"
-												>
-													<svg
-														class="w-3.5 sm:w-4 h-3.5 sm:h-4 text-gray-600"
-														fill="currentColor"
-														viewBox="0 0 20 20"
-													>
-														<path
-															fill-rule="evenodd"
-															d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
-															clip-rule="evenodd"
-														/>
-													</svg>
-												</button>
-											</div>
-										</div>
-									</div>
+										level="sub"
+										:families="cardSubcategories"
+										:selected="selectedCardSub"
+										@select="selectedCardSub = $event"
+									/>
 									<!-- Items display -->
 									<!-- //// Neoffice — not drawn while the phone's order screen covers it (NeoResto lot 1, task 27, -->
 									<!-- //// fix round 1): mounted underneath, the card loaded every picture for nobody to see. -->
@@ -2285,6 +2176,9 @@ import { useFloorNoticesStore } from "@/stores/floorNotices";
 import { useSeeFloorNotice } from "@/composables/useSeeFloorNotice";
 //// Neoffice — the row of card buttons, and the dialog the floor plan's « ⋯ » menu opens to fetch another card (NeoResto lot 1, task 25).
 import RestaurantCardTabs from "@/components/restaurant/RestaurantCardTabs.vue";
+//// Neoffice — the families of the open card as buttons, and its search with the grid / list switch (NeoResto lot 1, 03.11.2026).
+import CardFamilyChips from "@/components/restaurant/CardFamilyChips.vue";
+import CardSearchBar from "@/components/restaurant/CardSearchBar.vue";
 import CardPickerDialog from "@/components/restaurant/CardPickerDialog.vue";
 import AddPortionsDialog from "@/components/restaurant/AddPortionsDialog.vue"; //// Neoffice — adds portions to a counted product (NeoResto lot 1, Daniel, 02.11.2026)
 import TableQRCode from "@/components/restaurant/TableQRCode.vue";

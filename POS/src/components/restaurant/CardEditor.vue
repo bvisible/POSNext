@@ -228,7 +228,7 @@
 											:class="item.disabled ? 'bg-gray-300' : 'bg-green-500'"
 											:title="item.disabled ? __('Disabled') : __('Active')"></span>
 										<!-- The dish's picture, else its colour with its initial -->
-										<img v-if="itemExtraData[item.item]?.image" :src="itemExtraData[item.item].image" alt="" loading="lazy"
+										<img v-if="extraOf(item)?.image" :src="extraOf(item).image" alt="" loading="lazy"
 											class="w-10 h-10 rounded-lg object-cover flex-shrink-0" data-row-image />
 										<span v-else class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 text-sm font-bold text-gray-600"
 											:style="{ backgroundColor: colorOf(item) ? tintOf(colorOf(item)) : '#F3F4F6' }" data-row-initial>
@@ -237,16 +237,16 @@
 										<div class="flex-1 min-w-0">
 											<div class="flex items-center gap-1.5 flex-wrap">
 												<span class="text-base" :class="item.disabled ? 'text-gray-400 line-through' : ''" data-row-name>{{ nameOf(item) }}</span>
-												<span v-if="nameOf(item) !== item.item" class="text-xs text-gray-400">{{ item.item }}</span>
-												<span v-if="itemExtraData[item.item]?.item_group" class="text-xs text-gray-500 bg-gray-100 rounded px-1.5 py-0.5" data-row-group>{{ itemExtraData[item.item].item_group }}</span>
+												<span v-if="item.item && nameOf(item) !== item.item" class="text-xs text-gray-400">{{ item.item }}</span>
+												<span v-if="extraOf(item)?.item_group" class="text-xs text-gray-500 bg-gray-100 rounded px-1.5 py-0.5" data-row-group>{{ extraOf(item).item_group }}</span>
 												<!-- Spice level -->
-												<span v-if="itemExtraData[item.item]?.spice_level" class="flex gap-0 flex-shrink-0" :title="__('Spice level {0}', [itemExtraData[item.item].spice_level])">
-													<span v-for="s in itemExtraData[item.item].spice_level" :key="s" class="text-xs leading-none">🌶</span>
+												<span v-if="extraOf(item)?.spice_level" class="flex gap-0 flex-shrink-0" :title="__('Spice level {0}', [extraOf(item).spice_level])">
+													<span v-for="s in extraOf(item).spice_level" :key="s" class="text-xs leading-none">🌶</span>
 												</span>
 												<!-- Badges inline -->
-												<div v-if="itemExtraData[item.item]?.badges?.length" class="flex gap-0.5 flex-shrink-0">
+												<div v-if="extraOf(item)?.badges?.length" class="flex gap-0.5 flex-shrink-0">
 													<span
-														v-for="badge in itemExtraData[item.item].badges.slice(0, 4)"
+														v-for="badge in extraOf(item).badges.slice(0, 4)"
 														:key="badge.badge_name"
 														class="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
 														:style="{ backgroundColor: badge.color || '#9ca3af' }"
@@ -259,15 +259,15 @@
 															style="filter: brightness(0) invert(1);"
 														/>
 													</span>
-													<span v-if="itemExtraData[item.item].badges.length > 4"
+													<span v-if="extraOf(item).badges.length > 4"
 														class="text-xs text-gray-400 flex items-center">
-														+{{ itemExtraData[item.item].badges.length - 4 }}
+														+{{ extraOf(item).badges.length - 4 }}
 													</span>
 												</div>
 											</div>
 											<!-- Description (1 line, truncated) -->
-											<div v-if="itemExtraData[item.item]?.description" class="text-xs text-gray-400 mt-0.5 truncate max-w-[420px]">
-												{{ itemExtraData[item.item].description }}
+											<div v-if="extraOf(item)?.description" class="text-xs text-gray-400 mt-0.5 truncate max-w-[420px]">
+												{{ extraOf(item).description }}
 											</div>
 											<!-- Stock display -->
 											<div v-if="stockData[item.item]" class="text-xs text-gray-400 mt-0.5">
@@ -282,7 +282,7 @@
 										<div class="text-right flex-shrink-0 tabular-nums" data-row-price>
 											<span v-if="Number(item.price)" class="text-base font-medium text-gray-700">{{ formatPrice(item.price) }}</span>
 											<template v-else>
-												<span class="text-base font-medium text-gray-400">{{ formatPrice(itemExtraData[item.item]?.default_price || 0) }}</span>
+												<span class="text-base font-medium text-gray-400">{{ formatPrice(extraOf(item)?.default_price || 0) }}</span>
 												<div class="text-xs text-gray-400 leading-none">{{ __("Global") }}</div>
 											</template>
 										</div>
@@ -839,13 +839,18 @@ function openCategoryDialog(sub) {
 	showCategoryDialog.value = true
 }
 
+// What the server says of the dish of a row, or of the menu of a menu row (see get_card_items_extra)
+function extraOf(item) {
+	return itemExtraData.value[item.item_type === "Menu" ? item.menu : item.item]
+}
+
 function colorOf(item) {
-	const extra = itemExtraData.value[item.item] || {}
+	const extra = extraOf(item) || {}
 	return cardColor(extra.custom_color) || cardColor(extra.service_color) || null
 }
 
 function nameOf(item) {
-	return item.label || itemExtraData.value[item.item]?.item_name || item.item_name || item.item
+	return item.label || extraOf(item)?.item_name || item.item_name || item.item || item.menu
 }
 
 function initialOf(item) {

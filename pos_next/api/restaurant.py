@@ -4130,6 +4130,24 @@ def get_card_items_extra(card_name):
 	colors = service_families.group_colors()
 
 	for ci in card.items:
+		# //// Neoffice — a menu row of the card (« Menu du jour ») says its name, its picture and its price too, under the name of the menu
+		if ci.item_type == "Menu" and ci.menu:
+			menu_data = frappe.db.get_value(
+				"Restaurant Menu", ci.menu, ["menu_name", "price", "image"], as_dict=True
+			)
+			if menu_data:
+				result[ci.menu] = {
+					"description": "",
+					"badges": [],
+					"spice_level": 0,
+					"item_name": menu_data.menu_name,
+					"image": menu_data.image or "",
+					"custom_color": "",
+					"service_color": "",
+					"item_group": "",
+					"default_price": flt(menu_data.price),
+				}
+			continue
 		if ci.item_type != "Item" or not ci.item:
 			continue
 

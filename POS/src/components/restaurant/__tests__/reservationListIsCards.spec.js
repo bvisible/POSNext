@@ -66,6 +66,15 @@ describe("the day's reservations", () => {
 		expect(services[1].text()).toContain("8 guests")
 	})
 
+	it("say one reservation and one guest in the singular", () => {
+		list({ reservations: [{ ...BERNASCONI, no_of_guests: 1 }] });
+
+		expect(wrapper.get("[data-service]").text()).toContain("1 reservation ·");
+		expect(wrapper.get("[data-service]").text()).toContain("1 guest");
+		expect(wrapper.get("[data-service]").text()).not.toContain("1 reservations");
+		expect(wrapper.get("[data-summary]").text()).toContain("1 reservation");
+	});
+
 	it("leave out a service with no booking", () => {
 		list({ reservations: [BERNASCONI] })
 

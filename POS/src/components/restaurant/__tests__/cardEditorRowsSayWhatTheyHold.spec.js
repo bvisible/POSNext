@@ -34,11 +34,51 @@ const ROWS = [
 	{ item_type: "Item", item: "WHITE-1", price: 7.5, disabled: 0 },
 	{ item_type: "Category", label: "Starters" },
 	{ item_type: "Item", item: "SOUP-1", price: 0, disabled: 0 },
+	{ item_type: "Menu", menu: "Daily menu", price: 0, disabled: 0 },
 ]
 const EXTRA = {
-	"RED-1": { item_name: "Gamay", image: "", custom_color: "", service_color: "#C1372C", item_group: "Red wines", default_price: 6.5, description: "A glass", badges: [], spice_level: 0 },
-	"WHITE-1": { item_name: "Chasselas", image: "/files/white.png", custom_color: "#E0980F", service_color: "#D9B84A", item_group: "White wines", default_price: 6, badges: [], spice_level: 0 },
-	"SOUP-1": { item_name: "Soup of the day", image: "", custom_color: "", service_color: "", item_group: "Starters", default_price: 9.5, badges: [], spice_level: 0 },
+	"RED-1": {
+		item_name: "Gamay",
+		image: "",
+		custom_color: "",
+		service_color: "#C1372C",
+		item_group: "Red wines",
+		default_price: 6.5,
+		description: "A glass",
+		badges: [],
+		spice_level: 0,
+	},
+	"WHITE-1": {
+		item_name: "Chasselas",
+		image: "/files/white.png",
+		custom_color: "#E0980F",
+		service_color: "#D9B84A",
+		item_group: "White wines",
+		default_price: 6,
+		badges: [],
+		spice_level: 0,
+	},
+	"Daily menu": {
+		item_name: "Daily menu",
+		image: "",
+		custom_color: "",
+		service_color: "",
+		item_group: "",
+		default_price: 36,
+		description: "",
+		badges: [],
+		spice_level: 0,
+	},
+	"SOUP-1": {
+		item_name: "Soup of the day",
+		image: "",
+		custom_color: "",
+		service_color: "",
+		item_group: "Starters",
+		default_price: 9.5,
+		badges: [],
+		spice_level: 0,
+	},
 }
 
 let saved
@@ -110,6 +150,17 @@ describe("a row of the card editor", () => {
 		expect(rowOf(wrapper, "Soup of the day").attributes("style")).toBeUndefined()
 	})
 })
+
+describe("a menu row of the card editor", () => {
+	it("says the name of the menu and its price, not an empty line", async () => {
+		const wrapper = await editor();
+		const menu = rowOf(wrapper, "Daily menu");
+
+		expect(menu.get("[data-row-name]").text()).toBe("Daily menu");
+		expect(menu.get("[data-row-price]").text()).toContain("36.00");
+		expect(menu.find("[data-row-group]").exists()).toBe(false);
+	});
+});
 
 describe("a sub-category in the card editor", () => {
 	it("is a heading one level under the category above it, with its items one level deeper", async () => {
