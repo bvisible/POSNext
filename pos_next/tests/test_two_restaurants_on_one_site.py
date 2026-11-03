@@ -162,6 +162,18 @@ class TwoRestaurants:
 		)
 		return doc.insert(ignore_permissions=True).name
 
+	def on_the_guest_menu(self, restaurant, *items, price=5, card_name=None):
+		"""The card the QR page of `restaurant` serves (its guest_menu), offering `items` at `price`: a guest orders only what the card offers, at
+		the card's price (maintenance#2198)."""
+		card = self.make_card(
+			restaurant,
+			card_name or f"_Test Guest Menu {restaurant}",
+			items=[{"item_type": "Item", "item": item, "price": price} for item in items],
+		)
+		frappe.db.set_value("Restaurant", restaurant, "guest_menu", card)
+		frappe.clear_document_cache("Restaurant")
+		return card
+
 	def make_menu(self, restaurant, name, **values):
 		doc = frappe.get_doc(
 			{
@@ -1034,7 +1046,7 @@ class TestOrdersBelongToTheRestaurantOfTheirTable(TwoRestaurants, FrappeTestCase
 		frappe.db.set_value(
 			"Restaurant", self.b, {"enable_qr_ordering": 1, "qr_order_validation": "Server Approval"}
 		)
-		frappe.clear_document_cache("Restaurant")
+		self.on_the_guest_menu(self.b, self.fx.item)
 		# //// Neoffice — a guest scanning a table has no account at all: never Administrator (#2125).
 		with patch.object(frappe, "publish_realtime") as published, as_role("Guest"):
 			guest_ordering.submit_guest_order(

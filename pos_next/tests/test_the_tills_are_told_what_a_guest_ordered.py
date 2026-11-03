@@ -29,6 +29,7 @@ class TheTillsAreToldWhatAGuestOrdered(ServiceCase):
 		super().setUp()
 		frappe.db.set_value("Item", self.cola, "item_name", WINE)
 		frappe.db.set_value("Item", self.soup, "item_name", SOUP)
+		self.on_the_guest_menu(self.a, self.cola, self.soup, self.salad, self.penne, self.steak, self.tart)
 		self.token = self.a_token()
 		self.addCleanup(frappe.set_user, frappe.session.user)
 
@@ -104,6 +105,7 @@ class TheTillsAreToldWhatAGuestOrdered(ServiceCase):
 		extra = [an_item(f"_Test SF Extra {n}", DRINKS, self.company) for n in range(1, 6)]
 		for n, code in enumerate(extra, 1):
 			frappe.db.set_value("Item", code, "item_name", f"Extra {n}")
+		self.on_the_guest_menu(self.a, self.cola, self.soup, *extra, card_name="_Test Guest Menu Extras")
 
 		told = self.order((self.cola, 1), (self.soup, 1), *[(code, 1) for code in extra])[
 			"guest_order_submitted"

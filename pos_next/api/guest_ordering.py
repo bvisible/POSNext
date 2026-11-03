@@ -619,7 +619,18 @@ def get_guest_menu(token):
 	"""
 	token_doc = _require_valid_token(token)
 	settings = _get_restaurant_settings(token_doc.pos_profile)
+	card_names, all_categories = _guest_menu_categories(token_doc, settings)
 
+	return {
+		"card": {"card_name": ", ".join(card_names), "description": "", "image": ""},
+		"categories": all_categories,
+	}
+
+
+# //// Neoffice — the menu of a token, built once for the page that shows it (get_guest_menu) and for the order that prices its lines by it
+# //// (submit_guest_order, maintenance#2198)
+def _guest_menu_categories(token_doc, settings):
+	"""(card names, categories) of the menu the page of `token_doc` is served: its cards, its families' colours, its customer's prices."""
 	# Resolve warehouse from POS Profile for stock display
 	warehouse = None
 	if token_doc.pos_profile:
@@ -653,10 +664,59 @@ def get_guest_menu(token):
 			token_doc.pos_profile, all_categories, customer=account["customer"] if account else None
 		)
 
-	return {
-		"card": {"card_name": ", ".join(card_names), "description": "", "image": ""},
-		"categories": all_categories,
+	return card_names, all_categories
+
+
+# //// Neoffice — the price of a guest's line is the menu's, read on the server, never the one the page sends (maintenance#2198). The page computes
+# //// it in the browser (the dish's price, or its discounted price, plus the price of its options) and the server wrote it as sent: whoever held
+# //// the token of a table could order a dish at 0.05, and pay that much (#1973).
+def _dishes_of(categories):
+	"""{item_code: dish} of a menu, each dish as it first shows (the page lists the dishes in that order)."""
+	dishes = {}
+	for category in categories:
+		for dish in category.get("menu_items") or []:
+			dishes.setdefault(dish["item_code"], dish)
+	return dishes
+
+
+def _rate_on_the_menu(item, dishes):
+	"""The rate of a guest's line as the menu prices it, the way the page adds it up (stores/guestOrder.js, addToCart): the dish's discounted price,
+	else its price, plus the price of each option the line names. A dish the menu does not offer, or an option the dish does not have, is refused."""
+	code = item.get("item_code")
+	dish = dishes.get(code)
+	if not dish:
+		frappe.throw(_("{0} is not on the menu").format(frappe.db.get_value("Item", code, "item_name") or code))
+	discounted = dish.get("discounted_price")
+	rate = flt(dish.get("price") if discounted is None else discounted)
+	offered = {
+		(group.get("group_name"), option.get("option_name")): flt(option.get("price_adjustment"))
+		for group in dish.get("product_options") or []
+		for option in group.get("options") or []
 	}
+	modifiers = item.get("modifiers") or []
+	if isinstance(modifiers, str):
+		modifiers = frappe.parse_json(modifiers) if modifiers.strip() else []
+	if not isinstance(modifiers, list):
+		frappe.throw(_("{0}: an option is no longer offered, please reload the menu").format(dish["item_name"]))
+	for modifier in modifiers:
+		chosen = (
+			(modifier.get("group_name") or modifier.get("group"), modifier.get("option_name") or modifier.get("option"))
+			if isinstance(modifier, dict)
+			else None
+		)
+		if chosen not in offered:
+			frappe.throw(_("{0}: an option is no longer offered, please reload the menu").format(dish["item_name"]))
+		rate += offered[chosen]
+	return rate
+
+
+def _quantity_of(item):
+	"""The quantity of a guest's line: a whole number of dishes, at least one (a line of -2 would take two dishes off the bill, 0.01 would sell one
+	for a hundredth of its price)."""
+	qty = flt(item.get("qty", 1))
+	if qty < 1 or qty != int(qty):
+		frappe.throw(_("Please choose a whole number of dishes"))
+	return qty
 
 
 @frappe.whitelist(allow_guest=True)
@@ -683,6 +743,11 @@ def submit_guest_order(token, items):
 
 	# //// Neoffice — a dish the kitchen has no portion of left is refused, whatever the guest's page still shows (NeoResto lot 1, Daniel, 02.11.2026); before anything is created
 	_refuse_what_is_sold_out(items)
+	# //// Neoffice — every line priced by the menu the page is served, before anything is created (maintenance#2198)
+	_cards, menu = _guest_menu_categories(token_doc, settings)
+	dishes = _dishes_of(menu)
+	rates = {index: _rate_on_the_menu(item, dishes) for index, item in enumerate(items) if item.get("item_code")}
+	quantities = {index: _quantity_of(items[index]) for index in rates}
 
 	invoice_doc = _get_or_create_invoice(token_doc)
 	is_new_invoice = not invoice_doc
@@ -731,7 +796,7 @@ def submit_guest_order(token, items):
 	# //// Neoffice — the lines THIS order adds (the ones above, already on the invoice, are not news to the tills): see _lines_of_this_order.
 	added_rows = []
 
-	for item in items:
+	for index, item in enumerate(items):
 		item_code = item.get("item_code")
 		if not item_code:
 			continue
@@ -743,10 +808,9 @@ def submit_guest_order(token, items):
 		# //// modifiers were already on the invoice, which dropped a second round without a word and answered success (found by the floor-alerts
 		# //// agent, 01.11).
 
-		qty = flt(item.get("qty", 1))
-		rate = flt(item.get("rate") or item.get("price") or 0)
-		if not rate:
-			rate = flt(frappe.db.get_value("Item", item_code, "standard_rate") or 0)
+		# //// Neoffice — the menu's price, never the page's `rate`, for a whole number of dishes (maintenance#2198)
+		qty = quantities[index]
+		rate = rates[index]
 
 		row = invoice_doc.append("items", {
 			"item_code": item_code,
@@ -1590,15 +1654,18 @@ def submit_takeaway_order(token, items, customer=None):
 
 	invoice_doc = frappe.get_doc(invoice_data)
 
+	# //// Neoffice — the lines priced by the takeaway card, read on the server, for its customer, never by the page's `rate` (maintenance#2198)
+	takeaway_menu = _build_menu_from_card(card_name)["categories"]
+	_apply_pricing_rules_to_menu(pos_profile, takeaway_menu, customer=customer_name)
+	dishes = _dishes_of(takeaway_menu)
+
 	has_kds = frappe.db.has_column("Sales Invoice Item", "kds_status")
 	for item in items:
 		item_code = item.get("item_code")
 		if not item_code:
 			continue
-		qty = flt(item.get("qty", 1))
-		rate = flt(item.get("rate") or item.get("price") or 0)
-		if not rate:
-			rate = flt(frappe.db.get_value("Item", item_code, "standard_rate") or 0)
+		qty = _quantity_of(item)
+		rate = _rate_on_the_menu(item, dishes)
 
 		row = invoice_doc.append("items", {
 			"item_code": item_code,

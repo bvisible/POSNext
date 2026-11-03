@@ -268,7 +268,7 @@ class TestAGuestOrdersWhatIsLeft(PortionsCase):
 	def setUp(self):
 		super().setUp()
 		frappe.db.set_value("Restaurant", self.a, {"enable_qr_ordering": 1, "qr_order_validation": "Direct to Kitchen"})
-		frappe.clear_document_cache("Restaurant")
+		self.on_the_guest_menu(self.a, self.cola, self.soup, self.salad, self.penne, self.steak, self.tart)
 		self.token = frappe.get_doc(
 			{"doctype": "Guest Order Token", "mode": "restaurant", "table": self.table_a, "pos_profile": self.fx.profile}
 		).insert(ignore_permissions=True)

@@ -43,7 +43,7 @@ class GuestAccountCase(ServiceCase):
 			self.a,
 			{"enable_qr_ordering": 1, "qr_order_validation": "Direct to Kitchen", "guest_account_mode": "Optional"},
 		)
-		frappe.clear_document_cache("Restaurant")
+		self.on_the_guest_menu(self.a, self.cola, self.soup, self.salad, self.penne, self.steak, self.tart)
 		self.token = self.a_token()
 		self.mails = []
 		sender = patch("frappe.sendmail", side_effect=lambda **mail: self.mails.append(mail))

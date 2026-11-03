@@ -85,6 +85,7 @@ class TestTheListOfTablesReadsTheFloor(TwoRestaurants, FrappeTestCase):
 		self.make_till(self.fx.other_profile, self.b)
 		self.table_two = self.make_table(self.a, self.room_a, table_name="T2")
 		self.bar_a = self.make_station(self.a, station_name="Bar", station_type="Bar")
+		self.on_the_guest_menu(self.a, self.fx.item)
 
 	# What the till and the guests do
 
