@@ -23764,3 +23764,58 @@ msgstr ""
 msgid "✗ Decline"
 msgstr ""
 
+#: POS/src/components/guest/GuestCheckout.vue:282
+msgid "Account (optional)"
+msgstr ""
+
+#: POS/src/components/guest/GuestCheckout.vue:282
+msgid "Account (required)"
+msgstr ""
+
+#: POS/src/components/guest/GuestCheckout.vue:271
+msgid "Create an account for next time"
+msgstr ""
+
+#: POS/src/components/pos/POSHeader.vue:168
+msgid "Resto"
+msgstr ""
+
+#. Label of a Check field in DocType 'POS Settings'
+#: POS/src/components/settings/KitchenAlertsSettings.vue
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Popup when the next course is ordered"
+msgstr ""
+
+#. Description of a Check field in DocType 'POS Settings'
+#: POS/src/components/settings/KitchenAlertsSettings.vue
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Show a notice at the top of the kitchen screen when the next course of a table is ordered"
+msgstr ""
+
+#. Description of a Int field in DocType 'POS Settings'
+#: POS/src/components/settings/KitchenAlertsSettings.vue
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Seconds the notice stays on the kitchen screen. 0 = until somebody dismisses it"
+msgstr ""
+
+#: POS/src/components/restaurant/NextCourseNotices.vue
+msgid "{0} — the next course is ordered: {1}"
+msgstr ""
+
+#: POS/src/components/restaurant/NextCourseNotices.vue
+msgid "{0} — the next course is ordered"
+msgstr ""
+
+#: pos_next/till_settings/registry.py
+msgctxt "Service rhythm"
+msgid "The room calls"
+msgstr ""
+
+#: pos_next/till_settings/registry.py
+msgctxt "Service rhythm"
+msgid "The kitchen prepares ahead"
+msgstr ""
+
+#: POS/src/components/restaurant/FloorNotices.vue
+msgid "{0} × {1}"
+msgstr ""
