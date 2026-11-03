@@ -15,11 +15,13 @@ from frappe.utils import cint, flt
 
 # //// Neoffice — `kitchen_alerts` joined the import: the popup and the sound a till sets for the kitchen and the runner (NeoResto lot 1, Daniel, 01.11)
 # //// Neoffice — so did `call_seen`: the call of the next course the screens of a station took up, carried by each reading of the orders (Daniel, 01.11)
+# //// Neoffice — and `paid_orders`: the orders paid while a dish is still at the kitchen (neoffice-maintenance#2163)
 from pos_next.restaurant import (
 	call_seen,
 	devices,
 	item_units,
 	kitchen_alerts,
+	paid_orders,
 	permissions,
 	room_code,
 	scope,
@@ -309,11 +311,13 @@ def get_table_payment_summary(table_name):
 	from pos_next.api.cash_entry import require_till_user
 
 	require_till_user()
+	# //// Neoffice — `change_amount` too: what was handed back is not what the restaurant collected (neoffice-maintenance#2163)
+	invoice_fields = ["name", "grand_total", "paid_amount", "change_amount", "creation"]
 	# Priority 1: draft invoice linked directly to the table
 	invoice = frappe.get_all(
 		"Sales Invoice",
 		filters={"docstatus": ("in", (0, 1)), "restaurant_table": table_name},
-		fields=["name", "grand_total", "paid_amount", "creation"],
+		fields=invoice_fields,
 		order_by="creation desc",
 		limit=1,
 	)
@@ -326,10 +330,17 @@ def get_table_payment_summary(table_name):
 			order_by="creation desc",
 		)
 		if token_invoice and frappe.db.exists("Sales Invoice", token_invoice):
-			invoice = [frappe.db.get_value("Sales Invoice", token_invoice,
-				["name", "grand_total", "paid_amount", "creation"], as_dict=True)]
+			invoice = [frappe.db.get_value("Sales Invoice", token_invoice, invoice_fields, as_dict=True)]
 	if not invoice:
-		return {"invoice": None, "payments": [], "items": [], "grand_total": 0, "paid_amount": 0}
+		return {
+			"invoice": None,
+			"payments": [],
+			"items": [],
+			"grand_total": 0,
+			"paid_amount": 0,
+			"change_amount": 0,
+			"collected_amount": 0,
+		}
 
 	inv = invoice[0]
 	payments = frappe.get_all(
@@ -341,7 +352,8 @@ def get_table_payment_summary(table_name):
 	items = frappe.get_all(
 		"Sales Invoice Item",
 		filters={"parent": inv.name},
-		fields=["item_name", "qty", "amount"],
+		# //// Neoffice — the item code, to tell the tip's line from the dishes (below)
+		fields=["item_code", "item_name", "qty", "amount"],
 	)
 	tips = frappe.get_all(
 		"Restaurant Tip",
@@ -350,10 +362,21 @@ def get_table_payment_summary(table_name):
 	)
 	tip_total = sum(flt(t.amount) for t in tips)
 
+	# //// Neoffice — what the dialog adds up must be what the drawer holds (neoffice-maintenance#2163: paid 100 for 88, the
+	# //// dialog said « Total collected CHF 100.00 » with 12 handed back). The invoice's `paid_amount` is what was TENDERED:
+	# //// the change is taken off it, and the tip is already in it (the till and the guest's payment both charge it, on the
+	# //// tip's line where the restaurant has a tip item), so it is not added a second time. The tip's line is no dish of the
+	# //// order: it leaves the list and the order's total, and shows as the tip (as get_table_order shows a table).
+	tip_item_code = restaurant_config.get_restaurant_settings().get("tip_item")
+	tip_line = sum(flt(item.amount) for item in items if tip_item_code and item.item_code == tip_item_code)
+	items = [item for item in items if not (tip_item_code and item.item_code == tip_item_code)]
+
 	return {
 		"invoice": inv.name,
-		"grand_total": flt(inv.grand_total),
+		"grand_total": flt(inv.grand_total) - tip_line,
 		"paid_amount": flt(inv.paid_amount),
+		"change_amount": flt(inv.change_amount),
+		"collected_amount": flt(inv.paid_amount) - flt(inv.change_amount),
 		"payments": payments,
 		"items": items,
 		"tip_total": tip_total,
@@ -858,6 +881,8 @@ def get_table_order(table_name):
 	from pos_next.api.cash_entry import require_till_user
 
 	require_till_user()
+	# //// Neoffice — `customer_name` too: the till names the table's customer by his name (neoffice-maintenance#2163)
+	order_fields = ["name", "customer", "customer_name", "restaurant_table", "kds_status", "grand_total", "paid_amount"]
 	# First try draft
 	orders = frappe.get_all(
 		"Sales Invoice",
@@ -865,7 +890,7 @@ def get_table_order(table_name):
 			"docstatus": 0,
 			"restaurant_table": table_name,
 		},
-		fields=["name", "customer", "restaurant_table", "kds_status", "grand_total", "paid_amount"],
+		fields=order_fields,
 		order_by="modified desc",
 		limit=1
 	)
@@ -878,7 +903,7 @@ def get_table_order(table_name):
 				"docstatus": 1,
 				"restaurant_table": table_name,
 			},
-			fields=["name", "customer", "restaurant_table", "kds_status", "grand_total", "paid_amount"],
+			fields=order_fields,
 			order_by="modified desc",
 			limit=1
 		)
@@ -975,14 +1000,18 @@ def get_kds_orders(station=None, restaurant=None):
 	# We also remove the kds_status filter from SQL because if the user did not run bench migrate,
 	# the column might be completely missing and throw an error, or if it was added but has no default
 	# value it might fail. We handle the filtering safely in Python.
+	order_fields = ["name", "customer", "restaurant_table", "kds_status", "creation", "modified",
+				"is_takeaway", "takeaway_number", "pos_profile"]
 	raw_orders = frappe.get_all(
 		"Sales Invoice",
 		filters={
 			"docstatus": 0, # Drafts
 		},
-		fields=["name", "customer", "restaurant_table", "kds_status", "creation", "modified",
-				"is_takeaway", "takeaway_number", "pos_profile"]
+		fields=order_fields
 	)
+	# //// Neoffice — and the orders already paid whose dishes are still at the kitchen: settling the bill while a plate
+	# //// cooked made its ticket vanish from this screen, undelivered (neoffice-maintenance#2163, restaurant.paid_orders)
+	raw_orders += paid_orders.paid_orders_at_the_kitchen(order_fields)
 
 	# Filter purely in Python - include orders with table OR takeaway orders, of this restaurant
 	orders = [o for o in raw_orders if o.get("restaurant_table") or o.get("is_takeaway")]
@@ -1655,10 +1684,12 @@ def open_table(table_name, pos_profile, customer=None):
 		frappe.throw(_("Table {0} not found").format(table_name))
 
 	# Check for existing draft first
+	# //// Neoffice — `customer_name` too: the till names the table's customer by his name, not by his record's
+	# //// name, which is a code on a site that numbers its customers (neoffice-maintenance#2163)
 	existing = frappe.get_all(
 		"Sales Invoice",
 		filters={"docstatus": 0, "restaurant_table": table_name},
-		fields=["name", "customer", "kds_status", "paid_amount", *tickets.order_fields()],
+		fields=["name", "customer", "customer_name", "kds_status", "paid_amount", *tickets.order_fields()],
 		order_by="modified desc",
 		limit=1
 	)
@@ -1712,6 +1743,8 @@ def open_table(table_name, pos_profile, customer=None):
 			"name": order.name,
 			"items": order_items,
 			"customer": order.customer,
+			# //// Neoffice — see the read above (neoffice-maintenance#2163)
+			"customer_name": order.customer_name,
 			"kds_status": order.kds_status,
 			"paid_amount": flt(order.paid_amount) - tip_total,
 			"tip_total": tip_total,
@@ -2960,13 +2993,17 @@ def get_runner_orders(area=None, restaurant=None):
 	else:
 		require_system_user()
 	restaurant = restaurant or scope.current_restaurant()
+	# //// Neoffice — the takeaway flag and number go to the runner's card too: « Hand over » instead of « Deliver » (task 38b)
+	order_fields = ["name", "customer", "restaurant_table", "kds_status", "creation", "modified",
+				"is_takeaway", "takeaway_number"]
 	raw_orders = frappe.get_all(
 		"Sales Invoice",
 		filters={"docstatus": 0},
-		# //// Neoffice — the takeaway flag and number go to the runner's card too: « Hand over » instead of « Deliver » (task 38b)
-		fields=["name", "customer", "restaurant_table", "kds_status", "creation", "modified",
-				"is_takeaway", "takeaway_number"]
+		fields=order_fields
 	)
+	# //// Neoffice — a dish of a table already paid still has to be carried to it: the runner lists it until it is
+	# //// delivered (neoffice-maintenance#2163, restaurant.paid_orders)
+	raw_orders += paid_orders.paid_orders_at_the_kitchen(order_fields)
 
 	orders = scope.keep_orders_of([o for o in raw_orders if o.get("restaurant_table")], restaurant)
 

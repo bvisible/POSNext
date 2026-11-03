@@ -14,6 +14,9 @@ from unittest.mock import patch
 
 import frappe
 
+# //// Neoffice — the clock of an order paid long ago (neoffice-maintenance#2163)
+from frappe.utils import add_to_date, now_datetime
+
 from pos_next.api import kitchen_events
 from pos_next.restaurant import devices
 from pos_next.tests.test_restaurant_devices import CASHIER, KITCHEN, MANAGER, PORTAL, RUNNER, Tablets, as_user
@@ -110,7 +113,9 @@ class TestWhoMayAskForACopy(CopyCase):
 
 	def test_an_invoice_that_is_not_an_open_order_is_refused_to_a_desk_account(self):
 		for label, change in (
-			("submitted", {"docstatus": 1}),
+			# //// Neoffice — paid before the hours of a service: an order paid while its dishes cook is still a ticket
+			# //// (neoffice-maintenance#2163, test_a_paid_order_stays_at_the_kitchen)
+			("paid long ago", {"docstatus": 1, "modified": add_to_date(now_datetime(), days=-2)}),
 			("no table and no takeaway", {"restaurant_table": None}),
 		):
 			with self.subTest(label), listening(Listeners()) as app:

@@ -13,6 +13,9 @@ from unittest.mock import patch
 
 import frappe
 
+# //// Neoffice — the clock of an order paid long ago (neoffice-maintenance#2163)
+from frappe.utils import add_to_date, now_datetime
+
 from pos_next.api import restaurant
 from pos_next.restaurant import call_seen, devices
 from pos_next.tests.test_kitchen_copy import CopyCase, call
@@ -139,7 +142,14 @@ class TestWhoMayTakeUpACall(SeenCase):
 		)
 
 	def test_an_order_that_is_not_open_is_refused(self):
-		frappe.db.set_value("Sales Invoice", self.order, {"docstatus": 1}, update_modified=False)
+		# //// Neoffice — paid before the hours of a service: an order paid while its dishes cook is still the kitchen's
+		# //// (neoffice-maintenance#2163, test_a_paid_order_stays_at_the_kitchen)
+		frappe.db.set_value(
+			"Sales Invoice",
+			self.order,
+			{"docstatus": 1, "modified": add_to_date(now_datetime(), days=-2)},
+			update_modified=False,
+		)
 
 		with as_user(MANAGER), self.assertRaises((frappe.PermissionError, frappe.ValidationError)):
 			call(SEEN, self.order, self.key())

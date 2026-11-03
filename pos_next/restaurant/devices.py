@@ -555,19 +555,26 @@ def cut_to_device(device: frappe._dict, restaurant=None, station=None) -> tuple[
 
 
 def require_order_of_device(device: frappe._dict, invoice_name) -> None:
-	"""Refuse a tablet an invoice that is not an open order of its restaurant (a draft at a table, or to take away).
+	"""Refuse a tablet an invoice that is not an open order of its restaurant (a draft at a table, or to take away, or
+	such an order paid within the hours of a service, whose dishes the kitchen and the pass still work on).
 
 	A refusal says nothing of whether the invoice exists.
 	"""
+	# //// Neoffice — a paid order is still the kitchen's while its dishes are not delivered (neoffice-maintenance#2163):
+	# //// the tablet that shows its ticket may move its dishes (restaurant.paid_orders)
+	from pos_next.restaurant.paid_orders import is_paid_order_of_the_kitchen
+
 	if not isinstance(invoice_name, str) or not invoice_name:
 		_refuse()
 	order = frappe.db.get_value(
 		"Sales Invoice",
 		invoice_name,
-		["name", "docstatus", "restaurant_table", "is_takeaway", "pos_profile"],
+		["name", "docstatus", "restaurant_table", "is_takeaway", "pos_profile", "modified"],
 		as_dict=True,
 	)
-	if not order or order.docstatus != 0 or not (order.restaurant_table or order.is_takeaway):
+	if not order or not (order.restaurant_table or order.is_takeaway):
+		_refuse()
+	if order.docstatus != 0 and not is_paid_order_of_the_kitchen(order):
 		_refuse()
 	if not scope.keep_orders_of([order], device.restaurant):
 		_refuse()

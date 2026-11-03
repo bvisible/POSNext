@@ -997,9 +997,19 @@ class TestWhatATabletReaches(Tablets):
 			"Ready",
 		)
 		self.assert_refused(grill, "update_kds_status", restaurant.update_kds_status, self.bar_order, "Ready")
-		frappe.db.set_value("Sales Invoice", self.order, "docstatus", 1, update_modified=False)
+		# //// Neoffice — an order paid before the hours of a service: one paid while its dishes cook is still the kitchen's
+		# //// (neoffice-maintenance#2163, test_a_paid_order_stays_at_the_kitchen)
+		modified = frappe.db.get_value("Sales Invoice", self.order, "modified")
+		frappe.db.set_value(
+			"Sales Invoice",
+			self.order,
+			{"docstatus": 1, "modified": add_to_date(now_datetime(), days=-2)},
+			update_modified=False,
+		)
 		self.assert_refused(grill, "update_kds_status", restaurant.update_kds_status, self.order, "Ready")
-		frappe.db.set_value("Sales Invoice", self.order, "docstatus", 0, update_modified=False)
+		frappe.db.set_value(
+			"Sales Invoice", self.order, {"docstatus": 0, "modified": modified}, update_modified=False
+		)
 		# The order's buttons move the dishes of its station only, the station named or not: the pastry's dish is not the
 		# grill's to call ready, and the order follows its dishes (one begun, not all ready)
 		with as_user(grill):

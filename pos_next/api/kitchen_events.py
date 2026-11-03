@@ -8,7 +8,8 @@
 import frappe
 from frappe import _
 
-from pos_next.restaurant import call_seen, devices, permissions, scope
+# //// Neoffice — `paid_orders` joined the import: a paid order whose dishes cook is still a ticket (neoffice-maintenance#2163)
+from pos_next.restaurant import call_seen, devices, paid_orders, permissions, scope
 
 HOOK = "pos_next_kitchen_send"
 #: print a COPY of a ticket: listener(invoice, station=None, whole_order=False, mark_copy=True) answers
@@ -89,14 +90,21 @@ def _open_to(screen, invoice=None, station=None, restaurant=None, needs=("Sales 
 		return devices.cut_to_device(device, restaurant, station)
 	permissions.require(*needs)
 	if invoice is not None:
+		# //// Neoffice — `modified`: a ticket paid while a dish cooks is still on the screens, and its copy prints like a
+		# //// draft's (neoffice-maintenance#2163, restaurant.paid_orders)
 		order = (
 			frappe.db.get_value(
-				"Sales Invoice", invoice, ["docstatus", "restaurant_table", "is_takeaway"], as_dict=True
+				"Sales Invoice",
+				invoice,
+				["docstatus", "restaurant_table", "is_takeaway", "modified"],
+				as_dict=True,
 			)
 			if isinstance(invoice, str) and invoice
 			else None
 		)
-		if not order or order.docstatus != 0 or not (order.restaurant_table or order.is_takeaway):
+		if not order or not (order.restaurant_table or order.is_takeaway):
+			_refuse()
+		if order.docstatus != 0 and not paid_orders.is_paid_order_of_the_kitchen(order):
 			_refuse()
 	if station and not (isinstance(station, str) and frappe.db.exists("Preparation Station", station)):
 		frappe.throw(_("Station {0} not found").format(station))
