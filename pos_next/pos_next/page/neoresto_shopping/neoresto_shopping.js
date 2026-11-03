@@ -179,8 +179,19 @@
 			});
 	};
 
+	// Nora reads her context from the open form or the list; this page is neither, so it tells her which list is on screen.
+	// Said here, « ajoute cinq kilos d'oignons » is then about that list, whatever the words (the router decides on the page).
+	NeorestoShopping.prototype.tell_nora = function () {
+		var chat = frappe.ui && frappe.ui.NoraQuickChat;
+		if (!chat || !chat.setDocument) return;
+		chat.setDocument(
+			this.list ? { doctype: "Restaurant Shopping List", name: this.list, title: this.list } : null
+		);
+	};
+
 	NeorestoShopping.prototype.refresh = function () {
 		var self = this;
+		this.tell_nora();
 		if (!this.list) {
 			this.view = null;
 			return $.Deferred()
