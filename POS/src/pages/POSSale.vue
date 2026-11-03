@@ -770,6 +770,7 @@
 												v-for="(group, gi) in filteredCardGroups"
 												:key="'l' + gi"
 											>
+												<!-- //// Neoffice — a category row may be a sub-category one level under; skip the category header when the row only holds a sub-category (7830619 "feat(restaurant): a card has sub-categories, the editor's rows say what they hold, and the item panel gives its family's colour back") -->
 												<div
 													v-if="group.category && !selectedCardCategory && !group.subcategory"
 													class="bg-white border-b border-gray-200 px-3 py-1.5 mt-3 first:mt-0 rounded-t-lg"
@@ -780,6 +781,7 @@
 														{{ group.category }}
 													</h3>
 												</div>
+												<!-- //// Neoffice — sub-headings row for sub-categories, one level under the card's categories (7830619 "feat(restaurant): a card has sub-categories, the editor's rows say what they hold, and the item panel gives its family's colour back") -->
 												<div
 													v-if="group.subcategory && !selectedCardSub"
 													class="px-3 py-1 mt-2 text-xs font-semibold text-gray-600 bg-white border-b border-gray-100"
@@ -2321,6 +2323,7 @@ import RestaurantCardGrid from "@/components/restaurant/RestaurantCardGrid.vue";
 import PhoneOrderScreen from "@/components/restaurant/phone/PhoneOrderScreen.vue";
 import PhoneOptionsSheet from "@/components/restaurant/phone/PhoneOptionsSheet.vue";
 import { PHONE_MAX_WIDTH, phoneOrderShown as tillShowsPhoneOrder } from "@/utils/phoneCard";
+//// Neoffice — sub-category grouping helpers for the card's rows (7830619 "feat(restaurant): a card has sub-categories, the editor's rows say what they hold, and the item panel gives its family's colour back").
 import { categoriesOfCard, groupsOfCard, subcategoriesOf, visibleGroups } from "@/utils/cardGroups";
 //// Neoffice — what the options of a line loaded from a server draft add to its price (task 27, fix round 1).
 import { modifiersPriceAdjustment } from "@/utils/modifiersPrice";
@@ -2597,6 +2600,7 @@ const cardSubcategories = computed(() => subcategoriesOf(cardItemGroups.value, s
 watch(selectedCardCategory, () => {
 	selectedCardSub.value = null;
 });
+//// Neoffice — rows shown for the current category/sub-category selection and search (7830619 "feat(restaurant): a card has sub-categories, the editor's rows say what they hold, and the item panel gives its family's colour back").
 const filteredCardGroups = computed(() =>
 	visibleGroups(cardItemGroups.value, {
 		category: selectedCardCategory.value,
