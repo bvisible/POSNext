@@ -13,6 +13,8 @@
 		".nps-bar select{min-height:40px;border:1px solid #DCD4C7;border-radius:10px;background:#fff;padding:0 10px}" +
 		".nps-btn{min-height:40px;padding:0 16px;border-radius:10px;border:1px solid #141414;background:#fff;color:#141414;font-weight:600;cursor:pointer}" +
 		".nps-btn.ink{background:#141414;color:#fff}" +
+		".nps-btn.sm{min-height:32px;padding:0 12px;font-size:13px}" +
+		".nps-card>header .nps-right{display:flex;flex-wrap:wrap;gap:12px;align-items:center}" +
 		".nps-head{display:flex;flex-wrap:wrap;gap:18px;align-items:baseline;padding:14px 18px;border:1px solid #DCD4C7;border-radius:14px;background:#FDFBF7}" +
 		".nps-head .big{font-size:26px;font-variant-numeric:tabular-nums}" +
 		".nps-head .sub{color:#6F665A;font-size:13.5px}" +
@@ -111,6 +113,9 @@
 		this.$root.on("change", ".nps-list", function () {
 			self.list = $(this).val() || null;
 			self.refresh();
+		});
+		this.$root.on("click", "[data-add-to]", function () {
+			self.add_article($(this).attr("data-add-to"));
 		});
 		this.$root.on("click", "[data-new-list]", function () {
 			frappe.call({ method: API + "new_list", freeze: true }).then(function (r) {
@@ -276,9 +281,17 @@
 			'<section class="nps-card"><header><h3>' +
 			esc(title) +
 			mode +
-			"</h3><span>" +
+			'</h3><span class="nps-right"><span>' +
 			sub +
 			delivery +
+			"</span>" +
+			(block.supplier
+				? '<button type="button" class="nps-btn sm" data-add-to="' +
+				  esc(block.supplier) +
+				  '">+ ' +
+				  esc(__("Add")) +
+				  "</button>"
+				: "") +
 			"</span></header>" +
 			block.lines.map(this.line_html, this).join("") +
 			"</section>"
@@ -371,7 +384,7 @@
 	// The picker: the articles the restaurant buys, a search, a tick and a quantity on each, and one button that puts every ticked
 	// one on the list - the table that ticks lines on a new order. A pack is chosen where an article has several, else it is
 	// the usual one (the server picks it when none is sent).
-	NeorestoShopping.prototype.add_article = function () {
+	NeorestoShopping.prototype.add_article = function (supplier) {
 		var self = this;
 		var rows = [];
 		var chosen = {};
@@ -412,6 +425,8 @@
 				frappe.set_route("neoresto-purchases");
 			},
 		});
+		// Opened from a supplier's block: only what that supplier sells, in its own packagings
+		if (supplier) d.set_title(__("Add an article") + " — " + supplier);
 		var $box = d.fields_dict.picker.$wrapper;
 
 		function count() {
@@ -578,7 +593,21 @@
 		d.show();
 		sync();
 		frappe.call({ method: SUPPLIES + "get_supply_catalogue", args: {} }).then(function (r) {
-			rows = (r.message && r.message.rows) || [];
+			// The usual packaging first, so that the one the picker proposes is the one the owner usually buys
+			rows = ((r.message && r.message.rows) || [])
+				.map(function (row) {
+					var packs = row.packs
+						.filter(function (p) {
+							return !supplier || p.supplier === supplier;
+						})
+						.sort(function (a, b) {
+							return (b.usual ? 1 : 0) - (a.usual ? 1 : 0);
+						});
+					return $.extend({}, row, { packs: packs });
+				})
+				.filter(function (row) {
+					return !supplier || row.packs.length;
+				});
 			draw();
 			$box.find(".nps-pick-search").trigger("focus");
 		});
