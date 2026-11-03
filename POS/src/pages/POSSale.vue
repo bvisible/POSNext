@@ -609,6 +609,7 @@
 										</template>
 									</RestaurantCardTabs>
 									<!-- Category sub-filters -->
+									<!-- //// Neoffice — families sized/shaped like a card button (2d9d148 "feat(restaurant-till): three lines above the dishes instead of four, the families as big as a card button; the editor's menu rows say their name and price") -->
 									<CardFamilyChips
 										v-if="cardCategories.length > 0"
 										:families="cardCategories"
