@@ -22,7 +22,18 @@ import unicodedata
 COOKING = {
 	"key": "cooking",
 	"group_name": "Cuisson",
-	"known_as": ("cuisson", "cuissons", "point de cuisson", "points de cuisson"),
+	"known_as": (
+		"cuisson",
+		"cuissons",
+		"point de cuisson",
+		"points de cuisson",
+		# the demo menu of a restaurant calls it so; « cuisson des œufs » is another group and is not here on purpose
+		"cuisson de la viande",
+		"cuisson des viandes",
+		"cuisson viande",
+		"cuisson du steak",
+		"cuisson steak",
+	),
 	"selection_type": "Single",
 	"required": 1,
 	"options": ("Bleu", "Saignant", "À point", "Bien cuit"),
@@ -31,7 +42,14 @@ COOKING = {
 SIDE = {
 	"key": "side",
 	"group_name": "Accompagnement",
-	"known_as": ("accompagnement", "accompagnements", "garniture", "garnitures"),
+	"known_as": (
+		"accompagnement",
+		"accompagnements",
+		"garniture",
+		"garnitures",
+		"accompagnement du plat",
+		"choix de l accompagnement",
+	),
 	"selection_type": "Single",
 	"required": 1,
 	"options": ("Frites", "Riz", "Pommes de terre sautées", "Légumes de saison", "Salade verte"),

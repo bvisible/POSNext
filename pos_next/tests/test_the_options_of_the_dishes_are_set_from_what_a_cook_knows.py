@@ -86,6 +86,13 @@ class TestWhatACookKnows(unittest.TestCase):
 		self.assertTrue(cook.is_known_as(cook.SIDE, "Garniture"))
 		self.assertFalse(cook.is_known_as(cook.SIDE, "Sauce"))
 
+	def test_the_demo_menus_own_group_is_the_cooking_and_the_cooking_of_the_eggs_is_not(self):
+		# osiris holds « Cuisson de la viande »: a second « Cuisson » next to it would ask the waiter twice
+		self.assertTrue(cook.is_known_as(cook.COOKING, "Cuisson de la viande"))
+		self.assertTrue(cook.is_known_as(cook.COOKING, "Cuisson des viandes"))
+		self.assertFalse(cook.is_known_as(cook.COOKING, "Cuisson des œufs"))
+		self.assertTrue(cook.is_known_as(cook.SIDE, "Choix de l'accompagnement"))
+
 	def test_no_option_costs_anything_to_begin_with(self):
 		for kind in cook.GROUPS.values():
 			self.assertEqual(kind["selection_type"], "Single")
