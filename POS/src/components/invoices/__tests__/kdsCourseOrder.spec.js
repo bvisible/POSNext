@@ -98,20 +98,61 @@ describe("a course that waits for the one before it", () => {
 			const row = rowOf(wrapper, name)
 			expect(row.attributes("data-held"), name).toBe("true")
 			expect(row.classes(), name).toContain("opacity-50")
-			expect(row.classes(), name).toContain("cursor-default")
+			//// a dish that waits can be started ahead (Daniel, 03.11): it is greyed, and it is a touch target
+			expect(row.classes(), name).toContain("cursor-pointer")
 		}
 		for (const name of ["Soup", "Salad", "Pâté"])
 			expect(rowOf(wrapper, name).attributes("data-held"), name).toBeUndefined()
 	})
 
-	it("opens no menu on a dish that waits, and opens one on a dish that does not", async () => {
+	// The words of a menu's buttons, without the cross that closes it
+	const menuWords = (wrapper) =>
+		wrapper
+			.get('[data-test="ticket-line-menu"]')
+			.findAll("button")
+			.map((button) => button.text())
+			.filter(Boolean)
+
+	it("opens a menu on a dish that waits, which offers only to start it (Daniel, 03.11: « démarrer la suite sans avoir livré le premier truc »)", async () => {
 		const wrapper = show(meal())
 
 		await rowOf(wrapper, "Steak").trigger("click")
-		expect(wrapper.find('[data-test="ticket-line-menu"]').exists()).toBe(false)
+		expect(menuWords(wrapper)).toEqual(["Preparing"])
+
+		await wrapper.get('[data-test="ticket-line-menu"] .border-blue-300').trigger("click")
+		expect(call).toHaveBeenCalledWith(UPDATE, expect.objectContaining({ item_code: "ITEM-Steak", status: "Preparing" }))
+		// The dish stays greyed: it still waits for its turn, it is only begun
+		expect(rowOf(wrapper, "Steak").attributes("data-held")).toBe("true")
+	})
+
+	it("opens a menu on a dish that does not wait, with the way on as well", async () => {
+		const wrapper = show(meal())
 
 		await rowOf(wrapper, "Soup").trigger("click")
 		expect(wrapper.find('[data-test="ticket-line-menu"]').exists()).toBe(true)
+		expect(wrapper.find('[data-test="menu-ready"]').exists()).toBe(true)
+	})
+
+	it("offers nothing but to take the start back on a dish that waits and is begun, and says it is being prepared", async () => {
+		const wrapper = show([dish("Soup", "Starter", "Preparing"), dish("Steak", "Main", "Preparing"), dish("Tart", "Dessert")])
+		const steak = rowOf(wrapper, "Steak")
+
+		// Grey says « not its turn »; the word says it is being cooked all the same
+		expect(steak.get('[data-test="ticket-line-state"]').text()).toBe("Preparing")
+		// The starter is at the ticket's own state: it says nothing
+		expect(rowOf(wrapper, "Soup").find('[data-test="ticket-line-state"]').exists()).toBe(false)
+
+		await steak.trigger("click")
+		expect(wrapper.find('[data-test="menu-ready"]').exists()).toBe(false)
+		expect(menuWords(wrapper)).toHaveLength(1)
+		expect(menuWords(wrapper)[0]).not.toBe("Preparing")
+	})
+
+	it("opens no menu on a dish that waits and is already ready: nothing is left to do on it", async () => {
+		const wrapper = show([dish("Soup", "Starter"), dish("Steak", "Main", "Ready")])
+
+		await rowOf(wrapper, "Steak").trigger("click")
+		expect(wrapper.find('[data-test="ticket-line-menu"]').exists()).toBe(false)
 	})
 
 	it("lets the mains go once every starter is ready", () => {
@@ -136,11 +177,23 @@ describe("a course that waits for the one before it", () => {
 		expect(show(meal()).findAll('[data-held="true"]').length).toBeGreaterThan(0)
 	})
 
-	it("mutes the label of a course that waits, and it cannot be pressed", async () => {
+	it("mutes the label of a course that waits, and a press on it offers only to start its dishes", async () => {
 		const wrapper = show(meal())
 		const mains = sectionOf(wrapper, "Mains")
 
 		expect(mains.attributes("data-held")).toBe("true")
+		expect(mains.attributes("data-selectable")).toBe("true")
+		await mains.trigger("click")
+		expect(wrapper.find('[data-test="section-menu"]').exists()).toBe(true)
+		expect(wrapper.find('[data-test="section-preparing"]').exists()).toBe(true)
+		expect(wrapper.find('[data-test="section-ready"]').exists()).toBe(false)
+		expect(wrapper.find('[data-test="section-delivered"]').exists()).toBe(false)
+	})
+
+	it("cannot press the label of a course that waits when none of its dishes is to start", async () => {
+		const wrapper = show([dish("Soup", "Starter"), dish("Steak", "Main", "Preparing")])
+		const mains = sectionOf(wrapper, "Mains")
+
 		expect(mains.attributes("data-selectable")).toBeUndefined()
 		await mains.trigger("click")
 		expect(wrapper.find('[data-test="section-menu"]').exists()).toBe(false)

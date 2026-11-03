@@ -193,7 +193,7 @@
 								<template v-else>
 								<!-- //// Neoffice — a press on a section's label takes ALL its dishes (Daniel, 01.11: « prendre un objet ou tous les objets concernant le groupe »); a section that waits for the course before it is muted and cannot be pressed -->
 								<TicketSectionHeader v-if="item._head" :label="item._head.label" :family="item._head.family"
-									:selectable="Boolean(item._section) && mode !== 'ready-list' && !isHeld(item)" :count="item._section?.idxs.length || 0" :held="isHeld(item)"
+									:selectable="Boolean(item._section) && mode !== 'ready-list' && (!isHeld(item) || sectionOffers(item._section, 'Preparing'))" :count="item._section?.idxs.length || 0" :held="isHeld(item)"
 									@click="openSection(item, $event)" />
 								<div v-if="item._section && activeSection === item._section.key" data-test="section-menu"
 									class="fixed z-30 w-72 rounded-xl border border-gray-200 bg-white p-2 shadow-xl dark:border-gray-600 dark:bg-gray-800" :style="menuStyle">
@@ -234,9 +234,9 @@
 										fullscreen ? FULLSCREEN_FRAME.line : KITCHEN_FRAME.line,
 										isDelivered(item)
 											? 'cursor-default opacity-40 line-through'
-											//// Neoffice — a dish that waits for the course before it is greyed and inert (Daniel, 01.11)
+											//// Neoffice — a dish that waits for the course before it is greyed (Daniel, 01.11) and, when it has something to offer (to be started ahead, Daniel 03.11), it stays a touch target
 											: isHeld(item)
-												? 'cursor-default opacity-50'
+												? [hasMenu(item) ? 'cursor-pointer' : 'cursor-default', 'opacity-50']
 												: 'cursor-pointer active:bg-gray-100 dark:active:bg-gray-700 transition-colors',
 										//// Neoffice — the selected dish is read from across the pass (Daniel, 01.11: « un tout petit peu plus lisible »): the card's own white under it, a heavy ink outline and a shadow, where a clay outline on a clay-tinted card was hard to see
 										isMenuOf(item) ? 'bg-white shadow-md ring-[3px] ring-inset ring-[#141414] dark:bg-gray-900 dark:ring-white' : '',
@@ -796,6 +796,9 @@ const menuStyle = computed(() => {
 function offers(item, status) {
 	if (item.kds_status === status) return false
 	if (props.mode === "ready-list") return status === "Preparing"
+	//// Neoffice — a dish that waits for the course before it can be STARTED ahead, or have its start taken back, and nothing more (Daniel, 03.11: « on est en train de faire l'entrée, mais on pourrait imaginer que je
+	//// démarre aussi l'escalope […] il faudrait qu'on puisse démarrer la suite sans avoir livré le premier truc »): finishing or delivering it before its turn is not the cook's to do. It stays greyed, whatever its state.
+	if (isHeld(item)) return (status === "Preparing" && item.kds_status === "Pending") || (status === "Pending" && item.kds_status === "Preparing")
 	//// Neoffice — only a dish being prepared can be put back to « to start » (a Ready one has the toast, a Pending one has nothing to take back)
 	if (status === "Pending") return item.kds_status === "Preparing"
 	// A dish that is Ready already, or one the cook delivers himself, has no "ready" to press for a station without a runner
@@ -850,10 +853,13 @@ const lineTint = (item) => (isMenuOf(item) ? undefined : tintStyle(item.service_
 
 //// Neoffice — the tap on a dish (task 42). The tap of a dish that has a menu stops here (the click on the page would close the
 //// menu it has just opened). The tap of a delivered dish is not taken: it goes on to the page, which closes a menu left open.
+//// Neoffice — whether the menu of a dish has a button to offer: a dish that waits has one only when it can be started or has its start taken back (see offers())
+const hasMenu = (item) => MENU_STATUSES.some((status) => offers(item, status))
+
 function onLineTap(item, event) {
 	if (isDelivered(item)) return
-	//// Neoffice — a dish that waits for the course before it is not the cook's to touch yet (Daniel, 01.11): no menu, and the tap goes on to the page, which closes a menu left open
-	if (isHeld(item)) return
+	//// Neoffice — a dish that waits for the course before it is the cook's to touch only to start it ahead (Daniel, 01.11, then 03.11): with nothing to offer, no menu, and the tap goes on to the page, which closes a menu left open
+	if (isHeld(item) && !hasMenu(item)) return
 	event.stopPropagation()
 	activeSection.value = null
 	toggleItemMenu(item, event)
@@ -867,6 +873,9 @@ function sectionDishes(section) {
 function sectionOffers(section, status) {
 	if (props.mode === "ready-list") return false
 	const dishes = sectionDishes(section)
+	//// Neoffice — a course that waits for the one before it can only be started ahead, as its dishes' own menus (see offers())
+	if ((section?.idxs || []).some((index) => heldIdx.value.has(index)))
+		return status === "Preparing" && dishes.some((dish) => dish.kds_status === "Pending")
 	if (status === "Preparing") return dishes.some((dish) => dish.kds_status === "Pending")
 	//// Neoffice — as a dish's menu: a dish sent ahead and not called is finished with "ready" and never delivered (the service rhythm)
 	if (status === "Ready")
@@ -876,7 +885,7 @@ function sectionOffers(section, status) {
 }
 function openSection(entry, event) {
 	const section = entry._section
-	if (!section || props.mode === "ready-list" || isHeld(entry)) return
+	if (!section || props.mode === "ready-list" || (isHeld(entry) && !sectionOffers(section, "Preparing"))) return
 	event.stopPropagation()
 	activeItemMenu.value = null
 	if (activeSection.value === section.key) {
@@ -1200,6 +1209,8 @@ function stateWord(item) {
 	if (!item.kds_status || isDelivered(item)) return ""
 	//// Neoffice — a dish finished before its course is called is « ready ahead »: a state of its own on the ticket, whatever the ticket's state is, and not a dish at the pass (the service rhythm)
 	if (isUncalled(item) && item.kds_status === "Ready") return __("Ready ahead", null, "Kitchen order status")
+	//// Neoffice — a dish that waits for the course before it and is already being prepared says so (Daniel, 03.11): grey reads « not its turn », and the cook who started it ahead must not take it for a dish nobody touched
+	if (isHeld(item) && item.kds_status === "Preparing") return kitchenStatusLabel("Preparing")
 	if (item.kds_status === status.value) return ""
 	//// Neoffice — a dish still to start says « To do » like its ticket and the band (Daniel, 01.11: « tu as mis à faire avec le ticket qui n'a pas été commencé ? »): « waiting » is what the waiter holds back, and the dish says « Held »
 	return kitchenStatusLabel(item.kds_status, { takeaway: isTakeaway.value, board: true })
