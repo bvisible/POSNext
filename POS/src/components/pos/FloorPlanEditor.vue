@@ -344,7 +344,8 @@
 				>&minus;</button>
 			</div>
 			<!-- Empty state -->
-			<div v-if="filteredTables.length === 0 && !isEditMode" class="flex flex-col items-center justify-center h-full text-gray-400">
+			<!-- //// Neoffice — not while the room is not chosen yet: the plan is about to draw it, its tables are not missing (neoffice-maintenance#2163) -->
+			<div v-if="filteredTables.length === 0 && !isEditMode && (selectedArea || !areas.length)" class="flex flex-col items-center justify-center h-full text-gray-400">
 				<svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
 				</svg>
@@ -1501,13 +1502,16 @@ function syncLocalStations() {
 watch(() => restaurantStore.tables, syncLocalTables, { deep: true })
 watch(() => restaurantStore.floorStations, syncLocalStations, { deep: true })
 
+//// Neoffice — there is no « all rooms » plan: while no room is chosen yet, a restaurant that has rooms draws no table and no
+//// station, never those of every room on top of each other (neoffice-maintenance#2163: on each return to the tables, every
+//// room's tables flashed superposed for about 0.2 s, until the room was chosen). A floor with no room at all keeps its tables.
 const filteredTables = computed(() => {
-	if (!selectedArea.value) return localTables.value
+	if (!selectedArea.value) return areas.value.length ? [] : localTables.value
 	return localTables.value.filter((t) => t.area === selectedArea.value)
 })
 
 const filteredStations = computed(() => {
-	if (!selectedArea.value) return localStations.value
+	if (!selectedArea.value) return areas.value.length ? [] : localStations.value
 	return localStations.value.filter((s) => s.area === selectedArea.value)
 })
 
@@ -2570,14 +2574,10 @@ function autoLayoutTables() {
 	localTables.value = [...localTables.value]
 }
 
-onMounted(async () => {
-	// Always fetch from network to get latest position fields
-	await restaurantStore.fetchFromNetwork()
-
-	// Create local reactive copies
-	syncLocalTables()
-	syncLocalStations()
-
+//// Neoffice — the room the plan shows: the last one shown, else the restaurant's default, else the first. A room already chosen
+//// that still exists is kept. It was chosen once, after the network had answered (neoffice-maintenance#2163, see onMounted).
+function chooseTheRoom() {
+	if (selectedArea.value && areas.value.find((a) => a.name === selectedArea.value)) return
 	// Restore last selected area, or default
 	const savedArea = localStorage.getItem("pos_selected_area")
 	if (savedArea && areas.value.find((a) => a.name === savedArea)) {
@@ -2590,6 +2590,26 @@ onMounted(async () => {
 	} else if (areas.value.length > 0) {
 		selectedArea.value = areas.value[0].name
 	}
+}
+
+onMounted(async () => {
+	//// Neoffice — the plan draws at once what the store already holds, in ONE room, and reads the network after: the room used
+	//// to be chosen only once the network had answered, and meanwhile the store's tables of every room were drawn on top of each
+	//// other, on each return to the tables (neoffice-maintenance#2163)
+	syncLocalTables()
+	syncLocalStations()
+	chooseTheRoom()
+	syncLocalWalls()
+
+	// Always fetch from network to get latest position fields
+	await restaurantStore.fetchFromNetwork()
+
+	// Create local reactive copies
+	syncLocalTables()
+	syncLocalStations()
+
+	//// Neoffice — the room chosen above is kept; chosen now when the store held none (the first opening of the plan)
+	chooseTheRoom()
 
 	// Load walls for initial area
 	syncLocalWalls()
