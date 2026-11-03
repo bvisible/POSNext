@@ -463,6 +463,8 @@ describe("the status menu of a dish", () => {
 
 	it("opens on the screen, not inside the scrolling body that would cut it", async () => {
 		layout({ viewport: 150 })
+		// Room for the whole menu under the dish: its head grew with the big cross (Daniel, 03.11), two buttons need 248 px and the screen keeps a margin
+		window.innerHeight = 820
 		const wrapper = show(longOrder(25))
 		await nextTick()
 
@@ -511,9 +513,9 @@ describe("the status menu of a dish", () => {
 	})
 
 	it("counts the room the menu really needs: a menu of two buttons fits under the dish where one with a quantity to pick, a row more, does not", async () => {
-		// The dish ends at 548: with a window 784 px high there are 224 px under it, which is what two buttons need (the head 88, two buttons of 68)
+		// The dish ends at 548: with a window 820 px high there are 272 px under it, which is what two buttons need (the head 112 with its big cross, two buttons of 68)
 		layout({ viewport: 150 })
-		window.innerHeight = 784
+		window.innerHeight = 820
 		const wrapper = show(oneUnitAt(longOrder(25), 1))
 		await nextTick()
 
@@ -526,7 +528,7 @@ describe("the status menu of a dish", () => {
 		// Dish 2 has three units to cook: its menu has a quantity to pick, 68 px more, which the window does not leave under the dish
 		await openMenu(wrapper, 2)
 		const menu = wrapper.get('[data-test="ticket-line-menu"]')
-		expect(menu.element.style.bottom).toBe("288px")
+		expect(menu.element.style.bottom).toBe("324px")
 		expect(menu.element.style.top).toBe("")
 	})
 

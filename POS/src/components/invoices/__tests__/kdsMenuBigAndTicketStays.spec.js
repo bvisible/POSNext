@@ -126,6 +126,18 @@ describe("the menu of a dish, much bigger (Daniel, 01.11: « même s'il déborde
 		expect(head.classes()).toContain("line-clamp-2")
 	})
 
+	it("has a cross as big as its buttons, outlined in ink and drawn bold, so that a big finger aims at it and not at the action next to it (Daniel, 03.11)", async () => {
+		const wrapper = show(ticket(["Pending"]))
+		await firstLine(wrapper).trigger("click")
+
+		const cross = wrapper.get('[data-test="menu-close"]')
+		expect(cross.classes()).toEqual(expect.arrayContaining(["h-16", "w-16", "border-2", "border-[#141414]", "rounded-xl"]))
+		expect(cross.classes()).toContain("dark:border-white")
+		const drawing = cross.get("svg")
+		expect(drawing.classes()).toContain("h-9")
+		expect(drawing.attributes("stroke-width")).toBe("3")
+	})
+
 	it("has a cross at its head that closes it without acting", async () => {
 		const wrapper = show(ticket(["Pending"]))
 		await firstLine(wrapper).trigger("click")

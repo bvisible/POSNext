@@ -197,11 +197,11 @@
 									@click="openSection(item, $event)" />
 								<div v-if="item._section && activeSection === item._section.key" data-test="section-menu"
 									class="fixed z-30 w-72 rounded-xl border-2 border-[#141414] bg-white p-2 shadow-2xl dark:border-white dark:bg-gray-800" :style="menuStyle">
-									<div class="flex items-start gap-2 pb-2">
+									<div class="flex items-start gap-2 pb-3">
 										<p data-test="section-menu-title" class="min-w-0 flex-1 px-1.5 pt-1 text-base font-bold leading-snug text-gray-800 line-clamp-2 dark:text-gray-100">{{ item._section.label }} · {{ sectionDishes(item._section).length }}</p>
 										<button type="button" data-test="menu-close" :aria-label="__('Close')" :title="__('Close')" @click.stop="closeMenu"
-											class="flex h-11 w-11 flex-none touch-manipulation items-center justify-center rounded-lg border border-gray-300 text-gray-700 active:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:active:bg-gray-700">
-											<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6 6 18M6 6l12 12" /></svg>
+											class="flex h-16 w-16 flex-none touch-manipulation items-center justify-center rounded-xl border-2 border-[#141414] bg-gray-100 text-[#141414] active:bg-gray-200 dark:border-white dark:bg-gray-700 dark:text-white dark:active:bg-gray-600">
+											<svg class="h-9 w-9" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M18 6 6 18M6 6l12 12" /></svg>
 										</button>
 									</div>
 									<div class="flex flex-col gap-1">
@@ -295,11 +295,12 @@
 									:style="menuStyle">
 									<!-- //// Neoffice — the menu names the dish it is for and the line is highlighted (kitchen test, 01.11): the menu opens under the dish and covers the one after it, so a cook could not tell which dish a button would act on. The buttons are a size and a weight up, with a border in the colour of the state, so that « ready » is read from across the pass. -->
 									<!-- //// Neoffice — the menu is much bigger (Daniel, 01.11: « même s'il déborde, ce n'est pas grave »): the dish named on up to two lines in a readable size, a way to close the menu without acting (a cross at its head), buttons of 64 px with 20 px words -->
-									<div class="flex items-start gap-2 pb-2">
+									<!-- //// Neoffice — the cross is as big as the buttons, outlined in ink and drawn bold (Daniel, 03.11: « beaucoup plus visuelle et plus grosse, comme le bouton »): with big fingers one aims at it and does not slide onto the action next to it. A course's menu has the same. -->
+									<div class="flex items-start gap-2 pb-3">
 										<p data-test="ticket-line-menu-dish" class="min-w-0 flex-1 px-1.5 pt-1 text-base font-bold leading-snug text-gray-800 line-clamp-2 dark:text-gray-100">{{ shownQty(item) }}× {{ item.item_name }}</p>
 										<button type="button" data-test="menu-close" :aria-label="__('Close')" :title="__('Close')" @click.stop="closeMenu"
-											class="flex h-11 w-11 flex-none touch-manipulation items-center justify-center rounded-lg border border-gray-300 text-gray-700 active:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:active:bg-gray-700">
-											<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6 6 18M6 6l12 12" /></svg>
+											class="flex h-16 w-16 flex-none touch-manipulation items-center justify-center rounded-xl border-2 border-[#141414] bg-gray-100 text-[#141414] active:bg-gray-200 dark:border-white dark:bg-gray-700 dark:text-white dark:active:bg-gray-600">
+											<svg class="h-9 w-9" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M18 6 6 18M6 6l12 12" /></svg>
 										</button>
 									</div>
 									<div class="flex flex-col gap-1">
@@ -781,7 +782,8 @@ function changed() {
 const MENU_WIDTH = 288
 const MENU_WIDE_WIDTH = 320
 const MENU_BUTTON_HEIGHT = 68
-const MENU_FRAME_HEIGHT = 88
+//// Neoffice — the cross at the head of a menu is 64 px high now, as the buttons are (Daniel, 03.11: a big finger must aim at it): the head took 24 px more, with its gap and the outline
+const MENU_FRAME_HEIGHT = 112
 //// Neoffice — « Pending » joins the statuses a menu may offer: the way back of a dish being prepared (offers() below)
 const MENU_STATUSES = ["Preparing", "Ready", "Delivered", "Pending"]
 const menuPosition = ref({ left: 0, top: 0 })

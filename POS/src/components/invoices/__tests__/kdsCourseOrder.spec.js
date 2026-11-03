@@ -202,6 +202,15 @@ describe("a course that waits for the one before it", () => {
 		expect(wrapper.find('[data-test="section-delivered"]').exists()).toBe(false)
 	})
 
+	it("closes the menu of a course with the same big cross as a dish's (Daniel, 03.11)", async () => {
+		const wrapper = show(meal())
+
+		await sectionOf(wrapper, "Mains").trigger("click")
+		const cross = wrapper.get('[data-test="section-menu"] [data-test="menu-close"]')
+
+		expect(cross.classes()).toEqual(expect.arrayContaining(["h-16", "w-16", "border-2", "border-[#141414]"]))
+	})
+
 	it("cannot press the label of a course that waits when none of its dishes is to start", async () => {
 		const wrapper = show([dish("Soup", "Starter"), dish("Steak", "Main", "Preparing")])
 		const mains = sectionOf(wrapper, "Mains")
