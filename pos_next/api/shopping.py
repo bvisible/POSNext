@@ -6,7 +6,7 @@ import json
 
 import frappe
 
-from pos_next.restaurant import dishes, shopping, spoken_list, supply_catalogue
+from pos_next.restaurant import dishes, shopping, spoken_changes, spoken_list, supply_catalogue
 
 
 def _gate():
@@ -55,6 +55,31 @@ def add_proposed_lines(lines, list_name=None):
 	list in progress or to `list_name`; the list is made when there is none."""
 	_gate()
 	return spoken_list.add(json.loads(lines) if isinstance(lines, str) else lines, list_name or None)
+
+
+@frappe.whitelist()
+def read_list_in_progress():
+	"""The list in progress, line by line, as Nora reads it to the owner (nothing is written)."""
+	_gate()
+	return spoken_changes.read()
+
+
+@frappe.whitelist()
+def propose_changes_from_words(changes):
+	"""What Nora understood of the changes the owner said, and nothing written: a JSON list of {action, text, qty, state, every}.
+
+	Answers, for each change, the line of the list it names, or the several lines it could be, or none. Nora reads it back to the
+	owner before `apply_changes`."""
+	_gate()
+	return spoken_changes.propose(json.loads(changes) if isinstance(changes, str) else changes)
+
+
+@frappe.whitelist()
+def apply_changes(edits, list_name=None):
+	"""Carry out what the owner confirmed, as `propose_changes_from_words` answered it (its `edits`, a JSON list), to the list in
+	progress or to `list_name`: all of it, or none."""
+	_gate()
+	return spoken_changes.apply(json.loads(edits) if isinstance(edits, str) else edits, list_name or None)
 
 
 @frappe.whitelist()
