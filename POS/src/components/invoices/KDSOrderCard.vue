@@ -1211,6 +1211,8 @@ function stateWord(item) {
 	if (isUncalled(item) && item.kds_status === "Ready") return __("Ready ahead", null, "Kitchen order status")
 	//// Neoffice — a dish that waits for the course before it and is already being prepared says so (Daniel, 03.11): grey reads « not its turn », and the cook who started it ahead must not take it for a dish nobody touched
 	if (isHeld(item) && item.kds_status === "Preparing") return kitchenStatusLabel("Preparing")
+	//// Neoffice — and one that waits and was not started says nothing: its grey already says « not yet », a word on every waiting dish of a ticket in preparation would load the ticket (Daniel, 03.11)
+	if (isHeld(item) && item.kds_status === "Pending") return ""
 	if (item.kds_status === status.value) return ""
 	//// Neoffice — a dish still to start says « To do » like its ticket and the band (Daniel, 01.11: « tu as mis à faire avec le ticket qui n'a pas été commencé ? »): « waiting » is what the waiter holds back, and the dish says « Held »
 	return kitchenStatusLabel(item.kds_status, { takeaway: isTakeaway.value, board: true })

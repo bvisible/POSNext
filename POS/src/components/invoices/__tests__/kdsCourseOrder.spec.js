@@ -141,6 +141,8 @@ describe("a course that waits for the one before it", () => {
 		expect(steak.get('[data-test="ticket-line-state"]').text()).toBe("Preparing")
 		// The starter is at the ticket's own state: it says nothing
 		expect(rowOf(wrapper, "Soup").find('[data-test="ticket-line-state"]').exists()).toBe(false)
+		// The dessert waits and nobody began it: its grey says so, it wears no word (Daniel, 03.11)
+		expect(rowOf(wrapper, "Tart").find('[data-test="ticket-line-state"]').exists()).toBe(false)
 
 		await steak.trigger("click")
 		expect(wrapper.find('[data-test="menu-ready"]').exists()).toBe(false)
