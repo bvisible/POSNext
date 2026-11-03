@@ -30,6 +30,8 @@ MATCHED, AMBIGUOUS, UNKNOWN = "matched", "ambiguous", "unknown"
 FUZZY_FLOOR = 0.8
 # An article at least this close to what was said is the one understood; below, it is left as said (a free line)
 CONFIDENT = 0.85
+# What the family of an article says it is (« wine » for the articles of « Wines ») counts as this, when its name says nothing
+FAMILY = 0.86
 # Other articles this close to the best leave the choice to the owner
 TIE = 0.04
 CANDIDATES = 4
@@ -70,12 +72,13 @@ def _words(text) -> list[str]:
 	return [_stem(w) for w in _fold(text).split() if w not in STOP_WORDS]
 
 
-def _score(wanted: list[str], name: list[str]) -> float:
+def _score(wanted: list[str], name: list[str], family: list[str]) -> float:
 	"""How close what was said is to an article's name, from 0 to 1.
 
 	The same words, in any order: 1. Every word said is a word of the name: 0.9 and up, the nearer the name is to nothing
 	more, the higher (« beer » is nearer « Brown beer » than « Brown beer of the cellar »). Otherwise each word said must be
-	close to one of the name's (a typo or two), and the score is their mean, below 0.92."""
+	close to one of the name's (a typo or two), and the score is their mean, below 0.92. When the name says nothing of it, the
+	words of the article's family may: « wine » for a Chasselas in « Wines »."""
 	if not wanted or not name:
 		return 0.0
 	if set(wanted) == set(name):
@@ -83,9 +86,10 @@ def _score(wanted: list[str], name: list[str]) -> float:
 	if all(word in name for word in wanted):
 		return 0.9 + 0.1 * len(wanted) / len(name)
 	closest = [max(difflib.SequenceMatcher(None, word, other).ratio() for other in name) for word in wanted]
-	if min(closest) < FUZZY_FLOOR:
-		return 0.0
-	return min(sum(closest) / len(closest), 0.92)
+	by_name = 0.0 if min(closest) < FUZZY_FLOOR else min(sum(closest) / len(closest), 0.92)
+	if by_name < CONFIDENT and all(word in family for word in wanted):
+		return FAMILY
+	return by_name
 
 
 def _pack_of(packs: list[dict], unit: str | None) -> dict | None:
@@ -104,7 +108,7 @@ def propose(things: list[dict]) -> dict:
 	thing, in order, `status` (matched, ambiguous or unknown), the `item` and its `pack` when matched, the `candidates` when
 	ambiguous, and `line`, which `add` writes as it stands (None while the owner has still to choose)."""
 	rows = supply_catalogue.catalogue(limit=1000)["rows"]
-	known = [(row, _words(row["item_name"])) for row in rows]
+	known = [(row, _words(row["item_name"]), _words(row.get("item_group"))) for row in rows]
 	lines = []
 	for thing in things or []:
 		text = (thing.get("text") or "").strip()
@@ -113,7 +117,9 @@ def propose(things: list[dict]) -> dict:
 		qty = flt(thing.get("qty")) or 1
 		unit = (thing.get("unit") or "").strip() or None
 		wanted = _words(text)
-		ranked = sorted(((_score(wanted, words), row) for row, words in known), key=lambda pair: -pair[0])
+		ranked = sorted(
+			((_score(wanted, words, family), row) for row, words, family in known), key=lambda pair: -pair[0]
+		)
 		best = ranked[0][0] if ranked else 0
 		line = {
 			"text": text,

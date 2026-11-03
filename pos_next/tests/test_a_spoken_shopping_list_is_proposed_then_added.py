@@ -58,6 +58,22 @@ class TestASpokenShoppingListIsProposedThenAdded(FrappeTestCase):
 		cls.pasta = supplies.create_supply_item("Pâtes à lasagnes de Zurich", cls.group, BOTTLE_UOM)
 		supplies.add_supply_pack(cls.pasta, MARKET, BAG, 5, 18.6, None, 1, cls.company)
 		cls.swede = supplies.create_supply_item("Rutabaga", cls.group, BOTTLE_UOM)
+		# a family, whose name says what its articles are when their own names do not (« wine » for a Chasselas)
+		root = frappe.db.sql(
+			"select name from `tabItem Group` where ifnull(parent_item_group, '') = '' limit 1"
+		)[0][0]
+		cls.family = "_PNXT Legumes anciens"
+		if not frappe.db.exists("Item Group", cls.family):
+			frappe.get_doc(
+				{
+					"doctype": "Item Group",
+					"item_group_name": cls.family,
+					"parent_item_group": root,
+					"is_group": 0,
+				}
+			).insert(ignore_permissions=True)
+		cls.chervil = supplies.create_supply_item("Cerfeuil tubéreux", cls.family, BOTTLE_UOM)
+		cls.crosne = supplies.create_supply_item("Crosne", cls.family, BOTTLE_UOM)
 		# two articles that a short word names alike
 		cls.red = supplies.create_supply_item("Topinambour rouge", cls.group, BOTTLE_UOM)
 		cls.white = supplies.create_supply_item("Topinambour blanc", cls.group, BOTTLE_UOM)
@@ -90,6 +106,15 @@ class TestASpokenShoppingListIsProposedThenAdded(FrappeTestCase):
 		self.assertEqual((typo["status"], typo["item"]), ("matched", self.swede))
 		(other,) = self._propose({"text": "panacher"})["lines"]
 		self.assertEqual(other["status"], "unknown", "a word that merely starts alike is not the article")
+
+	def test_the_name_of_a_family_names_what_is_in_it_when_the_articles_do_not(self):
+		(line,) = self._propose({"text": "legumes anciens"})["lines"]
+		self.assertEqual(line["status"], "ambiguous")
+		self.assertEqual({c["item"] for c in line["candidates"]}, {self.chervil, self.crosne})
+		(named,) = self._propose({"text": "crosne"})["lines"]
+		self.assertEqual(
+			(named["status"], named["item"]), ("matched", self.crosne), "the article's own name first"
+		)
 
 	def test_a_short_word_names_the_article_that_holds_it(self):
 		(line,) = self._propose({"text": "biere brune"})["lines"]
