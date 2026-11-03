@@ -85,6 +85,46 @@ class TestTheShoppingListOfARestaurant(FrappeTestCase):
 		(line,) = self._lines(name)
 		self.assertEqual(line.qty, 3)
 
+	def test_several_articles_go_on_at_once_each_as_it_would_alone(self):
+		"""The picker of the screen ticks articles with their quantities and sends them in one go."""
+		name = self._new()
+		added = shopping.add_article_lines(
+			name,
+			[
+				{"item": self.wine, "qty": 2},
+				{"item": self.salad, "qty": 1},
+				{"item": self.wine, "qty": 1, "supplier": WHOLESALER, "uom": CRATE},
+				{"item": self.pasta, "qty": 3},
+			],
+		)
+		self.assertEqual(added, 4)
+		rows = {(line.item, line.supplier, line.uom): line.qty for line in self._lines(name)}
+		self.assertEqual(rows[(self.wine, CELLAR, PACK)], 2)
+		self.assertEqual(rows[(self.wine, WHOLESALER, CRATE)], 1)
+		self.assertEqual(rows[(self.salad, MARKET, "_PNXT shop Crate of 4")], 1)
+		self.assertEqual(
+			rows[(self.pasta, None, BOTTLE_UOM)], 3, "no packaging yet: counted in the article's own unit"
+		)
+
+	def test_one_article_that_does_not_exist_refuses_them_all(self):
+		name = self._new()
+		with self.assertRaises(frappe.DoesNotExistError):
+			shopping.add_article_lines(
+				name, [{"item": self.wine, "qty": 1}, {"item": "_PNXT no such article", "qty": 1}]
+			)
+		self.assertEqual(len(self._lines(name)), 0, "nothing of the first was written")
+
+	def test_nothing_ticked_adds_nothing(self):
+		name = self._new()
+		self.assertEqual(shopping.add_article_lines(name, []), 0)
+		self.assertEqual(len(self._lines(name)), 0)
+
+	def test_a_portal_account_cannot_put_articles_on_a_list(self):
+		name = self._new()
+		frappe.set_user(PORTAL)
+		with self.assertRaises(frappe.PermissionError):
+			shopping.add_article_lines(name, [{"item": self.wine, "qty": 1}])
+
 	def test_an_article_asked_for_again_is_not_added_to_a_line_put_aside_or_bought(self):
 		name = self._new()
 		row = shopping.add_article_line(name, self.wine, 2)

@@ -166,6 +166,30 @@ def add_article_line(
 	return line.name if line.name else doc.lines[-1].name
 
 
+def add_article_lines(list_name: str, lines: list[dict]) -> int:
+	"""Put several articles on the list at once, as its picker sends them; answers how many went on.
+
+	Each line is {item, qty} and, when the owner chose them, {supplier, uom}: it goes on as add_article_line puts it, so the
+	usual supplier's packaging stands where none is given and an article already on the list takes the quantity. Every
+	article is looked for before the first is written, so that one that does not exist leaves the list as it was.
+	"""
+	_list(list_name)
+	for line in lines:
+		if not frappe.db.exists("Item", line.get("item")):
+			frappe.throw(
+				_("The article {0} does not exist.").format(line.get("item")), frappe.DoesNotExistError
+			)
+	for line in lines:
+		add_article_line(
+			list_name,
+			line["item"],
+			line.get("qty") or 1,
+			line.get("supplier") or None,
+			line.get("uom") or None,
+		)
+	return len(lines)
+
+
 def add_free_line(
 	list_name: str, text: str, qty=1, unit_text: str | None = None, supplier: str | None = None
 ) -> str:

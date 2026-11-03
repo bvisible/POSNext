@@ -33,6 +33,13 @@ def add_article_line(list_name, item, qty=1, supplier=None, uom=None):
 
 
 @frappe.whitelist()
+def add_article_lines(list_name, lines):
+	"""The articles ticked in the picker, with their quantities: a JSON list of {item, qty, supplier, uom}."""
+	_gate()
+	return shopping.add_article_lines(list_name, json.loads(lines) if isinstance(lines, str) else lines)
+
+
+@frappe.whitelist()
 def add_free_line(list_name, text, qty=1, unit_text=None, supplier=None):
 	_gate()
 	return shopping.add_free_line(list_name, text, qty, unit_text, supplier or None)

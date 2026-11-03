@@ -84,6 +84,9 @@
 			self.state.family = $(this).attr("data-family");
 			self.refresh();
 		});
+		this.$root.on("click", "[data-create]", function () {
+			self.add_item();
+		});
 		this.$root.on("click", "[data-add-pack]", function () {
 			var item = self.find($(this).attr("data-add-pack"));
 			if (item) self.add_pack(item);
@@ -180,7 +183,9 @@
 			? this.data.rows.map(this.row_html, this).join("")
 			: '<div class="npp-empty">' +
 			  esc(__("No article yet. Add the first one you buy.")) +
-			  "</div>";
+			  '<div style="margin-top:12px"><button type="button" class="npp-btn" data-create>' +
+			  esc(__("Add an article to buy")) +
+			  "</button></div></div>";
 		this.$root.html(
 			'<div class="npp-bar"><input class="npp-search" type="search" value="' +
 				esc(s.search) +
@@ -435,6 +440,12 @@
 	};
 
 	frappe.pages["neoresto-purchases"].on_page_show = function (wrapper) {
-		if (wrapper.neoresto_purchases) wrapper.neoresto_purchases.refresh();
+		if (!wrapper.neoresto_purchases) return;
+		// Sent here by the shopping list's picker, which found nothing to put on the list: the article is made now
+		var make = frappe.route_options && frappe.route_options.create_article;
+		if (make) frappe.route_options = null;
+		wrapper.neoresto_purchases.refresh().then(function () {
+			if (make) wrapper.neoresto_purchases.add_item();
+		});
 	};
 })();

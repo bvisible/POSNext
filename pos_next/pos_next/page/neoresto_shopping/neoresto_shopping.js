@@ -32,7 +32,19 @@
 		".nps-pill.aside{background:#ECE7DE;color:#524B41}" +
 		".nps-pill.lost{background:#FFEAE2;color:#AA3700}" +
 		".nps-price{text-align:right;font-variant-numeric:tabular-nums}" +
-		".nps-empty{padding:28px 16px;text-align:center;color:#6F665A}";
+		".nps-empty{padding:28px 16px;text-align:center;color:#6F665A}" +
+		".nps-pick-search{width:100%;min-height:40px;border:1px solid #DCD4C7;border-radius:10px;padding:0 12px;margin-bottom:10px}" +
+		".nps-pick{border:1px solid #DCD4C7;border-radius:12px;max-height:46vh;overflow:auto}" +
+		".nps-pick-row{display:grid;grid-template-columns:34px minmax(150px,2fr) minmax(170px,2fr) 90px 100px;gap:10px;align-items:center;padding:8px 14px;border-top:1px solid #F6F3ED}" +
+		".nps-pick-row:first-child{border-top:0}" +
+		".nps-pick-row.head{position:sticky;top:0;background:#F6F3ED;font-size:12px;font-weight:600;color:#6F665A;text-transform:uppercase;letter-spacing:.04em}" +
+		".nps-pick-row.on{background:#FFF6EF}" +
+		".nps-pick-row .label{font-weight:600}" +
+		".nps-pick-row .sub{display:block;font-size:12.5px;color:#6F665A;font-weight:400}" +
+		".nps-pick-row select,.nps-pick-row input[type=number]{width:100%;min-height:34px;border:1px solid #DCD4C7;border-radius:8px;background:#fff;padding:0 8px}" +
+		".nps-pick-row input[type=checkbox]{width:18px;height:18px}" +
+		".nps-pick-row .price{text-align:right;font-variant-numeric:tabular-nums}" +
+		".nps-pick-none{padding:28px 16px;text-align:center;color:#6F665A}";
 
 	var DONE = ["Bought", "Ordered"];
 	var ASIDE = ["Not needed", "Already in stock"];
@@ -356,90 +368,35 @@
 		});
 	};
 
+	// The picker: the articles the restaurant buys, a search, a tick and a quantity on each, and one button that puts every ticked
+	// one on the list - the table that ticks lines on a new order. A pack is chosen where an article has several, else it is
+	// the usual one (the server picks it when none is sent).
 	NeorestoShopping.prototype.add_article = function () {
 		var self = this;
-		var packs = [];
+		var rows = [];
+		var chosen = {};
 		var d = new frappe.ui.Dialog({
 			title: __("Add an article"),
-			fields: [
-				{
-					fieldname: "item",
-					fieldtype: "Link",
-					options: "Item",
-					label: __("Article"),
-					reqd: 1,
-					get_query: function () {
-						return { filters: { is_restaurant_supply: 1, disabled: 0 } };
-					},
-					change: function () {
-						var code = d.get_value("item");
-						if (!code) return;
-						frappe
-							.call({
-								method: SUPPLIES + "get_supply_catalogue",
-								args: { search: code },
-							})
-							.then(function (r) {
-								var row = ((r.message && r.message.rows) || []).filter(function (
-									x
-								) {
-									return x.item === code;
-								})[0];
-								packs = row ? row.packs : [];
-								var labels = packs.map(function (p, i) {
-									return {
-										value: String(i),
-										label:
-											p.supplier +
-											" — " +
-											(p.uom || "") +
-											(p.price !== null && p.price !== undefined
-												? " · " + money(p.price)
-												: ""),
-									};
-								});
-								d.set_df_property(
-									"choice",
-									"options",
-									labels.length
-										? labels
-										: [{ value: "", label: __("No packaging yet") }]
-								);
-								d.set_value("choice", labels.length ? "0" : "");
-							});
-					},
-				},
-				{
-					fieldname: "qty",
-					fieldtype: "Float",
-					label: __("Quantity"),
-					default: 1,
-					reqd: 1,
-				},
-				{
-					fieldname: "choice",
-					fieldtype: "Select",
-					label: __("Supplier and packaging"),
-					options: [],
-				},
-			],
+			size: "extra-large",
+			fields: [{ fieldname: "picker", fieldtype: "HTML" }],
 			primary_action_label: __("Add to the list"),
-			primary_action: function (values) {
-				var pack =
-					values.choice !== "" && values.choice !== undefined
-						? packs[Number(values.choice)]
-						: null;
+			primary_action: function () {
+				var lines = Object.keys(chosen).map(function (code) {
+					var row = chosen[code];
+					var pack = row.packs[row.pack];
+					return {
+						item: code,
+						qty: row.qty,
+						supplier: pack ? pack.supplier : null,
+						uom: pack ? pack.uom : null,
+					};
+				});
+				if (!lines.length) return;
 				self.ensure_list().then(function () {
 					frappe
 						.call({
-							method: API + "add_article_line",
-							args: {
-								list_name: self.list,
-								item: values.item,
-								qty: values.qty,
-								supplier: pack ? pack.supplier : null,
-								uom: pack ? pack.uom : null,
-							},
+							method: API + "add_article_lines",
+							args: { list_name: self.list, lines: JSON.stringify(lines) },
 							freeze: true,
 						})
 						.then(function () {
@@ -448,8 +405,183 @@
 						});
 				});
 			},
+			secondary_action_label: __("Create an article"),
+			secondary_action: function () {
+				d.hide();
+				frappe.route_options = { create_article: 1 };
+				frappe.set_route("neoresto-purchases");
+			},
 		});
+		var $box = d.fields_dict.picker.$wrapper;
+
+		function count() {
+			return Object.keys(chosen).length;
+		}
+
+		function sync() {
+			var n = count();
+			d.get_primary_btn()
+				.prop("disabled", n === 0)
+				.text(__("Add to the list") + (n ? " (" + n + ")" : ""));
+		}
+
+		function packLabel(pack) {
+			return (
+				pack.supplier +
+				" — " +
+				(pack.uom || "") +
+				(pack.price !== null && pack.price !== undefined ? " · " + money(pack.price) : "")
+			);
+		}
+
+		function rowHtml(row) {
+			var on = !!chosen[row.item];
+			var current = on ? chosen[row.item] : null;
+			var pick = current ? current.pack : 0;
+			var qty = current ? current.qty : 1;
+			var pack = row.packs[pick];
+			var packs = !row.packs.length
+				? '<span class="sub">' + esc(__("No packaging yet")) + "</span>"
+				: row.packs.length === 1
+				? esc(packLabel(row.packs[0]))
+				: '<select data-pick-pack="' +
+				  esc(row.item) +
+				  '">' +
+				  row.packs
+						.map(function (p, i) {
+							return (
+								'<option value="' +
+								i +
+								'"' +
+								(i === pick ? " selected" : "") +
+								">" +
+								esc(packLabel(p)) +
+								"</option>"
+							);
+						})
+						.join("") +
+				  "</select>";
+			return (
+				'<div class="nps-pick-row' +
+				(on ? " on" : "") +
+				'" data-pick-row="' +
+				esc(row.item) +
+				'"><input type="checkbox" data-pick-tick="' +
+				esc(row.item) +
+				'"' +
+				(on ? " checked" : "") +
+				'><span class="label">' +
+				esc(row.item_name) +
+				'<span class="sub">' +
+				esc(row.item_group || "") +
+				"</span></span><span>" +
+				packs +
+				'</span><span class="price">' +
+				(pack && pack.price !== null && pack.price !== undefined
+					? esc(money(pack.price))
+					: "") +
+				'</span><input type="number" min="0" step="any" value="' +
+				esc(qty) +
+				'" data-pick-qty="' +
+				esc(row.item) +
+				'"></div>'
+			);
+		}
+
+		function draw() {
+			var needle = ($box.find(".nps-pick-search").val() || "").toLowerCase();
+			var shown = rows.filter(function (row) {
+				if (!needle) return true;
+				var haystack = [row.item_name, row.item, row.item_group]
+					.concat(
+						row.packs.map(function (p) {
+							return p.supplier + " " + (p.uom || "");
+						})
+					)
+					.join(" ")
+					.toLowerCase();
+				return haystack.indexOf(needle) >= 0;
+			});
+			$box.find(".nps-pick-body").html(
+				rows.length
+					? shown.length
+						? '<div class="nps-pick-row head"><span></span><span>' +
+						  esc(__("Article")) +
+						  "</span><span>" +
+						  esc(__("Who sells it, in which packaging")) +
+						  "</span><span></span><span>" +
+						  esc(__("Quantity")) +
+						  "</span></div>" +
+						  shown.map(rowHtml).join("")
+						: '<div class="nps-pick-none">' + esc(__("Nothing matches.")) + "</div>"
+					: '<div class="nps-pick-none">' +
+							esc(__("No article yet. Add the first one you buy.")) +
+							'<div style="margin-top:12px"><button type="button" class="nps-btn ink" data-pick-create>' +
+							esc(__("Create an article")) +
+							"</button></div></div>"
+			);
+			sync();
+		}
+
+		function row_of(code) {
+			return rows.filter(function (row) {
+				return row.item === code;
+			})[0];
+		}
+
+		function tick(code, on, qty) {
+			if (!on) {
+				delete chosen[code];
+				return;
+			}
+			var row = row_of(code);
+			chosen[code] = chosen[code] || { packs: row.packs, pack: 0, qty: 1 };
+			if (qty !== undefined) chosen[code].qty = qty;
+		}
+
+		$box.html(
+			'<input type="search" class="nps-pick-search" placeholder="' +
+				esc(__("An article, a supplier, a packaging…")) +
+				'"><div class="nps-pick nps-pick-body"></div>'
+		);
+		$box.on("input", ".nps-pick-search", draw);
+		$box.on("change", "[data-pick-tick]", function () {
+			tick($(this).attr("data-pick-tick"), this.checked);
+			draw();
+		});
+		// A quantity typed ticks its line: the owner who types a number means it
+		$box.on("input", "[data-pick-qty]", function () {
+			var code = $(this).attr("data-pick-qty");
+			var qty = parseFloat($(this).val());
+			if (!(qty > 0)) return;
+			var was = !!chosen[code];
+			tick(code, true, qty);
+			if (!was) {
+				$(this)
+					.closest(".nps-pick-row")
+					.addClass("on")
+					.find("[data-pick-tick]")
+					.prop("checked", true);
+				sync();
+			}
+		});
+		$box.on("change", "[data-pick-pack]", function () {
+			var code = $(this).attr("data-pick-pack");
+			tick(code, true);
+			chosen[code].pack = Number($(this).val());
+			draw();
+		});
+		$box.on("click", "[data-pick-create]", function () {
+			d.get_secondary_btn().trigger("click");
+		});
+
 		d.show();
+		sync();
+		frappe.call({ method: SUPPLIES + "get_supply_catalogue", args: {} }).then(function (r) {
+			rows = (r.message && r.message.rows) || [];
+			draw();
+			$box.find(".nps-pick-search").trigger("focus");
+		});
 	};
 
 	NeorestoShopping.prototype.add_free = function () {
