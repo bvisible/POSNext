@@ -12,10 +12,14 @@ written. A step can be completed later, or taken back. The suite pins:
 - what it never does: write twice, overwrite the settings of a family that exists, move an article that exists;
 - completing a step later (new dishes land under their own heading) and taking a step back (what the step made goes, what was
   there before stays, and a dish already in an order refuses the whole undo);
+- the hours of a card (« quand sert-on cette carte ? », Daniel, 03.11): read the way a person writes them, written with the card, taken
+  back with it, never over the hours a card already has, said when they overlap another card's;
 - who may do it, and that nothing is available where the site has not switched the feature on.
 
 The suite builds everything it needs and rolls back.
 """
+
+from typing import ClassVar
 
 import frappe
 from frappe.tests.roles import as_role
@@ -442,7 +446,7 @@ class TestWhatTheRestaurantHasAlready(CardPlanCase):
 		self.assertEqual(families[COFFEES]["buttons"], 3)
 		self.assertEqual(families[SOFTS]["buttons"], 2)
 		self.assertEqual([(sub["name"], sub["buttons"]) for sub in families[SOFTS]["subs"]], [(WATER, 2)])
-		self.assertEqual(overview["cards"], [{"name": CARD, "buttons": 5, "hidden": 1}])
+		self.assertEqual(overview["cards"], [{"name": CARD, "buttons": 5, "hidden": 1, "hours": []}])
 
 	def test_an_empty_restaurant_has_nothing_and_says_so(self):
 		with as_role("client_admin"):
@@ -554,3 +558,178 @@ def patch_off():
 	from unittest.mock import patch
 
 	return patch.dict(frappe.conf, {"neoresto_card_with_nora_active": 0})
+
+
+class TestTheHoursOfACard(CardPlanCase):
+	"""« Quand sert-on cette carte ? » (Daniel, 03.11: « autrement les gens vont oublier de mettre »): the plan may carry the slots
+	of the card, one row per day in the restaurant's hours, written with the card and taken back with it."""
+
+	LIGHT: ClassVar[dict] = {"days": "lundi-vendredi", "from": "14h", "to": "17:30", "label": "Light"}
+
+	def slots(self, card=CARD):
+		return frappe.db.sql(
+			"""SELECT day_of_week, from_time, to_time, label FROM `tabRestaurant Opening Hours`
+			WHERE parent = %s AND parenttype = 'Restaurant' AND restaurant_card = %s ORDER BY idx""",
+			(self.a, card),
+			as_dict=True,
+		)
+
+	def propose(self, *hours, **more):
+		with as_role("client_admin"):
+			return card_plan.propose(self.plan(coffees(), hours=list(hours), **more))
+
+	def test_the_hours_are_read_said_and_written_by_nothing(self):
+		proposal = self.propose(self.LIGHT)
+
+		hours = proposal["hours"]
+		self.assertEqual(
+			[r["day_of_week"] for r in hours["rows"]],
+			["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+		)
+		self.assertEqual(
+			{(r["from_time"], r["to_time"], r["label"]) for r in hours["rows"]},
+			{("14:00:00", "17:30:00", "Light")},
+		)
+		self.assertEqual(hours["text"], ["Monday\u2013Friday 14:00\u201317:30 (Light)"])
+		self.assertEqual(self.slots(), [], "a proposal writes nothing")
+
+	def test_days_are_read_the_way_a_person_writes_them(self):
+		friday = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+		cases = [
+			("lundi-vendredi", friday),
+			("du lundi au vendredi", friday),
+			("Mon-Fri", friday),
+			("en semaine", friday),
+			("tous les jours", [*friday, "Saturday", "Sunday"]),
+			("every day", [*friday, "Saturday", "Sunday"]),
+			("week-end", ["Saturday", "Sunday"]),
+			("samedi et dimanche", ["Saturday", "Sunday"]),
+			(["lun", "mer", "ven"], ["Monday", "Wednesday", "Friday"]),
+			("Samedi", ["Saturday"]),
+			("samedi-lundi", ["Monday", "Saturday", "Sunday"]),
+		]
+		for value, expected in cases:
+			self.assertEqual(card_plan._days(value), expected, repr(value))
+		for unreadable in ("someday", "", None, "lundi-samedi-dimanche-foo"):
+			self.assertIsNone(card_plan._days(unreadable), repr(unreadable))
+
+	def test_times_are_read_the_way_a_person_writes_them(self):
+		cases = {
+			"14h": "14:00:00",
+			"14h30": "14:30:00",
+			"14:30": "14:30:00",
+			"14.30": "14:30:00",
+			"14:30:00": "14:30:00",
+			"midi": "12:00:00",
+			"9": "09:00:00",
+			14: "14:00:00",
+		}
+		for value, expected in cases.items():
+			self.assertEqual(card_plan._time(value), expected, repr(value))
+		for unreadable in ("25h", "abc", "14h75", "", None):
+			self.assertIsNone(card_plan._time(unreadable), repr(unreadable))
+
+	def test_hours_that_cannot_be_read_are_left_out_and_said_and_the_card_is_proposed_all_the_same(self):
+		proposal = self.propose(
+			{"days": "someday", "from": "14h", "to": "17h"}, {"days": "lundi", "from": "14h", "to": "14h"}
+		)
+
+		self.assertEqual(proposal["hours"]["rows"], [])
+		self.assertEqual(proposal["counts"]["buttons"], 3)
+		self.assertEqual(
+			sum("hours" in w.lower() for w in proposal["warnings"]), 1, "said once, not once for each"
+		)
+
+	def test_all_hours_said_on_purpose_writes_nothing_and_says_nothing_but_that_it_was_asked(self):
+		said = self.propose()
+
+		self.assertEqual((said["hours"]["rows"], said["hours"]["asked"]), ([], True))
+		self.assertEqual([w for w in said["warnings"] if "hours" in w.lower()], [])
+		with as_role("client_admin"):
+			not_asked = card_plan.propose(self.plan(coffees()))
+		self.assertFalse(not_asked["hours"]["asked"])
+
+	def test_the_hours_are_written_with_the_card_and_taken_back_with_it(self):
+		before = self.count("Restaurant Opening Hours", parent=self.a)
+
+		with as_role("client_admin"):
+			manifest = card_plan.apply(self.plan(coffees(), hours=[self.LIGHT]))
+
+		self.assertEqual(len(manifest["hours"]), 5)
+		self.assertEqual(len(self.slots()), 5)
+		self.assertEqual(self.count("Restaurant Opening Hours", parent=self.a), before + 5)
+		with as_role("client_admin"):
+			card_plan.undo(manifest)
+		self.assertEqual(self.slots(), [])
+		self.assertEqual(self.count("Restaurant Opening Hours", parent=self.a), before)
+		self.assertFalse(
+			frappe.db.exists("Restaurant Card", CARD), "the card the step made goes, hours or not"
+		)
+
+	def test_a_card_that_has_its_hours_already_keeps_them(self):
+		with as_role("client_admin"):
+			card_plan.apply(self.plan(coffees(), hours=[self.LIGHT]))
+			again = card_plan.propose(self.plan(coffees(), hours=[self.LIGHT]))
+			other = card_plan.propose(
+				self.plan(coffees(), hours=[{"days": "samedi", "from": "9h", "to": "11h"}])
+			)
+			second = card_plan.apply(self.plan(coffees(), hours=[self.LIGHT]))
+
+		self.assertEqual(again["hours"]["rows"], [])
+		self.assertEqual(
+			[w for w in again["warnings"] if "already has hours" in w], [], "the same hours again say nothing"
+		)
+		self.assertEqual(len([w for w in other["warnings"] if "already has hours" in w]), 1)
+		self.assertEqual(second["hours"], [])
+		self.assertEqual(len(self.slots()), 5)
+
+	def test_without_the_right_to_set_the_hours_the_card_is_made_without_them(self):
+		from unittest.mock import patch
+
+		with patch.object(card_plan.permissions, "can", side_effect=lambda right: right != "manage_settings"):
+			proposal = self.propose(self.LIGHT)
+			with as_role("client_admin"):
+				manifest = card_plan.apply(self.plan(coffees(), hours=[self.LIGHT]))
+
+		self.assertEqual(proposal["hours"]["rows"], [])
+		self.assertEqual(len([w for w in proposal["warnings"] if "may not set the hours" in w]), 1)
+		self.assertEqual((manifest["hours"], self.slots()), ([], []))
+		self.assertTrue(frappe.db.exists("Restaurant Card", CARD))
+
+	def test_the_overview_says_when_each_card_is_served(self):
+		with as_role("client_admin"):
+			card_plan.apply(self.plan(coffees(), hours=[self.LIGHT]))
+			cards = card_plan.overview(self.a, root=ROOT)["cards"]
+
+		self.assertEqual(
+			[c["hours"] for c in cards if c["name"] == CARD],
+			[["Monday\u2013Friday 14:00\u201317:30 (Light)"]],
+		)
+
+	def test_hours_that_overlap_another_cards_are_said(self):
+		other = frappe.get_doc(
+			{
+				"doctype": "Restaurant Card",
+				"restaurant": self.a,
+				"card_name": "_Test CP Other",
+				"is_active": 1,
+			}
+		).insert(ignore_permissions=True)
+		restaurant = frappe.get_doc("Restaurant", self.a)
+		restaurant.append(
+			"opening_hours",
+			{
+				"day_of_week": "Monday",
+				"from_time": "12:00:00",
+				"to_time": "15:00:00",
+				"label": "Lunch",
+				"restaurant_card": other.name,
+			},
+		)
+		restaurant.save(ignore_permissions=True)
+
+		proposal = self.propose(self.LIGHT)
+
+		overlap = [w for w in proposal["warnings"] if other.name in w]
+		self.assertEqual(len(overlap), 1)
+		self.assertEqual(len(proposal["hours"]["rows"]), 5, "said, not refused: the owner decides")

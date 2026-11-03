@@ -21,6 +21,7 @@ It is switched on per site (`neoresto_card_with_nora_active`, off unless the sit
 the cards of a restaurant may neither propose nor apply.
 """
 
+import json
 import re
 import unicodedata
 
@@ -147,6 +148,243 @@ def _read(plan) -> list[dict]:
 	return families
 
 
+# ─── The hours of a card ─────────────────────────────────────────────────────
+# « Quand sert-on cette carte ? » (Daniel, 03.11): the hours of the restaurant are one row per day (day, from, to, a name, the card
+# served); the till offers a card during its slots only, and at every hour a card that has none. A plan may carry the slots of the
+# card it goes on, written with the card and taken back with it.
+
+DAYS = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+DASH = "\u2013"
+_DAY_WORDS = {
+	word: index
+	for index, words in enumerate(
+		(
+			("monday", "mon", "lundi", "lun"),
+			("tuesday", "tue", "tues", "mardi", "mar"),
+			("wednesday", "wed", "mercredi", "mer"),
+			("thursday", "thu", "thur", "thurs", "jeudi", "jeu"),
+			("friday", "fri", "vendredi", "ven"),
+			("saturday", "sat", "samedi", "sam"),
+			("sunday", "sun", "dimanche", "dim"),
+		)
+	)
+	for word in words
+}
+_EVERY_DAY = {"tous les jours", "every day", "everyday", "daily", "chaque jour", "7/7", "7 jours sur 7"}
+_WEEKDAYS = {"en semaine", "semaine", "weekdays", "weekday", "jours ouvrables"}
+_WEEKEND = {"week-end", "weekend", "week end", "we"}
+_RANGE = re.compile(r"^(?:du |de |from )?([a-z]+)\s*(?:-|\ba\b|\bau\b|\bto\b|\bthrough\b)\s*([a-z]+)$")
+_CLOCK = re.compile(r"^(\d{1,2})\s*(?:[:h.]\s*(\d{2})?)?(?::\d{2})?$")
+
+
+def _plain(text) -> str:
+	text = unicodedata.normalize("NFKD", str(text or "")).encode("ascii", "ignore").decode().lower()
+	return " ".join(text.replace("\u2013", "-").replace("\u2014", "-").split())
+
+
+def _days(value):
+	"""The week days a person's words mean, in week order (« lundi-vendredi », « en semaine », « Mon, Wed »), else None."""
+	if value in (None, "", []):
+		return None
+	parts = (
+		value
+		if isinstance(value, list | tuple)
+		else re.split(r"\s*(?:,|;|&|\bet\b|\band\b)\s*", _plain(value))
+	)
+	found = set()
+	for part in parts:
+		text = _plain(part)
+		if not text:
+			return None
+		if text in _EVERY_DAY:
+			found.update(range(7))
+		elif text in _WEEKDAYS:
+			found.update(range(5))
+		elif text in _WEEKEND:
+			found.update((5, 6))
+		elif text in _DAY_WORDS:
+			found.add(_DAY_WORDS[text])
+		else:
+			span = _RANGE.match(text)
+			if not span or span.group(1) not in _DAY_WORDS or span.group(2) not in _DAY_WORDS:
+				return None
+			start, end = _DAY_WORDS[span.group(1)], _DAY_WORDS[span.group(2)]
+			found.update(range(start, end + 1) if start <= end else [*range(start, 7), *range(0, end + 1)])
+	return [DAYS[index] for index in sorted(found)] or None
+
+
+def _time(value):
+	"""A time of day « HH:MM:SS » from what a person writes (« 14h30 », « 14:30 », « 9 », « midi »), else None."""
+	text = _plain(value)
+	if text == "midi":
+		return "12:00:00"
+	if text == "minuit":
+		return "23:59:00"
+	clock = _CLOCK.match(text)
+	if not clock:
+		return None
+	hour, minute = int(clock.group(1)), int(clock.group(2) or 0)
+	if hour > 23 or minute > 59:
+		return None
+	return f"{hour:02d}:{minute:02d}:00"
+
+
+def _hms(value) -> str:
+	"""A time as the database holds it (a duration or a time) in the form of `_time`."""
+	seconds = int(value.total_seconds()) if hasattr(value, "total_seconds") else None
+	if seconds is None:
+		text = str(value)
+		return text if len(text.split(":")) == 3 else f"{text}:00"
+	return f"{seconds // 3600:02d}:{seconds % 3600 // 60:02d}:{seconds % 60:02d}"
+
+
+def _read_hours(value, warnings):
+	"""The slots a plan's `hours` mean, one row per day: (day, from, to, name). What cannot be read is dropped and said once."""
+	if isinstance(value, str):
+		try:
+			value = json.loads(value)
+		except ValueError:
+			value = [value]
+	if isinstance(value, dict):
+		value = [value]
+	rows, unreadable = [], False
+	for slot in value or []:
+		slot = slot if isinstance(slot, dict) else {}
+		days = _days(slot.get("days") or slot.get("day") or slot.get("day_of_week"))
+		start = _time(slot.get("from") or slot.get("from_time"))
+		end = _time(slot.get("to") or slot.get("to_time"))
+		if not days or not start or not end or start == end:
+			unreadable = True
+			continue
+		label = (str(slot.get("label") or "").strip()) or None
+		for day in days:
+			row = {"day_of_week": day, "from_time": start, "to_time": end, "label": label}
+			if row not in rows:
+				rows.append(row)
+	if unreadable:
+		warnings.append(
+			_(
+				"Some hours cannot be read: they need days and a start and an end (for example Monday to Friday, 14:00 to 17:30). They are left out."
+			)
+		)
+	return rows
+
+
+def _day_runs(days) -> str:
+	"""« Monday-Friday, Sunday »: runs of three days or more are said by their ends, in the reader's language."""
+	indexes = sorted(DAYS.index(day) for day in days)
+	runs, run = [], [indexes[0]]
+	for index in indexes[1:]:
+		if index == run[-1] + 1:
+			run.append(index)
+		else:
+			runs.append(run)
+			run = [index]
+	runs.append(run)
+	said = []
+	for run in runs:
+		if len(run) >= 3:
+			said.append(f"{_(DAYS[run[0]])}{DASH}{_(DAYS[run[-1]])}")
+		else:
+			said.extend(_(DAYS[index]) for index in run)
+	return ", ".join(said)
+
+
+def _hours_text(rows) -> list[str]:
+	"""One line for each set of days that share their hours: « Monday-Friday 14:00-17:30 (Light) »."""
+	groups = {}
+	for row in rows:
+		groups.setdefault((row["from_time"], row["to_time"], row.get("label")), []).append(row["day_of_week"])
+	lines = []
+	for (start, end, label), days in groups.items():
+		line = f"{_day_runs(days)} {start[:5]}{DASH}{end[:5]}"
+		lines.append(f"{line} ({label})" if label else line)
+	return lines
+
+
+def describe_hours(rows) -> list[str]:
+	"""The slots of the rows said in the reader's language, one line for each set of days that share their hours."""
+	return _hours_text(rows)
+
+
+def _slots_of(restaurant):
+	return frappe.db.sql(
+		"""SELECT day_of_week, from_time, to_time, label, restaurant_card FROM `tabRestaurant Opening Hours`
+		WHERE parent = %s AND parenttype = 'Restaurant' ORDER BY idx""",
+		restaurant,
+		as_dict=True,
+	)
+
+
+def _overlaps(rows, others) -> list[str]:
+	"""The cards, other than the one of the rows, whose slots meet these on one of the same days."""
+	met = []
+	for other in others:
+		if not other.restaurant_card or other.restaurant_card in met:
+			continue
+		a_start, a_end = _hms(other.from_time), _hms(other.to_time)
+		for row in rows:
+			if row["day_of_week"] != other.day_of_week:
+				continue
+			# a slot that crosses midnight is taken for its part of the day itself
+			b_end = row["to_time"] if row["to_time"] > row["from_time"] else "24:00:00"
+			a_end_day = a_end if a_end > a_start else "24:00:00"
+			if row["from_time"] < a_end_day and a_start < b_end:
+				met.append(other.restaurant_card)
+				break
+	return met
+
+
+def _resolve_hours(plan, restaurant, card, card_exists, warnings) -> dict:
+	"""What the hours of the plan mean for the card it goes on: `asked` (the plan said something), `rows` to write, `text`."""
+	asked = plan.get("hours") is not None
+	rows = _read_hours(plan.get("hours"), warnings) if asked else []
+	nothing = {"asked": asked, "rows": [], "text": []}
+	if not rows:
+		return nothing
+	if not permissions.can("manage_settings"):
+		warnings.append(
+			_("You may not set the hours of the restaurant: ask its manager. The card is made without hours.")
+		)
+		return nothing
+	slots = _slots_of(restaurant)
+	held = [slot for slot in slots if slot.restaurant_card == card] if card_exists else []
+	if held:
+		same = {(s.day_of_week, _hms(s.from_time), _hms(s.to_time)) for s in held} == {
+			(r["day_of_week"], r["from_time"], r["to_time"]) for r in rows
+		}
+		if not same:
+			warnings.append(_("{0} already has hours: they are left as they are.").format(card))
+		return nothing
+	for other in _overlaps(rows, [s for s in slots if s.restaurant_card != card]):
+		warnings.append(_("The hours overlap those of {0}: both cards are offered then.").format(other))
+	return {"asked": True, "rows": rows, "text": _hours_text(rows)}
+
+
+def _write_hours(resolved, manifest) -> None:
+	"""Add the slots of the plan to the restaurant's hours, for the card the step goes on."""
+	rows = (resolved.get("hours") or {}).get("rows") or []
+	if not rows:
+		return
+	doc = frappe.get_doc("Restaurant", resolved["restaurant"])
+	before = {row.name for row in doc.get("opening_hours") or []}
+	for row in rows:
+		doc.append("opening_hours", {**row, "restaurant_card": resolved["card"]["name"]})
+	doc.save()
+	manifest["hours"] = [row.name for row in doc.opening_hours if row.name not in before]
+
+
+def _unwrite_hours(manifest) -> None:
+	names = set(manifest.get("hours") or [])
+	restaurant = manifest.get("restaurant")
+	if not names or not restaurant or not frappe.db.exists("Restaurant", restaurant):
+		return
+	doc = frappe.get_doc("Restaurant", restaurant)
+	doc.set("opening_hours", [row for row in doc.opening_hours if row.name not in names])
+	doc.flags.ignore_permissions = True
+	doc.save()
+
+
 # ─── Looking at what exists ──────────────────────────────────────────────────
 
 
@@ -254,6 +492,7 @@ def _resolve(plan) -> dict:
 		else []
 	)
 	on_card = {row.item for row in card_items if row.item}
+	hours = _resolve_hours(plan, restaurant, card, card_exists, warnings)
 	counts = {
 		"families": 0,
 		"subfamilies": 0,
@@ -351,6 +590,7 @@ def _resolve(plan) -> dict:
 		"price_list": price_list,
 		"currency": currency,
 		"card": {"name": card, "exists": card_exists},
+		"hours": hours,
 		"families": resolved,
 		"counts": counts,
 		"warnings": warnings,
@@ -439,7 +679,24 @@ def overview(restaurant: str | None = None, root: str | None = None) -> dict:
 		rows = frappe.get_all(
 			"Restaurant Card Item", filters={"parent": card, "item_type": "Item"}, fields=["disabled"]
 		)
-		cards.append({"name": card, "buttons": len(rows), "hidden": sum(1 for row in rows if row.disabled)})
+		slots = [
+			{
+				"day_of_week": s.day_of_week,
+				"from_time": _hms(s.from_time),
+				"to_time": _hms(s.to_time),
+				"label": s.label or None,
+			}
+			for s in _slots_of(restaurant)
+			if s.restaurant_card == card
+		]
+		cards.append(
+			{
+				"name": card,
+				"buttons": len(rows),
+				"hidden": sum(1 for row in rows if row.disabled),
+				"hours": _hours_text(slots),
+			}
+		)
 	stations = frappe.get_all(
 		"Preparation Station",
 		filters={"restaurant": restaurant},
@@ -501,6 +758,7 @@ def apply(plan: dict) -> dict:
 		"card": resolved["card"]["name"],
 		"card_created": False,
 		"guest_menu_set": False,
+		"hours": [],
 		"groups": [],
 		"group_changes": [],
 		"items": [],
@@ -551,6 +809,7 @@ def apply(plan: dict) -> dict:
 					).insert(ignore_permissions=True)
 					manifest["prices"].append(price.name)
 	_write_card(resolved, manifest)
+	_write_hours(resolved, manifest)
 	return manifest
 
 
@@ -758,6 +1017,7 @@ def undo(manifest: dict) -> dict:
 	if made and frappe.db.exists("Sales Invoice Item", {"item_code": ["in", made]}):
 		frappe.throw(_("An article of this step is already in an order: the step cannot be taken back."))
 	kept, removed = [], {"rows": 0, "items": 0, "groups": 0}
+	_unwrite_hours(manifest)
 	card = manifest.get("card")
 	if card and frappe.db.exists("Restaurant Card", card):
 		doc = frappe.get_doc("Restaurant Card", card)
