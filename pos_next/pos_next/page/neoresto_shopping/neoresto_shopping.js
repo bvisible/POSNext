@@ -49,6 +49,7 @@
 		'.nps-pick-row{grid-template-columns:34px minmax(0,1fr) auto;grid-template-areas:"tick label step" ". pack pack";gap:6px 12px;padding:12px}' +
 		".nps-pick-row.head,.nps-pick-row .p-price{display:none}" +
 		".nps-pick-row .p-tick{grid-area:tick;width:24px;height:24px}.nps-pick-row .p-label{grid-area:label}" +
+		".nps-pick{overflow-x:hidden}.nps-pick-row>*{min-width:0}.nps-pick-row select{max-width:100%}" +
 		".nps-pick-row .p-pack{grid-area:pack}.nps-pick-row .p-step{grid-area:step}.nps-pick-row select{min-height:44px}" +
 		"}" +
 		"@media (max-width:560px){" +
