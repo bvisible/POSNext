@@ -369,6 +369,7 @@ def _apply_pricing_rules_to_items(invoice_doc, items):
 	# Guest user has no permission to read Pricing Rules — elevate temporarily
 	original_ignore = frappe.flags.ignore_permissions
 	frappe.flags.ignore_permissions = True
+	queued = _messages_queued()
 
 	try:
 		from pos_next.api.invoices import apply_offers
@@ -422,11 +423,26 @@ def _apply_pricing_rules_to_items(invoice_doc, items):
 
 	except Exception as e:
 		# Non-blocking: if pricing rules fail, guest still sees undiscounted prices
+		_forget_messages_after(queued)
 		frappe.log_error("Guest pricing rules failed", str(e))
 	finally:
 		frappe.flags.ignore_permissions = original_ignore
 
 	return items
+
+
+# //// Neoffice — a pricing attempt that fails as the guest leaves its messages in the answer (« Guest has no access to Sales Invoice », « Error
+# //// applying offers: »), although the failure is caught. The page shows the first message of an answer (stores/guestOrder.js, serverMessage): an
+# //// order refused after its lines were priced by the menu read as a permission error (maintenance#2198). What the failed attempt queued is taken back.
+def _messages_queued():
+	return len(getattr(frappe.local, "message_log", None) or [])
+
+
+def _forget_messages_after(count):
+	"""Drop the messages queued for the answer after the first `count`."""
+	messages = getattr(frappe.local, "message_log", None)
+	if isinstance(messages, list):
+		del messages[count:]
 
 
 def _apply_pricing_rules_to_menu(pos_profile, categories, customer=None):
@@ -449,6 +465,7 @@ def _apply_pricing_rules_to_menu(pos_profile, categories, customer=None):
 
 	original_ignore = frappe.flags.ignore_permissions
 	frappe.flags.ignore_permissions = True
+	queued = _messages_queued()
 	try:
 		from pos_next.api.invoices import apply_offers
 
@@ -491,6 +508,7 @@ def _apply_pricing_rules_to_menu(pos_profile, categories, customer=None):
 				categories[ci]["menu_items"][ii]["discount_percentage"] = discount_pct
 				categories[ci]["menu_items"][ii]["discounted_price"] = discounted_price
 	except Exception as e:
+		_forget_messages_after(queued)
 		frappe.log_error("Guest menu pricing rules failed", str(e))
 	finally:
 		frappe.flags.ignore_permissions = original_ignore

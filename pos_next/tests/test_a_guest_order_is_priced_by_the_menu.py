@@ -62,6 +62,13 @@ class TestAGuestOrderIsPricedByTheMenu(ServiceCase):
 		)
 		return str(refusal.exception)
 
+	def messages(self):
+		"""The messages the answer carries, in order: the page shows the first one."""
+		return [
+			(entry if isinstance(entry, dict) else json.loads(entry)).get("message")
+			for entry in frappe.local.message_log or []
+		]
+
 	def rows(self, invoice):
 		return frappe.get_all(
 			"Sales Invoice Item",
@@ -131,3 +138,19 @@ class TestAGuestOrderIsPricedByTheMenu(ServiceCase):
 		for qty in (-2, 0, 0.5, 1.5):
 			with self.subTest(qty=qty):
 				self.refused({"item_code": self.cola, "qty": 1}, {"item_code": self.soup, "qty": qty})
+
+	def test_a_refused_order_says_its_refusal_and_nothing_before_it(self):
+		# Pricing the lines by the menu tries the pricing rules as the guest; what that attempt queues must not stand before the refusal,
+		# which the page would then hide behind « Guest has no access to Sales Invoice »
+		frappe.local.message_log = []
+		self.refused({"item_code": self.gum, "qty": 1})
+
+		gum = frappe.db.get_value("Item", self.gum, "item_name")
+		self.assertEqual(self.messages(), [frappe._("{0} is not on the menu").format(gum)])
+
+	def test_the_menu_carries_no_message_of_a_failed_pricing_attempt(self):
+		frappe.local.message_log = []
+		with as_role("Guest"):
+			guest_ordering.get_guest_menu(self.token.token)
+
+		self.assertEqual(self.messages(), [])
