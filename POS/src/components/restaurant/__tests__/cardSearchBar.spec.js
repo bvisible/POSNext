@@ -15,7 +15,7 @@ vi.mock("../CardPickerMenu.vue", () => ({
 }));
 
 const { default: CardSearchBar } = await import("../CardSearchBar.vue");
-const { default: RestaurantCardTabs } = await import("../RestaurantCardTabs.vue");
+const { default: CardFamilyChips } = await import("../CardFamilyChips.vue");
 
 let wrapper;
 afterEach(() => wrapper?.unmount());
@@ -54,29 +54,37 @@ describe("the search of the card", () => {
 	});
 });
 
-describe("the row of the card buttons", () => {
-	const cards = [{ name: "Lunch", card_name: "Lunch" }];
-	const mountRow = (slots = {}) =>
-		mount(RestaurantCardTabs, {
-			props: { cards, selected: "Lunch" },
-			slots,
-			global: { mocks: { __: globalThis.__ } },
-		});
+describe("the row of the families", () => {
+	const mountRow = (slots = {}, props = {}) =>
+		mount(CardFamilyChips, { props: { families: ["Starters", "Mains"], selected: null, ...props }, slots, global: { mocks: { __: globalThis.__ } } })
 
-	it("carries the search at its end, in the same line, wrapping under the buttons where the pane is narrow", () => {
-		const row = mountRow({ aside: '<div data-test="the-search" />' });
+	it("carries the search at its end, in the same line, wrapping under the families where the pane is narrow", () => {
+		const row = mountRow({ aside: '<div data-test="the-search" />' })
 
-		expect(
-			row.get('[data-test="card-tabs-aside"]').find('[data-test="the-search"]').exists()
-		).toBe(true);
-		expect(row.get('[data-test="card-tabs"] > div').classes()).toContain("flex-wrap");
-		row.unmount();
-	});
+		expect(row.get('[data-test="card-chips-aside"]').find('[data-test="the-search"]').exists()).toBe(true)
+		expect(row.find('[data-card-chips] > div').classes()).toContain("flex-wrap")
+		row.unmount()
+	})
+
+	it("keeps the search on a card that has no family at all: the row holds nothing else", () => {
+		const row = mountRow({ aside: '<div data-test="the-search" />' }, { families: [] })
+
+		expect(row.find('[data-chip="all"]').exists()).toBe(false)
+		expect(row.find('[data-test="the-search"]').exists()).toBe(true)
+		row.unmount()
+	})
+
+	it("is not drawn at all with no family and nothing to put at its end", () => {
+		const row = mountRow({}, { families: [] })
+
+		expect(row.find("[data-card-chips]").exists()).toBe(false)
+		row.unmount()
+	})
 
 	it("holds no empty group where nothing is put at its end", () => {
-		const row = mountRow();
+		const row = mountRow()
 
-		expect(row.find('[data-test="card-tabs-aside"]').exists()).toBe(false);
-		row.unmount();
-	});
-});
+		expect(row.find('[data-test="card-chips-aside"]').exists()).toBe(false)
+		row.unmount()
+	})
+})

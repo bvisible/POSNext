@@ -575,7 +575,21 @@
 									"
 									@qr="handleQRButtonClick"
 									@back="closeTable"
-								/>
+								>
+									<!-- //// Neoffice — the buttons of the cards are in the bar itself, beside the name on a wide pane (NeoResto lot 1, product owner, 03.11.2026: « fusionner le bandeau et la ligne des cartes ») -->
+									<template v-if="restaurantStore.shownCards.length > 0" #middle>
+										<!-- //// Neoffice — the row of card buttons is a component since NeoResto lot 1, task 25: it marks the cards opened by hand and ends with the « ⋯ » that fetches a card the opening hours keep off the till. -->
+										<RestaurantCardTabs
+											:cards="restaurantStore.shownCards"
+											:selected="selectedCard"
+											@select="
+												selectedCard = $event;
+												selectedCardCategory = null;
+											"
+											@close-card="restaurantStore.closeCardOpenedByHand($event)"
+										/>
+									</template>
+								</TableHeaderBar>
 
 								<!-- Restaurant Card Display (replaces items grid when cards are active) -->
 								<!-- //// Neoffice — the cards on the till are the store's shownCards: those of the hours, and the ones a -->
@@ -588,34 +602,17 @@
 									"
 									class="flex flex-col flex-1 min-h-0 overflow-hidden"
 								>
-									<!-- //// Neoffice — the row of card buttons is a component since NeoResto lot 1, task 25: it marks the cards -->
-									<!-- //// opened by hand and ends with the « ⋯ » that fetches a card the opening hours keep off the till. -->
-									<!-- //// Neoffice — three lines above the dishes instead of four (NeoResto lot 1, product owner, 03.11.2026: « une, deux, trois, quatre lignes au sommet avant d'avoir les articles »): -->
-									<!-- //// the card buttons carry the search and the grid / list switch at their end (the `aside` slot; they wrap under it on a narrow pane), then the families, as big as a card button. -->
-									<RestaurantCardTabs
-										:cards="restaurantStore.shownCards"
-										:selected="selectedCard"
-										@select="
-											selectedCard = $event;
-											selectedCardCategory = null;
-										"
-										@close-card="restaurantStore.closeCardOpenedByHand($event)"
-									>
-										<template #aside>
-											<CardSearchBar
-												v-model:query="cardSearchQuery"
-												v-model:view="cardViewMode"
-											/>
-										</template>
-									</RestaurantCardTabs>
 									<!-- Category sub-filters -->
 									<!-- //// Neoffice — families sized/shaped like a card button (2d9d148 "feat(restaurant-till): three lines above the dishes instead of four, the families as big as a card button; the editor's menu rows say their name and price") -->
 									<CardFamilyChips
-										v-if="cardCategories.length > 0"
 										:families="cardCategories"
 										:selected="selectedCardCategory"
 										@select="selectedCardCategory = $event"
-									/>
+									>
+										<template #aside>
+											<CardSearchBar v-model:query="cardSearchQuery" v-model:view="cardViewMode" />
+										</template>
+									</CardFamilyChips>
 									<!-- //// Neoffice — the sub-categories of the category chosen, one level under its chip (NeoResto lot 1, product owner, 03.11.2026): « Boissons » then « Bières », « Vins blancs »… -->
 									<CardFamilyChips
 										v-if="cardSubcategories.length > 0"

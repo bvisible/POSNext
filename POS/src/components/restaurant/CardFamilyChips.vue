@@ -3,12 +3,15 @@
 	<!-- //// dessus des cartes… c'est un petit peu petit, on ne les voit pas très bien »). They were 10-12 px chips, 24 px high, under card buttons of 34 px: they now wear the same size, -->
 	<!-- //// the same corner and the same border as a card button (RestaurantCardTabs.vue), so that the two rows read as one family of buttons. One component for both levels: the categories, -->
 	<!-- //// then the sub-categories of the category chosen (`level="sub"`, which keeps its colour dot). -->
+	<!-- //// Neoffice — the `aside` slot is where the search and the grid / list switch stand, at the end of the row of the families (NeoResto lot 1, product owner, 03.11.2026): side by side where the pane is wide enough, the search under the families where it is not -->
 	<div
+		v-if="chips.length > 0 || $slots.aside"
 		class="px-1.5 sm:px-3 py-1.5 bg-white border-b border-gray-200"
 		:data-card-chips="level"
 		v-bind="level === 'sub' ? { 'data-card-subchips': '' } : {}"
 	>
-		<div class="flex items-center gap-1 sm:gap-2 overflow-x-auto scrollbar-hide">
+		<div class="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+		<div v-if="chips.length > 0" class="flex min-w-0 flex-[1_1_320px] items-center gap-1 sm:gap-2 overflow-x-auto py-1 -my-1 scrollbar-hide">
 			<button
 				type="button"
 				data-chip="all"
@@ -37,6 +40,10 @@
 				/>
 				{{ chip.label }}
 			</button>
+		</div>
+		<div v-if="$slots.aside" data-test="card-chips-aside" class="flex min-w-0 max-w-[380px] flex-[1_1_300px] items-center">
+			<slot name="aside" />
+		</div>
 		</div>
 	</div>
 </template>

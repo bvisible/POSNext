@@ -5,13 +5,16 @@
 	<!-- //// of the restaurant's cards, where a few cards (or one more button) pushed it off a phone's screen; here it is -->
 	<!-- //// always in view, whatever the width, and it is a 44 px touch target (NeoResto lot 1, product owner: a waiter -->
 	<!-- //// shows the table's code on his phone to the guests, who scan it). It was in POSSale.vue (c5208ba7 2026-03-28). -->
+	<!-- //// Neoffice — the buttons of the cards sit in this bar's `middle` slot (NeoResto lot 1, product owner, 03.11.2026: « fusionner le bandeau et la ligne des cartes »): between the name and QR / Back on a wide pane, under them on a narrow one (the bar measures itself) -->
 	<div
-		class="flex items-center justify-between gap-2 px-4 py-2 border-b-2"
-		:class="
+		ref="root"
+		class="flex items-center justify-between gap-x-3 gap-y-2 px-4 py-2 border-b-2"
+		:class="[
+			wide ? 'flex-nowrap' : 'flex-wrap',
 			isTakeaway
 				? 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-300'
-				: 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'
-		"
+				: 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200',
+		]"
 		data-test="table-header-bar"
 	>
 		<div class="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
@@ -40,6 +43,14 @@
 			>
 				{{ kdsStatusLabel }}
 			</div>
+		</div>
+		<div
+			v-if="$slots.middle"
+			data-test="table-header-middle"
+			class="min-w-0"
+			:class="wide ? 'flex-1' : 'order-last basis-full'"
+		>
+			<slot name="middle" />
 		</div>
 		<div class="flex flex-shrink-0 items-center gap-2">
 			<!-- The QR code of the table: always here, never in the row of the cards, at every width -->
@@ -88,6 +99,24 @@
 
 <script setup>
 import { FeatherIcon } from "frappe-ui"
+import { onBeforeUnmount, onMounted, ref } from "vue"
+
+// //// Neoffice — the width from which the name, the buttons of the cards and QR / Back share one line: the name and the status (about 250 px), the cards with their « ⋯ » (about 310 px), QR and Back (about 180 px)
+const WIDE_FROM = 860
+const root = ref(null)
+const wide = ref(false)
+let observer = null
+const measure = () => {
+	if (root.value) wide.value = root.value.clientWidth >= WIDE_FROM
+}
+onMounted(() => {
+	measure()
+	if (typeof ResizeObserver !== "undefined" && root.value) {
+		observer = new ResizeObserver(measure)
+		observer.observe(root.value)
+	}
+})
+onBeforeUnmount(() => observer?.disconnect())
 
 defineProps({
 	// The table's label, or the takeaway ticket's number
