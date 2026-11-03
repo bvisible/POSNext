@@ -21994,3 +21994,61 @@ msgstr "Ticket par famille"
 #: pos_next/pos_next/doctype/preparation_station/preparation_station.json:110
 msgid "When a send holds several families (starters, mains, desserts), print one ticket for each, numbered in the order of the meal, instead of one ticket with sections. A ticket can then leave with its plates."
 msgstr "Lorsqu'un envoi comporte plusieurs familles (entrées, plats, desserts), imprimez un ticket pour chacune, numéroté dans l'ordre du repas, au lieu d'un seul ticket avec des sections. Chaque ticket peut alors partir avec ses assiettes."
+
+#: pos_next/restaurant/card_plan.py:754
+msgid "An article of this step is already in an order: the step cannot be taken back."
+msgstr "Un article de cette étape figure déjà dans une commande : l'étape ne peut pas être annulée."
+
+#: pos_next/restaurant/card_plan.py:66
+msgid "Building the card with Nora is not available"
+msgstr "La construction de la carte avec Nora n'est pas disponible"
+
+#: pos_next/restaurant/card_plan.py:365
+#, python-brace-format
+msgid "Colour {0} of {1} is not in the palette: left out."
+msgstr "La couleur {0} de {1} ne fait pas partie de la palette : elle est ignorée."
+
+#: pos_next/restaurant/card_plan.py:210
+msgid "Main card"
+msgstr "Carte principale"
+
+#: pos_next/restaurant/card_plan.py:376
+msgid "No group of the restaurant carries the VAT: the families go under the root of the groups."
+msgstr "Aucun groupe du restaurant ne porte la TVA : les familles sont rangées sous la racine des groupes."
+
+#: pos_next/restaurant/card_plan.py:141
+msgid "Nothing to propose: name at least one family with one article in it."
+msgstr "Rien à proposer : nommez au moins une famille contenant un article."
+
+#: pos_next/restaurant/card_plan.py:271
+#, python-brace-format
+msgid "Service family {0} of {1} is not known: left out."
+msgstr "La famille de service {0} de {1} est inconnue : elle est ignorée."
+
+#: pos_next/restaurant/card_plan.py:280
+#, python-brace-format
+msgid "The restaurant has no station {0}: {1} is not tied to one."
+msgstr "Le restaurant n'a pas de poste {0} : {1} n'est rattaché à aucun."
+
+#: pos_next/restaurant/card_plan.py:241 pos_next/restaurant/card_plan.py:399
+msgid "The site has no restaurant to build the card for"
+msgstr "Le site n'a aucun restaurant pour lequel construire la carte."
+
+#: pos_next/restaurant/card_plan.py:187
+msgid "The site has no selling price list"
+msgstr "Le site n'a pas de liste de prix de vente."
+
+#: pos_next/restaurant/card_plan.py:289
+#, python-brace-format
+msgid "{0} already exists: its own settings are kept."
+msgstr "{0} existe déjà : ses propres paramètres sont conservés."
+
+#: pos_next/restaurant/card_plan.py:326
+#, python-brace-format
+msgid "{0} is disabled: left as it is."
+msgstr "{0} est désactivé : il reste tel quel."
+
+#: pos_next/restaurant/card_plan.py:286
+#, python-brace-format
+msgid "{0} is outside the restaurant's groups: its VAT is its own."
+msgstr "{0} ne fait pas partie des groupes du restaurant : sa TVA lui est propre."
