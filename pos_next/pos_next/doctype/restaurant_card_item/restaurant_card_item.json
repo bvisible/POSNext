@@ -5,6 +5,7 @@
  "field_order": [
   "item_type",
   "label",
+  "is_subcategory",
   "item",
   "menu",
   "price",
@@ -28,6 +29,14 @@
    "in_list_view": 1,
    "label": "Label",
    "columns": 2
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.item_type=='Category'",
+   "description": "A heading under the category above it (« Wines » under « Drinks »): the till, the phone, the guest's page and the printed card show it as a second level.",
+   "fieldname": "is_subcategory",
+   "fieldtype": "Check",
+   "label": "Sub-category"
   },
   {
    "depends_on": "eval:doc.item_type=='Item'",

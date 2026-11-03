@@ -194,6 +194,8 @@ def _sections(card, lang: str) -> list[dict]:
 	fields = ["item_type", "label", "item", "price", "disabled"]
 	if frappe.get_meta("Restaurant Card Item").has_field("custom_price_text"):
 		fields.append("custom_price_text")
+	if frappe.db.has_column("Restaurant Card Item", "is_subcategory"):
+		fields.append("is_subcategory")
 	rows = frappe.get_all(
 		"Restaurant Card Item",
 		filters={"parent": card.name, "parenttype": "Restaurant Card", "parentfield": "items"},
@@ -210,13 +212,20 @@ def _sections(card, lang: str) -> list[dict]:
 
 	sections = []
 	section = {"label": "", "items": []}
+	top_label = ""
 	for row in rows:
 		if cint(row.disabled):
 			continue
 		if row.item_type == "Category":
 			if section["items"]:
 				sections.append(section)
-			section = {"label": cstr(row.label).strip(), "items": []}
+			# //// Neoffice — a sub-category is read under its category, « Drinks · Wines » (a second level, product owner, 03.11.2026)
+			label = cstr(row.label).strip()
+			if cint(row.get("is_subcategory")) and top_label:
+				section = {"label": f"{top_label} · {label}", "items": []}
+			else:
+				top_label = label
+				section = {"label": label, "items": []}
 		elif row.item_type == "Item" and row.item:
 			item = items.get(row.item)
 			if item and _is_for_sale(item):

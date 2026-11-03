@@ -2194,6 +2194,11 @@ def _card_is_in_its_dates(card, today):
 	return True
 
 
+def _sub_category_field():
+	"""The `is_subcategory` column of the card rows, as a list to spread into a field list: empty until the migration has made it."""
+	return ["is_subcategory"] if frappe.db.has_column("Restaurant Card Item", "is_subcategory") else []
+
+
 def _card_with_items(card):
 	"""A card of the till's list with its items, as the till sells from them (the disabled ones left out)."""
 	return _cards_with_items([card])[0]
@@ -2211,7 +2216,8 @@ def _cards_with_items(cards):
 		items = frappe.get_all(
 			"Restaurant Card Item",
 			filters={"parent": card.name},
-			fields=["item_type", "label", "item", "menu", "price", "sort_order", "disabled"],
+			# //// Neoffice — a heading may be a sub-category: a second level under the category above it
+			fields=["item_type", "label", "item", "menu", "price", "sort_order", "disabled", *_sub_category_field()],
 			order_by="sort_order asc, idx asc",
 		)
 		shown.append((card, items))
@@ -3910,6 +3916,10 @@ def get_item_edit_data(item_code, pos_profile=None):
 		"description": clean_desc,
 		"image": item.image or "",
 		"custom_color": item.custom_color or "",
+		# //// Neoffice — the colour the dish takes when it has none of its own: its item group's (its own, else the nearest up the tree), with the group's name, so that the
+		# //// panel can say it and give it back (product owner, 03.11.2026: « reprendre celle de la catégorie, mais pouvoir la modifier par article »)
+		"item_group": item.item_group,
+		"service_color": service_families.color_of_group(item.item_group),
 		"is_stock_item": item.is_stock_item,
 		"standard_rate": flt(item.standard_rate),
 		"price_list_rate": flt(price_list_rate),
@@ -4112,10 +4122,12 @@ def update_item_active(item_code, disabled=0, scope="local", card_name=None):
 
 @frappe.whitelist()
 def get_card_items_extra(card_name):
-	"""Return description + badges for all items in a card (for list display)."""
+	"""Return what the editor's list shows of each item of a card: description, badges, spice, and (NeoResto lot 1, product owner, 03.11.2026: « sans aucun clic, on ne voit pas
+	grand-chose ») its name, picture, colour (its own, else its item group's), item group and global price."""
 	permissions.require("Restaurant Card", "read", card_name)
 	card = frappe.get_doc("Restaurant Card", card_name)
 	result = {}
+	colors = service_families.group_colors()
 
 	for ci in card.items:
 		if ci.item_type != "Item" or not ci.item:
@@ -4148,6 +4160,13 @@ def get_card_items_extra(card_name):
 			"description": clean_desc,
 			"badges": badges,
 			"spice_level": int(item_doc.get("custom_spice_level") or 0),
+			# //// Neoffice — what the list of the card editor shows without a click
+			"item_name": item_doc.item_name,
+			"image": item_doc.get("image") or "",
+			"custom_color": item_doc.get("custom_color") or "",
+			"service_color": colors.get(item_doc.item_group, ""),
+			"item_group": item_doc.item_group,
+			"default_price": flt(item_doc.get("standard_rate")),
 		}
 
 	return result
@@ -4240,6 +4259,8 @@ def get_card_items_with_badges(card_name):
 	card = frappe.get_doc("Restaurant Card", card_name)
 	categories = []
 	current_category = {"label": "", "menu_items": []}
+	# //// Neoffice — a sub-category stands under the last category that is not one (product owner, 03.11.2026): the printed card draws its title one step smaller
+	top_label = ""
 
 	for card_item in card.items:
 		if card_item.get("disabled"):
@@ -4248,7 +4269,11 @@ def get_card_items_with_badges(card_name):
 		if card_item.item_type == "Category":
 			if current_category["menu_items"] or current_category["label"]:
 				categories.append(current_category)
-			current_category = {"label": card_item.label or "", "menu_items": []}
+			if cint(card_item.get("is_subcategory")) and top_label:
+				current_category = {"label": card_item.label or "", "parent": top_label, "menu_items": []}
+			else:
+				top_label = card_item.label or ""
+				current_category = {"label": top_label, "menu_items": []}
 			continue
 
 		if card_item.item_type != "Item" or not card_item.item:
@@ -4310,8 +4335,10 @@ def get_card_items_with_badges(card_name):
 	if current_category["menu_items"]:
 		categories.append(current_category)
 
-	# Filter out empty categories (all items disabled)
-	categories = [c for c in categories if c["menu_items"]]
+	# Filter out empty categories (all items disabled); a category that has sub-categories only keeps its title
+	# //// Neoffice — the title of a category whose dishes all stand under its sub-categories (« Drinks » over « Wines »)
+	parents = {c["parent"] for c in categories if c.get("parent") and c["menu_items"]}
+	categories = [c for c in categories if c["menu_items"] or c["label"] in parents]
 
 	return {
 		"card": {

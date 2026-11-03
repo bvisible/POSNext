@@ -110,7 +110,7 @@
 					{{ __("All") }}
 				</button>
 				<button
-					v-for="one in sections.chips"
+					v-for="one in topChips"
 					:key="one.key"
 					type="button"
 					data-type-chip
@@ -118,6 +118,25 @@
 					:class="chipClasses(activeChip === one.key)"
 					:style="chipStyle(one, activeChip === one.key)"
 					@click="chip = one.key"
+				>
+					{{ one.label }}
+				</button>
+			</nav>
+			<!-- //// Neoffice — the sub-categories of the category chosen, one level under its chip (NeoResto lot 1, product owner, 03.11.2026) -->
+			<nav
+				v-if="subChips.length > 0"
+				class="flex gap-1.5 px-3 pb-2 overflow-x-auto phone-order__strip whitespace-nowrap shrink-0"
+				data-sub-chips
+			>
+				<button
+					v-for="one in subChips"
+					:key="one.key"
+					type="button"
+					data-sub-chip
+					:aria-pressed="String(activeChip === one.key)"
+					:class="chipClasses(activeChip === one.key)"
+					:style="chipStyle(one, activeChip === one.key)"
+					@click="chip = activeChip === one.key ? activeTop : one.key"
 				>
 					{{ one.label }}
 				</button>
@@ -239,6 +258,10 @@ watch(
 	},
 )
 const activeChip = computed(() => (sections.value.chips.some((one) => one.key === chip.value) ? chip.value : null))
+// //// Neoffice — two rows of chips: the categories, then the sub-categories of the one chosen (itself, or the one its sub-category stands under)
+const topChips = computed(() => sections.value.chips.filter((one) => !one.parent))
+const activeTop = computed(() => sections.value.chips.find((one) => one.key === activeChip.value)?.parent || activeChip.value)
+const subChips = computed(() => (activeTop.value ? sections.value.chips.filter((one) => one.parent === activeTop.value) : []))
 
 // Pictures only where the till asks for them (POS Settings.phone_card_pictures, off by default)
 const pictures = computed(() => Boolean(Number(settingsStore.settings?.phone_card_pictures)))
@@ -274,9 +297,15 @@ const buttons = computed(() =>
 		}
 	}),
 )
-const shownButtons = computed(() =>
-	activeChip.value === null ? buttons.value : buttons.value.filter((button) => button.chip === activeChip.value),
-)
+// A category chosen shows its own dishes and those of its sub-categories; a sub-category chosen, its own
+const topOf = computed(() => new Map(sections.value.buttons.map(({ key, top }) => [key, top])))
+const shownButtons = computed(() => {
+	if (activeChip.value === null) return buttons.value
+	const isSub = sections.value.chips.some((one) => one.key === activeChip.value && one.parent)
+	return buttons.value.filter((button) =>
+		isSub ? button.chip === activeChip.value : topOf.value.get(button.key) === activeChip.value,
+	)
+})
 
 const orderName = computed(() =>
 	cartStore.isTakeaway

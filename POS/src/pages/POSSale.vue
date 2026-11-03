@@ -633,6 +633,33 @@
 											</button>
 										</div>
 									</div>
+									<!-- //// Neoffice — the sub-categories of the category chosen, one level under its chip (NeoResto lot 1, product owner, 03.11.2026): « Boissons » then « Bières », « Vins blancs »… -->
+									<div
+										v-if="cardSubcategories.length > 0"
+										class="px-1.5 sm:px-3 py-1 bg-white border-b border-gray-100"
+										data-card-subchips
+									>
+										<div class="flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
+											<button
+												@click="selectedCardSub = null"
+												class="px-3 py-1 rounded-full border text-[10px] sm:text-xs font-medium whitespace-nowrap transition-colors"
+												:class="!selectedCardSub ? 'border-gray-400 bg-gray-100 text-gray-800' : 'border-gray-200 text-gray-500 hover:bg-gray-50'"
+											>
+												{{ __("All") }}
+											</button>
+											<button
+												v-for="sub in cardSubcategories"
+												:key="sub.label"
+												@click="selectedCardSub = sub.label"
+												class="px-3 py-1 rounded-full border text-[10px] sm:text-xs font-medium whitespace-nowrap transition-colors inline-flex items-center gap-1.5"
+												:class="selectedCardSub === sub.label ? 'border-gray-400 bg-gray-100 text-gray-800' : 'border-gray-200 text-gray-500 hover:bg-gray-50'"
+												:style="sub.color && selectedCardSub === sub.label ? { borderColor: sub.color, borderWidth: '2px' } : null"
+											>
+												<span v-if="sub.color" class="h-2 w-2 rounded-full" :style="{ backgroundColor: sub.color }" />
+												{{ sub.label }}
+											</button>
+										</div>
+									</div>
 									<!-- Search + view toggle -->
 									<div
 										class="px-1.5 sm:px-3 py-1.5 sm:py-2 bg-white border-b border-gray-200"
@@ -720,6 +747,7 @@
 											v-if="cardViewMode === 'grid'"
 											:groups="filteredCardGroups"
 											:show-categories="!selectedCardCategory"
+											:show-subcategories="!selectedCardSub"
 											:tiles-per-row="posSettingsStore.settings.tiles_per_row"
 											:pictures="settingIsOn(posSettingsStore.settings.till_card_pictures)"
 											:colors="settingIsOn(posSettingsStore.settings.tile_colors)"
@@ -743,7 +771,7 @@
 												:key="'l' + gi"
 											>
 												<div
-													v-if="group.category && !selectedCardCategory"
+													v-if="group.category && !selectedCardCategory && !group.subcategory"
 													class="bg-white border-b border-gray-200 px-3 py-1.5 mt-3 first:mt-0 rounded-t-lg"
 												>
 													<h3
@@ -751,6 +779,12 @@
 													>
 														{{ group.category }}
 													</h3>
+												</div>
+												<div
+													v-if="group.subcategory && !selectedCardSub"
+													class="px-3 py-1 mt-2 text-xs font-semibold text-gray-600 bg-white border-b border-gray-100"
+												>
+													{{ group.subcategory }}
 												</div>
 												<div
 													v-for="(li_item, li) in group.items"
@@ -2287,6 +2321,7 @@ import RestaurantCardGrid from "@/components/restaurant/RestaurantCardGrid.vue";
 import PhoneOrderScreen from "@/components/restaurant/phone/PhoneOrderScreen.vue";
 import PhoneOptionsSheet from "@/components/restaurant/phone/PhoneOptionsSheet.vue";
 import { PHONE_MAX_WIDTH, phoneOrderShown as tillShowsPhoneOrder } from "@/utils/phoneCard";
+import { categoriesOfCard, groupsOfCard, subcategoriesOf, visibleGroups } from "@/utils/cardGroups";
 //// Neoffice — what the options of a line loaded from a server draft add to its price (task 27, fix round 1).
 import { modifiersPriceAdjustment } from "@/utils/modifiersPrice";
 import InvoiceManagement from "@/components/invoices/InvoiceManagement.vue";
@@ -2554,41 +2589,22 @@ const { showQRDialog, currentQR, handleQRButtonClick } = useTableQR({
 });
 const cardSearchQuery = ref("");
 const cardViewMode = ref("grid");
-const cardCategories = computed(() => {
-	return selectedCardItems.value.filter((i) => i.item_type === "Category").map((i) => i.label);
+//// Neoffice — a card has two levels (NeoResto lot 1, product owner, 03.11.2026): its categories, and under each its sub-categories (utils/cardGroups.js); the chips choose a category,
+//// then one of its sub-categories
+const cardCategories = computed(() => categoriesOfCard(selectedCardItems.value));
+const selectedCardSub = ref(null);
+const cardSubcategories = computed(() => subcategoriesOf(cardItemGroups.value, selectedCardCategory.value));
+watch(selectedCardCategory, () => {
+	selectedCardSub.value = null;
 });
-const filteredCardGroups = computed(() => {
-	let groups = cardItemGroups.value;
-	if (selectedCardCategory.value) {
-		const group = groups.find((g) => g.category === selectedCardCategory.value);
-		groups = group ? [{ category: null, items: group.items }] : [];
-	}
-	// Apply search filter
-	const q = cardSearchQuery.value?.toLowerCase().trim();
-	if (!q) return groups;
-	return groups
-		.map((g) => ({
-			category: g.category,
-			items: g.items.filter((i) =>
-				(i.item_name || i.menu_name || i.label || "").toLowerCase().includes(q)
-			),
-		}))
-		.filter((g) => g.items.length > 0);
-});
-const cardItemGroups = computed(() => {
-	const groups = [];
-	let current = { category: null, items: [] };
-	for (const item of selectedCardItems.value) {
-		if (item.item_type === "Category") {
-			if (current.items.length > 0 || current.category) groups.push(current);
-			current = { category: item.label, items: [] };
-		} else {
-			current.items.push(item);
-		}
-	}
-	if (current.items.length > 0 || current.category) groups.push(current);
-	return groups;
-});
+const filteredCardGroups = computed(() =>
+	visibleGroups(cardItemGroups.value, {
+		category: selectedCardCategory.value,
+		subcategory: selectedCardSub.value,
+		query: cardSearchQuery.value,
+	})
+);
+const cardItemGroups = computed(() => groupsOfCard(selectedCardItems.value));
 //// Neoffice — shownCards, not activeCards: a card opened by hand is a card of the row (NeoResto lot 1, task 25).
 const selectedCardItems = computed(() => {
 	if (!selectedCard.value) return [];

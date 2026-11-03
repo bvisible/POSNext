@@ -161,6 +161,21 @@
 			<div v-if="can.edit_items">
 				<label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{{ __('Display Color') }}</label>
 				<div class="flex flex-wrap gap-1.5 mt-1">
+					<!-- //// Neoffice — the colour of the item's family, which the dish takes while it has none of its own; a touch on it gives the family's colour back -->
+					<button
+						v-if="familyColor"
+						@click="editData.color = ''"
+						:class="[
+							'w-6 h-6 rounded-full border-2 transition-all duration-100',
+							!editData.color
+								? 'border-gray-900 scale-110 ring-2 ring-offset-1 ring-gray-400'
+								: 'border-dashed border-gray-400 hover:scale-105'
+						]"
+						:style="{ backgroundColor: familyColor }"
+						:title="__('Colour of the family {0}', [familyName])"
+						data-family-color
+						type="button"
+					/>
 					<button
 						v-for="c in colorPalette"
 						:key="c.hex"
@@ -179,7 +194,7 @@
 						v-if="editData.color"
 						@click="editData.color = ''"
 						class="w-6 h-6 rounded-full border border-dashed border-gray-300 flex items-center justify-center text-gray-400 hover:text-gray-600"
-						:title="__('Clear color')"
+						:title="familyColor ? __('Back to the colour of the family {0}', [familyName]) : __('Clear color')"
 						type="button"
 					>
 						<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -187,6 +202,11 @@
 						</svg>
 					</button>
 				</div>
+				<p v-if="familyColor" class="mt-1 text-[11px] leading-snug text-gray-500" data-family-color-hint>
+					{{ editData.color
+						? __('This item has its own colour. The family {0} has another.', [familyName])
+						: __('By default, the colour of the family {0}. Choose another one for this item only.', [familyName]) }}
+				</p>
 			</div>
 
 			<!-- Stock (read-only) -->
@@ -343,6 +363,8 @@ const confirmMode = ref("price") // "price" or "active"
 const pendingConfirmQueue = ref([]) // queue of confirmations needed
 
 const originalData = ref({})
+const familyColor = ref("")
+const familyName = ref("")
 const editData = ref({
 	globalPrice: 0,
 	cardPrice: 0,
@@ -459,6 +481,9 @@ async function loadData() {
 			pos_profile: shiftStore.profileName,
 		})
 		originalData.value = data
+		// //// Neoffice — the colour the dish takes from its item group while it has none, and the group's name (see get_item_edit_data)
+		familyColor.value = data.service_color || ""
+		familyName.value = data.item_group || ""
 
 		const globalPrice = data.price_list_rate || data.standard_rate || 0
 		editData.value = {

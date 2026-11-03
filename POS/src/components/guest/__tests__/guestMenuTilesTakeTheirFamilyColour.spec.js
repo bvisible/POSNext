@@ -102,3 +102,82 @@ describe("the guest's menu in the grid", () => {
 		expect(plain.classes()).not.toContain("tile--colored")
 	})
 })
+
+describe("the guest's menu with sub-categories", () => {
+	const SUBS = [
+		{ label: "Drinks", menu_items: [{ item_code: "C", item_name: "Cola", price: 5, service_color: "#5B9BD5" }] },
+		{ label: "Beers", parent: "Drinks", menu_items: [{ item_code: "L", item_name: "Lager", price: 5, service_color: "#E0980F" }] },
+		{ label: "Wines", parent: "Drinks", menu_items: [{ item_code: "G", item_name: "Gamay", price: 7, service_color: "#C1372C" }] },
+		{ label: "Desserts", menu_items: [{ item_code: "T", item_name: "Tiramisu", price: 11 }] },
+	]
+
+	async function subMenu() {
+		setActivePinia(createPinia())
+		useGuestOrderStore().menuCategories = SUBS
+		const wrapper = mount(GuestMenuView, { global: { mocks: { __: globalThis.__ } } })
+		await wrapper.vm.$nextTick()
+		return wrapper
+	}
+
+	const chipTexts = (wrapper) => wrapper.findAll("button").map((b) => b.text())
+
+	it("has chips for the categories only, until one is chosen", async () => {
+		const wrapper = await subMenu()
+
+		expect(wrapper.find("[data-guest-subchips]").exists()).toBe(false)
+		expect(chipTexts(wrapper)).toEqual(expect.arrayContaining(["Drinks", "Desserts"]))
+		expect(chipTexts(wrapper)).not.toContain("Beers")
+	})
+
+	it("shows the sub-categories of the category chosen, with the colour of their dishes", async () => {
+		const wrapper = await subMenu()
+		wrapper.vm.selectedCategory = "Drinks"
+		await wrapper.vm.$nextTick()
+		const chips = wrapper.get("[data-guest-subchips]")
+
+		expect(chips.text()).toContain("Beers")
+		expect(chips.text()).toContain("Wines")
+		expect(chips.findAll("span")[0].attributes("style")).toContain("background-color: rgb(224, 152, 15)")
+	})
+
+	it("names a sub-category with its category while no category is chosen", async () => {
+		const wrapper = await subMenu()
+
+		expect(wrapper.findAll("h3").map((h) => h.text())).toEqual(["Drinks", "Drinks · Beers", "Drinks · Wines", "Desserts"])
+	})
+
+	it("names a sub-category alone under its category, and nothing once one is chosen", async () => {
+		const wrapper = await subMenu()
+		wrapper.vm.selectedCategory = "Drinks"
+		await wrapper.vm.$nextTick()
+
+		expect(wrapper.findAll("h3").map((h) => h.text())).toEqual(["Beers", "Wines"])
+
+		wrapper.vm.selectedSub = "Wines"
+		await wrapper.vm.$nextTick()
+
+		expect(wrapper.findAll("h3")).toHaveLength(0)
+		expect(wrapper.text()).toContain("Gamay")
+		expect(wrapper.text()).not.toContain("Lager")
+	})
+
+	it("goes back to every sub-category when another category is chosen", async () => {
+		const wrapper = await subMenu()
+		wrapper.vm.selectedCategory = "Drinks"
+		wrapper.vm.selectedSub = "Wines"
+		await wrapper.vm.$nextTick()
+		wrapper.vm.selectedCategory = "Desserts"
+		await wrapper.vm.$nextTick()
+
+		expect(wrapper.vm.selectedSub).toBeNull()
+	})
+
+	it("keeps the chip of a category that has sub-categories only", async () => {
+		setActivePinia(createPinia())
+		useGuestOrderStore().menuCategories = SUBS.filter((c) => c.label !== "Drinks")
+		const wrapper = mount(GuestMenuView, { global: { mocks: { __: globalThis.__ } } })
+		await wrapper.vm.$nextTick()
+
+		expect(chipTexts(wrapper)).toEqual(expect.arrayContaining(["Drinks", "Desserts"]))
+	})
+})

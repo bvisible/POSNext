@@ -11,14 +11,24 @@
 <template>
 	<template v-for="(group, groupIndex) in groups" :key="'g' + groupIndex">
 		<div
-			v-if="group.category && showCategories"
+			v-if="group.category && showCategories && !group.subcategory"
 			class="bg-white border-b border-gray-200 px-3 py-1.5 mt-3 first:mt-0 rounded-t-lg"
 		>
 			<h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
 				{{ group.category }}
 			</h3>
 		</div>
+		<!-- //// Neoffice — a sub-category: a second level under its category (NeoResto lot 1, product owner, 03.11.2026), a heading with the colour of its dishes -->
 		<div
+			v-if="group.subcategory && showSubcategories"
+			class="mt-2 first:mt-0 flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-gray-600"
+			data-card-subcategory
+		>
+			<span v-if="groupColor(group)" class="h-2 w-2 rounded-full" :style="{ backgroundColor: groupColor(group) }" />
+			{{ group.subcategory }}
+		</div>
+		<div
+			v-if="group.items.length"
 			data-card-grid
 			:class="[
 				'grid gap-1.5 sm:gap-2.5',
@@ -37,7 +47,7 @@
 					greyedOut(item)
 						? 'opacity-50 ' + (counted(item) ? 'cursor-pointer' : 'cursor-not-allowed')
 						: 'cursor-pointer hover:shadow-neo-md ' + (tileColor(item) ? '' : 'hover:border-blue-400'),
-					fixed && isText(item) ? 'tile--text' : '',
+					isText(item) ? 'tile--text' : '',
 				]"
 				:style="tileStyle(item)"
 				@click="emit('pick', item)"
@@ -78,7 +88,7 @@
 				<div
 					:class="[
 						'relative aspect-square rounded-neo-sm mb-1.5 sm:mb-2 overflow-hidden',
-						fixed && isText(item) ? 'tile-well--text' : '',
+						isText(item) ? 'tile-well--text' : '',
 					]"
 					:style="wellStyle(item)"
 				>
@@ -87,7 +97,7 @@
 						v-else
 						:class="[
 							'w-full h-full flex items-center justify-center p-2',
-							fixed ? 'tile-well-name' : '',
+							'tile-well-name',
 						]"
 					>
 						<svg
@@ -160,6 +170,8 @@ const props = defineProps({
 	pictures: { type: Boolean, default: true },
 	// The till's « Colours of the tiles »: a tile takes the colour of its item, else of its item group
 	colors: { type: Boolean, default: true },
+	// The sub-category headings show while no sub-category is chosen
+	showSubcategories: { type: Boolean, default: true },
 })
 
 const emit = defineEmits(["pick", "add-portions"])
@@ -202,6 +214,18 @@ function tileStyle(item) {
 	return color ? { "--tile-edge": color, "--tile-soft": softTint(color), "--tile-dim": tintOf(color) } : {}
 }
 
+// The colour most of the dishes of a group carry (the first met wins a tie): that of its sub-category heading
+function groupColor(group) {
+	const counts = new Map()
+	for (const item of group.items) {
+		const color = tileColor(item)
+		if (color) counts.set(color, (counts.get(color) || 0) + 1)
+	}
+	let best = null
+	for (const [color, count] of counts) if (best === null || count > counts.get(best)) best = color
+	return best
+}
+
 function wellStyle(item) {
 	if (showsImage(item)) return {}
 	if (item.custom_color) return { backgroundColor: item.custom_color }
@@ -234,22 +258,21 @@ function nameClasses(item) {
 	background-color: var(--tile-dim);
 }
 
-/* //// Neoffice — the fixed grid (a number of tiles per row): each tile is measured by its own width. A dish
-   //// without a picture shows its name in a well shorter than a picture's, clear of the stock badge that
-   //// overhangs the corner, and not again under it; the price always shows whole. Nothing here touches the
-   //// automatic grid. */
+/* //// Neoffice — the fixed grid (a number of tiles per row): each tile is measured by its own width, the name of a dish of a picture shows on two lines at most and the price always
+   //// shows whole. */
 .tile-grid-fixed > [data-card-tile] {
 	container-type: inline-size;
 }
 
-/* The well of a dish without a picture holds three lines of its name at least, and takes the height its row
-   leaves: a row of names only is shorter than a row of pictures */
-.tile-grid-fixed .tile--text {
+/* //// Neoffice — a dish with no picture to show (the till shows none, or the dish has none) is a compact tile in every grid, the automatic one too: its name once, in a well as high as its
+   //// name needs and clear of the stock badge that overhangs the corner, its price under it; a row of names only is shorter than a row of pictures, and the well takes the height its row
+   //// leaves (product owner, 03.11.2026: « c'est affiché grand si on affiche sans photo ») */
+.tile--text {
 	display: flex;
 	flex-direction: column;
 }
 
-.tile-grid-fixed .tile-well--text {
+.tile-well--text {
 	aspect-ratio: auto;
 	min-height: 4.5rem;
 	flex: 1 0 auto;
@@ -257,24 +280,25 @@ function nameClasses(item) {
 	flex-direction: column;
 }
 
-.tile-grid-fixed .tile--text > div:last-child {
+.tile--text > div:last-child {
 	flex: 0 0 auto;
 }
 
-.tile-grid-fixed .tile-well-name {
+.tile--text .tile-well-name {
 	height: auto;
 	flex: 1 1 auto;
 	padding: 0.875rem 0.375rem 0.375rem;
 }
 
 /* A long word breaks rather than leaving the tile */
-.tile-grid-fixed .tile-well-name span,
-.tile-grid-fixed .tile-name-repeat {
+.tile-well-name span,
+.tile-name-repeat {
 	overflow-wrap: anywhere;
 	hyphens: auto;
 }
 
-.tile-grid-fixed .tile--text .tile-name-repeat {
+.tile--text .tile-name-repeat,
+.tile--text [data-tile-name] {
 	display: none;
 }
 

@@ -141,10 +141,14 @@ export function cardSections(entries, { familyColours = true } = {}) {
 	const sections = new Map()
 	const buttons = []
 	let current = null
+	// //// Neoffice — a sub-category stands one level under the last category that is not one (NeoResto lot 1, product owner, 03.11.2026): its chip names that category as its `parent`
+	let currentTop = null
 	rows.forEach((row, index) => {
 		if (row.item_type === "Category") {
 			current = `category:${index}`
-			sections.set(current, { key: current, label: row.label || "", entries: [] })
+			const isSub = Number(row.is_subcategory) && currentTop !== null
+			sections.set(current, { key: current, label: row.label || "", parent: isSub ? currentTop : null, entries: [] })
+			if (!isSub) currentTop = current
 			return
 		}
 		if (row.item_type !== "Item" && row.item_type !== "Menu") return
@@ -156,13 +160,25 @@ export function cardSections(entries, { familyColours = true } = {}) {
 		if (chip) sections.get(chip).entries.push(row)
 		buttons.push({ key: `entry:${index}`, entry: row, chip })
 	})
+	// A category counts the dishes of its sub-categories too: one with sub-categories only keeps its chip
+	const withChildren = (section) => [
+		...section.entries,
+		...[...sections.values()].filter((other) => other.parent === section.key).flatMap((other) => other.entries),
+	]
 	const chips = [...sections.values()]
-		.filter((section) => section.entries.length > 0)
-		.map((section) => ({ key: section.key, label: section.label, color: commonColour(section.entries, familyColours) }))
+		.filter((section) => withChildren(section).length > 0)
+		.map((section) => ({
+			key: section.key,
+			label: section.label,
+			parent: section.parent,
+			color: commonColour(withChildren(section), familyColours),
+		}))
 	const colourOfChip = new Map(chips.map((chip) => [chip.key, chip.color]))
 	for (const button of buttons) {
 		const own = colourOf(button.entry, familyColours)
 		button.color = own || colourOfChip.get(button.chip) || null
+		// The category the button belongs to at the first level: its chip, or the chip its sub-category stands under
+		button.top = sections.get(button.chip)?.parent || button.chip
 	}
 	return { chips, buttons }
 }

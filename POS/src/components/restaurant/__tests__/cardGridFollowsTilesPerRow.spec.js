@@ -73,11 +73,12 @@ describe("the restaurant's card grid", () => {
 		for (const tile of [dish, pictured, menu]) expect(tile.find("[data-tile-price]").exists()).toBe(true)
 	})
 
-	it("adds nothing to the tiles of the automatic grid", () => {
+	it("adds nothing to the tiles of a picture in the automatic grid, and makes a dish without one a compact tile", () => {
 		grid("Automatic")
 
 		for (const tile of wrapper.findAll("[data-card-tile]")) {
-			expect(tile.classes()).not.toContain("tile--text")
+			// A dish with no picture to show is a compact tile in every grid (product owner, 03.11.2026); the rest of the fixed grid's work stays with it
+			expect(tile.classes().includes("tile--text")).toBe(!tile.find("img").exists() && !tile.text().includes("Menu"))
 			expect(tile.find(".tile-name-repeat").exists()).toBe(false)
 			expect(tile.find(".tile-price").exists()).toBe(false)
 		}

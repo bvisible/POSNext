@@ -188,6 +188,8 @@
 							</div>
 
 							<!-- Card items -->
+							<!-- //// Neoffice — what a row says without a click (NeoResto lot 1, product owner, 03.11.2026: « sans aucun clic, on ne voit pas grand-chose »): the picture or the colour of the dish, its name and its code,
+							     //// its family, its description and badges, its price (the card's, else the global one in grey), and a heading may be a sub-category, one level under the category above it -->
 							<div class="space-y-1">
 								<div v-for="(item, idx) in cardDetail.items" :key="idx"
 									draggable="true"
@@ -196,31 +198,47 @@
 									@drop="onDrop(idx)"
 									@dragend="dragIdx = null"
 									@click="item.item_type === 'Item' && selectItemForBadges(item, idx)"
+									data-card-row
 									class="flex items-center gap-2 px-3 py-2 rounded-lg transition-all cursor-pointer"
 									:class="[
 										item.item_type === 'Category'
-											? 'bg-amber-50 border border-amber-200 font-bold text-amber-800 mt-3 first:mt-0'
-											: 'bg-white border border-gray-100 hover:border-gray-200 ml-4',
+											? (item.is_subcategory
+												? 'bg-white border border-amber-200 font-semibold text-amber-700 mt-2 ml-4'
+												: 'bg-amber-50 border border-amber-200 font-bold text-amber-800 mt-3 first:mt-0')
+											: 'bg-white border border-gray-100 hover:border-gray-200 ' + (levels[idx] === 2 ? 'ml-8' : 'ml-4'),
 										dragOverIdx === idx ? 'border-blue-400 border-2' : '',
 										item.disabled ? 'opacity-40' : '',
 										selectedBadgeItemIdx === idx ? 'ring-2 ring-emerald-400' : ''
-									]">
+									]"
+									:style="item.item_type === 'Item' && colorOf(item) ? { borderLeft: `4px solid ${colorOf(item)}` } : null">
 
 									<!-- Drag handle -->
 									<span class="text-gray-300 cursor-grab active:cursor-grabbing select-none">&#x2807;</span>
 
 									<!-- Category or Item content -->
-									<span v-if="item.item_type === 'Category'" class="text-amber-500 text-sm font-bold uppercase tracking-wider flex-1">
-										{{ item.label || __("Category") }}
-									</span>
+									<template v-if="item.item_type === 'Category'">
+										<span class="text-sm uppercase tracking-wider flex-1" :class="item.is_subcategory ? 'text-amber-600' : 'text-amber-500 font-bold'">
+											{{ item.label || __("Category") }}
+										</span>
+										<span v-if="item.is_subcategory" class="text-xs font-medium normal-case text-amber-600 bg-amber-50 rounded px-1.5 py-0.5">{{ __("Sub-category") }}</span>
+									</template>
 									<template v-else>
 										<!-- Active indicator -->
 										<span class="w-2 h-2 rounded-full flex-shrink-0"
 											:class="item.disabled ? 'bg-gray-300' : 'bg-green-500'"
 											:title="item.disabled ? __('Disabled') : __('Active')"></span>
+										<!-- The dish's picture, else its colour with its initial -->
+										<img v-if="itemExtraData[item.item]?.image" :src="itemExtraData[item.item].image" alt="" loading="lazy"
+											class="w-10 h-10 rounded-lg object-cover flex-shrink-0" data-row-image />
+										<span v-else class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 text-sm font-bold text-gray-600"
+											:style="{ backgroundColor: colorOf(item) ? tintOf(colorOf(item)) : '#F3F4F6' }" data-row-initial>
+											{{ initialOf(item) }}
+										</span>
 										<div class="flex-1 min-w-0">
-											<div class="flex items-center gap-1.5">
-												<span class="text-base" :class="item.disabled ? 'text-gray-400 line-through' : ''">{{ item.label || item.item_name || item.item }}</span>
+											<div class="flex items-center gap-1.5 flex-wrap">
+												<span class="text-base" :class="item.disabled ? 'text-gray-400 line-through' : ''" data-row-name>{{ nameOf(item) }}</span>
+												<span v-if="nameOf(item) !== item.item" class="text-xs text-gray-400">{{ item.item }}</span>
+												<span v-if="itemExtraData[item.item]?.item_group" class="text-xs text-gray-500 bg-gray-100 rounded px-1.5 py-0.5" data-row-group>{{ itemExtraData[item.item].item_group }}</span>
 												<!-- Spice level -->
 												<span v-if="itemExtraData[item.item]?.spice_level" class="flex gap-0 flex-shrink-0" :title="__('Spice level {0}', [itemExtraData[item.item].spice_level])">
 													<span v-for="s in itemExtraData[item.item].spice_level" :key="s" class="text-xs leading-none">🌶</span>
@@ -248,7 +266,7 @@
 												</div>
 											</div>
 											<!-- Description (1 line, truncated) -->
-											<div v-if="itemExtraData[item.item]?.description" class="text-xs text-gray-400 mt-0.5 truncate max-w-[300px]">
+											<div v-if="itemExtraData[item.item]?.description" class="text-xs text-gray-400 mt-0.5 truncate max-w-[420px]">
 												{{ itemExtraData[item.item].description }}
 											</div>
 											<!-- Stock display -->
@@ -260,14 +278,18 @@
 												<span v-if="stockData[item.item].length === 0" class="text-red-500">{{ __("Out of stock") }}</span>
 											</div>
 										</div>
-										<!-- Price as text -->
-										<span class="text-base font-medium text-gray-700 flex-shrink-0 tabular-nums">
-											{{ item.price || 0 }}
-										</span>
+										<!-- The price: the card's own, else the global price in grey -->
+										<div class="text-right flex-shrink-0 tabular-nums" data-row-price>
+											<span v-if="Number(item.price)" class="text-base font-medium text-gray-700">{{ formatPrice(item.price) }}</span>
+											<template v-else>
+												<span class="text-base font-medium text-gray-400">{{ formatPrice(itemExtraData[item.item]?.default_price || 0) }}</span>
+												<div class="text-xs text-gray-400 leading-none">{{ __("Global") }}</div>
+											</template>
+										</div>
 									</template>
 
 									<!-- Delete -->
-									<button @click="cardDetail.items.splice(idx, 1)" class="text-gray-300 hover:text-red-500 transition-colors flex-shrink-0">
+									<button @click.stop="cardDetail.items.splice(idx, 1)" class="text-gray-300 hover:text-red-500 transition-colors flex-shrink-0">
 										<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
 										</svg>
@@ -277,12 +299,19 @@
 
 							<!-- Add buttons -->
 							<div class="flex gap-2 mt-4">
-								<button @click="showCategoryDialog = true"
+								<button @click="openCategoryDialog(false)"
 									class="flex-1 py-2 text-sm font-medium text-amber-700 bg-amber-50 rounded-lg border border-dashed border-amber-300 hover:bg-amber-100 transition-colors flex items-center justify-center gap-1">
 									<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
 									</svg>
 									{{ __("Category") }}
+								</button>
+								<button data-add-subcategory @click="openCategoryDialog(true)"
+									class="flex-1 py-2 text-sm font-medium text-amber-700 bg-amber-50 rounded-lg border border-dashed border-amber-300 hover:bg-amber-100 transition-colors flex items-center justify-center gap-1">
+									<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+									</svg>
+									{{ __("Sub-category") }}
 								</button>
 								<button @click="showItemSearchDialog = true"
 									class="flex-1 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg border border-dashed border-blue-300 hover:bg-blue-100 transition-colors flex items-center justify-center gap-1">
@@ -326,7 +355,7 @@
 	/>
 
 	<!-- Add Category Dialog -->
-	<Dialog v-model="showCategoryDialog" :options="{ title: __('Add Category'), size: 'sm' }">
+	<Dialog v-model="showCategoryDialog" :options="{ title: newCategoryIsSub ? __('Add Sub-category') : __('Add Category'), size: 'sm' }">
 		<template #body-content>
 			<div>
 				<label class="block text-start text-base font-medium text-gray-700 mb-1">
@@ -412,6 +441,8 @@ import CreateItemDialog from "@/components/restaurant/CreateItemDialog.vue"
 import ItemEditPanel from "@/components/restaurant/ItemEditPanel.vue"
 import MenuDesignerDialog from "@/components/restaurant/MenuDesignerDialog.vue"
 import { cardLabel } from "@/utils/cardLabel"
+import { cardColor } from "@/utils/phoneCard"
+import { tintOf } from "@/utils/ticketFamilies"
 
 // initialCard: the card the editor opens on (the till's settings' « Edit » of a card, NeoResto lot 1, task 13)
 const props = defineProps({ modelValue: Boolean, initialCard: { type: String, default: "" } })
@@ -456,6 +487,7 @@ const isPermanentCard = computed(
 
 // Category dialog
 const showCategoryDialog = ref(false)
+const newCategoryIsSub = ref(false)
 const newCategoryName = ref("")
 
 // Item search dialog
@@ -584,6 +616,7 @@ async function loadCardDetail(name) {
 					price: i.price,
 					sort_order: i.sort_order,
 					disabled: !!i.disabled,
+					is_subcategory: !!i.is_subcategory,
 				})),
 			}
 			// Load stock data and extra data (description, badges)
@@ -653,6 +686,7 @@ async function saveCard() {
 			price: item.price || 0,
 			sort_order: idx,
 			disabled: item.disabled ? 1 : 0,
+			is_subcategory: item.item_type === "Category" && item.is_subcategory ? 1 : 0,
 		}))
 		await call("frappe.client.save", { doc })
 		showSuccess(__("Card saved"))
@@ -791,11 +825,48 @@ function addCategory() {
 			menu: null,
 			price: 0,
 			disabled: false,
+			// //// Neoffice — a sub-category: a second level under the category above it
+			is_subcategory: newCategoryIsSub.value,
 		})
 		newCategoryName.value = ""
 		showCategoryDialog.value = false
 	}
 }
+
+// //// Neoffice — what a row of the card says without a click (see the template): the colour, the name, the initial, the price, and the level of a row under a category or a sub-category
+function openCategoryDialog(sub) {
+	newCategoryIsSub.value = Boolean(sub)
+	showCategoryDialog.value = true
+}
+
+function colorOf(item) {
+	const extra = itemExtraData.value[item.item] || {}
+	return cardColor(extra.custom_color) || cardColor(extra.service_color) || null
+}
+
+function nameOf(item) {
+	return item.label || itemExtraData.value[item.item]?.item_name || item.item_name || item.item
+}
+
+function initialOf(item) {
+	return (nameOf(item) || "").trim().charAt(0).toUpperCase()
+}
+
+function formatPrice(value) {
+	return Number(value || 0).toFixed(2)
+}
+
+// 0: a category, 1: a sub-category or an item under a category, 2: an item under a sub-category
+const levels = computed(() => {
+	let current = 1
+	return (cardDetail.value?.items || []).map((row) => {
+		if (row.item_type === "Category") {
+			current = row.is_subcategory ? 2 : 1
+			return row.is_subcategory ? 1 : 0
+		}
+		return current
+	})
+})
 
 function addItem(item) {
 	cardDetail.value.items.push({

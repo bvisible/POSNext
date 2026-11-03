@@ -101,7 +101,7 @@
 
 {%- macro render_category(category, design, currency, site_url, show_currency=false) -%}
 	<div class="menu-category">
-		<h2 class="category-title">
+		<h2 class="category-title{% if category.parent %} category-title--sub{% endif %}">
 			{{ category.label }}
 			{%- if show_currency and design.price_alignment != "inline" %}
 				<span class="category-currency">{{ currency }}</span>
@@ -276,6 +276,13 @@
 			font-size: 14pt;
 			margin-bottom: 3mm;
 			color: {{ design.color_accent | default('#8B4513') }};
+		}
+
+		/* //// Neoffice — a sub-category (« Wines » under « Drinks »): its title one step smaller, tighter to the dishes it heads (NeoResto lot 1, product owner, 03.11.2026) */
+		.category-title--sub {
+			font-size: 11pt !important;
+			margin-top: 2mm;
+			margin-bottom: 2mm !important;
 		}
 
 		.category-currency {

@@ -371,3 +371,48 @@ describe("the colour of a button of an item group", () => {
 	})
 })
 
+
+describe("the sub-categories of a card on the phone", () => {
+	const category_ = (label, sub = false) => ({ item_type: "Category", label, ...(sub ? { is_subcategory: 1 } : {}) })
+	const CARD = [
+		category_("Drinks"),
+		category_("Beers", true),
+		dish("Lager", { service_color: "#E0980F" }),
+		category_("Wines", true),
+		dish("Gamay", { service_color: "#C1372C" }),
+		category_("Desserts"),
+		dish("Tiramisu"),
+	]
+
+	it("are chips that name the category they stand under", () => {
+		const { chips } = cardSections(CARD)
+
+		expect(chips.map((chip) => [chip.label, chip.parent ? chips.find((c) => c.key === chip.parent).label : null])).toEqual([
+			["Drinks", null],
+			["Beers", "Drinks"],
+			["Wines", "Drinks"],
+			["Desserts", null],
+		])
+	})
+
+	it("leave a category with sub-categories only its chip, in the colour of their dishes' majority", () => {
+		const { chips } = cardSections(CARD)
+
+		expect(chips.find((chip) => chip.label === "Drinks").color).toBe("#E0980F")
+	})
+
+	it("give each button the category it belongs to at the first level", () => {
+		const { buttons, chips } = cardSections(CARD)
+		const drinks = chips.find((chip) => chip.label === "Drinks").key
+		const beers = chips.find((chip) => chip.label === "Beers").key
+
+		expect(buttons.find((b) => b.entry.item === "Lager")).toMatchObject({ chip: beers, top: drinks })
+		expect(buttons.find((b) => b.entry.item === "Tiramisu").top).toBe(buttons.find((b) => b.entry.item === "Tiramisu").chip)
+	})
+
+	it("leave a card with none as it was", () => {
+		const { chips } = cardSections([category_("A"), dish("x")])
+
+		expect(chips).toEqual([expect.objectContaining({ label: "A", parent: null })])
+	})
+})

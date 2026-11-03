@@ -18,7 +18,8 @@ describe("the restaurant cards screen", () => {
 	})
 
 	it("writes the names of its dishes and cards at 16 px, its details at 12 or 14", () => {
-		expect(template).toMatch(/class="text-base"[^>]*>\{\{ item\.label/)
+		// The name of a dish is now what the row says without a click (its label, else the item's name, else its code)
+		expect(template).toMatch(/class="text-base"[^>]*>\{\{ nameOf\(item\)/)
 		expect(template).not.toMatch(/class="text-\[10px\] text-gray-400 mt-0\.5/)
 	})
 })

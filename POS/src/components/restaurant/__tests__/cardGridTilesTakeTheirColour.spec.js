@@ -107,3 +107,57 @@ describe("the pictures of the till", () => {
 		expect(water.classes()).toContain("tile--colored")
 	})
 })
+
+describe("the sub-categories of the card's grid", () => {
+	const GROUPS = [
+		{ category: "Drinks", items: [] },
+		{ category: "Drinks", subcategory: "Wines", items: [WATER] },
+		{ category: "Drinks", subcategory: "Beers", items: [PLAIN] },
+	]
+
+	it("have a heading, in the colour of their dishes, and the category's heading is shown once", () => {
+		grid({ groups: GROUPS })
+		const headings = wrapper.findAll("[data-card-subcategory]")
+
+		expect(headings.map((h) => h.text())).toEqual(["Wines", "Beers"])
+		expect(headings[0].find("span").attributes("style")).toContain("background-color: rgb(91, 155, 213)")
+		expect(headings[1].find("span").exists()).toBe(false)
+		expect(wrapper.findAll("h3").map((h) => h.text())).toEqual(["Drinks"])
+	})
+
+	it("show no heading once one of them is chosen", () => {
+		grid({ groups: GROUPS, showSubcategories: false })
+
+		expect(wrapper.findAll("[data-card-subcategory]")).toHaveLength(0)
+	})
+
+	it("draw no empty grid for a category that has only sub-categories", () => {
+		grid({ groups: GROUPS })
+
+		expect(wrapper.findAll("[data-card-grid]")).toHaveLength(2)
+	})
+})
+
+describe("a dish with no picture to show", () => {
+	it("is a compact tile with its name once, in the automatic grid too", () => {
+		const [water] = grid({ tilesPerRow: "Automatic" })
+
+		expect(water.classes()).toContain("tile--text")
+		expect(water.find("[data-well-name]").text()).toBe("Water")
+		// Its name under the well is hidden by the tile's own style (a compact tile says it once): the tile carries the class that does it
+		expect(water.classes()).toContain("tile--text")
+		expect(water.findAll("[data-tile-name]")).toHaveLength(1)
+	})
+
+	it("is every dish when the till shows no pictures, a dish with a picture included", () => {
+		const tiles = grid({ pictures: false })
+
+		for (const tile of tiles.slice(0, 4)) expect(tile.classes()).toContain("tile--text")
+	})
+
+	it("is not a dish that has its picture shown", () => {
+		const [, wine] = grid()
+
+		expect(wine.classes()).not.toContain("tile--text")
+	})
+})

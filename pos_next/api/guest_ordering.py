@@ -186,6 +186,11 @@ def _tile_colors_on(pos_profile):
 	return value is None or bool(cint(value))
 
 
+def _sub_category_field():
+	"""The `is_subcategory` column of the card rows, as a list to spread into a field list: empty until the migration has made it."""
+	return ["is_subcategory"] if frappe.db.has_column("Restaurant Card Item", "is_subcategory") else []
+
+
 def _build_menu_from_card(card_name, warehouse=None, colors=None):
 	"""Build menu structure (categories + items) from a Restaurant Card. `colors` maps an Item Group to its colour (`service_families.group_colors`): each dish carries
 	its group's as `service_color`, for the guest's page to tint it."""
@@ -194,13 +199,15 @@ def _build_menu_from_card(card_name, warehouse=None, colors=None):
 	card_items = frappe.get_all(
 		"Restaurant Card Item",
 		filters={"parent": card_name},
-		fields=["item_type", "label", "item", "price", "sort_order", "disabled"],
+		fields=["item_type", "label", "item", "price", "sort_order", "disabled", *_sub_category_field()],
 		order_by="sort_order asc, idx asc",
 	)
 
 	categories = []
 	current_category = {"label": "", "menu_items": []}
 	counted_items = []
+	# //// Neoffice — the heading a sub-category stands under (a second level, product owner, 03.11.2026): the last category that is not a sub-category
+	top_label = ""
 
 	for ci in card_items:
 		if ci.get("disabled"):
@@ -209,7 +216,11 @@ def _build_menu_from_card(card_name, warehouse=None, colors=None):
 		if ci.item_type == "Category":
 			if current_category["menu_items"] or current_category["label"]:
 				categories.append(current_category)
-			current_category = {"label": ci.label or "", "menu_items": []}
+			if cint(ci.get("is_subcategory")) and top_label:
+				current_category = {"label": ci.label or "", "parent": top_label, "menu_items": []}
+			else:
+				top_label = ci.label or ""
+				current_category = {"label": top_label, "menu_items": []}
 			continue
 
 		if ci.item_type != "Item" or not ci.item:

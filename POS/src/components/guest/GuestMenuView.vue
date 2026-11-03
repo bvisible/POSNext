@@ -29,6 +29,28 @@
 			</div>
 		</div>
 
+		<!-- //// Neoffice — the sub-categories of the category chosen, one level under its chip (NeoResto lot 1, product owner, 03.11.2026): « Boissons » then « Bières », « Vins »… -->
+		<div v-if="subcategories.length > 0" class="px-1.5 sm:px-3 py-1 bg-white border-b border-gray-100 flex-shrink-0" data-guest-subchips>
+			<div class="flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
+				<button
+					@click="selectedSub = null"
+					class="px-3 py-1 rounded-full border text-[10px] sm:text-xs font-medium whitespace-nowrap transition-colors"
+					:class="!selectedSub ? 'border-gray-400 bg-gray-100 text-gray-800' : 'border-gray-200 text-gray-500 hover:bg-gray-50'"
+				>{{ __("All") }}</button>
+				<button
+					v-for="sub in subcategories"
+					:key="sub.label"
+					@click="selectedSub = sub.label"
+					class="px-3 py-1 rounded-full border text-[10px] sm:text-xs font-medium whitespace-nowrap transition-colors inline-flex items-center gap-1.5"
+					:class="selectedSub === sub.label ? 'border-gray-400 bg-gray-100 text-gray-800' : 'border-gray-200 text-gray-500 hover:bg-gray-50'"
+					:style="sub.color && selectedSub === sub.label ? { borderColor: sub.color, borderWidth: '2px' } : null"
+				>
+					<span v-if="sub.color" class="h-2 w-2 rounded-full" :style="{ backgroundColor: sub.color }"></span>
+					{{ sub.label }}
+				</button>
+			</div>
+		</div>
+
 		<!-- Search + view toggle -->
 		<div class="px-1.5 sm:px-3 py-1.5 sm:py-2 bg-white border-b border-gray-200 flex-shrink-0">
 			<div class="flex items-center gap-1 sm:gap-2">
@@ -64,10 +86,10 @@
 			<!-- Grid view -->
 			<template v-else-if="viewMode === 'grid'">
 				<template v-for="(group, gi) in filteredGroups" :key="'g'+gi">
-					<div v-if="group.category && !selectedCategory" class="bg-white border-b border-gray-200 px-3 py-1.5 mt-3 first:mt-0 rounded-t-lg">
-						<h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{{ group.category }}</h3>
+					<div v-if="headingOf(group)" class="bg-white border-b border-gray-200 px-3 py-1.5 mt-3 first:mt-0 rounded-t-lg">
+						<h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{{ headingOf(group) }}</h3>
 					</div>
-					<div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1.5 sm:gap-2.5" :class="!selectedCategory && group.category ? 'mt-1' : 'mt-0'">
+					<div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1.5 sm:gap-2.5" :class="headingOf(group) ? 'mt-1' : 'mt-0'">
 						<div
 							v-for="(item, ii) in group.items"
 							:key="ii"
@@ -106,8 +128,8 @@
 			<!-- List view -->
 			<template v-else>
 				<template v-for="(group, gi) in filteredGroups" :key="'l'+gi">
-					<div v-if="group.category && !selectedCategory" class="bg-white border-b border-gray-200 px-3 py-1.5 mt-3 first:mt-0 rounded-t-lg">
-						<h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{{ group.category }}</h3>
+					<div v-if="headingOf(group)" class="bg-white border-b border-gray-200 px-3 py-1.5 mt-3 first:mt-0 rounded-t-lg">
+						<h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{{ headingOf(group) }}</h3>
 					</div>
 					<div
 						v-for="(item, li) in group.items"
@@ -246,13 +268,15 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue"
+import { ref, computed, watch } from "vue"
 import { useGuestOrderStore } from "@/stores/guestOrder"
 import { cardColor, softTint } from "@/utils/phoneCard"
+import { colorOfGroup } from "@/utils/cardGroups"
 
 const guestStore = useGuestOrderStore()
 
 const selectedCategory = ref(null)
+const selectedSub = ref(null)
 const searchQuery = ref("")
 const viewMode = ref("list")
 const selectedItem = ref(null)
@@ -285,11 +309,29 @@ const mergedCategories = computed(() => {
 })
 
 // Extract unique category names
+// //// Neoffice — the first row of chips is the categories that are not sub-categories (a sub-category names the one it stands under as `parent`, which may have no dish of its own)
 const categories = computed(() => {
-	return mergedCategories.value
-		.map((c) => c.label)
-		.filter((c) => c)
+	return [...new Set(mergedCategories.value.map((c) => c.parent || c.label).filter((c) => c))]
 })
+
+// The sub-categories of the category chosen, each with the colour most of its dishes carry
+const subcategories = computed(() => {
+	if (!selectedCategory.value) return []
+	return mergedCategories.value
+		.filter((c) => c.parent === selectedCategory.value)
+		.map((c) => ({ label: c.label, color: colorOfGroup({ items: c.menu_items || [] }) }))
+})
+
+watch(selectedCategory, () => {
+	selectedSub.value = null
+})
+
+// What a group says above its dishes: its category (once the category is chosen, nothing), or its sub-category (« Drinks · Wines » while no category is chosen, « Wines » under it)
+function headingOf(group) {
+	if (!group.category || selectedSub.value) return ""
+	if (group.parent) return selectedCategory.value ? group.category : `${group.parent} · ${group.category}`
+	return selectedCategory.value ? "" : group.category
+}
 
 // Group items by category, with search filtering
 const filteredGroups = computed(() => {
@@ -309,12 +351,15 @@ const filteredGroups = computed(() => {
 		}
 
 		// Filter by category
-		if (selectedCategory.value && cat.label !== selectedCategory.value) {
+		if (selectedCategory.value && (cat.parent || cat.label) !== selectedCategory.value) {
+			continue
+		}
+		if (selectedSub.value && cat.label !== selectedSub.value) {
 			continue
 		}
 
 		if (items.length > 0) {
-			groups.push({ category: cat.label, items })
+			groups.push({ category: cat.label, parent: cat.parent, items })
 		}
 	}
 	return groups
