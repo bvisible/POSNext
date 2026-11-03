@@ -96,7 +96,9 @@ describe("the restaurant's card grid", () => {
 
 		const [dish, pictured] = wrapper.findAll("[data-card-tile]")
 		expect(dish.classes()).toContain("cursor-not-allowed")
-		expect(dish.find("[data-stock-badge]").text()).toBe("0")
+		//// Neoffice — a sold-out dish says « Sold out » and carries no count (neoffice-maintenance#2163: -3 and -2 beside « Sold out »)
+		expect(dish.find("[data-sold-out]").exists()).toBe(true)
+		expect(dish.find("[data-stock-badge]").exists()).toBe(false)
 		expect(pictured.find("[data-stock-badge]").exists()).toBe(false)
 	})
 })

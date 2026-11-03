@@ -50,8 +50,10 @@
 					+
 				</button>
 				<!-- Stock Badge -->
+				<!-- //// Neoffice — a count only while some is left: a sold-out tile says « Sold out », never -3 or -2 (neoffice-maintenance#2163: -->
+				<!-- //// the stock goes below zero where the site sells beyond it, and the badge printed it beside « Sold out ») -->
 				<div
-					v-if="stockOf(item) !== null"
+					v-if="stockOf(item) !== null && !outOfStock(item)"
 					:class="[
 						'absolute -top-1.5 -end-1.5 sm:-top-2 sm:-end-2 rounded-md shadow-lg z-10',
 						'px-2 sm:px-2.5 py-1 sm:py-1 text-[10px] sm:text-xs font-bold',
