@@ -35,6 +35,22 @@
 		".nps-pill.lost{background:#FFEAE2;color:#AA3700}" +
 		".nps-price{text-align:right;font-variant-numeric:tabular-nums}" +
 		".nps-empty{padding:28px 16px;text-align:center;color:#6F665A}" +
+		"@media (max-width:1100px),(pointer:coarse){" +
+		'.nps-line{grid-template-columns:minmax(0,1fr) auto auto;grid-template-areas:"label label price" "unit unit unit" "step tick more";gap:8px 12px;padding:12px 16px}' +
+		".nps-line .c-label{grid-area:label}.nps-line .c-unit{grid-area:unit;color:#6F665A;font-size:13.5px}.nps-line .c-price{grid-area:price}" +
+		".nps-line .c-step{grid-area:step;justify-self:start}.nps-line .c-tick{grid-area:tick}.nps-line .c-more{grid-area:more}" +
+		".nps-step{height:46px}.nps-step button{width:46px;height:44px;font-size:22px}.nps-step span{min-width:34px;font-size:17px}" +
+		".nps-btn{min-height:46px}.nps-btn.sm{min-height:40px}" +
+		".nps-line .c-tick .nps-btn,.nps-line .c-tick .nps-pill{width:100%;text-align:center}" +
+		".nps-line .nps-more,.nps-bar select{min-height:46px}" +
+		".nps-pick{max-height:52vh}" +
+		".nps-pick-bar{flex-wrap:wrap}.nps-pick-bar select,.nps-pick-bar .nps-pick-search{flex:1 1 100%;max-width:none}" +
+		".nps-pick-bar label{flex:1 1 100%}.nps-pick-bar label select{flex:1}" +
+		'.nps-pick-row{grid-template-columns:34px minmax(0,1fr) auto;grid-template-areas:"tick label step" ". pack pack";gap:6px 12px;padding:12px}' +
+		".nps-pick-row.head,.nps-pick-row .p-price{display:none}" +
+		".nps-pick-row .p-tick{grid-area:tick;width:24px;height:24px}.nps-pick-row .p-label{grid-area:label}" +
+		".nps-pick-row .p-pack{grid-area:pack}.nps-pick-row .p-step{grid-area:step}.nps-pick-row select{min-height:44px}" +
+		"}" +
 		".nps-pick-search{width:100%;min-height:40px;border:1px solid #DCD4C7;border-radius:10px;padding:0 12px;margin-bottom:10px}" +
 		".nps-pick-bar{display:flex;gap:10px;align-items:center;margin-bottom:10px}" +
 		".nps-pick-bar select{min-height:40px;max-width:280px;border:1px solid #DCD4C7;border-radius:10px;background:#fff;padding:0 10px}" +
@@ -47,6 +63,7 @@
 		".nps-pick-row.head{position:sticky;top:0;background:#F6F3ED;font-size:12px;font-weight:600;color:#6F665A;text-transform:uppercase;letter-spacing:.04em}" +
 		".nps-pick-row.on{background:#FFF6EF}" +
 		".nps-pick-row .label{font-weight:600}" +
+		".nps-pick-row .p-step{justify-self:end}" +
 		".nps-pick-row .sub{display:block;font-size:12.5px;color:#6F665A;font-weight:400}" +
 		".nps-pick-row select,.nps-pick-row input[type=number]{width:100%;min-height:34px;border:1px solid #DCD4C7;border-radius:8px;background:#fff;padding:0 8px}" +
 		".nps-pick-row input[type=checkbox]{width:18px;height:18px}" +
@@ -349,14 +366,14 @@
 		return (
 			'<div class="nps-line' +
 			(aside ? " aside" : "") +
-			'"><div class="label">' +
+			'"><div class="label c-label">' +
 			esc(line.label) +
 			(line.free ? '<span class="sub">' + esc(__("Free line")) + "</span>" : "") +
 			"</div>" +
-			"<div>" +
+			'<div class="c-unit">' +
 			esc(unit || "—") +
 			"</div>" +
-			'<div class="nps-step"><button type="button" data-act="minus" data-row="' +
+			'<div class="nps-step c-step"><button type="button" data-act="minus" data-row="' +
 			esc(line.name) +
 			'" aria-label="' +
 			esc(__("Less")) +
@@ -367,11 +384,11 @@
 			'" aria-label="' +
 			esc(__("More")) +
 			'">+</button></div>' +
-			'<div class="nps-price">' +
+			'<div class="nps-price c-price">' +
 			price +
-			"</div><div>" +
+			'</div><div class="c-tick">' +
 			tick +
-			"</div><div>" +
+			'</div><div class="c-more">' +
 			more +
 			"</div></div>"
 		);
@@ -536,28 +553,34 @@
 			return (
 				'<div class="nps-pick-row' +
 				(entry ? " on" : "") +
-				'"><input type="checkbox" data-pick-tick="' +
+				'"><input type="checkbox" class="p-tick" data-pick-tick="' +
 				esc(row.item) +
 				'"' +
 				(entry ? " checked" : "") +
-				'><span class="label">' +
+				'><span class="label p-label">' +
 				esc(row.item_name) +
 				(on_list[row.item]
 					? '<span class="nps-tag">' + esc(__("Already on the list")) + "</span>"
 					: "") +
 				'<span class="sub">' +
 				esc(row.item_group || "") +
-				"</span></span><span>" +
+				'</span></span><span class="p-pack">' +
 				choice +
-				'</span><span class="price">' +
+				'</span><span class="price p-price">' +
 				(pack && pack.price !== null && pack.price !== undefined
 					? esc(money(pack.price))
 					: "") +
-				'</span><input type="number" min="0" step="any" value="' +
-				esc(qty) +
-				'" data-pick-qty="' +
+				'</span><div class="nps-step p-step"><button type="button" data-pick-minus="' +
 				esc(row.item) +
-				'"></div>'
+				'" aria-label="' +
+				esc(__("Less")) +
+				'">−</button><span>' +
+				esc(qty) +
+				'</span><button type="button" data-pick-plus="' +
+				esc(row.item) +
+				'" aria-label="' +
+				esc(__("More")) +
+				'">+</button></div></div>'
 			);
 		}
 
@@ -577,6 +600,7 @@
 				return haystack.indexOf(needle) >= 0;
 			});
 			$box.find(".nps-pick-supplier").html(optionsHtml());
+			var scrolled = $box.find(".nps-pick-body").scrollTop();
 			$box.find(".nps-pick-body").html(
 				rows.length
 					? shown.length
@@ -595,6 +619,7 @@
 							esc(__("Create an article")) +
 							"</button></div></div>"
 			);
+			$box.find(".nps-pick-body").scrollTop(scrolled);
 			sync();
 		}
 
@@ -631,25 +656,25 @@
 			else delete chosen[key];
 			draw();
 		});
-		// A quantity typed ticks its line: the owner who types a number means it
-		$box.on("input", "[data-pick-qty]", function () {
-			var code = $(this).attr("data-pick-qty");
-			var qty = parseFloat($(this).val());
-			if (!(qty > 0)) return;
+		// A quantity changed ticks its line: the owner who touches a number means it. One less than one takes the tick off.
+		function bump(code, delta) {
 			var pack = current(code);
 			var key = keyOf(code, pack);
-			quantities[key] = qty;
-			var was = !!chosen[key];
-			chosen[key] = { item: code, pack: pack, qty: qty };
-			if (!was) {
-				$(this)
-					.closest(".nps-pick-row")
-					.addClass("on")
-					.find("[data-pick-tick]")
-					.prop("checked", true);
-				$box.find(".nps-pick-supplier").html(optionsHtml());
-				sync();
+			var qty = (chosen[key] ? chosen[key].qty : quantities[key] || 1) + delta;
+			if (qty < 1) {
+				delete chosen[key];
+				quantities[key] = 1;
+			} else {
+				quantities[key] = qty;
+				chosen[key] = { item: code, pack: pack, qty: qty };
 			}
+			draw();
+		}
+		$box.on("click", "[data-pick-plus]", function () {
+			bump($(this).attr("data-pick-plus"), 1);
+		});
+		$box.on("click", "[data-pick-minus]", function () {
+			bump($(this).attr("data-pick-minus"), -1);
 		});
 		$box.on("change", "[data-pick-pack]", function () {
 			var code = $(this).attr("data-pick-pack");
