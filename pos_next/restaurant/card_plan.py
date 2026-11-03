@@ -21,6 +21,7 @@ It is switched on per site (`neoresto_card_with_nora_active`, off unless the sit
 the cards of a restaurant may neither propose nor apply.
 """
 
+import re
 import unicodedata
 
 import frappe
@@ -82,17 +83,20 @@ def _same(a, b) -> bool:
 	return _fold(a) == _fold(b)
 
 
+_PRICE = re.compile(r"^(?:(?:chf|fr\.?)\s*)?(\d+(?:\.\d+)?)(?:\s*(?:chf|fr\.?|\.-))?$", re.IGNORECASE)
+
+
 def _price(value):
-	"""A price the way a person writes it (« 4,20 », « 4.2 », « CHF 4.20 »), None when there is none to read."""
+	"""A price the way a person writes it (« 4,20 », « 4.2 », « CHF 4.20 »), None when it is not one.
+
+	Nothing is guessed: digits glued together (« 3.804.00 »), or a number with words around it (« 4.20 (3 cl) »), make no price: a wrong
+	price on a till is worse than a button waiting for its price."""
 	if value in (None, ""):
 		return None
 	if isinstance(value, int | float):
 		return flt(value)
-	cleaned = "".join(ch for ch in str(value).replace(",", ".").replace("'", "") if ch.isdigit() or ch == ".")
-	try:
-		return flt(cleaned) if cleaned else None
-	except (TypeError, ValueError):
-		return None
+	found = _PRICE.match(str(value).strip().replace(",", ".").replace("'", ""))
+	return flt(found.group(1)) if found else None
 
 
 def _read(plan) -> list[dict]:

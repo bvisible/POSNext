@@ -169,6 +169,24 @@ class TestAProposalWritesNothing(CardPlanCase):
 
 		self.assertEqual([item["needs_price"] for item in items], [False, True, True])
 
+	def test_a_price_is_read_the_way_a_person_writes_it_and_never_guessed(self):
+		cases = {
+			"4,20": 4.2,
+			"4.2": 4.2,
+			"CHF 4.20": 4.2,
+			"4.20 CHF": 4.2,
+			" 12 ": 12.0,
+			3.5: 3.5,
+			# what is not a price is not made one: digits glued together would be a wrong price on a till
+			"3.804.00": None,
+			"4.20 (3 cl)": None,
+			"gratuit": None,
+			"": None,
+			None: None,
+		}
+		for text, expected in cases.items():
+			self.assertEqual(card_plan._price(text), expected, repr(text))
+
 	def test_what_it_cannot_use_is_dropped_and_said(self):
 		plan = self.plan(coffees(service_family="Pudding", color="chartreuse", station="Nowhere"))
 
@@ -305,6 +323,9 @@ class TestAStepIsWritten(CardPlanCase):
 			}
 		).insert(ignore_permissions=True)
 
+		with as_role("client_admin"):
+			proposal = card_plan.propose(self.plan(coffees()))["families"][0]
+		self.assertEqual((proposal["service_family"], proposal["color"]), ("Main", "#112233"))
 		self.apply(self.plan(coffees()))
 
 		group = frappe.get_doc("Item Group", COFFEES)
