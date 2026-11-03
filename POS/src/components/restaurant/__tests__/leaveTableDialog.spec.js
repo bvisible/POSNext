@@ -57,6 +57,33 @@ describe("the question asked when a sent dish was taken off", () => {
 		expect(part(wrapper, "leave-send").text()).toBe("Send the cancellation to the kitchen")
 	})
 
+	it("asks only whether to leave when no dish was taken off but lines are not sent yet (the tablet's question, as the phone's)", async () => {
+		const wrapper = show({ removed: [], unsent: 2 })
+		await wrapper.vm.$nextTick()
+
+		expect(part(wrapper, "leave-title").text()).toBe("Leave this table? 2 lines not sent will be lost.")
+		expect(part(wrapper, "leave-go").text()).toBe("Leave")
+		expect(part(wrapper, "leave-stay").text()).toBe("Stay")
+		expect(part(wrapper, "leave-send").exists()).toBe(false)
+		expect(part(wrapper, "leave-put-back").exists()).toBe(false)
+		expect(document.activeElement).toBe(part(wrapper, "leave-stay").element)
+
+		await part(wrapper, "leave-go").trigger("click")
+		expect(wrapper.emitted("leave")).toHaveLength(1)
+	})
+
+	it("says one line in the singular, and « order » for a takeaway", () => {
+		expect(part(show({ removed: [], unsent: 1 }), "leave-title").text()).toBe("Leave this table? 1 line not sent will be lost.")
+		expect(part(show({ removed: [], unsent: 3, isTakeaway: true }), "leave-title").text()).toBe("Leave this order? 3 lines not sent will be lost.")
+		expect(part(show({ removed: [], unsent: 1, isTakeaway: true }), "leave-title").text()).toBe("Leave this order? 1 line not sent will be lost.")
+	})
+
+	it("tells in the question about a dish taken off that the lines not sent are lost too", () => {
+		expect(part(show({ unsent: 2 }), "leave-unsent-note").text()).toBe("2 lines not sent will also be lost.")
+		expect(part(show({ unsent: 1 }), "leave-unsent-note").text()).toBe("1 line not sent will also be lost.")
+		expect(part(show({ unsent: 0 }), "leave-unsent-note").exists()).toBe(false)
+	})
+
 	it("offers no « put back » where the order cannot be read again", () => {
 		expect(part(show({ canPutBack: false }), "leave-put-back").exists()).toBe(false)
 	})

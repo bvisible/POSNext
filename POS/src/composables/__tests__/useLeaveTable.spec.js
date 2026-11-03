@@ -100,6 +100,59 @@ describe("leaving a table", () => {
 		expect(ctx.leave).not.toHaveBeenCalled()
 	})
 
+	it("asks about the lines not sent yet, which a way back would lose (Daniel, 03.11)", () => {
+		const ctx = setup({ cart: { invoiceItems: [{ item_code: "STEAK", kds_status: "Pending" }, { item_code: "CAKE", kds_status: "" }] } })
+
+		ctx.requestLeave()
+
+		expect(ctx.asking.value).toBe(true)
+		expect(ctx.leave).not.toHaveBeenCalled()
+		expect(ctx.removed.value).toEqual([])
+		expect(ctx.unsentCount.value).toBe(1)
+	})
+
+	it("leaves at once when the lines left are all sent or held back, and a gift row of an offer is no line", () => {
+		const held = setup({ cart: { invoiceItems: [{ item_code: "WINE", kds_status: "Waiting" }, { item_code: "GIFT", kds_status: "", is_free_item: 1 }] } })
+
+		held.requestLeave()
+
+		expect(held.leave).toHaveBeenCalledTimes(1)
+		expect(held.asking.value).toBe(false)
+	})
+
+	it("does not ask a second time what the phone has just asked", () => {
+		const ctx = setup({ cart: { invoiceItems: [{ item_code: "CAKE", kds_status: "" }] } })
+
+		ctx.requestLeave({ unsentAsked: true })
+
+		expect(ctx.leave).toHaveBeenCalledTimes(1)
+		expect(ctx.asking.value).toBe(false)
+	})
+
+	it("names the lines not sent in the question about a dish taken off, unless the phone has asked about them", () => {
+		const lines = [{ item_code: "STEAK", kds_status: "Pending" }, { item_code: "CAKE", kds_status: "" }, { item_code: "PIE", kds_status: "" }]
+		const plain = setup({ cart: { removedSentLines: removed, invoiceItems: lines } })
+		const asked = setup({ cart: { removedSentLines: removed, invoiceItems: lines } })
+
+		plain.requestLeave()
+		asked.requestLeave({ unsentAsked: true })
+
+		expect(plain.asking.value).toBe(true)
+		expect(plain.unsentCount.value).toBe(2)
+		expect(asked.asking.value).toBe(true)
+		expect(asked.unsentCount.value).toBe(0)
+	})
+
+	it("leaves anyway when the waiter says so, after the question about the lines not sent", () => {
+		const ctx = setup({ cart: { invoiceItems: [{ item_code: "CAKE", kds_status: "" }] } })
+		ctx.requestLeave()
+
+		ctx.leaveAnyway()
+
+		expect(ctx.leave).toHaveBeenCalledTimes(1)
+		expect(ctx.asking.value).toBe(false)
+	})
+
 	it("says the order is emptied when the dish taken off was the last one the saved order had", () => {
 		expect(setup().emptied.value).toBe(false)
 		// Only a line never sent is left: nothing the kitchen has, nothing saved

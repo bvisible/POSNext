@@ -4,9 +4,11 @@
 //// when the dish was the LAST one the order is cancelled as a whole instead (`emptied`: there is no line left to save);
 //// - put the order back as it was: the table is read again, the dish is on it, and the waiter stays;
 //// - stay: nothing changes.
-//// The page hands over what only it knows how to do (`send`, `putBack`, `leave`): this file is the question and its three answers.
+//// The same way back drops the lines not sent yet without a word, on a tablet (Daniel, 03.11: the phone asked, the tablet did not): it asks too, « leave » or « stay », and names them in the question about a dish taken off.
+//// The phone asks about them itself before it goes back, and says so (`unsentAsked`): the question is asked once.
+//// The page hands over what only it knows how to do (`send`, `putBack`, `leave`): this file is the question and its answers.
 import { computed, ref } from "vue"
-import { linesOfTheSavedOrder } from "@/utils/removedSentLines"
+import { linesNotSentYet, linesOfTheSavedOrder } from "@/utils/removedSentLines"
 
 /**
  * @param {Object} options
@@ -21,12 +23,22 @@ export function useLeaveTable({ cartStore, send, putBack, leave }) {
 	const removed = computed(() => cartStore.removedSentLines || [])
 	// The dish taken off was the last one the saved order had: an order with no line cannot be saved, so the whole order is cancelled (Daniel, 03.11)
 	const emptied = computed(() => linesOfTheSavedOrder(cartStore.invoiceItems).length === 0)
+	// The lines the question names as lost: counted when the way back is pressed, 0 where the phone has just asked about them
+	const unsentCount = ref(0)
 	// A takeaway has no table to read again: its order is put back only by leaving it as the kitchen has it, which the till cannot show
 	const canPutBack = computed(() => Boolean(cartStore.restaurantTable) && !cartStore.isTakeaway)
 
-	function requestLeave() {
-		if (removed.value.length === 0) return leave()
+	function requestLeave({ unsentAsked = false } = {}) {
+		const unsent = unsentAsked ? 0 : linesNotSentYet(cartStore.invoiceItems).length
+		if (removed.value.length === 0 && unsent === 0) return leave()
+		unsentCount.value = unsent
 		asking.value = true
+	}
+
+	// « Leave », after the question about the lines not sent: the way back as it was before there was a question
+	function leaveAnyway() {
+		asking.value = false
+		leave()
 	}
 
 	async function sendCancellation() {
@@ -56,5 +68,5 @@ export function useLeaveTable({ cartStore, send, putBack, leave }) {
 		asking.value = false
 	}
 
-	return { asking, busy, removed, emptied, canPutBack, requestLeave, sendCancellation, putTheOrderBack, stay }
+	return { asking, busy, removed, emptied, unsentCount, canPutBack, requestLeave, leaveAnyway, sendCancellation, putTheOrderBack, stay }
 }

@@ -370,7 +370,8 @@ function stay() {
 
 function leave() {
 	leaveAsk.value = false
-	emit("back")
+	//// Neoffice — says that the question about the lines not sent was asked, so that the page does not ask it again (the tablet's question, Daniel, 03.11.2026)
+	emit("back", { unsentAsked: true })
 }
 
 function chipClasses(active) {

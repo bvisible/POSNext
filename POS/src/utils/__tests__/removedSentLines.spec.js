@@ -4,7 +4,7 @@
  * @vitest-environment jsdom
  */
 import { describe, expect, it } from "vitest"
-import { linesOfTheSavedOrder, removedSentLines, sentLinesOf } from "../removedSentLines"
+import { linesNotSentYet, linesOfTheSavedOrder, removedSentLines, sentLinesOf } from "../removedSentLines"
 
 const line = (code, quantity, status = "Pending", extra = {}) => ({
 	item_code: code,
@@ -81,5 +81,20 @@ describe("what a cancellation saves", () => {
 		const lines = [line("SOUP", 1), line("TART", 1, ""), line("WINE", 1, "Waiting"), line("STEAK", 1, "Ready")]
 
 		expect(linesOfTheSavedOrder(lines).map((one) => one.item_code)).toEqual(["SOUP", "WINE", "STEAK"])
+	})
+})
+
+describe("the lines added and not sent yet", () => {
+	it("keeps the lines with no kitchen status: the saved order does not have them", () => {
+		const lines = [line("SOUP", 1), line("TART", 1, ""), line("CAKE", 2, "")]
+
+		expect(linesNotSentYet(lines).map((one) => one.item_code)).toEqual(["TART", "CAKE"])
+	})
+
+	it("leaves out a course held back (it went through a send), a gift row of an offer, and no lines at all", () => {
+		const lines = [line("WINE", 1, "Waiting"), line("GIFT", 1, "", { is_free_item: 1 })]
+
+		expect(linesNotSentYet(lines)).toEqual([])
+		expect(linesNotSentYet(undefined)).toEqual([])
 	})
 })

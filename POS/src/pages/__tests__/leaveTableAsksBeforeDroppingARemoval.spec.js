@@ -11,7 +11,7 @@ const page = readFileSync(new URL("../POSSale.vue", import.meta.url), "utf8")
 describe("the way back from a table, in the till's page", () => {
 	it("goes through the question about a sent dish taken off, not straight to the cart's clearing", () => {
 		expect(page).toMatch(/useLeaveTable\(\s*\{/)
-		expect(page).toMatch(/function closeTable\(\)\s*\{\s*return leaveTable\.requestLeave\(\)/)
+		expect(page).toMatch(/function closeTable\(options\)\s*\{\s*return leaveTable\.requestLeave\(\{ unsentAsked: Boolean\(options\?\.unsentAsked\) \}\)/)
 	})
 
 	it("draws the question, and hands it what the composable knows", () => {
@@ -19,6 +19,9 @@ describe("the way back from a table, in the till's page", () => {
 		expect(page).toMatch(/@send="leaveTable\.sendCancellation"/)
 		expect(page).toMatch(/@put-back="leaveTable\.putTheOrderBack"/)
 		expect(page).toMatch(/@stay="leaveTable\.stay"/)
+		expect(page).toMatch(/@leave="leaveTable\.leaveAnyway"/)
+		expect(page).toMatch(/:unsent="leaveTable\.unsentCount\.value"/)
+		expect(page).toMatch(/:is-takeaway="cartStore\.isTakeaway"/)
 	})
 
 	it("sends a cancellation made only of the lines the saved order has", () => {

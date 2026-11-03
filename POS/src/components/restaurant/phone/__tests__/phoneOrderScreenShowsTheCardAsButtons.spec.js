@@ -380,6 +380,8 @@ describe("leaving the table with « ‹ Tables »", () => {
 		await wrapper.find("[data-back]").trigger("click")
 		await ask().find("[data-leave-go]").trigger("click")
 		expect(wrapper.emitted("back")).toHaveLength(1)
+		// The page must not ask the same question again: the answer says it was asked (Daniel, 03.11, the tablet's question)
+		expect(wrapper.emitted("back")[0]).toEqual([{ unsentAsked: true }])
 		expect(ask().exists()).toBe(false)
 	})
 

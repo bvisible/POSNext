@@ -1987,9 +1987,12 @@
 			:can-put-back="leaveTable.canPutBack.value"
 			:busy="leaveTable.busy.value"
 			:emptied="leaveTable.emptied.value"
+			:unsent="leaveTable.unsentCount.value"
+			:is-takeaway="cartStore.isTakeaway"
 			@send="leaveTable.sendCancellation"
 			@put-back="leaveTable.putTheOrderBack"
 			@stay="leaveTable.stay"
+			@leave="leaveTable.leaveAnyway"
 		/>
 
 		<!-- Paid/Cleaning Table Dialog -->
@@ -3857,8 +3860,9 @@ const leaveTable = useLeaveTable({
 	leave: () => cartStore.clearCart(),
 });
 
-function closeTable() {
-	return leaveTable.requestLeave();
+//// Neoffice — the phone has asked about the lines not sent itself and says so, so that the question is not asked a second time (`unsentAsked`); the tablet's header emits no such news.
+function closeTable(options) {
+	return leaveTable.requestLeave({ unsentAsked: Boolean(options?.unsentAsked) });
 }
 
 //// Neoffice — the order saved without the dishes taken off, which is how the kitchen is told (a printer that had the dish cancels it on paper; the screen drops it). Only the lines the saved order has go with it: a line not sent yet

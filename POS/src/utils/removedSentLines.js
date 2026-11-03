@@ -43,6 +43,17 @@ export function removedSentLines(before, lines) {
 }
 
 /**
+ * The lines added to an order and not sent yet: no kitchen status at all, so the saved order does not have them and a way back from the table would lose them. A line the waiter holds back (« Waiting ») is
+ * not one: it has been through a send, so it is saved with the order. A gift row of an offer follows its dish and is no line the waiter ordered.
+ *
+ * @param {Array<Object>|undefined} lines - The cart's lines
+ * @returns {Array<Object>}
+ */
+export function linesNotSentYet(lines) {
+	return (lines || []).filter((line) => line && !line.is_free_item && !line.kds_status)
+}
+
+/**
  * The lines of an order that the saved order already has: whatever carries a kitchen status, a course held back by the waiter (« Waiting ») included, because the order is rebuilt from the lines it is handed and a held
  * course left out would be deleted by it. A line with no status was added since the table was opened and never sent: it is not saved, which is what a cancellation must not do to it.
  *
