@@ -21811,3 +21811,79 @@ msgstr "{0} n'est pas une réponse du tour des réserves."
 #, python-brace-format
 msgid "{0} {1} needed"
 msgstr "Besoin : {0} {1}"
+
+#. Label of a Check field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:581
+#: pos_next/till_settings/registry.py:962
+msgid "Colours of the tiles"
+msgstr "Couleurs des tuiles"
+
+#. Description of the 'Colours of the tiles' (Check) field in DocType 'POS
+#. Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:578
+#: pos_next/till_settings/registry.py:964
+msgid "Each tile of the restaurant's card takes the colour of its item, else of its item group (the Service Colour of the group, set at the desk), on the till and on a phone."
+msgstr "Chaque tuile de la carte du restaurant prend la couleur de son article, sinon celle de son groupe d'articles (la couleur de service du groupe, réglée depuis le bureau), à la caisse comme sur un téléphone."
+
+#. Description of the 'Ticket Text Size' (Select) field in DocType 'Preparation
+#. Station'
+#: pos_next/pos_next/doctype/preparation_station/preparation_station.json:101
+msgid "How big the writing of the kitchen tickets of this station is. Medium keeps the height of a dish and halves its width."
+msgstr "Taille du texte des tickets cuisine de ce poste. Moyenne garde la hauteur d'un plat et réduit sa largeur de moitié."
+
+#: POS/src/components/settings/CloudPrntTillSettings.vue:230
+msgctxt "Ticket text size"
+msgid "Large"
+msgstr "Grande"
+
+#: POS/src/components/settings/CloudPrntTillSettings.vue:231
+msgctxt "Ticket text size"
+msgid "Medium"
+msgstr "Moyenne"
+
+#. Description of the 'Paper only' (Check) field in DocType 'Preparation
+#. Station'
+#: pos_next/pos_next/doctype/preparation_station/preparation_station.json:94
+msgid "No screen at this station: the ticket is all the kitchen reads. The ticket holds the whole meal, the courses held back too, and nothing is followed on the screens or at the tables. Needs a printer."
+msgstr "Pas d'écran à ce poste : le ticket est tout ce que lit la cuisine. Le ticket porte tout le repas, y compris les plats mis en attente, et rien n'est suivi sur les écrans ni aux tables. Nécessite une imprimante."
+
+#. Description of the 'Pictures on the till' (Check) field in DocType 'POS
+#. Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:570
+#: pos_next/till_settings/registry.py:952
+msgid "On the till, each tile of the restaurant's card shows the item's picture. Off: the name on the tile's colour, so that more tiles fit."
+msgstr "À la caisse, chaque tuile de la carte du restaurant affiche l'image de l'article. Désactivé : le nom sur la couleur de la tuile, pour que plus de tuiles tiennent à l'écran."
+
+#. Label of a Check field in DocType 'Preparation Station'
+#: pos_next/pos_next/doctype/preparation_station/preparation_station.json:97
+msgid "Paper only"
+msgstr "Papier seulement"
+
+#: POS/src/components/settings/CloudPrntTillSettings.vue:151
+msgid "Paper only: no screen"
+msgstr "Papier seulement : pas d'écran"
+
+#. Label of a Check field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:573
+#: pos_next/till_settings/registry.py:950
+msgid "Pictures on the till"
+msgstr "Images à la caisse"
+
+#: POS/src/components/settings/CloudPrntTillSettings.vue:232
+msgctxt "Ticket text size"
+msgid "Small"
+msgstr "Petite"
+
+#: POS/src/components/settings/CloudPrntTillSettings.vue:155
+msgid "The ticket holds the whole meal and nothing is followed on a screen or at the tables."
+msgstr "Le ticket porte tout le repas, et rien n'est suivi sur un écran ni aux tables."
+
+#. Label of a Select field in DocType 'Preparation Station'
+#: pos_next/pos_next/doctype/preparation_station/preparation_station.json:104
+msgid "Ticket Text Size"
+msgstr "Taille du texte des tickets"
+
+#: POS/src/components/settings/CloudPrntTillSettings.vue:160
+#: POS/src/components/settings/CloudPrntTillSettings.vue:161
+msgid "Writing of the tickets"
+msgstr "Taille de l'écriture des tickets"
