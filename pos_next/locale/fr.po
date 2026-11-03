@@ -22183,3 +22183,17 @@ msgstr "Vous n'êtes pas autorisé à définir les horaires du restaurant : dema
 #, python-brace-format
 msgid "{0} already has hours: they are left as they are."
 msgstr "{0} a déjà des horaires : ils restent tels quels."
+
+#: POS/src/components/guest/GuestAccountSheet.vue:56
+#, python-brace-format
+msgid "Continue as {0}"
+msgstr "Continuer en tant que {0}"
+
+#: POS/src/stores/guestOrder.js:315 pos_next/api/guest_ordering.py:1137
+msgid "Sign in to link your account to this table."
+msgstr "Connectez-vous pour associer votre compte à cette table."
+
+#: POS/src/components/guest/GuestAccountSheet.vue:48
+#, python-brace-format
+msgid "You are signed in as {0}."
+msgstr "Vous êtes connecté en tant que {0}."
