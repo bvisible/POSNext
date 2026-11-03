@@ -36,10 +36,10 @@
 		".nps-price{text-align:right;font-variant-numeric:tabular-nums}" +
 		".nps-empty{padding:28px 16px;text-align:center;color:#6F665A}" +
 		".nps-pick-search{width:100%;min-height:40px;border:1px solid #DCD4C7;border-radius:10px;padding:0 12px;margin-bottom:10px}" +
-		".nps-chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;margin-bottom:2px}" +
-		".nps-chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 14px;border:1px solid #DCD4C7;border-radius:999px;background:#fff;color:#141414;font-size:13.5px;font-weight:600;cursor:pointer}" +
-		".nps-chip.on{background:#141414;border-color:#141414;color:#fff}" +
-		".nps-chip .n{min-width:20px;padding:0 6px;border-radius:999px;background:#FFEAE2;color:#AA3700;font-size:12px;text-align:center}" +
+		".nps-pick-bar{display:flex;gap:10px;align-items:center;margin-bottom:10px}" +
+		".nps-pick-bar select{min-height:40px;max-width:280px;border:1px solid #DCD4C7;border-radius:10px;background:#fff;padding:0 10px}" +
+		".nps-pick-bar .nps-pick-search{flex:1;width:auto;margin-bottom:0}" +
+		".nps-pick-bar label{display:flex;gap:8px;align-items:center;margin:0;font-size:13px;color:#6F665A}" +
 		".nps-tag{display:inline-block;margin-left:8px;padding:0 8px;border-radius:999px;background:#E9F7EE;color:#11663A;font-size:11.5px;font-weight:600}" +
 		".nps-pick{border:1px solid #DCD4C7;border-radius:12px;max-height:46vh;overflow:auto}" +
 		".nps-pick-row{display:grid;grid-template-columns:34px minmax(150px,2fr) minmax(170px,2fr) 90px 100px;gap:10px;align-items:center;padding:8px 14px;border-top:1px solid #F6F3ED}" +
@@ -386,11 +386,11 @@
 		});
 	};
 
-	// The picker: the articles the restaurant buys, a strip of suppliers to filter by, a search, a tick and a quantity on each line,
+	// The picker: the articles the restaurant buys, a select of suppliers to filter by, a search, a tick and a quantity on each line,
 	// and one button that puts every ticked one on the list - the table that ticks lines on a new order. The owner may choose a
 	// supplier, tick what he needs from him, choose another, tick again: what is ticked stays ticked while the filter changes, and
-	// each supplier's chip says how many are ticked under it. An article ticked under two suppliers goes on twice, once at each.
-	// `preset` is the supplier whose block's « Add » opened it. A packaging is chosen where an article has several (the usual
+	// each supplier's option says how many are ticked under it. An article ticked under two suppliers goes on twice, once at each.
+	// `preset` is the supplier whose block's « Add » opened it, chosen in the select. A packaging is chosen where an article has several (the usual
 	// one first), else it is the only one.
 	NeorestoShopping.prototype.add_article = function (preset) {
 		var self = this;
@@ -480,24 +480,26 @@
 			);
 		}
 
-		function chipsHtml() {
-			function chip(name, label, count) {
+		// The suppliers as the options of a select, each with what is ticked under it: it holds however many there are
+		function optionsHtml() {
+			function option(name, label) {
+				var n = name === "" ? ticked(null) : ticked(name);
 				return (
-					'<button type="button" class="nps-chip' +
-					(supplier === name ? " on" : "") +
-					'" data-pick-supplier="' +
+					'<option value="' +
 					esc(name) +
-					'">' +
+					'"' +
+					(supplier === name ? " selected" : "") +
+					">" +
 					esc(label) +
-					(count ? '<span class="n">' + esc(count) + "</span>" : "") +
-					"</button>"
+					(n ? " (" + n + ")" : "") +
+					"</option>"
 				);
 			}
 			return (
-				chip("", __("All suppliers"), ticked(null)) +
+				option("", __("All suppliers")) +
 				suppliers
 					.map(function (s) {
-						return chip(s.name, s.name, ticked(s.name));
+						return option(s.name, s.name);
 					})
 					.join("")
 			);
@@ -574,7 +576,7 @@
 					.toLowerCase();
 				return haystack.indexOf(needle) >= 0;
 			});
-			$box.find(".nps-chips").html(chipsHtml());
+			$box.find(".nps-pick-supplier").html(optionsHtml());
 			$box.find(".nps-pick-body").html(
 				rows.length
 					? shown.length
@@ -609,13 +611,15 @@
 		}
 
 		$box.html(
-			'<div class="nps-chips"></div><input type="search" class="nps-pick-search" placeholder="' +
+			'<div class="nps-pick-bar"><label><span>' +
+				esc(__("Supplier")) +
+				'</span><select class="nps-pick-supplier"></select></label><input type="search" class="nps-pick-search" placeholder="' +
 				esc(__("An article, a supplier, a packaging…")) +
-				'"><div class="nps-pick nps-pick-body"></div>'
+				'"></div><div class="nps-pick nps-pick-body"></div>'
 		);
 		$box.on("input", ".nps-pick-search", draw);
-		$box.on("click", "[data-pick-supplier]", function () {
-			supplier = $(this).attr("data-pick-supplier");
+		$box.on("change", ".nps-pick-supplier", function () {
+			supplier = $(this).val() || "";
 			picks = {};
 			draw();
 		});
@@ -643,7 +647,7 @@
 					.addClass("on")
 					.find("[data-pick-tick]")
 					.prop("checked", true);
-				$box.find(".nps-chips").html(chipsHtml());
+				$box.find(".nps-pick-supplier").html(optionsHtml());
 				sync();
 			}
 		});
