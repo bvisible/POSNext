@@ -23,7 +23,7 @@ import unicodedata
 import frappe
 from frappe.utils import flt
 
-from pos_next.restaurant import shopping, supply_catalogue
+from pos_next.restaurant import permissions, shopping, supply_catalogue
 
 MATCHED, AMBIGUOUS, UNKNOWN = "matched", "ambiguous", "unknown"
 # A spoken word is taken for one of an article's words when at least this close (a typo or two)
@@ -106,7 +106,11 @@ def propose(things: list[dict]) -> dict:
 
 	`things` is [{text, qty, unit}] (the quantity and the unit are optional: one, and none). Answers {lines, counts}: for each
 	thing, in order, `status` (matched, ambiguous or unknown), the `item` and its `pack` when matched, the `candidates` when
-	ambiguous, and `line`, which `add` writes as it stands (None while the owner has still to choose)."""
+	ambiguous, and `line`, which `add` writes as it stands (None while the owner has still to choose).
+
+	Whoever may not write the list is refused here, as `add` would refuse them: the proposal is read back to the one who will
+	confirm it, and the catalogue it reads is open to many accounts that have no business with the restaurant's list."""
+	permissions.require(shopping.DOCTYPE, "write")
 	rows = supply_catalogue.catalogue(limit=1000)["rows"]
 	known = [(row, _words(row["item_name"]), _words(row.get("item_group"))) for row in rows]
 	lines = []

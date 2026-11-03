@@ -31,6 +31,10 @@ CELLAR = "_PNXT spoken cellar"
 CRATE = "_PNXT spoken Crate of 24"
 BOX = "_PNXT spoken Box of 6"
 BAG = "_PNXT spoken Bag of 5 kg"
+# The owner's rights on the ERP (items, suppliers, prices) without the restaurant's: it reads the catalogue, it does not
+# manage the shopping list
+READER = "spoken-reader@yopmail.com"
+READER_ROLES = tuple(role for role in OWNER_ROLES if role != "Restaurant Manager")
 
 
 def _by_text(proposal):
@@ -43,6 +47,7 @@ class TestASpokenShoppingListIsProposedThenAdded(FrappeTestCase):
 		super().setUpClass()
 		_user(OWNER, OWNER_ROLES)
 		_user(PORTAL, (), user_type="Website User")
+		_user(READER, READER_ROLES)
 		for name in (MARKET, CELLAR):
 			_supplier(name)
 		_bottle_uom()
@@ -200,6 +205,15 @@ class TestASpokenShoppingListIsProposedThenAdded(FrappeTestCase):
 		)
 
 	# -- who may, and where -----------------------------------------------------------------------------------------
+
+	def test_an_account_that_may_not_write_the_list_gets_no_proposal(self):
+		# The proposal is read back to whoever will confirm it, and `add` would refuse that account: it is refused first,
+		# not after a yes (the catalogue alone is readable by many accounts, the list is the restaurant managers')
+		frappe.set_user(READER)
+		with self.assertRaises(frappe.PermissionError):
+			spoken_list.propose([{"text": "panais"}])
+		with self.assertRaises(frappe.PermissionError):
+			spoken_list.add([{"item": self.parsnip, "qty": 1}])
 
 	def test_a_portal_account_can_neither_propose_nor_add(self):
 		frappe.set_user(PORTAL)
