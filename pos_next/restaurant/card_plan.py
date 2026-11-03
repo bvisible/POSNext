@@ -104,7 +104,12 @@ def _read(plan) -> list[dict]:
 	families = []
 	for family in (plan or {}).get("families") or []:
 		subs = []
-		for sub in family.get("subs") or []:
+		# Articles written straight under the family are an unnamed sub-family: Nora writes « Glaces: vanille, chocolat » that way
+		# (03.11, a summer card was refused four times for it)
+		raw_subs = list(family.get("subs") or [])
+		if family.get("items"):
+			raw_subs.append({"name": None, "items": family["items"]})
+		for sub in raw_subs:
 			items, seen = [], set()
 			for item in sub.get("items") or []:
 				if isinstance(item, str):

@@ -203,6 +203,37 @@ class TestAProposalWritesNothing(CardPlanCase):
 		with as_role("client_admin"), self.assertRaises(frappe.ValidationError):
 			card_plan.propose(self.plan({"name": " ", "subs": []}))
 
+	def test_articles_straight_under_a_family_are_an_unnamed_sub_family(self):
+		# Measured on osiris, 03.11: asked for a summer card, Nora put the articles under each family and the plan was refused
+		# four times in a row (« Nothing to propose »): it is the natural way to write « Glaces: vanille, chocolat »
+		straight = {
+			"name": COFFEES,
+			"service_family": "Dessert",
+			"station": BAR,
+			"items": [{"name": "_Test CP Espresso", "price": 4.2}, "_Test CP Ristretto"],
+		}
+
+		with as_role("client_admin"):
+			family = card_plan.propose(self.plan(straight))["families"][0]
+
+		self.assertEqual(len(family["subs"]), 1)
+		self.assertIsNone(family["subs"][0]["name"])
+		self.assertEqual(
+			[(i["name"], i["price"]) for i in family["subs"][0]["items"]],
+			[("_Test CP Espresso", 4.2), ("_Test CP Ristretto", None)],
+		)
+
+	def test_articles_under_the_family_and_in_a_sub_family_are_both_kept(self):
+		mixed = {**softs(), "items": [{"name": "_Test CP Tea", "price": 3}]}
+
+		with as_role("client_admin"):
+			family = card_plan.propose(self.plan(mixed))["families"][0]
+
+		self.assertEqual(
+			sorted(sub["name"] or "" for sub in family["subs"]),
+			["", WATER],
+		)
+
 	def test_the_family_of_the_root_group_is_the_one_a_plan_without_root_uses(self):
 		plan = self.plan(coffees())
 		del plan["root"]
