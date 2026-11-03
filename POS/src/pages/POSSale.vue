@@ -1851,6 +1851,7 @@
 						<DialogTitle as="h3" class="text-2xl font-semibold leading-6 text-ink-gray-9">
 							{{ __("Invoice Created Successfully") }}
 						</DialogTitle>
+						<!-- //// Neoffice — see the block marker above: single-cross header restructure -->
 						<button
 							type="button"
 							data-test="success-close"
@@ -1860,6 +1861,7 @@
 						>
 							<FeatherIcon name="x" class="h-6 w-6" />
 						</button>
+						<!-- //// Neoffice — see the block marker above: single-cross header restructure -->
 					</div>
 				</template>
 				<template #body-content>
