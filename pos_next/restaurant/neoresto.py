@@ -20,6 +20,7 @@ NeoResto is the view of it made for a restaurant, at the top of the menu:
   the site runs NeoResto, or by the provisioning of a restaurant client.
 """
 
+import json
 from contextlib import contextmanager
 from functools import cache
 
@@ -410,6 +411,7 @@ def setup():
 		return
 	# The page first: the menu entry lists it, and the theme's workspace cleanup keeps the pages the entries list
 	_make_the_page()
+	sync_purchase_shortcuts()
 	if frappe.db.exists("App Customization", APP):
 		return
 	frappe.get_doc(
@@ -444,6 +446,78 @@ def _make_the_page():
 	)
 	with _never_exported():
 		page.insert(ignore_permissions=True)
+
+
+# The shortcuts of the page to the purchases screens: the label, which is also the key the theme draws a door by (so it stays
+# the untranslated word, translated when drawn), and the page it opens
+PURCHASE_SHORTCUTS = (("Purchases", "neoresto-purchases"), ("Shopping list", "neoresto-shopping"))
+
+
+def sync_purchase_shortcuts():
+	"""Put on the page of NeoResto a shortcut to each purchases screen where the site shows the purchases, and take them
+	away where it does not (`neoresto_purchases_active`, supply_catalogue.purchases_active).
+
+	The theme draws a shortcut that the page's rows AND its content both declare, so both are written, one block of a
+	quarter of the width each. Only these two are ever added or removed: whatever else the page's administrators put there,
+	and whatever they renamed, is left as it is. Run by `setup`, so a migrate does it, and so does the provisioning of a
+	restaurant client right after it switches the purchases on; called again it changes nothing."""
+	if not frappe.db.exists("Workspace", WORKSPACE):
+		return
+	wanted = supply_catalogue.purchases_active()
+	# Read the rows and the content as they are, and open the document only to change it: a migrate that has nothing to do
+	# opens nothing
+	rows = frappe.get_all(
+		"Workspace Shortcut",
+		filters={
+			"parent": WORKSPACE,
+			"parenttype": "Workspace",
+			"type": "Page",
+			"link_to": ["in", [target for _label, target in PURCHASE_SHORTCUTS]],
+		},
+		fields=["label"],
+	)
+	declared = {
+		b["data"].get("shortcut_name")
+		for b in json.loads(frappe.db.get_value("Workspace", WORKSPACE, "content") or "[]")
+		if b.get("type") == "shortcut"
+	}
+	if wanted:
+		done = len(rows) == len(PURCHASE_SHORTCUTS) and all(r.label in declared for r in rows)
+	else:
+		done = not rows
+	if done:
+		return
+	page = frappe.get_doc("Workspace", WORKSPACE)
+	blocks = json.loads(page.content or "[]")
+	changed = False
+	for label, target in PURCHASE_SHORTCUTS:
+		row = next((r for r in page.shortcuts if r.type == "Page" and r.link_to == target), None)
+		if wanted and not row:
+			row = page.append("shortcuts", {"label": label, "type": "Page", "link_to": target})
+			changed = True
+		if not row:
+			continue
+		shown = [
+			b for b in blocks if b.get("type") == "shortcut" and b["data"].get("shortcut_name") == row.label
+		]
+		if wanted and not shown:
+			blocks.append(
+				{
+					"id": frappe.generate_hash(length=10),
+					"type": "shortcut",
+					"data": {"shortcut_name": row.label, "col": 3},
+				}
+			)
+			changed = True
+		if not wanted:
+			blocks = [b for b in blocks if b not in shown]
+			page.remove(row)
+			changed = True
+	if not changed:
+		return
+	page.content = json.dumps(blocks)
+	with _never_exported():
+		page.save(ignore_permissions=True)
 
 
 @contextmanager
