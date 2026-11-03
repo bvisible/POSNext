@@ -40,6 +40,8 @@ export const RESTAURANT_RIGHTS = [
 	// Who opens the till's settings, for THIS till: its own (its managers', product owner, 30.10.2026), its restaurant's
 	"manage_till_settings",
 	"manage_restaurant_settings",
+	// The card editor offers « Compose with Nora »: the site switched the feature on and the user manages the cards
+	"compose_card_with_nora",
 ]
 
 // The cards a cashier opened by hand stay on THIS till, through a reload of the page, until he closes them or the shift

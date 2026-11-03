@@ -22161,3 +22161,7 @@ msgstr "Si vous envoyez l'annulation, 1 ligne qui n'a pas encore été envoyée 
 #, python-brace-format
 msgid "{0} lines not sent will be lost if you send the cancellation."
 msgstr "Si vous envoyez l'annulation, {0} lignes qui n'ont pas encore été envoyées seront perdues."
+
+#: POS/src/components/restaurant/CardEditor.vue:64
+msgid "Compose with Nora"
+msgstr "Composer avec Nora"

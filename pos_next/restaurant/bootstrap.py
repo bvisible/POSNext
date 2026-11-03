@@ -26,6 +26,10 @@ def extend_bootstrap_settings(settings: dict, pos_profile: str | None = None) ->
 	"""
 	can = permissions.rights_of_the_user()
 	can["manage_restaurant_settings"] = can["manage_settings"]
+	# The card editor offers « Compose with Nora » (Daniel, 03.11): the site switched the feature on and the user manages the cards
+	from pos_next.restaurant import card_plan
+
+	can["compose_card_with_nora"] = bool(can.get("manage_cards") and card_plan.active())
 	# Told first: the seam's runner logs a hook that raises and goes on, so a failure below must not cost the user
 	# every right of the restaurant
 	settings["restaurant_can"] = can

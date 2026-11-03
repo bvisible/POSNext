@@ -50,6 +50,7 @@ describe("the restaurant store knows what the user may manage", () => {
 			"create_items",
 			"manage_till_settings",
 			"manage_restaurant_settings",
+			"compose_card_with_nora",
 		])
 	})
 

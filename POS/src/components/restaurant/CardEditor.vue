@@ -61,6 +61,14 @@
 							</div>
 						</div>
 
+						<!-- //// Neoffice — « Compose with Nora » (Daniel, 03.11): the wizard of the card starts from the card. The server tells the -->
+						<!-- //// till whether to offer it (`compose_card_with_nora`); the till has no chat of Nora's, the desk's list of the cards has. -->
+						<div v-if="restaurantStore.can?.compose_card_with_nora && !showNewCard" class="rounded-lg p-2 border border-gray-300 bg-white hover:bg-gray-50 transition-colors">
+							<button @click="composeWithNora" class="text-sm font-medium text-gray-700 flex items-center gap-1 w-full justify-center">
+								{{ __("Compose with Nora") }}
+							</button>
+						</div>
+
 						<!-- Separator -->
 						<div class="border-t border-gray-200 pt-2 mt-2">
 							<span class="text-xs font-bold text-gray-400 uppercase tracking-wider px-1">{{ __("Always available") }}</span>
@@ -749,6 +757,11 @@ function selectItemForBadges(item, idx) {
 
 function openDesigner() {
 	showDesigner.value = true
+}
+
+// //// Neoffice — the wizard of the card is Nora's chat, which the desk holds: its list of the cards starts it at once with this link
+function composeWithNora() {
+	window.open("/app/restaurant-card#compose-with-nora", "_blank", "noopener")
 }
 
 // The opening hours are the till's settings' « Hours and cards » tab (NeoResto lot 1, task 13)
