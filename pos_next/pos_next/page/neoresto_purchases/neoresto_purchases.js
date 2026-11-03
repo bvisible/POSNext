@@ -18,7 +18,6 @@
 		".npp-chip.on{border-color:#F55D1A;background:#FFEAE2;color:#AA3700}" +
 		".npp-chip small{color:#6F665A;font-weight:400;margin-left:4px}" +
 		".npp-label{font-size:13px;color:#6F665A;margin-right:2px}" +
-		".npp-sep{width:1px;height:26px;background:#DCD4C7;margin:0 6px}" +
 		".npp-table{border:1px solid #ECE7DE;border-radius:14px;overflow:hidden;background:#fff}" +
 		".npp-head,.npp-row{display:grid;grid-template-columns:minmax(180px,1.4fr) minmax(320px,3fr) 190px;gap:14px;align-items:start;padding:12px 16px}" +
 		".npp-head{background:#F6F3ED;font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6F665A}" +
@@ -34,7 +33,18 @@
 		".npp-none{color:#6F665A;font-size:14px}" +
 		".npp-btn{min-height:36px;padding:0 14px;border-radius:10px;border:1px solid #141414;background:#fff;color:#141414;font-weight:600;cursor:pointer}" +
 		".npp-empty{padding:32px 16px;text-align:center;color:#6F665A}" +
-		".npp-foot{display:flex;justify-content:space-between;padding:12px 16px;border-top:1px solid #ECE7DE;font-size:14px;color:#6F665A}";
+		".npp-foot{display:flex;justify-content:space-between;padding:12px 16px;border-top:1px solid #ECE7DE;font-size:14px;color:#6F665A}" +
+		"@media (max-width:1000px),(pointer:coarse){" +
+		".npp-bar label{display:flex;flex:1 1 100%;gap:8px;align-items:center}.npp-bar label select{flex:1;min-height:46px}" +
+		".npp-bar .npp-search{flex:1 1 100%;min-height:46px}" +
+		".npp-chip{min-height:44px}" +
+		".npp-head{display:none}" +
+		".npp-row{grid-template-columns:minmax(0,1fr);gap:10px;padding:14px 16px}" +
+		".npp-pack{grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;padding:6px 0}" +
+		".npp-pack>span:first-child{grid-column:1/-1;font-weight:600}.npp-pack>span:first-child:empty{display:none}" +
+		".npp-row .npp-btn{min-height:46px;width:100%}" +
+		".npp-foot{flex-direction:column;gap:4px}" +
+		"}";
 
 	function esc(value) {
 		return frappe.utils.escape_html(
@@ -80,8 +90,8 @@
 			self.state.scope = $(this).attr("data-scope");
 			self.refresh();
 		});
-		this.$root.on("click", "[data-family]", function () {
-			self.state.family = $(this).attr("data-family");
+		this.$root.on("change", ".npp-family", function () {
+			self.state.family = $(this).val();
 			self.refresh();
 		});
 		this.$root.on("click", "[data-create]", function () {
@@ -141,25 +151,25 @@
 				);
 			})
 			.join("");
-		var families = [{ name: "", label: __("All families") }]
-			.concat(
-				this.data.families.map(function (f) {
-					return { name: f.name, label: f.name, count: f.count };
+		var families =
+			'<option value="">' +
+			esc(__("All families")) +
+			"</option>" +
+			this.data.families
+				.map(function (f) {
+					return (
+						'<option value="' +
+						esc(f.name) +
+						'"' +
+						(s.family === f.name ? " selected" : "") +
+						">" +
+						esc(f.name) +
+						" (" +
+						esc(f.count) +
+						")</option>"
+					);
 				})
-			)
-			.map(function (f) {
-				return (
-					'<button type="button" class="npp-chip' +
-					(s.family === f.name ? " on" : "") +
-					'" data-family="' +
-					esc(f.name) +
-					'">' +
-					esc(f.label) +
-					(f.count ? " <small>" + esc(f.count) + "</small>" : "") +
-					"</button>"
-				);
-			})
-			.join("");
+				.join("");
 		var suppliers =
 			'<option value="">' +
 			esc(__("All suppliers")) +
@@ -196,13 +206,16 @@
 				esc(__("Supplier")) +
 				' <select class="npp-supplier">' +
 				suppliers +
+				"</select></label>" +
+				'<label class="npp-label">' +
+				esc(__("Family")) +
+				' <select class="npp-family">' +
+				families +
 				"</select></label></div>" +
 				'<div class="npp-chips"><span class="npp-label">' +
 				esc(__("What we buy")) +
 				"</span>" +
 				scopeChips +
-				'<span class="npp-sep"></span>' +
-				families +
 				"</div>" +
 				'<div class="npp-table"><div class="npp-head"><span>' +
 				esc(__("Article")) +
