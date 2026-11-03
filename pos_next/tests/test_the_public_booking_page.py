@@ -40,7 +40,7 @@ import frappe.realtime
 from frappe.app import handle_exception, make_form_dict
 from frappe.auth import HTTPRequest
 from frappe.tests.utils import FrappeTestCase
-from frappe.utils import add_days, get_datetime, getdate, now_datetime, nowdate, set_request
+from frappe.utils import add_days, get_datetime, get_first_day, getdate, now_datetime, nowdate, set_request
 
 from pos_next.api import reservations
 from pos_next.pos_next.doctype.restaurant_reservation.restaurant_reservation import check_overlap
@@ -493,7 +493,9 @@ class TestAVisitorLearnsWhichTablesAreFreeAndNothingElse(OnlineBooking, FrappeTe
 			f"{NEXT_WEEK} 20:00:00",
 			NEXT_WEEK.replace("-", ""),
 			getdate(NEXT_WEEK).strftime("%m/%d/%Y"),
-			NEXT_WEEK.replace("-0", "-"),
+			# Without its leading zeros: the first of a month always has one to drop, where next week's date
+			# has none from the 10th to the 31st of October, November and December (the page's own form)
+			get_first_day(NEXT_WEEK, d_months=1, as_str=True).replace("-0", "-"),
 			"2026-13-45",
 			# Frappe's getdate answers None for it, which a lenient reading then calls a method of
 			"0000-00-00",

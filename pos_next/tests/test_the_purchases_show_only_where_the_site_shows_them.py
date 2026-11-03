@@ -13,6 +13,7 @@ from frappe.tests.utils import FrappeTestCase
 
 from pos_next.api import supplies as api
 from pos_next.restaurant import neoresto, supply_catalogue
+from pos_next.tests.test_neoresto import theme_or_skip
 
 NEORESTO = "pos_next.restaurant.neoresto.neoresto_active"
 SUPPLY_NEORESTO = "pos_next.restaurant.supply_catalogue.neoresto_active"
@@ -38,6 +39,9 @@ class TestThePurchasesShowOnlyWhereTheSiteShowsThem(FrappeTestCase):
 			self.assertFalse(supply_catalogue.purchases_active())
 
 	def test_the_space_has_the_tab_only_where_the_purchases_show(self):
+		# The space borrows tabs of the theme's spaces: a fresh CI site has no neoffice_theme (as TestTheTabs)
+		theme_or_skip("neoffice_theme.workspace_spaces.retail", "tabs")
+		theme_or_skip("neoffice_theme.workspace_spaces.operations", "tabs")
 		with self._flag(True), patch(NEORESTO, return_value=True), patch(SUPPLY_NEORESTO, return_value=True):
 			keys = _keys()
 			self.assertIn("purchases", keys)
