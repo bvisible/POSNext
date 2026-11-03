@@ -20,6 +20,7 @@
   "use_runner",
   "paper_only",
   "ticket_text_size",
+  "ticket_per_family",
   "section_break_floor_plan",
   "show_on_floor_plan",
   "area",
@@ -105,6 +106,13 @@
    "options": "Large\nMedium\nSmall"
   },
   {
+   "default": "0",
+   "description": "When a send holds several families (starters, mains, desserts), print one ticket for each, numbered in the order of the meal, instead of one ticket with sections. A ticket can then leave with its plates.",
+   "fieldname": "ticket_per_family",
+   "fieldtype": "Check",
+   "label": "Ticket per family"
+  },
+  {
    "fieldname": "section_break_floor_plan",
    "fieldtype": "Section Break",
    "label": "Floor Plan",
@@ -180,7 +188,7 @@
  ],
  "index_web_link_preview": 0,
  "links": [],
- "modified": "2026-10-29 23:00:00.000000",
+ "modified": "2026-11-03 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "Preparation Station",

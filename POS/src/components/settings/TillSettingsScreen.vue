@@ -478,7 +478,7 @@ const read = ref({})
 const draft = reactive({})
 // The cloudprnt printing as read, and as edited
 const printingRead = ref(null)
-const printingDraft = ref({ receipt_printer: null, auto_print: 0, open_drawer: "Cash payments", stations: {}, paper_only: {}, text_size: {} })
+const printingDraft = ref({ receipt_printer: null, auto_print: 0, open_drawer: "Cash payments", stations: {}, paper_only: {}, text_size: {}, ticket_per_family: {} })
 const roleHelpOpen = ref(false)
 const groupHelp = reactive({})
 
@@ -660,6 +660,7 @@ async function loadPrinting() {
 		stationPrinters: Object.fromEntries((config.stations || []).map((row) => [row.station, row.printer || null])),
 		stationPaperOnly: Object.fromEntries((config.stations || []).map((row) => [row.station, Number(row.paper_only || 0)])),
 		stationTextSize: Object.fromEntries((config.stations || []).map((row) => [row.station, row.text_size || "Medium"])),
+		stationTicketPerFamily: Object.fromEntries((config.stations || []).map((row) => [row.station, Number(row.ticket_per_family || 0)])),
 	}
 	printingDraft.value = {
 		receipt_printer: printingRead.value.receipt_printer,
@@ -668,6 +669,7 @@ async function loadPrinting() {
 		stations: {},
 		paper_only: {},
 		text_size: {},
+		ticket_per_family: {},
 	}
 }
 

@@ -178,6 +178,25 @@
 							</button>
 						</div>
 					</div>
+					<!-- //// Neoffice — one ticket for each family of a send, so that a ticket can leave with its plates (Daniel, 03.11.2026; design note NeoResto/02 § E): a setting of the station, off by default. Needs a printer. -->
+					<div :class="[SUB_CLASS, stationPrinter(station) ? '' : GREYED_CLASS]" data-setting="station_ticket_per_family">
+						<div class="flex min-h-[30px] items-center gap-2.5">
+							<input
+								:id="`cloudprnt-per-family-${station.station}`"
+								type="checkbox"
+								class="h-[18px] w-[18px] flex-none rounded-[5px] accent-pos-ink text-pos-ink"
+								:checked="stationTicketPerFamily(station)"
+								:disabled="!config.can_configure || !stationPrinter(station)"
+								@change="changeTicketPerFamily(station.station, $event.target.checked)"
+							/>
+							<label :for="`cloudprnt-per-family-${station.station}`" class="text-[13.5px] text-pos-ink">{{
+								__("One ticket per family")
+							}}</label>
+						</div>
+						<p class="ml-7 text-[12px] leading-[1.4] text-pos-muted">
+							{{ __("Starters, mains and desserts come out on their own tickets, numbered in the order of the meal, so that a ticket can leave with its plates.") }}
+						</p>
+					</div>
 				</div>
 			</template>
 		</template>
@@ -278,6 +297,17 @@ function stationTextSize(station) {
 
 function changeTextSize(station, size) {
 	change({ text_size: { ...(draft.value.text_size || {}), [station]: size } })
+}
+
+// A station prints a ticket for each family as this screen says, else as it does today; never without a printer
+function stationTicketPerFamily(station) {
+	if (!stationPrinter(station)) return false
+	const chosen = draft.value.ticket_per_family || {}
+	return station.station in chosen ? Boolean(chosen[station.station]) : Boolean(Number(station.ticket_per_family))
+}
+
+function changeTicketPerFamily(station, on) {
+	change({ ticket_per_family: { ...(draft.value.ticket_per_family || {}), [station]: on ? 1 : 0 } })
 }
 
 async function testPrint() {

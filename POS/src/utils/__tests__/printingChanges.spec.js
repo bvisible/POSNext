@@ -64,4 +64,20 @@ describe("what the printing settings save", () => {
 			Kitchen: "Large",
 		})
 	})
+
+	// //// Neoffice — one ticket for each family of a send (Daniel, 03.11.2026)
+	it("saves the stations that print a ticket for each family, and only the ones that changed", () => {
+		const read = { ...READ, stationTicketPerFamily: { Kitchen: 0, Bar: 1 } }
+
+		const changes = printingChangesOf(read, { ...SAME, ticket_per_family: { Kitchen: 1, Bar: 1 } })
+
+		expect(changes.ticket_per_family).toEqual({ Kitchen: 1 })
+		expect(changes.stations).toBeUndefined()
+	})
+
+	it("does not save a choice left as it was, and reads a station that said nothing as off", () => {
+		expect(printingChangesOf({ ...READ, stationTicketPerFamily: { Kitchen: 1 } }, { ...SAME, ticket_per_family: { Kitchen: 1 } })).toBeNull()
+		expect(printingChangesOf(READ, { ...SAME, ticket_per_family: { Kitchen: 0 } })).toBeNull()
+		expect(printingChangesOf(READ, { ...SAME, ticket_per_family: { Kitchen: 1 } }).ticket_per_family).toEqual({ Kitchen: 1 })
+	})
 })
