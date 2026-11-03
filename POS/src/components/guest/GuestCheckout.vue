@@ -152,8 +152,9 @@
 						<span class="text-base font-bold text-gray-900">{{ formatPrice(guestStore.orderTotal) }}</span>
 					</div>
 				</div>
+					<!-- //// Neoffice — a takeaway order is paid whole, with no tip: nobody served it, and the server says what it owes (neoffice-maintenance#2132) -->
 					<!-- Tips -->
-					<div class="bg-white border-b border-gray-200 p-4">
+					<div v-if="!guestStore.isTakeaway" class="bg-white border-b border-gray-200 p-4">
 						<h3 class="text-sm font-semibold text-gray-700 mb-2">{{ __('Tip') }}</h3>
 						<div v-if="guestStore.paidTipAmount > 0" class="mb-3 flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded-lg">
 							<span class="text-xs font-medium text-green-700">{{ __('Tip already paid') }}</span>
@@ -197,7 +198,7 @@
 					</div>
 
 					<!-- Amount to pay (split / partial) -->
-					<div class="bg-white border-b border-gray-200 p-4">
+					<div v-if="!guestStore.isTakeaway" class="bg-white border-b border-gray-200 p-4">
 						<h3 class="text-sm font-semibold text-gray-700 mb-2">{{ __('Amount to pay') }}</h3>
 						<!-- Quick split buttons -->
 						<div class="flex items-center gap-1.5 mb-3">
@@ -451,10 +452,13 @@ onMounted(async () => {
 		lastPaymentAmount.value = Number.parseFloat(params.get("amount")) || 0
 		clearTip()
 		// Confirm payment with backend (records the payment now that Wallee confirmed)
-		await guestStore.confirmPayment(lastPaymentAmount.value, Number.parseFloat(params.get("tip")) || 0)
+		const confirmed = await guestStore.confirmPayment(lastPaymentAmount.value, Number.parseFloat(params.get("tip")) || 0)
+		window.history.replaceState({}, "", window.location.pathname)
+		// //// Neoffice — a takeaway payment the provider has not confirmed yet is not a success (the store says why); a confirmed one hands the page the number to show at pickup (neoffice-maintenance#2132)
+		if (confirmed?.status === "awaiting_payment") return
 		paymentState.value = "success"
 		showPaymentDialog.value = true
-		window.history.replaceState({}, "", window.location.pathname)
+		if (confirmed?.ticket) emit("order-confirmed", confirmed.ticket)
 	} else if (params.get("payment") === "failed") {
 		paymentState.value = "failed"
 		guestStore.error = __("Payment was cancelled or failed. Please try again.")

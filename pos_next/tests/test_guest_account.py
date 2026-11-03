@@ -496,10 +496,20 @@ class TestWhatTheRestaurantRequires(GuestAccountCase):
 			self.ask_for_a_code(an_address())
 		with self.assertRaises(frappe.PermissionError):
 			self.as_guest(guest_ordering.confirm_guest_code, self.token.token, an_address(), "123456")
-		with self.assertRaises(frappe.PermissionError):
-			self.as_guest(guest_ordering.register_guest_account, self.token.token, "a-proof", "Jean Martin")
 
 		self.assertEqual((self.mails, frappe.db.count("Customer"), frappe.db.count("User")), ([], *before))
+
+	def test_a_real_proof_opens_no_account_where_the_restaurant_proposes_none(self):
+		# The proof is good (it was handed back while accounts were proposed); the restaurant has closed them since
+		address = an_address()
+		proof = self.sign_in(address)["proof"]
+		self.set_mode("Not Proposed")
+
+		with self.assertRaises(frappe.PermissionError):
+			self.as_guest(guest_ordering.register_guest_account, self.token.token, proof, "Jean Martin")
+
+		self.assertFalse(frappe.db.exists("User", address))
+		self.assertIsNone(guest_account.customer_by_email(address))
 
 	def test_an_order_asks_for_an_account_when_the_restaurant_requires_it(self):
 		self.set_mode("Mandatory")

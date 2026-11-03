@@ -172,29 +172,63 @@ const needsAccount = computed(() => guestStore.canSignIn && !guestStore.account)
 
 const activeTab = ref("menu")
 
+// //// Neoffice — the session of a takeaway order outlives a page load: the payment page sends the customer back here, and a new token would have lost
+// //// the order, the account and the payment (neoffice-maintenance#2132). The token is kept for the tab, and dropped when the order is done.
+const TOKEN_KEY = "pos_next_takeaway_token"
+
+function keptToken() {
+	try {
+		return window.sessionStorage.getItem(TOKEN_KEY)
+	} catch {
+		return null
+	}
+}
+
+function keepToken(value) {
+	try {
+		if (value) window.sessionStorage.setItem(TOKEN_KEY, value)
+		else window.sessionStorage.removeItem(TOKEN_KEY)
+	} catch {
+		// a browser that keeps nothing: the order then lives for this page only
+	}
+}
+
+async function newTakeawayToken() {
+	// Create a takeaway token (no table needed)
+	const response = await fetch("/api/method/pos_next.api.guest_ordering.create_takeaway_token", {
+		method: "POST",
+		credentials: "omit",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({}),
+	})
+	if (!response.ok) throw new Error(`HTTP ${response.status}`)
+	const data = await response.json()
+	const token = data.message?.token
+	if (!token) throw new Error("No token returned")
+	return token
+}
+
 async function initTakeaway() {
 	isInitializing.value = true
 	initError.value = null
 	try {
-		// Create a takeaway token (no table needed)
-		const response = await fetch(
-			"/api/method/pos_next.api.guest_ordering.create_takeaway_token",
-			{
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					"X-Frappe-CSRF-Token": window.csrf_token || "",
-				},
-				body: JSON.stringify({}),
-			},
-		)
-		if (!response.ok) throw new Error(`HTTP ${response.status}`)
-		const data = await response.json()
-		const token = data.message?.token
-		if (!token) throw new Error("No token returned")
-
-		await guestStore.validateToken(token)
+		const kept = keptToken()
+		let token = kept
+		if (kept) {
+			try {
+				await guestStore.validateToken(kept)
+			} catch {
+				token = null
+				keepToken(null)
+			}
+		}
+		if (!token) {
+			token = await newTakeawayToken()
+			keepToken(token)
+			await guestStore.validateToken(token)
+		}
 		await guestStore.fetchMenu()
+		await guestStore.refreshOrderStatus()
 	} catch (err) {
 		initError.value = err.message || __("Failed to load takeaway menu")
 	} finally {
@@ -202,8 +236,18 @@ async function initTakeaway() {
 	}
 }
 
-function goToPay() {
-	if (guestStore.cartItemCount === 0) return
+// //// Neoffice — "Pay & Order" first sends the cart, which makes the order (held at the kitchen, priced by the menu on the server): a payment needs an
+// //// order to pay, and a takeaway session had none before it (neoffice-maintenance#2132)
+async function goToPay() {
+	if (guestStore.cartItemCount === 0 && !(guestStore.orderTotal > 0)) return
+	if (guestStore.cartItemCount > 0) {
+		try {
+			await guestStore.submitOrder()
+		} catch {
+			// the store carries what the server said; the page stays on the cart
+			return
+		}
+	}
 	activeTab.value = "pay"
 }
 
@@ -214,6 +258,7 @@ function handleOrderSent() {
 function handleOrderConfirmed(num) {
 	orderNumber.value = num
 	orderSuccess.value = true
+	keepToken(null)
 	guestStore.reset()
 }
 

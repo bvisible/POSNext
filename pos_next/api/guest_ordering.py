@@ -665,8 +665,12 @@ def _guest_menu_categories(token_doc, settings):
 	if token_doc.pos_profile:
 		warehouse = frappe.db.get_value("POS Profile", token_doc.pos_profile, "warehouse")
 
-	# Try time-slot based card selection first
-	card_names = _get_timeslot_cards(settings)
+	# //// Neoffice — a web takeaway session is served the card the restaurant gives its takeaway (`takeaway_menu`), not the card of its tables (#2132)
+	if token_doc.mode == "takeaway" and settings.get("takeaway_menu"):
+		card_names = [settings.get("takeaway_menu")]
+	else:
+		# Try time-slot based card selection first
+		card_names = _get_timeslot_cards(settings)
 	if not card_names:
 		# Fall back to configured guest menu or flagged card
 		fallback = _get_guest_menu_card(settings)
@@ -769,6 +773,9 @@ def submit_guest_order(token, items):
 
 	settings = _get_restaurant_settings(token_doc.pos_profile)
 	validation_mode = settings.qr_order_validation or "Direct to Kitchen"
+	# //// Neoffice — a web takeaway order is paid before the kitchen starts it: its lines wait (held, like a dish the waiter keeps back) until the payment is
+	# //// proven, then `_release_paid_takeaway` sends them (neoffice-maintenance#2132)
+	held_until_paid = token_doc.mode == "takeaway"
 
 	# //// Neoffice — a dish the kitchen has no portion of left is refused, whatever the guest's page still shows (NeoResto lot 1, Daniel, 02.11.2026); before anything is created
 	_refuse_what_is_sold_out(items)
@@ -807,6 +814,9 @@ def submit_guest_order(token, items):
 		}
 		if token_doc.table:
 			invoice_data["restaurant_table"] = token_doc.table
+		# //// Neoffice — a takeaway order is flagged as one before its first save: it takes the takeaway tax category and its ticket number then (#2132)
+		if token_doc.mode == "takeaway" and frappe.db.has_column("Sales Invoice", "is_takeaway"):
+			invoice_data["is_takeaway"] = 1
 
 		invoice_doc = frappe.get_doc(invoice_data)
 
@@ -850,7 +860,7 @@ def submit_guest_order(token, items):
 		added_rows.append(row)
 
 		if has_kds:
-			if validation_mode == "Direct to Kitchen":
+			if validation_mode == "Direct to Kitchen" and not held_until_paid:
 				row.kds_status = "Pending"
 			else:
 				row.kds_status = "Waiting"
@@ -882,7 +892,7 @@ def submit_guest_order(token, items):
 
 	# //// Neoffice — a guest order that goes straight to the kitchen is a send like the till's: tell the
 	# //// kitchen-send listeners (cloudprnt prints each station's ticket; maintenance#1935).
-	if has_kds and validation_mode == "Direct to Kitchen":
+	if has_kds and validation_mode == "Direct to Kitchen" and not held_until_paid:
 		from pos_next.api.kitchen_events import kitchen_send
 
 		kitchen_send(invoice_doc.name, next_batch)
@@ -922,7 +932,9 @@ def submit_guest_order(token, items):
 	return {
 		"invoice": invoice_doc.name,
 		"grand_total": flt(invoice_doc.grand_total),
-		"status": "pending_approval" if validation_mode == "Server Approval" else "sent_to_kitchen",
+		"status": "awaiting_payment"
+		if held_until_paid
+		else ("pending_approval" if validation_mode == "Server Approval" else "sent_to_kitchen"),
 	}
 
 
@@ -1173,6 +1185,10 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 
 	amount = flt(amount)
 	tip = flt(tip)
+	# //// Neoffice — a takeaway order is paid whole, for what the server says it still owes (no split, no tip: the page cannot choose to pay less; #2132)
+	if token_doc.mode == "takeaway":
+		tip = 0
+		amount = flt(invoice_doc.grand_total) - flt(invoice_doc.paid_amount)
 	if amount <= 0:
 		frappe.throw(_("Payment amount must be greater than zero."))
 
@@ -1286,6 +1302,10 @@ def confirm_guest_payment(token, amount, tip=0):
 
 	if not invoice_doc:
 		frappe.throw(_("No active order found for this session."))
+
+	# //// Neoffice — a web takeaway order is settled by what the payment provider confirmed, never by what the page says it paid (neoffice-maintenance#2132)
+	if token_doc.mode == "takeaway":
+		return _settle_takeaway_order(invoice_doc)
 
 	amount = flt(amount)
 	tip = flt(tip)
@@ -1456,6 +1476,81 @@ def confirm_guest_payment(token, amount, tip=0):
 		return {"status": "error"}
 
 
+# //// Neoffice — the payment of a web takeaway order, and what follows it (neoffice-maintenance#2132).
+def _succeeded_intents(invoice_name):
+	"""The Payment Intents of the order that the payment provider settled (the `payments` app writes `succeeded` on the provider's word)."""
+	if not frappe.db.table_exists("Payment Intent"):
+		return []
+	return frappe.get_all(
+		"Payment Intent",
+		filters={"reference_doctype": "Sales Invoice", "reference_name": invoice_name, "status": "succeeded"},
+		fields=["name", "amount"],
+	)
+
+
+def _provider_confirmed(invoice_doc):
+	"""Whether the provider has settled the whole order: the intents that succeeded hold at least its total (they are in minor units)."""
+	return sum(cint(intent.amount) for intent in _succeeded_intents(invoice_doc.name)) >= round(flt(invoice_doc.grand_total) * 100) > 0
+
+
+def _settle_takeaway_order(invoice_doc):
+	"""What `confirm_guest_payment` is for a web takeaway order. The page's word is not a payment: the order is paid when the provider settled its
+	total, whatever amount the page says. Then the `payments` app's own reconciliation puts the money on the invoice (it does it by itself when the
+	intent succeeds; asked again it does nothing twice), the invoice is submitted, and its held lines go to the kitchen. Until then the answer is
+	{"status": "awaiting_payment"} and the page asks again."""
+	if not _provider_confirmed(invoice_doc):
+		return {"status": "awaiting_payment"}
+
+	from payments.api.reconciliation import reconcile_payment_intent
+
+	with _as_the_system():
+		for intent in _succeeded_intents(invoice_doc.name):
+			reconcile_payment_intent(intent.name)
+		invoice_doc = frappe.get_doc("Sales Invoice", invoice_doc.name)
+		if invoice_doc.docstatus == 0:
+			if flt(invoice_doc.paid_amount) < flt(invoice_doc.grand_total):
+				frappe.throw(_("The payment of this order is not recorded yet. Please try again."))
+			from pos_next.api.invoices import _set_payment_accounts
+
+			_set_payment_accounts(invoice_doc.payments, invoice_doc.company)
+			invoice_doc.ignore_pricing_rule = 1
+			invoice_doc.flags.ignore_pricing_rule = True
+			invoice_doc.flags.ignore_permissions = True
+			invoice_doc.flags.ignore_version = True
+			frappe.flags.ignore_account_permission = True
+			invoice_doc.save()
+			invoice_doc.submit()
+	frappe.db.commit()
+
+	ticket = _release_paid_takeaway(invoice_doc.name)
+	return {
+		"status": "success",
+		"paid_amount": flt(invoice_doc.paid_amount),
+		"grand_total": flt(invoice_doc.grand_total),
+		"submitted": True,
+		"ticket": ticket,
+	}
+
+
+def _release_paid_takeaway(invoice_name):
+	"""Send a paid takeaway order to the kitchen: its held lines become Pending, once, and the kitchen-send listeners are told (cloudprnt prints the
+	tickets). A line already sent is not touched, so a second call does nothing. The number the customer shows at pickup, or None."""
+	if frappe.db.has_column("Sales Invoice Item", "kds_status"):
+		held = frappe.get_all(
+			"Sales Invoice Item", filters={"parent": invoice_name, "kds_status": "Waiting"}, fields=["name", "kds_batch"]
+		)
+		for row in held:
+			frappe.db.set_value("Sales Invoice Item", row.name, "kds_status", "Pending", update_modified=False)
+		if held:
+			frappe.db.commit()
+			from pos_next.api.kitchen_events import kitchen_send
+
+			for batch in sorted({cint(row.kds_batch) or 1 for row in held}):
+				kitchen_send(invoice_name, batch)
+			frappe.publish_realtime("kds_update")
+	return frappe.db.get_value("Sales Invoice", invoice_name, "posa_ticket_no") or None
+
+
 # ==========================================
 # Authenticated endpoints (server-side)
 # ==========================================
@@ -1586,6 +1681,19 @@ def create_table_token(table, pos_profile):
 # ==========================================
 
 
+# //// Neoffice — a web takeaway order is rung up on a till of its restaurant (neoffice-maintenance#2132): the oldest enabled one that names the restaurant,
+# //// else the first enabled POS Profile (what `submit_takeaway_order` always did).
+def _takeaway_pos_profile(restaurant):
+	profile = None
+	if restaurant:
+		profile = frappe.db.get_value(
+			"POS Settings", {"enabled": 1, "restaurant": restaurant}, "pos_profile", order_by="creation asc"
+		)
+	return profile or next(
+		iter(frappe.get_all("POS Profile", filters={"disabled": 0}, order_by="creation asc", limit=1, pluck="name")), None
+	)
+
+
 @frappe.whitelist(allow_guest=True, methods=["POST"])
 def create_takeaway_token():
 	"""
@@ -1618,6 +1726,8 @@ def create_takeaway_token():
 	token_doc = frappe.get_doc({
 		"doctype": "Guest Order Token",
 		"mode": "takeaway",
+		# //// Neoffice — the till the order is rung up on: an order needs a POS Profile before it can exist, and a takeaway session had none (#2132)
+		"pos_profile": _takeaway_pos_profile(settings.get("name")),
 		"expires_at": expires_at,
 	})
 	token_doc.flags.ignore_permissions = True

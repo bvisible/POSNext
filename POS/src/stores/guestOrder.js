@@ -73,6 +73,8 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 	// Who the session is: the customer the till put on the table, or the one the guest signed in as (null for nobody).
 	// //// Neoffice — the sign-in of the QR page (NeoResto lot 1, Daniel, 02.11.2026): { customer, customer_name, source, loyalty_points, loyalty_value, loyalty_program }
 	const account = ref(null)
+	// "restaurant" (a table's QR code) or "takeaway" (the web order): a takeaway order is paid whole, with no tip
+	const mode = ref("restaurant")
 
 	// Getters
 	const cartTotal = computed(() => {
@@ -96,6 +98,7 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 	const canSignIn = computed(() => accountMode.value !== "Not Proposed")
 	// An account is required and nobody is identified yet: nothing can be ordered
 	const mustSignIn = computed(() => accountMode.value === "Mandatory" && !account.value)
+	const isTakeaway = computed(() => mode.value === "takeaway")
 
 	// Actions
 	async function validateToken(tokenValue) {
@@ -108,6 +111,7 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 			)
 			token.value = tokenValue
 			account.value = result.account || null
+			mode.value = result.mode || "restaurant"
 			tableInfo.value = result.table || null
 			settings.value = {
 				qr_order_validation: result.qr_order_validation,
@@ -291,10 +295,20 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 		if (!token.value || _paymentConfirmed) return { status: "already_confirmed" }
 		_paymentConfirmed = true
 		try {
-			const result = await guestFetch(
-				"pos_next.api.guest_ordering.confirm_guest_payment",
-				{ token: token.value, amount, tip },
-			)
+			const ask = () =>
+				guestFetch("pos_next.api.guest_ordering.confirm_guest_payment", { token: token.value, amount, tip })
+			let result = await ask()
+			// //// Neoffice — a takeaway order is recorded only once the payment provider has confirmed the money, which can come a few seconds after the
+			// //// browser's return: ask again for a minute before saying so (neoffice-maintenance#2132)
+			for (let attempt = 0; result?.status === "awaiting_payment" && attempt < 20; attempt++) {
+				await new Promise((resolve) => setTimeout(resolve, 3000))
+				result = await ask()
+			}
+			if (result?.status === "awaiting_payment") {
+				_paymentConfirmed = false
+				error.value = __("Your payment is not confirmed yet. Please reload this page in a moment.")
+				return result
+			}
 			await refreshOrderStatus()
 			return result
 		} catch (err) {
@@ -353,6 +367,7 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 		invoiceName.value = ""
 		postingDate.value = ""
 		account.value = null
+		mode.value = "restaurant"
 		_realtimeSubscribed = false
 	}
 
@@ -379,10 +394,12 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 		invoiceName,
 		postingDate,
 		account,
+		mode,
 		// Getters
 		accountMode,
 		canSignIn,
 		mustSignIn,
+		isTakeaway,
 		cartTotal,
 		cartItemCount,
 		remainingAmount,
