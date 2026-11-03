@@ -4,15 +4,17 @@
 	<!-- //// opened with its name). No password: the code is the proof. Since 03.11.2026 the code is the frappe fork's engine's, the same -->
 	<!-- //// one the shop and the desk sign in with (neoffice-maintenance#2192); `embedded` draws it as a card of the page, for the takeaway -->
 	<!-- //// page, where an account is the first step and there is nothing to close. -->
+	<!-- //// Neoffice — the sheet stops above the phone's keyboard (product owner, 03.11.2026: the keyboard hid the « Send me a code » button): `bottom` is what the keyboard covers, and the panel scrolls if the room left is short. -->
 	<div
 		:class="embedded ? '' : 'fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50'"
+		:style="!embedded && keyboardInset > 0 ? { bottom: `${keyboardInset}px` } : null"
 		data-test="account-sheet"
 		@click.self="!embedded && emit('close')"
 	>
 		<div
 			:class="[
 				'bg-white w-full',
-				embedded ? 'rounded-xl border border-gray-200 p-6 shadow-sm' : 'sm:max-w-sm rounded-t-2xl sm:rounded-2xl shadow-xl p-5 safe-area-bottom',
+				embedded ? 'rounded-xl border border-gray-200 p-6 shadow-sm' : 'sm:max-w-sm rounded-t-2xl sm:rounded-2xl shadow-xl p-5 safe-area-bottom max-h-full overflow-y-auto',
 			]"
 		>
 			<div class="flex items-center justify-between mb-3">
@@ -157,7 +159,10 @@
 
 <script setup>
 import { computed, onBeforeUnmount, ref } from "vue"
+import { useKeyboardInset } from "@/composables/useKeyboardInset"
 import { useGuestOrderStore } from "@/stores/guestOrder"
+
+const { inset: keyboardInset } = useKeyboardInset()
 
 defineProps({
 	// Drawn as a card of the page, with no overlay and nothing to close (the takeaway page, where an account is the first step)
