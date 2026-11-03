@@ -196,7 +196,7 @@
 									:selectable="Boolean(item._section) && mode !== 'ready-list' && (!isHeld(item) || sectionOffers(item._section, 'Preparing'))" :count="item._section?.idxs.length || 0" :held="isHeld(item)"
 									@click="openSection(item, $event)" />
 								<div v-if="item._section && activeSection === item._section.key" data-test="section-menu"
-									class="fixed z-30 w-72 rounded-xl border border-gray-200 bg-white p-2 shadow-xl dark:border-gray-600 dark:bg-gray-800" :style="menuStyle">
+									class="fixed z-30 w-72 rounded-xl border-2 border-[#141414] bg-white p-2 shadow-2xl dark:border-white dark:bg-gray-800" :style="menuStyle">
 									<div class="flex items-start gap-2 pb-2">
 										<p data-test="section-menu-title" class="min-w-0 flex-1 px-1.5 pt-1 text-base font-bold leading-snug text-gray-800 line-clamp-2 dark:text-gray-100">{{ item._section.label }} · {{ sectionDishes(item._section).length }}</p>
 										<button type="button" data-test="menu-close" :aria-label="__('Close')" :title="__('Close')" @click.stop="closeMenu"
@@ -280,6 +280,7 @@
 									<TicketDishNotes :item="item" :allergy-words="allergyWords" />
 								</div>
 								<!-- Item context menu -->
+								<!-- //// Neoffice — the two menus (a dish's, a course's) wear the ink outline of the design system, white in dark mode like the selected dish, and a deeper shadow (Daniel, 03.11: « on n'arrive pas à bien séparer le pop-up du fond ») -->
 								<!-- //// Neoffice — was `absolute` under the dish, inside the ticket: the dishes now scroll inside the ticket, -->
 								<!-- //// and a menu inside a scrolling body is cut by its foot. It is `fixed` and placed on the screen by -->
 								<!-- //// utils/menuPlacement, and its buttons are 44 px high for a finger (task 23). -->
@@ -289,7 +290,7 @@
 							<!-- //// "ready" and has no "deliver"; with none "ready" and "deliver" are one gesture, so the menu has "deliver" and no "ready"; from the list of -->
 							<!-- //// what waits at the pass a dish can only be called back to preparation. -->
 								<div v-if="activeItemMenu === item._globalIdx && !isDelivered(item)" data-test="ticket-line-menu"
-									class="fixed z-30 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-600 p-2"
+									class="fixed z-30 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border-2 border-[#141414] dark:border-white p-2"
 									:class="pickerShown(item) ? 'w-80' : 'w-72'"
 									:style="menuStyle">
 									<!-- //// Neoffice — the menu names the dish it is for and the line is highlighted (kitchen test, 01.11): the menu opens under the dish and covers the one after it, so a cook could not tell which dish a button would act on. The buttons are a size and a weight up, with a border in the colour of the state, so that « ready » is read from across the pass. -->

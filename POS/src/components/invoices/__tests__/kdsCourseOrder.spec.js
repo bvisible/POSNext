@@ -125,6 +125,16 @@ describe("a course that waits for the one before it", () => {
 		expect(rowOf(wrapper, "Steak").attributes("data-held")).toBe("true")
 	})
 
+	it("draws the menu of a dish with the ink outline of the design system, so that it stands out from the ticket under it (Daniel, 03.11)", async () => {
+		const wrapper = show(meal())
+
+		await rowOf(wrapper, "Steak").trigger("click")
+		const classes = wrapper.get('[data-test="ticket-line-menu"]').classes()
+		expect(classes).toContain("border-2")
+		expect(classes).toContain("border-[#141414]")
+		expect(classes).toContain("dark:border-white")
+	})
+
 	it("opens a menu on a dish that does not wait, with the way on as well", async () => {
 		const wrapper = show(meal())
 
