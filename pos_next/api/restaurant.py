@@ -16,9 +16,11 @@ from frappe.utils import cint, flt
 # //// Neoffice — `kitchen_alerts` joined the import: the popup and the sound a till sets for the kitchen and the runner (NeoResto lot 1, Daniel, 01.11)
 # //// Neoffice — so did `call_seen`: the call of the next course the screens of a station took up, carried by each reading of the orders (Daniel, 01.11)
 # //// Neoffice — and `paid_orders`: the orders paid while a dish is still at the kitchen (neoffice-maintenance#2163)
+# //// Neoffice — and `figures`: the overview of the restaurant's space is told when the service changes what it counts (neoffice-maintenance#2163)
 from pos_next.restaurant import (
 	call_seen,
 	devices,
+	figures,
 	item_units,
 	kitchen_alerts,
 	paid_orders,
@@ -118,6 +120,9 @@ def on_invoice_update(doc, method):
 			# The party of the invoice is gone with it, and so is the QR code that served it: not the code of the party now
 			# seated at the table, whose order is another's or is yet to come (see the helper)
 			expire_codes_of_emptied_tables([doc.restaurant_table], spare_live_codes=True)
+	# //// Neoffice — the overview of the space counts the tables with guests and what the tills took: a sale of a till or an order of a table moves both (#2163)
+	if doc.get("restaurant_table") or doc.get("is_pos"):
+		figures.figures_changed()
 
 
 @frappe.whitelist()
@@ -294,6 +299,8 @@ def update_table_status(table_name, status):
 		frappe.throw(_("Table {0} not found").format(table_name))
 
 	frappe.db.set_value("Restaurant Table", table_name, "status", status)
+	# //// Neoffice — the overview of the space counts the tables with guests (#2163)
+	figures.figures_changed()
 
 	# Expire guest order tokens when table is set to Empty
 	if status == "Empty":
@@ -412,6 +419,8 @@ def _put_table_back(table_name):
 	unlinked so that the next order starts fresh. Whoever calls it has checked who may, and tells the other tills.
 	"""
 	frappe.db.set_value("Restaurant Table", table_name, "status", "Empty")
+	# //// Neoffice — the overview of the space counts the tables with guests (#2163)
+	figures.figures_changed()
 
 	# Expire guest order tokens
 	from pos_next.pos_next.doctype.guest_order_token.guest_order_token import GuestOrderToken

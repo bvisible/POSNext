@@ -1415,6 +1415,10 @@ def create_table_token(table, pos_profile):
 	if current_status == "Empty":
 		frappe.db.set_value("Restaurant Table", table, "status", "Occupied")
 		frappe.publish_realtime("table_update")
+		# //// Neoffice — the overview of the restaurant's space counts the tables with guests (neoffice-maintenance#2163)
+		from pos_next.restaurant.figures import figures_changed
+
+		figures_changed()
 
 	guest_url = guest_link(token_doc.token)
 

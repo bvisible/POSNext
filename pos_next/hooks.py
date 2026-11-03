@@ -253,7 +253,18 @@ doc_events = {
 	# //// attached to the closing shift, and e-mailed when the profile asks for it, both in the
 	# //// background after the commit so closing stays fast (neoffice-maintenance#1235).
 	"POS Closing Shift": {
-		"on_submit": "pos_next.api.eod_report.enqueue_after_close",
+		# //// Neoffice — on_submit became a list: closing a session moves the « sessions open » of the restaurant's overview (neoffice-maintenance#2163).
+		"on_submit": ["pos_next.api.eod_report.enqueue_after_close", "pos_next.restaurant.figures.figures_changed"],
+	},
+	# //// Neoffice — added entry (no upstream equivalent): the restaurant's overview counts the sessions open and the bookings of the day, and is told
+	# //// when they change (neoffice-maintenance#2163).
+	"POS Opening Shift": {
+		"on_submit": "pos_next.restaurant.figures.figures_changed",
+		"on_cancel": "pos_next.restaurant.figures.figures_changed",
+	},
+	"Restaurant Reservation": {
+		"on_update": "pos_next.restaurant.figures.figures_changed",
+		"on_trash": "pos_next.restaurant.figures.figures_changed",
 	},
 	"Customer": {
 		"after_insert": [
