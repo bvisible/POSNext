@@ -36,6 +36,11 @@
 		".nps-price{text-align:right;font-variant-numeric:tabular-nums}" +
 		".nps-empty{padding:28px 16px;text-align:center;color:#6F665A}" +
 		".nps-pick-search{width:100%;min-height:40px;border:1px solid #DCD4C7;border-radius:10px;padding:0 12px;margin-bottom:10px}" +
+		".nps-chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;margin-bottom:2px}" +
+		".nps-chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 14px;border:1px solid #DCD4C7;border-radius:999px;background:#fff;color:#141414;font-size:13.5px;font-weight:600;cursor:pointer}" +
+		".nps-chip.on{background:#141414;border-color:#141414;color:#fff}" +
+		".nps-chip .n{min-width:20px;padding:0 6px;border-radius:999px;background:#FFEAE2;color:#AA3700;font-size:12px;text-align:center}" +
+		".nps-tag{display:inline-block;margin-left:8px;padding:0 8px;border-radius:999px;background:#E9F7EE;color:#11663A;font-size:11.5px;font-weight:600}" +
 		".nps-pick{border:1px solid #DCD4C7;border-radius:12px;max-height:46vh;overflow:auto}" +
 		".nps-pick-row{display:grid;grid-template-columns:34px minmax(150px,2fr) minmax(170px,2fr) 90px 100px;gap:10px;align-items:center;padding:8px 14px;border-top:1px solid #F6F3ED}" +
 		".nps-pick-row:first-child{border-top:0}" +
@@ -381,27 +386,41 @@
 		});
 	};
 
-	// The picker: the articles the restaurant buys, a search, a tick and a quantity on each, and one button that puts every ticked
-	// one on the list - the table that ticks lines on a new order. A pack is chosen where an article has several, else it is
-	// the usual one (the server picks it when none is sent).
-	NeorestoShopping.prototype.add_article = function (supplier) {
+	// The picker: the articles the restaurant buys, a strip of suppliers to filter by, a search, a tick and a quantity on each line,
+	// and one button that puts every ticked one on the list - the table that ticks lines on a new order. The owner may choose a
+	// supplier, tick what he needs from him, choose another, tick again: what is ticked stays ticked while the filter changes, and
+	// each supplier's chip says how many are ticked under it. An article ticked under two suppliers goes on twice, once at each.
+	// `preset` is the supplier whose block's « Add » opened it. A packaging is chosen where an article has several (the usual
+	// one first), else it is the only one.
+	NeorestoShopping.prototype.add_article = function (preset) {
 		var self = this;
 		var rows = [];
-		var chosen = {};
+		var suppliers = [];
+		var chosen = {}; // key -> {item, pack, qty}
+		var quantities = {}; // key -> the quantity typed, ticked or not
+		var picks = {}; // article -> the packaging shown on its line, among those of the supplier in view
+		var on_list = {}; // articles already on the list the lines will join
+		var supplier = preset || "";
+
+		((self.view && self.view.blocks) || []).forEach(function (block) {
+			block.lines.forEach(function (line) {
+				if (line.item) on_list[line.item] = true;
+			});
+		});
+
 		var d = new frappe.ui.Dialog({
 			title: __("Add an article"),
 			size: "extra-large",
 			fields: [{ fieldname: "picker", fieldtype: "HTML" }],
 			primary_action_label: __("Add to the list"),
 			primary_action: function () {
-				var lines = Object.keys(chosen).map(function (code) {
-					var row = chosen[code];
-					var pack = row.packs[row.pack];
+				var lines = Object.keys(chosen).map(function (key) {
+					var entry = chosen[key];
 					return {
-						item: code,
-						qty: row.qty,
-						supplier: pack ? pack.supplier : null,
-						uom: pack ? pack.uom : null,
+						item: entry.item,
+						qty: entry.qty,
+						supplier: entry.pack ? entry.pack.supplier : null,
+						uom: entry.pack ? entry.pack.uom : null,
 					};
 				});
 				if (!lines.length) return;
@@ -425,44 +444,80 @@
 				frappe.set_route("neoresto-purchases");
 			},
 		});
-		// Opened from a supplier's block: only what that supplier sells, in its own packagings
-		if (supplier) d.set_title(__("Add an article") + " — " + supplier);
 		var $box = d.fields_dict.picker.$wrapper;
 
-		function count() {
-			return Object.keys(chosen).length;
+		function keyOf(code, pack) {
+			return code + "|" + (pack ? pack.supplier : "");
+		}
+
+		function visiblePacks(row) {
+			return supplier
+				? row.packs.filter(function (p) {
+						return p.supplier === supplier;
+				  })
+				: row.packs;
+		}
+
+		function ticked(name) {
+			return Object.keys(chosen).filter(function (key) {
+				var pack = chosen[key].pack;
+				return name === null ? true : pack && pack.supplier === name;
+			}).length;
 		}
 
 		function sync() {
-			var n = count();
+			var n = ticked(null);
 			d.get_primary_btn()
 				.prop("disabled", n === 0)
 				.text(__("Add to the list") + (n ? " (" + n + ")" : ""));
 		}
 
-		function packLabel(pack) {
+		function packLabel(pack, withSupplier) {
 			return (
-				pack.supplier +
-				" — " +
+				(withSupplier ? pack.supplier + " — " : "") +
 				(pack.uom || "") +
 				(pack.price !== null && pack.price !== undefined ? " · " + money(pack.price) : "")
 			);
 		}
 
+		function chipsHtml() {
+			function chip(name, label, count) {
+				return (
+					'<button type="button" class="nps-chip' +
+					(supplier === name ? " on" : "") +
+					'" data-pick-supplier="' +
+					esc(name) +
+					'">' +
+					esc(label) +
+					(count ? '<span class="n">' + esc(count) + "</span>" : "") +
+					"</button>"
+				);
+			}
+			return (
+				chip("", __("All suppliers"), ticked(null)) +
+				suppliers
+					.map(function (s) {
+						return chip(s.name, s.name, ticked(s.name));
+					})
+					.join("")
+			);
+		}
+
 		function rowHtml(row) {
-			var on = !!chosen[row.item];
-			var current = on ? chosen[row.item] : null;
-			var pick = current ? current.pack : 0;
-			var qty = current ? current.qty : 1;
-			var pack = row.packs[pick];
-			var packs = !row.packs.length
+			var packs = visiblePacks(row);
+			var pick = Math.min(picks[row.item] || 0, Math.max(packs.length - 1, 0));
+			var pack = packs[pick] || null;
+			var key = keyOf(row.item, pack);
+			var entry = chosen[key];
+			var qty = entry ? entry.qty : quantities[key] || 1;
+			var choice = !packs.length
 				? '<span class="sub">' + esc(__("No packaging yet")) + "</span>"
-				: row.packs.length === 1
-				? esc(packLabel(row.packs[0]))
+				: packs.length === 1
+				? esc(packLabel(packs[0], !supplier))
 				: '<select data-pick-pack="' +
 				  esc(row.item) +
 				  '">' +
-				  row.packs
+				  packs
 						.map(function (p, i) {
 							return (
 								'<option value="' +
@@ -470,7 +525,7 @@
 								'"' +
 								(i === pick ? " selected" : "") +
 								">" +
-								esc(packLabel(p)) +
+								esc(packLabel(p, !supplier)) +
 								"</option>"
 							);
 						})
@@ -478,19 +533,20 @@
 				  "</select>";
 			return (
 				'<div class="nps-pick-row' +
-				(on ? " on" : "") +
-				'" data-pick-row="' +
-				esc(row.item) +
+				(entry ? " on" : "") +
 				'"><input type="checkbox" data-pick-tick="' +
 				esc(row.item) +
 				'"' +
-				(on ? " checked" : "") +
+				(entry ? " checked" : "") +
 				'><span class="label">' +
 				esc(row.item_name) +
+				(on_list[row.item]
+					? '<span class="nps-tag">' + esc(__("Already on the list")) + "</span>"
+					: "") +
 				'<span class="sub">' +
 				esc(row.item_group || "") +
 				"</span></span><span>" +
-				packs +
+				choice +
 				'</span><span class="price">' +
 				(pack && pack.price !== null && pack.price !== undefined
 					? esc(money(pack.price))
@@ -506,10 +562,11 @@
 		function draw() {
 			var needle = ($box.find(".nps-pick-search").val() || "").toLowerCase();
 			var shown = rows.filter(function (row) {
+				if (supplier && !visiblePacks(row).length) return false;
 				if (!needle) return true;
 				var haystack = [row.item_name, row.item, row.item_group]
 					.concat(
-						row.packs.map(function (p) {
+						visiblePacks(row).map(function (p) {
 							return p.supplier + " " + (p.uom || "");
 						})
 					)
@@ -517,6 +574,7 @@
 					.toLowerCase();
 				return haystack.indexOf(needle) >= 0;
 			});
+			$box.find(".nps-chips").html(chipsHtml());
 			$box.find(".nps-pick-body").html(
 				rows.length
 					? shown.length
@@ -544,24 +602,29 @@
 			})[0];
 		}
 
-		function tick(code, on, qty) {
-			if (!on) {
-				delete chosen[code];
-				return;
-			}
-			var row = row_of(code);
-			chosen[code] = chosen[code] || { packs: row.packs, pack: 0, qty: 1 };
-			if (qty !== undefined) chosen[code].qty = qty;
+		// The packaging on an article's line, among those of the supplier in view
+		function current(code) {
+			var packs = visiblePacks(row_of(code));
+			return packs[Math.min(picks[code] || 0, Math.max(packs.length - 1, 0))] || null;
 		}
 
 		$box.html(
-			'<input type="search" class="nps-pick-search" placeholder="' +
+			'<div class="nps-chips"></div><input type="search" class="nps-pick-search" placeholder="' +
 				esc(__("An article, a supplier, a packaging…")) +
 				'"><div class="nps-pick nps-pick-body"></div>'
 		);
 		$box.on("input", ".nps-pick-search", draw);
+		$box.on("click", "[data-pick-supplier]", function () {
+			supplier = $(this).attr("data-pick-supplier");
+			picks = {};
+			draw();
+		});
 		$box.on("change", "[data-pick-tick]", function () {
-			tick($(this).attr("data-pick-tick"), this.checked);
+			var code = $(this).attr("data-pick-tick");
+			var pack = current(code);
+			var key = keyOf(code, pack);
+			if (this.checked) chosen[key] = { item: code, pack: pack, qty: quantities[key] || 1 };
+			else delete chosen[key];
 			draw();
 		});
 		// A quantity typed ticks its line: the owner who types a number means it
@@ -569,21 +632,32 @@
 			var code = $(this).attr("data-pick-qty");
 			var qty = parseFloat($(this).val());
 			if (!(qty > 0)) return;
-			var was = !!chosen[code];
-			tick(code, true, qty);
+			var pack = current(code);
+			var key = keyOf(code, pack);
+			quantities[key] = qty;
+			var was = !!chosen[key];
+			chosen[key] = { item: code, pack: pack, qty: qty };
 			if (!was) {
 				$(this)
 					.closest(".nps-pick-row")
 					.addClass("on")
 					.find("[data-pick-tick]")
 					.prop("checked", true);
+				$box.find(".nps-chips").html(chipsHtml());
 				sync();
 			}
 		});
 		$box.on("change", "[data-pick-pack]", function () {
 			var code = $(this).attr("data-pick-pack");
-			tick(code, true);
-			chosen[code].pack = Number($(this).val());
+			var before = keyOf(code, current(code));
+			var was = chosen[before];
+			picks[code] = Number($(this).val());
+			var pack = current(code);
+			if (was) {
+				// A ticked line that changes packaging follows it, with its quantity
+				delete chosen[before];
+				chosen[keyOf(code, pack)] = { item: code, pack: pack, qty: was.qty };
+			}
 			draw();
 		});
 		$box.on("click", "[data-pick-create]", function () {
@@ -593,21 +667,15 @@
 		d.show();
 		sync();
 		frappe.call({ method: SUPPLIES + "get_supply_catalogue", args: {} }).then(function (r) {
+			var data = r.message || {};
 			// The usual packaging first, so that the one the picker proposes is the one the owner usually buys
-			rows = ((r.message && r.message.rows) || [])
-				.map(function (row) {
-					var packs = row.packs
-						.filter(function (p) {
-							return !supplier || p.supplier === supplier;
-						})
-						.sort(function (a, b) {
-							return (b.usual ? 1 : 0) - (a.usual ? 1 : 0);
-						});
-					return $.extend({}, row, { packs: packs });
-				})
-				.filter(function (row) {
-					return !supplier || row.packs.length;
+			rows = (data.rows || []).map(function (row) {
+				var packs = row.packs.slice().sort(function (a, b) {
+					return (b.usual ? 1 : 0) - (a.usual ? 1 : 0);
 				});
+				return $.extend({}, row, { packs: packs });
+			});
+			suppliers = data.suppliers || [];
 			draw();
 			$box.find(".nps-pick-search").trigger("focus");
 		});
