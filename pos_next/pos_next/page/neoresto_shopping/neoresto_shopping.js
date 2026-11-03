@@ -35,6 +35,24 @@
 		".nps-pill.lost{background:#FFEAE2;color:#AA3700}" +
 		".nps-price{text-align:right;font-variant-numeric:tabular-nums}" +
 		".nps-empty{padding:28px 16px;text-align:center;color:#6F665A}" +
+		".nps-pick-search{width:100%;min-height:40px;border:1px solid #DCD4C7;border-radius:10px;padding:0 12px;margin-bottom:10px}" +
+		".nps-pick-bar{display:flex;gap:10px;align-items:center;margin-bottom:10px}" +
+		".nps-pick-bar select{min-height:40px;max-width:280px;border:1px solid #DCD4C7;border-radius:10px;background:#fff;padding:0 10px}" +
+		".nps-pick-bar .nps-pick-search{flex:1;width:auto;margin-bottom:0}" +
+		".nps-pick-bar label{display:flex;gap:8px;align-items:center;margin:0;font-size:13px;color:#6F665A}" +
+		".nps-tag{display:inline-block;margin-left:8px;padding:0 8px;border-radius:999px;background:#E9F7EE;color:#11663A;font-size:11.5px;font-weight:600}" +
+		".nps-pick{border:1px solid #DCD4C7;border-radius:12px;max-height:46vh;overflow:auto}" +
+		".nps-pick-row{display:grid;grid-template-columns:34px minmax(150px,2fr) minmax(170px,2fr) 90px 100px;gap:10px;align-items:center;padding:8px 14px;border-top:1px solid #F6F3ED}" +
+		".nps-pick-row:first-child{border-top:0}" +
+		".nps-pick-row.head{position:sticky;top:0;background:#F6F3ED;font-size:12px;font-weight:600;color:#6F665A;text-transform:uppercase;letter-spacing:.04em}" +
+		".nps-pick-row.on{background:#FFF6EF}" +
+		".nps-pick-row .label{font-weight:600}" +
+		".nps-pick-row .p-step{justify-self:end}" +
+		".nps-pick-row .sub{display:block;font-size:12.5px;color:#6F665A;font-weight:400}" +
+		".nps-pick-row select,.nps-pick-row input[type=number]{width:100%;min-height:34px;border:1px solid #DCD4C7;border-radius:8px;background:#fff;padding:0 8px}" +
+		".nps-pick-row input[type=checkbox]{width:18px;height:18px}" +
+		".nps-pick-row .price{text-align:right;font-variant-numeric:tabular-nums}" +
+		".nps-pick-none{padding:28px 16px;text-align:center;color:#6F665A}" +
 		"@media (max-width:1100px),(pointer:coarse){" +
 		'.nps-line{grid-template-columns:minmax(0,1fr) auto auto;grid-template-areas:"label label price" "unit unit unit" "step tick more";gap:8px 12px;padding:12px 16px}' +
 		".nps-line .c-label{grid-area:label}.nps-line .c-unit{grid-area:unit;color:#6F665A;font-size:13.5px}.nps-line .c-price{grid-area:price}" +
@@ -55,25 +73,7 @@
 		"@media (max-width:560px){" +
 		'.nps-line{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"label price" "unit unit" "step more" "tick tick"}' +
 		".nps-line .c-more{justify-self:end}.nps-line .nps-more{min-width:130px}" +
-		"}" +
-		".nps-pick-search{width:100%;min-height:40px;border:1px solid #DCD4C7;border-radius:10px;padding:0 12px;margin-bottom:10px}" +
-		".nps-pick-bar{display:flex;gap:10px;align-items:center;margin-bottom:10px}" +
-		".nps-pick-bar select{min-height:40px;max-width:280px;border:1px solid #DCD4C7;border-radius:10px;background:#fff;padding:0 10px}" +
-		".nps-pick-bar .nps-pick-search{flex:1;width:auto;margin-bottom:0}" +
-		".nps-pick-bar label{display:flex;gap:8px;align-items:center;margin:0;font-size:13px;color:#6F665A}" +
-		".nps-tag{display:inline-block;margin-left:8px;padding:0 8px;border-radius:999px;background:#E9F7EE;color:#11663A;font-size:11.5px;font-weight:600}" +
-		".nps-pick{border:1px solid #DCD4C7;border-radius:12px;max-height:46vh;overflow:auto}" +
-		".nps-pick-row{display:grid;grid-template-columns:34px minmax(150px,2fr) minmax(170px,2fr) 90px 100px;gap:10px;align-items:center;padding:8px 14px;border-top:1px solid #F6F3ED}" +
-		".nps-pick-row:first-child{border-top:0}" +
-		".nps-pick-row.head{position:sticky;top:0;background:#F6F3ED;font-size:12px;font-weight:600;color:#6F665A;text-transform:uppercase;letter-spacing:.04em}" +
-		".nps-pick-row.on{background:#FFF6EF}" +
-		".nps-pick-row .label{font-weight:600}" +
-		".nps-pick-row .p-step{justify-self:end}" +
-		".nps-pick-row .sub{display:block;font-size:12.5px;color:#6F665A;font-weight:400}" +
-		".nps-pick-row select,.nps-pick-row input[type=number]{width:100%;min-height:34px;border:1px solid #DCD4C7;border-radius:8px;background:#fff;padding:0 8px}" +
-		".nps-pick-row input[type=checkbox]{width:18px;height:18px}" +
-		".nps-pick-row .price{text-align:right;font-variant-numeric:tabular-nums}" +
-		".nps-pick-none{padding:28px 16px;text-align:center;color:#6F665A}";
+		"}";
 
 	var DONE = ["Bought", "Ordered"];
 	var ASIDE = ["Not needed", "Already in stock"];
