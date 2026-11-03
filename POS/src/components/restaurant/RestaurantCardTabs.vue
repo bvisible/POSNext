@@ -9,7 +9,7 @@
 			<!-- The buttons scroll; the « ⋯ » stays out of the scroller, whose edge would cut its list off -->
 			<div
 				data-test="card-tabs-scroller"
-				class="flex items-center gap-1 sm:gap-2 overflow-x-auto py-1 -my-1 scrollbar-hide snap-x snap-mandatory min-w-0 flex-1"
+				class="flex items-center gap-1 sm:gap-2 overflow-x-auto py-1 -my-1 scrollbar-hide [scrollbar-width:none] [&::-webkit-scrollbar]:hidden snap-x snap-mandatory min-w-0 flex-1"
 			>
 				<div
 					v-for="card in cards"

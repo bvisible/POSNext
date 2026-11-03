@@ -11,7 +11,7 @@
 		v-bind="level === 'sub' ? { 'data-card-subchips': '' } : {}"
 	>
 		<div class="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-		<div v-if="chips.length > 0" class="flex min-w-0 flex-[1_1_320px] items-center gap-1 sm:gap-2 overflow-x-auto py-1 -my-1 scrollbar-hide">
+		<div v-if="chips.length > 0" class="flex min-w-0 flex-[1_1_320px] items-center gap-1 sm:gap-2 overflow-x-auto py-1 -my-1 scrollbar-hide [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
 			<button
 				type="button"
 				data-chip="all"
