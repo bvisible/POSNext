@@ -1,14 +1,25 @@
 <template>
 	<!-- //// Neoffice — added file (no upstream equivalent). The sign-in of the QR page (NeoResto lot 1, Daniel, 02.11.2026): the guest -->
-	<!-- //// gives an address, a code is mailed to it, and the customer of that address is the customer of the table (a new one is made -->
-	<!-- //// with its name). No password: the code is the proof. -->
-	<div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50" data-test="account-sheet" @click.self="emit('close')">
-		<div class="bg-white w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl shadow-xl p-5 safe-area-bottom">
+	<!-- //// gives an address, a code is mailed to it, and the customer of that address is the customer of the table (a new account is -->
+	<!-- //// opened with its name). No password: the code is the proof. Since 03.11.2026 the code is the frappe fork's engine's, the same -->
+	<!-- //// one the shop and the desk sign in with (neoffice-maintenance#2192); `embedded` draws it as a card of the page, for the takeaway -->
+	<!-- //// page, where an account is the first step and there is nothing to close. -->
+	<div
+		:class="embedded ? '' : 'fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50'"
+		data-test="account-sheet"
+		@click.self="!embedded && emit('close')"
+	>
+		<div
+			:class="[
+				'bg-white w-full',
+				embedded ? 'rounded-xl border border-gray-200 p-6 shadow-sm' : 'sm:max-w-sm rounded-t-2xl sm:rounded-2xl shadow-xl p-5 safe-area-bottom',
+			]"
+		>
 			<div class="flex items-center justify-between mb-3">
 				<h3 class="text-base font-bold text-gray-900">
-					{{ account ? __('Your account') : __('Sign in') }}
+					{{ embedded ? __('Your details') : account ? __('Your account') : __('Sign in') }}
 				</h3>
-				<button class="p-1 text-gray-400" :aria-label="__('Close')" data-test="account-close" @click="emit('close')">✕</button>
+				<button v-if="!embedded" class="p-1 text-gray-400" :aria-label="__('Close')" data-test="account-close" @click="emit('close')">✕</button>
 			</div>
 
 			<!-- Signed in -->
@@ -26,7 +37,7 @@
 						{{ __('Worth {0}', [formatPrice(account.loyalty_value)]) }}
 					</p>
 				</div>
-				<button class="w-full mt-4 py-3 bg-blue-600 text-white font-semibold rounded-xl" data-test="account-done" @click="emit('close')">
+				<button v-if="!embedded" class="w-full mt-4 py-3 bg-blue-600 text-white font-semibold rounded-xl" data-test="account-done" @click="emit('close')">
 					{{ __('Continue') }}
 				</button>
 			</template>
@@ -34,9 +45,11 @@
 			<!-- Step 1: the address -->
 			<template v-else-if="step === 'email'">
 				<p class="text-sm text-gray-600 mb-3">
-					{{ guestStore.settings?.has_loyalty_program
-						? __('Sign in to earn and use your loyalty points. We send you a code by email, no password needed.')
-						: __('Sign in with your email address. We send you a code, no password needed.') }}
+					{{ embedded
+						? __('Required to receive your order') + '. ' + __('We send you a code by email, no password needed.')
+						: guestStore.settings?.has_loyalty_program
+							? __('Sign in to earn and use your loyalty points. We send you a code by email, no password needed.')
+							: __('Sign in with your email address. We send you a code, no password needed.') }}
 				</p>
 				<input
 					v-model="email"
@@ -62,19 +75,19 @@
 			<template v-else-if="step === 'code'">
 				<p class="text-sm text-gray-600 mb-3">{{ __('We sent a code to {0}.', [email]) }}</p>
 				<input
-					v-model="code"
+					:value="code"
 					type="text"
 					inputmode="numeric"
 					autocomplete="one-time-code"
-					maxlength="6"
 					:placeholder="__('Code')"
 					data-test="account-code"
 					class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-center text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500"
+					@input="onCode($event.target.value)"
 					@keyup.enter="confirmCode"
 				/>
 				<button
 					class="w-full mt-3 py-3 bg-blue-600 text-white font-semibold rounded-xl disabled:opacity-50"
-					:disabled="busy || code.trim().length < 6"
+					:disabled="busy || code.length < 6"
 					data-test="account-confirm"
 					@click="confirmCode"
 				>
@@ -82,11 +95,13 @@
 				</button>
 				<div class="flex items-center justify-between mt-3 text-xs">
 					<button class="text-gray-500 underline" data-test="account-other-address" @click="goBack">{{ __('Use another address') }}</button>
-					<button class="text-gray-500 underline" :disabled="busy" data-test="account-resend" @click="sendCode">{{ __('Send a new code') }}</button>
+					<button class="text-gray-500 underline disabled:no-underline disabled:opacity-60" :disabled="busy || waitToResend > 0" data-test="account-resend" @click="sendCode">
+						{{ waitToResend > 0 ? __('Send a new code in {0} s', [waitToResend]) : __('Send a new code') }}
+					</button>
 				</div>
 			</template>
 
-			<!-- Step 3: the name of a new customer -->
+			<!-- Step 3: the name of a new account -->
 			<template v-else-if="step === 'register'">
 				<p class="text-sm text-gray-600 mb-3">{{ __('Welcome! Tell us your name to create your account.') }}</p>
 				<input
@@ -123,20 +138,31 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue"
+import { computed, onBeforeUnmount, ref } from "vue"
 import { useGuestOrderStore } from "@/stores/guestOrder"
 
+defineProps({
+	// Drawn as a card of the page, with no overlay and nothing to close (the takeaway page, where an account is the first step)
+	embedded: { type: Boolean, default: false },
+})
 const emit = defineEmits(["close"])
 const guestStore = useGuestOrderStore()
+
+const CODE_LENGTH = 6
 
 const account = computed(() => guestStore.account)
 const step = ref("email") // email | code | register
 const email = ref("")
 const code = ref("")
+// What the engine handed back for an address that has no account: the register step sends it, never the address
+const proof = ref("")
 const customerName = ref("")
 const mobileNo = ref("")
 const busy = ref(false)
 const message = ref("")
+// Seconds before another code may be asked for (the engine's own delay, so that the page never asks for what it would not send)
+const waitToResend = ref(0)
+let countdown = null
 
 function formatPrice(amount) {
 	return new Intl.NumberFormat(undefined, {
@@ -145,6 +171,23 @@ function formatPrice(amount) {
 		minimumFractionDigits: 2,
 	}).format(amount)
 }
+
+function stopCountdown() {
+	if (countdown) clearInterval(countdown)
+	countdown = null
+}
+
+function startCountdown(seconds) {
+	stopCountdown()
+	waitToResend.value = Math.max(0, Math.ceil(Number(seconds) || 0))
+	if (!waitToResend.value) return
+	countdown = setInterval(() => {
+		waitToResend.value -= 1
+		if (waitToResend.value <= 0) stopCountdown()
+	}, 1000)
+}
+
+onBeforeUnmount(stopCountdown)
 
 // One step of the sign-in: the page shows what the server said when it refuses, and stays where it is
 async function run(action) {
@@ -159,27 +202,39 @@ async function run(action) {
 	}
 }
 
+// Nothing but the six digits, however they arrive (typed, pasted as "482 913", offered by the phone from the mail): the sixth one sends
+function onCode(value) {
+	code.value = String(value).replace(/\D/g, "").slice(0, CODE_LENGTH)
+	if (code.value.length === CODE_LENGTH && !busy.value) confirmCode()
+}
+
 function sendCode() {
 	return run(async () => {
-		await guestStore.requestCode(email.value.trim())
+		const answer = await guestStore.requestCode(email.value.trim())
 		code.value = ""
 		step.value = "code"
+		startCountdown(answer?.resend_in)
 	})
 }
 
 function confirmCode() {
+	if (busy.value || code.value.length < CODE_LENGTH) return
 	return run(async () => {
-		const result = await guestStore.confirmCode(email.value.trim(), code.value.trim())
-		if (result?.status === "needs_registration") step.value = "register"
+		const result = await guestStore.confirmCode(email.value.trim(), code.value)
+		if (result?.status === "needs_registration") {
+			proof.value = result.proof
+			step.value = "register"
+		}
 	})
 }
 
 function register() {
-	return run(() => guestStore.registerAccount(email.value.trim(), customerName.value.trim(), mobileNo.value.trim()))
+	return run(() => guestStore.registerAccount(proof.value, customerName.value.trim(), mobileNo.value.trim()))
 }
 
 function goBack() {
 	message.value = ""
+	code.value = ""
 	step.value = "email"
 }
 </script>

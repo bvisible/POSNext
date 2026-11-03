@@ -116,14 +116,24 @@ def _account_of(token_doc, invoice_doc=None):
 	return guest_account.describe(token_doc, invoice_doc)
 
 
-def _account_is_required(settings):
-	return (settings.guest_account_mode or "Not Proposed") == "Mandatory"
+def _account_mode(token_doc):
+	"""What the page is told about accounts: "Not Proposed", "Optional" or "Mandatory". A web takeaway order always needs one (the kitchen
+	has nobody to call otherwise); a table follows its restaurant. Where the engine cannot mail a code (no engine, its switch off, no
+	outgoing mail) nothing is proposed or required: a diner is never locked out of a table by a mail that cannot go."""
+	if not guest_account.is_available():
+		return "Not Proposed"
+	if token_doc.mode == "takeaway":
+		return "Mandatory"
+	return _get_restaurant_settings(token_doc.pos_profile).guest_account_mode or "Not Proposed"
+
+
+def _account_is_required(token_doc):
+	return _account_mode(token_doc) == "Mandatory"
 
 
 def _require_accounts_proposed(token_doc):
 	"""A restaurant that does not propose an account has no sign-in: nothing is mailed, nothing is made."""
-	mode = _get_restaurant_settings(token_doc.pos_profile).guest_account_mode or "Not Proposed"
-	if mode == "Not Proposed":
+	if _account_mode(token_doc) == "Not Proposed":
 		frappe.throw(_("Accounts are not proposed here."), frappe.PermissionError)
 
 
@@ -598,7 +608,8 @@ def validate_token(token):
 		# page names its tab with it, and a company may run several restaurants
 		"restaurant_name": settings.get("restaurant_name") or "",
 		"qr_order_validation": settings.qr_order_validation or "Direct to Kitchen",
-		"guest_account_mode": settings.guest_account_mode or "Not Proposed",
+		# //// Neoffice — what the page may offer: a takeaway order needs an account, and where no code can be mailed nothing is offered (_account_mode)
+		"guest_account_mode": _account_mode(token_doc),
 		# The loyalty programme is a setting of the till the session belongs to (a POS Settings row per POS Profile)
 		"has_loyalty_program": bool(
 			scope.till_settings(token_doc.pos_profile, ["enable_loyalty_program"]).enable_loyalty_program
@@ -754,7 +765,7 @@ def submit_guest_order(token, items):
 
 	# //// Neoffice — a restaurant that requires an account takes no order from a session nobody is identified in (the till's customer on the table counts as identified)
 	customer_of_the_table, _source = guest_account.customer_of(token_doc, invoice_doc)
-	if _account_is_required(settings) and not customer_of_the_table:
+	if _account_is_required(token_doc) and not customer_of_the_table:
 		frappe.throw(_("Please sign in to order."))
 
 	if is_new_invoice:
@@ -991,16 +1002,21 @@ def get_order_status(token):
 	}
 
 
-# //// Neoffice — the sign-in of the QR page (NeoResto lot 1, Daniel, 02.11.2026): a code mailed to an address proves it, the customer of
-# //// the address is the customer of the table, a new customer is made after the proof. See pos_next.restaurant.guest_account.
+# //// Neoffice — the sign-in of the QR page and of the takeaway page (NeoResto lot 1, Daniel, 02.11.2026; moved onto the frappe fork's engine on 03.11.2026,
+# //// neoffice-maintenance#2192): `frappe.passwordless` mails a code and a link to an address and proves it, and the account that comes out of it is a real
+# //// one (a Website User, its Customer and its Contact) whose customer is the customer of the table. See pos_next.restaurant.guest_account.
+def _guest_page_path(token_doc):
+	"""Where the link of the sign-in mail brings the person back to: their table's page, or the takeaway page."""
+	return "/pos/order" if token_doc.mode == "takeaway" else f"/pos/guest/{token_doc.token}"
+
+
 @frappe.whitelist(allow_guest=True, methods=["POST"])
 def request_guest_code(token, email):
-	"""Mail a sign-in code to `email` for this session. The answer is the same whether the address belongs to a customer or not."""
+	"""Mail a sign-in code and a link to `email` for this session. The answer is the same whether the address belongs to a customer or not."""
 	require_neoresto()
 	token_doc = _require_valid_token(token)
 	_require_accounts_proposed(token_doc)
-	with _as_the_system():
-		return guest_account.request_code(token_doc, email)
+	return guest_account.request_code(token_doc, email, _guest_page_path(token_doc))
 
 
 def _signed_in(token_doc, customer):
@@ -1016,28 +1032,45 @@ def _signed_in(token_doc, customer):
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])
 def confirm_guest_code(token, email, code):
-	"""Prove `email` with the code that was mailed to it: the customer of that address is signed in, or, when the address belongs to nobody,
-	{"status": "needs_registration"} and the name is asked for (`register_guest_account`)."""
+	"""Prove `email` with the code that was mailed to it. An address that has an account is signed in by the engine and its customer is the
+	customer of the table; an address that has none, but whose customer the shop or the till already knows, gets its account opened here with
+	nothing more to ask; any other is {"status": "needs_registration", "proof"}: the name is asked for and `register_guest_account` ends it."""
 	require_neoresto()
 	token_doc = _require_valid_token(token)
 	_require_accounts_proposed(token_doc)
-	email = guest_account.clean_email(email)
-	guest_account.check_code(token_doc, email, code)
-	customer = guest_account.customer_by_email(email)
-	if customer:
+	address = guest_account.clean_email(email)
+	answer = guest_account.check_code(address, code)
+
+	if answer.get("status") == "signed_in":
+		user = answer["user"]
+		if not guest_account.website_user(user):
+			frappe.throw(_("This account cannot be used to order here."), frappe.PermissionError)
+		with _as_the_system():
+			customer = guest_account.customer_of_user(user, token_doc.pos_profile)
 		return _signed_in(token_doc, customer)
-	guest_account.keep_the_proof(token_doc, email)
-	return {"status": "needs_registration"}
+
+	# `address` is the one the code just proved, and the proof was minted for it
+	if guest_account.customer_by_email(address):
+		guest_account.address_of_proof(answer["proof"])
+		with _as_the_system():
+			_user, customer = guest_account.open_account(address, None, None, token_doc.pos_profile)
+		return _signed_in(token_doc, customer)
+	return {"status": "needs_registration", "proof": answer["proof"]}
 
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])
-def register_guest_account(token, email, customer_name, mobile_no=None):
-	"""Make the customer of an address this session proved, the way the till makes one, and sign them in."""
+def register_guest_account(token, proof, customer_name, mobile_no=None):
+	"""Open the account of the address a code proved (`proof`, single use: the browser never names the address), sign them in, and make
+	their customer the customer of the table."""
 	require_neoresto()
 	token_doc = _require_valid_token(token)
 	_require_accounts_proposed(token_doc)
+	name = guest_account.clean_name(customer_name)
+	if not name:  # before the proof is spent: a missing name is for the person to fix, with the same code
+		frappe.throw(_("Please enter your name."))
+	address = guest_account.address_of_proof(proof)
 	with _as_the_system():
-		customer = guest_account.register(token_doc, email, customer_name, mobile_no)
+		_user, customer = guest_account.open_account(address, name, mobile_no, token_doc.pos_profile)
 	return _signed_in(token_doc, customer)
 
 

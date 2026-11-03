@@ -257,7 +257,9 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 		}
 	}
 
-	// The sign-in: a code is mailed to the address, the code proves it, and a customer that does not exist yet is made with its name
+	// The sign-in, on the frappe fork's engine (`frappe.passwordless`, neoffice-maintenance#2192): a code and a link are mailed to the address; the
+	// code proves it; an address that has an account is the table's customer at once, a new one gives a name and the PROOF the server handed back
+	// (never the address: the server opens the account of the address the proof was minted for). Nothing here opens a session on the phone.
 	async function requestCode(email) {
 		return guestFetch("pos_next.api.guest_ordering.request_guest_code", { token: token.value, email })
 	}
@@ -272,10 +274,10 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 		return result
 	}
 
-	async function registerAccount(email, customerName, mobileNo) {
+	async function registerAccount(proof, customerName, mobileNo) {
 		const result = await guestFetch("pos_next.api.guest_ordering.register_guest_account", {
 			token: token.value,
-			email,
+			proof,
 			customer_name: customerName,
 			mobile_no: mobileNo || null,
 		})

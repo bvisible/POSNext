@@ -48,12 +48,12 @@
 				<div class="flex items-center justify-between">
 					<div>
 						<h1 class="text-base font-bold text-gray-900">{{ __('Takeaway Order') }}</h1>
-						<p v-if="accountStep === 'done'" class="text-xs text-gray-500">
-							{{ accountName }}
+						<p v-if="!needsAccount && guestStore.account" class="text-xs text-gray-500">
+							{{ guestStore.account.customer_name }}
 						</p>
 					</div>
 					<button
-						v-if="accountStep === 'done' && activeTab !== 'cart'"
+						v-if="!needsAccount && activeTab !== 'cart'"
 						@click="activeTab = 'cart'"
 						class="relative p-2"
 					>
@@ -70,61 +70,12 @@
 				</div>
 			</div>
 
-			<!-- Account/Login Step (mandatory for takeaway) -->
-			<div v-if="accountStep !== 'done'" class="flex-1 overflow-y-auto p-4">
+			<!-- //// Neoffice — the account step of a takeaway order is the sign-in of the QR page (a code mailed to the address, the name of a new account), the
+			     //// frappe fork's engine's one (neoffice-maintenance#2192, #2132). It used to be a form that asked for a name, an address and a phone and kept them
+			     //// nowhere: `confirmAccount` only turned the step to "done". Skipped where no code can be mailed (the server then proposes no account). -->
+			<div v-if="needsAccount" class="flex-1 overflow-y-auto p-4">
 				<div class="max-w-sm mx-auto mt-4">
-					<div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-						<h2 class="text-lg font-bold text-gray-900 mb-1">{{ __('Your details') }}</h2>
-						<p class="text-sm text-gray-500 mb-4">{{ __('Required to receive your order') }}</p>
-
-						<div class="space-y-3">
-							<div>
-								<label class="block text-xs font-medium text-gray-700 mb-1">
-									{{ __('Name') }} <span class="text-red-500">*</span>
-								</label>
-								<input
-									v-model="accountName"
-									type="text"
-									:placeholder="__('Your name')"
-									class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-								/>
-							</div>
-							<div>
-								<label class="block text-xs font-medium text-gray-700 mb-1">
-									{{ __('Email') }} <span class="text-red-500">*</span>
-								</label>
-								<input
-									v-model="accountEmail"
-									type="email"
-									:placeholder="__('your@email.com')"
-									class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-								/>
-							</div>
-							<div>
-								<label class="block text-xs font-medium text-gray-700 mb-1">
-									{{ __('Phone') }}
-								</label>
-								<input
-									v-model="accountPhone"
-									type="tel"
-									:placeholder="__('Phone number (optional)')"
-									class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-								/>
-							</div>
-						</div>
-
-						<div v-if="accountError" class="mt-3 p-2 bg-red-50 border border-red-200 rounded-lg">
-							<p class="text-xs text-red-600">{{ accountError }}</p>
-						</div>
-
-						<button
-							@click="confirmAccount"
-							:disabled="!accountName.trim() || !accountEmail.trim()"
-							class="w-full mt-4 py-3 bg-blue-600 text-white font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-						>
-							{{ __('Continue') }}
-						</button>
-					</div>
+					<GuestAccountSheet embedded />
 				</div>
 			</div>
 
@@ -199,12 +150,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue"
+import { ref, computed, onMounted, onUnmounted } from "vue"
 import { useGuestOrderStore } from "@/stores/guestOrder"
 import { useTabTitle } from "@/composables/useTabTitle"
 import GuestMenuView from "@/components/guest/GuestMenuView.vue"
 import GuestCart from "@/components/guest/GuestCart.vue"
 import GuestCheckout from "@/components/guest/GuestCheckout.vue"
+import GuestAccountSheet from "@/components/guest/GuestAccountSheet.vue"
 
 const guestStore = useGuestOrderStore()
 // The tab says the restaurant's name, in place of "Order", as the session names it from its first call (utils/tabTitle.js)
@@ -215,12 +167,8 @@ const initError = ref(null)
 const orderSuccess = ref(false)
 const orderNumber = ref(null)
 
-// Account step: 'form' | 'done'
-const accountStep = ref("form")
-const accountName = ref("")
-const accountEmail = ref("")
-const accountPhone = ref("")
-const accountError = ref(null)
+// The order waits for an account: the server says so for a takeaway session (mode "Mandatory") unless no code can be mailed here
+const needsAccount = computed(() => guestStore.canSignIn && !guestStore.account)
 
 const activeTab = ref("menu")
 
@@ -252,21 +200,6 @@ async function initTakeaway() {
 	} finally {
 		isInitializing.value = false
 	}
-}
-
-function confirmAccount() {
-	accountError.value = null
-	if (!accountName.value.trim() || !accountEmail.value.trim()) {
-		accountError.value = __("Name and email are required")
-		return
-	}
-	// Simple email validation
-	const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-	if (!emailRe.test(accountEmail.value)) {
-		accountError.value = __("Please enter a valid email address")
-		return
-	}
-	accountStep.value = "done"
 }
 
 function goToPay() {

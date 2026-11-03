@@ -1,6 +1,7 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The sign-in of the QR page (NeoResto lot 1, Daniel, 02.11.2026): a guest gives an address,
- * //// a code is mailed to it, the code proves it, and the customer of that address is the customer of the table; a new customer gives a name.
+ * //// a code is mailed to it (by the frappe fork's engine since 03.11, neoffice-maintenance#2192), the code proves it, and the customer of that
+ * //// address is the customer of the table; a new account gives a name and the proof the server handed back, never the address.
  * //// When the till already put a customer on the table the page takes that identity with no sign-in, and a restaurant that requires an account
  * //// takes no order before the guest is identified. The pages are mounted as a diner meets them, over the real store, with the server
  * //// answering through `fetch`.
@@ -25,6 +26,7 @@ vi.mock("@/data/user", () => ({ userResource: {} }))
 vi.mock("@/data/session", () => ({ session: { isLoggedIn: true } }))
 
 const { default: GuestOrder } = await import("@/pages/GuestOrder.vue")
+const { default: TakeawayOrder } = await import("@/pages/TakeawayOrder.vue")
 const { default: GuestCart } = await import("../GuestCart.vue")
 const { default: GuestCheckout } = await import("../GuestCheckout.vue")
 const { useGuestOrderStore } = await import("@/stores/guestOrder")
@@ -70,9 +72,10 @@ function serve() {
 				has_loyalty_program: server.loyalty,
 				account: server.account,
 			},
+			create_takeaway_token: { token: "tok-1", name: "GOT-1", restaurant_name: "The Bistro" },
 			get_guest_menu: { categories: [] },
 			get_order_status: { invoice: null, items: [], grand_total: 0, net_total: 0, account: server.account },
-			request_guest_code: { sent: true },
+			request_guest_code: { ok: true, resend_in: server.resendIn, expires_in: 600 },
 			confirm_guest_code: server.confirmed,
 			register_guest_account: { status: "signed_in", account: MARIE },
 			submit_guest_order: { invoice: "SINV-1", grand_total: 5, status: "sent_to_kitchen" },
@@ -114,6 +117,7 @@ beforeEach(() => {
 		loyalty: true,
 		account: null,
 		confirmed: { status: "signed_in", account: MARIE },
+		resendIn: 30,
 	}
 	serve()
 })
@@ -161,7 +165,7 @@ describe("a customer signs in", () => {
 		expect(page.get('[data-test="account-code"]').exists()).toBe(true)
 
 		await type(page, "account-code", "123456")
-		await press(page, "account-confirm")
+		await settle()
 
 		expect(asked("confirm_guest_code")[0].body).toEqual({ token: "tok-1", email: "marie@yopmail.com", code: "123456" })
 		expect(page.get('[data-test="account-name-line"]').text()).toBe("Hello Marie Dupont")
@@ -177,8 +181,7 @@ describe("a customer signs in", () => {
 		await type(page, "account-email", "marie@yopmail.com")
 		await press(page, "account-send-code")
 		await type(page, "account-code", "000000")
-
-		await press(page, "account-confirm")
+		await settle()
 
 		expect(page.get('[data-test="account-error"]').text()).toBe("Wrong code.")
 		expect(page.find('[data-test="account-code"]').exists()).toBe(true)
@@ -196,6 +199,7 @@ describe("a customer signs in", () => {
 	})
 
 	it("can ask for another address, or for a new code", async () => {
+		server.resendIn = 0
 		const page = await openThePage()
 		await press(page, "sign-in")
 		await type(page, "account-email", "marie@yopmail.com")
@@ -215,22 +219,126 @@ describe("a customer signs in", () => {
 		await type(page, "account-email", "marie@yopmail.com")
 		await press(page, "account-send-code")
 		await type(page, "account-code", "123456")
-		await press(page, "account-confirm")
+		await settle()
 
 		expect(page.find('[data-test="account-points"]').exists()).toBe(false)
 		expect(page.get('[data-test="account-chip"]').text()).not.toContain("pts")
 	})
 })
 
+describe("the code, the way a phone offers it", () => {
+	async function onTheCodeStep() {
+		const page = await openThePage()
+		await press(page, "sign-in")
+		await type(page, "account-email", "marie@yopmail.com")
+		await press(page, "account-send-code")
+		return page
+	}
+
+	it("sends nothing when the address field is left: only the button asks for a code", async () => {
+		const page = await openThePage()
+		await press(page, "sign-in")
+
+		await page.get('[data-test="account-email"]').setValue("marie@yopmail.com")
+		await page.get('[data-test="account-email"]').trigger("blur")
+		await settle()
+
+		expect(asked("request_guest_code")).toHaveLength(0)
+	})
+
+	it("sends the code on the sixth digit, with no button to press", async () => {
+		const page = await onTheCodeStep()
+
+		await type(page, "account-code", "12345")
+		await settle()
+		expect(asked("confirm_guest_code")).toHaveLength(0)
+
+		await type(page, "account-code", "123456")
+		await settle()
+		expect(asked("confirm_guest_code")).toHaveLength(1)
+	})
+
+	it("keeps the digits only, whatever is pasted", async () => {
+		const page = await onTheCodeStep()
+
+		await type(page, "account-code", "482 913")
+		await settle()
+
+		expect(asked("confirm_guest_code")[0].body.code).toBe("482913")
+	})
+
+	it("asks again only once the engine's delay has passed", async () => {
+		vi.useFakeTimers()
+		try {
+			const page = await onTheCodeStep()
+			expect(page.get('[data-test="account-resend"]').attributes("disabled")).toBeDefined()
+			expect(page.get('[data-test="account-resend"]').text()).toContain("30 s")
+
+			await vi.advanceTimersByTimeAsync(30000)
+			await settle()
+
+			expect(page.get('[data-test="account-resend"]').attributes("disabled")).toBeUndefined()
+			expect(page.get('[data-test="account-resend"]').text()).toBe("Send a new code")
+		} finally {
+			vi.useRealTimers()
+		}
+	})
+})
+
+describe("the takeaway page opens with the sign-in, and orders after it", () => {
+	async function theTakeawayPage() {
+		const wrapper = mount(TakeawayOrder, {
+			global: { plugins: [pinia], mocks: { __: globalThis.__ }, stubs: { GuestMenuView: true, GuestCart: true, GuestCheckout: true } },
+		})
+		opened.push(wrapper)
+		await settle()
+		return wrapper
+	}
+
+	beforeEach(() => {
+		server.mode = "Mandatory"
+	})
+
+	it("starts with the sign-in drawn as a card of the page, with nothing to close", async () => {
+		const page = await theTakeawayPage()
+
+		expect(page.get('[data-test="account-sheet"]').exists()).toBe(true)
+		expect(page.find('[data-test="account-close"]').exists()).toBe(false)
+		expect(page.find('[data-test="account-name"]').exists()).toBe(false)
+		expect(page.findComponent({ name: "GuestMenuView" }).exists()).toBe(false)
+	})
+
+	it("opens the menu once the code is typed and the account is the diner's", async () => {
+		const page = await theTakeawayPage()
+		await type(page, "account-email", "marie@yopmail.com")
+		await press(page, "account-send-code")
+
+		await type(page, "account-code", "123456")
+		await settle()
+
+		expect(page.find('[data-test="account-sheet"]').exists()).toBe(false)
+		expect(page.text()).toContain("Marie Dupont")
+		expect(asked("request_guest_code")[0].body).toEqual({ token: "tok-1", email: "marie@yopmail.com" })
+	})
+
+	it("goes straight to the menu where no code can be mailed (the server proposes no account)", async () => {
+		server.mode = "Not Proposed"
+
+		const page = await theTakeawayPage()
+
+		expect(page.find('[data-test="account-sheet"]').exists()).toBe(false)
+	})
+})
+
 describe("an address nobody has yet", () => {
 	it("asks for a name after the code, then makes the account and signs in", async () => {
-		server.confirmed = { status: "needs_registration" }
+		server.confirmed = { status: "needs_registration", proof: "proof-of-new" }
 		const page = await openThePage()
 		await press(page, "sign-in")
 		await type(page, "account-email", "new@yopmail.com")
 		await press(page, "account-send-code")
 		await type(page, "account-code", "123456")
-		await press(page, "account-confirm")
+		await settle()
 
 		expect(page.get('[data-test="account-name"]').exists()).toBe(true)
 		expect(page.get('[data-test="account-register"]').attributes("disabled")).toBeDefined()
@@ -241,7 +349,7 @@ describe("an address nobody has yet", () => {
 
 		expect(asked("register_guest_account")[0].body).toEqual({
 			token: "tok-1",
-			email: "new@yopmail.com",
+			proof: "proof-of-new",
 			customer_name: "Marie Dupont",
 			mobile_no: "+41 79 000 00 00",
 		})
