@@ -3871,6 +3871,7 @@ async function sendCancellationToKitchen() {
 		invoiceData.items = linesOfTheSavedOrder(invoiceData.items);
 		// Nothing would remain: an order with no line cannot be saved, so the whole order is cancelled instead. Deleting its draft tells the kitchen's printers on its own, and frees the table (Daniel, 03.11)
 		if (invoiceData.items.length === 0) {
+			//// Neoffice — an invoice with no line cannot be saved, so cancel the order as a whole instead: deleting the draft fires the void hook that tells the kitchen's printers, and frees the table (992985d3 "feat(restaurant): the last dish taken off an order that had left for the kitchen cancels the whole order")
 			await call("pos_next.api.restaurant.cancel_table_order", { invoice: cartStore.currentDraftId });
 			showSuccess(__("Order cancelled"));
 			cartStore.markChangesSent();
