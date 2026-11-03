@@ -3644,7 +3644,7 @@ msgstr "Activer les réservations"
 #: POS/src/components/settings/POSSettings.vue:607
 #: pos_next/pos_next/doctype/restaurant_settings/restaurant_settings.json
 msgid "Enable Runner"
-msgstr "Activer le Runner"
+msgstr "Activer l'écran de passe"
 
 #. Label of a Check field in DocType 'POS Settings'
 #: pos_next/pos_next/doctype/pos_settings/pos_settings.json
@@ -3676,7 +3676,7 @@ msgstr "Activer les pourboires"
 msgid ""
 "Enable a runner display for delivering ready items from stations to tables"
 msgstr ""
-"Activer un affichage runner pour livrer les articles prêts des postes aux "
+"Activer un écran de passe pour livrer les articles prêts des postes aux "
 "tables"
 
 #: POS/src/components/sale/ItemsSelector.vue:111
@@ -3718,7 +3718,7 @@ msgstr "Activer la remise au niveau de la facture"
 #: POS/src/pages/Runner.vue:8
 msgid "Enable it in Restaurant Settings to use the Runner display."
 msgstr ""
-"Activez-le dans les Paramètres restaurant pour utiliser l'affichage Runner."
+"Activez-le dans les Paramètres restaurant pour utiliser l'écran de passe."
 
 #. Description of the 'Allow Item Discount' (Check) field in DocType 'POS
 #. Settings'
@@ -3792,7 +3792,7 @@ msgid ""
 "Enable the Runner display for delivering ready items from stations to "
 "tables."
 msgstr ""
-"Activer l'écran Runner pour livrer les articles prêts des stations aux "
+"Activer l'écran de passe pour livrer les articles prêts des stations aux "
 "tables."
 
 #. Description of the 'Enable Customer Display' (Check) field in DocType 'POS
@@ -5161,7 +5161,7 @@ msgid ""
 "If unchecked, items from this station will skip the runner and can be marked"
 " as Delivered directly from the KDS."
 msgstr ""
-"Si décoché, les articles de cette station sauteront le runner et pourront "
+"Si décoché, les articles de cette station sauteront le passe et pourront "
 "être marqués comme livrés directement depuis le KDS."
 
 #. Label of a Attach Image field in DocType 'Restaurant Card'
@@ -9591,19 +9591,19 @@ msgstr "Remise règle : -{0}"
 #: POS/src/components/pos/FloorPlanEditor.vue:152
 #: pos_next/pos_next/doctype/restaurant_settings/restaurant_settings.json
 msgid "Runner"
-msgstr "Runner"
+msgstr "Passe"
 
 #: POS/src/pages/Runner.vue:18
 msgid "Runner Display"
-msgstr "Affichage Runner"
+msgstr "Écran de passe"
 
 #: POS/src/components/invoices/KDSOrderCard.vue:159
 msgid "Runner is active. This will skip the Runner."
-msgstr "Le Runner est actif. Cela va court-circuiter le Runner."
+msgstr "Le passe est actif. Cela court-circuite le passe."
 
 #: POS/src/pages/Runner.vue:7
 msgid "Runner is disabled"
-msgstr "Le Runner est désactivé"
+msgstr "L'écran de passe est désactivé"
 
 #. Description of the 'Icon' (Data) field in DocType 'Menu Badge'
 #: pos_next/pos_next/doctype/menu_badge/menu_badge.json
@@ -12008,7 +12008,7 @@ msgstr "Utiliser la saisie de quantité"
 #: POS/src/components/pos/FloorPlanEditor.vue:730
 #: pos_next/pos_next/doctype/preparation_station/preparation_station.json
 msgid "Use Runner"
-msgstr "Utiliser le Runner"
+msgstr "Passer par le passe"
 
 #. Label of a Int field in DocType 'POS Coupon'
 #: pos_next/pos_next/doctype/pos_coupon/pos_coupon.json
@@ -17624,7 +17624,7 @@ msgstr "Préparation"
 #: POS/src/components/restaurant/RestaurantScreenSwitch.vue:39
 msgctxt "Restaurant screen"
 msgid "Runner"
-msgstr "Runner"
+msgstr "Passe"
 
 #: POS/src/components/restaurant/RestaurantScreenSwitch.vue:40
 msgctxt "Restaurant screen"
@@ -17728,7 +17728,7 @@ msgstr "Un restaurant qui ferme après minuit : sa journée va de cette heure à
 
 #: pos_next/pos_next/doctype/restaurant_area/restaurant_area.json
 msgid "At most 6 characters, shown on the kitchen's and the runner's tickets before the table (S01). Left empty, it is made from the room's name: Salle 1 gives S01."
-msgstr "6 caractères au maximum, affichés sur les tickets de la cuisine et du Runner avant la table (S01). Laissé vide, il est tiré du nom de la salle : Salle 1 donne S01."
+msgstr "6 caractères au maximum, affichés sur les tickets de la cuisine et du passe (S01). Laissé vide, il est tiré du nom de la salle : Salle 1 donne S01."
 
 #: pos_next/pos_next/doctype/restaurant_ticket_counter/restaurant_ticket_counter.json
 msgid "Names the counting period: the restaurant and its business day, or \"never\", or its shift"
@@ -17778,13 +17778,13 @@ msgid "A manager chooses them on the till's POS Profile (Cash In/Out Operations)
 msgstr "Un responsable les choisit dans le profil POS de la caisse (opérations Entrées/Sorties de caisse)."
 
 msgid "A manager chooses “{0}” at the till and shows a QR code. Scan it with this tablet's camera: the kitchen or runner screen opens, with no password."
-msgstr "Un responsable choisit « {0} » à la caisse et affiche un QR code. Scannez-le avec la caméra de cette tablette : l'écran cuisine ou l'écran runner s'ouvre, sans mot de passe."
+msgstr "Un responsable choisit « {0} » à la caisse et affiche un QR code. Scannez-le avec la caméra de cette tablette : l'écran cuisine ou l'écran de passe s'ouvre, sans mot de passe."
 
 msgid "A purchase from a supplier not subject to VAT: the whole amount is booked as the expense, no input VAT is claimed."
 msgstr "Un achat auprès d'un fournisseur non assujetti à la TVA : le montant total est comptabilisé en charge, aucune TVA déductible n'est réclamée."
 
 msgid "A tablet opens the kitchen screen or the runner screen."
-msgstr "Une tablette ouvre l'écran cuisine ou l'écran runner."
+msgstr "Une tablette ouvre l'écran cuisine ou l'écran de passe."
 
 msgid "A tablet signs in by scanning a code shown at the till."
 msgstr "Une tablette se connecte en scannant un code affiché à la caisse."
@@ -18123,7 +18123,7 @@ msgid "Rooms"
 msgstr "Salles"
 
 msgid "Runner · {0} ready at the pass"
-msgstr "Runner · {0} prêt(s) au passe"
+msgstr "Passe · {0} prêt(s)"
 
 msgid "Say why this movement is set aside: the reason stays on its shift."
 msgstr "Indiquez pourquoi ce mouvement est mis de côté : le motif reste sur sa session."
@@ -18704,7 +18704,7 @@ msgstr "Couleur du service"
 #: pos_next/i18n_anchors.py
 msgctxt "Item Group"
 msgid "The colour of the dishes of this category on the kitchen and runner tickets: a very pale tint behind each dish. Optional. A sub-group with none takes its parent's."
-msgstr "La couleur des plats de cette catégorie sur les tickets de la cuisine et du runner : une teinte très pâle derrière chaque plat. Facultative. Un sous-groupe sans couleur prend celle de son parent."
+msgstr "La couleur des plats de cette catégorie sur les tickets de la cuisine et du passe : une teinte très pâle derrière chaque plat. Facultative. Un sous-groupe sans couleur prend celle de son parent."
 
 #: POS/src/components/invoices/KDSOrderCard.vue
 msgctxt "Kitchen send number"
@@ -18742,7 +18742,7 @@ msgstr "Bouton d'impression sur l'écran cuisine"
 
 #: POS/src/components/restaurant/PrintCopySettings.vue:83
 msgid "Print button on the runner screen"
-msgstr "Bouton d'impression sur l'écran du runner"
+msgstr "Bouton d'impression sur l'écran de passe"
 
 #: POS/src/components/restaurant/PrintCopySettings.vue:34
 msgid "A printer button beside the ticket's main button prints a copy of it, where its station has a printer."
@@ -18800,7 +18800,7 @@ msgstr "Annuler le démarrage"
 #: POS/src/components/invoices/KDSOrderCard.vue
 msgctxt "Kitchen order status"
 msgid "With the runner"
-msgstr "Chez le runner"
+msgstr "Au passe"
 
 #: POS/src/components/invoices/KDSOrderCard.vue
 msgctxt "Kitchen order status"
@@ -19925,7 +19925,7 @@ msgstr "Automatique"
 
 #: pos_next/till_settings/registry.py:275
 msgid "Pass screen (Runner)"
-msgstr "Écran de passe (Runner)"
+msgstr "Écran de passe"
 
 #: pos_next/till_settings/registry.py:276
 msgid "The dishes that are ready show on the pass screen; whoever takes them to the tables marks them served."
@@ -20453,7 +20453,7 @@ msgstr "Son des plats prêts"
 #: POS/src/components/settings/KitchenAlertsSettings.vue
 #: pos_next/pos_next/doctype/pos_settings/pos_settings.json
 msgid "Sound of the runner screen when dishes come up ready"
-msgstr "Son de l'écran du runner quand des plats sont prêts"
+msgstr "Son de l'écran de passe quand des plats sont prêts"
 
 #. Label of a Select field in DocType 'POS Settings'
 #: POS/src/components/settings/KitchenAlertsSettings.vue
@@ -20748,10 +20748,10 @@ msgid "Guests scan this code to order from their phone."
 msgstr "Les convives scannent ce code pour commander depuis leur téléphone."
 
 msgid "Show the tickets with the runner"
-msgstr "Afficher les tickets chez le runner"
+msgstr "Afficher les tickets au passe"
 
 msgid "A ticket whose dishes are all with the runner stays at the end of the column. Turned off, it leaves this screen."
-msgstr "Un ticket dont tous les plats sont chez le runner reste en fin de colonne. Désactivé, il quitte cet écran."
+msgstr "Un ticket dont tous les plats sont au passe reste en fin de colonne. Désactivé, il quitte cet écran."
 
 msgid "Seen"
 msgstr "Vu"
@@ -20777,7 +20777,7 @@ msgstr "Une tablette déconnectée n'est acceptée nulle part tant qu'elle n'a p
 #. Description of a DocType
 #: pos_next/pos_next/doctype/restaurant_device_pairing/restaurant_device_pairing.json:6
 msgid "A one-time token that pairs a tablet with the kitchen or runner screen of a restaurant. Only the token's SHA-256 hash is kept."
-msgstr "Un jeton à usage unique qui appaire une tablette à l'écran de la cuisine ou à celui des runners d'un restaurant. Seule l'empreinte SHA-256 du jeton est conservée."
+msgstr "Un jeton à usage unique qui appaire une tablette à l'écran de la cuisine ou à celui du passe d'un restaurant. Seule l'empreinte SHA-256 du jeton est conservée."
 
 #. Description of the 'Device Account' (Link) field in DocType 'Restaurant
 #. Device'
@@ -20794,7 +20794,7 @@ msgstr "Une session ouverte avant ce moment est refusée, même après un nouvel
 #. Description of a DocType
 #: pos_next/pos_next/doctype/restaurant_device/restaurant_device.json:6
 msgid "A tablet that opens the kitchen screen or the runner screen of a restaurant with an account of its own, paired by a QR code shown at the till."
-msgstr "Une tablette qui ouvre l'écran de la cuisine ou celui des runners d'un restaurant avec un compte qui lui est propre, appairée grâce à un code QR affiché à la caisse."
+msgstr "Une tablette qui ouvre l'écran de la cuisine ou celui du passe d'un restaurant avec un compte qui lui est propre, appairée grâce à un code QR affiché à la caisse."
 
 #: POS/src/components/restaurant/AddPortionsDialog.vue:10
 #: POS/src/components/restaurant/RestaurantCardGrid.vue:45
@@ -21263,3 +21263,7 @@ msgstr "Votre code de connexion est {0}. Il est valable pendant {1} minutes."
 #, python-brace-format
 msgid "{0} is sold out"
 msgstr "{0} : il n'en reste plus"
+
+#: POS/src/pages/POSSale.vue
+msgid "Change given: {0}"
+msgstr "Rendu : {0}"
