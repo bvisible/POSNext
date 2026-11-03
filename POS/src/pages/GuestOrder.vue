@@ -257,6 +257,10 @@ onMounted(async () => {
 		await guestStore.validateToken(token)
 		await guestStore.fetchMenu()
 		await guestStore.refreshOrderStatus()
+		//// Neoffice — the link of the sign-in mail brings the guest back to this page with a customer's session on the phone (NeoResto lot 1, Daniel, 03.11.2026: the table is
+		//// the one of the QR code they started from): the sign-in sheet opens by itself on « Continue as … », and nothing is linked before they press it
+		await guestStore.loadSignedInAccount()
+		if (guestStore.signedIn && guestStore.canSignIn && !guestStore.account) showAccount.value = true
 		// Auto-switch to Pay tab if already fully paid
 		if (guestStore.isFullyPaid) {
 			activeTab.value = "pay"

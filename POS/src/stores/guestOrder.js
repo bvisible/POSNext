@@ -25,14 +25,25 @@ function serverMessage(body) {
 	}
 }
 
-async function guestFetch(method, args = {}) {
+//// Neoffice — whether this browser holds the session of somebody (the till's staff, or a customer whom the link of the sign-in mail signed in): Frappe's
+//// `user_id` cookie is readable (it is not the session id) and says « Guest » when nobody is signed in.
+export function holdsASession() {
+	const match = typeof document === "undefined" ? null : document.cookie.match(/(?:^|;\s*)user_id=([^;]*)/)
+	return Boolean(match) && decodeURIComponent(match[1]) !== "Guest"
+}
+
+async function guestFetch(method, args = {}, { session = false, csrf = "", keepCookies = false } = {}) {
 	//// Neoffice — no session at all: `credentials: "omit"`. A browser that is signed in at the till (a waiter or the owner scanning the code of a table with their own phone, a test)
 	//// sent its session cookie, and Frappe then asks a CSRF token of the call, which a guest page never has: « Invalid request » on every call, shown as « Link invalid or expired »
 	//// (product owner, 03.11.2026). A guest call is the table's token and nothing else, so it is sent as the guest's, whoever holds the phone.
+	//// Two exceptions, each asked for by the call: `session` carries the session (and the CSRF token Frappe then asks for), which only the calls that link a signed-in
+	//// customer to the table do; `keepCookies` lets the browser keep the cookie the sign-in engine sets when a code is asked for, which the link of the mail needs to find
+	//// again the browser that asked (`frappe.passwordless`: a link signs in only where the code was asked for). The latter is sent only by a browser that holds no
+	//// session, so that a phone signed in at the till keeps being the guest's.
 	const response = await fetch(`/api/method/${method}`, {
 		method: "POST",
-		credentials: "omit",
-		headers: { "Content-Type": "application/json" },
+		credentials: session || keepCookies ? "include" : "omit",
+		headers: { "Content-Type": "application/json", ...(csrf ? { "X-Frappe-CSRF-Token": csrf } : {}) },
 		body: JSON.stringify(args),
 	})
 
@@ -44,6 +55,14 @@ async function guestFetch(method, args = {}) {
 
 	const data = await response.json()
 	return data.message
+}
+
+//// Neoffice — a read made with the session (`signed_in_account`): a GET carries no CSRF token to ask for
+async function sessionGet(method, args = {}) {
+	const query = new URLSearchParams(args).toString()
+	const response = await fetch(`/api/method/${method}?${query}`, { method: "GET", credentials: "include" })
+	if (!response.ok) throw new Error(`HTTP ${response.status}`)
+	return (await response.json()).message
 }
 
 export const useGuestOrderStore = defineStore("guestOrder", () => {
@@ -73,6 +92,9 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 	// Who the session is: the customer the till put on the table, or the one the guest signed in as (null for nobody).
 	// //// Neoffice — the sign-in of the QR page (NeoResto lot 1, Daniel, 02.11.2026): { customer, customer_name, source, loyalty_points, loyalty_value, loyalty_program }
 	const account = ref(null)
+	//// Neoffice — the customer's account this browser is already signed in with ({ user, full_name }), which the link of the sign-in mail leaves on the phone: the page offers
+	//// « Continue as … » (03.11.2026). null for nobody, and for a member of the staff.
+	const signedIn = ref(null)
 	// "restaurant" (a table's QR code) or "takeaway" (the web order): a takeaway order is paid whole, with no tip
 	const mode = ref("restaurant")
 
@@ -264,8 +286,40 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 	// The sign-in, on the frappe fork's engine (`frappe.passwordless`, neoffice-maintenance#2192): a code and a link are mailed to the address; the
 	// code proves it; an address that has an account is the table's customer at once, a new one gives a name and the PROOF the server handed back
 	// (never the address: the server opens the account of the address the proof was minted for). Nothing here opens a session on the phone.
+	// The mail's link brings the guest back to this page signed in, in the browser that asked for the code: the cookie the engine sets when it is asked is kept (`keepCookies`),
+	// but only by a browser that holds no session (a phone signed in at the till stays the guest's, with the code to type).
 	async function requestCode(email) {
-		return guestFetch("pos_next.api.guest_ordering.request_guest_code", { token: token.value, email })
+		return guestFetch(
+			"pos_next.api.guest_ordering.request_guest_code",
+			{ token: token.value, email },
+			{ keepCookies: !holdsASession() },
+		)
+	}
+
+	// Whose session this browser holds, asked once the table is known; nothing is asked when it holds none (nothing to find out, and no call that carries cookies)
+	async function loadSignedInAccount() {
+		signedIn.value = null
+		if (!token.value || !holdsASession()) return null
+		try {
+			const result = await sessionGet("pos_next.api.guest_ordering.signed_in_account", { token: token.value })
+			signedIn.value = result?.account || null
+		} catch {
+			signedIn.value = null
+		}
+		return signedIn.value
+	}
+
+	// Links the account of the session to the table, once the guest has pressed « Continue as … ». The write carries the session, so Frappe asks the CSRF token of that session.
+	async function claimSignedInAccount() {
+		const csrf = (await sessionGet("pos_next.api.utilities.get_csrf_token"))?.csrf_token
+		if (!csrf) throw new Error(__("Sign in to link your account to this table."))
+		const result = await guestFetch(
+			"pos_next.api.guest_ordering.claim_signed_in_account",
+			{ token: token.value },
+			{ session: true, csrf },
+		)
+		if (result?.account) account.value = result.account
+		return result
 	}
 
 	async function confirmCode(email, code) {
@@ -367,6 +421,7 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 		invoiceName.value = ""
 		postingDate.value = ""
 		account.value = null
+		signedIn.value = null
 		mode.value = "restaurant"
 		_realtimeSubscribed = false
 	}
@@ -394,6 +449,7 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 		invoiceName,
 		postingDate,
 		account,
+		signedIn,
 		mode,
 		// Getters
 		accountMode,
@@ -418,6 +474,8 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 		requestCode,
 		confirmCode,
 		registerAccount,
+		loadSignedInAccount,
+		claimSignedInAccount,
 		subscribeToRealtime,
 		reset,
 	}

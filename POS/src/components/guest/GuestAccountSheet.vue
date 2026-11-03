@@ -42,6 +42,24 @@
 				</button>
 			</template>
 
+			<!-- Already signed in on this phone (the link of the sign-in mail brought the guest back to the table): one tap links the account to the table -->
+			<template v-else-if="step === 'continue' && guestStore.signedIn">
+				<p class="text-sm text-gray-600 mb-3" data-test="account-signed-in-line">
+					{{ __('You are signed in as {0}.', [guestStore.signedIn.full_name]) }}
+				</p>
+				<button
+					class="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl disabled:opacity-50"
+					:disabled="busy"
+					data-test="account-continue-as"
+					@click="continueAs"
+				>
+					{{ __('Continue as {0}', [guestStore.signedIn.full_name]) }}
+				</button>
+				<button class="w-full mt-2 text-xs text-gray-500 underline" data-test="account-other-address" @click="goBack">
+					{{ __('Use another address') }}
+				</button>
+			</template>
+
 			<!-- Step 1: the address -->
 			<template v-else-if="step === 'email'">
 				<p class="text-sm text-gray-600 mb-3">
@@ -151,7 +169,8 @@ const guestStore = useGuestOrderStore()
 const CODE_LENGTH = 6
 
 const account = computed(() => guestStore.account)
-const step = ref("email") // email | code | register
+// continue: the browser already holds a customer's session (the link of the mail brought the guest back here): the sheet starts by offering to go on as that account
+const step = ref(guestStore.signedIn && !guestStore.account ? "continue" : "email") // continue | email | code | register
 const email = ref("")
 const code = ref("")
 // What the engine handed back for an address that has no account: the register step sends it, never the address
@@ -230,6 +249,10 @@ function confirmCode() {
 
 function register() {
 	return run(() => guestStore.registerAccount(proof.value, customerName.value.trim(), mobileNo.value.trim()))
+}
+
+function continueAs() {
+	return run(() => guestStore.claimSignedInAccount())
 }
 
 function goBack() {

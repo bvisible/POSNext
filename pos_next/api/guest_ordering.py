@@ -36,12 +36,17 @@ def _as_the_system():
 	# `ignore_permissions` says on the document: « User don't have permissions to select/read this account », a red PermissionError under « Send Order »
 	# (Daniel's test, 01.11). The guest endpoints are public and the token is their only gate, so the writes the order needs are made as the system,
 	# exactly as far as they go, and the user is given back even when they fail.
-	user = frappe.session.user
+	# //// Neoffice — the whole session is given back, not only its user: `set_user` also replaces the session's id with the user's name and empties
+	# //// its data, which is nothing to lose for a guest but is the open session of a customer whose sign-in mail link brought them back to the page
+	# //// (`claim_signed_in_account`): its id and its CSRF token must be what the next call of the page finds (NeoResto lot 1, 03.11.2026).
+	user, sid, data = frappe.session.user, frappe.session.sid, frappe.session.data
 	frappe.set_user("Administrator")
 	try:
 		yield
 	finally:
 		frappe.set_user(user)
+		frappe.session.sid = sid
+		frappe.session.data = data
 
 
 def _get_token_doc(token):
@@ -1101,6 +1106,37 @@ def register_guest_account(token, proof, customer_name, mobile_no=None):
 	address = guest_account.address_of_proof(proof)
 	with _as_the_system():
 		_user, customer = guest_account.open_account(address, name, mobile_no, token_doc.pos_profile)
+	return _signed_in(token_doc, customer)
+
+
+# //// Neoffice — the link of the sign-in mail brings the guest back to the page they started from (NeoResto lot 1, Daniel, 03.11.2026: « on commence par lire le QR
+# //// que le serveur nous donne et de là on se connecte, comme ça on a la table pour rattacher le compte »). The mail's link signs a customer in on the phone
+# //// (the engine's `sign_in_with_link`, in the browser that asked for the code) and redirects to `_guest_page_path`, the table's page. The page asks for
+# //// everything else without any session (`credentials: "omit"`), so these two calls are the only ones that carry it: one asks whose session it is, so that
+# //// the page can offer « Continue as … », one links that account to the table once the guest has pressed the button. Nothing is linked silently: the
+# //// browser may hold the session of somebody who signed in at the shop on a shared phone, and a link to a table is nobody's proof of anything.
+@frappe.whitelist(allow_guest=True)
+def signed_in_account(token):
+	"""The customer's account the browser is signed in with, as `{"account": {"user", "full_name"}}`, or `{"account": None}` for a guest, a member of
+	the staff or a disabled account. Nothing but the name of the caller's own account is told."""
+	require_neoresto()
+	token_doc = _require_valid_token(token)
+	_require_accounts_proposed(token_doc)
+	return {"account": guest_account.website_user(frappe.session.user)}
+
+
+@frappe.whitelist(allow_guest=True, methods=["POST"])
+def claim_signed_in_account(token):
+	"""Make the customer of the account this browser is signed in with the customer of the table. A customer's session only; one customer per
+	table, never taken over (`guest_account.bind`)."""
+	require_neoresto()
+	token_doc = _require_valid_token(token)
+	_require_accounts_proposed(token_doc)
+	user = frappe.session.user
+	if not guest_account.website_user(user):
+		frappe.throw(_("Sign in to link your account to this table."), frappe.PermissionError)
+	with _as_the_system():
+		customer = guest_account.customer_of_user(user, token_doc.pos_profile)
 	return _signed_in(token_doc, customer)
 
 
