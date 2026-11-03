@@ -21887,3 +21887,79 @@ msgstr "Taille du texte des tickets"
 #: POS/src/components/settings/CloudPrntTillSettings.vue:161
 msgid "Writing of the tickets"
 msgstr "Taille de l'écriture des tickets"
+
+#. Description of the 'Sub-category' (Check) field in DocType 'Restaurant Card
+#. Item'
+#: pos_next/pos_next/doctype/restaurant_card_item/restaurant_card_item.json
+msgid "A heading under the category above it (« Wines » under « Drinks »): the till, the phone, the guest's page and the printed card show it as a second level."
+msgstr "Un intertitre placé sous la catégorie au-dessus (« Vins » sous « Boissons ») : la caisse, le téléphone, la page du convive et la carte imprimée l'affichent comme un second niveau."
+
+#: POS/src/components/restaurant/CardEditor.vue:358
+msgid "Add Sub-category"
+msgstr "Ajouter une sous-catégorie"
+
+#: POS/src/components/restaurant/ReservationList.vue:133
+#: POS/src/components/restaurant/ReservationList.vue:312
+#: pos_next/public/pos/assets/POSSale-1yH2PqHs.js:2
+msgid "At the table"
+msgstr "À table"
+
+#: POS/src/components/restaurant/ReservationList.vue:313
+#: pos_next/public/pos/assets/POSSale-1yH2PqHs.js:2
+msgid "Awaiting the guest"
+msgstr "En attente du client"
+
+#: POS/src/components/restaurant/ItemEditPanel.vue:197
+#, python-brace-format
+msgid "Back to the colour of the family {0}"
+msgstr "Revenir à la couleur de la famille {0}"
+
+#: POS/src/components/restaurant/ItemEditPanel.vue:208
+#, python-brace-format
+msgid "By default, the colour of the family {0}. Choose another one for this item only."
+msgstr "Par défaut, la couleur de la famille {0}. Choisissez une autre couleur pour cet article uniquement."
+
+#: POS/src/components/restaurant/ItemEditPanel.vue:175
+#, python-brace-format
+msgid "Colour of the family {0}"
+msgstr "Couleur de la famille {0}"
+
+#: POS/src/components/restaurant/ReservationList.vue:262
+msgctxt "Reservation service"
+msgid "Dinner"
+msgstr "Soir"
+
+#: POS/src/components/restaurant/ReservationList.vue:261
+msgctxt "Reservation service"
+msgid "Lunch"
+msgstr "Midi"
+
+#. Label of a Check field in DocType 'Restaurant Card Item'
+#: POS/src/components/restaurant/CardEditor.vue:223
+#: POS/src/components/restaurant/CardEditor.vue:314
+#: pos_next/pos_next/doctype/restaurant_card_item/restaurant_card_item.json:39
+msgid "Sub-category"
+msgstr "Sous-catégorie"
+
+#: POS/src/components/restaurant/ItemEditPanel.vue:207
+#, python-brace-format
+msgid "This item has its own colour. The family {0} has another."
+msgstr "Cet article a sa propre couleur ; la famille {0} en a une autre."
+
+#: POS/src/components/restaurant/ReservationList.vue:60
+#: POS/src/components/restaurant/ReservationList.vue:69
+#: POS/src/components/restaurant/ReservationList.vue:93
+#, python-brace-format
+msgid "{0} guests"
+msgstr "{0} personnes"
+
+#: POS/src/components/restaurant/ReservationList.vue:58
+#: POS/src/components/restaurant/ReservationList.vue:69
+#, python-brace-format
+msgid "{0} reservations"
+msgstr "{0} réservations"
+
+#: POS/src/components/restaurant/ReservationList.vue:62
+#, python-brace-format
+msgid "{0} seated"
+msgstr "{0} à table"
