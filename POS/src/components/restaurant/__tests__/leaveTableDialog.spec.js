@@ -78,9 +78,9 @@ describe("the question asked when a sent dish was taken off", () => {
 		expect(part(show({ removed: [], unsent: 1, isTakeaway: true }), "leave-title").text()).toBe("Leave this order? 1 line not sent will be lost.")
 	})
 
-	it("tells in the question about a dish taken off that the lines not sent are lost too", () => {
-		expect(part(show({ unsent: 2 }), "leave-unsent-note").text()).toBe("2 lines not sent will also be lost.")
-		expect(part(show({ unsent: 1 }), "leave-unsent-note").text()).toBe("1 line not sent will also be lost.")
+	it("tells in the question about a dish taken off that the lines not sent are lost only if the cancellation is sent (« put back » keeps them)", () => {
+		expect(part(show({ unsent: 2 }), "leave-unsent-note").text()).toBe("2 lines not sent will be lost if you send the cancellation.")
+		expect(part(show({ unsent: 1 }), "leave-unsent-note").text()).toBe("1 line not sent will be lost if you send the cancellation.")
 		expect(part(show({ unsent: 0 }), "leave-unsent-note").exists()).toBe(false)
 	})
 

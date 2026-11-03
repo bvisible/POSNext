@@ -126,7 +126,9 @@ const title = computed(() => {
 })
 
 const unsentNote = computed(() =>
-	props.unsent === 1 ? __("1 line not sent will also be lost.") : __("{0} lines not sent will also be lost.", [props.unsent])
+	props.unsent === 1
+		? __("1 line not sent will be lost if you send the cancellation.")
+		: __("{0} lines not sent will be lost if you send the cancellation.", [props.unsent])
 )
 
 // 2 and not 2.0, 1.5 as it is

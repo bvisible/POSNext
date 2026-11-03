@@ -2300,6 +2300,7 @@ import { customerOfTheOrder, useOpenTable } from "@/composables/useOpenTable";
 //// Neoffice — « Back » asks before it drops a dish taken off after it had left for the kitchen (NeoResto lot 1, product owner, 03.11.2026).
 import LeaveTableDialog from "@/components/restaurant/LeaveTableDialog.vue";
 import { useLeaveTable } from "@/composables/useLeaveTable";
+import { putUnsentLinesBack, takeUnsentLines } from "@/utils/keepUnsentLines";
 import { linesOfTheSavedOrder } from "@/utils/removedSentLines";
 import { call } from "@/utils/apiWrapper";
 //// Neoffice — reads the cash rounding step again once a shift is open (see utils/cashRounding.js).
@@ -3856,9 +3857,15 @@ const { openTable } = useOpenTable();
 const leaveTable = useLeaveTable({
 	cartStore,
 	send: sendCancellationToKitchen,
-	putBack: () => openTable(cartStore.restaurantTable),
+	putBack: putTheTableBack,
 	leave: () => cartStore.clearCart(),
 });
+
+//// Neoffice — « Put the order back as it was »: the table is read again, as the kitchen has it, and the lines the waiter added and has not sent are put back on it, not lost (Daniel, 03.11).
+async function putTheTableBack() {
+	const kept = takeUnsentLines(cartStore.invoiceItems);
+	if (await openTable(cartStore.restaurantTable)) putUnsentLinesBack(cartStore, kept);
+}
 
 //// Neoffice — the phone has asked about the lines not sent itself and says so, so that the question is not asked a second time (`unsentAsked`); the tablet's header emits no such news.
 function closeTable(options) {
