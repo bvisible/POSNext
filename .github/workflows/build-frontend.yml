@@ -5,6 +5,8 @@ on:
     branches: [version-15]
     paths:
       - 'POS/**'
+      # //// Neoffice — a change to this very file rebuilds, so that a fix of the build is tried by its own push
+      - '.github/workflows/build-frontend.yml'
       - 'package.json'
       - '!**/node_modules/**'
       - '!pos_next/public/pos/**'
@@ -55,9 +57,9 @@ jobs:
             exit 0
           fi
           git commit --no-verify -m "[skip-build] frontend artifacts for ${GITHUB_SHA::8}"
-          # //// Neoffice — the fork-markers bot pushes its own commit right after every push, often while this job is still building: a plain `git push` was then refused ("fetch first") and the artifacts of that commit never reached the branch (2026-11-03, the till of osiris kept the previous bundle). Take what arrived on top, then push again, a few times.
+          # //// Neoffice — the fork-markers bot pushes its own commit right after every push, often while this job is still building: a plain `git push` was then refused ("fetch first") and the artifacts of that commit never reached the branch (2026-11-03, the till of osiris kept the previous bundle). Take what arrived on top (the build leaves untracked-by-us changes behind: autostash), then push again, a few times.
           for attempt in 1 2 3 4 5; do
-            if git pull --rebase origin "${GITHUB_REF_NAME}" && git push; then
+            if git pull --rebase --autostash origin "${GITHUB_REF_NAME}" && git push; then
               exit 0
             fi
             sleep $((attempt * 3))
