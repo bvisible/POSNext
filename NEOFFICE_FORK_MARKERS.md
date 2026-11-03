@@ -199,6 +199,7 @@ commits it with the rest. Same rule: generated, never marked, listed in the tabl
 | `POS/manifest.webmanifest` | PWA name *POS Next* → **Neopos** (`771950bd`, 2026-04-02). |
 | `.bvisible-annotations.json`, `.bvisible-tracked-files` | State of the first-generation annotation tooling (`4e0d3068`, 2026-05-19, *"chore(fork-annotations): bootstrap tooling for upstream divergence tracking"*), consumed by `scripts/annotate_fork.py` and `scripts/check_annotations.py`. Machine-written, no upstream equivalent. Superseded by the `//// Neoffice` markers and this file. |
 | `POS/yarn.lock` | Lockfile for the dependencies above. Regenerated, never hand-edited. |
+| `tests/e2e/package.json` | Added file (no upstream equivalent): the manifest of the browser tests of the guest pages (`@playwright/test`, pinned to the version whose browsers are installed on the Macs), neoffice-maintenance#2192 and #2132. A JSON file cannot carry the marker. |
 
 ### Toolchain taken from upstream develop `f7c55a30` (2026-10-28)
 
@@ -352,6 +353,7 @@ detail is in the sections above.
 | `pos_next/pos_next/print_format/pos_next_receipt/pos_next_receipt.json` |
 | `pos_next/pos_next/report/neopos_register/neopos_register.json` |
 | `pos_next/public/pos/manifest.webmanifest` |
+| `tests/e2e/package.json` |
 
 ### Generated / binary, listed for completeness
 

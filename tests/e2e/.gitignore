@@ -1,0 +1,4 @@
+# //// Neoffice — added file (no upstream equivalent): what a Playwright run leaves in this folder.
+node_modules/
+test-results/
+playwright-report/

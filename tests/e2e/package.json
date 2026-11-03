@@ -1,0 +1,12 @@
+{
+	"name": "pos-next-e2e",
+	"version": "1.0.0",
+	"description": "Browser tests of POS Next's guest pages (Playwright): the QR page of a table and the web takeaway order",
+	"scripts": {
+		"test": "playwright test"
+	},
+	"private": true,
+	"devDependencies": {
+		"@playwright/test": "1.62.1"
+	}
+}
