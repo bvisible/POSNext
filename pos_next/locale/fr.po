@@ -22087,3 +22087,24 @@ msgstr "{0} ne figure pas sur la carte."
 #, python-brace-format
 msgid "{0}: an option is no longer offered, please reload the menu"
 msgstr "{0} : une option n'est plus proposée, veuillez recharger la carte."
+
+#: POS/src/components/restaurant/LeaveTableDialog.vue:36
+msgid "Cancel the order and tell the kitchen"
+msgstr "Annuler la commande et prévenir la cuisine"
+
+#: pos_next/api/restaurant.py:460
+#, python-brace-format
+msgid "Invoice {0} is not a restaurant order"
+msgstr "La facture {0} n'est pas une commande de restaurant"
+
+#: POS/src/pages/POSSale.vue:3875
+msgid "Order cancelled"
+msgstr "Commande annulée"
+
+#: POS/src/components/restaurant/LeaveTableDialog.vue:26
+msgid "That was the last dish: the whole order will be cancelled."
+msgstr "Il ne reste plus aucun plat : toute la commande sera annulée."
+
+#: pos_next/api/restaurant.py:462
+msgid "This order already holds a payment: it cannot be cancelled here"
+msgstr "Cette commande contient déjà un paiement : elle ne peut pas être annulée ici"
