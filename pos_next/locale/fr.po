@@ -21975,3 +21975,22 @@ msgstr "{0} personne"
 #, python-brace-format
 msgid "{0} reservation"
 msgstr "{0} réservation"
+
+#: POS/src/components/settings/CloudPrntTillSettings.vue:193
+msgid "One ticket per family"
+msgstr "Un ticket par famille"
+
+#: POS/src/components/settings/CloudPrntTillSettings.vue:197
+msgid "Starters, mains and desserts come out on their own tickets, numbered in the order of the meal, so that a ticket can leave with its plates."
+msgstr "Les entrées, les plats et les desserts sortent chacun sur leur propre ticket, numéroté dans l'ordre du repas, afin qu'un ticket puisse partir avec ses assiettes."
+
+#. Label of a Check field in DocType 'Preparation Station'
+#: pos_next/pos_next/doctype/preparation_station/preparation_station.json:113
+msgid "Ticket per family"
+msgstr "Ticket par famille"
+
+#. Description of the 'Ticket per family' (Check) field in DocType 'Preparation
+#. Station'
+#: pos_next/pos_next/doctype/preparation_station/preparation_station.json:110
+msgid "When a send holds several families (starters, mains, desserts), print one ticket for each, numbered in the order of the meal, instead of one ticket with sections. A ticket can then leave with its plates."
+msgstr "Lorsqu'un envoi comporte plusieurs familles (entrées, plats, desserts), imprimez un ticket pour chacune, numéroté dans l'ordre du repas, au lieu d'un seul ticket avec des sections. Chaque ticket peut alors partir avec ses assiettes."
