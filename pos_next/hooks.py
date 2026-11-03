@@ -221,7 +221,9 @@ fixtures = [
 
 # before_install = "pos_next.install.before_install"
 after_install = "pos_next.install.after_install"
-after_migrate = "pos_next.install.after_migrate"
+# //// Neoffice — a second step after the first: the cards of buttons of NeoResto's page (neoresto.after_migrate), which needs the
+# //// page install.after_migrate makes. A list: Frappe runs them in this order.
+after_migrate = ["pos_next.install.after_migrate", "pos_next.restaurant.neoresto.after_migrate"]
 
 # Uninstallation
 # ------------
@@ -268,7 +270,10 @@ doc_events = {
 	# //// background after the commit so closing stays fast (neoffice-maintenance#1235).
 	"POS Closing Shift": {
 		# //// Neoffice — on_submit became a list: closing a session moves the « sessions open » of the restaurant's overview (neoffice-maintenance#2163).
-		"on_submit": ["pos_next.api.eod_report.enqueue_after_close", "pos_next.restaurant.figures.figures_changed"],
+		"on_submit": [
+			"pos_next.api.eod_report.enqueue_after_close",
+			"pos_next.restaurant.figures.figures_changed",
+		],
 	},
 	# //// Neoffice — added entry (no upstream equivalent): the restaurant's overview counts the sessions open and the bookings of the day, and is told
 	# //// when they change (neoffice-maintenance#2163).

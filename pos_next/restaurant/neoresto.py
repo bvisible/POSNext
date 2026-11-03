@@ -411,7 +411,6 @@ def setup():
 		return
 	# The page first: the menu entry lists it, and the theme's workspace cleanup keeps the pages the entries list
 	_make_the_page()
-	sync_purchase_shortcuts()
 	if frappe.db.exists("App Customization", APP):
 		return
 	frappe.get_doc(
@@ -448,76 +447,141 @@ def _make_the_page():
 		page.insert(ignore_permissions=True)
 
 
-# The shortcuts of the page to the purchases screens: the label, which is also the key the theme draws a door by (so it stays
-# the untranslated word, translated when drawn), and the page it opens
-PURCHASE_SHORTCUTS = (("Purchases", "neoresto-purchases"), ("Shopping list", "neoresto-shopping"))
+# The cards of the page, as the Sport page has its own (« Tout le module » of the overview): a title, then its buttons, each
+# (label, link type, target). Every word is one the catalogue already translates. « Settings » is
+# the title the theme files under the folded settings card; « Purchases » is written only where the site shows the purchases.
+PURCHASES_CARD = "Purchases"
+PAGE_CARDS = (
+	(
+		"Service",
+		(
+			("Floor and tables", "DocType", "Restaurant Table"),
+			("Reservations", "DocType", "Restaurant Reservation"),
+			("Preparation stations", "DocType", "Preparation Station"),
+			("Tips", "DocType", "Restaurant Tip"),
+		),
+	),
+	(
+		"Cards and menus",
+		(
+			("Cards", "DocType", "Restaurant Card"),
+			("Menus", "DocType", "Restaurant Menu"),
+			("Options", "DocType", "Product Option Group"),
+			("Items", "DocType", "Item"),
+		),
+	),
+	(
+		PURCHASES_CARD,
+		(
+			("What we buy", "Page", "neoresto-purchases"),
+			("Shopping list", "Page", "neoresto-shopping"),
+			("Suppliers", "DocType", "Supplier"),
+			("Purchase Invoices", "DocType", "Purchase Invoice"),
+		),
+	),
+	(
+		"Settings",
+		(
+			("Restaurants", "DocType", "Restaurant"),
+			("Tills", "DocType", "POS Profile"),
+			("POS Settings", "DocType", "POS Settings"),
+			("Preparation Workflow", "DocType", "Preparation Workflow"),
+			("Menu Badge", "DocType", "Menu Badge"),
+			("Menu Design Template", "DocType", "Menu Design Template"),
+		),
+	),
+)
+# What the first version of this page (03.11) wrote instead: a shortcut to each purchases screen. They would say the Purchases
+# card twice, as tiles of its first card: taken away.
+FIRST_VERSION_SHORTCUTS = (("Purchases", "neoresto-purchases"), ("Shopping list", "neoresto-shopping"))
 
 
-def sync_purchase_shortcuts():
-	"""Put on the page of NeoResto a shortcut to each purchases screen where the site shows the purchases, and take them
-	away where it does not (`neoresto_purchases_active`, supply_catalogue.purchases_active).
+def sync_page_cards():
+	"""Write on the page of NeoResto the cards of buttons of PAGE_CARDS, and take the Purchases card away where the site does
+	not show the purchases (`neoresto_purchases_active`, supply_catalogue.purchases_active).
 
-	The theme draws a shortcut that the page's rows AND its content both declare, so both are written, one block of a
-	quarter of the width each. Only these two are ever added or removed: whatever else the page's administrators put there,
-	and whatever they renamed, is left as it is. Run by `setup`, so a migrate does it, and so does the provisioning of a
-	restaurant client right after it switches the purchases on; called again it changes nothing."""
+	The theme draws a card when the page's link rows AND its content both name it, so both are written. A card is written
+	once: one that is there is never written again, even changed (an administrator may take a button off, or add one);
+	only the Purchases card follows the flag. Whatever else is on the page is left as it is. Run at every migrate
+	after `setup` (install.make_neoresto_menu_entry), and by hand (`bench execute pos_next.restaurant.neoresto.sync_page_cards`)
+	right after a site's configuration switches the purchases on; called again it changes nothing, and opens no document."""
 	if not frappe.db.exists("Workspace", WORKSPACE):
 		return
-	wanted = supply_catalogue.purchases_active()
-	# Read the rows and the content as they are, and open the document only to change it: a migrate that has nothing to do
-	# opens nothing
-	rows = frappe.get_all(
+	purchases = supply_catalogue.purchases_active()
+	present = {
+		row.label
+		for row in frappe.get_all(
+			"Workspace Link",
+			filters={"parent": WORKSPACE, "parenttype": "Workspace", "type": "Card Break"},
+			fields=["label"],
+		)
+	}
+	old_shortcuts = frappe.get_all(
 		"Workspace Shortcut",
 		filters={
 			"parent": WORKSPACE,
 			"parenttype": "Workspace",
 			"type": "Page",
-			"link_to": ["in", [target for _label, target in PURCHASE_SHORTCUTS]],
+			"link_to": ["in", [target for _label, target in FIRST_VERSION_SHORTCUTS]],
 		},
 		fields=["label"],
 	)
-	declared = {
-		b["data"].get("shortcut_name")
-		for b in json.loads(frappe.db.get_value("Workspace", WORKSPACE, "content") or "[]")
-		if b.get("type") == "shortcut"
-	}
-	if wanted:
-		done = len(rows) == len(PURCHASE_SHORTCUTS) and all(r.label in declared for r in rows)
-	else:
-		done = not rows
-	if done:
+	to_write = [
+		title
+		for title, _rows in PAGE_CARDS
+		if title not in present and (purchases or title != PURCHASES_CARD)
+	]
+	to_drop = [PURCHASES_CARD] if PURCHASES_CARD in present and not purchases else []
+	if not (to_write or to_drop or old_shortcuts):
 		return
+
 	page = frappe.get_doc("Workspace", WORKSPACE)
 	blocks = json.loads(page.content or "[]")
-	changed = False
-	for label, target in PURCHASE_SHORTCUTS:
-		row = next((r for r in page.shortcuts if r.type == "Page" and r.link_to == target), None)
-		if wanted and not row:
-			row = page.append("shortcuts", {"label": label, "type": "Page", "link_to": target})
-			changed = True
-		if not row:
-			continue
-		shown = [
-			b for b in blocks if b.get("type") == "shortcut" and b["data"].get("shortcut_name") == row.label
+	for row in [
+		r for r in page.shortcuts if (r.label, r.link_to) in FIRST_VERSION_SHORTCUTS and r.type == "Page"
+	]:
+		blocks = [
+			b
+			for b in blocks
+			if not (b.get("type") == "shortcut" and b["data"].get("shortcut_name") == row.label)
 		]
-		if wanted and not shown:
-			blocks.append(
-				{
-					"id": frappe.generate_hash(length=10),
-					"type": "shortcut",
-					"data": {"shortcut_name": row.label, "col": 3},
-				}
-			)
-			changed = True
-		if not wanted:
-			blocks = [b for b in blocks if b not in shown]
+		page.remove(row)
+	for title in to_drop:
+		doomed, inside = [], False
+		for row in page.links:
+			inside = (row.label == title) if row.type == "Card Break" else inside
+			if inside:
+				doomed.append(row)
+		for row in doomed:
 			page.remove(row)
-			changed = True
-	if not changed:
-		return
+		blocks = [b for b in blocks if not (b.get("type") == "card" and b["data"].get("card_name") == title)]
+	for title, buttons in PAGE_CARDS:
+		if title not in to_write:
+			continue
+		page.append("links", {"type": "Card Break", "label": title, "link_count": len(buttons)})
+		for label, link_type, target in buttons:
+			page.append("links", {"type": "Link", "label": label, "link_type": link_type, "link_to": target})
+		blocks.append(
+			{"id": frappe.generate_hash(length=10), "type": "card", "data": {"card_name": title, "col": 4}}
+		)
 	page.content = json.dumps(blocks)
 	with _never_exported():
 		page.save(ignore_permissions=True)
+
+
+def after_migrate():
+	"""Write the cards of NeoResto's page after every migrate where the site runs NeoResto and has the theme, and never fail the
+	migrate for them: an exception in this hook would roll the whole migrate back and stop a fleet update. A savepoint undoes
+	what a failed attempt half made, and an Error Log row says why; the next migrate tries again."""
+	if not active() or not frappe.db.exists("DocType", "App Customization"):
+		return
+	save_point = "neoresto_page_cards"
+	frappe.db.savepoint(save_point)
+	try:
+		sync_page_cards()
+	except Exception:
+		frappe.db.rollback(save_point=save_point)
+		frappe.log_error("POS Next: NeoResto page cards", frappe.get_traceback())
 
 
 @contextmanager

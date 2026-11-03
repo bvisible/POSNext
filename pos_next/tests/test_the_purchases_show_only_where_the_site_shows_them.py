@@ -64,19 +64,19 @@ class TestThePurchasesShowOnlyWhereTheSiteShowsThem(FrappeTestCase):
 		self.assertEqual(set(answer), {"rows", "total", "families", "suppliers"})
 
 
-class TestThePurchasesShortcutsOfTheRestoPage(FrappeTestCase):
-	"""The page of the Resto space carries a shortcut to each purchases screen, where the site shows the purchases.
+class TestTheRestoPageCards(FrappeTestCase):
+	"""The page of the Resto space carries its cards of buttons, the way the Sport page carries its own (« Tout le module »).
 
-	The theme draws the shortcuts the page's rows AND its content declare: both are written, and both are taken away where
-	the purchases do not show. What the page's administrators put there is left as it is.
+	The theme draws a card of the page's link rows when the page's content names it: both are written. The Purchases card is
+	there only where the site shows the purchases, and goes where it does not. What the page's administrators put there, and
+	whatever they changed in a card of ours, is left as it is.
 	"""
-
-	OURS = (("Purchases", "neoresto-purchases"), ("Shopping list", "neoresto-shopping"))
 
 	def setUp(self):
 		frappe.set_user("Administrator")
 		neoresto._make_the_page()
 		page = frappe.get_doc("Workspace", neoresto.SPACE)
+		page.set("links", [])
 		page.set("shortcuts", [])
 		page.content = "[]"
 		with neoresto._never_exported():
@@ -88,46 +88,126 @@ class TestThePurchasesShortcutsOfTheRestoPage(FrappeTestCase):
 			patch(NEORESTO, return_value=True),
 			patch(SUPPLY_NEORESTO, return_value=True),
 		):
-			neoresto.sync_purchase_shortcuts()
+			neoresto.sync_page_cards()
 		return frappe.get_doc("Workspace", neoresto.SPACE)
 
 	@staticmethod
+	def _cards(page):
+		"""{card title: [(label, link type, target), ...]} in the order of the link rows."""
+		cards, current = {}, None
+		for row in page.links:
+			if row.type == "Card Break":
+				current = cards.setdefault(row.label, [])
+			elif current is not None:
+				current.append((row.label, row.link_type, row.link_to))
+		return cards
+
+	@staticmethod
 	def _declared(page):
-		return [
-			b["data"]["shortcut_name"]
-			for b in json.loads(page.content or "[]")
-			if b.get("type") == "shortcut"
-		]
+		return [b["data"]["card_name"] for b in json.loads(page.content or "[]") if b.get("type") == "card"]
 
-	def test_each_purchases_screen_has_its_shortcut_where_the_site_shows_them(self):
+	def test_each_card_is_written_with_its_buttons_and_named_in_the_content(self):
 		page = self._sync(True)
-		rows = {(r.label, r.type, r.link_to) for r in page.shortcuts}
-		self.assertEqual(rows, {(label, "Page", target) for label, target in self.OURS})
-		self.assertEqual(sorted(self._declared(page)), sorted(label for label, _target in self.OURS))
+		cards = self._cards(page)
+		self.assertEqual(
+			list(cards),
+			["Service", "Cards and menus", "Purchases", "Settings"],
+			"in the order the page shows them",
+		)
+		self.assertIn(("Floor and tables", "DocType", "Restaurant Table"), cards["Service"])
+		self.assertIn(("What we buy", "Page", "neoresto-purchases"), cards["Purchases"])
+		self.assertIn(("Shopping list", "Page", "neoresto-shopping"), cards["Purchases"])
+		self.assertEqual(self._declared(page), list(cards))
+		breaks = {r.label: r.link_count for r in page.links if r.type == "Card Break"}
+		self.assertEqual(breaks, {title: len(rows) for title, rows in cards.items()})
 
-	def test_the_shortcuts_are_taken_away_where_the_purchases_do_not_show(self):
-		self._sync(True)
+	def test_the_purchases_card_is_there_only_where_the_site_shows_the_purchases(self):
 		page = self._sync(False)
-		self.assertEqual([r.link_to for r in page.shortcuts], [])
-		self.assertEqual(self._declared(page), [])
+		self.assertEqual(list(self._cards(page)), ["Service", "Cards and menus", "Settings"])
+		self.assertEqual(self._declared(page), ["Service", "Cards and menus", "Settings"])
+
+	def test_the_purchases_card_goes_and_comes_with_the_flag(self):
+		self._sync(True)
+		off = self._sync(False)
+		self.assertNotIn("Purchases", self._cards(off))
+		self.assertNotIn("Purchases", self._declared(off))
+		self.assertFalse([r for r in off.links if r.link_to in ("neoresto-purchases", "neoresto-shopping")])
+		on = self._sync(True)
+		self.assertIn("Purchases", self._cards(on))
+		self.assertEqual(sorted(self._declared(on)), sorted(self._cards(on)))
 
 	def test_syncing_again_writes_nothing_twice(self):
 		self._sync(True)
 		page = self._sync(True)
-		self.assertEqual(len(page.shortcuts), 2)
-		self.assertEqual(len(self._declared(page)), 2)
+		self.assertEqual(len([r for r in page.links if r.type == "Card Break"]), 4)
+		self.assertEqual(len(self._declared(page)), 4)
 
 	def test_what_an_administrator_put_on_the_page_is_left_alone(self):
 		page = frappe.get_doc("Workspace", neoresto.SPACE)
-		page.append("shortcuts", {"label": "Tables", "type": "DocType", "link_to": "Restaurant Table"})
+		page.append("links", {"type": "Card Break", "label": "My own card", "link_count": 1})
+		page.append(
+			"links",
+			{"type": "Link", "label": "Tables", "link_type": "DocType", "link_to": "Restaurant Table"},
+		)
 		page.content = json.dumps(
-			[{"id": "abc1234567", "type": "shortcut", "data": {"shortcut_name": "Tables", "col": 3}}]
+			[{"id": "abc1234567", "type": "card", "data": {"card_name": "My own card", "col": 4}}]
 		)
 		with neoresto._never_exported():
 			page.save(ignore_permissions=True)
 		on = self._sync(True)
-		self.assertIn("Tables", self._declared(on))
-		self.assertEqual(len(on.shortcuts), 3)
+		self.assertIn("My own card", self._cards(on))
+		self.assertEqual(self._cards(on)["My own card"], [("Tables", "DocType", "Restaurant Table")])
 		off = self._sync(False)
-		self.assertEqual(self._declared(off), ["Tables"])
-		self.assertEqual([r.label for r in off.shortcuts], ["Tables"])
+		self.assertIn("My own card", self._cards(off))
+		self.assertIn("My own card", self._declared(off))
+
+	def test_a_card_the_administrator_changed_is_not_written_again(self):
+		page = self._sync(False)
+		service = next(r for r in page.links if r.type == "Card Break" and r.label == "Service")
+		page.links = [
+			r for r in page.links if r.idx != service.idx + 1
+		]  # the first button of the card, taken off
+		with neoresto._never_exported():
+			page.save(ignore_permissions=True)
+		after = self._sync(False)
+		self.assertEqual(len(self._cards(after)["Service"]), 3)
+
+	def test_the_two_shortcuts_of_the_first_version_are_taken_away(self):
+		page = frappe.get_doc("Workspace", neoresto.SPACE)
+		for label, target in (("Purchases", "neoresto-purchases"), ("Shopping list", "neoresto-shopping")):
+			page.append("shortcuts", {"label": label, "type": "Page", "link_to": target})
+		page.append("shortcuts", {"label": "Tables", "type": "DocType", "link_to": "Restaurant Table"})
+		page.content = json.dumps(
+			[
+				{"id": "aaa1111111", "type": "shortcut", "data": {"shortcut_name": "Purchases", "col": 3}},
+				{
+					"id": "bbb2222222",
+					"type": "shortcut",
+					"data": {"shortcut_name": "Shopping list", "col": 3},
+				},
+				{"id": "ccc3333333", "type": "shortcut", "data": {"shortcut_name": "Tables", "col": 3}},
+			]
+		)
+		with neoresto._never_exported():
+			page.save(ignore_permissions=True)
+		after = self._sync(True)
+		self.assertEqual([r.label for r in after.shortcuts], ["Tables"])
+		kept = [b["data"]["shortcut_name"] for b in json.loads(after.content) if b["type"] == "shortcut"]
+		self.assertEqual(kept, ["Tables"])
+
+	def test_a_migrate_never_fails_for_the_cards(self):
+		"""The hook runs at every migrate of every client: a card that cannot be written is an Error Log row, never a failed migrate."""
+		with (
+			patch(NEORESTO, return_value=True),
+			patch.object(frappe.db, "exists", return_value=True),
+			patch.object(neoresto, "sync_page_cards", side_effect=RuntimeError("the page is gone")),
+			patch.object(frappe, "log_error") as logged,
+		):
+			neoresto.after_migrate()
+		logged.assert_called_once()
+		self.assertEqual(logged.call_args.args[0], "POS Next: NeoResto page cards")
+
+	def test_a_site_that_does_not_run_neoresto_gets_no_cards(self):
+		with patch(NEORESTO, return_value=False), patch.object(neoresto, "sync_page_cards") as sync:
+			neoresto.after_migrate()
+		sync.assert_not_called()
