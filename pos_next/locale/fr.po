@@ -22073,3 +22073,17 @@ msgstr "Envoyer l'annulation en cuisine"
 #, python-brace-format
 msgid "{0} dishes already sent to the kitchen were removed."
 msgstr "{0} plats déjà envoyés en cuisine ont été retirés."
+
+#: pos_next/api/guest_ordering.py:718
+msgid "Please choose a whole number of dishes"
+msgstr "Veuillez indiquer un nombre entier de plats."
+
+#: pos_next/api/guest_ordering.py:688
+#, python-brace-format
+msgid "{0} is not on the menu"
+msgstr "{0} ne figure pas sur la carte."
+
+#: pos_next/api/guest_ordering.py:700 pos_next/api/guest_ordering.py:708
+#, python-brace-format
+msgid "{0}: an option is no longer offered, please reload the menu"
+msgstr "{0} : une option n'est plus proposée, veuillez recharger la carte."
