@@ -6,7 +6,7 @@ import json
 
 import frappe
 
-from pos_next.restaurant import dishes, shopping, supply_catalogue
+from pos_next.restaurant import dishes, shopping, spoken_list, supply_catalogue
 
 
 def _gate():
@@ -37,6 +37,24 @@ def add_article_lines(list_name, lines):
 	"""The articles ticked in the picker, with their quantities: a JSON list of {item, qty, supplier, uom}."""
 	_gate()
 	return shopping.add_article_lines(list_name, json.loads(lines) if isinstance(lines, str) else lines)
+
+
+@frappe.whitelist()
+def propose_list_from_words(items):
+	"""What Nora understood of what the owner said, and nothing written: a JSON list of {text, qty, unit}.
+
+	Answers, for each thing said, the article it understood and its packaging, or the articles it could be, or nothing known
+	(which would go on as a free line). Nora reads it back to the owner before `add_proposed_lines`."""
+	_gate()
+	return spoken_list.propose(json.loads(items) if isinstance(items, str) else items)
+
+
+@frappe.whitelist()
+def add_proposed_lines(lines, list_name=None):
+	"""Write what the owner confirmed, as `propose_list_from_words` answered it (its `line` of each thing, a JSON list), to the
+	list in progress or to `list_name`; the list is made when there is none."""
+	_gate()
+	return spoken_list.add(json.loads(lines) if isinstance(lines, str) else lines, list_name or None)
 
 
 @frappe.whitelist()
