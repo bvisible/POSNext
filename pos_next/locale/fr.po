@@ -22165,3 +22165,21 @@ msgstr "Si vous envoyez l'annulation, {0} lignes qui n'ont pas encore été envo
 #: POS/src/components/restaurant/CardEditor.vue:64
 msgid "Compose with Nora"
 msgstr "Composer avec Nora"
+
+#: pos_next/restaurant/card_plan.py:267
+msgid "Some hours cannot be read: they need days and a start and an end (for example Monday to Friday, 14:00 to 17:30). They are left out."
+msgstr "Certains horaires ne peuvent pas être lus : il leur faut des jours, un début et une fin (par exemple du lundi au vendredi, de 14:00 à 17:30). Ils sont écartés."
+
+#: pos_next/restaurant/card_plan.py:360
+#, python-brace-format
+msgid "The hours overlap those of {0}: both cards are offered then."
+msgstr "Ces horaires chevauchent ceux de {0} : les deux cartes sont alors proposées."
+
+#: pos_next/restaurant/card_plan.py:347
+msgid "You may not set the hours of the restaurant: ask its manager. The card is made without hours."
+msgstr "Vous n'êtes pas autorisé à définir les horaires du restaurant : demandez-le à son gérant. La carte est créée sans horaires."
+
+#: pos_next/restaurant/card_plan.py:357
+#, python-brace-format
+msgid "{0} already has hours: they are left as they are."
+msgstr "{0} a déjà des horaires : ils restent tels quels."
