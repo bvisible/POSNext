@@ -22052,3 +22052,24 @@ msgstr "{0} est désactivé : il reste tel quel."
 #, python-brace-format
 msgid "{0} is outside the restaurant's groups: its VAT is its own."
 msgstr "{0} ne fait pas partie des groupes du restaurant : sa TVA lui est propre."
+
+#: POS/src/components/restaurant/LeaveTableDialog.vue:79
+msgid "A dish already sent to the kitchen was removed."
+msgstr "Un plat déjà envoyé en cuisine a été retiré."
+
+#: POS/src/pages/POSSale.vue:3881
+msgid "Cancellation sent to the kitchen"
+msgstr "Annulation envoyée en cuisine"
+
+#: POS/src/components/restaurant/LeaveTableDialog.vue:43
+msgid "Put the order back as it was"
+msgstr "Remettre la commande comme avant"
+
+#: POS/src/components/restaurant/LeaveTableDialog.vue:33
+msgid "Send the cancellation to the kitchen"
+msgstr "Envoyer l'annulation en cuisine"
+
+#: POS/src/components/restaurant/LeaveTableDialog.vue:80
+#, python-brace-format
+msgid "{0} dishes already sent to the kitchen were removed."
+msgstr "{0} plats déjà envoyés en cuisine ont été retirés."
