@@ -36,9 +36,9 @@ function open(reservations) {
 
 const confirmButtonOf = (wrapper, name) =>
 	wrapper
-		.findAll(".reservation-row")
-		.find((rowElement) => rowElement.text().includes(`Guest ${name}`))
-		.find(".confirm-btn")
+		.findAll("[data-reservation-card]")
+		.find((cardElement) => cardElement.text().includes(`Guest ${name}`))
+		.find("[data-action='confirm']")
 
 describe("the day's list of the till confirms an online booking for its guest", () => {
 	it("offers to confirm a booking whose guest has not confirmed it, Confirmed or Pending", () => {
@@ -63,14 +63,14 @@ describe("the day's list of the till confirms an online booking for its guest", 
 	})
 })
 
-// What the two ✓ actions of a row (the guest's arrival, the confirmation) say on screen: a title is never seen on a
+// What the two ✓ actions of a booking's card (the guest's arrival, the confirmation) say on screen: a title is never seen on a
 // touch screen
 const wordsOf = (wrapper, name) =>
 	wrapper
-		.findAll(".reservation-row")
-		.find((rowElement) => rowElement.text().includes(`Guest ${name}`))
-		.findAll(".seat-btn, .confirm-btn")
-		.map((button) => button.text().replace("✓", "").trim())
+		.findAll("[data-reservation-card]")
+		.find((cardElement) => cardElement.text().includes(`Guest ${name}`))
+		.findAll("[data-action='check-in'], [data-action='confirm']")
+		.map((button) => button.text().trim())
 
 describe("the two actions of a booking say what they do", () => {
 	it("names the guest's arrival and the confirmation by phone apart on a booking that waits for its guest", () => {
