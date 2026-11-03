@@ -436,6 +436,43 @@ def _put_table_back(table_name):
 		frappe.db.set_value("Sales Invoice", inv_name, "restaurant_table", None, update_modified=False)
 
 
+# //// Neoffice — added function (no upstream equivalent). A table's order cancelled as a whole (NeoResto lot 1, Daniel, 03.11.2026): the waiter took off the LAST dish
+# //// that had left for the kitchen and answered « Back »'s question with « cancel », and an invoice with no line cannot be saved, so there is no order left to tell the kitchen
+# //// by. The draft is deleted instead, which tells the kitchen's printers on its own (the void hook, `kitchen_events.void_on_trash`: the dishes it had are cancelled on paper), and the
+# //// table is free again unless another order still names it. What is refused: a sale already submitted, an order that holds money (a guest paid from his phone: the money is on the
+# //// order, deleting it here would lose it), and an invoice that is no restaurant order (this is no way to delete any draft of the site).
+@frappe.whitelist(methods=["POST"])
+def cancel_table_order(invoice):
+	"""Cancel a table's (or a takeaway's) draft order as a whole: delete it, tell the kitchen, free the table."""
+	from pos_next.api.cash_entry import require_document_till
+
+	require_document_till("Sales Invoice", invoice)
+	if not isinstance(invoice, str) or not frappe.db.exists("Sales Invoice", invoice):
+		frappe.throw(_("Invoice {0} does not exist").format(invoice))
+
+	takeaway = ["is_takeaway"] if frappe.db.has_column("Sales Invoice", "is_takeaway") else []
+	order = frappe.db.get_value(
+		"Sales Invoice", invoice, ["docstatus", "restaurant_table", "paid_amount", *takeaway], as_dict=True
+	)
+	if order.docstatus != 0:
+		frappe.throw(_("Cannot delete submitted invoice {0}").format(invoice))
+	if not (order.restaurant_table or cint(order.get("is_takeaway"))):
+		frappe.throw(_("Invoice {0} is not a restaurant order").format(invoice))
+	if flt(order.paid_amount) > 0:
+		frappe.throw(_("This order already holds a payment: it cannot be cancelled here"))
+
+	# The till's own checks are made above: the deletion is the till's to make, whatever the waiter's right on the doctype
+	frappe.delete_doc("Sales Invoice", invoice, force=1, ignore_permissions=True)
+	table = order.restaurant_table
+	if table and not frappe.db.exists("Sales Invoice", {"docstatus": 0, "restaurant_table": table}):
+		_put_table_back(table)
+
+	frappe.db.commit()
+	frappe.publish_realtime("kds_update")
+	frappe.publish_realtime("table_update")
+	return {"status": "success"}
+
+
 @frappe.whitelist()
 def free_cleaning_tables(area, restaurant=None):
 	"""Free every table of a room that is being cleaned: Cleaning goes back to Empty, in one call for the whole room.

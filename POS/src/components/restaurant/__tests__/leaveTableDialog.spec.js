@@ -43,6 +43,20 @@ describe("the question asked when a sent dish was taken off", () => {
 		expect(document.activeElement).toBe(part(wrapper, "leave-stay").element)
 	})
 
+	it("says that the whole order will be cancelled when the dish taken off was the last one", () => {
+		const wrapper = show({ emptied: true })
+
+		expect(part(wrapper, "leave-emptied-hint").text()).toBe("That was the last dish: the whole order will be cancelled.")
+		expect(part(wrapper, "leave-send").text()).toBe("Cancel the order and tell the kitchen")
+	})
+
+	it("says nothing of the sort while dishes are left on the order", () => {
+		const wrapper = show()
+
+		expect(part(wrapper, "leave-emptied-hint").exists()).toBe(false)
+		expect(part(wrapper, "leave-send").text()).toBe("Send the cancellation to the kitchen")
+	})
+
 	it("offers no « put back » where the order cannot be read again", () => {
 		expect(part(show({ canPutBack: false }), "leave-put-back").exists()).toBe(false)
 	})

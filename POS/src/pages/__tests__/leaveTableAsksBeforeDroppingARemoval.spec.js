@@ -25,6 +25,11 @@ describe("the way back from a table, in the till's page", () => {
 		expect(page).toMatch(/linesOfTheSavedOrder\(/)
 	})
 
+	it("cancels the whole order when no line is left to save, and hands the dialog the news", () => {
+		expect(page).toMatch(/pos_next\.api\.restaurant\.cancel_table_order/)
+		expect(page).toMatch(/:emptied="leaveTable\.emptied\.value"/)
+	})
+
 	it("remembers what had left for the kitchen when an order is read back for a guest's update", () => {
 		expect(page).toMatch(/cartStore\.replaceAllItems\(orderData\.items\);[\s\S]{0,400}cartStore\.rememberSentLines\(\)/)
 	})

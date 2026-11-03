@@ -22,6 +22,9 @@
 					{{ formatQuantity(dish.quantity) }}× {{ dish.item_name }}
 				</li>
 			</ul>
+			<p v-if="emptied" data-test="leave-emptied-hint" class="m-0 mt-3 text-[14px] leading-snug text-[#524B41]">
+				{{ __("That was the last dish: the whole order will be cancelled.") }}
+			</p>
 			<div class="mt-4 flex flex-col gap-2">
 				<button
 					type="button"
@@ -30,7 +33,7 @@
 					class="min-h-[48px] rounded-[12px] border border-[#DCD4C7] bg-[#FFFDF8] px-3 text-[16px] font-bold text-[#141414] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#141414] disabled:opacity-50"
 					@click="emit('send')"
 				>
-					{{ __("Send the cancellation to the kitchen") }}
+					{{ emptied ? __("Cancel the order and tell the kitchen") : __("Send the cancellation to the kitchen") }}
 				</button>
 				<button
 					v-if="canPutBack"
@@ -63,11 +66,13 @@ import { computed, nextTick, onMounted, ref } from "vue"
  * removed:    the dishes taken off, `{ item_code, item_name, quantity }` each
  * canPutBack: whether the order can be read again (a table's, not a takeaway's)
  * busy:       the cancellation is on its way: the two buttons that act wait for it
+ * emptied:    the dish taken off was the last one: the whole order is cancelled, and the dialog says so
  */
 const props = defineProps({
 	removed: { type: Array, default: () => [] },
 	canPutBack: { type: Boolean, default: true },
 	busy: { type: Boolean, default: false },
+	emptied: { type: Boolean, default: false },
 })
 const emit = defineEmits(["send", "put-back", "stay"])
 

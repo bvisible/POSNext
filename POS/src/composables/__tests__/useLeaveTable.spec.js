@@ -10,7 +10,13 @@ import { useLeaveTable } from "../useLeaveTable"
 const removed = [{ item_code: "SOUP", item_name: "Soup", quantity: 1 }]
 
 function setup({ cart = {}, send = vi.fn(async () => true), putBack = vi.fn(async () => {}) } = {}) {
-	const cartStore = reactive({ removedSentLines: [], restaurantTable: { name: "T1" }, isTakeaway: false, ...cart })
+	const cartStore = reactive({
+		removedSentLines: [],
+		invoiceItems: [{ item_code: "STEAK", kds_status: "Pending" }],
+		restaurantTable: { name: "T1" },
+		isTakeaway: false,
+		...cart,
+	})
 	const leave = vi.fn()
 	return { cartStore, leave, send, putBack, ...useLeaveTable({ cartStore, send, putBack, leave }) }
 }
@@ -92,6 +98,15 @@ describe("leaving a table", () => {
 		expect(ctx.send).not.toHaveBeenCalled()
 		expect(ctx.putBack).not.toHaveBeenCalled()
 		expect(ctx.leave).not.toHaveBeenCalled()
+	})
+
+	it("says the order is emptied when the dish taken off was the last one the saved order had", () => {
+		expect(setup().emptied.value).toBe(false)
+		// Only a line never sent is left: nothing the kitchen has, nothing saved
+		expect(setup({ cart: { invoiceItems: [{ item_code: "CAKE", kds_status: "" }] } }).emptied.value).toBe(true)
+		expect(setup({ cart: { invoiceItems: [] } }).emptied.value).toBe(true)
+		// A course held back is saved with the order: the order is not emptied
+		expect(setup({ cart: { invoiceItems: [{ item_code: "WINE", kds_status: "Waiting" }] } }).emptied.value).toBe(false)
 	})
 
 	it("can put a table's order back, and a takeaway's it cannot (it has no table to read again)", () => {

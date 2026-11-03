@@ -1986,6 +1986,7 @@
 			:removed="leaveTable.removed.value"
 			:can-put-back="leaveTable.canPutBack.value"
 			:busy="leaveTable.busy.value"
+			:emptied="leaveTable.emptied.value"
 			@send="leaveTable.sendCancellation"
 			@put-back="leaveTable.putTheOrderBack"
 			@stay="leaveTable.stay"
@@ -3868,10 +3869,14 @@ async function sendCancellationToKitchen() {
 	try {
 		const invoiceData = cartStore.buildOfferEvaluationPayload(shiftStore.currentProfile, { keepUndecided: true });
 		invoiceData.items = linesOfTheSavedOrder(invoiceData.items);
-		// Nothing would remain: the kitchen cannot be told by an order with no line
+		// Nothing would remain: an order with no line cannot be saved, so the whole order is cancelled instead. Deleting its draft tells the kitchen's printers on its own, and frees the table (Daniel, 03.11)
 		if (invoiceData.items.length === 0) {
-			showError(__("Failed to send order to kitchen"));
-			return false;
+			await call("pos_next.api.restaurant.cancel_table_order", { invoice: cartStore.currentDraftId });
+			showSuccess(__("Order cancelled"));
+			cartStore.markChangesSent();
+			cartStore.clearCart();
+			restaurantStore.fetchFromNetwork();
+			return true;
 		}
 		invoiceData.is_pos = 1;
 		invoiceData.docstatus = 0;
