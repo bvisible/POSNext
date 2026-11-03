@@ -136,6 +136,18 @@
 		this.page.add_inner_button(__("Stores round"), function () {
 			self.stores_round();
 		});
+		// The list on screen follows what is written to it from elsewhere (Nora, a phone): the document's own update event, which
+		// every save of the list sends to whoever watches it (see follow). One refresh for a burst of lines.
+		if (frappe.realtime && frappe.realtime.on) {
+			frappe.realtime.on("doc_update", function (data) {
+				if (!data || data.doctype !== "Restaurant Shopping List" || data.name !== self.list) return;
+				if (!self.page.wrapper.is(":visible")) return;
+				clearTimeout(self.follow_timer);
+				self.follow_timer = setTimeout(function () {
+					self.refresh();
+				}, 400);
+			});
+		}
 		this.$root = $('<div class="nps"></div>').appendTo(this.page.main);
 		this.$root.on("change", ".nps-list", function () {
 			self.list = $(this).val() || null;
@@ -189,9 +201,18 @@
 		);
 	};
 
+	// Watch the list on screen (and stop watching the one left): its saves then reach the page, see make.
+	NeorestoShopping.prototype.follow = function () {
+		if (!(frappe.realtime && frappe.realtime.doc_subscribe) || this.followed === this.list) return;
+		if (this.followed) frappe.realtime.doc_unsubscribe("Restaurant Shopping List", this.followed);
+		this.followed = this.list;
+		if (this.list) frappe.realtime.doc_subscribe("Restaurant Shopping List", this.list);
+	};
+
 	NeorestoShopping.prototype.refresh = function () {
 		var self = this;
 		this.tell_nora();
+		this.follow();
 		if (!this.list) {
 			this.view = null;
 			return $.Deferred()
