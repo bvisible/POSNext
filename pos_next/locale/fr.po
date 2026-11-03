@@ -22152,3 +22152,12 @@ msgstr "1 ligne non envoyée sera aussi perdue."
 #, python-brace-format
 msgid "{0} lines not sent will also be lost."
 msgstr "{0} lignes non envoyées seront aussi perdues."
+
+#: POS/src/components/restaurant/LeaveTableDialog.vue:130
+msgid "1 line not sent will be lost if you send the cancellation."
+msgstr "Si vous envoyez l'annulation, 1 ligne qui n'a pas encore été envoyée sera perdue."
+
+#: POS/src/components/restaurant/LeaveTableDialog.vue:131
+#, python-brace-format
+msgid "{0} lines not sent will be lost if you send the cancellation."
+msgstr "Si vous envoyez l'annulation, {0} lignes qui n'ont pas encore été envoyées seront perdues."
