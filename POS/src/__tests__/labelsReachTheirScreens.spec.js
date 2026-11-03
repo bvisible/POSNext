@@ -228,7 +228,8 @@ describe("the plan view", () => {
 			.get('[data-test="screen-switch"], [aria-label="Écran"]')
 			.findAll("button")
 			.map((button) => button.text())
-		expect(screens).toEqual(["Préparation", "Runner", "Plan de salle"])
+		// « Runner » is « Passe » in French since the catalogue says the pass (03.11, #2163): the switch's second screen
+		expect(screens).toEqual(["Préparation", "Passe", "Plan de salle"])
 	})
 
 	it("reads Plan de salle on the toggle of the reservation form too, and List stays List", async () => {

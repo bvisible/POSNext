@@ -1,7 +1,7 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The kitchen test of 01.11 afternoon (NeoResto lot 1): the menu of a dish is much bigger, with a cross to
  * //// close it and a way back for a dish being prepared (« Annuler le démarrage »), the selected dish is read from across the pass, and a ticket with no dish left
- * //// to cook stays on the screen with a quiet pill instead of a button (« Chez le runner », « La suite à venir »). The French comes from the real catalogue.
+ * //// to cook stays on the screen with a quiet pill instead of a button (« Au passe », « La suite à venir »). The French comes from the real catalogue.
  * @vitest-environment jsdom
  */
 import { readFileSync } from "node:fs"
@@ -196,13 +196,13 @@ describe("a way back for a dish being prepared (Daniel, 01.11: « si on veut ann
 })
 
 describe("a ticket the kitchen view keeps with no dish left to cook (Daniel, 01.11: it must not disappear)", () => {
-	it("has no button and says « Chez le runner » when all its dishes are with the runner", () => {
+	it("has no button and says « Au passe » when all its dishes are with the runner", () => {
 		const wrapper = show(
 			ticket(["Delivered", "Delivered"], { view_state: "at-the-pass" }),
 		)
 
 		expect(wrapper.find('[data-test="ticket-main"]').exists()).toBe(false)
-		expect(wrapper.get('[data-test="ticket-no-dish"]').text()).toBe("Chez le runner")
+		expect(wrapper.get('[data-test="ticket-no-dish"]').text()).toBe("Au passe")
 	})
 
 	it("says « À remettre » on a takeaway, where nothing goes to a runner", () => {
