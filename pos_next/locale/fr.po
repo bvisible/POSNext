@@ -22143,3 +22143,12 @@ msgstr "Code incorrect, ou code expiré. Veuillez le vérifier ou en demander un
 #: pos_next/public/pos/assets/GuestAccountSheet-BxLd-v-z.js:1
 msgid "Your payment is not confirmed yet. Please reload this page in a moment."
 msgstr "Votre paiement n'est pas encore confirmé. Veuillez recharger cette page dans un instant."
+
+#: POS/src/components/restaurant/LeaveTableDialog.vue:129
+msgid "1 line not sent will also be lost."
+msgstr "1 ligne non envoyée sera aussi perdue."
+
+#: POS/src/components/restaurant/LeaveTableDialog.vue:129
+#, python-brace-format
+msgid "{0} lines not sent will also be lost."
+msgstr "{0} lignes non envoyées seront aussi perdues."
