@@ -51,6 +51,10 @@
 		".nps-pick-row .p-tick{grid-area:tick;width:24px;height:24px}.nps-pick-row .p-label{grid-area:label}" +
 		".nps-pick-row .p-pack{grid-area:pack}.nps-pick-row .p-step{grid-area:step}.nps-pick-row select{min-height:44px}" +
 		"}" +
+		"@media (max-width:560px){" +
+		'.nps-line{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"label price" "unit unit" "step more" "tick tick"}' +
+		".nps-line .c-more{justify-self:end}.nps-line .nps-more{min-width:130px}" +
+		"}" +
 		".nps-pick-search{width:100%;min-height:40px;border:1px solid #DCD4C7;border-radius:10px;padding:0 12px;margin-bottom:10px}" +
 		".nps-pick-bar{display:flex;gap:10px;align-items:center;margin-bottom:10px}" +
 		".nps-pick-bar select{min-height:40px;max-width:280px;border:1px solid #DCD4C7;border-radius:10px;background:#fff;padding:0 10px}" +
