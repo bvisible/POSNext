@@ -155,6 +155,29 @@
 							{{ __("The ticket holds the whole meal and nothing is followed on a screen or at the tables.") }}
 						</p>
 					</div>
+					<!-- //// Neoffice — how big the writing of a station's kitchen tickets is (Daniel, 03.11.2026): a setting of the station, Medium by default. Needs a printer. -->
+					<div :class="[SUB_CLASS, stationPrinter(station) ? '' : GREYED_CLASS]" data-setting="station_text_size">
+						<div class="mb-[5px] text-[12.5px] text-pos-muted">{{ __("Writing of the tickets") }}</div>
+						<div class="flex gap-1.5" role="radiogroup" :aria-label="__('Writing of the tickets')">
+							<button
+								v-for="size in textSizes"
+								:key="size.value"
+								type="button"
+								role="radio"
+								class="h-9 min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap rounded-[10px] bg-white px-1.5 text-[13px]"
+								:class="
+									stationTextSize(station) === size.value
+										? 'border-2 border-pos-ink font-bold text-pos-ink'
+										: 'border border-pos-line text-pos-muted'
+								"
+								:aria-checked="stationTextSize(station) === size.value ? 'true' : 'false'"
+								:disabled="!config.can_configure || !stationPrinter(station)"
+								@click="changeTextSize(station.station, size.value)"
+							>
+								{{ size.label }}
+							</button>
+						</div>
+					</div>
 				</div>
 			</template>
 		</template>
@@ -202,6 +225,13 @@ const drawerRules = [
 	{ value: "Never", label: __("Never") },
 ]
 
+// The values are the cloudprnt sizes (cloudprnt.kitchen_ticket.TEXT_SIZES); the labels are what the manager reads.
+const textSizes = [
+	{ value: "Large", label: __("Large", null, "Ticket text size") },
+	{ value: "Medium", label: __("Medium", null, "Ticket text size") },
+	{ value: "Small", label: __("Small", null, "Ticket text size") },
+]
+
 function textOf(key) {
 	const definition = props.definitions[key] || {}
 	return { label: definition.label || "", help: definition.help || "" }
@@ -238,6 +268,16 @@ function stationPaperOnly(station) {
 
 function changePaperOnly(station, on) {
 	change({ paper_only: { ...(draft.value.paper_only || {}), [station]: on ? 1 : 0 } })
+}
+
+// The size of a station's tickets as this screen says, else as it is today
+function stationTextSize(station) {
+	const chosen = draft.value.text_size || {}
+	return chosen[station.station] || station.text_size || "Medium"
+}
+
+function changeTextSize(station, size) {
+	change({ text_size: { ...(draft.value.text_size || {}), [station]: size } })
 }
 
 async function testPrint() {

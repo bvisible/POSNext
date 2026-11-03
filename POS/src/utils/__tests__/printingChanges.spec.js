@@ -11,8 +11,9 @@ const READ = {
 	open_drawer: "Cash payments",
 	stationPrinters: { Kitchen: "P1", Bar: null },
 	stationPaperOnly: { Kitchen: 0, Bar: 0 },
+	stationTextSize: { Kitchen: "Medium", Bar: "Medium" },
 }
-const SAME = { receipt_printer: "P1", auto_print: 0, open_drawer: "Cash payments", stations: {}, paper_only: {} }
+const SAME = { receipt_printer: "P1", auto_print: 0, open_drawer: "Cash payments", stations: {}, paper_only: {}, text_size: {} }
 
 describe("what the printing settings save", () => {
 	it("saves nothing when nothing differs", () => {
@@ -44,5 +45,23 @@ describe("what the printing settings save", () => {
 
 		expect(changes.stations).toEqual({ Bar: "P1" })
 		expect(changes.paper_only).toEqual({ Bar: 1 })
+	})
+
+	it("saves the size of the writing of a station's tickets", () => {
+		const changes = printingChangesOf(READ, { ...SAME, text_size: { Kitchen: "Small" } })
+
+		expect(changes.text_size).toEqual({ Kitchen: "Small" })
+		expect(changes.stations).toBeUndefined()
+	})
+
+	it("does not save a size left as it was", () => {
+		expect(printingChangesOf(READ, { ...SAME, text_size: { Kitchen: "Medium" } })).toBeNull()
+	})
+
+	it("reads a station that said no size as medium", () => {
+		expect(printingChangesOf({ ...READ, stationTextSize: {} }, { ...SAME, text_size: { Kitchen: "Medium" } })).toBeNull()
+		expect(printingChangesOf({ ...READ, stationTextSize: {} }, { ...SAME, text_size: { Kitchen: "Large" } }).text_size).toEqual({
+			Kitchen: "Large",
+		})
 	})
 })

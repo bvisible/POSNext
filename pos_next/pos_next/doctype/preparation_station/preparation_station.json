@@ -19,6 +19,7 @@
   "workflow",
   "use_runner",
   "paper_only",
+  "ticket_text_size",
   "section_break_floor_plan",
   "show_on_floor_plan",
   "area",
@@ -94,6 +95,14 @@
    "fieldname": "paper_only",
    "fieldtype": "Check",
    "label": "Paper only"
+  },
+  {
+   "default": "Medium",
+   "description": "How big the writing of the kitchen tickets of this station is. Medium keeps the height of a dish and halves its width.",
+   "fieldname": "ticket_text_size",
+   "fieldtype": "Select",
+   "label": "Ticket Text Size",
+   "options": "Large\nMedium\nSmall"
   },
   {
    "fieldname": "section_break_floor_plan",
