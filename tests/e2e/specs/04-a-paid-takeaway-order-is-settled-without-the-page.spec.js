@@ -43,7 +43,7 @@ async function waitUntil(read, done, timeout) {
 
 test.describe("a paid web takeaway order is settled by the server", () => {
 	// Nothing here is a page: one project is enough
-	test.beforeEach((_fixtures, info) => {
+	test.beforeEach(({ baseURL }, info) => {
 		test.skip(info.project.name !== "phone", "server side only, no page");
 	});
 
