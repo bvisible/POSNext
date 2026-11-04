@@ -18,7 +18,7 @@ function ensure_style() {
 	.rcl-qty { font-size: 13px; color: var(--text-muted); }
 	.rcl-convert { margin-top: 6px; font-size: 12.5px; line-height: 1.4; color: var(--text-on-orange, #a16207); }
 	.rcl-convert .form-control { display: inline-block; width: 90px; height: 28px; margin: 6px 6px 0 0; }
-	.rcl-state { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; }
+	.rcl-state { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; min-height: 88px; }
 	.rcl .alert { margin: 0; }
 	.rcl .link-field { margin: 0; }
 	`;
@@ -210,10 +210,16 @@ function link_ingredients(frm) {
 				</div>
 				${
 					without.length
-						? `<div class="alert alert-info">${__(
-								"Without quantity, kept in the recipe without an article: {0}.",
-								[esc(without.join(", "))]
-						  )}</div>`
+						? `<div class="alert alert-info">${
+								without.length === 1
+									? __(
+											"One ingredient without quantity stays in the recipe, without an article."
+									  )
+									: __(
+											"{0} ingredients without quantity stay in the recipe, without an article.",
+											[without.length]
+									  )
+						  }</div>`
 						: ""
 				}
 			</div>`);
@@ -225,7 +231,7 @@ function link_ingredients(frm) {
 						options: "Item",
 						fieldname: `article_${i}`,
 						placeholder: __("Choose the article"),
-						get_query: () => ({ filters: { disabled: 0 } }),
+						get_query: () => ({ filters: { disabled: 0, is_purchase_item: 1 } }),
 						change: () => refresh_states(),
 					},
 					parent: $body.find(`.rcl-article[data-i="${i}"]`),

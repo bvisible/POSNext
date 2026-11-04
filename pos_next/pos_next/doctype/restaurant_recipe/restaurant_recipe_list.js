@@ -127,7 +127,7 @@ function open_library(listview) {
 					: "";
 				$body.html(`<div class="rcp">
 					<div class="rcp-eyebrow">${__("Free library · {0} fiches", [fiches.length])}</div>
-					<div class="alert alert-warning">${__("These are drafts.")} ${esc(library.note)} ${__(
+					<div class="alert alert-warning">${esc(library.note)} ${__(
 					"They arrive in your recipes as « To review », with their source and their licence."
 				)}</div>
 					<div class="rcp-filters">
@@ -143,10 +143,16 @@ function open_library(listview) {
 					}</div>
 					<div class="alert alert-info">${
 						picked
-							? `<b>${__("{0} recipes chosen out of {1} available.", [
-									picked,
-									available,
-							  ])}</b> `
+							? `<b>${
+									picked === 1
+										? __("One recipe chosen out of {0} available.", [
+												available,
+										  ])
+										: __("{0} recipes chosen out of {1} available.", [
+												picked,
+												available,
+										  ])
+							  }</b> `
 							: ""
 					}${__(
 					"Quantities in cups, ounces and quarts stay in the unit of the source, marked « To convert »: Nora does not convert them for you."
@@ -157,7 +163,11 @@ function open_library(listview) {
 					${licences}
 				</div>`);
 				dialog.set_primary_action(
-					picked ? __("Add {0} recipes", [picked]) : __("Add to my recipes"),
+					picked === 1
+						? __("Add one recipe")
+						: picked
+						? __("Add {0} recipes", [picked])
+						: __("Add to my recipes"),
 					submit
 				);
 			};
