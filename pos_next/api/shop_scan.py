@@ -80,3 +80,12 @@ def validate_shop_cart(code, pos_profile, missing=None, pos_opening_shift=None):
 
 	require_till_user(pos_profile)
 	return control.validate(code, pos_profile, missing, pos_opening_shift)
+
+
+@frappe.whitelist()
+def get_shop_poster(pos_profile):
+	"""The address of the shop's QR code and the shop's name, for the poster the till prints (lot 5)."""
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user(pos_profile)
+	return session.poster_of(pos_profile)

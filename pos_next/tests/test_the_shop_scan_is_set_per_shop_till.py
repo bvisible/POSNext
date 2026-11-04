@@ -3,8 +3,9 @@
 
 A till's POS Settings carry the switch, the lifetime of an abandoned cart and the key of the shop's QR code; a guest session
 can be a shop one, and keeps the code and the state of its cart; an article, or its group, says whether a seller checks it at
-the counter. The till's settings screen does not show the switch until the phone's page ships: a setting the till shows must
-work. The suite reads the site's schema and writes nothing it keeps.
+the counter. The till's settings screen shows the switch and the settings of the scan on a shop till only (lot 5: the phone's
+page, the takeover and the payment work); the key of the QR code is the system's. The suite reads the site's schema and writes
+nothing it keeps.
 """
 
 import frappe
@@ -12,7 +13,12 @@ from frappe.tests.utils import FrappeTestCase
 
 from pos_next.till_settings import registry
 
-SHOP_SCAN_SETTINGS = ("enable_shop_scan", "shop_cart_lifetime_hours", "shop_scan_key")
+SHOP_SCAN_SETTINGS = (
+	"enable_shop_scan",
+	"shop_cart_lifetime_hours",
+	"shop_scan_phone_payment",
+	"shop_scan_validation_on_phone",
+)
 
 
 class TestTheShopScanIsSetPerShopTill(FrappeTestCase):
@@ -34,16 +40,26 @@ class TestTheShopScanIsSetPerShopTill(FrappeTestCase):
 		session = frappe.get_meta("Guest Order Token")
 		self.assertEqual(session.get_field("cart_code").fieldtype, "Data")
 		self.assertEqual(
-			session.get_field("cart_status").options.split("\n"), ["", "Scanning", "At the counter"]
+			session.get_field("cart_status").options.split("\n"),
+			["", "Scanning", "At the counter", "Paid", "Checked"],
 		)
 		# Nothing for it on the Sales Invoice, whose table is at MariaDB's row size on a fleet site
 		for fieldname in ("shop_cart_code", "shop_cart_status", "cart_code", "cart_status"):
 			with self.subTest(fieldname=fieldname):
 				self.assertFalse(frappe.get_meta("Sales Invoice").get_field(fieldname))
 
-	def test_the_till_does_not_show_the_switch_before_the_phones_page_ships(self):
+	def test_the_till_shows_the_settings_of_the_scan_on_a_shop_till_only(self):
 		listed = {setting.key for setting in registry.document_settings(registry.POS_SETTINGS)}
+		for key in (*SHOP_SCAN_SETTINGS, "shop_scan_poster"):
+			with self.subTest(key=key):
+				setting = registry.get(key)
+				self.assertEqual(setting.tab, "shop_scan")
+				self.assertTrue(registry.shown_on(setting, False))
+				self.assertFalse(registry.shown_on(setting, True))
 		for key in SHOP_SCAN_SETTINGS:
 			with self.subTest(key=key):
-				self.assertIn(key, registry.NOT_LISTED[registry.POS_SETTINGS])
-				self.assertNotIn(key, listed)
+				self.assertIn(key, listed)
+				self.assertNotIn(key, registry.NOT_LISTED[registry.POS_SETTINGS])
+		# The key of the shop's QR code is the system's: nobody types it
+		self.assertIn("shop_scan_key", registry.NOT_LISTED[registry.POS_SETTINGS])
+		self.assertNotIn("shop_scan_key", listed)

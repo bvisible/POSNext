@@ -44,6 +44,17 @@ def shop_key(pos_profile: str) -> str:
 	return key
 
 
+def poster_of(pos_profile: str) -> dict:
+	"""What the poster of the shop's QR code carries: the address the code opens, and the shop's name (lot 5)."""
+	from frappe.utils import get_url
+
+	company = frappe.db.get_value("POS Profile", pos_profile, "company")
+	return {
+		"url": f"{get_url()}/pos/shop/{shop_key(pos_profile)}",
+		"shop_name": frappe.db.get_value("Company", company, "company_name") or company,
+	}
+
+
 def is_shop_till(settings) -> bool:
 	"""Whether a till's POS Settings (as a dict) let customers scan: switched on, and no restaurant till."""
 	return bool(

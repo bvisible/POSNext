@@ -188,6 +188,9 @@ TABS = (
 	Tab("stock", _lt("Stock"), SECTION_TILL),
 	Tab("printing", _lt("Printing"), SECTION_TILL),
 	Tab("closing", _lt("Closing"), SECTION_TILL),
+	# //// Neoffice — scanning in the shop (pos_next.shop_scan, lot 5, board 9 of the canvas): a shop till only, its
+	# //// settings all say so and the tab goes with them
+	Tab("shop_scan", _lt("Scanning in the shop"), SECTION_TILL),
 	# The office's tabs: set-up and money, never at the till
 	Tab("payments", _lt("Payments"), SECTION_DESK),
 	Tab("loyalty", _lt("Loyalty"), SECTION_DESK),
@@ -251,6 +254,9 @@ _GROUPS = (
 	Group("counting", "closing", _lt("Counting"), 1),
 	Group("cash_movements", "closing", _lt("Cash movements"), 2),
 	Group("eod_report", "closing", _lt("End-of-day report"), 3),
+	# //// Neoffice — scanning in the shop (lot 5): the switch, the shop's QR code and the abandoned carts; paying on the phone
+	Group("shop_scan", "shop_scan", _lt("Customers scan their articles"), 1),
+	Group("shop_scan_payment", "shop_scan", _lt("Paying on the phone"), 2),
 	# The office only
 	Group("till_identity", "general", _lt("This till"), 1),
 	Group("till_users", "general", _lt("Users"), 2),
@@ -1807,6 +1813,77 @@ SETTINGS = (
 		doctype=POS_PROFILE,
 		desk_only=True,
 	),
+	# ---------------------------------------------------------------- Scanning in the shop (lot 5)
+	# //// Neoffice — the settings of scanning in the shop, set at the till now that the phone's page, the till's takeover and
+	# //// the payment on the phone work (they were left to the desk until then, NOT_LISTED). A shop till only.
+	Setting(
+		"enable_shop_scan",
+		"shop_scan",
+		_lt("Let customers scan their articles"),
+		_lt(
+			"Customers scan the articles of this till with their phone, from the shop's QR code, and the till"
+			" takes their cart over by its code. Off by default."
+		),
+		"check",
+		doctype=POS_SETTINGS,
+		till=SHOP,
+	),
+	Setting(
+		"shop_scan_poster",
+		"shop_scan",
+		_lt("The shop's QR code"),
+		_lt("One fixed code, to show at the entrance and in the aisles: print its poster."),
+		"special",
+		store=DEVICE,
+		till=SHOP,
+		depends_on=(on("enable_shop_scan"),),
+		kind=ACTION,
+	),
+	Setting(
+		"shop_cart_lifetime_hours",
+		"shop_scan",
+		_lt("An abandoned cart is deleted after (hours)"),
+		_lt(
+			"A cart neither paid nor taken over is deleted after this many hours. A paid cart is never"
+			" deleted: it waits for its check."
+		),
+		"int",
+		doctype=POS_SETTINGS,
+		till=SHOP,
+		depends_on=(on("enable_shop_scan"),),
+		min=1,
+		max=72,
+	),
+	Setting(
+		"shop_scan_phone_payment",
+		"shop_scan_payment",
+		_lt("Pay on the phone"),
+		_lt(
+			"The customer may pay the cart on the phone, by the payment page of the restaurant's guests. A paid"
+			" cart is always checked at the reception before the customer leaves."
+		),
+		"check",
+		doctype=POS_SETTINGS,
+		till=SHOP,
+		depends_on=(on("enable_shop_scan"),),
+	),
+	Setting(
+		"shop_scan_validation_on_phone",
+		"shop_scan_payment",
+		_lt("An article to check, on the phone"),
+		_lt(
+			"An article a seller checks (ticked on the item or on its item group): the cart is paid at the till,"
+			" or it is paid on the phone and the seller checks the article at the counter."
+		),
+		"select",
+		doctype=POS_SETTINGS,
+		till=SHOP,
+		depends_on=(on("enable_shop_scan"), on("shop_scan_phone_payment")),
+		options=(
+			("Blocks the payment", _lt("Blocks the payment, paid at the till")),
+			("Paid, checked at the counter", _lt("Paid, the seller checks it at the counter")),
+		),
+	),
 	Setting(
 		"allow_negative_stock",
 		"negative_stock",
@@ -1828,15 +1905,11 @@ _BY_KEY = {setting.key: setting for setting in SETTINGS}
 _INERT = "read by no code of the till: an option of POS Awesome that POSNext copied and never wired (Task 14)"
 _OLD_TILL = "an option of ERPNext's own till page, which this till does not use"
 _RESTAURANT_FORM = "set on the restaurant's own form, not a setting of a till"
-_SHOP_SCAN_TO_COME = (
-	"scanning in the shop (pos_next.shop_scan): set on the desk until the phone's page ships, then listed (a setting the till"
-	" shows must work)"
-)
+# //// Neoffice — the key of the shop's QR code is set by the system the first time it is asked for (scanning in the shop)
+_SET_BY_THE_SYSTEM = "set by the system the first time the shop's QR code is asked for: nobody types it"
 NOT_LISTED = {
 	POS_SETTINGS: {
-		"enable_shop_scan": _SHOP_SCAN_TO_COME,
-		"shop_cart_lifetime_hours": _SHOP_SCAN_TO_COME,
-		"shop_scan_key": _SHOP_SCAN_TO_COME,
+		"shop_scan_key": _SET_BY_THE_SYSTEM,
 		"allow_return": _INERT,
 		"default_card_view": _INERT,
 		"show_customer_balance": _INERT,

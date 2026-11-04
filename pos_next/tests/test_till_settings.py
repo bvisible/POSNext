@@ -57,6 +57,8 @@ SAVEPOINT = "till_settings_test"
 
 SHOP_TABS = ["general", "sale_screen", "prices", "sales", "stock", "printing", "closing"]
 RESTAURANT_TABS = ["restaurant", "hours", "online", "reservations"]
+# //// Neoffice — the tab of scanning in the shop (lot 5, board 9 of the canvas): a shop till's only, its settings all say so
+SHOP_SCAN_TAB = ["shop_scan"]
 
 # The family of doctype field types each widget of the list draws
 WIDGET_FIELDTYPES = {
@@ -131,7 +133,7 @@ class TestTheList(FrappeTestCase):
 
 	def test_the_tabs_of_the_till_are_the_eleven_of_the_mockup(self):
 		till = [tab.key for tab in registry.TABS if tab.section != registry.SECTION_DESK]
-		self.assertEqual(till, RESTAURANT_TABS + SHOP_TABS)
+		self.assertEqual(till, RESTAURANT_TABS + SHOP_TABS + SHOP_SCAN_TAB)
 		# The office's own settings never sit in a tab of the restaurant
 		for setting in registry.SETTINGS:
 			if setting.desk_only:
@@ -445,7 +447,7 @@ class TestWhoOpensTheSettings(TillSettingsCase):
 		self.as_user(TILL_MANAGER)
 		answer = get_till_settings(self.shop_till)
 
-		self.assertEqual(till_tabs(answer), SHOP_TABS)
+		self.assertEqual(till_tabs(answer), SHOP_TABS + SHOP_SCAN_TAB)
 		self.assertEqual(answer["can"], {"till": True, "restaurant": False})
 		self.assertFalse(answer["restaurant_till"])
 		settings = by_key(answer)
@@ -470,7 +472,7 @@ class TestWhoOpensTheSettings(TillSettingsCase):
 		with patch.dict(frappe.conf, {"neoresto_active": 0}):
 			answer = get_till_settings(self.restaurant_till)
 
-		self.assertEqual(till_tabs(answer), SHOP_TABS)
+		self.assertEqual(till_tabs(answer), SHOP_TABS + SHOP_SCAN_TAB)
 
 	def test_nothing_set_at_the_office_reaches_the_till(self):
 		self.as_user(TILL_MANAGER)

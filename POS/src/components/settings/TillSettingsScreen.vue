@@ -293,6 +293,32 @@
 												{{ block.setting.help }}
 											</p>
 
+											<!-- //// Neoffice — the poster of the shop's QR code (scanning in the shop, lot 5): printed from here, the code is never typed -->
+											<div
+												v-else-if="block.setting.key === 'shop_scan_poster'"
+												:class="greyed(block.setting) ? 'opacity-[0.42]' : ''"
+												data-setting="shop_scan_poster"
+											>
+												<div class="mb-[5px] flex flex-wrap items-center gap-1.5 text-[12.5px] text-pos-muted">
+													<span>{{ block.setting.label }}</span>
+													<HelpBulb v-model:open="groupHelp.shop_scan_poster" :text="block.setting.help" />
+												</div>
+												<button
+													type="button"
+													class="h-9 rounded-[10px] border border-pos-line bg-white px-3 text-[13px] font-semibold text-pos-ink"
+													:disabled="greyed(block.setting) || printingPoster"
+													@click="printThePoster"
+												>
+													{{ __("Print the poster") }}
+												</button>
+												<p
+													v-if="groupHelp.shop_scan_poster"
+													class="mb-1 mt-1.5 rounded-lg border-l-[3px] border-blue-400 bg-pos-action-soft px-2.5 py-2 text-[12.5px] leading-[1.45] text-pos-ink"
+												>
+													{{ block.setting.help }}
+												</p>
+											</div>
+
 											<!-- The QZ Tray printer of this computer -->
 											<div
 												v-else-if="block.setting.key === 'qz_printer'"
@@ -434,10 +460,27 @@ import { formatTime } from "@/utils/currency"
 import { logger } from "@/utils/logger"
 import { offlineWorker } from "@/utils/offline/workerClient"
 import { savePrinterName } from "@/utils/qzTray"
+//// Neoffice — the poster of the shop's QR code (scanning in the shop, lot 5)
+import { printShopPoster } from "@/utils/shopPoster"
 
 const log = logger.create("POSSettings")
 const { detectSettingsChanges, emit: emitEvent } = usePOSEvents()
 const { showSuccess, showError } = useToast()
+
+//// Neoffice — the poster of the shop's QR code (scanning in the shop, lot 5): the address and the shop's name come from
+//// the server, which sets the key of the code the first time it is asked for
+const printingPoster = ref(false)
+async function printThePoster() {
+	printingPoster.value = true
+	try {
+		const poster = await call("pos_next.api.shop_scan.get_shop_poster", { pos_profile: props.posProfile })
+		await printShopPoster({ shopName: poster.shop_name, url: poster.url })
+	} catch (error) {
+		showError(error?.message || __("The poster could not be printed."))
+	} finally {
+		printingPoster.value = false
+	}
+}
 
 const props = defineProps({
 	modelValue: Boolean,
