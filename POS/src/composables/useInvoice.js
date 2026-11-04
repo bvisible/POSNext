@@ -58,6 +58,10 @@ export function useInvoice() {
 	//// restaurant_table to submit_invoice via useInvoice").
 	//// pass restaurant_table to submit_invoice via useInvoice (was missing,… — 45435e4
 	const restaurantTable = ref(null);
+	//// Neoffice — the server draft a customer's phone wrote its cart in (scanning in the shop, composables/useShopCart): the
+	//// sale is that draft, saved and submitted by its name. Without it the till booked a second invoice and left the phone's
+	//// draft behind. Cleared with the ticket, as the table is.
+	const shopCartInvoice = ref(null);
 	const salesTeam = ref([]); // Sales team for Sales Invoice
 	const posProfile = ref(null);
 	const posOpeningShift = ref(null); // POS Opening Shift name
@@ -1432,6 +1436,11 @@ export function useInvoice() {
 					invoiceData.receivable_account = receivableAccount;
 				}
 
+				//// Neoffice — a phone's cart is sold as the draft it already is (see shopCartInvoice)
+				if (shopCartInvoice.value && targetDoctype === "Sales Invoice") {
+					invoiceData.name = shopCartInvoice.value;
+				}
+
 				//// Neoffice — a POS "Sales Order" submitted without a delivery date failed ERPNext's
 				//// mandatory-date validation in front of the customer. Both dates now default to today
 				//// (b6dd7f10, 2026-05-28 "reapply bug A/B/E fixes").
@@ -1629,6 +1638,8 @@ export function useInvoice() {
 	function resetInvoice() {
 		invoiceItems.value = [];
 		payments.value = [];
+		//// Neoffice — the phone's draft dies with the ticket (scanning in the shop)
+		shopCartInvoice.value = null;
 		additionalDiscount.value = 0;
 		//// Neoffice — the rule discount and the per-ticket bypass must die with the ticket:
 		//// leaving them set would carry one customer's transaction discount into the next sale
@@ -1666,6 +1677,8 @@ export function useInvoice() {
 
 		invoiceItems.value = [];
 		payments.value = [];
+		//// Neoffice — the phone's draft dies with the ticket (scanning in the shop)
+		shopCartInvoice.value = null;
 		additionalDiscount.value = 0;
 		//// Neoffice — same reset on the clear-cart path, for the same reason (44ea4e9a).
 		ruleHeaderDiscount.value = 0;
@@ -1800,6 +1813,8 @@ export function useInvoice() {
 		//// Neoffice — exposed so posCart can keep the selected table in sync with the invoice
 		//// being built (45435e47, 2026-03-24).
 		restaurantTable,
+		//// Neoffice — the phone's draft the sale submits (scanning in the shop), set through posCart
+		shopCartInvoice,
 		salesTeam,
 		posProfile,
 		posOpeningShift,

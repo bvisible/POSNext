@@ -119,7 +119,8 @@ describe("a phone's cart at the till", () => {
 			},
 		)
 		expect(stores.cart.addItem).toHaveBeenCalledTimes(1)
-		expect(stores.cart.currentDraftId).toBe("FA-2026-00001")
+		expect(stores.cart.shopCartInvoice).toBe("FA-2026-00001")
+		expect(stores.cart.currentDraftId).toBeUndefined()
 		expect(stores.cart.setCustomer).toHaveBeenCalledWith({
 			name: "CUST-1",
 			customer_name: "A customer",

@@ -177,6 +177,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		//// ticket was paid (45435e47, 2026-03-24).
 		//// pass restaurant_table to submit_invoice via useInvoice (was missing,… — 45435e4
 		restaurantTable: baseRestaurantTable,
+		//// Neoffice — the server draft of a phone's cart the sale submits (scanning in the shop, composables/useShopCart)
+		shopCartInvoice,
 		//// Neoffice — the takeaway order and its number are useInvoice's refs, exposed below as the store's own: the
 		//// lines are taxed and the sale paid there, at the takeaway rates and with the order's flag and number (NeoResto
 		//// lot 1, task 11). The cart's VAT per account and the payment's takeaway fields come from there too.
@@ -3135,6 +3137,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		appliedCoupon,
 		selectionMode,
 		currentDraftId,
+		//// Neoffice — scanning in the shop: the phone's draft the sale submits (useInvoice)
+		shopCartInvoice,
 		offerProcessingState, // Offer processing state for UI feedback
 
 		// Computed

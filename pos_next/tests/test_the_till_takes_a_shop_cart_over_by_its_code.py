@@ -7,11 +7,14 @@ another till is not found at that till; a portal account, a visitor and a desk a
 over while the customer was still scanning takes no more scan.
 """
 
+import json
+from unittest.mock import patch
+
 import frappe
 
-from pos_next.api import shop_scan
+from pos_next.api import invoices, shop_scan
 from pos_next.tests.shop_scan_case import ShopCase
-from pos_next.tests.test_till_writes_need_the_till import OTHER_TILL, _user
+from pos_next.tests.test_till_writes_need_the_till import OTHER_TILL, _sale, _user
 
 PORTAL = "shop-scan-portal@yopmail.com"
 DESK = "shop-scan-desk@yopmail.com"
@@ -74,6 +77,39 @@ class TestTheTillTakesAShopCartOverByItsCode(ShopCase):
 
 		frappe.db.set_value("POS Settings", self.settings, "enable_shop_scan", 0)
 		self.assertEqual(_get_pos_settings(profile)["enable_shop_scan"], 0)
+
+	def test_the_tills_sale_is_the_phones_draft(self):
+		# The till sells the cart under the draft's name (useInvoice.shopCartInvoice): the phone's draft, written by the
+		# system, is what its cashier saves and submits, and no second invoice is booked
+		_token, phone = self.a_finished_cart()
+		cart = self.open_at_the_till(phone["code"])
+		lines = [
+			{key: line[key] for key in ("item_code", "qty", "rate", "price_list_rate", "uom")}
+			for line in cart["items"]
+		]
+		sale = _sale(
+			self.fx,
+			name=cart["invoice"],
+			items=lines,
+			payments=[{"mode_of_payment": self.fx.mode, "amount": cart["grand_total"]}],
+		)
+		invoices_before = frappe.db.count("Sales Invoice", {"pos_profile": self.fx.profile})
+		# update_invoice sets it for the rest of the request; its commit would end the test's transaction
+		self.addCleanup(
+			setattr, frappe.flags, "ignore_account_permission", frappe.flags.ignore_account_permission
+		)
+		with patch.object(frappe.local.db, "commit"):
+			draft = self.as_cashier(invoices.update_invoice, json.dumps(sale))
+			done = self.as_cashier(
+				invoices.submit_invoice, invoice=json.dumps({**sale, "name": draft["name"]}), data="{}"
+			)
+
+		self.assertEqual((draft["name"], done["name"]), (cart["invoice"], cart["invoice"]))
+		self.assertEqual(
+			frappe.db.get_value("Sales Invoice", cart["invoice"], ["docstatus", "grand_total"]),
+			(1, phone["grand_total"]),
+		)
+		self.assertEqual(frappe.db.count("Sales Invoice", {"pos_profile": self.fx.profile}), invoices_before)
 
 	def test_a_code_is_read_with_or_without_its_dash(self):
 		_token, phone = self.a_finished_cart()

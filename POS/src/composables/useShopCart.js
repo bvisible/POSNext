@@ -2,7 +2,8 @@
 //// customer's phone by the code the phone shows (pos_next.api.shop_scan.open_shop_cart), scanned with the till's scanner or
 //// typed in its search. The cart is put in the till's own as a table's order is (useOpenTable): each line at its list
 //// price, the till's offers then work it out (the same engine the phone was priced by), and the till's payment submits the
-//// phone's draft. If the amount the till comes to is not the one the phone showed (an offer ended since), the seller is told.
+//// phone's draft (useInvoice.shopCartInvoice), not a second invoice. If the amount the till comes to is not the one the
+//// phone showed (an offer ended since), the seller is told.
 import { usePOSCartStore } from "@/stores/posCart"
 import { usePOSSettingsStore } from "@/stores/posSettings"
 import { usePOSShiftStore } from "@/stores/posShift"
@@ -92,7 +93,8 @@ export function useShopCart() {
 		for (const { item, qty } of linesForTheTill(cart)) {
 			cartStore.addItem(item, qty)
 		}
-		cartStore.$patch({ currentDraftId: cart.invoice, hasUnsentChanges: false })
+		// The sale submits the phone's draft (useInvoice.shopCartInvoice): never the till's local drafts (currentDraftId)
+		cartStore.$patch({ shopCartInvoice: cart.invoice })
 		if (cart.customer) await cartStore.setCustomer(customerOfTheOrder(cart))
 
 		showSuccess(__("Cart {0} of a phone taken over.", [cart.code]))
