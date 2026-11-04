@@ -514,6 +514,8 @@ def _patch_set_missing_item_details(invoice_doc):
 					item.discount_percentage = s["discount_percentage"]
 					item.discount_amount = s["discount_amount"]
 					item.pricing_rules = s["pricing_rules"]
+					# //// Neoffice — restores the saved price list rate too, not just the discount (#2228 fix(invoices)):
+					# //// without this, a line under an offer fell back to set_missing_item_details' rate (0 with no Item Price).
 					if s["price_list_rate"] > 0:
 						item.price_list_rate = s["price_list_rate"]
 
