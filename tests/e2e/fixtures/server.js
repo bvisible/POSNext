@@ -262,8 +262,9 @@ function aSessionOf(user) {
 /**
  * A takeaway session whose customer is the suite's own throwaway one, with an order sent and held, as the page leaves it
  * before the payment: the token, the order, its total. For the tests that ask who may say an order is paid.
+ * `language` is the one the visitor's browser asks for (the mail that gives the pickup number is written in it).
  */
-function aHeldTakeawayOrder(address) {
+function aHeldTakeawayOrder(address, language = null) {
 	return json(
 		onTheServer(`${ONLY_OURS}
 from pos_next.api import guest_ordering
@@ -279,10 +280,41 @@ settings = guest_ordering._get_restaurant_settings(token.pos_profile)
 menu = guest_ordering._build_menu_from_card(settings.get("takeaway_menu") or settings.get("guest_menu"))
 dish = next(d for c in menu["categories"] for d in c.get("menu_items", []) if not d.get("product_options") and d.get("price"))
 frappe.set_user("Guest")
+# the language the visitor's browser asks for: frappe settles it from the request, the order remembers it
+if ${py(language)}:
+    frappe.local.lang = ${py(language)}
 order = guest_ordering.submit_guest_order(token.token, json.dumps([{"item_code": dish["item_code"], "qty": 1}]))
 frappe.set_user("Administrator")
 frappe.db.commit()
 print(json.dumps({"token": token.token, "token_name": token.name, "invoice": order["invoice"], "total": order["grand_total"], "status": order["status"]}))
+`)
+	);
+}
+
+/**
+ * The mails the server queued for an address, as the mailbox would read them: the decoded subject, the HTML body and
+ * the queue's own status (the mail is queued by Frappe before it leaves, so the row holds what was sent).
+ */
+function mailsTo(address) {
+	return json(
+		onTheServer(`${ONLY_OURS}
+import email, email.header
+address = ${py(address)}
+assert OURS.match(address)
+mails = []
+for queue in frappe.db.sql_list("select parent from \`tabEmail Queue Recipient\` where recipient = %s", (address,)):
+    row = frappe.db.get_value("Email Queue", queue, ["message", "status"], as_dict=True)
+    if not row:
+        continue
+    message = email.message_from_string(row.message)
+    subject = str(email.header.make_header(email.header.decode_header(message["Subject"] or "")))
+    html = " ".join(
+        part.get_payload(decode=True).decode(part.get_content_charset() or "utf-8", "replace")
+        for part in message.walk()
+        if part.get_content_type() == "text/html"
+    )
+    mails.append({"subject": subject, "html": html, "status": row.status})
+print(json.dumps(mails))
 `)
 	);
 }
@@ -299,4 +331,5 @@ module.exports = {
 	aWebsiteUser,
 	aSessionOf,
 	aHeldTakeawayOrder,
+	mailsTo,
 };

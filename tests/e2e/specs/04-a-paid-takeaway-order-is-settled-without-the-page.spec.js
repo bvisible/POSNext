@@ -6,7 +6,8 @@
 //// of it) because the page that asks for the settlement had come back in another browser.
 ////
 //// No page is opened here, on purpose: the order is made, the provider "settles" it the way its webhook does, and the real
-//// workers must submit the invoice and send its lines to the kitchen on their own.
+//// workers must submit the invoice and send its lines to the kitchen on their own, and mail the customer the number he shows
+//// at pickup, once, in the language of the page he ordered on.
 
 const { test, expect } = require("@playwright/test");
 const {
@@ -14,6 +15,7 @@ const {
 	aHeldTakeawayOrder,
 	theProviderSettles,
 	onTheServer,
+	mailsTo,
 	cleanUp,
 } = require("../fixtures/server");
 
@@ -39,6 +41,15 @@ async function waitUntil(read, done, timeout) {
 		await new Promise((resolve) => setTimeout(resolve, 3000));
 	}
 	return last;
+}
+
+/** The mails the workers have queued for the diner, once at least `count` have (the mail is a job of its own after the settlement). */
+async function theMailsOf(address, count, timeout = 90_000) {
+	return waitUntil(
+		() => mailsTo(address),
+		(mails) => mails.length >= count,
+		timeout
+	);
 }
 
 test.describe("a paid web takeaway order is settled by the server", () => {
@@ -69,6 +80,36 @@ test.describe("a paid web takeaway order is settled by the server", () => {
 			expect(settled.lines.length).toBeGreaterThan(0);
 			expect(settled.lines.every((status) => status === "Pending")).toBe(true);
 			expect(settled.ticket).toBeTruthy();
+
+			// The customer is told the number he shows at the counter: one mail, with that number
+			const mails = await theMailsOf(address, 1);
+			expect(mails.length).toBe(1);
+			expect(mails[0].status).not.toBe("Error");
+			expect(mails[0].subject).toContain(String(settled.ticket));
+			expect(mails[0].html).toContain(String(settled.ticket));
+		} finally {
+			cleanUp({ tokenNames: [held.token_name], addresses: [address] });
+		}
+	});
+
+	test("a German page gets its pickup number in German", async () => {
+		const address = aDiner();
+		const held = aHeldTakeawayOrder(address, "de");
+		try {
+			theProviderSettles(held.invoice);
+			const settled = await waitUntil(
+				() => theOrder(held.invoice),
+				(order) => order.docstatus === 1,
+				150_000
+			);
+			expect(settled.docstatus).toBe(1);
+
+			const mails = await theMailsOf(address, 1);
+
+			expect(mails.length).toBe(1);
+			expect(mails[0].subject).toContain("Abholnummer");
+			expect(mails[0].subject).toContain(String(settled.ticket));
+			expect(mails[0].html).toContain("Ihre Abholnummer");
 		} finally {
 			cleanUp({ tokenNames: [held.token_name], addresses: [address] });
 		}

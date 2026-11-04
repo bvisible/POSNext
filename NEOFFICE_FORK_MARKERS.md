@@ -163,6 +163,12 @@ these two languages, and on a site whose POS Settings list no allowed language, 
 the address placeholder are written as bare entries by hand: the page's dictionary is keyed by the bare word, and the translator's tool leaves a
 word empty when the catalogue says it through a context. A `.po` cannot carry a comment, so they are recorded here.
 
+The takeaway customer's pickup mail (neoffice-maintenance#2132, 2026-11-04): `templates/emails/pos_next_takeaway_pickup.html` is an **added file** (no upstream
+equivalent), sent by `guest_ordering.send_the_pickup_email` when the order's lines leave the kitchen's hold. Its seven strings (the subject, the title, the
+thanks, « Your pickup number », the sentence about showing it, « Your order summary », « Total paid ») are appended to the end of `main.pot`, `fr.po`, `de.po` and
+`it.po`, five of them under the context « Takeaway pickup email »; the French, German and Italian are Haiku's. The takeaway order's Sales Invoice now carries the
+`language` of the page it was made on (`submit_guest_order`), which is what the mail is written in.
+
 ### Images
 
 `pos_next/public/icons/badges/*.svg` (23) and `pos_next/public/icons/badges/png/*.png` (23) — the

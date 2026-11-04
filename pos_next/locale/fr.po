@@ -22628,3 +22628,38 @@ msgstr "Votre panier"
 #, python-brace-format
 msgid "{0} each"
 msgstr "{0} la pièce"
+
+#: pos_next/api/guest_ordering.py:1711
+#, python-brace-format
+msgid "Your order at {0}: pickup number {1}"
+msgstr "Votre commande chez {0} : numéro de retrait {1}"
+
+#: pos_next/templates/emails/pos_next_takeaway_pickup.html:14
+msgctxt "Takeaway pickup email"
+msgid "Your order is confirmed"
+msgstr "Votre commande est confirmée"
+
+#: pos_next/templates/emails/pos_next_takeaway_pickup.html:15
+#, python-brace-format
+msgid "Thank you: your payment has been received and the kitchen of {0} has your order."
+msgstr "Merci : votre paiement a bien été reçu et la cuisine de {0} a votre commande."
+
+#: pos_next/templates/emails/pos_next_takeaway_pickup.html:16
+msgctxt "Takeaway pickup email"
+msgid "Your pickup number"
+msgstr "Votre numéro de retrait"
+
+#: pos_next/templates/emails/pos_next_takeaway_pickup.html:20
+msgctxt "Takeaway pickup email"
+msgid "Show this number when you collect your order."
+msgstr "Présentez ce numéro lorsque vous venez retirer votre commande."
+
+#: pos_next/templates/emails/pos_next_takeaway_pickup.html:26
+msgctxt "Takeaway pickup email"
+msgid "Your order summary"
+msgstr "Récapitulatif de votre commande"
+
+#: pos_next/templates/emails/pos_next_takeaway_pickup.html:30
+msgctxt "Takeaway pickup email"
+msgid "Total paid"
+msgstr "Total payé"

@@ -45,7 +45,9 @@ the next tests fail for something they did not do), and a global setup sweeps th
   app puts on the invoice by itself. Play a test card by hand once on the hosted page before claiming that part.
 - **A paid order settles itself** (`04-a-paid-takeaway-order-is-settled-without-the-page`): no page is opened; the provider's settlement is simulated and the
   real workers must submit the invoice and send its lines to the kitchen (played on osiris, the money was on the invoice and the order a held draft,
-  because the page had come back in another browser).
+  because the page had come back in another browser). It also reads the mail the customer is sent (`mailsTo`, from the Email Queue: the subject and the
+  body with the pickup number, once, in the language of the page: a second test orders on a German page and reads « Abholnummer »; needs the German
+  catalogue compiled on the server, `compile-po-to-mo` then `clear-cache`).
 - **Identities** (`03-the-three-identities`): a visitor, a Website User and a member of the staff, with sessions minted
   the way `bench browse --user` does, with no password. The staff session passes everything by construction, which is
   why it is only the third of three.

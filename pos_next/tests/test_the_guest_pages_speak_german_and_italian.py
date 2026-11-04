@@ -19,7 +19,8 @@ import frappe
 from babel.messages.pofile import read_po
 from frappe.tests.utils import FrappeTestCase
 
-# What the guest sees: the pages and sheets of the QR order and of the takeaway order, and the two server modules that answer them in words.
+# What the guest sees: the pages and sheets of the QR order and of the takeaway order, the two server modules that answer them in words, and the mail
+# that gives a takeaway customer his pickup number.
 GUEST_FILES = (
 	"POS/src/components/guest/GuestAccountSheet.vue",
 	"POS/src/components/guest/GuestCart.vue",
@@ -33,6 +34,7 @@ GUEST_FILES = (
 	"POS/src/utils/publicMenu.js",
 	"pos_next/api/guest_ordering.py",
 	"pos_next/restaurant/guest_account.py",
+	"pos_next/templates/emails/pos_next_takeaway_pickup.html",
 )
 
 # The word is the same in that language, so the English key already reads right: no entry, on purpose.
@@ -61,7 +63,8 @@ def guest_strings() -> dict[str, list[str]]:
 	for name in GUEST_FILES:
 		path = repository_root() / name
 		text = path.read_text(encoding="utf8")
-		is_python = name.endswith(".py")
+		# A mail template says its words through the same `_()` as the server modules do
+		is_python = name.endswith((".py", ".html"))
 		for match in (PY_CALL if is_python else JS_CALL).finditer(text):
 			raw = next(group for group in match.groups() if group is not None)
 			if "\\" in raw:
@@ -98,7 +101,7 @@ class TheGuestPagesSpeakGermanAndItalian(FrappeTestCase):
 						continue
 					# The page's dictionary is keyed by the bare word, which the JavaScript asks for; a server module may say a
 					# word through a context, which is its own entry.
-					is_server = all(name.endswith(".py") for name in files)
+					is_server = all(name.endswith((".py", ".html")) for name in files)
 					if msgid not in (anywhere if is_server else bare):
 						missing.append(f"{msgid!r} ({files[0]})")
 				self.assertEqual(missing, [], f"{language}: strings a guest reads with no translation")

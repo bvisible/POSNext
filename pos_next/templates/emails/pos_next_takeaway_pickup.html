@@ -1,0 +1,43 @@
+{#- //// Neoffice — added file (no upstream equivalent). The mail a customer gets when the restaurant has his paid takeaway order: the number he shows at
+//// pickup, what he ordered and what he paid (neoffice-maintenance#2132, 04.11.2026). Sent by `guest_ordering.send_the_pickup_email`, in the language of the page
+//// the order was made on. Every text that reaches it from a menu or a setting is escaped with `| e`: this environment does not autoescape. -#}
+<div class="body-table with-container">
+	<div class="body-content">
+		<table class="email-container" cellpadding="0" cellspacing="0" width="100%" align="center">
+			<tbody>
+				<tr>
+					<td align="center">
+						<table class="email-body" cellpadding="0" cellspacing="0" width="100%" align="center">
+							<tbody>
+								<tr>
+									<td align="center">
+										<div class="email-header-title">{{ _("Your order is confirmed", context="Takeaway pickup email") }}</div>
+										<p>{{ _("Thank you: your payment has been received and the kitchen of {0} has your order.").format(restaurant | e) }}</p>
+										<p style="margin: 28px 0 0; font-size: 13px; color: #6b7280;">{{ _("Your pickup number", context="Takeaway pickup email") }}</p>
+										<div style="font-size: 44px; font-weight: 600; letter-spacing: 4px; margin: 4px 0 8px; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;">
+											{{ ticket | e }}
+										</div>
+										<p>{{ _("Show this number when you collect your order.", context="Takeaway pickup email") }}</p>
+									</td>
+								</tr>
+								{% if lines %}
+								<tr>
+									<td align="center">
+										<p style="margin: 28px 0 8px; font-size: 13px; color: #6b7280;">{{ _("Your order summary", context="Takeaway pickup email") }}</p>
+										{% for line in lines %}
+										<div>{{ line.qty }} &times; {{ line.name | e }}</div>
+										{% endfor %}
+										<p style="margin: 16px 0 0; font-weight: 600;">{{ _("Total paid", context="Takeaway pickup email") }}: {{ total | e }}</p>
+									</td>
+								</tr>
+								{% endif %}
+							</tbody>
+						</table>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</div>
+{#- The sending account signs in one language only: in another language the mail would end with a goodbye the reader cannot read. frappe's mail body skips the signature when this comment is in the message. -#}
+{% if not own_voice %}<!-- signature-included -->{% endif %}

@@ -16,7 +16,7 @@ from contextlib import contextmanager
 import frappe
 from frappe import _
 from frappe.rate_limiter import rate_limit
-from frappe.utils import add_to_date, cint, flt, now_datetime
+from frappe.utils import add_to_date, cint, flt, fmt_money, now_datetime, validate_email_address
 from frappe.utils.synchronization import filelock
 
 from pos_next.restaurant import guest_account, permissions, portions, scope, service_families, tickets
@@ -843,6 +843,9 @@ def submit_guest_order(token, items):
 		# //// Neoffice — a takeaway order is flagged as one before its first save: it takes the takeaway tax category and its ticket number then (#2132)
 		if token_doc.mode == "takeaway" and frappe.db.has_column("Sales Invoice", "is_takeaway"):
 			invoice_data["is_takeaway"] = 1
+		# //// Neoffice — the language of the page the order is made on: the mail that gives the customer his pickup number is written in it, by a job that has no request (#2132)
+		if token_doc.mode == "takeaway" and frappe.local.lang:
+			invoice_data["language"] = frappe.local.lang
 
 		invoice_doc = frappe.get_doc(invoice_data)
 
@@ -1624,7 +1627,105 @@ def _release_paid_takeaway(invoice_name):
 			for batch in sorted({cint(row.kds_batch) or 1 for row in held}):
 				kitchen_send(invoice_name, batch)
 			frappe.publish_realtime("kds_update")
+			# //// Neoffice — the customer is told his pickup number, once: when the lines leave the kitchen's hold, whoever settled the order (#2132)
+			_tell_the_customer_of_the_pickup(invoice_name)
 	return frappe.db.get_value("Sales Invoice", invoice_name, "posa_ticket_no") or None
+
+
+# //// Neoffice — the customer's mail: his pickup number, what he ordered and what he paid (neoffice-maintenance#2132, 04.11.2026). Played for real on osiris: the
+# //// customer paid on the provider's page, and the number he shows at the counter was only ever on the tab he had closed (or in another browser).
+def _address_of_the_customer(customer):
+	"""The mailbox of a customer: the address of the account he signed in with (the one the engine proved), else the one of his primary contact; None for nobody."""
+	address = (frappe.db.get_value("Customer", customer, "email_id") or "").strip()
+	if not address:
+		rows = frappe.db.sql(
+			"""
+			select email.email_id from `tabContact Email` email
+			join `tabDynamic Link` link on link.parent = email.parent and link.parenttype = 'Contact'
+				and link.link_doctype = 'Customer' and link.link_name = %s
+			order by email.is_primary desc, email.creation asc limit 1
+			""",
+			customer,
+		)
+		address = (rows[0][0] if rows else "") or ""
+	return validate_email_address(address) or None
+
+
+def _site_language():
+	return frappe.db.get_single_value("System Settings", "language") or "en"
+
+
+def _language_of_the_mail(order):
+	"""The language of the page the order was made on (frappe settled it from the visitor's browser among the languages it has); else the site's own.
+	A job starts in English whatever the site speaks."""
+	asked = order.language
+	if asked and frappe.db.exists("Language", asked):
+		return asked
+	return _site_language()
+
+
+def _tell_the_customer_of_the_pickup(invoice_name):
+	"""Queue the mail that gives a takeaway customer his pickup number: the settlement, which the customer's page waits for, does not wait for a mail
+	server. Never raises: the order is settled and in the kitchen."""
+	try:
+		frappe.enqueue("pos_next.api.guest_ordering.send_the_pickup_email", queue="short", invoice=invoice_name)
+	except Exception:
+		frappe.log_error("The pickup email could not be queued", f"{invoice_name}\n{frappe.get_traceback()}")
+
+
+def send_the_pickup_email(invoice):
+	"""Mail a web takeaway customer the number to show at pickup, with what he ordered and what he paid. Only for a submitted order of a takeaway session
+	(a table's order and the till's own sales are told nothing), only to a customer who has a mailbox, in the language of the page the order was made on.
+	A failure is logged and never raised: the mail is a courtesy, the order is settled."""
+	order = frappe.db.get_value(
+		"Sales Invoice",
+		invoice,
+		["docstatus", "customer", "language", "currency", "grand_total", "posa_ticket_no", "pos_profile", "company"],
+		as_dict=True,
+	)
+	if not order or order.docstatus != 1 or not order.posa_ticket_no:
+		return
+	if not frappe.db.exists("Guest Order Token", {"invoice": invoice, "mode": "takeaway"}):
+		return
+	address = _address_of_the_customer(order.customer)
+	if not address:
+		return
+
+	restaurant = get_restaurant_settings_for_profile(order.pos_profile).get("restaurant_name") or order.company
+	lines = [
+		{"name": row.item_name or row.item_code, "qty": cint(row.qty) if flt(row.qty) == cint(row.qty) else flt(row.qty)}
+		for row in frappe.get_all(
+			"Sales Invoice Item",
+			filters={"parent": invoice, "qty": [">", 0]},
+			fields=["item_code", "item_name", "qty"],
+			order_by="idx asc",
+		)
+	]
+	# The code and the amount in the site's number format: `fmt_money` with a currency drops it when Global Defaults hides the symbol
+	total = f"{order.currency} {fmt_money(flt(order.grand_total), precision=2)}"
+
+	kept = frappe.local.lang
+	frappe.local.lang = _language_of_the_mail(order)
+	try:
+		frappe.sendmail(
+			recipients=[address],
+			subject=_("Your order at {0}: pickup number {1}").format(restaurant, order.posa_ticket_no),
+			template="pos_next_takeaway_pickup",
+			args={
+				"restaurant": restaurant,
+				"ticket": order.posa_ticket_no,
+				"lines": lines,
+				"total": total,
+				# The sending account signs in one language: another language's mail must not end with its goodbye
+				"own_voice": frappe.local.lang.lower().replace("_", "-") == _site_language().lower().replace("_", "-"),
+			},
+			now=True,
+		)
+	except Exception:
+		frappe.clear_messages()
+		frappe.log_error("The pickup email could not be sent", f"{invoice}\n{frappe.get_traceback()}")
+	finally:
+		frappe.local.lang = kept
 
 
 # //// Neoffice — a paid web takeaway order is settled by the server when the provider says so, not only when the customer's page comes back (neoffice-maintenance#2132,

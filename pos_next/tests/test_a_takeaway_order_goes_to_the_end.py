@@ -15,6 +15,8 @@ wanted a payment on an order that it had not made. The suite pins the way that w
 - a payment the provider settled is settled by the SERVER, whether or not the customer's page comes back: the intent's update queues the settlement, a job
   every five minutes catches what that missed, and the page and the job together settle once (played for real on osiris, 04.11: the money was on the
   invoice, the order a draft with its lines held, because the page had come back in another browser).
+- the customer is told his pickup number by mail, once, when his lines leave the kitchen's hold: in the language of the page he ordered on, with what he
+  ordered and what he paid, whoever settled the order (the page, the event or the job), and never at the price of the settlement.
 
 The suite builds everything it needs and rolls back; the engine is pinned on, its connection and its login are in memory.
 """
@@ -27,6 +29,9 @@ from pos_next.api import guest_ordering
 from pos_next.restaurant import guest_account
 from pos_next.restaurant import settings as restaurant_settings
 from pos_next.tests.test_guest_account import GuestAccountCase, an_address
+
+# What the case replaces with a recorder, to read what a test needs of the real one
+TELL_THE_CUSTOMER = guest_ordering._tell_the_customer_of_the_pickup
 
 
 class TakeawayCase(GuestAccountCase):
@@ -42,6 +47,10 @@ class TakeawayCase(GuestAccountCase):
 		sent = patch("pos_next.api.kitchen_events.kitchen_send")
 		self.kitchen = sent.start()
 		self.addCleanup(sent.stop)
+		# A settlement tells the customer by a job: here it is recorded, never queued on the clone
+		told = patch.object(guest_ordering, "_tell_the_customer_of_the_pickup")
+		self.told = told.start()
+		self.addCleanup(told.stop)
 
 	def a_takeaway_token(self):
 		made = self.as_guest(guest_ordering.create_takeaway_token)
@@ -525,3 +534,229 @@ class TestAPaidOrderIsSettledWithoutThePage(TakeawayCase):
 		self.assertIn("pos_next.api.guest_ordering.settle_takeaway_on_payment", hooks["doc_events"]["Payment Intent"]["on_update"])
 		cron = hooks["scheduler_events"]["cron"]["*/5 * * * *"]
 		self.assertIn("pos_next.api.guest_ordering.settle_paid_takeaway_orders", cron)
+
+
+class TestTheCustomerIsToldHisPickupNumber(TakeawayCase):
+	TEMPLATE = "pos_next_takeaway_pickup"
+
+	def a_settled_order(self, address=None):
+		"""A customer's paid order, settled by the job: (order, address)."""
+		address = address or an_address()
+		self.register(address)
+		invoice = self.order((self.cola, 1), (self.soup, 2))["invoice"]
+		with patch("frappe.enqueue"):
+			self.the_provider_confirms(invoice)
+		guest_ordering.settle_paid_takeaway_order(invoice)
+		return invoice, address
+
+	def pickup_mails(self):
+		return [mail for mail in self.mails if mail.get("template") == self.TEMPLATE]
+
+	def the_mail(self, invoice):
+		guest_ordering.send_the_pickup_email(invoice)
+		mails = self.pickup_mails()
+		self.assertEqual(len(mails), 1)
+		return mails[0]
+
+	def test_the_settlement_tells_the_customer_once(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		invoice, _address = self.a_settled_order()
+
+		self.told.assert_called_once_with(invoice)
+
+	def test_the_page_coming_back_afterwards_does_not_tell_him_again(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		invoice, _address = self.a_settled_order()
+
+		self.confirm(frappe.db.get_value("Sales Invoice", invoice, "grand_total"))
+		self.confirm(frappe.db.get_value("Sales Invoice", invoice, "grand_total"))
+
+		self.told.assert_called_once_with(invoice)
+
+	def test_the_page_that_settles_it_first_tells_him_and_the_job_after_it_does_not(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		self.register(an_address())
+		invoice = self.order((self.cola, 1))["invoice"]
+		with patch("frappe.enqueue"):
+			self.the_provider_confirms(invoice)
+
+		self.confirm(frappe.db.get_value("Sales Invoice", invoice, "grand_total"))
+		guest_ordering.settle_paid_takeaway_order(invoice)
+
+		self.told.assert_called_once_with(invoice)
+
+	def test_an_order_nobody_paid_tells_nothing(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		self.register(an_address())
+		invoice = self.order((self.cola, 1))["invoice"]
+
+		guest_ordering.settle_paid_takeaway_order(invoice)
+
+		self.told.assert_not_called()
+
+	def test_telling_is_a_job_on_the_short_queue(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		with patch("frappe.enqueue") as enqueue:
+			TELL_THE_CUSTOMER("SINV-1")
+
+		enqueue.assert_called_once_with(
+			"pos_next.api.guest_ordering.send_the_pickup_email", queue="short", invoice="SINV-1"
+		)
+
+	def test_a_queue_that_refuses_the_job_breaks_nothing(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		with patch("frappe.enqueue", side_effect=RuntimeError("no queue")), patch("frappe.log_error") as log_error:
+			TELL_THE_CUSTOMER("SINV-1")
+
+		self.assertEqual(log_error.call_args.args[0], "The pickup email could not be queued")
+
+	def test_the_mail_goes_to_the_customers_own_address_with_his_number(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		invoice, address = self.a_settled_order()
+		ticket = frappe.db.get_value("Sales Invoice", invoice, "posa_ticket_no")
+		self.assertTrue(ticket)
+
+		mail = self.the_mail(invoice)
+
+		self.assertEqual(mail["recipients"], [address])
+		self.assertEqual(mail["args"]["ticket"], ticket)
+		self.assertIn(str(ticket), mail["subject"])
+		self.assertIn(frappe.db.get_value("Restaurant", self.a, "restaurant_name"), mail["subject"])
+
+	def test_the_mail_says_what_was_ordered_and_what_was_paid(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		invoice, _address = self.a_settled_order()
+		total = frappe.db.get_value("Sales Invoice", invoice, "grand_total")
+
+		mail = self.the_mail(invoice)
+
+		self.assertEqual(
+			[(line["name"], line["qty"]) for line in mail["args"]["lines"]],
+			[
+				(frappe.db.get_value("Item", self.cola, "item_name"), 1),
+				(frappe.db.get_value("Item", self.soup, "item_name"), 2),
+			],
+		)
+		self.assertTrue(mail["args"]["total"].startswith(frappe.db.get_value("Sales Invoice", invoice, "currency")))
+		self.assertIn(f"{total:.2f}", mail["args"]["total"])
+
+	def test_the_page_reads_in_the_template(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		from frappe.utils.jinja import get_email_from_template
+
+		invoice, _address = self.a_settled_order()
+		mail = self.the_mail(invoice)
+
+		html, _text = get_email_from_template(self.TEMPLATE, mail["args"])
+
+		ticket = frappe.db.get_value("Sales Invoice", invoice, "posa_ticket_no")
+		self.assertIn(str(ticket), html)
+		self.assertIn("1 &times;", html)
+		self.assertIn("2 &times;", html)
+		self.assertIn(mail["args"]["total"], html)
+		self.assertIn(frappe.db.get_value("Restaurant", self.a, "restaurant_name"), html)
+
+	def test_what_a_menu_or_a_setting_writes_is_escaped(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		from frappe.utils.jinja import get_email_from_template
+
+		invoice, _address = self.a_settled_order()
+		for row in frappe.get_all("Sales Invoice Item", filters={"parent": invoice}, pluck="name"):
+			frappe.db.set_value("Sales Invoice Item", row, "item_name", "<script>alert(1)</script>")
+		mail = self.the_mail(invoice)
+
+		html, _text = get_email_from_template(self.TEMPLATE, {**mail["args"], "restaurant": "<b>Chez</b>"})
+
+		self.assertNotIn("<script>", html)
+		self.assertNotIn("<b>Chez</b>", html)
+		self.assertIn("&lt;script&gt;", html)
+
+	def test_it_is_written_in_the_language_of_the_page_the_order_was_made_on(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		seen = []
+		kept = frappe.local.lang
+		self.addCleanup(setattr, frappe.local, "lang", kept)
+		frappe.local.lang = "de"
+		self.register(an_address())
+		invoice = self.order((self.cola, 1))["invoice"]
+		frappe.local.lang = kept
+		with patch("frappe.enqueue"):
+			self.the_provider_confirms(invoice)
+		guest_ordering.settle_paid_takeaway_order(invoice)
+		self.assertEqual(frappe.db.get_value("Sales Invoice", invoice, "language"), "de")
+
+		with patch("frappe.sendmail", side_effect=lambda **mail: seen.append((frappe.local.lang, mail))):
+			guest_ordering.send_the_pickup_email(invoice)
+
+		self.assertEqual([lang for lang, _mail in seen], ["de"])
+		self.assertEqual(frappe.local.lang, kept)
+
+	def test_a_mail_in_the_sites_own_language_ends_with_its_signature_and_another_does_not(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		invoice, _address = self.a_settled_order()
+		site = guest_ordering._site_language()
+		other = "de" if site.lower() != "de" else "fr"
+
+		frappe.db.set_value("Sales Invoice", invoice, "language", site)
+		own = self.the_mail(invoice)["args"]["own_voice"]
+		self.mails.clear()
+		frappe.db.set_value("Sales Invoice", invoice, "language", other)
+		foreign = self.the_mail(invoice)["args"]["own_voice"]
+
+		self.assertTrue(own)
+		self.assertFalse(foreign)
+
+	def test_an_order_with_no_language_is_written_in_the_sites(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		invoice, _address = self.a_settled_order()
+		frappe.db.set_value("Sales Invoice", invoice, "language", None)
+		seen = []
+
+		with patch("frappe.sendmail", side_effect=lambda **mail: seen.append(frappe.local.lang)):
+			guest_ordering.send_the_pickup_email(invoice)
+
+		self.assertEqual(seen, [guest_ordering._site_language()])
+
+	def test_a_language_the_site_does_not_know_falls_back_to_the_sites(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		invoice, _address = self.a_settled_order()
+		frappe.db.set_value("Sales Invoice", invoice, "language", "xx-not-a-language")
+		seen = []
+
+		with patch("frappe.sendmail", side_effect=lambda **mail: seen.append(frappe.local.lang)):
+			guest_ordering.send_the_pickup_email(invoice)
+
+		self.assertEqual(seen, [guest_ordering._site_language()])
+
+	def test_the_address_is_the_customers_primary_contacts_when_the_customer_has_none(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		invoice, address = self.a_settled_order()
+		customer = frappe.db.get_value("Sales Invoice", invoice, "customer")
+		frappe.db.set_value("Customer", customer, "email_id", None)
+
+		mail = self.the_mail(invoice)
+
+		self.assertEqual(mail["recipients"], [address])
+
+	def test_a_customer_with_no_mailbox_is_told_nothing(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		invoice, _address = self.a_settled_order()
+		customer = frappe.db.get_value("Sales Invoice", invoice, "customer")
+		frappe.db.set_value("Customer", customer, "email_id", None)
+		frappe.db.sql("delete from `tabContact Email` where parent in (select parent from `tabDynamic Link` where link_name = %s)", customer)
+
+		guest_ordering.send_the_pickup_email(invoice)
+
+		self.assertEqual(self.pickup_mails(), [])
+
+	def test_an_order_of_a_table_is_told_nothing(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		invoice, _address = self.a_settled_order()
+		frappe.db.set_value("Guest Order Token", self.token.name, "mode", "restaurant")
+
+		guest_ordering.send_the_pickup_email(invoice)
+
+		self.assertEqual(self.pickup_mails(), [])
+
+	def test_an_order_that_is_not_submitted_is_told_nothing(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		self.register(an_address())
+		invoice = self.order((self.cola, 1))["invoice"]
+
+		guest_ordering.send_the_pickup_email(invoice)
+
+		self.assertEqual(self.pickup_mails(), [])
+
+	def test_a_mail_server_that_refuses_is_logged_and_never_raised(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		invoice, _address = self.a_settled_order()
+		kept = frappe.local.lang
+		# a language that is not the running one: the mail changes it, and the failure must give it back all the same
+		frappe.db.set_value("Sales Invoice", invoice, "language", "de" if kept != "de" else "fr")
+
+		with patch("frappe.sendmail", side_effect=RuntimeError("smtp down")), patch("frappe.log_error") as log_error:
+			guest_ordering.send_the_pickup_email(invoice)
+
+		self.assertEqual(log_error.call_args.args[0], "The pickup email could not be sent")
+		self.assertEqual(frappe.local.lang, kept)

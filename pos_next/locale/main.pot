@@ -25157,3 +25157,38 @@ msgstr ""
 #: pos_next/fixtures/custom_field.json
 msgid "A seller checks the articles of this group and of its sub-groups before they are sold (age, advice): a customer who scans one in the shop goes to the counter with it."
 msgstr ""
+
+#: pos_next/api/guest_ordering.py:1711
+#, python-brace-format
+msgid "Your order at {0}: pickup number {1}"
+msgstr ""
+
+#: pos_next/templates/emails/pos_next_takeaway_pickup.html:14
+msgctxt "Takeaway pickup email"
+msgid "Your order is confirmed"
+msgstr ""
+
+#: pos_next/templates/emails/pos_next_takeaway_pickup.html:15
+#, python-brace-format
+msgid "Thank you: your payment has been received and the kitchen of {0} has your order."
+msgstr ""
+
+#: pos_next/templates/emails/pos_next_takeaway_pickup.html:16
+msgctxt "Takeaway pickup email"
+msgid "Your pickup number"
+msgstr ""
+
+#: pos_next/templates/emails/pos_next_takeaway_pickup.html:20
+msgctxt "Takeaway pickup email"
+msgid "Show this number when you collect your order."
+msgstr ""
+
+#: pos_next/templates/emails/pos_next_takeaway_pickup.html:26
+msgctxt "Takeaway pickup email"
+msgid "Your order summary"
+msgstr ""
+
+#: pos_next/templates/emails/pos_next_takeaway_pickup.html:30
+msgctxt "Takeaway pickup email"
+msgid "Total paid"
+msgstr ""

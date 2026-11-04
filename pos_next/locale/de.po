@@ -1171,3 +1171,38 @@ msgstr "Telefon"
 #: POS/src/components/guest/GuestAccountSheet.vue:77 pos_next/public/pos/assets/TakeawayOrder-B_4XXoCm.js:1
 msgid "your@email.com"
 msgstr "ihre@email.com"
+
+#: pos_next/api/guest_ordering.py:1711
+#, python-brace-format
+msgid "Your order at {0}: pickup number {1}"
+msgstr "Ihre Bestellung bei {0}: Abholnummer {1}"
+
+#: pos_next/templates/emails/pos_next_takeaway_pickup.html:14
+msgctxt "Takeaway pickup email"
+msgid "Your order is confirmed"
+msgstr "Ihre Bestellung ist bestätigt"
+
+#: pos_next/templates/emails/pos_next_takeaway_pickup.html:15
+#, python-brace-format
+msgid "Thank you: your payment has been received and the kitchen of {0} has your order."
+msgstr "Vielen Dank: Ihre Zahlung ist eingegangen, und die Küche von {0} hat Ihre Bestellung."
+
+#: pos_next/templates/emails/pos_next_takeaway_pickup.html:16
+msgctxt "Takeaway pickup email"
+msgid "Your pickup number"
+msgstr "Ihre Abholnummer"
+
+#: pos_next/templates/emails/pos_next_takeaway_pickup.html:20
+msgctxt "Takeaway pickup email"
+msgid "Show this number when you collect your order."
+msgstr "Bitte zeigen Sie diese Nummer vor, wenn Sie Ihre Bestellung abholen."
+
+#: pos_next/templates/emails/pos_next_takeaway_pickup.html:26
+msgctxt "Takeaway pickup email"
+msgid "Your order summary"
+msgstr "Ihre Bestellübersicht"
+
+#: pos_next/templates/emails/pos_next_takeaway_pickup.html:30
+msgctxt "Takeaway pickup email"
+msgid "Total paid"
+msgstr "Bezahlter Gesamtbetrag"
