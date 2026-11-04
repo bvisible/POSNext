@@ -115,8 +115,9 @@ def _read(manifest: dict, entry: dict) -> dict:
 	return data
 
 
-def listing() -> dict:
-	"""What the library offers and what the restaurant already holds of it. Read only."""
+def listing(month=None) -> dict:
+	"""What the library offers and what the restaurant already holds of it, and, when a season calendar is installed, whether each fiche is in
+	season for `month` (this month when not given). Read only."""
 	recipes.require_neoresto()
 	permissions.require(recipes.DOCTYPE, "read")
 	manifest = _manifest()
@@ -150,9 +151,20 @@ def listing() -> dict:
 				if cuisine_knowledge.fold(data["title"]) in taken
 				else "new",
 				"recipe": held.get(entry["id"]),
+				"_ingredients": [r["name"] for r in data["ingredients"]]
+				+ list(data.get("unquantifiedIngredients") or []),
 			}
 		)
+	# //// Neoffice — the season of each fiche, when a calendar is installed (lot R4)
+	from pos_next.restaurant import season
+
+	number = season.month_of(month)
+	seasonal = season.annotate(out, lambda row: row["_ingredients"], number)
+	for row in out:
+		row.pop("_ingredients", None)
 	return {
+		"season_available": seasonal,
+		"month": number,
 		"count": len(out),
 		"provider": manifest["provider"],
 		"revision": manifest["revision"],

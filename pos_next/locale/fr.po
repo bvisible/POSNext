@@ -23264,3 +23264,73 @@ msgstr "Le client scanne encore"
 msgctxt "Phone cart"
 msgid "To be paid"
 msgstr "À encaisser"
+
+#: pos_next/restaurant/season.py:1
+msgid "a row of the calendar is incomplete or repeated"
+msgstr "une ligne du calendrier est incomplète ou répétée"
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:1
+msgid "In season"
+msgstr "De saison"
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:1
+#, python-brace-format
+msgid "In season in {0}"
+msgstr "De saison en {0}"
+
+#: pos_next/restaurant/season.py:1
+msgid "No season calendar is installed on this site."
+msgstr "Aucun calendrier de saison n'est installé sur ce site."
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:1
+msgid "Out of season"
+msgstr "Hors saison"
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:1
+msgid "Stored"
+msgstr "De garde"
+
+#: pos_next/restaurant/season.py:1
+msgid "the calendar file is missing"
+msgstr "le fichier du calendrier est absent"
+
+#: pos_next/restaurant/season.py:1
+msgid "the calendar is empty"
+msgstr "le calendrier est vide"
+
+#: pos_next/restaurant/season.py:1
+msgid "the calendar was changed since it was checked"
+msgstr "le calendrier a été modifié depuis sa vérification"
+
+#: pos_next/restaurant/season.py:1
+msgid "The families are vegetable, fruit and herb."
+msgstr "Les familles sont : légume, fruit et herbe."
+
+#: pos_next/restaurant/season.py:1
+msgid "the manifest does not say where the calendar comes from"
+msgstr "le manifeste n'indique pas d'où provient le calendrier"
+
+#: pos_next/restaurant/season.py:1
+#, python-brace-format
+msgid "the months of «{0}» are not numbers from 1 to 12"
+msgstr "les mois de «{0}» ne sont pas des nombres de 1 à 12"
+
+#: pos_next/restaurant/season.py:1
+#, python-brace-format
+msgid "The season calendar is not usable: {0}."
+msgstr "Le calendrier de saison n'est pas utilisable : {0}."
+
+#: pos_next/restaurant/season.py:1
+#, python-brace-format
+msgid "«{0}» has no month"
+msgstr "«{0}» n'a aucun mois"
+
+#: pos_next/restaurant/season.py:1
+#, python-brace-format
+msgid "«{0}» is both in season and stored the same month"
+msgstr "«{0}» est à la fois de saison et de garde le même mois"
+
+#: pos_next/restaurant/season.py:1
+#, python-brace-format
+msgid "«{0}» is not a month."
+msgstr "«{0}» n'est pas un mois."

@@ -244,9 +244,14 @@ def _stems(text) -> list[str]:
 	return [_stem(w) for w in cuisine_knowledge.fold(text).split() if len(w) > 1]
 
 
-def search(query=None, family=None, ingredient=None, vegetarian=None, limit=MOST_RESULTS) -> dict:
+def search(
+	query=None, family=None, ingredient=None, vegetarian=None, limit=MOST_RESULTS, month=None, in_season=None
+) -> dict:
 	"""The recipes that fit: by words of the name, the family or the description (and the ingredients), by family, by an ingredient, vegetarian
-	or not. Read only; the best fit first. Nothing matches by guessing: every word asked is in the recipe."""
+	or not. Read only; the best fit first. Nothing matches by guessing: every word asked is in the recipe.
+
+	With a season calendar installed each recipe says whether it is in season for `month` (this month when not given); `in_season` keeps only the
+	ones that are in season or stored, those in season first. A recipe out of season is never refused by this: it is only left out of that list."""
 	require_neoresto()
 	permissions.require(DOCTYPE, "read")
 	rows = frappe.get_list(
@@ -305,6 +310,25 @@ def search(query=None, family=None, ingredient=None, vegetarian=None, limit=MOST
 		if ok:
 			found.append((score, row))
 	found.sort(key=lambda pair: (-pair[0], pair[1].recipe_name.lower()))
+	# //// Neoffice — the season of each recipe, when a calendar is installed (lot R4)
+	from pos_next.restaurant import season
+
+	number = season.month_of(month)
+	calendar = season._calendar_or_none()
+	verdicts = {}
+	if calendar is not None:
+		for _score, row in found:
+			verdicts[row.name] = season.judge(calendar, by_recipe.get(row.name, []), number)
+		if in_season:
+			rank = {"season": 0, "storage": 1}
+			found = sorted(
+				[pair for pair in found if verdicts[pair[1].name]["state"] in rank],
+				key=lambda pair: (
+					rank[verdicts[pair[1].name]["state"]],
+					-pair[0],
+					pair[1].recipe_name.lower(),
+				),
+			)
 	limit = max(1, min(cint(limit) or MOST_RESULTS, 50))
 	shown = [
 		{
@@ -317,10 +341,23 @@ def search(query=None, family=None, ingredient=None, vegetarian=None, limit=MOST
 			"portions": row.base_portions,
 			"minutes": row.total_minutes or None,
 			"origin": row.source_kind,
+			**({"season": _season_of(verdicts[row.name])} if row.name in verdicts else {}),
 		}
 		for _score, row in found[:limit]
 	]
-	return {"count": len(found), "shown": len(shown), "recipes": shown}
+	answer = {
+		"count": len(found),
+		"shown": len(shown),
+		"recipes": shown,
+		"season_available": calendar is not None,
+	}
+	if calendar is not None:
+		answer["month"] = number
+	return answer
+
+
+def _season_of(verdict: dict) -> dict:
+	return {"state": verdict["state"], "out": verdict["out"], "storage": verdict["storage"]}
 
 
 def set_dish_recipe(dish: str, recipe: str | None) -> dict:

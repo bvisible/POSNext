@@ -7,7 +7,7 @@ import json
 
 import frappe
 
-from pos_next.restaurant import recipe_library, recipe_plan, recipes
+from pos_next.restaurant import recipe_library, recipe_plan, recipes, season
 
 
 def _json(value):
@@ -21,16 +21,27 @@ def get_recipe(name, portions=None):
 
 
 @frappe.whitelist()
-def search_recipes(query=None, family=None, ingredient=None, vegetarian=None, limit=None):
-	"""The recipes that fit the words asked, the best first."""
+def search_recipes(
+	query=None, family=None, ingredient=None, vegetarian=None, limit=None, month=None, in_season=None
+):
+	"""The recipes that fit the words asked, the best first; `in_season` keeps those in season (or stored) for `month`."""
 	flag = None if vegetarian in (None, "") else frappe.utils.cint(vegetarian) == 1
-	return recipes.search(query, family, ingredient, flag, limit or recipes.MOST_RESULTS)
+	seasonal = None if in_season in (None, "") else frappe.utils.cint(in_season) == 1
+	return recipes.search(
+		query, family, ingredient, flag, limit or recipes.MOST_RESULTS, month or None, seasonal
+	)
 
 
 @frappe.whitelist()
-def get_library():
-	"""What the free library offers, and which of it the restaurant already holds."""
-	return recipe_library.listing()
+def get_library(month=None):
+	"""What the free library offers, and which of it the restaurant already holds (and which is in season, when a calendar is installed)."""
+	return recipe_library.listing(month or None)
+
+
+@frappe.whitelist()
+def get_season(month=None, family=None, query=None):
+	"""What is in season in Switzerland for a month (this month by default), or what the calendar says of the products asked."""
+	return season.what_is_in_season(month or None, family or None, query or None)
 
 
 @frappe.whitelist()

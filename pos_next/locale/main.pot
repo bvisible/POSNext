@@ -25466,3 +25466,73 @@ msgstr ""
 #, python-brace-format
 msgid "{0} ingredients without quantity stay in the recipe, without an article."
 msgstr ""
+
+#: pos_next/restaurant/season.py:1
+#, python-brace-format
+msgid "The season calendar is not usable: {0}."
+msgstr ""
+
+#: pos_next/restaurant/season.py:1
+#, python-brace-format
+msgid "the months of «{0}» are not numbers from 1 to 12"
+msgstr ""
+
+#: pos_next/restaurant/season.py:1
+msgid "the manifest does not say where the calendar comes from"
+msgstr ""
+
+#: pos_next/restaurant/season.py:1
+msgid "the calendar file is missing"
+msgstr ""
+
+#: pos_next/restaurant/season.py:1
+msgid "the calendar was changed since it was checked"
+msgstr ""
+
+#: pos_next/restaurant/season.py:1
+msgid "a row of the calendar is incomplete or repeated"
+msgstr ""
+
+#: pos_next/restaurant/season.py:1
+#, python-brace-format
+msgid "«{0}» has no month"
+msgstr ""
+
+#: pos_next/restaurant/season.py:1
+#, python-brace-format
+msgid "«{0}» is both in season and stored the same month"
+msgstr ""
+
+#: pos_next/restaurant/season.py:1
+msgid "the calendar is empty"
+msgstr ""
+
+#: pos_next/restaurant/season.py:1
+#, python-brace-format
+msgid "«{0}» is not a month."
+msgstr ""
+
+#: pos_next/restaurant/season.py:1
+msgid "No season calendar is installed on this site."
+msgstr ""
+
+#: pos_next/restaurant/season.py:1
+msgid "The families are vegetable, fruit and herb."
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:1
+msgid "In season"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:1
+msgid "Stored"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:1
+msgid "Out of season"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:1
+#, python-brace-format
+msgid "In season in {0}"
+msgstr ""

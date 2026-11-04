@@ -46,7 +46,16 @@ function open_library(listview) {
 				family: "",
 				selected: new Set(),
 				licences: false,
+				season: false,
 			};
+			// //// Neoffice — the season of each fiche, only where a season calendar is installed (lot R4): the chip and the word on each row
+			const month_name = library.season_available
+				? moment(library.month, "M").format("MMMM")
+				: "";
+			const season_word = (f) =>
+				({ season: __("In season"), storage: __("Stored"), out: __("Out of season") }[
+					f.season && f.season.state
+				] || "");
 			const families = [...new Set(fiches.map((f) => f.family).filter(Boolean))].sort();
 			const dialog = new frappe.ui.Dialog({
 				title: __("Add from the free library"),
@@ -63,7 +72,9 @@ function open_library(listview) {
 					return (
 						words.every((w) => hay.includes(w)) &&
 						(!state.vegetarian || f.vegetarian) &&
-						(!state.family || f.family === state.family)
+						(!state.family || f.family === state.family) &&
+						(!state.season ||
+							(f.season && ["season", "storage"].includes(f.season.state)))
 					);
 				});
 			};
@@ -93,7 +104,13 @@ function open_library(listview) {
 					<div><div class="rcp-title">${esc(f.title)}</div><div class="rcp-meta">${esc(meta)}${
 					f.family ? ` · ${esc(f.family)}` : ""
 				}</div></div>
-					<span class="rcp-meta">${f.vegetarian ? __("Vegetarian") : ""}</span>
+					<span class="rcp-meta" title="${esc(
+						f.season && f.season.out && f.season.out.length
+							? f.season.out.join(", ")
+							: ""
+					)}">${[f.vegetarian ? __("Vegetarian") : "", season_word(f)]
+					.filter(Boolean)
+					.join(" · ")}</span>
 					${badge}
 				</div>`;
 			};
@@ -104,6 +121,15 @@ function open_library(listview) {
 					`<span class="rcp-chip ${
 						state.vegetarian ? "on" : ""
 					}" data-chip="vegetarian">${__("Vegetarian")}</span>`,
+					...(library.season_available
+						? [
+								`<span class="rcp-chip ${
+									state.season ? "on" : ""
+								}" data-chip="season">${__("In season in {0}", [
+									month_name,
+								])}</span>`,
+						  ]
+						: []),
 					`<span class="rcp-chip ${
 						state.family ? "" : "on"
 					}" data-chip="family" data-family="">${__("All")}</span>`,
@@ -204,6 +230,7 @@ function open_library(listview) {
 			});
 			$body.on("click", ".rcp-chip", function () {
 				if ($(this).data("chip") === "vegetarian") state.vegetarian = !state.vegetarian;
+				else if ($(this).data("chip") === "season") state.season = !state.season;
 				else state.family = $(this).data("family") || "";
 				render();
 			});
