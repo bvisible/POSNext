@@ -281,6 +281,37 @@ class TestWhatAConfirmedProposalWrites(MenuPlanCase):
 		self.assertEqual((doc.price, doc.description), (26, "Du lundi au vendredi"))
 		self.assertEqual(self.courses(), [("Plat", self.dish), ("Plat", self.salad), ("Dessert", self.soup)])
 
+	def test_the_proposal_says_the_whole_menu_as_it_will_stand_not_only_the_change(self):
+		"""A model that is told only what changes completes the rest from memory: 04.11, « le dessert ne proposera plus rien » was said of a
+		menu whose dessert held another dish since."""
+		self.apply(self.propose(self.menu()))
+		self.apply(
+			self.propose({"name": MENU, "courses": [{"name": "Dessert", "choices": ["soupe zurichoise"]}]})
+		)
+		change = {
+			"name": MENU,
+			"courses": [{"name": "Plat", "choices": [{"text": "plat du jour zurichois", "remove": True}]}],
+		}
+		held = self.propose(change)["menus"][0]["will_hold"]
+		self.assertEqual(
+			held,
+			[
+				{"course": "Plat", "dishes": []},
+				{"course": "Boisson", "dishes": [COFFEE]},
+				{"course": "Dessert", "dishes": [SOUP]},
+			],
+		)
+
+	def test_a_new_menu_will_hold_what_was_said_and_a_dish_still_to_settle_is_not_in_it(self):
+		menu = self.menu(
+			courses=[
+				{"name": "Plat", "choices": ["tartare zurichois"]},
+				{"name": "Boisson", "choices": ["cafe zurichois"]},
+			]
+		)
+		held = self.propose(menu)["menus"][0]["will_hold"]
+		self.assertEqual(held, [{"course": "Plat", "dishes": []}, {"course": "Boisson", "dishes": [COFFEE]}])
+
 	def test_a_menu_is_switched_off_without_losing_its_courses(self):
 		self.apply(self.propose(self.menu()))
 		self.apply(self.propose({"name": MENU, "active": False}))

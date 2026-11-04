@@ -203,11 +203,31 @@ def _card_placement(restaurant: str, wanted, menu_name: str) -> dict | None:
 	return {"name": name, "exists": True, "placed": placed, "will_place": not placed}
 
 
+def _will_hold(held: dict, courses: list[dict]) -> list[dict]:
+	"""The menu as it will stand once written: each course it has or gets, with the dishes it will offer.
+
+	What the owner is read back is the whole menu, not only the change: a model that is told what is added or taken out completes the rest
+	from memory, and a menu changed since then is read wrong. A dish still to settle (ambiguous, unknown) is not in it yet."""
+	rows = {name: [row["item_name"] for row in dishes] for name, dishes in held.items()}
+	named = set()
+	for course in courses:
+		named.add(course["name"])
+		dishes = rows.setdefault(course["name"], [])
+		for choice in course["choices"]:
+			label = choice["item_name"]
+			if choice["status"] == "remove":
+				dishes[:] = [d for d in dishes if d != label]
+			elif choice["status"] in ("matched", "to_create") and label not in dishes:
+				dishes.append(label)
+	return [{"course": name, "dishes": dishes} for name, dishes in rows.items() if dishes or name in named]
+
+
 def propose(menus) -> dict:
 	"""What the menus said mean, and nothing written.
 
 	Answers {menus, counts}: for each menu, `status` (new, extend or unchanged), the price asked and the one it has, its courses with each dish
-	(matched, present, ambiguous, to_create, remove or unknown), what is still missing (`needs`), and where it would go on a card."""
+	(matched, present, ambiguous, to_create, remove or unknown), the menu as it will stand once written (`will_hold`), what is still
+	missing (`needs`), and where it would go on a card."""
 	_manage()
 	restaurant = default_restaurant()
 	if not restaurant:
@@ -256,6 +276,7 @@ def propose(menus) -> dict:
 				"available_to": menu["available_to"],
 				"restaurant": restaurant,
 				"courses": courses,
+				"will_hold": _will_hold(held, courses),
 				"needs": needs,
 				"card": card,
 			}
