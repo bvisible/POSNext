@@ -113,3 +113,9 @@ class TestAShopCartTakesOnlyWhatTheTillSells(ShopCase):
 		self.assertEqual(cart["total"], 3 * PRICE)
 		self.assertEqual(cart["grand_total"], self.the_draft(token).grand_total)
 		self.assertEqual(cart["status"], "Scanning")
+		self.assertEqual(cart["currency"], self.fx.currency)
+
+	def test_an_empty_cart_says_its_currency_too(self):
+		cart = self.as_guest(shop_scan.get_shop_cart, self.a_session())
+
+		self.assertEqual((cart["lines"], cart["currency"]), ([], self.fx.currency))

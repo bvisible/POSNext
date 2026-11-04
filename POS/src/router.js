@@ -111,6 +111,15 @@ const routes = [
 		component: () => import("@/pages/PublicMenu.vue"),
 		meta: { allowGuest: true },
 	},
+	//// Neoffice — scanning in the shop (lot 2): the page the fixed QR code of a shop till opens. A customer has no
+	//// session: let through as the other guest pages; the page asks the server, and says politely where the shop does
+	//// not let customers scan.
+	{
+		name: "ShopScan",
+		path: "/shop/:key",
+		component: () => import("@/pages/ShopScan.vue"),
+		meta: { allowGuest: true, title: () => __("Shop") },
+	},
 	// Catch-all route
 	{
 		path: "/:pathMatch(.*)*",

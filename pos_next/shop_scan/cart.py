@@ -256,5 +256,8 @@ def view(token_doc, cart) -> dict:
 		),
 		"tax": flt(cart.total_taxes_and_charges) if cart else 0,
 		"grand_total": amount,
+		# The phone writes the amounts in it (an empty cart has no invoice yet: the till's currency)
+		"currency": (cart.currency if cart else None)
+		or frappe.get_cached_value("POS Profile", token_doc.pos_profile, "currency"),
 		"needs_validation": any(line["needs_validation"] for line in lines),
 	}

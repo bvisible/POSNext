@@ -20,6 +20,8 @@
 		"@babel/helper-compilation-targets": "^7.28.6",
 		"@pinia/testing": "^1.0.3",
 		"@vue/test-utils": "^2.4.6",
+		"@zxing/browser": "0.2.1",
+		"@zxing/library": "0.23.0",
 		"browserslist": "^4.28.1",
 		"core-js-compat": "^3.48.0",
 		"dexie": "^4.2.0",

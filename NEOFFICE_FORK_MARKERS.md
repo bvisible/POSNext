@@ -205,7 +205,7 @@ commits it with the rest. Same rule: generated, never marked, listed in the tabl
 | File | Why |
 |---|---|
 | `package.json` | `build` no longer runs `cd POS && yarn build` unconditionally: it skips when `pos_next/public/pos/assets` already exists, unless `FORCE_REBUILD=1` (`f38e0911`, `c06b77e4`, 2026-05-07). Rebuilding the SPA during `bench build` OOM-kills 4 GB tenants. |
-| `POS/package.json` | Adds `qrcode` (guest-ordering QR codes), `react` + `react-dom` and `@neoffice/nora-learn-react` — the Nora Learn React island embedded in a Vue app (`3939a848`, `05053a5b`). |
+| `POS/package.json` | Adds `qrcode` (guest-ordering QR codes), `react` + `react-dom` and `@neoffice/nora-learn-react` — the Nora Learn React island embedded in a Vue app (`3939a848`, `05053a5b`). Scanning in the shop (04.11.2026) adds `@zxing/browser` 0.2.1 and `@zxing/library` 0.23.0, pinned: the barcode reader of a customer's phone where the browser has none of its own (Safari on an iPhone), loaded only by the shop's page (`POS/src/utils/barcodeReader.js`). |
 | `POS/manifest.webmanifest` | PWA name *POS Next* → **Neopos** (`771950bd`, 2026-04-02). |
 | `.bvisible-annotations.json`, `.bvisible-tracked-files` | State of the first-generation annotation tooling (`4e0d3068`, 2026-05-19, *"chore(fork-annotations): bootstrap tooling for upstream divergence tracking"*), consumed by `scripts/annotate_fork.py` and `scripts/check_annotations.py`. Machine-written, no upstream equivalent. Superseded by the `//// Neoffice` markers and this file. |
 | `POS/yarn.lock` | Lockfile for the dependencies above. Regenerated, never hand-edited. |
