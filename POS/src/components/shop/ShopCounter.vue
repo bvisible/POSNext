@@ -123,8 +123,9 @@ watchEffect(async () => {
 	color: var(--success-ink);
 	background: var(--success-soft, #e9f7ee);
 }
-.shop-counter__pill--paid span,
-.shop-counter__pill--checked span {
+/* The base rule of the dot below comes later: a paid or checked dot outranks it */
+.shop-counter__pill.shop-counter__pill--paid span,
+.shop-counter__pill.shop-counter__pill--checked span {
 	background: #1f9d57;
 }
 .shop-counter__fine {
