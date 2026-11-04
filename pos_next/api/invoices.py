@@ -496,6 +496,10 @@ def _patch_set_missing_item_details(invoice_doc):
 					"discount_percentage": disc_pct,
 					"discount_amount": disc_amt,
 					"pricing_rules": item.get("pricing_rules") or "",
+					# //// Neoffice — the price the discount is taken off, kept too (maintenance#2228): since ERPNext
+					# //// v15.124.5, a row whose rule is "removed" under ignore_pricing_rule gets the price list's rate
+					# //// back, and an item priced by the till or the restaurant's card (no Item Price) fell to 0.
+					"price_list_rate": flt(item.price_list_rate),
 				}
 
 		# Call original method (sets missing fields like warehouse, income_account, etc.)
@@ -510,6 +514,8 @@ def _patch_set_missing_item_details(invoice_doc):
 					item.discount_percentage = s["discount_percentage"]
 					item.discount_amount = s["discount_amount"]
 					item.pricing_rules = s["pricing_rules"]
+					if s["price_list_rate"] > 0:
+						item.price_list_rate = s["price_list_rate"]
 
 	import types
 
