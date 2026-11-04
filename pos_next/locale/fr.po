@@ -23588,3 +23588,72 @@ msgstr "{0} : {1} ajouté(s) au comptoir, {2}"
 #, python-brace-format
 msgid "{0}: {1} missing, refunded {2}"
 msgstr "{0} : {1} manquant(s), remboursement de {2}"
+
+#: pos_next/till_settings/registry.py:1847
+msgid "A cart neither paid nor taken over is deleted after this many hours. A paid cart is never deleted: it waits for its check."
+msgstr "Un panier ni payé ni repris est effacé après ce nombre d'heures. Un panier payé n'est jamais effacé : il attend son contrôle."
+
+#: pos_next/till_settings/registry.py:1845
+msgid "An abandoned cart is deleted after (hours)"
+msgstr "Un panier abandonné est effacé après (heures)"
+
+#: pos_next/till_settings/registry.py:1875
+msgid "An article a seller checks (ticked on the item or on its item group): the cart is paid at the till, or it is paid on the phone and the seller checks the article at the counter."
+msgstr "Un article contrôlé par le vendeur (coché sur l'article ou sur son groupe d'articles) : le panier est payé à la caisse, ou il est payé sur le téléphone et le vendeur contrôle l'article au comptoir."
+
+#: pos_next/till_settings/registry.py:1873
+msgid "An article to check, on the phone"
+msgstr "Un article à valider, sur le téléphone"
+
+#: pos_next/till_settings/registry.py:1883
+msgid "Blocks the payment, paid at the till"
+msgstr "Bloque le paiement, passage à la caisse"
+
+#: pos_next/till_settings/registry.py:1824
+msgid "Customers scan the articles of this till with their phone, from the shop's QR code, and the till takes their cart over by its code. Off by default."
+msgstr "Les clients scannent les articles de cette caisse avec leur téléphone, depuis le QR du magasin, et la caisse reprend leur panier grâce à son code. Éteint par défaut."
+
+#: pos_next/till_settings/registry.py:258
+msgid "Customers scan their articles"
+msgstr "Les clients scannent leurs articles"
+
+#: pos_next/till_settings/registry.py:1822
+msgid "Let customers scan their articles"
+msgstr "Laisser les clients scanner leurs articles"
+
+#: pos_next/till_settings/registry.py:1835
+msgid "One fixed code, to show at the entrance and in the aisles: print its poster."
+msgstr "Un seul code, fixe, à afficher à l'entrée et dans les rayons : imprimez son affiche."
+
+#: pos_next/till_settings/registry.py:1884
+msgid "Paid, the seller checks it at the counter"
+msgstr "Se paie, le vendeur valide au contrôle"
+
+#: pos_next/till_settings/registry.py:1860
+msgid "Pay on the phone"
+msgstr "Payer sur le téléphone"
+
+#: pos_next/till_settings/registry.py:259
+msgid "Paying on the phone"
+msgstr "Paiement sur le téléphone"
+
+#: POS/src/components/settings/TillSettingsScreen.vue:312
+msgid "Print the poster"
+msgstr "Imprimer l'affiche"
+
+#: pos_next/till_settings/registry.py:193
+msgid "Scanning in the shop"
+msgstr "Scan en magasin"
+
+#: pos_next/till_settings/registry.py:1862
+msgid "The customer may pay the cart on the phone, by the payment page of the restaurant's guests. A paid cart is always checked at the reception before the customer leaves."
+msgstr "Le client peut payer son panier sur le téléphone, depuis la page de paiement destinée aux convives du restaurant. Un panier payé est toujours contrôlé à la réception avant la sortie."
+
+#: POS/src/components/settings/TillSettingsScreen.vue:479
+#: pos_next/public/pos/assets/POSSale-B5jq-EAh.js:72
+msgid "The poster could not be printed."
+msgstr "L'affiche n'a pas pu être imprimée."
+
+#: pos_next/till_settings/registry.py:1834
+msgid "The shop's QR code"
+msgstr "Le QR du magasin"
