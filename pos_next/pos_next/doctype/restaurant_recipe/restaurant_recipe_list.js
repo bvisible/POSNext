@@ -179,7 +179,7 @@ function open_library(listview) {
 						frappe.show_alert({
 							message:
 								__("{0} recipes added, to review.", [added]) +
-								(skipped ? " " + __("{0} left as they were.", [skipped]) : ""),
+								(skipped ? " " + __("Left as they were: {0}.", [skipped]) : ""),
 							indicator: "green",
 						});
 						listview.refresh();

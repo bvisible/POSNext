@@ -211,7 +211,7 @@ function link_ingredients(frm) {
 				${
 					without.length
 						? `<div class="alert alert-info">${__(
-								"{0} have no quantity: they stay in the recipe, without an article.",
+								"Without quantity, kept in the recipe without an article: {0}.",
 								[esc(without.join(", "))]
 						  )}</div>`
 						: ""

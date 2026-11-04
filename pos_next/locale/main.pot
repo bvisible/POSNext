@@ -25246,3 +25246,160 @@ msgstr ""
 #: pos_next/fixtures/custom_field.json
 msgid "A seller checks the articles of this group and of its sub-groups before they are sold (age, advice): a customer who scans one in the shop goes to the counter with it."
 msgstr ""
+
+#: pos_next/restaurant/recipe_plan.py:421
+#, python-brace-format
+msgid "a fiche of the free library that fits «{0}»"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:160
+#, python-brace-format
+msgid "Add {0} recipes"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:177
+#, python-brace-format
+msgid "An article is what you buy: « Leek », « Cream 35 % ». This link will later tell what has to be bought for a dish. The quantities of the recipe are those of the source: {0} portions."
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:206
+msgid "Article you buy"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:193
+msgid "as the article is bought"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:227
+msgid "Choose the article"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:160
+msgid "Confirm this link"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:166
+#, python-brace-format
+msgid "Create the article «{0}»"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:129
+#, python-brace-format
+msgid "Free library · {0} fiches"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:206
+msgid "Ingredient of the recipe"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:91
+msgid "kilos or grams"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:92
+msgid "litres or decilitres"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:84
+msgid "Name already used"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:142
+msgid "No fiche matches."
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:86
+msgid "Public domain"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:151
+msgid "Quantities in cups, ounces and quarts stay in the unit of the source, marked « To convert »: Nora does not convert them for you."
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:122
+msgid "Save the links"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:134
+#, python-brace-format
+msgid "Search the {0} fiches…"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:154
+msgid "See the licence of each fiche"
+msgstr ""
+
+#: pos_next/restaurant/recipe_plan.py:311
+#, python-brace-format
+msgid "the quantity of «{0}» as the article is bought (it is written in {1})"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:93
+msgid "the unit of the article"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:130
+msgid "These are drafts."
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:130
+msgid "They arrive in your recipes as « To review », with their source and their licence."
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:187
+#, python-brace-format
+msgid "To convert into {0}: Nora asks you for the value, she does not guess it."
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:142
+msgid "To link"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:139
+msgid "To save"
+msgstr ""
+
+#: pos_next/restaurant/recipe_plan.py:598
+#, python-brace-format
+msgid "Which article is «{0}»? Choose one first."
+msgstr ""
+
+#: pos_next/restaurant/recipe_plan.py:580
+#, python-brace-format
+msgid "Which fiche is «{0}»? Choose one first."
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:1
+#, python-brace-format
+msgid "Without quantity, kept in the recipe without an article: {0}."
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:202
+#, python-brace-format
+msgid "{0} ingredients"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:1
+#, python-brace-format
+msgid "Left as they were: {0}."
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:149
+#, python-brace-format
+msgid "{0} of {1} linked"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:146
+#, python-brace-format
+msgid "{0} recipes chosen out of {1} available."
+msgstr ""
+
+#: pos_next/restaurant/recipe_plan.py:594
+#, python-brace-format
+msgid "«{0}» is not an article the restaurant buys."
+msgstr ""
+
+#: pos_next/restaurant/recipe_plan.py:469
+#, python-brace-format
+msgid "«{0}» was not added: {1}."
+msgstr ""
