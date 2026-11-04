@@ -68,6 +68,11 @@ vi.mock("@/stores/posCart", () => ({
 vi.mock("@/stores/posDrafts", () => ({
 	usePOSDraftsStore: () => ({ returnDraftSerials: vi.fn() }),
 }))
+// The draft list also lists the phones' carts since the shop scan's lot 3 (PhoneCarts reads this store when it opens,
+// and with no Pinia here that was an unhandled rejection that turned the whole run red): this till takes none
+vi.mock("@/stores/posSettings", () => ({
+	usePOSSettingsStore: () => ({ settings: { enable_shop_scan: 0 } }),
+}))
 
 function draft(id, status) {
 	return {

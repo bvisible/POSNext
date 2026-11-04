@@ -1,0 +1,59 @@
+# //// Neoffice — added file (no upstream equivalent). The till's vitest suite (POS/, about 4,350 specs) on every push
+# to version-15 that can change its verdict, and on such a pull request: one red spec, or one error thrown outside a
+# test, turns this run red. Until 2026-11-04 no workflow ran it (build-frontend.yml builds, tests.yml runs the Python
+# suite at night), and a spec one lot broke stayed red unseen until a later session ran the suite by hand.
+name: frontend-tests
+
+on:
+  push:
+    branches: [version-15]
+    paths:
+      - 'POS/**'
+      # the specs also read the app itself: the French catalogue, the cases shared with the Python tests, doctype JSON
+      - 'pos_next/**'
+      - '.github/workflows/frontend-tests.yml'
+      - '!**/node_modules/**'
+      # what build-frontend.yml commits is the build's output, never read by a spec
+      - '!pos_next/public/pos/**'
+      - '!pos_next/www/pos.html'
+      - '!pos_next/www/pos-sw.js'
+  pull_request:
+    paths:
+      - 'POS/**'
+      - 'pos_next/**'
+      - '.github/workflows/frontend-tests.yml'
+      - '!**/node_modules/**'
+      - '!pos_next/public/pos/**'
+      - '!pos_next/www/pos.html'
+      - '!pos_next/www/pos-sw.js'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  vitest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: POS
+    steps:
+      - uses: actions/checkout@v4
+
+      # Node 20 and the frozen lockfile, as build-frontend.yml: the suite runs on the dependencies the till is built with
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+          cache-dependency-path: POS/yarn.lock
+
+      - name: Install
+        run: yarn install --frozen-lockfile
+
+      - name: Vitest
+        run: yarn vitest run

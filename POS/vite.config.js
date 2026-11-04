@@ -295,12 +295,14 @@ export default defineConfig({
 	//// Neoffice — vitest: Node 25 turns on its own Web Storage global, an empty shell without a
 	//// --localstorage-file, and it shadows jsdom's localStorage in the test workers ("getItem is not
 	//// a function"). It is switched off in the workers wherever Node knows the flag (22.4 and later);
-	//// an older Node has neither the global nor the flag and would refuse it. No workflow runs vitest
-	//// today (build-frontend.yml builds with Node 20, ci.yml runs Node 22): this keeps
-	//// `npx vitest run` deterministic on any of them and on a developer's machine.
+	//// an older Node has neither the global nor the flag and would refuse it. frontend-tests.yml runs
+	//// vitest with Node 20, as build-frontend.yml builds: this keeps `npx vitest run` deterministic
+	//// there and on a developer's machine (Node 26 on the Mac).
 	test: {
 		execArgv: process.allowedNodeEnvironmentFlags.has("--experimental-webstorage")
 			? ["--no-experimental-webstorage"]
 			: [],
+		//// Neoffice — a run puts POS/components.d.ts back as it found it (see vitest.globalSetup.js)
+		globalSetup: ["./vitest.globalSetup.js"],
 	},
 });

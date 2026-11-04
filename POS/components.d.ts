@@ -16,8 +16,9 @@ declare module 'vue' {
     //// that introduced the component. At the next upstream merge do NOT resolve this file
     //// by hand: take upstream's copy and let the plugin regenerate it. The regeneration erases
     //// these `////` lines: put them back from the previous copy of this file, and give each new
-    //// component of ours a marker of its own, in the same style. `vitest` and the dev server
-    //// regenerate the file too: after either, run `git checkout -- POS/components.d.ts`.
+    //// component of ours a marker of its own, in the same style. The dev server regenerates the
+    //// file too: after it, run `git restore POS/components.d.ts`. A vitest run rewrites it and
+    //// puts it back once over (POS/vitest.globalSetup.js).
     //// Neoffice — AddressAutocomplete: geo.admin address lookup used by the POS customer
     //// dialogs (structured street + N°, ADR-002). Upstream has a single free-text address
     //// field (98500337, 2026-07-18 "fix(pos/address): geo.admin house number from label
