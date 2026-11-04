@@ -22213,3 +22213,288 @@ msgstr "Le pourboire ne peut pas être négatif, ni couvrir à lui seul le paiem
 #: pos_next/tests/test_a_guest_payment_is_booked_by_the_provider.py:176
 msgid "This payment is more than the order still owes."
 msgstr "Ce paiement dépasse le montant encore dû pour votre commande."
+
+#: pos_next/restaurant/spoken_changes.py:86
+#, python-brace-format
+msgid "A change is {action, text, qty, state}."
+msgstr "Un changement est {action, text, qty, state}."
+
+#: pos_next/restaurant/menu_plan.py:87
+#, python-brace-format
+msgid "A course holds at most {0} dishes."
+msgstr "Un service comporte au plus {0} plats."
+
+#: pos_next/restaurant/menu_plan.py:84
+#, python-brace-format
+msgid "A course of {0} has a name (Entrée, Plat, Dessert…)."
+msgstr "Un service de {0} porte un nom (Entrée, Plat, Dessert…)."
+
+#: pos_next/restaurant/menu_plan.py:92
+#, python-brace-format
+msgid "A dish of the course {0} has no name."
+msgstr "Un plat du service {0} n'a pas de nom."
+
+#: pos_next/restaurant/spoken_changes.py:212
+msgid "A line is changed once at a time."
+msgstr "Une seule modification à la fois par ligne."
+
+#: pos_next/restaurant/menu_plan.py:80
+#, python-brace-format
+msgid "A menu has at most {0} courses."
+msgstr "Un menu comporte au plus {0} services."
+
+#: pos_next/restaurant/menu_plan.py:71
+#, python-brace-format
+msgid "A menu is {name, price, courses}."
+msgstr "Un menu est {name, price, courses}."
+
+#. Description of the 'Abandoned Cart Lifetime (Hours)' (Int) field in DocType
+#. 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:201
+msgid "A phone's cart that is neither paid nor taken over by the till is deleted after this many hours."
+msgstr "Le panier d'un téléphone qui n'est ni payé ni repris par la caisse est supprimé après ce nombre d'heures."
+
+#. Label of a Int field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:204
+msgid "Abandoned Cart Lifetime (Hours)"
+msgstr "Durée de vie du panier abandonné (heures)"
+
+#: pos_next/restaurant/spoken_changes.py:155
+#, python-brace-format
+msgid "At most {0} changes at a time."
+msgstr "Au plus {0} modifications à la fois."
+
+#: pos_next/restaurant/option_plan.py:45
+#, python-brace-format
+msgid "At most {0} families or dishes at a time."
+msgstr "Au plus {0} familles ou plats à la fois."
+
+#: pos_next/restaurant/menu_plan.py:67
+#, python-brace-format
+msgid "At most {0} menus at a time."
+msgstr "Au plus {0} menus à la fois."
+
+#. Option for the 'Cart Status' (Select) field in DocType 'Guest Order Token'
+#: pos_next/pos_next/doctype/guest_order_token/guest_order_token.json:116
+msgid "At the counter"
+msgstr "Au comptoir"
+
+#. Label of a Data field in DocType 'Guest Order Token'
+#: pos_next/pos_next/doctype/guest_order_token/guest_order_token.json:105
+msgid "Cart Code"
+msgstr "Code du panier"
+
+#. Label of a Select field in DocType 'Guest Order Token'
+#: pos_next/pos_next/doctype/guest_order_token/guest_order_token.json:114
+msgid "Cart Status"
+msgstr "État du panier"
+
+#. Description of the 'Let Customers Scan Their Items' (Check) field in DocType
+#. 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:193
+msgid "Customers scan the items of this till with their phone, from the shop's QR code, and the till takes their cart over. A shop till only."
+msgstr "Les clients scannent les articles de cette caisse avec leur téléphone, à partir du QR code du magasin, et la caisse reprend leur panier. Caisse de magasin uniquement."
+
+#: pos_next/shop_scan/cart.py:50
+#: pos_next/tests/test_a_shop_cart_takes_only_what_the_till_sells.py:61
+msgid "Invalid quantity."
+msgstr "Quantité invalide."
+
+#. Label of a Data field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:212
+msgid "Key of the Shop's QR Code"
+msgstr "Clé du QR code du magasin"
+
+#. Label of a Check field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:196
+msgid "Let Customers Scan Their Items"
+msgstr "Permettre aux clients de scanner leurs articles"
+
+#: pos_next/restaurant/option_plan.py:43
+msgid "Name the families or the dishes to set, as a list."
+msgstr "Indiquez les familles ou les plats à définir, sous forme de liste."
+
+#: pos_next/restaurant/menu_plan.py:74 pos_next/restaurant/menu_plan.py:299
+msgid "Name the menu."
+msgstr "Indiquez le menu."
+
+#: pos_next/restaurant/menu_plan.py:463
+msgid "Nothing to compose."
+msgstr "Rien à composer."
+
+#: pos_next/restaurant/option_plan.py:237
+msgid "Nothing to set."
+msgstr "Rien à définir."
+
+#: pos_next/restaurant/spoken_changes.py:153
+msgid "Say what to change on the list."
+msgstr "Dites ce qu'il faut modifier sur la liste."
+
+#: pos_next/restaurant/spoken_changes.py:94
+msgid "Say which line: the change has no text."
+msgstr "Précisez la ligne : la modification ne contient pas de texte."
+
+#: pos_next/restaurant/menu_plan.py:65
+msgid "Say which menu to compose."
+msgstr "Précisez le menu à composer."
+
+#. Label of a Section Break field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:189
+msgid "Scan in the Shop"
+msgstr "Scanner en magasin"
+
+#: pos_next/shop_scan/session.py:30
+msgid "Scanning in the shop is not available here."
+msgstr "Le scan en magasin n'est pas disponible ici."
+
+#. Description of the 'Key of the Shop's QR Code' (Data) field in DocType 'POS
+#. Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:209
+msgid "Set by the system the first time the shop's QR code is asked for: the code opens this till's shop page and nothing else."
+msgstr "Définie par le système la première fois que le QR code du magasin est demandé : le code ouvre la page magasin de cette caisse et rien d'autre."
+
+#. Option for the 'Mode' (Select) field in DocType 'Guest Order Token'
+#: pos_next/pos_next/doctype/guest_order_token/guest_order_token.json:47
+msgid "shop"
+msgstr "Magasin"
+
+#. Description of the 'Cart Code' (Data) field in DocType 'Guest Order Token'
+#: pos_next/pos_next/doctype/guest_order_token/guest_order_token.json:102
+msgid "The code the phone shows for the cart of a shop session: the till takes the cart over by it."
+msgstr "Le code affiché par le téléphone pour le panier d'une session magasin : la caisse reprend le panier grâce à ce code."
+
+#: pos_next/restaurant/menu_plan.py:320 pos_next/restaurant/option_plan.py:222
+#, python-brace-format
+msgid "The family {0} does not exist."
+msgstr "La famille {0} n'existe pas."
+
+#: pos_next/restaurant/menu_plan.py:303
+#, python-brace-format
+msgid "The menu {0} has no price yet: ask the owner."
+msgstr "Le menu {0} n'a pas encore de prix : adressez-vous au responsable."
+
+#: pos_next/restaurant/spoken_changes.py:102
+#, python-brace-format
+msgid "The new quantity of {0} must be more than zero."
+msgstr "La nouvelle quantité de {0} doit être supérieure à zéro."
+
+#. Description of the 'Payment Intent' (Data) field in DocType 'Restaurant Tip'
+#: pos_next/pos_next/doctype/restaurant_tip/restaurant_tip.json:77
+msgid "The payment a guest made from the table's QR page that carried this tip: it is recorded once"
+msgstr "Le paiement effectué par un client depuis la page QR de la table, qui portait ce pourboire : il n'est enregistré qu'une fois"
+
+#: pos_next/restaurant/menu_plan.py:77
+#, python-brace-format
+msgid "The price of {0} is not a price: {1}."
+msgstr "Le prix de {0} n'est pas un prix : {1}."
+
+#: pos_next/restaurant/menu_plan.py:305
+#, python-brace-format
+msgid "The price of {0} must be more than zero."
+msgstr "Le prix de {0} doit être supérieur à zéro."
+
+#: pos_next/restaurant/spoken_changes.py:215
+msgid "The quantity must be more than zero."
+msgstr "La quantité doit être supérieure à zéro."
+
+#: pos_next/shop_scan/session.py:73
+#: pos_next/tests/test_a_shop_session_opens_only_where_and_when_the_shop_sells.py:56
+msgid "The shop is closed: scanning starts again when its till opens."
+msgstr "Le magasin est fermé : le scan reprend à l'ouverture de sa caisse."
+
+#: pos_next/restaurant/spoken_changes.py:201
+msgid "There is no shopping list in progress."
+msgstr "Aucune liste d'achats en cours."
+
+#: pos_next/shop_scan/cart.py:138
+#: pos_next/tests/test_a_shop_cart_takes_only_what_the_till_sells.py:52
+msgid "This article has no price here. Please go to the counter."
+msgstr "Cet article n'a pas de prix ici. Veuillez vous rendre au comptoir."
+
+#: pos_next/shop_scan/cart.py:133
+#: pos_next/tests/test_a_shop_cart_takes_only_what_the_till_sells.py:29
+msgid "This article is not sold here."
+msgstr "Cet article n'est pas vendu ici."
+
+#: pos_next/shop_scan/cart.py:136
+#: pos_next/tests/test_a_shop_cart_takes_only_what_the_till_sells.py:44
+msgid "This article is scanned at the counter."
+msgstr "Cet article est scanné au comptoir."
+
+#: pos_next/shop_scan/cart.py:92
+#: pos_next/tests/test_a_shop_cart_takes_only_what_the_till_sells.py:98
+msgid "This cart is waiting for the till."
+msgstr "Ce panier attend la caisse."
+
+#: pos_next/shop_scan/cart.py:177
+#: pos_next/tests/test_a_shop_cart_takes_only_what_the_till_sells.py:87
+msgid "This line is not in your cart."
+msgstr "Cette ligne ne figure pas dans votre panier."
+
+#: pos_next/restaurant/menu_plan.py:234 pos_next/restaurant/menu_plan.py:475
+msgid "This site has no restaurant to compose a menu for."
+msgstr "Ce site n'a pas de restaurant pour lequel composer un menu."
+
+#: pos_next/shop_scan/cart.py:75
+msgid "This till has no default customer."
+msgstr "Cette caisse n'a pas de client par défaut."
+
+#: pos_next/shop_scan/session.py:37
+msgid "This till has no settings yet."
+msgstr "Cette caisse n'a pas encore de réglages."
+
+#. Description of the 'Cart Status' (Select) field in DocType 'Guest Order
+#. Token'
+#: pos_next/pos_next/doctype/guest_order_token/guest_order_token.json:111
+msgid "Where the cart of a shop session stands: the customer is scanning, or the cart waits for the till."
+msgstr "Où en est le panier d'une session magasin : le client est en train de scanner, ou le panier attend la caisse."
+
+#: pos_next/shop_scan/cart.py:215
+#: pos_next/tests/test_a_shop_cart_takes_only_what_the_till_sells.py:105
+msgid "Your cart is empty."
+msgstr "Votre panier est vide."
+
+#: pos_next/restaurant/spoken_changes.py:208
+#, python-brace-format
+msgid "{0} is not a change of a line."
+msgstr "{0} n'est pas une modification de ligne."
+
+#: pos_next/restaurant/spoken_changes.py:89
+#, python-brace-format
+msgid "{0} is not a change of the list: {1}."
+msgstr "{0} n'est pas une modification de la liste : {1}."
+
+#: pos_next/restaurant/spoken_changes.py:107
+#, python-brace-format
+msgid "{0} is not a state of a line: {1}."
+msgstr "{0} n'est pas un état de ligne : {1}."
+
+#: pos_next/restaurant/option_plan.py:217
+#, python-brace-format
+msgid "{0} is not an option group Nora knows."
+msgstr "{0} n'est pas un groupe d'options connu de Nora."
+
+#: pos_next/restaurant/menu_plan.py:58
+#, python-brace-format
+msgid "{0}: a date is written 2026-12-24."
+msgstr "{0} : une date s'écrit 2026-12-24."
+
+#: pos_next/restaurant/menu_plan.py:312
+#, python-brace-format
+msgid "{0}: «{1}» is still to settle ({2})."
+msgstr "{0} : « {1} » reste à régler ({2})."
+
+#. Custom Field (scanning in the shop): label of a checkbox on an Item and an Item Group form
+#: pos_next/fixtures/custom_field.json
+msgid "Validated at the Counter"
+msgstr "Validé au comptoir"
+
+#. Custom Field (scanning in the shop): help of that checkbox on the Item form
+#: pos_next/fixtures/custom_field.json
+msgid "A seller checks this article before it is sold (age, advice): a customer who scans it in the shop goes to the counter with it."
+msgstr "Un vendeur contrôle cet article avant la vente (âge, conseil) : un client qui le scanne en magasin se présente au comptoir avec lui."
+
+#. Custom Field (scanning in the shop): help of that checkbox on the Item Group form
+#: pos_next/fixtures/custom_field.json
+msgid "A seller checks the articles of this group and of its sub-groups before they are sold (age, advice): a customer who scans one in the shop goes to the counter with it."
+msgstr "Un vendeur contrôle les articles de ce groupe et de ses sous-groupes avant leur vente (âge, conseil) : un client qui en scanne un en magasin se présente au comptoir avec lui."
