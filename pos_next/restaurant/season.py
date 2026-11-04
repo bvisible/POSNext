@@ -162,6 +162,8 @@ def load(folder: Path | None = None) -> dict | None:
 				"keys": sorted(
 					{tuple(recipes._stems(w)) for w in words if recipes._stems(w)}, key=lambda k: -len(k)
 				),
+				# words that say an ingredient is NOT this product (« haricots blancs » are not green beans)
+				"not": {stem for w in row.get("not") or [] for stem in recipes._stems(w)},
 			}
 		)
 	if not entries:
@@ -173,6 +175,7 @@ def load(folder: Path | None = None) -> dict | None:
 		"title": source.get("title"),
 		"year": source["year"],
 		"url": source["url"],
+		"note": manifest.get("note"),
 		"reviewed": bool(reviewed.get("by")),
 		"reviewed_by": reviewed.get("by"),
 		"reviewed_on": reviewed.get("on"),
@@ -207,6 +210,8 @@ def lookup(cal: dict, name) -> dict | None:
 	have = set(stems)
 	best = None
 	for entry in cal["entries"]:
+		if entry["not"] & have:
+			continue
 		for key in entry["keys"]:
 			if all(word in have for word in key) and (best is None or len(key) > best[0]):
 				best = (len(key), entry)
@@ -214,8 +219,12 @@ def lookup(cal: dict, name) -> dict | None:
 
 
 def judge(cal: dict, names, month: int) -> dict:
-	"""The season of a list of ingredient names for a month: the verdict, and the products that make it."""
+	"""The season of a list of ingredient names for a month: the verdict, and the products that make it.
+
+	A herb out of season does not decide a recipe (it is as often dried, or a garnish): it is told apart in `herbs_out`, and does not count
+	among the ingredients judged."""
 	by_state = {state: [] for state in STATES}
+	herbs_out = []
 	unknown = []
 	seen = set()
 	for name in names:
@@ -224,7 +233,11 @@ def judge(cal: dict, names, month: int) -> dict:
 			unknown.append(name)
 		elif entry["id"] not in seen:
 			seen.add(entry["id"])
-			by_state[state_of(entry, month)].append(entry["name"])
+			state = state_of(entry, month)
+			if state == "out" and entry["family"] == "herb":
+				herbs_out.append(entry["name"])
+			else:
+				by_state[state].append(entry["name"])
 	verdict = (
 		"out"
 		if by_state["out"]
@@ -234,7 +247,14 @@ def judge(cal: dict, names, month: int) -> dict:
 		if by_state["season"]
 		else "unknown"
 	)
-	return {"state": verdict, **by_state, "unknown": unknown, "judged": len(seen), "of": len(names)}
+	return {
+		"state": verdict,
+		**by_state,
+		"herbs_out": herbs_out,
+		"unknown": unknown,
+		"judged": sum(len(listed) for listed in by_state.values()),
+		"of": len(names),
+	}
 
 
 def _calendar_or_none() -> dict | None:
@@ -261,6 +281,7 @@ def season_of(verdict: dict) -> dict:
 		"state": verdict["state"],
 		"out": verdict["out"],
 		"storage": verdict["storage"],
+		"herbs_out": verdict["herbs_out"],
 		"judged": verdict["judged"],
 		"of": verdict["of"],
 	}
@@ -291,6 +312,7 @@ def status() -> dict:
 		"publisher": cal["publisher"],
 		"title": cal["title"],
 		"year": cal["year"],
+		"note": cal["note"],
 		"reviewed": cal["reviewed"],
 		"reviewed_by": cal["reviewed_by"],
 		"reviewed_on": cal["reviewed_on"],
@@ -330,6 +352,7 @@ def what_is_in_season(month=None, family=None, query=None) -> dict:
 			"publisher": cal["publisher"],
 			"year": cal["year"],
 			"reviewed": cal["reviewed"],
+			"note": cal["note"],
 		},
 	}
 	if query:

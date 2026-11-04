@@ -1,0 +1,1819 @@
+{
+ "entries": [
+  {
+   "id": "abricots",
+   "name": "Abricots",
+   "family": "fruit",
+   "season": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "storage": []
+  },
+  {
+   "id": "ail",
+   "name": "Ail",
+   "family": "vegetable",
+   "season": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "storage": [
+    10,
+    11,
+    12
+   ]
+  },
+  {
+   "id": "ail-des-ours",
+   "name": "Ail des ours",
+   "family": "herb",
+   "season": [
+    3,
+    4
+   ],
+   "storage": []
+  },
+  {
+   "id": "airelles",
+   "name": "Airelles",
+   "family": "fruit",
+   "season": [
+    8,
+    9,
+    10
+   ],
+   "storage": []
+  },
+  {
+   "id": "aneth",
+   "name": "Aneth",
+   "family": "herb",
+   "season": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "storage": []
+  },
+  {
+   "id": "aronia",
+   "name": "Aronia",
+   "family": "fruit",
+   "season": [
+    8,
+    9
+   ],
+   "storage": [],
+   "aliases": [
+    "baies d'aronia"
+   ]
+  },
+  {
+   "id": "artichauts",
+   "name": "Artichauts",
+   "family": "vegetable",
+   "season": [
+    7,
+    8,
+    9,
+    10
+   ],
+   "storage": [],
+   "aliases": [
+    "artichaut"
+   ]
+  },
+  {
+   "id": "asperges",
+   "name": "Asperges",
+   "family": "vegetable",
+   "season": [
+    4,
+    5,
+    6
+   ],
+   "storage": []
+  },
+  {
+   "id": "aubergines",
+   "name": "Aubergines",
+   "family": "vegetable",
+   "season": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "storage": []
+  },
+  {
+   "id": "baies-de-goji",
+   "name": "Baies de goji",
+   "family": "fruit",
+   "season": [
+    8,
+    9,
+    10
+   ],
+   "storage": [],
+   "aliases": [
+    "goji"
+   ]
+  },
+  {
+   "id": "basilic",
+   "name": "Basilic",
+   "family": "herb",
+   "season": [
+    5,
+    6,
+    7,
+    8,
+    9
+   ],
+   "storage": []
+  },
+  {
+   "id": "batavia",
+   "name": "Batavia",
+   "family": "vegetable",
+   "season": [
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "storage": []
+  },
+  {
+   "id": "betteraves",
+   "name": "Betteraves",
+   "family": "vegetable",
+   "season": [
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "storage": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    11,
+    12
+   ],
+   "aliases": [
+    "betterave rouge"
+   ]
+  },
+  {
+   "id": "bettes",
+   "name": "Bettes",
+   "family": "vegetable",
+   "season": [
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "storage": [],
+   "aliases": [
+    "côtes de bette",
+    "bette",
+    "blette",
+    "blettes"
+   ]
+  },
+  {
+   "id": "brocolis",
+   "name": "Brocolis",
+   "family": "vegetable",
+   "season": [
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "storage": [],
+   "aliases": [
+    "brocoli",
+    "broccoli",
+    "broccolis"
+   ]
+  },
+  {
+   "id": "camomille",
+   "name": "Camomille",
+   "family": "herb",
+   "season": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "storage": []
+  },
+  {
+   "id": "cardon",
+   "name": "Cardon",
+   "family": "vegetable",
+   "season": [
+    11,
+    12
+   ],
+   "storage": []
+  },
+  {
+   "id": "carottes",
+   "name": "Carottes",
+   "family": "vegetable",
+   "season": [
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "storage": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    11,
+    12
+   ]
+  },
+  {
+   "id": "catalogne",
+   "name": "Catalogne",
+   "family": "vegetable",
+   "season": [
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "storage": [],
+   "aliases": [
+    "chicorée catalogne"
+   ]
+  },
+  {
+   "id": "celeri-branche",
+   "name": "Céleri-branche",
+   "family": "vegetable",
+   "season": [
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "storage": [],
+   "aliases": [
+    "céleri en branches",
+    "branche de céleri"
+   ]
+  },
+  {
+   "id": "celeri-rave",
+   "name": "Céleri-rave",
+   "family": "vegetable",
+   "season": [
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "storage": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    11,
+    12
+   ]
+  },
+  {
+   "id": "cerises",
+   "name": "Cerises",
+   "family": "fruit",
+   "season": [
+    6,
+    7
+   ],
+   "storage": []
+  },
+  {
+   "id": "chicoree",
+   "name": "Chicorée",
+   "family": "vegetable",
+   "season": [
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "storage": [],
+   "aliases": [
+    "chicorée frisée",
+    "frisée"
+   ]
+  },
+  {
+   "id": "chicoree-rouge",
+   "name": "Chicorée rouge",
+   "family": "vegetable",
+   "season": [
+    1,
+    2,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "storage": [],
+   "aliases": [
+    "trévise",
+    "radicchio"
+   ]
+  },
+  {
+   "id": "chou-blanc",
+   "name": "Chou blanc",
+   "family": "vegetable",
+   "season": [
+    5,
+    6,
+    7,
+    8,
+    9
+   ],
+   "storage": [
+    1,
+    2,
+    3,
+    4,
+    10,
+    11,
+    12
+   ]
+  },
+  {
+   "id": "chou-chinois",
+   "name": "Chou chinois",
+   "family": "vegetable",
+   "season": [
+    1,
+    2,
+    3,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "storage": []
+  },
+  {
+   "id": "chou-de-milan",
+   "name": "Chou de Milan",
+   "family": "vegetable",
+   "season": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "storage": [],
+   "aliases": [
+    "chou de savoie"
+   ]
+  },
+  {
+   "id": "chou-fleur",
+   "name": "Chou-fleur",
+   "family": "vegetable",
+   "season": [
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "storage": []
+  },
+  {
+   "id": "chou-kale",
+   "name": "Chou kale",
+   "family": "vegetable",
+   "season": [
+    1,
+    2,
+    3,
+    10,
+    11,
+    12
+   ],
+   "storage": [],
+   "aliases": [
+    "kale"
+   ]
+  },
+  {
+   "id": "chou-noir",
+   "name": "Chou noir",
+   "family": "vegetable",
+   "season": [
+    1,
+    2,
+    3,
+    11,
+    12
+   ],
+   "storage": [],
+   "aliases": [
+    "cavolo nero",
+    "chou palmier",
+    "chou frisé noir"
+   ]
+  },
+  {
+   "id": "chou-pointu",
+   "name": "Chou pointu",
+   "family": "vegetable",
+   "season": [
+    9,
+    10,
+    11
+   ],
+   "storage": [
+    1,
+    2,
+    3,
+    4,
+    12
+   ]
+  },
+  {
+   "id": "chou-rave",
+   "name": "Chou-rave",
+   "family": "vegetable",
+   "season": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "storage": [],
+   "aliases": [
+    "colrave"
+   ]
+  },
+  {
+   "id": "chou-rouge",
+   "name": "Chou rouge",
+   "family": "vegetable",
+   "season": [
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "storage": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    11,
+    12
+   ]
+  },
+  {
+   "id": "choux-de-bruxelles",
+   "name": "Choux de Bruxelles",
+   "family": "vegetable",
+   "season": [
+    1,
+    9,
+    10,
+    11,
+    12
+   ],
+   "storage": []
+  },
+  {
+   "id": "ciboulette",
+   "name": "Ciboulette",
+   "family": "herb",
+   "season": [
+    5,
+    6,
+    7,
+    8,
+    9
+   ],
+   "storage": []
+  },
+  {
+   "id": "coings",
+   "name": "Coings",
+   "family": "fruit",
+   "season": [
+    9,
+    10,
+    11
+   ],
+   "storage": []
+  },
+  {
+   "id": "concombre",
+   "name": "Concombre",
+   "family": "vegetable",
+   "season": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+   ],
+   "storage": []
+  },
+  {
+   "id": "coriandre",
+   "name": "Coriandre",
+   "family": "herb",
+   "season": [
+    5,
+    6,
+    7,
+    8,
+    9
+   ],
+   "storage": []
+  },
+  {
+   "id": "courge",
+   "name": "Courge",
+   "family": "vegetable",
+   "season": [
+    1,
+    2,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "storage": [],
+   "aliases": [
+    "potiron",
+    "potimarron",
+    "butternut"
+   ]
+  },
+  {
+   "id": "courgettes",
+   "name": "Courgettes",
+   "family": "vegetable",
+   "season": [
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "storage": []
+  },
+  {
+   "id": "cresson",
+   "name": "Cresson",
+   "family": "herb",
+   "season": [
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+   ],
+   "storage": []
+  },
+  {
+   "id": "cynorhodons",
+   "name": "Cynorhodons",
+   "family": "fruit",
+   "season": [
+    9,
+    10,
+    11
+   ],
+   "storage": [],
+   "aliases": [
+    "cynorhodon"
+   ]
+  },
+  {
+   "id": "doucette",
+   "name": "Doucette",
+   "family": "vegetable",
+   "season": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "storage": [],
+   "aliases": [
+    "mâche",
+    "rampon"
+   ]
+  },
+  {
+   "id": "echalotes",
+   "name": "Échalotes",
+   "family": "vegetable",
+   "season": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "storage": [],
+   "aliases": [
+    "échalote"
+   ]
+  },
+  {
+   "id": "endives",
+   "name": "Endives",
+   "family": "vegetable",
+   "season": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "storage": [],
+   "aliases": [
+    "endive"
+   ]
+  },
+  {
+   "id": "epinards",
+   "name": "Épinards",
+   "family": "vegetable",
+   "season": [
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "storage": []
+  },
+  {
+   "id": "estragon",
+   "name": "Estragon",
+   "family": "herb",
+   "season": [
+    5,
+    6,
+    7,
+    8,
+    9
+   ],
+   "storage": []
+  },
+  {
+   "id": "fenouil",
+   "name": "Fenouil",
+   "family": "vegetable",
+   "season": [
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "storage": []
+  },
+  {
+   "id": "figues",
+   "name": "Figues",
+   "family": "fruit",
+   "season": [
+    8,
+    9,
+    10
+   ],
+   "storage": []
+  },
+  {
+   "id": "flower-sprouts",
+   "name": "Flower sprouts",
+   "family": "vegetable",
+   "season": [
+    1,
+    2,
+    3,
+    11,
+    12
+   ],
+   "storage": [],
+   "aliases": [
+    "kalette",
+    "chou kalette",
+    "kalettes"
+   ]
+  },
+  {
+   "id": "fraises",
+   "name": "Fraises",
+   "family": "fruit",
+   "season": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "storage": []
+  },
+  {
+   "id": "framboises",
+   "name": "Framboises",
+   "family": "fruit",
+   "season": [
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "storage": []
+  },
+  {
+   "id": "groseilles",
+   "name": "Groseilles",
+   "family": "fruit",
+   "season": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "storage": [],
+   "aliases": [
+    "cassis",
+    "raisinets"
+   ]
+  },
+  {
+   "id": "groseilles-a-maquereau",
+   "name": "Groseilles à maquereau",
+   "family": "fruit",
+   "season": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "storage": []
+  },
+  {
+   "id": "haricots-verts",
+   "name": "Haricots verts",
+   "family": "vegetable",
+   "season": [
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "storage": [],
+   "aliases": [
+    "haricot",
+    "haricots beurre"
+   ],
+   "not": [
+    "blanc",
+    "rouge",
+    "noir",
+    "cannellini",
+    "pinto",
+    "azuki",
+    "lingot",
+    "coco",
+    "mungo"
+   ]
+  },
+  {
+   "id": "kiwis",
+   "name": "Kiwis",
+   "family": "fruit",
+   "season": [
+    11,
+    12
+   ],
+   "storage": [
+    1,
+    2,
+    3,
+    4
+   ]
+  },
+  {
+   "id": "laitue",
+   "name": "Laitue",
+   "family": "vegetable",
+   "season": [
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "storage": [],
+   "aliases": [
+    "salade verte",
+    "laitue pommée"
+   ]
+  },
+  {
+   "id": "laitue-feuille-de-chene",
+   "name": "Laitue feuille de chêne",
+   "family": "vegetable",
+   "season": [
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "storage": []
+  },
+  {
+   "id": "laitue-romaine",
+   "name": "Laitue romaine",
+   "family": "vegetable",
+   "season": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "storage": [],
+   "aliases": [
+    "romaine"
+   ]
+  },
+  {
+   "id": "lentilles",
+   "name": "Lentilles",
+   "family": "vegetable",
+   "season": [
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "storage": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    11,
+    12
+   ]
+  },
+  {
+   "id": "liveche",
+   "name": "Livèche",
+   "family": "herb",
+   "season": [
+    5,
+    6,
+    7,
+    8
+   ],
+   "storage": []
+  },
+  {
+   "id": "lollo",
+   "name": "Lollo",
+   "family": "vegetable",
+   "season": [
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "storage": [],
+   "aliases": [
+    "lollo rouge",
+    "lollo bionda"
+   ]
+  },
+  {
+   "id": "lupin",
+   "name": "Lupin",
+   "family": "vegetable",
+   "season": [
+    7,
+    8,
+    9,
+    10
+   ],
+   "storage": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    11,
+    12
+   ]
+  },
+  {
+   "id": "mais-doux",
+   "name": "Maïs doux",
+   "family": "vegetable",
+   "season": [
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "storage": []
+  },
+  {
+   "id": "marjolaine",
+   "name": "Marjolaine",
+   "family": "herb",
+   "season": [
+    8,
+    9
+   ],
+   "storage": []
+  },
+  {
+   "id": "melisse",
+   "name": "Mélisse",
+   "family": "herb",
+   "season": [
+    6,
+    7,
+    8
+   ],
+   "storage": [],
+   "aliases": [
+    "mélisse citronnée"
+   ]
+  },
+  {
+   "id": "melon",
+   "name": "Melon",
+   "family": "vegetable",
+   "season": [
+    7,
+    8
+   ],
+   "storage": []
+  },
+  {
+   "id": "menthe-poivree",
+   "name": "Menthe poivrée",
+   "family": "herb",
+   "season": [
+    7,
+    8,
+    9
+   ],
+   "storage": [],
+   "aliases": [
+    "menthe"
+   ]
+  },
+  {
+   "id": "mini-kiwis",
+   "name": "Mini-kiwis",
+   "family": "fruit",
+   "season": [
+    9,
+    10
+   ],
+   "storage": [],
+   "aliases": [
+    "kiwaï",
+    "kiwai"
+   ]
+  },
+  {
+   "id": "mirabelles",
+   "name": "Mirabelles",
+   "family": "fruit",
+   "season": [
+    7,
+    8
+   ],
+   "storage": []
+  },
+  {
+   "id": "monarde",
+   "name": "Monarde",
+   "family": "herb",
+   "season": [
+    7,
+    8,
+    9
+   ],
+   "storage": []
+  },
+  {
+   "id": "mures",
+   "name": "Mûres",
+   "family": "fruit",
+   "season": [
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "storage": []
+  },
+  {
+   "id": "myrtilles",
+   "name": "Myrtilles",
+   "family": "fruit",
+   "season": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "storage": [],
+   "aliases": [
+    "bleuets"
+   ]
+  },
+  {
+   "id": "navet",
+   "name": "Navet",
+   "family": "vegetable",
+   "season": [
+    1,
+    2,
+    11,
+    12
+   ],
+   "storage": [],
+   "aliases": [
+    "navet d'automne"
+   ]
+  },
+  {
+   "id": "navet-de-mai",
+   "name": "Navet de mai",
+   "family": "vegetable",
+   "season": [
+    4,
+    5,
+    6
+   ],
+   "storage": []
+  },
+  {
+   "id": "nectarines",
+   "name": "Nectarines",
+   "family": "fruit",
+   "season": [
+    7,
+    8,
+    9
+   ],
+   "storage": []
+  },
+  {
+   "id": "oignons",
+   "name": "Oignons",
+   "family": "vegetable",
+   "season": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "storage": [
+    1,
+    2,
+    3,
+    12
+   ]
+  },
+  {
+   "id": "origan",
+   "name": "Origan",
+   "family": "herb",
+   "season": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "storage": []
+  },
+  {
+   "id": "pain-de-sucre",
+   "name": "Pain de sucre",
+   "family": "vegetable",
+   "season": [
+    1,
+    2,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "storage": []
+  },
+  {
+   "id": "pak-choi",
+   "name": "Pak-choï",
+   "family": "vegetable",
+   "season": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "storage": [],
+   "aliases": [
+    "pak choi"
+   ]
+  },
+  {
+   "id": "panais",
+   "name": "Panais",
+   "family": "vegetable",
+   "season": [
+    1,
+    2,
+    3,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "storage": []
+  },
+  {
+   "id": "patate-douce",
+   "name": "Patate douce",
+   "family": "vegetable",
+   "season": [
+    9,
+    10,
+    11
+   ],
+   "storage": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    12
+   ],
+   "aliases": [
+    "patates douces"
+   ]
+  },
+  {
+   "id": "patisson",
+   "name": "Pâtisson",
+   "family": "vegetable",
+   "season": [
+    7,
+    8,
+    9
+   ],
+   "storage": []
+  },
+  {
+   "id": "peches",
+   "name": "Pêches",
+   "family": "fruit",
+   "season": [
+    7,
+    8,
+    9
+   ],
+   "storage": []
+  },
+  {
+   "id": "persil",
+   "name": "Persil",
+   "family": "herb",
+   "season": [
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "storage": []
+  },
+  {
+   "id": "petits-pois",
+   "name": "Petits pois",
+   "family": "vegetable",
+   "season": [
+    6,
+    7
+   ],
+   "storage": []
+  },
+  {
+   "id": "poireau",
+   "name": "Poireau",
+   "family": "vegetable",
+   "season": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "storage": []
+  },
+  {
+   "id": "poires",
+   "name": "Poires",
+   "family": "fruit",
+   "season": [
+    8,
+    9,
+    10
+   ],
+   "storage": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    11,
+    12
+   ]
+  },
+  {
+   "id": "pois-chiches",
+   "name": "Pois chiches",
+   "family": "vegetable",
+   "season": [
+    8
+   ],
+   "storage": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    9,
+    10,
+    11,
+    12
+   ]
+  },
+  {
+   "id": "pois-mange-tout",
+   "name": "Pois mange-tout",
+   "family": "vegetable",
+   "season": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "storage": [],
+   "aliases": [
+    "pois gourmand"
+   ]
+  },
+  {
+   "id": "poivrons",
+   "name": "Poivrons",
+   "family": "vegetable",
+   "season": [
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "storage": [],
+   "aliases": [
+    "poivron"
+   ]
+  },
+  {
+   "id": "pommes",
+   "name": "Pommes",
+   "family": "fruit",
+   "season": [
+    7,
+    8,
+    9,
+    10
+   ],
+   "storage": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    11,
+    12
+   ]
+  },
+  {
+   "id": "pommes-de-terre",
+   "name": "Pommes de terre",
+   "family": "vegetable",
+   "season": [
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "storage": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    11,
+    12
+   ]
+  },
+  {
+   "id": "pourpier",
+   "name": "Pourpier",
+   "family": "herb",
+   "season": [
+    1,
+    2,
+    3,
+    4,
+    10,
+    11,
+    12
+   ],
+   "storage": []
+  },
+  {
+   "id": "quetsches",
+   "name": "Quetsches",
+   "family": "fruit",
+   "season": [
+    7,
+    8,
+    9
+   ],
+   "storage": [],
+   "aliases": [
+    "pruneau",
+    "zwetschge"
+   ]
+  },
+  {
+   "id": "quinoa",
+   "name": "Quinoa",
+   "family": "vegetable",
+   "season": [
+    7,
+    8
+   ],
+   "storage": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    9,
+    10,
+    11,
+    12
+   ]
+  },
+  {
+   "id": "racine-de-persil",
+   "name": "Racine de persil",
+   "family": "vegetable",
+   "season": [
+    1,
+    2,
+    10,
+    11,
+    12
+   ],
+   "storage": []
+  },
+  {
+   "id": "radis",
+   "name": "Radis",
+   "family": "vegetable",
+   "season": [
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "storage": [],
+   "aliases": [
+    "radis rose"
+   ]
+  },
+  {
+   "id": "radis-long-blanc",
+   "name": "Radis long blanc",
+   "family": "vegetable",
+   "season": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "storage": [],
+   "aliases": [
+    "radis noir",
+    "radis d'hiver"
+   ]
+  },
+  {
+   "id": "raisins",
+   "name": "Raisins",
+   "family": "fruit",
+   "season": [
+    8,
+    9,
+    10
+   ],
+   "storage": []
+  },
+  {
+   "id": "rhubarbe",
+   "name": "Rhubarbe",
+   "family": "vegetable",
+   "season": [
+    4,
+    5,
+    6
+   ],
+   "storage": []
+  },
+  {
+   "id": "romanesco",
+   "name": "Romanesco",
+   "family": "vegetable",
+   "season": [
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "storage": []
+  },
+  {
+   "id": "romarin",
+   "name": "Romarin",
+   "family": "herb",
+   "season": [
+    5,
+    6,
+    7,
+    8,
+    9
+   ],
+   "storage": []
+  },
+  {
+   "id": "roquette",
+   "name": "Roquette",
+   "family": "vegetable",
+   "season": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "storage": []
+  },
+  {
+   "id": "rutabaga",
+   "name": "Rutabaga",
+   "family": "vegetable",
+   "season": [
+    1,
+    2,
+    3,
+    4,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "storage": [],
+   "aliases": [
+    "chou-navet",
+    "chou navet"
+   ]
+  },
+  {
+   "id": "safran",
+   "name": "Safran",
+   "family": "herb",
+   "season": [
+    10,
+    11
+   ],
+   "storage": []
+  },
+  {
+   "id": "salade-iceberg",
+   "name": "Salade iceberg",
+   "family": "vegetable",
+   "season": [
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "storage": [],
+   "aliases": [
+    "iceberg"
+   ]
+  },
+  {
+   "id": "sauge",
+   "name": "Sauge",
+   "family": "herb",
+   "season": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "storage": []
+  },
+  {
+   "id": "scorsonere",
+   "name": "Scorsonère",
+   "family": "vegetable",
+   "season": [
+    1,
+    2,
+    10,
+    11,
+    12
+   ],
+   "storage": [],
+   "aliases": [
+    "salsifis noir",
+    "salsifis"
+   ]
+  },
+  {
+   "id": "soja",
+   "name": "Soja",
+   "family": "vegetable",
+   "season": [
+    7,
+    8,
+    9
+   ],
+   "storage": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    10,
+    11,
+    12
+   ]
+  },
+  {
+   "id": "sureau",
+   "name": "Sureau",
+   "family": "herb",
+   "season": [
+    9,
+    10
+   ],
+   "storage": []
+  },
+  {
+   "id": "tomates",
+   "name": "Tomates",
+   "family": "vegetable",
+   "season": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "storage": []
+  },
+  {
+   "id": "topinambours",
+   "name": "Topinambours",
+   "family": "vegetable",
+   "season": [
+    1,
+    2,
+    3,
+    11,
+    12
+   ],
+   "storage": []
+  }
+ ]
+}

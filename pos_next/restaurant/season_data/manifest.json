@@ -1,0 +1,16 @@
+{
+ "file": "switzerland.json",
+ "file_sha256": "de13bf9225fdba606084ca14bc882d72fbe8e35eb60d4c2095ccfea081266fbf",
+ "source": {
+  "publisher": "Schweizer Bäuerinnen und Bauern (SBV)",
+  "title": "Saisonkalender",
+  "year": 2025,
+  "url": "https://shop.schweizerbauern.ch/wp-content/uploads/2025/07/11087D-Saisonkalender_2025.pdf"
+ },
+ "licence_note": "The months are facts read from the shapes of the published calendar; none of its text or layout is reproduced. The document carries no licence statement.",
+ "note": "Harvest months include protected cultivation for some products (the publisher marks it: « teils längere Erntezeit dank geschütztem Anbau »), so tomatoes or aubergines are in season longer than in the open air.",
+ "reviewed": {
+  "by": null,
+  "on": null
+ }
+}

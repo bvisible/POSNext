@@ -32,7 +32,7 @@ SUMMER_SALAD = "_Test SE Salade d'asperges"
 PLAIN = "_Test SE Bouillon clair"
 
 
-def entry(key, name, family, season_months, storage=(), aliases=()):
+def entry(key, name, family, season_months, storage=(), aliases=(), not_=()):
 	return {
 		"id": key,
 		"name": name,
@@ -40,6 +40,7 @@ def entry(key, name, family, season_months, storage=(), aliases=()):
 		"season": list(season_months),
 		"storage": list(storage),
 		"aliases": list(aliases),
+		"not": list(not_),
 	}
 
 
@@ -54,6 +55,15 @@ ENTRIES = [
 	entry("strawberry", "Fraises", "fruit", range(5, 10), [], ["fraise"]),
 	entry("parsley", "Persil", "herb", range(5, 12), [], []),
 	entry("broccoli", "Brocolis", "vegetable", range(6, 11), [], ["brocoli", "broccoli"]),
+	entry(
+		"beans",
+		"Haricots verts",
+		"vegetable",
+		range(6, 11),
+		[],
+		["haricot"],
+		["blanc", "rouge", "cannellini"],
+	),
 ]
 
 
@@ -70,6 +80,7 @@ def a_calendar_folder(entries=ENTRIES, reviewed_by=None, tamper=False, **manifes
 			"year": 2025,
 			"url": "https://example.test/calendar",
 		},
+		"note": "The harvest months include protected cultivation for some products.",
 		"reviewed": {"by": reviewed_by, "on": "2026-11-05" if reviewed_by else None},
 	}
 	doc.update(manifest)
@@ -158,6 +169,7 @@ class TestTheCalendarIsTheFileItsManifestNames(SeasonCase):
 		self.assertEqual(
 			(said["publisher"], said["year"], said["products"]), ("A test publisher", 2025, len(ENTRIES))
 		)
+		self.assertIn("protected cultivation", said["note"])
 		self.installed(reviewed_by="the owner")
 		with as_role("client_admin"):
 			self.assertTrue(season.status()["reviewed"])
@@ -225,6 +237,14 @@ class TestAProductIsInSeasonStoredOrOut(SeasonCase):
 		self.assertEqual(season.lookup(cal, "un butternut")["id"], "squash")
 		self.assertEqual(season.lookup(cal, "Brocoli")["id"], "broccoli")
 
+	def test_a_word_that_says_what_a_product_is_not_keeps_it_from_matching(self):
+		self.installed()
+		cal = season.load()
+		self.assertEqual(season.lookup(cal, "Haricots verts")["id"], "beans")
+		self.assertEqual(season.lookup(cal, "Haricots beurre")["id"], "beans")
+		for name in ("Haricots blancs", "Haricots rouges secs", "Haricots cannellini"):
+			self.assertIsNone(season.lookup(cal, name), name)
+
 	def test_what_the_calendar_does_not_list_is_unknown_not_out_of_season(self):
 		self.installed()
 		cal = season.load()
@@ -288,6 +308,19 @@ class TestARecipeIsJudgedByWhatTheCalendarKnows(SeasonCase):
 		self.assertTrue(season.annotate(rows, lambda row: row["names"], 12))
 		self.assertEqual(rows[0]["season"]["judged"], 2)
 		self.assertEqual(rows[0]["season"]["of"], 3)
+
+	def test_a_herb_out_of_season_does_not_decide_a_recipe(self):
+		self.installed()
+		cal = season.load()
+		said = season.judge(cal, ["Carottes", "Persil", "Asperges"], 2)
+		self.assertEqual((said["state"], said["out"], said["herbs_out"]), ("out", ["Asperges"], ["Persil"]))
+		said = season.judge(cal, ["Carottes", "Persil"], 2)
+		self.assertEqual(
+			(said["state"], said["herbs_out"], said["judged"], said["of"]), ("storage", ["Persil"], 1, 2)
+		)
+		rows = [{"names": ["Carottes", "Persil"]}]
+		season.annotate(rows, lambda row: row["names"], 2)
+		self.assertEqual(rows[0]["season"]["herbs_out"], ["Persil"])
 
 	def test_a_recipe_the_calendar_knows_nothing_of_has_no_verdict(self):
 		self.installed()
@@ -380,3 +413,56 @@ class TestWhoMayAsk(SeasonCase):
 				with self.assertRaises((frappe.PermissionError, frappe.ValidationError)):
 					call()
 		frappe.set_user("Administrator")
+
+
+class TestTheCalendarThatShipsWithTheApp(FrappeTestCase):
+	"""The data file of the app itself (read from the published calendar by scripts/season-calendar/build_calendar.py): it must hold, and a few of
+	its rows are pinned to what the published calendar says, so that a bad extraction or a hand edit is seen."""
+
+	def setUp(self):
+		super().setUp()
+		self.cal = season.load()
+		if self.cal is None:
+			self.skipTest("No calendar ships with this version of the app")
+
+	def test_it_holds_and_says_where_it_comes_from(self):
+		self.assertGreaterEqual(len(self.cal["entries"]), 100)
+		self.assertEqual(self.cal["publisher"], "Schweizer Bäuerinnen und Bauern (SBV)")
+		self.assertIn("protected cultivation", self.cal["note"])
+
+	def test_every_product_has_a_french_name_a_family_and_months(self):
+		names = [e["name"] for e in self.cal["entries"]]
+		self.assertEqual(len(names), len(set(names)))
+		for e in self.cal["entries"]:
+			self.assertIn(e["family"], season.FAMILIES, e["name"])
+			self.assertTrue(e["season"] or e["storage"], e["name"])
+
+	def test_a_few_rows_say_what_the_published_calendar_says(self):
+		by = {e["id"]: e for e in self.cal["entries"]}
+		self.assertEqual(by["asperges"]["season"], [4, 5, 6])
+		self.assertEqual(by["kiwis"]["season"], [11, 12])
+		self.assertEqual(by["kiwis"]["storage"], [1, 2, 3, 4])
+		self.assertEqual(by["carottes"]["storage"], [1, 2, 3, 4, 5, 11, 12])
+		self.assertEqual(by["pourpier"]["season"], [1, 2, 3, 4, 10, 11, 12])
+		self.assertEqual(by["rhubarbe"]["season"], [4, 5, 6])
+		self.assertEqual(by["choux-de-bruxelles"]["season"], [1, 9, 10, 11, 12])
+
+	def test_the_names_of_a_kitchen_find_their_product(self):
+		for said, wanted in (
+			("Pommes de terre fermes", "pommes-de-terre"),
+			("Compote de pommes", None),
+			("Pommes", "pommes"),
+			("Oignon jaune moyen", "oignons"),
+			("Poivrons rouges", "poivrons"),
+			("Courge moyenne", "courge"),
+			("Brocoli", "brocolis"),
+			("Haricots verts en conserve", None),
+			("Haricots blancs", None),
+			("Persil frais haché", "persil"),
+			("Persil séché", None),
+			("Gros poireaux", "poireau"),
+			("Œufs", None),
+			("Huile d'olive", None),
+		):
+			found = season.lookup(self.cal, said)
+			self.assertEqual(found["id"] if found else None, wanted, said)
