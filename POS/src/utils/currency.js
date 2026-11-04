@@ -131,9 +131,10 @@ const SYMBOLS = {
 	SAR: "\u00EA",
 	AED: "د.إ",
 	//// Neoffice — the Swiss franc is written « CHF », as the desk writes it (product owner, 2026-10-28). Upstream asks
-	//// Intl for its narrow symbol (getSymbol below), which is the browser's CLDR data: a newer CLDR names the franc
-	//// « Fr. » / « fr. » (Safari on macOS 27 in fr-CH, Node 26), so one till wrote « CHF 29.00 » in Chrome 152 and
-	//// « Fr. 29.00 » in Safari, and the suite went red on Node 26 (2026-11-04).
+	//// Intl for its narrow symbol (getSymbol below), which is the browser's CLDR data: the CLDR of Node 26 (49) names the
+	//// franc « Fr. » in en and de, « fr. » in fr, and Safari on macOS 27 already says « Fr. » in fr-CH, where Chrome 152
+	//// still says « CHF ». A browser taking that data would have written « Fr. 29.00 » at the till; the suite went red
+	//// on Node 26 (2026-11-04).
 	CHF: "CHF",
 };
 

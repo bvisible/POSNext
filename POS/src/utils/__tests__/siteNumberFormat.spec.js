@@ -93,9 +93,9 @@ describe("amounts follow the site's number format", () => {
 		expect(formatCurrencyNumber(12345678.9)).toBe("1,23,45,678.90")
 	})
 
-	// The narrow symbol of a currency is the browser's CLDR data: a newer CLDR names the franc
-	// « Fr. » (« fr. » in French), as Safari on macOS 27 in fr-CH and Node 26 do, where Chrome 152
-	// still writes « CHF ». Such a browser is played here, whatever the Node running the suite.
+	// The narrow symbol of a currency is the browser's CLDR data: the CLDR of Node 26 names the
+	// franc « Fr. » (« fr. » in French), Safari on macOS 27 does in fr-CH, Chrome 152 still writes
+	// « CHF ». Such a browser is played here, whatever the Node running the suite.
 	it("writes CHF even where the browser's CLDR names the franc « Fr. »", () => {
 		initPrecision(SWISS_SITE)
 		const RealNumberFormat = Intl.NumberFormat
