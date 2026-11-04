@@ -67,6 +67,16 @@ def _measure(unit) -> tuple[str, float] | None:
 	return None
 
 
+def _readable(slot) -> tuple[float, str | None]:
+	"""A free line's quantity as it reads best: a mass or a volume (held in g or ml) in kg or l from a thousand up, else as the recipe wrote it."""
+	if not slot.get("family"):
+		return round(slot["qty"], 2), slot["unit"]
+	big, small = ("kg", "g") if slot["family"] == "mass" else ("l", "ml")
+	if slot["qty"] >= 1000:
+		return round(slot["qty"] / 1000, 2), big
+	return round(slot["qty"], 2), small
+
+
 def to_stock_unit(qty, unit, stock_uom):
 	"""`qty` of `unit`, counted in the article's own unit (its stock unit); None when the two cannot be counted one in the other."""
 	have, want = _measure(unit), _measure(stock_uom)
@@ -273,11 +283,22 @@ def plan(said) -> dict:
 				slot["stock"] = (slot["stock"] or 0.0) + counted
 				slot["from"].append(label)
 			else:
-				slot = free.setdefault(
-					(cuisine_knowledge.fold(row["name"]), cuisine_knowledge.fold(row["unit"] or "")),
-					{"name": row["name"], "unit": row["unit"], "qty": 0.0, "from": []},
-				)
-				slot["qty"] += row["qty"]
+				# A mass or a volume is added in grams or millilitres whatever the recipe wrote (800 g and 1 kg of the same thing are
+				# 1.8 kg), then said in kg or l from a thousand up: « 8000 g » for eight kilos of squash was hard to read on the list.
+				measure = _measure(row["unit"])
+				family = measure[0] if measure and measure[0] in ("mass", "volume") else None
+				if family:
+					slot = free.setdefault(
+						(cuisine_knowledge.fold(row["name"]), family),
+						{"name": row["name"], "unit": None, "family": family, "qty": 0.0, "from": []},
+					)
+					slot["qty"] += row["qty"] * measure[1]
+				else:
+					slot = free.setdefault(
+						(cuisine_knowledge.fold(row["name"]), cuisine_knowledge.fold(row["unit"] or "")),
+						{"name": row["name"], "unit": row["unit"], "family": None, "qty": 0.0, "from": []},
+					)
+					slot["qty"] += row["qty"]
 				slot["from"].append(label)
 	lines, total, partial = [], 0.0, False
 	for item, slot in needs.items():
@@ -329,19 +350,19 @@ def plan(said) -> dict:
 			}
 		)
 	for slot in free.values():
-		qty = round(slot["qty"], 2)
+		qty, unit = _readable(slot)
 		lines.append(
 			{
 				"text": slot["name"],
 				"qty": qty,
-				"unit": slot["unit"],
+				"unit": unit,
 				"status": "unknown",
 				"item": None,
 				"item_name": None,
 				"pack": None,
 				"candidates": [],
 				"from": sorted(set(slot["from"])),
-				"line": {"free": True, "text": slot["name"], "qty": qty, "unit_text": slot["unit"]},
+				"line": {"free": True, "text": slot["name"], "qty": qty, "unit_text": unit},
 			}
 		)
 	counts = {
@@ -391,7 +412,10 @@ def cost(said, portions=None, markup=None) -> dict:
 	for row in _rows_of(cand, target):
 		entry = {
 			"name": row["name"],
+			# `qty` is for ALL the `portions` of the answer (200 g for four portions), `qty_per_portion` for one (50 g): a reader took
+			# the first for a portion's (04.11)
 			"qty": round(row["qty"], 3) if row["qty"] else None,
+			"qty_per_portion": round(row["qty"] / target, 3) if row["qty"] else None,
 			"unit": row["unit"],
 		}
 		if row["why"] and row["why"] != "one_pack":

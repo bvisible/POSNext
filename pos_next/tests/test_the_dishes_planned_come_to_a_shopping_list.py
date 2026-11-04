@@ -15,6 +15,8 @@ restaurant », lot R6). The list and its packagings are the purchases' (lots B a
 The suite builds everything it needs and rolls back.
 """
 
+import json
+from pathlib import Path
 from unittest.mock import patch
 
 import frappe
@@ -179,21 +181,49 @@ class TestThePortionsAreWorkedOutAddedUpAndRoundedUp(ShoppingCase):
 
 
 class TestWhatCannotBeWorkedOutIsSaidNeverGuessed(ShoppingCase):
-	def test_an_ingredient_without_an_article_goes_on_as_a_free_line_written_as_the_recipe_says_it(self):
+	def test_an_ingredient_without_an_article_goes_on_as_a_free_line_with_its_name(self):
 		self.a_recipe(
 			SOUP,
 			[
 				{"ingredient_name": "Pâtes", "item": self.pasta, "qty": 120, "unit": "g"},
-				{"ingredient_name": "Courge butternut", "qty": 800, "unit": "g"},
+				{"ingredient_name": "Courge butternut", "qty": 400, "unit": "g"},
 			],
 		)
 		answer = self.plan({"name": SOUP, "portions": 8})
 		free = [line for line in answer["lines"] if line["status"] == "unknown"]
 		self.assertEqual(len(free), 1)
 		self.assertEqual(
-			free[0]["line"], {"free": True, "text": "Courge butternut", "qty": 1600.0, "unit_text": "g"}
+			free[0]["line"], {"free": True, "text": "Courge butternut", "qty": 800.0, "unit_text": "g"}
 		)
 		self.assertEqual(answer["counts"], {"matched": 1, "ambiguous": 0, "unknown": 1})
+
+	def free_lines(self, answer):
+		return {
+			line["text"]: (line["qty"], line["unit"])
+			for line in answer["lines"]
+			if line["status"] == "unknown"
+		}
+
+	def test_a_mass_or_a_volume_from_a_thousand_up_is_said_in_kilograms_or_litres(self):
+		self.a_recipe(
+			SOUP,
+			[
+				{"ingredient_name": "Courge", "qty": 800, "unit": "g"},
+				{"ingredient_name": "Crème", "qty": 5, "unit": "dl"},
+				{"ingredient_name": "Muscade", "qty": 3, "unit": "g"},
+				{"ingredient_name": "Persil", "qty": 1, "unit": "bouquet"},
+			],
+		)
+		self.assertEqual(
+			self.free_lines(self.plan({"name": SOUP, "portions": 40})),
+			{"Courge": (8.0, "kg"), "Crème": (5.0, "l"), "Muscade": (30.0, "g"), "Persil": (10.0, "bouquet")},
+		)
+
+	def test_the_same_ingredient_written_in_two_units_by_two_dishes_is_one_free_line(self):
+		self.a_recipe(SOUP, [{"ingredient_name": "Courge", "qty": 800, "unit": "g"}])
+		self.a_recipe(GRATIN, [{"ingredient_name": "courge", "qty": 1, "unit": "kg"}])
+		answer = self.plan({"name": SOUP, "portions": 4}, {"name": GRATIN, "portions": 4})
+		self.assertEqual(self.free_lines(answer), {"Courge": (1.8, "kg")})
 
 	def test_what_has_no_quantity_no_conversion_or_no_matching_unit_is_left_off_and_said(self):
 		self.a_recipe(
@@ -301,6 +331,19 @@ class TestADishIsNamedByARecipeADishOrItsOwnIngredients(ShoppingCase):
 				recipe_shopping.plan([bad])
 
 
+class TestAFreeLineIsReadableOnTheListsForm(FrappeTestCase):
+	def test_the_grid_of_the_form_shows_what_a_free_line_is_and_its_unit(self):
+		# On the form's grid a free line (the squash of a recipe) showed only « 8'000 »: the name is `free_text`, the unit `unit_text`,
+		# neither was a column (04.11). Read from the doctype's file: a site that has not migrated yet still carries the old columns.
+		path = Path(frappe.get_app_path("pos_next", "pos_next", "doctype", "restaurant_shopping_list_line"))
+		fields = {
+			f["fieldname"]: f
+			for f in json.loads((path / "restaurant_shopping_list_line.json").read_text())["fields"]
+		}
+		for name in ("free_text", "unit_text"):
+			self.assertEqual(fields[name].get("in_list_view"), 1, name)
+
+
 class TestWhatThePlanSaysIsWhatTheListWrites(ShoppingCase):
 	def test_the_confirmed_lines_land_on_the_list_with_the_origin_of_a_dish(self):
 		self.a_recipe(
@@ -343,6 +386,15 @@ class TestWhatAPortionCosts(ShoppingCase):
 		with as_role("client_admin"):
 			answer = recipe_shopping.cost(SOUP, 40)
 		self.assertEqual((answer["portions"], answer["total"], answer["per_portion"]), (40, 7.44, 0.19))
+
+	def test_a_quantity_says_whether_it_is_for_all_the_portions_or_for_one(self):
+		self.a_recipe(SOUP, [{"ingredient_name": "Pâtes", "item": self.pasta, "qty": 200, "unit": "g"}])
+		with as_role("client_admin"):
+			row = recipe_shopping.cost(SOUP)["ingredients"][0]
+			row_of_forty = recipe_shopping.cost(SOUP, 40)["ingredients"][0]
+		# 200 g is for the four portions of the recipe, 50 g for one; for forty portions 2000 g, still 50 g for one
+		self.assertEqual((row["qty"], row["qty_per_portion"]), (200, 50))
+		self.assertEqual((row_of_forty["qty"], row_of_forty["qty_per_portion"]), (2000, 50))
 
 	def test_a_cost_that_misses_an_ingredient_is_partial_and_suggests_no_price(self):
 		self.a_recipe(

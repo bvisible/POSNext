@@ -4,7 +4,7 @@
  "creation": "2026-11-02 20:30:00.000000",
  "doctype": "DocType",
  "engine": "InnoDB",
- "modified": "2026-11-02 20:30:00.000000",
+ "modified": "2026-11-04 22:10:00.000000",
  "module": "POS Next",
  "owner": "Administrator",
  "states": [],
@@ -40,6 +40,8 @@
    "fieldname": "free_text",
    "fieldtype": "Small Text",
    "label": "Free Text",
+   "in_list_view": 1,
+   "columns": 2,
    "description": "What to buy when it is not an article: written as the owner says it."
   },
   {
@@ -71,6 +73,8 @@
    "fieldname": "unit_text",
    "fieldtype": "Data",
    "label": "Unit (free line)",
+   "in_list_view": 1,
+   "columns": 1,
    "description": "The unit of a free line, as written (rolls, pieces…)."
   },
   {
