@@ -23334,3 +23334,257 @@ msgstr "«{0}» est à la fois de saison et de garde le même mois"
 #, python-brace-format
 msgid "«{0}» is not a month."
 msgstr "«{0}» n'est pas un mois."
+
+#: POS/src/components/shop/ShopCartControl.vue:96
+msgid "All there · Validate the cart"
+msgstr "Tout est là · Valider le panier"
+
+#: pos_next/shop_scan/payment.py:56
+msgid "An article of your cart is checked by a seller: this cart is paid at the till."
+msgstr "Un article de votre panier est contrôlé par un vendeur : ce panier se paie à la caisse."
+
+#. Label of a Select field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:232
+msgid "An Article to Check, on the Phone"
+msgstr "Article à contrôler, sur le téléphone"
+
+#: POS/src/components/shop/ShopCartControl.vue:93
+msgid "Article found in the bag"
+msgstr "Article trouvé dans le sac"
+
+#: POS/src/components/shop/ShopCounter.vue:13
+#: pos_next/public/pos/assets/ShopScan-DrJPL01E.js:1
+msgid "Before you leave, show this code: a seller checks your articles."
+msgstr "Avant de partir, montrez ce code : un vendeur contrôle vos articles."
+
+#. Option for the 'An Article to Check, on the Phone' (Select) field in DocType
+#. 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:233
+msgid "Blocks the payment"
+msgstr "Bloque le paiement, passage à la caisse"
+
+#: pos_next/shop_scan/payment.py:96
+#, python-brace-format
+msgid "Cart {0}"
+msgstr "Panier {0}"
+
+#: POS/src/composables/useShopCart.js:116
+#: pos_next/public/pos/assets/POSSale-039DFtX8.js:9
+#, python-brace-format
+msgid "Cart {0} paid on the phone: check it."
+msgstr "Panier {0} payé sur le téléphone : à contrôler."
+
+#: pos_next/public/pos/assets/POSSale-039DFtX8.js:9
+#, python-brace-format
+msgid "Cart {0} validated, {1} refunded."
+msgstr "Panier {0} validé, {1} remboursé."
+
+#: POS/src/components/shop/ShopCartControl.vue:205
+#: pos_next/public/pos/assets/POSSale-039DFtX8.js:9
+#, python-brace-format
+msgid "Cart {0} validated."
+msgstr "Panier {0} validé."
+
+#: POS/src/components/shop/ShopCartControl.vue:127
+#: pos_next/public/pos/assets/POSSale-039DFtX8.js:9
+#, python-brace-format
+msgid "Check of the cart {0}"
+msgstr "Contrôle du panier {0}"
+
+#: pos_next/shop_scan/control.py:177
+#, python-brace-format
+msgid "Check of the cart {0} paid on the phone: {1}."
+msgstr "Contrôle du panier {0} payé sur le téléphone : {1}."
+
+#: POS/src/components/sale/InvoiceCart.vue:1955
+#, python-brace-format
+msgid "Check the cart {0}"
+msgstr "Contrôler le panier {0}"
+
+#: POS/src/pages/ShopScan.vue:118
+msgid "Confirming your payment…"
+msgstr "Nous confirmons votre paiement…"
+
+#: POS/src/components/shop/ShopCounter.vue:82
+#: pos_next/public/pos/assets/ShopScan-DrJPL01E.js:1
+msgid "Go to the reception to have your cart validated"
+msgstr "Rendez-vous à la réception pour la validation de votre panier"
+
+#: POS/src/components/shop/ShopCartControl.vue:52
+msgid "Missing:"
+msgstr "Manquant :"
+
+#: pos_next/shop_scan/control.py:53
+msgid "Nothing of this cart is left to sell: refund the whole payment from the payment's own record."
+msgstr "Il ne reste rien à vendre de ce panier : remboursez l'intégralité du paiement depuis la fiche du paiement."
+
+#: POS/src/components/shop/ShopCartControl.vue:56
+msgid "One less missing"
+msgstr "Un manquant de moins"
+
+#: POS/src/components/shop/ShopCartControl.vue:65
+msgid "One more missing"
+msgstr "Un manquant de plus"
+
+#. Label of a Long Text field in DocType 'Guest Order Token'
+#: pos_next/pos_next/doctype/guest_order_token/guest_order_token.json:125
+msgid "Paid Lines"
+msgstr "Lignes payées"
+
+#: POS/src/components/shop/ShopCartControl.vue:77
+#, python-brace-format
+msgid "Paid on the phone: {0}"
+msgstr "Payé sur le téléphone : {0}"
+
+#: POS/src/components/shop/PhoneCarts.vue:75
+#: POS/src/components/shop/ShopCartControl.vue:12
+#: pos_next/public/pos/assets/POSSale-039DFtX8.js:9
+msgid "Paid · to check"
+msgstr "Payé · à contrôler"
+
+#: POS/src/components/shop/ShopCounter.vue:77
+#: pos_next/public/pos/assets/ShopScan-DrJPL01E.js:1
+#, python-brace-format
+msgid "Paid · {0}"
+msgstr "Payé · {0}"
+
+#. Option for the 'An Article to Check, on the Phone' (Select) field in DocType
+#. 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:233
+msgid "Paid, checked at the counter"
+msgstr "Se paie, le vendeur valide au contrôle"
+
+#: POS/src/components/shop/ShopCart.vue:93
+#: POS/src/components/shop/ShopCounter.vue:51
+#: pos_next/public/pos/assets/ShopScan-DrJPL01E.js:1
+msgid "Pay now"
+msgstr "Payer maintenant"
+
+#. Label of a Check field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:224
+msgid "Pay on the Phone"
+msgstr "Payer sur le téléphone"
+
+#: POS/src/components/shop/ShopCartControl.vue:96
+#, python-brace-format
+msgid "Refund {0} and validate"
+msgstr "Rembourser {0} et valider"
+
+#: POS/src/components/shop/ShopCartControl.vue:181
+#: pos_next/public/pos/assets/POSSale-039DFtX8.js:9
+msgid "Scan the article: the customer pays the rest at the till."
+msgstr "Scannez l'article : le client paie le reste à la caisse."
+
+#: POS/src/components/shop/ShopCounter.vue:16
+#: pos_next/public/pos/assets/ShopScan-DrJPL01E.js:1
+msgid "Thank you for your visit."
+msgstr "Merci de votre visite."
+
+#: POS/src/components/shop/ShopCartControl.vue:208
+#: pos_next/public/pos/assets/POSSale-039DFtX8.js:9
+msgid "The cart could not be validated."
+msgstr "Le panier n'a pas pu être validé."
+
+#. Description of the 'Pay on the Phone' (Check) field in DocType 'POS
+#. Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:221
+msgid "The customer may pay the cart on the phone, by the payment page the restaurant's guests pay on. A paid cart is always checked at the counter before the customer leaves."
+msgstr "Le client peut payer son panier sur son téléphone, via la page de paiement utilisée par les clients du restaurant. Un panier payé est toujours contrôlé au comptoir avant que le client ne parte."
+
+#. Description of the 'Paid Lines' (Long Text) field in DocType 'Guest Order
+#. Token'
+#: pos_next/pos_next/doctype/guest_order_token/guest_order_token.json:121
+msgid "The lines of a shop cart as the customer paid them on the phone (item, quantity, amount): what the check at the counter is measured against."
+msgstr "Les lignes d'un panier de magasin telles que le client les a payées sur son téléphone (article, quantité, montant) : la référence du contrôle au comptoir."
+
+#: pos_next/shop_scan/payment.py:113
+msgid "The payment could not start. Please pay at the till."
+msgstr "Le paiement n'a pas pu démarrer. Veuillez payer à la caisse."
+
+#: POS/src/components/shop/ShopCounter.vue:55
+#: pos_next/public/pos/assets/ShopScan-DrJPL01E.js:1
+msgid "The payment counts once the provider has confirmed it."
+msgstr "Le paiement n'est compté que lorsque le prestataire l'a confirmé."
+
+#: POS/src/pages/ShopScan.vue:244 POS/src/pages/ShopScan.vue:252
+#: pos_next/public/pos/assets/ShopScan-DrJPL01E.js:1
+msgid "The payment did not go through. Try again, or pay at the till."
+msgstr "Le paiement n'a pas abouti. Réessayez, ou payez à la caisse."
+
+#: pos_next/shop_scan/control.py:76
+msgid "The payment of this cart cannot be refunded here."
+msgstr "Le paiement de ce panier ne peut pas être remboursé ici."
+
+#: pos_next/shop_scan/control.py:93
+msgid "This cart is already sold."
+msgstr "Ce panier est déjà vendu."
+
+#: pos_next/shop_scan/control.py:98
+msgid "This cart is not paid in full: take the rest with the till's payment."
+msgstr "Ce panier n'est pas entièrement payé : encaissez le solde par le paiement de la caisse."
+
+#: pos_next/shop_scan/control.py:32
+msgid "This cart is not paid: it is sold by the till's payment."
+msgstr "Ce panier n'est pas payé : il se vend par le paiement à la caisse."
+
+#: pos_next/shop_scan/payment.py:46 pos_next/shop_scan/payment.py:80
+msgid "This cart is paid."
+msgstr "Ce panier est payé."
+
+#: pos_next/shop_scan/payment.py:52
+msgid "This shop takes the payment at the till."
+msgstr "Ce magasin encaisse le paiement à la caisse."
+
+#: pos_next/shop_scan/control.py:30
+msgid "This till has no phone's cart of this code."
+msgstr "Cette caisse n'a aucun panier de téléphone avec ce code."
+
+#: POS/src/components/shop/ShopCartControl.vue:36
+msgid "To check by a seller"
+msgstr "À contrôler par un vendeur"
+
+#: POS/src/components/shop/ShopCartControl.vue:85
+msgid "To refund"
+msgstr "À rembourser"
+
+#. Description of the 'An Article to Check, on the Phone' (Select) field in
+#. DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:229
+msgid "What an article a seller checks (ticked on the item or on its item group) does on the phone: the cart is paid at the till, or it is paid on the phone and the seller checks the article at the counter."
+msgstr "Ce que fait un article contrôlé par un vendeur (coché sur l'article ou sur son groupe d'articles) sur le téléphone : le panier se paie à la caisse, ou il se paie sur le téléphone et le vendeur contrôle l'article au comptoir."
+
+#. Description of the 'Cart Status' (Select) field in DocType 'Guest Order
+#. Token'
+#: pos_next/pos_next/doctype/guest_order_token/guest_order_token.json:112
+msgid "Where the cart of a shop session stands: the customer is scanning, the cart waits for the till, it is paid on the phone and waits for its check, or the seller checked it."
+msgstr "Où en est le panier d'une session en magasin : le client scanne, le panier attend la caisse, il est payé sur le téléphone et attend son contrôle, ou le vendeur l'a contrôlé."
+
+#: POS/src/components/shop/ShopCounter.vue:81
+#: pos_next/public/pos/assets/ShopScan-DrJPL01E.js:1
+msgid "Your cart is validated"
+msgstr "Votre panier est validé"
+
+#: POS/src/pages/ShopScan.vue:254
+#: pos_next/public/pos/assets/ShopScan-DrJPL01E.js:1
+msgid "Your payment is not confirmed yet. Show this code at the till."
+msgstr "Votre paiement n'est pas encore confirmé. Présentez ce code à la caisse."
+
+#: POS/src/components/shop/ShopCounter.vue:12
+#: pos_next/public/pos/assets/ShopScan-DrJPL01E.js:1
+msgid "Your payment is received."
+msgstr "Nous avons reçu votre paiement."
+
+#: POS/src/components/shop/ShopCartControl.vue:15
+#, python-brace-format
+msgid "{0} of {1} checked"
+msgstr "{0} sur {1} contrôlés"
+
+#: pos_next/shop_scan/control.py:170
+#, python-brace-format
+msgid "{0}: {1} added at the counter, {2}"
+msgstr "{0} : {1} ajouté(s) au comptoir, {2}"
+
+#: pos_next/shop_scan/control.py:173
+#, python-brace-format
+msgid "{0}: {1} missing, refunded {2}"
+msgstr "{0} : {1} manquant(s), remboursement de {2}"
