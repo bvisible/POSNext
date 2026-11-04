@@ -296,7 +296,7 @@
 											<!-- //// Neoffice — the poster of the shop's QR code (scanning in the shop, lot 5): printed from here, the code is never typed -->
 											<div
 												v-else-if="block.setting.key === 'shop_scan_poster'"
-												:class="greyed(block.setting) ? 'opacity-[0.42]' : ''"
+												:class="['ml-[9px] border-l-2 border-pos-line pl-[19px]', greyed(block.setting) ? 'opacity-[0.42]' : '']"
 												data-setting="shop_scan_poster"
 											>
 												<div class="mb-[5px] flex flex-wrap items-center gap-1.5 text-[12.5px] text-pos-muted">

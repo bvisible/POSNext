@@ -20,7 +20,7 @@ const STYLE = `
 	.poster__qr svg { display: block; width: 100%; height: auto; }
 	.poster__steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6mm; width: 100%; margin: 0; padding: 0; list-style: none; text-align: left; }
 	.poster__step { display: flex; flex-direction: column; gap: 1.5mm; }
-	.poster__number { font-family: "Forum", serif; font-size: 22pt; line-height: 1; color: #aa3700; }
+	.poster__step .poster__number { font-family: "Forum", serif; font-size: 22pt; line-height: 1; color: #aa3700; }
 	.poster__step strong { font-size: 13pt; color: #141414; }
 	.poster__step span { font-size: 11pt; line-height: 1.35; color: #524b41; }
 	.poster__url { margin: 0; max-width: 100%; font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; font-size: 9pt; line-height: 1.4; color: #6f665a; overflow-wrap: anywhere; }

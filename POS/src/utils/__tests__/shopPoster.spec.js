@@ -34,6 +34,8 @@ describe("the poster of the shop's QR code", () => {
 			),
 		).toEqual(["Scan", "Go to the till", "Checked and paid"])
 		expect(page.querySelector(".poster__url").textContent).toBe(URL)
+		// The number of a step is the step's own rule, not the rule of its text (a span, as the text is)
+		expect(html).toContain(".poster__step .poster__number {")
 	})
 
 	it("says the steps the phone's page says", () => {
