@@ -113,6 +113,11 @@ export function articlesIn(cart) {
 		.reduce((sum, line) => sum + Number(line.qty || 0), 0);
 }
 
+/** « 1 article », « 3 articles »: the number of a cart's articles with its noun, agreed. */
+export function articlesLabel(count) {
+	return Number(count) === 1 ? __("1 article") : __("{0} articles", [count]);
+}
+
 /** An amount as the customer's phone writes money; the number alone for a currency it does not know. */
 export function formatAmount(amount, currency) {
 	try {

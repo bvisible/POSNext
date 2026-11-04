@@ -10,7 +10,7 @@ vi.hoisted(() => {
 		args ? msgid.replace(/\{(\d+)\}/g, (_match, index) => args[Number(index)]) : msgid;
 });
 
-const { articlesIn, keptSession, openShop, scanItem, serverMessage, ShopRefusal } = await import(
+const { articlesIn, articlesLabel, keptSession, openShop, scanItem, serverMessage, ShopRefusal } = await import(
 	"../shopScan"
 );
 
@@ -130,6 +130,11 @@ describe("the shop's page and the server", () => {
 		).toBe("Not sold here.");
 		expect(serverMessage({})).toBe("");
 		expect(serverMessage({ _server_messages: "not json" })).toBe("");
+	});
+
+	it("says one article in the singular, any other number in the plural", () => {
+		expect(articlesLabel(1)).toBe("1 article");
+		expect(articlesLabel(3)).toBe("3 articles");
 	});
 
 	it("counts the articles of a cart, the free ones apart", () => {

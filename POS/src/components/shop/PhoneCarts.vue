@@ -11,20 +11,26 @@
 				:key="cart.code"
 				class="bg-white border border-gray-200 rounded-lg p-3 flex items-center gap-3"
 			>
-				<div class="flex-1 min-w-0">
+				<!-- Its state under what it holds: a long state never squeezes the code and the amount (seen at 512 px) -->
+				<div class="flex-1 min-w-0 flex flex-col items-start gap-1">
 					<p class="text-sm text-gray-900 flex flex-wrap items-baseline gap-x-2">
 						<strong class="font-mono">{{ cart.code }}</strong>
 						<span dir="auto" class="truncate">{{ cart.customer_name || cart.customer }}</span>
 					</p>
-					<p class="text-xs text-gray-600 mt-0.5 tabular-nums">
-						{{ __("{0} articles · {1}", [cart.articles, money(cart)]) }} · {{ timeOf(cart.since) }}
+					<p class="text-xs text-gray-600 tabular-nums">
+						{{ articlesLabel(cart.articles) }} · {{ money(cart) }} · {{ timeOf(cart.since) }}
 					</p>
+					<span :class="['px-2 py-0.5 rounded-full text-xs font-semibold', stateOf(cart).tone]">
+						{{ stateOf(cart).label }}
+					</span>
 				</div>
-				<span :class="['shrink-0 px-2 py-0.5 rounded-full text-xs font-semibold', stateOf(cart).tone]">
-					{{ stateOf(cart).label }}
-				</span>
-				<Button variant="solid" :loading="takingOver === cart.code" @click="takeOverTheCart(cart)">
-					{{ __("Take over") }}
+				<Button
+					class="shrink-0"
+					variant="solid"
+					:loading="takingOver === cart.code"
+					@click="takeOverTheCart(cart)"
+				>
+					{{ __("Take over", null, "Phone cart") }}
 				</Button>
 			</li>
 		</ul>
@@ -38,6 +44,7 @@ import { usePOSSettingsStore } from "@/stores/posSettings"
 import { usePOSShiftStore } from "@/stores/posShift"
 import { call } from "@/utils/apiWrapper"
 import { formatCurrency } from "@/utils/currency"
+import { articlesLabel } from "@/utils/shopScan"
 import { Button } from "frappe-ui"
 import { onMounted, ref } from "vue"
 
@@ -76,7 +83,10 @@ function stateOf(cart) {
 			tone: "bg-amber-50 text-amber-800",
 		}
 	}
-	return { label: __("To be paid"), tone: "bg-orange-50 text-orange-800" }
+	return {
+		label: __("To be paid", null, "Phone cart"),
+		tone: "bg-orange-50 text-orange-800",
+	}
 }
 
 async function load() {

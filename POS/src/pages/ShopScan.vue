@@ -43,7 +43,7 @@
 						<p class="shop-hero__state">
 							{{
 								articles
-									? __("{0} articles · {1}", [articles, money(cart.grand_total)])
+									? `${articlesLabel(articles)} · ${money(cart.grand_total)}`
 									: __("empty for now")
 							}}
 						</p>
@@ -125,6 +125,7 @@ import ShopCounter from "@/components/shop/ShopCounter.vue";
 import ShopScanner from "@/components/shop/ShopScanner.vue";
 import {
 	articlesIn,
+	articlesLabel,
 	finishCart,
 	formatAmount,
 	keepSession,

@@ -115,6 +115,7 @@ describe("the carts of the phones at the till", () => {
 		expect(rows[0].text()).toContain("Walk-in")
 		expect(rows[0].text()).toContain("4 articles · CHF 58.30 · 14:31")
 		expect(rows[0].text()).toContain("To be paid")
+		expect(rows[1].text()).toContain("1 article · CHF 58.00")
 		expect(rows[1].text()).toContain("An article to check")
 		expect(rows[2].text()).toContain("The customer is still scanning")
 	})

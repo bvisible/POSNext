@@ -18,7 +18,7 @@
 			></div>
 			<p class="shop-counter__code">{{ cart.code }}</p>
 			<p class="shop-counter__summary">
-				{{ __("{0} articles", [articles]) }} ·
+				{{ articlesLabel(articles) }} ·
 				<strong>{{ money(cart.grand_total) }}</strong>
 			</p>
 		</div>
@@ -37,7 +37,7 @@
 <script setup>
 import QRCode from "qrcode";
 import { computed, ref, watchEffect } from "vue";
-import { articlesIn, formatAmount } from "@/utils/shopScan";
+import { articlesIn, articlesLabel, formatAmount } from "@/utils/shopScan";
 
 const props = defineProps({
 	cart: { type: Object, required: true },
