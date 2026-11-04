@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neopos VERSION\n"
 "Report-Msgid-Bugs-To: support@brainwise.me\n"
-"POT-Creation-Date: 2026-11-04 12:30+0000\n"
-"PO-Revision-Date: 2026-11-04 12:30+0000\n"
+"POT-Creation-Date: 2026-11-04 14:00+0000\n"
+"PO-Revision-Date: 2026-11-04 14:00+0000\n"
 "Last-Translator: support@brainwise.me\n"
 "Language-Team: support@brainwise.me\n"
 "MIME-Version: 1.0\n"
@@ -397,6 +397,15 @@ msgstr ""
 msgid "A receipt for this invoice was already printed — the customer may have a physical copy. Use Return Invoice to issue a credit note instead."
 msgstr ""
 
+#: pos_next/restaurant/recipe_plan.py:80
+#, python-brace-format
+msgid "A recipe is {name, portions, ingredients, steps}."
+msgstr ""
+
+#: pos_next/restaurant/recipe_plan.py:420
+msgid "A recipe to write is a line `propose` answered."
+msgstr ""
+
 #: pos_next/till_settings/registry.py:638
 msgid "A reminder e-mail goes to the customer this many hours before the reservation."
 msgstr ""
@@ -411,10 +420,23 @@ msgstr ""
 msgid "A second screen, turned to the customer, shows the cart and the total."
 msgstr ""
 
+#: POS/src/components/shop/ShopCart.vue:71
+#: POS/src/components/shop/ShopCounter.vue:32
+msgid "A seller checks an article of your cart at the counter."
+msgstr ""
+
+#: POS/src/pages/ShopScan.vue:86
+msgid "A seller checks your cart, then you pay."
+msgstr ""
+
 #. Description of the 'Disconnected At' (Datetime) field in DocType 'Restaurant
 #. Device'
 #: pos_next/pos_next/doctype/restaurant_device/restaurant_device.json:112
 msgid "A session opened before this moment is refused, even after the tablet is paired again."
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:75
+msgid "A suggestion is only a suggestion: nothing is linked until you press the button."
 msgstr ""
 
 #: pos_next/api/restaurant_devices.py:45
@@ -533,7 +555,7 @@ msgstr ""
 msgid "Account Head"
 msgstr ""
 
-#: pos_next/api/invoices.py:633
+#: pos_next/api/invoices.py:641
 #, python-brace-format
 msgid "Account {0} is not a Receivable account"
 msgstr ""
@@ -597,7 +619,7 @@ msgstr ""
 #: pos_next/pos_next/doctype/restaurant_card/restaurant_card.json:63
 #: pos_next/pos_next/doctype/restaurant_menu/restaurant_menu.json:56
 #: pos_next/pos_next/doctype/wallet/wallet.json:36
-#: pos_next/restaurant/neoresto.py:312
+#: pos_next/restaurant/neoresto.py:335
 msgid "Active"
 msgstr ""
 
@@ -632,6 +654,7 @@ msgstr ""
 #: POS/src/components/sale/PaymentDialog.vue:1901
 #: POS/src/components/sale/PaymentDialog.vue:2244
 #: POS/src/components/settings/TillSettingField.vue:194
+#: POS/src/components/shop/ShopScanner.vue:41
 #: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:351
 msgid "Add"
 msgstr ""
@@ -781,6 +804,11 @@ msgstr ""
 msgid "Add at least one row to {0}"
 msgstr ""
 
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:35
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:78
+msgid "Add from the free library"
+msgstr ""
+
 #: POS/src/components/guest/GuestCart.vue:27
 #: pos_next/public/pos/assets/GuestAccountSheet-BFqon8nK.js:1
 #: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
@@ -836,6 +864,10 @@ msgstr ""
 msgid "Add to cart"
 msgstr ""
 
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:38
+msgid "Add to my recipes"
+msgstr ""
+
 #: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:469
 #: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:526
 #: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:783
@@ -864,6 +896,10 @@ msgstr ""
 
 #: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:959
 msgid "Added to the list"
+msgstr ""
+
+#: POS/src/components/shop/ShopScanner.vue:49
+msgid "Added to your cart"
 msgstr ""
 
 #: POS/src/composables/useCartSort.js:8
@@ -955,6 +991,7 @@ msgstr ""
 #: pos_next/pos_next/doctype/restaurant_device/restaurant_device.json:145
 #: pos_next/pos_next/doctype/restaurant_menu/restaurant_menu.json:135
 #: pos_next/pos_next/doctype/restaurant_portion/restaurant_portion.json:58
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:263
 #: pos_next/pos_next/doctype/restaurant_reservation/restaurant_reservation.json:256
 #: pos_next/pos_next/doctype/restaurant_shopping_list/restaurant_shopping_list.json:125
 #: pos_next/pos_next/doctype/restaurant_table/restaurant_table.json:148
@@ -1009,6 +1046,10 @@ msgctxt "Kitchen order status"
 msgid "Ahead, waiting for the call"
 msgstr ""
 
+#: POS/src/components/shop/ShopScanner.vue:15
+msgid "Aim at the article's barcode"
+msgstr ""
+
 #. Label of a Select field in DocType 'POS Settings'
 #: pos_next/pos_next/doctype/pos_settings/pos_settings.json:311
 #: pos_next/till_settings/registry.py:844
@@ -1032,7 +1073,8 @@ msgstr ""
 #: pos_next/public/pos/assets/POSSale-DU_AQXZv.js:241
 #: pos_next/public/pos/assets/Runner-1nMuEkOM.js:1
 #: pos_next/public/pos/assets/followLiveReading-Chv0vP4C.js:1
-#: pos_next/restaurant/neoresto.py:279 pos_next/restaurant/neoresto.py:319
+#: pos_next/restaurant/neoresto.py:292 pos_next/restaurant/neoresto.py:328
+#: pos_next/restaurant/neoresto.py:342
 msgid "All"
 msgstr ""
 
@@ -1115,7 +1157,7 @@ msgid "All items are either being prepared or have been delivered."
 msgstr ""
 
 #: POS/src/components/sale/ReturnInvoiceDialog.vue:1393
-#: pos_next/api/invoices.py:4174
+#: pos_next/api/invoices.py:4182
 #: pos_next/public/pos/assets/POSSale-3T_tl0G_.js:12
 #: pos_next/public/pos/assets/POSSale-DU_AQXZv.js:215
 msgid "All items from this invoice have already been returned"
@@ -1174,6 +1216,11 @@ msgstr ""
 #. Option for the 'Badge Type' (Select) field in DocType 'Menu Badge'
 #: pos_next/pos_next/doctype/menu_badge/menu_badge.json:31
 msgid "Allergen"
+msgstr ""
+
+#. Label of a Small Text field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:138
+msgid "Allergens"
 msgstr ""
 
 #: POS/src/components/restaurant/MenuSettings.vue:62
@@ -1370,6 +1417,10 @@ msgstr ""
 msgid "Already in stock"
 msgstr ""
 
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:30
+msgid "Already in your recipes"
+msgstr ""
+
 #: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:600
 msgid "Already on the list"
 msgstr ""
@@ -1551,6 +1602,17 @@ msgstr ""
 #: pos_next/public/pos/assets/CustomerDisplay-CUU4jVLr.js:1
 #: pos_next/public/pos/assets/CustomerDisplay-DIC58MR6.js:1
 msgid "An error occurred. Please try again."
+msgstr ""
+
+#. Description of the 'Allergens' (Small Text) field in DocType 'Restaurant
+#. Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:139
+msgid "An indication only: always check the products that are used."
+msgstr ""
+
+#: pos_next/restaurant/recipes.py:392
+#, python-brace-format
+msgid "An ingredient to link is {idx, item}."
 msgstr ""
 
 #: pos_next/api/restaurant.py:3557
@@ -1800,12 +1862,20 @@ msgstr ""
 msgid "Arrived"
 msgstr ""
 
+#. Label of a Link field in DocType 'Restaurant Recipe Ingredient'
 #. Label of a Data field in DocType 'Restaurant Shopping List Line'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:88
+#: pos_next/pos_next/doctype/restaurant_recipe_ingredient/restaurant_recipe_ingredient.json:60
 #: pos_next/pos_next/doctype/restaurant_shopping_list_line/restaurant_shopping_list_line.json:48
 #: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:221
 #: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:378
 #: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:645
 msgid "Article"
+msgstr ""
+
+#. Label of a Data field in DocType 'Restaurant Recipe Ingredient'
+#: pos_next/pos_next/doctype/restaurant_recipe_ingredient/restaurant_recipe_ingredient.json:66
+msgid "Article name"
 msgstr ""
 
 #: pos_next/api/cash_entry.py:609
@@ -1870,6 +1940,12 @@ msgstr ""
 msgid "At most {0} menus at a time."
 msgstr ""
 
+#: pos_next/restaurant/recipe_library.py:219
+#: pos_next/restaurant/recipe_plan.py:76 pos_next/restaurant/recipe_plan.py:414
+#, python-brace-format
+msgid "At most {0} recipes at a time."
+msgstr ""
+
 #. Option for the 'Cart Status' (Select) field in DocType 'Guest Order Token'
 #: pos_next/pos_next/doctype/guest_order_token/guest_order_token.json:116
 msgid "At the counter"
@@ -1896,6 +1972,11 @@ msgstr ""
 #: pos_next/api/bootstrap.py:62 pos_next/api/localization.py:103
 #: pos_next/api/localization.py:222 pos_next/api/utilities.py:42
 msgid "Authentication required"
+msgstr ""
+
+#. Label of a Data field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:165
+msgid "Author"
 msgstr ""
 
 #: POS/src/components/common/AuthorizationDialog.vue:12
@@ -2333,7 +2414,7 @@ msgstr ""
 msgid "Booked on the day it reached the server: the till's clock said {0}."
 msgstr ""
 
-#: pos_next/api/invoices.py:2126
+#: pos_next/api/invoices.py:2134
 msgid "Both invoice and data parameters are missing"
 msgstr ""
 
@@ -2681,7 +2762,7 @@ msgstr ""
 msgid "Cannot create items in the root group '{0}'. Please select a child group."
 msgstr ""
 
-#: pos_next/api/invoices.py:4013
+#: pos_next/api/invoices.py:4021
 msgid "Cannot create return against a return invoice"
 msgstr ""
 
@@ -2706,7 +2787,7 @@ msgstr ""
 msgid "Cannot delete coupon {0} as it has been used {1} times"
 msgstr ""
 
-#: pos_next/api/invoices.py:3393 pos_next/api/restaurant.py:458
+#: pos_next/api/invoices.py:3401 pos_next/api/restaurant.py:458
 #, python-brace-format
 msgid "Cannot delete submitted invoice {0}"
 msgstr ""
@@ -2868,7 +2949,7 @@ msgid "Cards to Include"
 msgstr ""
 
 #: POS/src/pages/GuestOrder.vue:159 POS/src/pages/POSSale.vue:491
-#: POS/src/pages/TakeawayOrder.vue:131
+#: POS/src/pages/ShopScan.vue:32 POS/src/pages/TakeawayOrder.vue:131
 #: pos_next/public/pos/assets/GuestOrder-fdBGPa-L.js:1
 #: pos_next/public/pos/assets/GuestOrder-v_UClcF0.js:1
 #: pos_next/public/pos/assets/POSSale-3T_tl0G_.js:41
@@ -3218,6 +3299,10 @@ msgstr ""
 msgid "Change sales person"
 msgstr ""
 
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:148
+msgid "Change the portions"
+msgstr ""
+
 #: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:821
 msgid "Change the supplier"
 msgstr ""
@@ -3266,6 +3351,14 @@ msgstr ""
 
 #: POS/src/components/restaurant/ReservationList.vue:111
 msgid "Check-in"
+msgstr ""
+
+#: POS/src/pages/ShopScan.vue:85
+msgid "Checked and paid"
+msgstr ""
+
+#: POS/src/components/shop/ShopCart.vue:25
+msgid "Checked by a seller"
 msgstr ""
 
 #: POS/src/components/sale/EditItemDialog.vue:673
@@ -3368,7 +3461,7 @@ msgstr ""
 msgid "Cleaning"
 msgstr ""
 
-#: pos_next/restaurant/neoresto.py:276
+#: pos_next/restaurant/neoresto.py:289
 msgctxt "Table state"
 msgid "Cleaning"
 msgstr ""
@@ -3648,7 +3741,7 @@ msgstr ""
 #. Option for the 'Status' (Select) field in DocType 'Restaurant Tip'
 #: POS/src/components/ShiftClosingDialog.vue:181
 #: pos_next/pos_next/doctype/restaurant_tip/restaurant_tip.json:93
-#: pos_next/restaurant/neoresto.py:304
+#: pos_next/restaurant/neoresto.py:317
 msgid "Collected"
 msgstr ""
 
@@ -3764,7 +3857,7 @@ msgstr ""
 msgid "Company is required"
 msgstr ""
 
-#: pos_next/api/invoices.py:620
+#: pos_next/api/invoices.py:628
 msgid "Company is required to set a receivable account"
 msgstr ""
 
@@ -3952,6 +4045,11 @@ msgstr ""
 
 #: POS/src/components/sale/PaymentDialog.vue:1084
 msgid "Convert to tip"
+msgstr ""
+
+#. Label of a Select field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:90
+msgid "Cooked and tested"
 msgstr ""
 
 #: pos_next/public/js/coupon_code_list.js:138
@@ -4433,7 +4531,7 @@ msgstr ""
 msgid "Credit Sale Return"
 msgstr ""
 
-#: pos_next/api/invoices.py:643 pos_next/api/invoices.py:2432
+#: pos_next/api/invoices.py:651 pos_next/api/invoices.py:2440
 msgid "Credit sales are not enabled for this POS Profile."
 msgstr ""
 
@@ -4603,8 +4701,8 @@ msgstr ""
 msgid "Customer Name is required"
 msgstr ""
 
-#: pos_next/api/invoices.py:719 pos_next/api/invoices.py:769
-#: pos_next/api/invoices.py:2434 pos_next/overrides/sales_invoice.py:168
+#: pos_next/api/invoices.py:727 pos_next/api/invoices.py:777
+#: pos_next/api/invoices.py:2442 pos_next/overrides/sales_invoice.py:168
 msgid "Customer Required"
 msgstr ""
 
@@ -4640,16 +4738,16 @@ msgstr ""
 msgid "Customer is required"
 msgstr ""
 
-#: pos_next/api/invoices.py:2434
+#: pos_next/api/invoices.py:2442
 msgid "Customer is required for credit sales"
 msgstr ""
 
-#: pos_next/api/invoices.py:768
+#: pos_next/api/invoices.py:776
 #, python-brace-format
 msgid "Customer is required when paying with {0}"
 msgstr ""
 
-#: pos_next/api/invoices.py:718 pos_next/overrides/sales_invoice.py:166
+#: pos_next/api/invoices.py:726 pos_next/overrides/sales_invoice.py:166
 msgid "Customer is required. Please select a customer or configure a default customer in POS Profile."
 msgstr ""
 
@@ -5598,7 +5696,7 @@ msgstr ""
 
 #. Option for the 'Status' (Select) field in DocType 'Restaurant Tip'
 #: pos_next/pos_next/doctype/restaurant_tip/restaurant_tip.json:93
-#: pos_next/restaurant/neoresto.py:305
+#: pos_next/restaurant/neoresto.py:318
 msgid "Distributed"
 msgstr ""
 
@@ -5676,9 +5774,12 @@ msgid "Download the PDF"
 msgstr ""
 
 #. Option for the 'Status' (Select) field in DocType 'POS Opening Shift'
+#. Option for the 'Status' (Select) field in DocType 'Restaurant Recipe'
 #. Option for the 'Status' (Select) field in DocType 'Restaurant Shopping List'
 #: pos_next/pos_next/doctype/pos_opening_shift/pos_opening_shift.json:47
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:81
 #: pos_next/pos_next/doctype/restaurant_shopping_list/restaurant_shopping_list.json:41
+#: pos_next/restaurant/neoresto.py:327
 msgid "Draft"
 msgstr ""
 
@@ -5708,10 +5809,19 @@ msgstr ""
 msgid "Draft invoice loaded successfully"
 msgstr ""
 
+#. Description of the 'Status' (Select) field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:85
+msgid "Draft: still to complete. To review: complete, nobody has read it yet. Validated: read and approved."
+msgstr ""
+
 #: POS/src/components/invoices/InvoiceManagement.vue:1250
 #: pos_next/public/pos/assets/POSSale-3T_tl0G_.js:37
 #: pos_next/public/pos/assets/POSSale-DU_AQXZv.js:237
 msgid "Drafts"
+msgstr ""
+
+#: pos_next/restaurant/recipe_library.py:160
+msgid "Drafts written from public-domain recipes: nobody has read them or cooked them. Check the quantities before relying on them."
 msgstr ""
 
 #: POS/src/components/pos/FloorPlanEditor.vue:268
@@ -6421,7 +6531,7 @@ msgstr ""
 msgid "Error Report - Neopos"
 msgstr ""
 
-#: pos_next/api/invoices.py:5008
+#: pos_next/api/invoices.py:5016
 #, python-brace-format
 msgid "Error applying offers: {0}"
 msgstr ""
@@ -6914,7 +7024,7 @@ msgstr ""
 msgid "Failed to create customer"
 msgstr ""
 
-#: pos_next/api/invoices.py:2227
+#: pos_next/api/invoices.py:2235
 msgid "Failed to create invoice draft"
 msgstr ""
 
@@ -7107,7 +7217,7 @@ msgstr ""
 msgid "Failed to generate your welcome coupon"
 msgstr ""
 
-#: pos_next/api/invoices.py:2230
+#: pos_next/api/invoices.py:2238
 msgid "Failed to get invoice name from draft"
 msgstr ""
 
@@ -7615,6 +7725,8 @@ msgstr ""
 msgid "Failed to upload image"
 msgstr ""
 
+#. Label of a Data field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:56
 #: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:211
 #: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:335
 msgid "Family"
@@ -7674,6 +7786,11 @@ msgstr ""
 #: POS/src/components/restaurant/RoomStationFilterLine.vue:51
 #: pos_next/public/pos/assets/followLiveReading-Chv0vP4C.js:1
 msgid "Filter by station"
+msgstr ""
+
+#. Label of a Data field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:199
+msgid "Fingerprint of the source"
 msgstr ""
 
 #: POS/src/components/sale/CreateCustomerDialog.vue:28
@@ -7827,7 +7944,7 @@ msgstr ""
 msgid "Free"
 msgstr ""
 
-#: pos_next/restaurant/neoresto.py:272
+#: pos_next/restaurant/neoresto.py:285
 msgctxt "Table state"
 msgid "Free"
 msgstr ""
@@ -8182,6 +8299,10 @@ msgstr ""
 msgid "Go to previous page"
 msgstr ""
 
+#: POS/src/pages/ShopScan.vue:78
+msgid "Go to the till"
+msgstr ""
+
 #. Option for the 'Next course sound' (Select) field in DocType 'POS Settings'
 #. Option for the 'Dishes ready sound' (Select) field in DocType 'POS Settings'
 #. Option for the 'Guest order sound' (Select) field in DocType 'POS Settings'
@@ -8231,7 +8352,7 @@ msgstr ""
 msgid "Granted"
 msgstr ""
 
-#: pos_next/api/guest_ordering.py:1483 pos_next/api/invoices.py:3044
+#: pos_next/api/guest_ordering.py:1483 pos_next/api/invoices.py:3052
 #: pos_next/pos_next/doctype/restaurant/restaurant.py:124
 #: pos_next/pos_next/doctype/restaurant_settings/restaurant_settings.py:97
 msgctxt "Restaurant tip line"
@@ -8515,6 +8636,10 @@ msgstr ""
 msgid "How big the writing of the kitchen tickets of this station is. Medium keeps the height of a dish and halves its width."
 msgstr ""
 
+#: POS/src/pages/ShopScan.vue:66
+msgid "How it works"
+msgstr ""
+
 #: pos_next/till_settings/registry.py:1192
 msgid "How long a gift card is valid, in months. 0: no end date."
 msgstr ""
@@ -8561,6 +8686,10 @@ msgstr ""
 
 #: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:1030
 msgid "I have enough"
+msgstr ""
+
+#: POS/src/components/shop/ShopCart.vue:89
+msgid "I pay at the till"
 msgstr ""
 
 #. Label of a Data field in DocType 'Menu Badge'
@@ -8686,7 +8815,7 @@ msgstr ""
 #. Option for the 'Status' (Select) field in DocType 'Wallet'
 #: POS/src/components/restaurant/CardEditor.vue:129
 #: pos_next/pos_next/doctype/wallet/wallet.json:36
-#: pos_next/restaurant/neoresto.py:313
+#: pos_next/restaurant/neoresto.py:336
 msgid "Inactive"
 msgstr ""
 
@@ -8741,12 +8870,17 @@ msgid "Info"
 msgstr ""
 
 #. Label of a Link field in DocType 'Restaurant Dish Ingredient'
+#. Label of a Data field in DocType 'Restaurant Recipe Ingredient'
 #: pos_next/pos_next/doctype/restaurant_dish_ingredient/restaurant_dish_ingredient.json:26
+#: pos_next/pos_next/doctype/restaurant_recipe_ingredient/restaurant_recipe_ingredient.json:19
 #: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:278
 #: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:897
 msgid "Ingredient"
 msgstr ""
 
+#. Label of a Section Break field in DocType 'Restaurant Recipe'
+#. Label of a Table field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:111
 #: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:887
 msgid "Ingredients"
 msgstr ""
@@ -8878,7 +9012,7 @@ msgstr ""
 msgid "Invalid POS Profile"
 msgstr ""
 
-#: pos_next/api/invoices.py:698 pos_next/overrides/sales_invoice.py:266
+#: pos_next/api/invoices.py:706 pos_next/overrides/sales_invoice.py:266
 msgid "Invalid Payment Account"
 msgstr ""
 
@@ -8906,7 +9040,7 @@ msgstr ""
 msgid "Invalid amount"
 msgstr ""
 
-#: pos_next/api/invoices.py:1596 pos_next/api/invoices.py:1598
+#: pos_next/api/invoices.py:1604 pos_next/api/invoices.py:1606
 #: pos_next/api/offers.py:746
 msgid "Invalid coupon code"
 msgstr ""
@@ -8916,7 +9050,7 @@ msgstr ""
 msgid "Invalid image path"
 msgstr ""
 
-#: pos_next/api/invoices.py:2136
+#: pos_next/api/invoices.py:2144
 msgid "Invalid invoice format"
 msgstr ""
 
@@ -9090,7 +9224,7 @@ msgstr ""
 msgid "Invoice must be submitted before adding payments"
 msgstr ""
 
-#: pos_next/api/invoices.py:4009
+#: pos_next/api/invoices.py:4017
 msgid "Invoice must be submitted to create a return"
 msgstr ""
 
@@ -9103,7 +9237,7 @@ msgid "Invoice name and recipients are required"
 msgstr ""
 
 #: pos_next/api/credit_sales.py:244 pos_next/api/email.py:76
-#: pos_next/api/invoices.py:3097 pos_next/api/partial_payments.py:795
+#: pos_next/api/invoices.py:3105 pos_next/api/partial_payments.py:795
 #: pos_next/api/partial_payments.py:879
 msgid "Invoice name is required"
 msgstr ""
@@ -9132,7 +9266,7 @@ msgstr ""
 msgid "Invoice subject"
 msgstr ""
 
-#: pos_next/api/invoices.py:3396
+#: pos_next/api/invoices.py:3404
 #, python-brace-format
 msgid "Invoice {0} Deleted"
 msgstr ""
@@ -9170,9 +9304,9 @@ msgstr ""
 msgid "Invoice {0} created, receipt on {1}"
 msgstr ""
 
-#: pos_next/api/invoices.py:3100 pos_next/api/invoices.py:3389
-#: pos_next/api/invoices.py:3667 pos_next/api/invoices.py:3720
-#: pos_next/api/invoices.py:4003 pos_next/api/partial_payments.py:395
+#: pos_next/api/invoices.py:3108 pos_next/api/invoices.py:3397
+#: pos_next/api/invoices.py:3675 pos_next/api/invoices.py:3728
+#: pos_next/api/invoices.py:4011 pos_next/api/partial_payments.py:395
 #: pos_next/api/partial_payments.py:805 pos_next/api/partial_payments.py:903
 #: pos_next/api/restaurant.py:451
 #, python-brace-format
@@ -9189,7 +9323,7 @@ msgstr ""
 msgid "Invoice {0} is not a restaurant order"
 msgstr ""
 
-#: pos_next/api/invoices.py:1004 pos_next/api/restaurant.py:769
+#: pos_next/api/invoices.py:1012 pos_next/api/restaurant.py:769
 #: pos_next/api/restaurant.py:3279
 #, python-brace-format
 msgid "Invoice {0} not found"
@@ -9835,6 +9969,26 @@ msgstr ""
 msgid "Letter head"
 msgstr ""
 
+#. Option for the 'Origin' (Select) field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:151
+msgid "Library"
+msgstr ""
+
+#. Label of a Data field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:205
+msgid "Library reference"
+msgstr ""
+
+#. Label of a Small Text field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:181
+msgid "Licence"
+msgstr ""
+
+#. Label of a Data field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:187
+msgid "Licence link"
+msgstr ""
+
 #: POS/src/components/restaurant/ThemeButton.vue:88
 #: pos_next/public/pos/assets/followLiveReading-Chv0vP4C.js:1
 msgctxt "Colour mode"
@@ -9862,8 +10016,17 @@ msgstr ""
 msgid "Lines With a Price"
 msgstr ""
 
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:111
+msgid "Link"
+msgstr ""
+
 #: POS/src/components/restaurant/OpenPhoneDialog.vue:34
 msgid "Link copied"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:109
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:149
+msgid "Link the ingredients to articles"
 msgstr ""
 
 #. Description of the 'ERPNext Coupon Code' (Link) field in DocType 'POS
@@ -10024,6 +10187,7 @@ msgstr ""
 
 #: POS/src/components/payments/QRPaymentDialog.vue:71
 #: POS/src/components/sale/EditCustomerDialog.vue:125
+#: POS/src/pages/ShopScan.vue:15
 msgid "Loading…"
 msgstr ""
 
@@ -10336,6 +10500,10 @@ msgstr ""
 msgid "Mark Delivered"
 msgstr ""
 
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:151
+msgid "Mark as validated"
+msgstr ""
+
 #: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:379
 msgid "Mark bought"
 msgstr ""
@@ -10633,8 +10801,10 @@ msgstr ""
 msgid "Minute"
 msgstr ""
 
+#. Label of a Int field in DocType 'Restaurant Recipe'
 #: POS/src/components/settings/TillSettingField.vue:84
 #: POS/src/stores/posShift.js:64 POS/src/stores/posShift.js:68
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:106
 #: pos_next/public/pos/assets/index-B8kuZaoV.js:96
 #: pos_next/public/pos/assets/index-DTK24MUK.js:94
 msgid "Minutes"
@@ -10673,11 +10843,11 @@ msgstr ""
 msgid "Missing Payment Account"
 msgstr ""
 
-#: pos_next/api/invoices.py:2124
+#: pos_next/api/invoices.py:2132
 msgid "Missing invoice parameter"
 msgstr ""
 
-#: pos_next/api/invoices.py:2119
+#: pos_next/api/invoices.py:2127
 #, python-brace-format
 msgid "Missing invoice parameter. Received data: {0}"
 msgstr ""
@@ -10759,7 +10929,7 @@ msgstr ""
 msgid "Mode of Payment {0} is routed to a terminal channel — a Payment Device is required on this row."
 msgstr ""
 
-#: pos_next/api/invoices.py:695 pos_next/overrides/sales_invoice.py:263
+#: pos_next/api/invoices.py:703 pos_next/overrides/sales_invoice.py:263
 #, python-brace-format
 msgid "Mode of Payment {0} uses account {1}, which is the same as the invoice receivable account. Please set a Cash or Bank account on the Mode of Payment."
 msgstr ""
@@ -10903,6 +11073,10 @@ msgstr ""
 
 #: pos_next/restaurant/supplies.py:113
 msgid "Name the packaging."
+msgstr ""
+
+#: pos_next/restaurant/recipe_plan.py:83 pos_next/restaurant/recipes.py:110
+msgid "Name the recipe."
 msgstr ""
 
 #. Description of the 'Counter' (Data) field in DocType 'Restaurant Ticket
@@ -11154,6 +11328,7 @@ msgstr ""
 #: pos_next/pos_next/doctype/restaurant_device/restaurant_device.json:151
 #: pos_next/pos_next/doctype/restaurant_menu/restaurant_menu.json:147
 #: pos_next/pos_next/doctype/restaurant_portion/restaurant_portion.json:59
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:275
 #: pos_next/pos_next/doctype/restaurant_reservation/restaurant_reservation.json:268
 #: pos_next/pos_next/doctype/restaurant_shopping_list/restaurant_shopping_list.json:134
 #: pos_next/pos_next/doctype/restaurant_table/restaurant_table.json:160
@@ -11316,7 +11491,7 @@ msgstr ""
 msgid "No barcode matches «{0}». Pick from the results or scan the barcode again."
 msgstr ""
 
-#: pos_next/api/invoices.py:933
+#: pos_next/api/invoices.py:941
 #, python-brace-format
 msgid "No batches available in {0} for {1}."
 msgstr ""
@@ -11341,6 +11516,10 @@ msgstr ""
 
 #: POS/src/components/sale/ReturnInvoiceDialog.vue:302
 msgid "No connection"
+msgstr ""
+
+#: POS/src/utils/shopScan.js:52
+msgid "No connection. Please try again."
 msgstr ""
 
 #: POS/src/components/sale/EditCustomerDialog.vue:333
@@ -11811,12 +11990,16 @@ msgstr ""
 msgid "No-show after (minutes)"
 msgstr ""
 
-#: pos_next/restaurant/neoresto.py:297
+#: pos_next/restaurant/neoresto.py:310
 msgid "No-shows"
 msgstr ""
 
 #: POS/src/components/sale/CouponManagement.vue:613
 msgid "No."
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:158
+msgid "Nobody has read this recipe yet. Check the quantities and the steps, then mark it as validated."
 msgstr ""
 
 #: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:269
@@ -11986,7 +12169,7 @@ msgstr ""
 #: pos_next/api/cash_entry.py:57 pos_next/api/cash_entry.py:82
 #: pos_next/api/cash_entry.py:101 pos_next/api/customer_display.py:44
 #: pos_next/api/guest_ordering.py:1727 pos_next/api/guest_ordering.py:1739
-#: pos_next/api/invoices.py:1148 pos_next/api/kitchen_events.py:73
+#: pos_next/api/invoices.py:1156 pos_next/api/kitchen_events.py:73
 #: pos_next/api/payments.py:53 pos_next/api/payments.py:65
 #: pos_next/api/restaurant.py:498 pos_next/api/restaurant.py:766
 #: pos_next/api/restaurant.py:1299 pos_next/api/restaurant.py:1320
@@ -12000,7 +12183,7 @@ msgstr ""
 #: pos_next/pos_next/doctype/pos_closing_shift/pos_closing_shift.py:1018
 #: pos_next/pos_next/doctype/pos_closing_shift/pos_closing_shift.py:1044
 #: pos_next/pos_next/doctype/pos_closing_shift/pos_closing_shift.py:1066
-#: pos_next/restaurant/devices.py:156 pos_next/restaurant/permissions.py:90
+#: pos_next/restaurant/devices.py:156 pos_next/restaurant/permissions.py:91
 msgid "Not permitted"
 msgstr ""
 
@@ -12039,6 +12222,12 @@ msgstr ""
 
 #: POS/src/components/restaurant/OpenTabletDialog.vue:88
 msgid "Not seen yet"
+msgstr ""
+
+#. Option for the 'Cooked and tested' (Select) field in DocType 'Restaurant
+#. Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:91
+msgid "Not tested"
 msgstr ""
 
 #: POS/src/utils/printInvoice.js:744
@@ -12097,6 +12286,10 @@ msgstr ""
 
 #: pos_next/restaurant/option_plan.py:237
 msgid "Nothing to set."
+msgstr ""
+
+#: pos_next/restaurant/recipe_plan.py:412
+msgid "Nothing to write."
 msgstr ""
 
 #: POS/src/composables/usePrintTableQr.js:150
@@ -12187,7 +12380,7 @@ msgstr ""
 msgid "Occupied"
 msgstr ""
 
-#: pos_next/restaurant/neoresto.py:273
+#: pos_next/restaurant/neoresto.py:286
 msgctxt "Table state"
 msgid "Occupied"
 msgstr ""
@@ -12232,9 +12425,14 @@ msgstr ""
 msgid "Offer removed: {0}. Cart no longer meets requirements."
 msgstr ""
 
+#: POS/src/components/shop/ShopCart.vue:21
+#, python-brace-format
+msgid "Offer −{0} %"
+msgstr ""
+
 #: POS/src/components/sale/InvoiceCart.vue:1351
-#: POS/src/utils/printInvoice.js:216 POS/src/utils/printInvoice.js:796
-#: pos_next/offered.py:198
+#: POS/src/components/shop/ShopCart.vue:19 POS/src/utils/printInvoice.js:216
+#: POS/src/utils/printInvoice.js:796 pos_next/offered.py:198
 #: pos_next/public/pos/assets/ShiftOpeningDialog-Bd1ATttv.js:58
 msgid "Offered"
 msgstr ""
@@ -12438,6 +12636,11 @@ msgstr ""
 msgid "On: a dish with no portion left is greyed out at the till and cannot be added. Off: it stays available and the till only warns that none is left. A product counted by its portions (or by its stock) is sold out when none is left; whoever works at the till adds portions when the kitchen can make more."
 msgstr ""
 
+#: POS/src/components/shop/ShopCounter.vue:29
+#, python-brace-format
+msgid "Once it is checked, you pay {0}."
+msgstr ""
+
 #. Name of a DocType
 #: pos_next/pos_next/doctype/one_time_customer_offer_usage/one_time_customer_offer_usage.json:58
 msgid "One Time Customer Offer Usage"
@@ -12448,14 +12651,29 @@ msgstr ""
 msgid "One less"
 msgstr ""
 
+#: POS/src/components/shop/ShopCart.vue:33
+#, python-brace-format
+msgid "One less {0}"
+msgstr ""
+
 #: POS/src/components/invoices/KDSOrderCard.vue:321
 #: POS/src/components/restaurant/phone/PhoneOptionsSheet.vue:144
 msgid "One more"
 msgstr ""
 
+#: POS/src/components/shop/ShopCart.vue:43
+#, python-brace-format
+msgid "One more {0}"
+msgstr ""
+
 #. Description of the 'Device Key' (Data) field in DocType 'Restaurant Device'
 #: pos_next/pos_next/doctype/restaurant_device/restaurant_device.json:61
 msgid "One row per screen of a restaurant: two tablets pairing the same screen at the same instant make one row."
+msgstr ""
+
+#. Description of the 'Steps' (Long Text) field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:128
+msgid "One step per line."
 msgstr ""
 
 #: POS/src/components/settings/CloudPrntTillSettings.vue:193
@@ -12538,6 +12756,10 @@ msgstr ""
 
 #: pos_next/till_settings/registry.py:1005
 msgid "Only the items of these groups show in the till. Empty: every item."
+msgstr ""
+
+#: pos_next/restaurant/recipes.py:231
+msgid "Only the quantities of the list change with the portions: the times and the temperatures in the steps do not."
 msgstr ""
 
 #: pos_next/pos_next/doctype/restaurant_table/restaurant_table.py:49
@@ -12740,6 +12962,10 @@ msgstr ""
 msgid "Opening hours"
 msgstr ""
 
+#: POS/src/components/shop/ShopScanner.vue:12
+msgid "Opening the camera…"
+msgstr ""
+
 #: POS/src/pages/PairDevice.vue:29
 #: pos_next/public/pos/assets/PairDevice-BHyF0k3c.js:1
 msgid "Opening the screen…"
@@ -12882,7 +13108,7 @@ msgstr ""
 #: POS/src/components/sale/ProductManagement.vue:677
 #: pos_next/pos_next/doctype/pos_payment_driver_mapping/pos_payment_driver_mapping.json:74
 #: pos_next/pos_next/doctype/product_option_group/product_option_group.json:259
-#: pos_next/restaurant/neoresto.py:209
+#: pos_next/restaurant/neoresto.py:222
 msgid "Options"
 msgstr ""
 
@@ -13041,7 +13267,9 @@ msgctxt "Menu Badge"
 msgid "Organic"
 msgstr ""
 
+#. Label of a Select field in DocType 'Restaurant Recipe'
 #. Label of a Select field in DocType 'Restaurant Shopping List Line'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:150
 #: pos_next/pos_next/doctype/restaurant_shopping_list_line/restaurant_shopping_list_line.json:113
 msgid "Origin"
 msgstr ""
@@ -13163,6 +13391,11 @@ msgstr ""
 #. Station Item'
 #: pos_next/pos_next/doctype/preparation_station_item/preparation_station_item.json:57
 msgid "Override: this item follows a different workflow than its station. Leave empty to use the station's workflow."
+msgstr ""
+
+#. Option for the 'Origin' (Select) field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:151
+msgid "Own"
 msgstr ""
 
 #: POS/src/utils/printInvoice.js:281
@@ -13542,7 +13775,7 @@ msgstr ""
 
 #: pos_next/api/credit_sales.py:706 pos_next/api/credit_sales.py:745
 #: pos_next/api/customer_display.py:142 pos_next/api/customer_display.py:212
-#: pos_next/api/expenses.py:582 pos_next/api/invoices.py:3212
+#: pos_next/api/expenses.py:582 pos_next/api/invoices.py:3220
 #: pos_next/api/items.py:489 pos_next/api/items.py:1971
 #: pos_next/api/partial_payments.py:526 pos_next/api/partial_payments.py:603
 #: pos_next/api/partial_payments.py:675 pos_next/api/partial_payments.py:735
@@ -13678,6 +13911,7 @@ msgstr ""
 #: pos_next/pos_next/doctype/restaurant_card/restaurant_card.json:143
 #: pos_next/pos_next/doctype/restaurant_menu/restaurant_menu.json:113
 #: pos_next/pos_next/doctype/restaurant_portion/restaurant_portion.json:60
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:247
 #: pos_next/pos_next/doctype/restaurant_reservation/restaurant_reservation.json:233
 #: pos_next/pos_next/doctype/restaurant_settings/restaurant_settings.json:268
 #: pos_next/pos_next/doctype/restaurant_table/restaurant_table.json:125
@@ -14284,7 +14518,7 @@ msgstr ""
 msgid "Please add items to cart before proceeding to payment"
 msgstr ""
 
-#: POS/src/pages/PublicMenu.vue:21
+#: POS/src/pages/PublicMenu.vue:21 POS/src/pages/ShopScan.vue:20
 #: pos_next/public/pos/assets/PublicMenu-Br0JN2XE.js:1
 msgid "Please ask a member of our team."
 msgstr ""
@@ -14553,7 +14787,10 @@ msgstr ""
 msgid "Popup when a guest orders"
 msgstr ""
 
+#. Label of a Int field in DocType 'Restaurant Recipe'
 #: POS/src/components/restaurant/ItemPortionsSection.vue:6
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:29
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:97
 #: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:880
 msgid "Portions"
 msgstr ""
@@ -14681,7 +14918,7 @@ msgstr ""
 msgid "Prep Time (min)"
 msgstr ""
 
-#: pos_next/restaurant/neoresto.py:258 pos_next/tests/test_neoresto.py:340
+#: pos_next/restaurant/neoresto.py:271 pos_next/tests/test_neoresto.py:340
 #: pos_next/tests/test_neoresto.py:357
 msgid "Preparation"
 msgstr ""
@@ -14735,7 +14972,7 @@ msgstr ""
 msgid "Preparation Workflows"
 msgstr ""
 
-#: pos_next/restaurant/neoresto.py:220 pos_next/till_settings/registry.py:248
+#: pos_next/restaurant/neoresto.py:233 pos_next/till_settings/registry.py:248
 msgid "Preparation stations"
 msgstr ""
 
@@ -15354,7 +15591,7 @@ msgid "Purchase price of the packaging"
 msgstr ""
 
 #: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:449
-#: pos_next/restaurant/neoresto.py:181
+#: pos_next/restaurant/neoresto.py:194
 msgid "Purchases"
 msgstr ""
 
@@ -15380,6 +15617,10 @@ msgstr ""
 #: pos_next/pos_next/doctype/restaurant_settings/restaurant_settings.json:106
 #: pos_next/public/pos/assets/POSSale-DU_AQXZv.js:241
 msgid "QR Self-Ordering"
+msgstr ""
+
+#: POS/src/components/shop/ShopCounter.vue:16
+msgid "QR code of your cart"
 msgstr ""
 
 #: POS/src/components/restaurant/TableCard.vue:37
@@ -15472,7 +15713,12 @@ msgstr ""
 msgid "Quality"
 msgstr ""
 
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:24
+msgid "Quantities for another number of portions"
+msgstr ""
+
 #. Label of a Float field in DocType 'Product Option'
+#. Label of a Float field in DocType 'Restaurant Recipe Ingredient'
 #. Label of a Float field in DocType 'Restaurant Shopping List Line'
 #: POS/src/components/restaurant/ProductOptionsEditor.vue:126
 #: POS/src/components/sale/EditItemDialog.vue:124
@@ -15481,6 +15727,7 @@ msgstr ""
 #: POS/src/components/sale/ItemsSelector.vue:1200
 #: POS/src/composables/useCartSort.js:30
 #: pos_next/pos_next/doctype/product_option/product_option.json:137
+#: pos_next/pos_next/doctype/restaurant_recipe_ingredient/restaurant_recipe_ingredient.json:26
 #: pos_next/pos_next/doctype/restaurant_shopping_list_line/restaurant_shopping_list_line.json:56
 #: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:649
 #: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:765
@@ -15497,6 +15744,10 @@ msgstr ""
 #. Label of a Section Break field in DocType 'POS Offer'
 #: pos_next/pos_next/doctype/pos_offer/pos_offer.json:255
 msgid "Quantity and Amount Conditions"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:98
+msgid "Quantity as the article is bought"
 msgstr ""
 
 #: POS/src/components/sale/InvoiceCart.vue:1635
@@ -15665,28 +15916,41 @@ msgstr ""
 msgid "Receivable account for customer wallets"
 msgstr ""
 
-#: pos_next/api/invoices.py:631
+#: pos_next/api/invoices.py:639
 #, python-brace-format
 msgid "Receivable account {0} does not belong to company {1}"
 msgstr ""
 
-#: pos_next/api/invoices.py:629
+#: pos_next/api/invoices.py:637
 #, python-brace-format
 msgid "Receivable account {0} does not exist"
 msgstr ""
 
-#: pos_next/api/invoices.py:635
+#: pos_next/api/invoices.py:643
 #, python-brace-format
 msgid "Receivable account {0} is a group account"
 msgstr ""
 
-#: pos_next/api/invoices.py:637
+#: pos_next/api/invoices.py:645
 #, python-brace-format
 msgid "Receivable account {0} is disabled"
 msgstr ""
 
 #: POS/src/components/sale/CustomerDialog.vue:65
 msgid "Recent & Frequent"
+msgstr ""
+
+#. Label of a Data field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:47
+msgid "Recipe"
+msgstr ""
+
+#: pos_next/restaurant/neoresto.py:180
+msgid "Recipes"
+msgstr ""
+
+#: pos_next/restaurant/recipes.py:332
+msgid "Recipes are not set up on this site yet."
 msgstr ""
 
 #: POS/src/components/pos/CashInOutDialog.vue:192
@@ -16218,7 +16482,7 @@ msgstr ""
 #: pos_next/pos_next/doctype/restaurant/restaurant.json:311
 #: pos_next/pos_next/doctype/restaurant_settings/restaurant_settings.json:177
 #: pos_next/public/pos/assets/POSSale-DU_AQXZv.js:2
-#: pos_next/restaurant/neoresto.py:230 pos_next/till_settings/registry.py:182
+#: pos_next/restaurant/neoresto.py:243 pos_next/till_settings/registry.py:182
 #: pos_next/till_settings/registry.py:211
 msgid "Reservations"
 msgstr ""
@@ -16253,6 +16517,7 @@ msgstr ""
 #. Label of a Link field in DocType 'Restaurant Device'
 #. Label of a Link field in DocType 'Restaurant Device Pairing'
 #. Label of a Link field in DocType 'Restaurant Menu'
+#. Label of a Link field in DocType 'Restaurant Recipe'
 #. Label of a Link field in DocType 'Restaurant Reservation'
 #. Label of a Link field in DocType 'Restaurant Table'
 #. Label of a Link field in DocType 'Restaurant Ticket Counter'
@@ -16266,6 +16531,7 @@ msgstr ""
 #: pos_next/pos_next/doctype/restaurant_device/restaurant_device.json:38
 #: pos_next/pos_next/doctype/restaurant_device_pairing/restaurant_device_pairing.json:33
 #: pos_next/pos_next/doctype/restaurant_menu/restaurant_menu.json:23
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:40
 #: pos_next/pos_next/doctype/restaurant_reservation/restaurant_reservation.json:44
 #: pos_next/pos_next/doctype/restaurant_table/restaurant_table.json:39
 #: pos_next/pos_next/doctype/restaurant_ticket_counter/restaurant_ticket_counter.json:28
@@ -16328,6 +16594,7 @@ msgstr ""
 #: pos_next/pos_next/doctype/restaurant_device/restaurant_device.json:139
 #: pos_next/pos_next/doctype/restaurant_menu/restaurant_menu.json:123
 #: pos_next/pos_next/doctype/restaurant_portion/restaurant_portion.json:57
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:251
 #: pos_next/pos_next/doctype/restaurant_reservation/restaurant_reservation.json:244
 #: pos_next/pos_next/doctype/restaurant_shopping_list/restaurant_shopping_list.json:116
 #: pos_next/pos_next/doctype/restaurant_table/restaurant_table.json:136
@@ -16366,6 +16633,16 @@ msgstr ""
 #. Name of a DocType
 #: pos_next/pos_next/doctype/restaurant_portion/restaurant_portion.json:51
 msgid "Restaurant Portion"
+msgstr ""
+
+#. Name of a DocType
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:218
+msgid "Restaurant Recipe"
+msgstr ""
+
+#. Name of a DocType
+#: pos_next/pos_next/doctype/restaurant_recipe_ingredient/restaurant_recipe_ingredient.json:74
+msgid "Restaurant Recipe Ingredient"
 msgstr ""
 
 #. Name of a DocType
@@ -16436,7 +16713,7 @@ msgstr ""
 msgid "Restaurant till"
 msgstr ""
 
-#: pos_next/restaurant/neoresto.py:255 pos_next/tests/test_neoresto.py:338
+#: pos_next/restaurant/neoresto.py:268 pos_next/tests/test_neoresto.py:338
 #: pos_next/tests/test_neoresto.py:357
 msgid "Restaurants"
 msgstr ""
@@ -16537,7 +16814,7 @@ msgstr ""
 msgid "Return credit to wallet for {0} against {1}: {2}"
 msgstr ""
 
-#: pos_next/api/invoices.py:2531
+#: pos_next/api/invoices.py:2539
 msgid "Return invoice submitted successfully, but wallet reversal failed. Please contact administrator."
 msgstr ""
 
@@ -16556,38 +16833,38 @@ msgstr ""
 msgid "Return invoices will appear here"
 msgstr ""
 
-#: pos_next/api/invoices.py:1093
+#: pos_next/api/invoices.py:1101
 #: pos_next/pos_next/utils/sales_person_commission.py:693
 #, python-brace-format
 msgid "Return item link {0} does not belong to invoice {1}"
 msgstr ""
 
-#: pos_next/api/invoices.py:1100
+#: pos_next/api/invoices.py:1108
 #: pos_next/pos_next/utils/sales_person_commission.py:698
 #, python-brace-format
 msgid "Return item {0} does not match original row {1} ({2})"
 msgstr ""
 
-#: pos_next/api/invoices.py:3691
+#: pos_next/api/invoices.py:3699
 msgid "Return period has expired"
 msgstr ""
 
-#: pos_next/api/invoices.py:1023 pos_next/api/invoices.py:3738
-#: pos_next/api/invoices.py:4029
+#: pos_next/api/invoices.py:1031 pos_next/api/invoices.py:3746
+#: pos_next/api/invoices.py:4037
 #, python-brace-format
 msgid "Return period has expired. Invoice {0} was created {1} days ago. Returns are only allowed within {2} days of purchase."
 msgstr ""
 
-#: pos_next/api/invoices.py:2561
+#: pos_next/api/invoices.py:2569
 msgid "Return submitted but wallet credit failed. Please contact administrator."
 msgstr ""
 
-#: pos_next/api/invoices.py:2839
+#: pos_next/api/invoices.py:2847
 #, python-brace-format
 msgid "Return submitted, but no original {0} payment was found to refund automatically — please refund manually."
 msgstr ""
 
-#: pos_next/api/invoices.py:2858
+#: pos_next/api/invoices.py:2866
 #, python-brace-format
 msgid "Return submitted, but the {0} refund failed — please refund manually."
 msgstr ""
@@ -16608,6 +16885,11 @@ msgstr ""
 #: pos_next/public/pos/assets/ShiftOpeningDialog-DHJcbMRQ.js:2
 #: pos_next/till_settings/registry.py:236
 msgid "Returns"
+msgstr ""
+
+#. Label of a Data field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:193
+msgid "Revision"
 msgstr ""
 
 #. Label of a Link field in DocType 'POS Expense Cancel Role'
@@ -16678,6 +16960,11 @@ msgstr ""
 msgid "Row {0}: name an article or write what to buy."
 msgstr ""
 
+#: pos_next/restaurant/recipes.py:122
+#, python-brace-format
+msgid "Row {0}: name the ingredient."
+msgstr ""
+
 #: pos_next/authorization/policy.py:139
 #, python-brace-format
 msgid "Row {0}: select a Role"
@@ -16688,9 +16975,19 @@ msgstr ""
 msgid "Row {0}: select a User"
 msgstr ""
 
+#: pos_next/restaurant/recipes.py:124
+#, python-brace-format
+msgid "Row {0}: the quantity cannot be negative."
+msgstr ""
+
 #: pos_next/restaurant/shopping.py:54
 #, python-brace-format
 msgid "Row {0}: the quantity must be more than zero."
+msgstr ""
+
+#: pos_next/restaurant/recipes.py:132
+#, python-brace-format
+msgid "Row {0}: «{1}» is already in the list."
 msgstr ""
 
 #: POS/src/components/sale/PromotionManagement.vue:234
@@ -16824,6 +17121,7 @@ msgstr ""
 #: pos_next/pos_next/doctype/restaurant_card/restaurant_card.json:137
 #: pos_next/pos_next/doctype/restaurant_menu/restaurant_menu.json:106
 #: pos_next/pos_next/doctype/restaurant_portion/restaurant_portion.json:56
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:235
 #: pos_next/pos_next/doctype/restaurant_reservation/restaurant_reservation.json:225
 #: pos_next/pos_next/doctype/restaurant_settings/restaurant_settings.json:263
 #: pos_next/pos_next/doctype/restaurant_table/restaurant_table.json:119
@@ -16841,12 +17139,12 @@ msgstr ""
 msgid "Sales Order"
 msgstr ""
 
-#: pos_next/api/invoices.py:2961
+#: pos_next/api/invoices.py:2969
 #, python-brace-format
 msgid "Sales Order {0} was created but the Sales Invoice failed to submit: {1}"
 msgstr ""
 
-#: pos_next/api/invoices.py:2899
+#: pos_next/api/invoices.py:2907
 #, python-brace-format
 msgid "Sales Order {0} was created but the matching Sales Invoice could not be generated: {1}"
 msgstr ""
@@ -16948,6 +17246,12 @@ msgstr ""
 msgid "Sales/Hr"
 msgstr ""
 
+#. Description of the 'Without quantity' (Check) field in DocType 'Restaurant
+#. Recipe Ingredient'
+#: pos_next/pos_next/doctype/restaurant_recipe_ingredient/restaurant_recipe_ingredient.json:42
+msgid "Salt, pepper, oil... nobody gave a quantity on purpose."
+msgstr ""
+
 #: POS/src/components/sale/EditCustomerDialog.vue:269
 msgctxt "Address book"
 msgid "Salutation"
@@ -17042,6 +17346,10 @@ msgstr ""
 msgid "Say which company the usual supplier is for."
 msgstr ""
 
+#: pos_next/restaurant/recipes.py:386
+msgid "Say which ingredients to link."
+msgstr ""
+
 #: pos_next/restaurant/spoken_changes.py:94
 msgid "Say which line: the change has no text."
 msgstr ""
@@ -17050,12 +17358,28 @@ msgstr ""
 msgid "Say which menu to compose."
 msgstr ""
 
+#: pos_next/restaurant/recipe_plan.py:74
+msgid "Say which recipe to write."
+msgstr ""
+
+#: pos_next/restaurant/recipe_library.py:216
+msgid "Say which recipes to add."
+msgstr ""
+
 #: pos_next/api/cash_entry.py:571
 msgid "Say why this movement is set aside: the reason stays on its shift."
 msgstr ""
 
 #: pos_next/till_settings/registry.py:233
 msgid "Scale barcodes"
+msgstr ""
+
+#: POS/src/pages/ShopScan.vue:71
+msgid "Scan"
+msgstr ""
+
+#: POS/src/components/shop/ShopCart.vue:97 POS/src/pages/ShopScan.vue:55
+msgid "Scan an article"
 msgstr ""
 
 #. Label of a Section Break field in DocType 'POS Settings'
@@ -17094,6 +17418,10 @@ msgstr ""
 msgid "Scan with your TWINT app"
 msgstr ""
 
+#: POS/src/pages/ShopScan.vue:37
+msgid "Scan your articles"
+msgstr ""
+
 #: POS/src/components/sale/ItemsSelector.vue:1185
 #: pos_next/public/pos/assets/POSSale-3T_tl0G_.js:17
 #: pos_next/public/pos/assets/POSSale-DU_AQXZv.js:218
@@ -17105,7 +17433,7 @@ msgstr ""
 msgid "Scanning"
 msgstr ""
 
-#: pos_next/shop_scan/session.py:30
+#: POS/src/pages/ShopScan.vue:171 pos_next/shop_scan/session.py:30
 msgid "Scanning in the shop is not available here."
 msgstr ""
 
@@ -17416,6 +17744,10 @@ msgstr ""
 #. Label of a Section Break field in DocType 'POS Settings'
 #: pos_next/pos_next/doctype/pos_settings/pos_settings.json:879
 msgid "Security"
+msgstr ""
+
+#: POS/src/components/shop/ShopScanner.vue:65 POS/src/pages/ShopScan.vue:63
+msgid "See my cart"
 msgstr ""
 
 #: POS/src/pages/CustomerDisplay.vue:88
@@ -18000,6 +18332,11 @@ msgstr ""
 msgid "Shape"
 msgstr ""
 
+#. Label of a Data field in DocType 'Restaurant Recipe Ingredient'
+#: pos_next/pos_next/doctype/restaurant_recipe_ingredient/restaurant_recipe_ingredient.json:55
+msgid "Shelf"
+msgstr ""
+
 #: POS/src/components/sale/ShiftHistoryDialog.vue:127
 #: pos_next/pos_next/report/cashier_performance_report/cashier_performance_report.js:22
 #: pos_next/pos_next/report/inventory_impact_and_fast_movers_report/inventory_impact_and_fast_movers_report.js:22
@@ -18098,8 +18435,12 @@ msgstr ""
 msgid "Shifts Worked"
 msgstr ""
 
+#: POS/src/router.js:121
+msgid "Shop"
+msgstr ""
+
 #: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:1083
-#: pos_next/restaurant/neoresto.py:196
+#: pos_next/restaurant/neoresto.py:209
 #: pos_next/templates/restaurant_shopping_list.html:27
 msgid "Shopping list"
 msgstr ""
@@ -18112,6 +18453,11 @@ msgstr ""
 #: POS/src/components/pos/FloorPlanEditor.vue:773
 #: pos_next/pos_next/doctype/restaurant_area/restaurant_area.json:37
 msgid "Short Code"
+msgstr ""
+
+#. Label of a Small Text field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:64
+msgid "Short description"
 msgstr ""
 
 #: POS/src/components/restaurant/CreateItemDialog.vue:50
@@ -18295,6 +18641,10 @@ msgstr ""
 msgid "Show the {0} other notices"
 msgstr ""
 
+#: POS/src/components/shop/ShopCounter.vue:8
+msgid "Show this code to the seller"
+msgstr ""
+
 #: POS/src/pages/TakeawayOrder.vue:41
 #: pos_next/public/pos/assets/TakeawayOrder-B_4XXoCm.js:1
 #: pos_next/public/pos/assets/TakeawayOrder-CJnh2Hi7.js:1
@@ -18303,6 +18653,10 @@ msgstr ""
 
 #: pos_next/till_settings/registry.py:982
 msgid "Show variants as items"
+msgstr ""
+
+#: POS/src/pages/ShopScan.vue:79
+msgid "Show your code to the seller."
 msgstr ""
 
 #: POS/src/components/sale/ProductManagement.vue:192
@@ -18535,7 +18889,7 @@ msgid "Something that is not an article: written as you say it."
 msgstr ""
 
 #: POS/src/components/guest/GuestAccountSheet.vue:223
-#: POS/src/composables/useTillCode.js:92
+#: POS/src/composables/useTillCode.js:92 POS/src/utils/shopScan.js:37
 #: pos_next/public/pos/assets/GuestAccountSheet-BFqon8nK.js:1
 #: pos_next/public/pos/assets/index-B8kuZaoV.js:104
 msgid "Something went wrong. Please try again."
@@ -18641,6 +18995,16 @@ msgstr ""
 msgid "Sound of the till when a guest orders or pays from the QR code of a table. It plays at the alert volume set above"
 msgstr ""
 
+#. Description of the 'Family' (Data) field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:59
+msgid "Soups, salads, main dishes... as the restaurant calls them."
+msgstr ""
+
+#. Label of a Section Break field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:144
+msgid "Source"
+msgstr ""
+
 #. Label of a Link field in DocType 'Wallet Transaction'
 #: pos_next/pos_next/doctype/wallet_transaction/wallet_transaction.json:139
 msgid "Source Account"
@@ -18658,6 +19022,16 @@ msgstr ""
 
 #: pos_next/pos_next/doctype/wallet_transaction/wallet_transaction.py:93
 msgid "Source account is required for wallet transaction"
+msgstr ""
+
+#. Label of a Data field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:171
+msgid "Source link"
+msgstr ""
+
+#. Label of a Data field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:159
+msgid "Source title"
 msgstr ""
 
 #: pos_next/i18n_anchors.py:29
@@ -18834,6 +19208,7 @@ msgstr ""
 #. Label of a Select field in DocType 'Offline Expense Sync'
 #. Label of a Select field in DocType 'Offline Invoice Sync'
 #. Label of a Select field in DocType 'POS Opening Shift'
+#. Label of a Select field in DocType 'Restaurant Recipe'
 #. Label of a Select field in DocType 'Restaurant Reservation'
 #. Label of a Select field in DocType 'Restaurant Shopping List'
 #. Label of a Select field in DocType 'Restaurant Table'
@@ -18845,6 +19220,7 @@ msgstr ""
 #: pos_next/pos_next/doctype/offline_expense_sync/offline_expense_sync.json:41
 #: pos_next/pos_next/doctype/offline_invoice_sync/offline_invoice_sync.json:41
 #: pos_next/pos_next/doctype/pos_opening_shift/pos_opening_shift.json:46
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:80
 #: pos_next/pos_next/doctype/restaurant_reservation/restaurant_reservation.json:53
 #: pos_next/pos_next/doctype/restaurant_shopping_list/restaurant_shopping_list.json:40
 #: pos_next/pos_next/doctype/restaurant_table/restaurant_table.json:55
@@ -18883,7 +19259,10 @@ msgid "Step name"
 msgstr ""
 
 #. Label of a Table field in DocType 'Preparation Workflow'
+#. Label of a Section Break field in DocType 'Restaurant Recipe'
+#. Label of a Long Text field in DocType 'Restaurant Recipe'
 #: pos_next/pos_next/doctype/preparation_workflow/preparation_workflow.json:44
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:122
 msgid "Steps"
 msgstr ""
 
@@ -19005,7 +19384,8 @@ msgstr ""
 #: POS/src/components/guest/GuestCheckout.vue:151
 #: POS/src/components/sale/InvoiceCart.vue:1826
 #: POS/src/components/sale/OfflineInvoicesDialog.vue:314
-#: POS/src/components/sale/PaymentDialog.vue:902 POS/src/pages/CFD.vue:57
+#: POS/src/components/sale/PaymentDialog.vue:902
+#: POS/src/components/shop/ShopCart.vue:61 POS/src/pages/CFD.vue:57
 #: pos_next/public/pos/assets/CFD-BVqcBpPE.js:1
 #: pos_next/public/pos/assets/CFD-CwRWTMvP.js:1
 #: pos_next/public/pos/assets/CustomerDisplay-CUU4jVLr.js:1
@@ -19194,6 +19574,7 @@ msgstr ""
 #: pos_next/pos_next/doctype/restaurant_device_pairing/restaurant_device_pairing.json:101
 #: pos_next/pos_next/doctype/restaurant_menu/restaurant_menu.json:94
 #: pos_next/pos_next/doctype/restaurant_portion/restaurant_portion.json:55
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:223
 #: pos_next/pos_next/doctype/restaurant_reservation/restaurant_reservation.json:213
 #: pos_next/pos_next/doctype/restaurant_settings/restaurant_settings.json:257
 #: pos_next/pos_next/doctype/restaurant_shopping_list/restaurant_shopping_list.json:107
@@ -19576,6 +19957,12 @@ msgstr ""
 msgid "Test print sent"
 msgstr ""
 
+#. Option for the 'Cooked and tested' (Select) field in DocType 'Restaurant
+#. Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:91
+msgid "Tested"
+msgstr ""
+
 #: POS/src/components/restaurant/ServiceTopBar.vue:63
 #: POS/src/components/restaurant/ServiceTopBar.vue:64
 #: pos_next/public/pos/assets/followLiveReading-Chv0vP4C.js:1
@@ -19699,6 +20086,10 @@ msgstr ""
 #. Counter'
 #: pos_next/pos_next/doctype/restaurant_ticket_counter/restaurant_ticket_counter.json:33
 msgid "The business day the counter was opened for"
+msgstr ""
+
+#: POS/src/components/shop/ShopScanner.vue:18
+msgid "The camera is not available here. Type the barcode below."
 msgstr ""
 
 #: pos_next/till_settings/registry.py:587
@@ -19890,6 +20281,11 @@ msgstr ""
 msgid "The family {0} does not exist."
 msgstr ""
 
+#: pos_next/restaurant/recipe_library.py:46
+#, python-brace-format
+msgid "The free recipe library is not intact: {0}."
+msgstr ""
+
 #: pos_next/api/reservations.py:236
 msgid "The guest has not confirmed this online reservation: it cannot be marked as a no-show"
 msgstr ""
@@ -20067,6 +20463,11 @@ msgstr ""
 msgid "The points earned become a wallet balance, at the rate of the program. Always on with the loyalty program."
 msgstr ""
 
+#: pos_next/restaurant/recipes.py:114 pos_next/restaurant/recipes.py:198
+#, python-brace-format
+msgid "The portions are a number between 1 and {0}."
+msgstr ""
+
 #: POS/src/components/restaurant/AddPortionsDialog.vue:115
 #: pos_next/public/pos/assets/POSSale-3T_tl0G_.js:18
 msgid "The portions could not be added"
@@ -20112,6 +20513,10 @@ msgstr ""
 msgid "The price of {0} must be more than zero."
 msgstr ""
 
+#: POS/src/pages/ShopScan.vue:39
+msgid "The price shown is the price you pay at the till."
+msgstr ""
+
 #: pos_next/till_settings/registry.py:1026
 msgid "The prices shown and entered include VAT."
 msgstr ""
@@ -20133,6 +20538,11 @@ msgstr ""
 
 #: pos_next/api/portions.py:19
 msgid "The products must be a list of item codes"
+msgstr ""
+
+#. Description of the 'Portions' (Int) field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:101
+msgid "The quantities below are for this number of portions."
 msgstr ""
 
 #: pos_next/till_settings/registry.py:1241
@@ -20231,6 +20641,10 @@ msgstr ""
 msgid "The screen could not be opened"
 msgstr ""
 
+#: POS/src/components/shop/ShopCounter.vue:28
+msgid "The seller scans this code and takes your cart over."
+msgstr ""
+
 #: pos_next/till_settings/api.py:76
 msgid "The settings to save are not readable"
 msgstr ""
@@ -20244,12 +20658,21 @@ msgstr ""
 msgid "The shop is closed: scanning starts again when its till opens."
 msgstr ""
 
+#: POS/src/pages/ShopScan.vue:72
+msgid "The shop's articles, with their price."
+msgstr ""
+
 #: pos_next/restaurant/card_plan.py:484 pos_next/restaurant/card_plan.py:644
 msgid "The site has no restaurant to build the card for"
 msgstr ""
 
 #: pos_next/restaurant/card_plan.py:430
 msgid "The site has no selling price list"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:99
+#, python-brace-format
+msgid "The source says {0} {1}"
 msgstr ""
 
 #. Description of the 'Preparation Station' (Link) field in DocType 'Restaurant
@@ -20338,6 +20761,10 @@ msgstr ""
 msgid "The till's cash mode of payment {0} has no account for {1}."
 msgstr ""
 
+#: POS/src/components/shop/ShopCart.vue:65
+msgid "The till's offers"
+msgstr ""
+
 #: pos_next/api/guest_ordering.py:1262
 #: pos_next/tests/test_a_guest_payment_is_booked_by_the_provider.py:167
 msgid "The tip cannot be negative, nor the whole payment."
@@ -20357,6 +20784,12 @@ msgstr ""
 
 #: POS/src/components/common/TillCodeDialog.vue:89
 msgid "The two codes are different."
+msgstr ""
+
+#. Description of the 'Unit to convert' (Check) field in DocType 'Restaurant
+#. Recipe Ingredient'
+#: pos_next/pos_next/doctype/restaurant_recipe_ingredient/restaurant_recipe_ingredient.json:50
+msgid "The unit comes from a source that is not metric (cup, ounce...): it is converted when the ingredient is linked to an article."
 msgstr ""
 
 #. Description of the 'Unit (free line)' (Data) field in DocType 'Restaurant
@@ -20388,6 +20821,26 @@ msgstr ""
 #: pos_next/public/pos/assets/POSSale-DU_AQXZv.js:237
 #, python-brace-format
 msgid "There are {0} occupied tables. Clear all orders and disable restaurant mode?"
+msgstr ""
+
+#: pos_next/restaurant/recipes.py:334 pos_next/restaurant/recipes.py:396
+#, python-brace-format
+msgid "There is no article named «{0}»."
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:66
+msgid "There is no ingredient to link."
+msgstr ""
+
+#: pos_next/restaurant/recipes.py:194 pos_next/restaurant/recipes.py:338
+#: pos_next/restaurant/recipes.py:364
+#, python-brace-format
+msgid "There is no recipe named «{0}»."
+msgstr ""
+
+#: pos_next/restaurant/recipe_library.py:60
+#, python-brace-format
+msgid "There is no recipe «{0}» in the free library."
 msgstr ""
 
 #: pos_next/restaurant/spoken_changes.py:201
@@ -20605,7 +21058,7 @@ msgstr ""
 msgid "This invoice cannot be returned because the return period has expired."
 msgstr ""
 
-#: pos_next/api/invoices.py:1942
+#: pos_next/api/invoices.py:1950
 msgid "This invoice is currently being processed. Please wait."
 msgstr ""
 
@@ -20873,6 +21326,10 @@ msgstr ""
 msgid "Thursday"
 msgstr ""
 
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:44
+msgid "Tick the recipes to add."
+msgstr ""
+
 #. Label of a Section Break field in DocType 'Restaurant'
 #: pos_next/pos_next/doctype/restaurant/restaurant.json:152
 msgid "Ticket Numbers"
@@ -20927,7 +21384,7 @@ msgstr ""
 msgid "Till settings"
 msgstr ""
 
-#: pos_next/restaurant/neoresto.py:256 pos_next/tests/test_neoresto.py:339
+#: pos_next/restaurant/neoresto.py:269 pos_next/tests/test_neoresto.py:339
 #: pos_next/tests/test_neoresto.py:357
 msgid "Tills"
 msgstr ""
@@ -20965,12 +21422,14 @@ msgstr ""
 msgid "Timestamp: {0}"
 msgstr ""
 
+#. Label of a Small Text field in DocType 'Restaurant Recipe'
 #: POS/src/components/guest/GuestCheckout.vue:158
 #: POS/src/components/guest/GuestCheckout.vue:195
 #: POS/src/components/sale/PaymentDialog.vue:1035
 #: pos_next/api/guest_ordering.py:1288 pos_next/api/guest_ordering.py:1478
-#: pos_next/api/invoices.py:3037
+#: pos_next/api/invoices.py:3045
 #: pos_next/pos_next/doctype/restaurant/restaurant.py:119
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:133
 #: pos_next/pos_next/doctype/restaurant_settings/restaurant_settings.py:92
 #: pos_next/public/pos/assets/GuestAccountSheet-BFqon8nK.js:1
 #: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
@@ -21029,7 +21488,7 @@ msgstr ""
 #: pos_next/public/pos/assets/POSSale-3T_tl0G_.js:41
 #: pos_next/public/pos/assets/POSSale-DU_AQXZv.js:2
 #: pos_next/public/pos/assets/POSSale-DU_AQXZv.js:241
-#: pos_next/restaurant/neoresto.py:241 pos_next/till_settings/registry.py:203
+#: pos_next/restaurant/neoresto.py:254 pos_next/till_settings/registry.py:203
 msgid "Tips"
 msgstr ""
 
@@ -21077,6 +21536,14 @@ msgstr ""
 msgid "To buy"
 msgstr ""
 
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:14
+msgid "To complete"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:15
+msgid "To convert"
+msgstr ""
+
 #: POS/src/components/sale/ItemSelectionDialog.vue:373
 msgid "To create variants:"
 msgstr ""
@@ -21112,6 +21579,12 @@ msgstr ""
 msgid "To order"
 msgstr ""
 
+#. Option for the 'Status' (Select) field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:81
+#: pos_next/restaurant/neoresto.py:326
+msgid "To review"
+msgstr ""
+
 #: pos_next/public/pos/assets/index-B8kuZaoV.js:104
 msgid "To serve a starter with the mains, choose Main."
 msgstr ""
@@ -21129,7 +21602,7 @@ msgstr ""
 #: POS/src/composables/useInvoiceFilters.js:252
 #: pos_next/public/pos/assets/POSSale-3T_tl0G_.js:37
 #: pos_next/public/pos/assets/POSSale-DU_AQXZv.js:237
-#: pos_next/restaurant/neoresto.py:289
+#: pos_next/restaurant/neoresto.py:302
 msgid "Today"
 msgstr ""
 
@@ -21179,6 +21652,10 @@ msgstr ""
 #: pos_next/api/authorization.py:172 pos_next/api/authorization.py:196
 #, python-brace-format
 msgid "Too many failed attempts. Approval is locked for {0} minutes."
+msgstr ""
+
+#: POS/src/utils/shopScan.js:33
+msgid "Too many requests. Please try again later."
 msgstr ""
 
 #: pos_next/api/reservations.py:765
@@ -21476,6 +21953,10 @@ msgstr ""
 msgid "Type an invoice number to search all invoices"
 msgstr ""
 
+#: POS/src/components/shop/ShopScanner.vue:24
+msgid "Type the barcode"
+msgstr ""
+
 #: POS/src/components/sale/WarehouseAvailabilityDialog.vue:86
 msgid "Type to search items..."
 msgstr ""
@@ -21518,7 +21999,7 @@ msgstr ""
 msgid "Unable to connect to server. Check your internet connection."
 msgstr ""
 
-#: pos_next/api/invoices.py:1311
+#: pos_next/api/invoices.py:1319
 #, python-brace-format
 msgid "Unable to load POS Profile {0}"
 msgstr ""
@@ -21562,8 +22043,11 @@ msgid "Undo start"
 msgstr ""
 
 #. Label of a Data field in DocType 'Restaurant Dish Ingredient'
+#. Label of a Data field in DocType 'Restaurant Recipe Ingredient'
 #: POS/src/components/customer-display/DisplayCart.vue:68
 #: pos_next/pos_next/doctype/restaurant_dish_ingredient/restaurant_dish_ingredient.json:43
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:104
+#: pos_next/pos_next/doctype/restaurant_recipe_ingredient/restaurant_recipe_ingredient.json:33
 #: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:772
 #: pos_next/public/pos/assets/CustomerDisplay-CUU4jVLr.js:1
 #: pos_next/public/pos/assets/CustomerDisplay-DIC58MR6.js:1
@@ -21585,6 +22069,11 @@ msgstr ""
 #: POS/src/components/restaurant/CreateItemDialog.vue:72
 #: POS/src/components/sale/ItemSelectionDialog.vue:209
 msgid "Unit of Measure"
+msgstr ""
+
+#. Label of a Check field in DocType 'Restaurant Recipe Ingredient'
+#: pos_next/pos_next/doctype/restaurant_recipe_ingredient/restaurant_recipe_ingredient.json:47
+msgid "Unit to convert"
 msgstr ""
 
 #: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:345
@@ -21659,7 +22148,7 @@ msgstr ""
 msgid "Until {0}"
 msgstr ""
 
-#: pos_next/restaurant/neoresto.py:294
+#: pos_next/restaurant/neoresto.py:307
 msgid "Upcoming"
 msgstr ""
 
@@ -21860,6 +22349,21 @@ msgstr ""
 msgid "Validate"
 msgstr ""
 
+#. Option for the 'Status' (Select) field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:81
+#: pos_next/restaurant/neoresto.py:325
+msgid "Validated"
+msgstr ""
+
+#: pos_next/restaurant/recipes.py:140
+#, python-brace-format
+msgid "Validated needs a quantity for every ingredient (or «without quantity»): {0}."
+msgstr ""
+
+#: pos_next/restaurant/recipes.py:145
+msgid "Validated needs ingredients and steps."
+msgstr ""
+
 #: POS/src/components/sale/ReturnInvoiceDialog.vue:1288
 #: POS/src/components/sale/ReturnInvoiceDialog.vue:1815
 #: POS/src/utils/errorHandler.js:95 POS/src/utils/errorHandler.js:169
@@ -21895,6 +22399,12 @@ msgstr ""
 #: pos_next/i18n_anchors.py:39
 msgctxt "Menu Badge"
 msgid "Vegan"
+msgstr ""
+
+#. Label of a Check field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:69
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:22
+msgid "Vegetarian"
 msgstr ""
 
 #: pos_next/i18n_anchors.py:38
@@ -22067,6 +22577,10 @@ msgstr ""
 #: pos_next/public/pos/assets/CustomerDisplay-CUU4jVLr.js:1
 #: pos_next/public/pos/assets/CustomerDisplay-DIC58MR6.js:1
 msgid "Waiting for items"
+msgstr ""
+
+#: POS/src/components/shop/ShopCounter.vue:6
+msgid "Waiting for the till"
 msgstr ""
 
 #: POS/src/components/restaurant/KitchenLayoutSwitch.vue:19
@@ -22305,6 +22819,11 @@ msgstr ""
 msgid "What was actually taken, when it differs from the quantity."
 msgstr ""
 
+#. Label of a Long Text field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:212
+msgid "What was changed"
+msgstr ""
+
 #: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:216
 msgid "What we buy"
 msgstr ""
@@ -22415,6 +22934,11 @@ msgstr ""
 msgid "Which POS action this rule gates."
 msgstr ""
 
+#: pos_next/restaurant/recipe_plan.py:432
+#, python-brace-format
+msgid "Which dish is «{0}»? Choose one first."
+msgstr ""
+
 #. Description of the 'Cashier' (Data) field in DocType 'POS Closing Shift Cash
 #. Movement'
 #: pos_next/pos_next/doctype/pos_closing_shift_cash_movement/pos_closing_shift_cash_movement.json:55
@@ -22503,6 +23027,12 @@ msgstr ""
 msgid "Without a sale: {0}"
 msgstr ""
 
+#. Label of a Check field in DocType 'Restaurant Recipe Ingredient'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:13
+#: pos_next/pos_next/doctype/restaurant_recipe_ingredient/restaurant_recipe_ingredient.json:39
+msgid "Without quantity"
+msgstr ""
+
 #. Label of a Link field in DocType 'Preparation Station'
 #: POS/src/components/pos/FloorPlanEditor.vue:863
 #: pos_next/pos_next/doctype/preparation_station/preparation_station.json:83
@@ -22581,7 +23111,7 @@ msgstr ""
 msgid "Write-off account"
 msgstr ""
 
-#: pos_next/api/invoices.py:2355
+#: pos_next/api/invoices.py:2363
 #, python-brace-format
 msgid "Write-off amount {0} exceeds limit {1}"
 msgstr ""
@@ -22659,12 +23189,12 @@ msgstr ""
 msgid "You are signed in as {0}."
 msgstr ""
 
-#: pos_next/api/invoices.py:1109
+#: pos_next/api/invoices.py:1117
 #, python-brace-format
 msgid "You are trying to return more quantity for item {0} than remains on that line."
 msgstr ""
 
-#: pos_next/api/invoices.py:1118
+#: pos_next/api/invoices.py:1126
 #, python-brace-format
 msgid "You are trying to return more quantity for item {0} than was sold."
 msgstr ""
@@ -22692,7 +23222,7 @@ msgstr ""
 msgid "You changed the global price. Do you also want to update the price on all other cards that use this item?"
 msgstr ""
 
-#: pos_next/api/credit_sales.py:751 pos_next/api/invoices.py:3220
+#: pos_next/api/credit_sales.py:751 pos_next/api/invoices.py:3228
 #: pos_next/api/partial_payments.py:534 pos_next/api/partial_payments.py:610
 #: pos_next/api/partial_payments.py:681 pos_next/api/partial_payments.py:741
 #: pos_next/api/partial_payments.py:997 pos_next/api/partial_payments.py:1060
@@ -22749,7 +23279,7 @@ msgstr ""
 msgid "You don't have permission to view promotions"
 msgstr ""
 
-#: pos_next/api/invoices.py:3104 pos_next/api/partial_payments.py:799
+#: pos_next/api/invoices.py:3112 pos_next/api/partial_payments.py:799
 msgid "You don't have permission to view this invoice"
 msgstr ""
 
@@ -22799,6 +23329,10 @@ msgstr ""
 msgid "You will be redirected to the Neoffice back-office."
 msgstr ""
 
+#: POS/src/components/shop/ShopCart.vue:76
+msgid "You will pay"
+msgstr ""
+
 #: POS/src/pages/GuestReservation.vue:153
 #: pos_next/public/pos/assets/GuestReservation-D0hOx5zg.js:1
 #: pos_next/public/pos/assets/GuestReservation-Dq1mf9Gp.js:1
@@ -22820,6 +23354,10 @@ msgstr ""
 msgid "Your account"
 msgstr ""
 
+#: POS/src/pages/ShopScan.vue:42 POS/src/pages/ShopScan.vue:103
+msgid "Your cart"
+msgstr ""
+
 #: POS/src/stores/posCart.js:1484
 #: pos_next/public/pos/assets/index-B8kuZaoV.js:104
 #: pos_next/public/pos/assets/index-DTK24MUK.js:102
@@ -22833,7 +23371,7 @@ msgstr ""
 msgid "Your cart is empty"
 msgstr ""
 
-#: pos_next/shop_scan/cart.py:215
+#: POS/src/components/shop/ShopCart.vue:5 pos_next/shop_scan/cart.py:215
 #: pos_next/tests/test_a_shop_cart_takes_only_what_the_till_sells.py:105
 msgid "Your cart is empty."
 msgstr ""
@@ -22923,6 +23461,10 @@ msgstr ""
 
 #: POS/src/components/pos/FloorPlanEditor.vue:343
 msgid "Zoom out"
+msgstr ""
+
+#: pos_next/restaurant/recipe_library.py:75
+msgid "a recipe has an unexpected name"
 msgstr ""
 
 #: pos_next/pos_next/doctype/pos_closing_shift/pos_closing_shift.py:60
@@ -23070,6 +23612,10 @@ msgstr ""
 msgid "empty"
 msgstr ""
 
+#: POS/src/pages/ShopScan.vue:47
+msgid "empty for now"
+msgstr ""
+
 #: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:307
 #: pos_next/templates/restaurant_shopping_list.html:51
 #, python-brace-format
@@ -23153,6 +23699,10 @@ msgstr ""
 
 #: POS/src/components/pos/POSHeader.vue:343
 msgid "items cached"
+msgstr ""
+
+#: pos_next/restaurant/recipe_library.py:53
+msgid "its manifest cannot be read"
 msgstr ""
 
 #: POS/src/components/sale/PaymentDialog.vue:1385
@@ -23283,7 +23833,7 @@ msgctxt "Option group"
 msgid "required"
 msgstr ""
 
-#: pos_next/restaurant/neoresto.py:375 pos_next/tests/test_neoresto.py:804
+#: pos_next/restaurant/neoresto.py:398 pos_next/tests/test_neoresto.py:804
 msgid "reservations still to come today"
 msgstr ""
 
@@ -23315,7 +23865,7 @@ msgstr ""
 msgid "sales_invoice_item is required when returning {0} (multiple matching lines on the original invoice)."
 msgstr ""
 
-#: pos_next/restaurant/neoresto.py:382 pos_next/tests/test_neoresto.py:805
+#: pos_next/restaurant/neoresto.py:405 pos_next/tests/test_neoresto.py:805
 msgid "sessions open"
 msgstr ""
 
@@ -23324,7 +23874,7 @@ msgstr ""
 msgid "shop"
 msgstr ""
 
-#: pos_next/restaurant/neoresto.py:354 pos_next/tests/test_neoresto.py:802
+#: pos_next/restaurant/neoresto.py:377 pos_next/tests/test_neoresto.py:802
 msgid "tables occupied"
 msgstr ""
 
@@ -23350,6 +23900,11 @@ msgctxt "Service family"
 msgid "the desserts"
 msgstr ""
 
+#: pos_next/restaurant/recipe_library.py:78
+#, python-brace-format
+msgid "the file of «{0}» is missing"
+msgstr ""
+
 #: pos_next/public/pos/assets/index-B8kuZaoV.js:104
 msgid "the mains"
 msgstr ""
@@ -23357,6 +23912,10 @@ msgstr ""
 #: POS/src/utils/serviceFamilies.js:212
 msgctxt "Service family"
 msgid "the mains"
+msgstr ""
+
+#: POS/src/components/shop/ShopCart.vue:77
+msgid "the same amount at the till"
 msgstr ""
 
 #: pos_next/public/pos/assets/index-B8kuZaoV.js:104
@@ -23502,9 +24061,15 @@ msgstr ""
 msgid "{0} applied. The current promotion saves more on: {1}"
 msgstr ""
 
+#: POS/src/components/shop/ShopCounter.vue:21
 #: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:227
 #, python-brace-format
 msgid "{0} articles"
+msgstr ""
+
+#: POS/src/pages/ShopScan.vue:46
+#, python-brace-format
+msgid "{0} articles · {1}"
 msgstr ""
 
 #: pos_next/cash_movement.py:173
@@ -23593,6 +24158,11 @@ msgstr ""
 #: pos_next/cash_movement.py:177
 #, python-brace-format
 msgid "{0} does not say whether it is a Credit or a Debit."
+msgstr ""
+
+#: POS/src/components/shop/ShopCart.vue:23
+#, python-brace-format
+msgid "{0} each"
 msgstr ""
 
 #: POS/src/components/ShiftClosingDialog.vue:769
@@ -23919,6 +24489,7 @@ msgid "{0} lines not sent will be lost if you send the cancellation."
 msgstr ""
 
 #: POS/src/components/restaurant/ScreenAwakeSettings.vue:149
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:21
 #: pos_next/public/pos/assets/followLiveReading-Chv0vP4C.js:1
 #, python-brace-format
 msgid "{0} min"
@@ -23953,6 +24524,11 @@ msgstr ""
 #: POS/src/components/sale/CustomerDialog.vue:68
 #, python-brace-format
 msgid "{0} of {1} customers"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:72
+#, python-brace-format
+msgid "{0} of {1} ingredients are linked."
 msgstr ""
 
 #: POS/src/components/pos/CashInOutDialog.vue:767
@@ -24014,6 +24590,11 @@ msgstr ""
 msgid "{0} payments"
 msgstr ""
 
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:20
+#, python-brace-format
+msgid "{0} portions"
+msgstr ""
+
 #: POS/src/pages/GuestOrder.vue:82
 #: pos_next/public/pos/assets/GuestOrder-fdBGPa-L.js:1
 #, python-brace-format
@@ -24025,7 +24606,12 @@ msgstr ""
 msgid "{0} puts money into the drawer: a withdrawal takes it out."
 msgstr ""
 
-#: pos_next/api/invoices.py:2848
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:54
+#, python-brace-format
+msgid "{0} recipes added, to review."
+msgstr ""
+
+#: pos_next/api/invoices.py:2856
 #, python-brace-format
 msgid "{0} refund of {1} processed automatically."
 msgstr ""
@@ -24088,7 +24674,7 @@ msgstr ""
 msgid "{0} tables freed in {1}"
 msgstr ""
 
-#: pos_next/restaurant/neoresto.py:366 pos_next/tests/test_neoresto.py:817
+#: pos_next/restaurant/neoresto.py:389 pos_next/tests/test_neoresto.py:817
 #: pos_next/tests/test_neoresto.py:823
 #, python-brace-format
 msgid "{0} tickets"
@@ -24158,7 +24744,7 @@ msgstr ""
 msgid "{0} {1} {2}h {3}m"
 msgstr ""
 
-#: pos_next/restaurant/neoresto.py:365 pos_next/tests/test_neoresto.py:803
+#: pos_next/restaurant/neoresto.py:388 pos_next/tests/test_neoresto.py:803
 #, python-brace-format
 msgid "{0} · taken today"
 msgstr ""
@@ -24222,6 +24808,31 @@ msgstr ""
 msgid "{0}: a date is written 2026-12-24."
 msgstr ""
 
+#: pos_next/restaurant/recipe_plan.py:67
+#, python-brace-format
+msgid "{0}: a number between {1} and {2}."
+msgstr ""
+
+#: pos_next/restaurant/recipe_plan.py:53
+#, python-brace-format
+msgid "{0}: a quantity is a number (250), not «{1}»."
+msgstr ""
+
+#: pos_next/restaurant/recipe_plan.py:55
+#, python-brace-format
+msgid "{0}: a quantity is a number above zero."
+msgstr ""
+
+#: pos_next/restaurant/recipe_plan.py:65
+#, python-brace-format
+msgid "{0}: a whole number is expected."
+msgstr ""
+
+#: pos_next/restaurant/recipe_plan.py:94
+#, python-brace-format
+msgid "{0}: an ingredient is {name, qty, unit}."
+msgstr ""
+
 #: pos_next/api/guest_ordering.py:758 pos_next/api/guest_ordering.py:766
 #, python-brace-format
 msgid "{0}: an option is no longer offered, please reload the menu"
@@ -24268,6 +24879,16 @@ msgstr ""
 #: pos_next/cash_movement.py:202
 #, python-brace-format
 msgid "{0}: the account {1} needs a customer or a supplier, which the till does not name."
+msgstr ""
+
+#: pos_next/restaurant/recipe_plan.py:88
+#, python-brace-format
+msgid "{0}: the ingredients are a list of at most {1}."
+msgstr ""
+
+#: pos_next/restaurant/recipe_plan.py:110
+#, python-brace-format
+msgid "{0}: the steps are a list of at most {1}."
 msgstr ""
 
 #: pos_next/patches/neorestau/keep_the_tills_cash_operations.py:77
@@ -24335,6 +24956,31 @@ msgstr ""
 
 #: pos_next/till_settings/registry.py:509
 msgid "« Straight to the kitchen »: the order leaves at once. « Waiter approval »: a waiter confirms it first."
+msgstr ""
+
+#: pos_next/restaurant/recipe_library.py:114
+#, python-brace-format
+msgid "«{0}» does not match its manifest ({1})"
+msgstr ""
+
+#: pos_next/restaurant/recipe_plan.py:430
+#, python-brace-format
+msgid "«{0}» is not a dish the restaurant sells."
+msgstr ""
+
+#: pos_next/restaurant/recipe_plan.py:424
+#, python-brace-format
+msgid "«{0}» is not ready to be written: it needs {1}."
+msgstr ""
+
+#: pos_next/restaurant/recipes.py:401
+#, python-brace-format
+msgid "«{0}» is written in {1}: give its quantity and its unit as the article is bought."
+msgstr ""
+
+#: pos_next/restaurant/recipe_library.py:80
+#, python-brace-format
+msgid "«{0}» was changed since it was checked"
 msgstr ""
 
 #: POS/src/components/sale/EditItemDialog.vue:979

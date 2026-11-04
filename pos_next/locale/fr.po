@@ -22498,3 +22498,133 @@ msgstr "Un vendeur contrôle cet article avant la vente (âge, conseil) : un cli
 #: pos_next/fixtures/custom_field.json
 msgid "A seller checks the articles of this group and of its sub-groups before they are sold (age, advice): a customer who scans one in the shop goes to the counter with it."
 msgstr "Un vendeur contrôle les articles de ce groupe et de ses sous-groupes avant leur vente (âge, conseil) : un client qui en scanne un en magasin se présente au comptoir avec lui."
+
+#: POS/src/components/shop/ShopCart.vue:71
+#: POS/src/components/shop/ShopCounter.vue:32
+msgid "A seller checks an article of your cart at the counter."
+msgstr "Un vendeur contrôle un article de votre panier au comptoir."
+
+#: POS/src/pages/ShopScan.vue:86
+msgid "A seller checks your cart, then you pay."
+msgstr "Un vendeur contrôle votre panier, puis vous payez."
+
+#: POS/src/components/shop/ShopScanner.vue:15
+msgid "Aim at the article's barcode"
+msgstr "Visez le code-barres de l'article"
+
+#: POS/src/pages/ShopScan.vue:85
+msgid "Checked and paid"
+msgstr "Contrôlé et payé"
+
+#: POS/src/components/shop/ShopCart.vue:25
+msgid "Checked by a seller"
+msgstr "Contrôlé par un vendeur"
+
+#: POS/src/pages/ShopScan.vue:47
+msgid "empty for now"
+msgstr "vide pour l'instant"
+
+#: POS/src/pages/ShopScan.vue:78
+msgid "Go to the till"
+msgstr "Aller à la caisse"
+
+#: POS/src/components/shop/ShopCart.vue:89
+msgid "I pay at the till"
+msgstr "Je paie à la caisse"
+
+#: POS/src/utils/shopScan.js:52
+msgid "No connection. Please try again."
+msgstr "Pas de connexion. Veuillez réessayer."
+
+#: POS/src/components/shop/ShopCart.vue:21
+#, python-brace-format
+msgid "Offer −{0} %"
+msgstr "Promotion −{0} %"
+
+#: POS/src/components/shop/ShopCounter.vue:29
+#, python-brace-format
+msgid "Once it is checked, you pay {0}."
+msgstr "Une fois contrôlé, vous paierez {0}."
+
+#: POS/src/components/shop/ShopCart.vue:33
+#, python-brace-format
+msgid "One less {0}"
+msgstr "Un {0} de moins"
+
+#: POS/src/components/shop/ShopCart.vue:43
+#, python-brace-format
+msgid "One more {0}"
+msgstr "Un {0} de plus"
+
+#: POS/src/components/shop/ShopScanner.vue:12
+msgid "Opening the camera…"
+msgstr "Ouverture de la caméra…"
+
+#: POS/src/components/shop/ShopCounter.vue:16
+msgid "QR code of your cart"
+msgstr "Code QR de votre panier"
+
+#: POS/src/components/shop/ShopCart.vue:97 POS/src/pages/ShopScan.vue:55
+msgid "Scan an article"
+msgstr "Scanner un article"
+
+#: POS/src/pages/ShopScan.vue:37
+msgid "Scan your articles"
+msgstr "Scannez vos articles"
+
+#: POS/src/components/shop/ShopScanner.vue:65 POS/src/pages/ShopScan.vue:63
+msgid "See my cart"
+msgstr "Voir mon panier"
+
+#: POS/src/components/shop/ShopCounter.vue:8
+msgid "Show this code to the seller"
+msgstr "Montrez ce code au vendeur"
+
+#: POS/src/pages/ShopScan.vue:79
+msgid "Show your code to the seller."
+msgstr "Montrez votre code au vendeur."
+
+#: POS/src/components/shop/ShopScanner.vue:18
+msgid "The camera is not available here. Type the barcode below."
+msgstr "La caméra n'est pas disponible ici. Saisissez le code-barres ci-dessous."
+
+#: POS/src/pages/ShopScan.vue:39
+msgid "The price shown is the price you pay at the till."
+msgstr "Le prix affiché est celui que vous payez à la caisse."
+
+#: POS/src/components/shop/ShopCart.vue:77
+msgid "the same amount at the till"
+msgstr "le même montant à la caisse"
+
+#: POS/src/components/shop/ShopCounter.vue:28
+msgid "The seller scans this code and takes your cart over."
+msgstr "Le vendeur scanne ce code et reprend votre panier."
+
+#: POS/src/pages/ShopScan.vue:72
+msgid "The shop's articles, with their price."
+msgstr "Les articles du magasin, avec leur prix."
+
+#: POS/src/components/shop/ShopCart.vue:65
+msgid "The till's offers"
+msgstr "Les promotions de la caisse"
+
+#: POS/src/components/shop/ShopScanner.vue:24
+msgid "Type the barcode"
+msgstr "Saisir le code-barres"
+
+#: POS/src/components/shop/ShopCounter.vue:6
+msgid "Waiting for the till"
+msgstr "En attente de la caisse"
+
+#: POS/src/components/shop/ShopCart.vue:76
+msgid "You will pay"
+msgstr "Vous paierez"
+
+#: POS/src/pages/ShopScan.vue:42 POS/src/pages/ShopScan.vue:103
+msgid "Your cart"
+msgstr "Votre panier"
+
+#: POS/src/components/shop/ShopCart.vue:23
+#, python-brace-format
+msgid "{0} each"
+msgstr "{0} la pièce"
