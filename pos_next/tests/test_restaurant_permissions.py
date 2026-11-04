@@ -114,8 +114,16 @@ CASHIER_ROLE = "POSNext Cashier"
 RESTAURANT = "_Test Rights Restaurant"
 IMAGE = (b"\xff\xd8\xff", "jpg")
 # What the till is told: the restaurant's rights, the ERP's on items and prices, who opens the till's settings (its
-# own, its restaurant's: NeoResto lot 1, task 13; per till when the till is named, see test_till_settings)
-EVERY_RIGHT = {*permissions.RIGHTS, "manage_till_settings", "manage_restaurant_settings"}
+# own, its restaurant's: NeoResto lot 1, task 13; per till when the till is named, see test_till_settings), and who is
+# offered « Compose with Nora » in the card editor (on a site that switched it on, see the module of that right)
+EVERY_RIGHT = {
+	*permissions.RIGHTS,
+	"manage_till_settings",
+	"manage_restaurant_settings",
+	"compose_card_with_nora",
+}
+# The site switch of « Compose with Nora »: on here, so the right follows the cards' (off: its own module)
+NORA_CARD_ON = {"neoresto_card_with_nora_active": 1}
 # A restaurant's manager without the ERP's item rights, at a till he does not manage
 MANAGER_IS_TOLD = {
 	**dict.fromkeys(EVERY_RIGHT, True),
@@ -623,6 +631,12 @@ class TestATableIsTheFloorPlans(RestaurantRights):
 
 
 class TestTheTillIsToldWhatItsUserMayManage(RestaurantRights):
+	def setUp(self):
+		super().setUp()
+		switch = patch.dict(frappe.local.conf, NORA_CARD_ON)
+		switch.start()
+		self.addCleanup(switch.stop)
+
 	def told(self, user):
 		with as_user(user):
 			settings = {}
