@@ -65,3 +65,12 @@ class TestTheRestaurantFieldsHideWithoutNeoresto(unittest.TestCase):
 			if FLAG in (field.get("depends_on") or "") and field["name"] != "Item-restaurant_recipe":
 				with self.subTest(field=field["name"]):
 					self.assertGreater(field["modified"], "2026-11-03", field["name"])
+
+	def test_the_supplier_column_that_depends_on_cannot_hide_is_hidden_by_the_form_of_the_article(self):
+		# A column of a table does not read depends_on: the form of an Item hides the restaurant's one itself
+		root = FIXTURE.parents[1]
+		script = (root / "public" / "js" / "item.js").read_text(encoding="utf-8")
+		self.assertIn("frappe.boot.neoresto_active", script)
+		self.assertIn('"supply_uom", "hidden", 1', script)
+		hooks = (root / "hooks.py").read_text(encoding="utf-8")
+		self.assertIn('"Item": "public/js/item.js"', hooks)

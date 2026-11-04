@@ -90,6 +90,8 @@ _asset_version = get_build_version()
 
 # include js in doctype views
 doctype_js = {
+	# //// Neoffice — the restaurant's column of the supplier table of an article hides without NeoResto (maintenance#2233): a table column does not read depends_on.
+	"Item": "public/js/item.js",
 	"Customer": "public/js/customer.js",
 	"User": "public/js/user.js",
 	"POS Profile": "public/js/pos_profile.js",
