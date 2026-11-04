@@ -238,10 +238,20 @@ def judge(cal: dict, names, month: int) -> dict:
 
 
 def _calendar_or_none() -> dict | None:
-	"""The calendar where this site runs NeoResto and has one installed; None otherwise (no verdict, no refusal: the caller only goes without)."""
+	"""The calendar where this site runs NeoResto and has one installed; None otherwise (no verdict, no refusal: the caller only goes without).
+
+	A calendar that does not hold (a file changed after it was checked, a month that does not exist) is left out of the recipes' screens
+	rather than breaking them, and the error is logged; the tool that asks for the season itself says it."""
 	from pos_next.restaurant.mode import neoresto_active
 
-	return load() if neoresto_active() else None
+	if not neoresto_active():
+		return None
+	try:
+		return load()
+	except frappe.ValidationError as exc:
+		frappe.clear_messages()
+		frappe.log_error("Season calendar unusable", str(exc))
+		return None
 
 
 def season_of(verdict: dict) -> dict:

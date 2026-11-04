@@ -163,6 +163,28 @@ class TestTheCalendarIsTheFileItsManifestNames(SeasonCase):
 			self.assertTrue(season.status()["reviewed"])
 
 
+class TestACalendarThatDoesNotHoldNeverBreaksTheRecipes(SeasonCase):
+	def test_the_recipes_go_on_without_a_season_and_the_error_is_logged(self):
+		self.installed(tamper=True)
+		self.a_recipe(SUMMER_SALAD, "Asperges", "Fraises")
+		with patch.object(frappe, "log_error") as logged, as_role("client_admin"):
+			found = recipes.search("asperges", in_season=True)
+			library = recipe_library.listing()
+		self.assertFalse(found["season_available"])
+		self.assertEqual([r["recipe"] for r in found["recipes"]], [SUMMER_SALAD])
+		self.assertFalse(library["season_available"])
+		self.assertTrue(logged.called)
+		self.assertEqual(logged.call_args.args[0], "Season calendar unusable")
+
+	def test_the_tool_that_asks_for_the_season_says_it(self):
+		self.installed(tamper=True)
+		with (
+			as_role("client_admin"),
+			self.assertRaisesRegex(frappe.ValidationError, "changed since it was checked"),
+		):
+			season.what_is_in_season("mars")
+
+
 class TestAProductIsInSeasonStoredOrOut(SeasonCase):
 	def test_a_month_is_said_by_number_or_by_name(self):
 		for said, number in (
