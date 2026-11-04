@@ -341,7 +341,7 @@ def search(
 			"portions": row.base_portions,
 			"minutes": row.total_minutes or None,
 			"origin": row.source_kind,
-			**({"season": _season_of(verdicts[row.name])} if row.name in verdicts else {}),
+			**({"season": season.season_of(verdicts[row.name])} if row.name in verdicts else {}),
 		}
 		for _score, row in found[:limit]
 	]
@@ -354,10 +354,6 @@ def search(
 	if calendar is not None:
 		answer["month"] = number
 	return answer
-
-
-def _season_of(verdict: dict) -> dict:
-	return {"state": verdict["state"], "out": verdict["out"], "storage": verdict["storage"]}
 
 
 def set_dish_recipe(dish: str, recipe: str | None) -> dict:

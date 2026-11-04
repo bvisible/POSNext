@@ -234,7 +234,7 @@ def judge(cal: dict, names, month: int) -> dict:
 		if by_state["season"]
 		else "unknown"
 	)
-	return {"state": verdict, **by_state, "unknown": unknown}
+	return {"state": verdict, **by_state, "unknown": unknown, "judged": len(seen), "of": len(names)}
 
 
 def _calendar_or_none() -> dict | None:
@@ -242,6 +242,18 @@ def _calendar_or_none() -> dict | None:
 	from pos_next.restaurant.mode import neoresto_active
 
 	return load() if neoresto_active() else None
+
+
+def season_of(verdict: dict) -> dict:
+	"""What a row of a list says of its season: the verdict, the products that make it, and how many of its ingredients the calendar knows
+	(a recipe rated on one product out of six is rated weakly: it is said)."""
+	return {
+		"state": verdict["state"],
+		"out": verdict["out"],
+		"storage": verdict["storage"],
+		"judged": verdict["judged"],
+		"of": verdict["of"],
+	}
 
 
 def annotate(rows: list[dict], names_of, month: int | None = None) -> bool:
@@ -253,7 +265,7 @@ def annotate(rows: list[dict], names_of, month: int | None = None) -> bool:
 	month = month or month_of()
 	for row in rows:
 		verdict = judge(cal, names_of(row), month)
-		row["season"] = {"state": verdict["state"], "out": verdict["out"], "storage": verdict["storage"]}
+		row["season"] = season_of(verdict)
 	return True
 
 

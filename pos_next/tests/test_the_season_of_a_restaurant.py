@@ -257,6 +257,16 @@ class TestARecipeIsJudgedByWhatTheCalendarKnows(SeasonCase):
 		self.assertEqual(season.judge(cal, ["Carottes", "Courge", "Sel"], 9)["state"], "season")
 		self.assertEqual(season.judge(cal, ["Carottes", "Courge", "Sel"], 9)["unknown"], ["Sel"])
 
+	def test_a_verdict_says_how_many_of_the_ingredients_the_calendar_knows(self):
+		self.installed()
+		cal = season.load()
+		said = season.judge(cal, ["Persil", "Crème", "Concentré de tomate", "Œufs", "Persil frais"], 6)
+		self.assertEqual((said["state"], said["judged"], said["of"]), ("season", 1, 5))
+		rows = [{"names": ["Carottes", "Courge", "Sel"]}]
+		self.assertTrue(season.annotate(rows, lambda row: row["names"], 12))
+		self.assertEqual(rows[0]["season"]["judged"], 2)
+		self.assertEqual(rows[0]["season"]["of"], 3)
+
 	def test_a_recipe_the_calendar_knows_nothing_of_has_no_verdict(self):
 		self.installed()
 		self.assertEqual(season.judge(season.load(), ["Œufs", "Sel"], 11)["state"], "unknown")
