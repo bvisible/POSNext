@@ -4119,9 +4119,14 @@ async function loadDriverMappings() {
 		});
 		const list = Array.isArray(rows) ? rows : rows?.message || [];
 
+		//// Neoffice — removed the separate uniqueProviders/providerModes lookup, which called
+		//// frappe.client.get_list on Payment Provider (System Manager only) and 403'd for a
+		//// cashier (b683e7c5 "fix(payments): the till reads its payment mappings with its own
+		//// rights, no 403 for a cashier (#2244)"): pos_get_mappings now returns provider_mode directly.
 		const map = {};
 		for (const row of list) {
 			if (row.mode_of_payment) {
+				//// Neoffice — see the block marker above: provider_mode comes straight from pos_get_mappings
 				row.provider_mode = row.provider_mode || null;
 				map[row.mode_of_payment.toLowerCase()] = row;
 			}
