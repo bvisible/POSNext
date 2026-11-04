@@ -23239,3 +23239,28 @@ msgstr "Une recette choisie sur {0} disponibles."
 #, python-brace-format
 msgid "{0} ingredients without quantity stay in the recipe, without an article."
 msgstr "{0} ingrédients sans quantité restent dans la recette, sans article."
+
+#: POS/src/components/shop/PhoneCarts.vue:82
+#: pos_next/public/pos/assets/POSSale-C3kObD3P.js:9
+msgid "An article to check"
+msgstr "Un article à contrôler"
+
+#: POS/src/components/shop/PhoneCarts.vue:6
+#: POS/src/components/shop/PhoneCarts.vue:7
+msgid "Carts of the phones"
+msgstr "Paniers des téléphones"
+
+#: POS/src/components/shop/PhoneCarts.vue:33
+msgctxt "Phone cart"
+msgid "Take over"
+msgstr "Reprendre"
+
+#: POS/src/components/shop/PhoneCarts.vue:76
+#: pos_next/public/pos/assets/POSSale-C3kObD3P.js:9
+msgid "The customer is still scanning"
+msgstr "Le client scanne encore"
+
+#: POS/src/components/shop/PhoneCarts.vue:87
+msgctxt "Phone cart"
+msgid "To be paid"
+msgstr "À encaisser"
