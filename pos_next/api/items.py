@@ -527,6 +527,12 @@ def search_by_barcode(barcode, pos_profile):
 		# Get item doc
 		item_doc = frappe.get_cached_doc("Item", item_code)
 
+		# //// Neoffice — a scanned item is one the till's grid shows (_scanned_item_in_the_tills_scope): upstream checked
+		# //// is_sales_item only, so a disabled item, an internal one (the tip) or one outside the till's item groups and
+		# //// brands was rung up at the till (neoffice-maintenance#2219). Out of scope reads as an unknown code.
+		if not _scanned_item_in_the_tills_scope(item_doc, pos_profile_doc):
+			return None
+
 		# Check if item is allowed for sales
 		if not item_doc.is_sales_item:
 			frappe.throw(_("Item {0} is not allowed for sales").format(item_code))
@@ -899,6 +905,23 @@ def _get_pos_profile_allowed_item_groups(pos_profile_doc):
 	)
 	frappe.cache().set_value(cache_key, result, expires_in_sec=300)
 	return result
+
+
+# //// Neoffice — added function (no upstream equivalent): the grid's rules for one scanned item (#2219).
+def _scanned_item_in_the_tills_scope(item_doc, pos_profile_doc):
+	"""Whether the till sells `item_doc`, by the rules of its grid (_build_item_base_conditions): an active item, not an
+	internal one, in the till's item groups and brands when the till names some."""
+	if item_doc.disabled:
+		return False
+	if frappe.db.has_column("Item", "is_internal_item") and item_doc.get("is_internal_item"):
+		return False
+	allowed_item_groups = _get_pos_profile_allowed_item_groups(pos_profile_doc)
+	if allowed_item_groups and item_doc.item_group not in allowed_item_groups:
+		return False
+	allowed_brands = _get_allowed_profile_brands(pos_profile_doc.name)
+	if allowed_brands and item_doc.brand not in allowed_brands:
+		return False
+	return True
 
 
 def _build_item_base_conditions(
