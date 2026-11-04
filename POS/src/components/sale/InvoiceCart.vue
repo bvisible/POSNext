@@ -1945,6 +1945,15 @@
 							{{ formatCurrency(cartStore.guestTipAmount) }}
 						</span>
 					</div>
+					<!-- //// Neoffice — a cart paid on the phone is checked before it is sold: its check opens again from here (scanning in the shop, lot 4) -->
+					<button
+						v-if="cartStore.shopCartCheck"
+						type="button"
+						class="w-full py-1.5 rounded-neo-md text-xs font-bold text-white bg-gray-900 hover:bg-gray-800"
+						@click="cartStore.$patch({ shopCartCheckOpen: true })"
+					>
+						{{ __("Check the cart {0}", [cartStore.shopCartCheck.code]) }}
+					</button>
 					<div class="flex items-center justify-between">
 						<span class="text-xs font-semibold text-orange-600">
 							{{ __("Remaining to collect") }}

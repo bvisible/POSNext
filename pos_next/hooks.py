@@ -293,7 +293,11 @@ doc_events = {
 	# //// Neoffice — added entry (no upstream equivalent): a web takeaway order the provider has paid is settled and sent to the kitchen by the server,
 	# //// whether or not the customer's page comes back (neoffice-maintenance#2132). Played for real: the order stayed a draft with its lines held.
 	"Payment Intent": {
-		"on_update": "pos_next.api.guest_ordering.settle_takeaway_on_payment",
+		# //// Neoffice — a list: a shop cart paid on the phone is booked the same way, and waits for its check (scan in the shop, lot 4)
+		"on_update": [
+			"pos_next.api.guest_ordering.settle_takeaway_on_payment",
+			"pos_next.shop_scan.payment.book_on_payment",
+		],
 	},
 	"Restaurant Reservation": {
 		"on_update": "pos_next.restaurant.figures.figures_changed",
@@ -317,7 +321,12 @@ doc_events = {
 	"Sales Invoice": {
 		# //// Neoffice — a takeaway sale at a restaurant till takes the restaurant's takeaway tax category, and each item
 		# //// its takeaway template, before ERPNext's validate computes the taxes from them (NeoResto lot 1, task 10).
-		"before_validate": "pos_next.restaurant.takeaway_tax.apply_takeaway_tax_category",
+		# //// Neoffice — a list: a phone's cart in the shop keeps the prices it was given whoever saves its draft (the payment's
+		# //// booking by the payments app saved it plainly, and ERPNext set the price list rate back under an offer; lot 4).
+		"before_validate": [
+			"pos_next.restaurant.takeaway_tax.apply_takeaway_tax_category",
+			"pos_next.shop_scan.pricing.keep_the_phones_prices",
+		],
 		"validate": [
 			"pos_next.api.sales_invoice_hooks.validate",
 			# //// Neoffice — coupon validation hangs off the invoice's native ERPNext `coupon_code` link
@@ -354,6 +363,8 @@ doc_events = {
 		# //// book (458d81a9 2026-03-20 for the restaurant side; the whole list restored by
 		# //// f0c960ff, 2026-03-21).
 		"on_submit": [
+			# //// Neoffice — a cart paid on the phone is checked: its session closed, what the sale holds more or less than was paid written on it (scan in the shop, lot 4)
+			"pos_next.shop_scan.control.note_the_difference",
 			"pos_next.api.sales_invoice_hooks.update_coupon_usage_on_submit",
 			"pos_next.realtime_events.emit_stock_update_event",
 			# //// use native ERPNext coupon_code field on Sales Invoice — 9bc096d + f0c960f (+1 more)
@@ -470,6 +481,8 @@ scheduler_events = {
 			"pos_next.api.reservations.expire_unconfirmed_reservations",
 			# //// Neoffice — the safety net of the settlement above: a paid web takeaway order nobody settled (neoffice-maintenance#2132).
 			"pos_next.api.guest_ordering.settle_paid_takeaway_orders",
+			# //// Neoffice — the safety net of a shop cart paid on the phone that nobody booked (scan in the shop, lot 4)
+			"pos_next.shop_scan.payment.book_paid_carts",
 		],
 	},
 }

@@ -24,6 +24,9 @@ CODE_LENGTH = 6
 MAX_QTY = 999
 SCANNING = "Scanning"
 AT_THE_COUNTER = "At the counter"
+# Paid on the phone, the cart waits for the seller's check; then the seller checked it and the sale is submitted (lot 4)
+PAID = "Paid"
+CHECKED = "Checked"
 
 
 def display_code(code: str | None) -> str | None:
@@ -88,7 +91,7 @@ def _new_cart(token_doc):
 
 
 def _refuse_a_waiting_cart(token_doc):
-	if token_doc.cart_status == AT_THE_COUNTER:
+	if token_doc.cart_status in (AT_THE_COUNTER, PAID, CHECKED):
 		frappe.throw(_("This cart is waiting for the till."))
 
 
@@ -203,7 +206,14 @@ def _drop(token_doc, cart):
 
 def get(token: str) -> dict:
 	token_doc = require_shop_token(token)
-	return view(token_doc, _cart_of(token_doc))
+	return view(token_doc, _cart_of(token_doc) or _checked_cart_of(token_doc))
+
+
+def _checked_cart_of(token_doc):
+	"""The sale a cart became once the seller checked it, for the phone to say so; None before."""
+	if token_doc.cart_status == CHECKED and token_doc.invoice:
+		return frappe.get_doc("Sales Invoice", token_doc.invoice)
+	return None
 
 
 def finish(token: str) -> dict:
@@ -262,4 +272,14 @@ def view(token_doc, cart) -> dict:
 		"currency": (cart.currency if cart else None)
 		or frappe.get_cached_value("POS Profile", token_doc.pos_profile, "currency"),
 		"needs_validation": any(line["needs_validation"] for line in lines),
+		# What the phone paid of it, and whether it may pay it now (lot 4): the reason when it may not
+		"paid_amount": flt(cart.paid_amount) if cart else 0,
+		**_payment_of(token_doc, cart, lines),
 	}
+
+
+def _payment_of(token_doc, cart, lines) -> dict:
+	from pos_next.shop_scan.payment import payment_refusal
+
+	refusal = payment_refusal(token_doc, cart, lines) if cart else None
+	return {"can_pay": bool(cart) and not refusal, "pay_refusal": refusal}

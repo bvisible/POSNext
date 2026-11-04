@@ -19,6 +19,9 @@ export function looksLikeCartCode(text) {
 	return CART_CODE.test(String(text || "").trim())
 }
 
+// A cart the customer paid on the phone: it is checked, not paid again
+const PAID = "Paid"
+
 // How long the till's offers may take before the amount is compared with the phone's
 const OFFERS_WAIT_MS = 5000
 
@@ -96,6 +99,23 @@ export function useShopCart() {
 		// The sale submits the phone's draft (useInvoice.shopCartInvoice): never the till's local drafts (currentDraftId)
 		cartStore.$patch({ shopCartInvoice: cart.invoice })
 		if (cart.customer) await cartStore.setCustomer(customerOfTheOrder(cart))
+		if (cart.status === PAID) {
+			// Paid on the phone (lot 4): the cart shows what was paid, and the seller checks it before it is sold
+			cartStore.$patch({
+				guestPaidAmount: Number(cart.paid_amount || 0),
+				shopCartCheck: {
+					code: cart.code,
+					invoice: cart.invoice,
+					lines: (cart.items || []).filter((line) => !line.is_free_item),
+					paid_amount: Number(cart.paid_amount || 0),
+					grand_total: Number(cart.grand_total || 0),
+					currency: shiftStore.profileCurrency,
+				},
+				shopCartCheckOpen: true,
+			})
+			showSuccess(__("Cart {0} paid on the phone: check it.", [cart.code]))
+			return true
+		}
 
 		showSuccess(__("Cart {0} of a phone taken over.", [cart.code]))
 		if (cart.needs_validation) {

@@ -79,10 +79,22 @@
 			<p class="shop-cart__band-amount">{{ money(cart.grand_total) }}</p>
 		</div>
 
+		<!-- //// Paying on the phone (lot 4, boards 4 and 6): offered where the shop takes it; an article a seller checks may -->
+		<!-- //// close it, and the cart says why. The till's payment stays: « I pay at the till ». -->
+		<p v-if="payClosed" class="shop-cart__notice" role="note">{{ cart.pay_refusal }}</p>
 		<div class="shop-cart__actions">
 			<button
+				v-if="cart.can_pay || payClosed"
 				type="button"
 				class="shop-button shop-button--ink"
+				:disabled="busy || !cart.can_pay"
+				@click="emit('pay')"
+			>
+				{{ __("Pay now") }}
+			</button>
+			<button
+				type="button"
+				:class="['shop-button', cart.can_pay ? 'shop-button--line' : 'shop-button--ink']"
 				:disabled="busy || !lines.length"
 				@click="emit('finish')"
 			>
@@ -108,9 +120,13 @@ const props = defineProps({
 	cart: { type: Object, required: true },
 	busy: { type: Boolean, default: false },
 });
-const emit = defineEmits(["qty", "scan", "finish"]);
+const emit = defineEmits(["qty", "scan", "finish", "pay"]);
 
 const lines = computed(() => props.cart?.lines || []);
+// The payment on the phone is closed by an article a seller checks: the button shows, closed, with the reason
+const payClosed = computed(
+	() => !props.cart?.can_pay && Boolean(props.cart?.needs_validation && props.cart?.pay_refusal),
+);
 
 function money(amount) {
 	return formatAmount(amount, props.cart?.currency);

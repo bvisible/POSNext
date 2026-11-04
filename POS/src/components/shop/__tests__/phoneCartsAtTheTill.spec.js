@@ -120,6 +120,14 @@ describe("the carts of the phones at the till", () => {
 		expect(rows[2].text()).toContain("The customer is still scanning")
 	})
 
+	it("says a cart paid on the phone is to check", async () => {
+		fx.call = vi.fn(async () => [
+			{ ...CARTS[0], status: "Paid", paid_amount: 58.3 },
+		])
+
+		expect((await aDialog()).find("li").text()).toContain("Paid · to check")
+	})
+
 	it("takes a cart over by its code and closes once the till holds it", async () => {
 		fx.takeOver = vi.fn(async () => {
 			fx.cart.shopCartInvoice = "FA-1"

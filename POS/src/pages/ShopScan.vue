@@ -108,10 +108,18 @@
 						@qty="onQty"
 						@scan="state = 'scanner'"
 						@finish="onFinish"
+						@pay="onPay"
 					/>
 				</template>
 
-				<ShopCounter v-else-if="state === 'counter'" :cart="cart" />
+				<template v-else-if="state === 'counter'">
+					<!-- //// Back from the payment page (lot 4): the provider's word is asked for, and said while it comes -->
+					<p v-if="confirming" class="shop-status" role="status">
+						{{ __("Confirming your payment…") }}
+					</p>
+					<p v-if="refusal" class="shop-refused" role="alert">{{ refusal }}</p>
+					<ShopCounter :cart="cart" :busy="busy" @pay="onPay" />
+				</template>
 			</template>
 		</main>
 	</div>
@@ -119,24 +127,28 @@
 
 <script setup>
 import { computed, onMounted, ref } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import ShopCart from "@/components/shop/ShopCart.vue";
 import ShopCounter from "@/components/shop/ShopCounter.vue";
 import ShopScanner from "@/components/shop/ShopScanner.vue";
 import {
 	articlesIn,
 	articlesLabel,
+	confirmPayment,
 	finishCart,
 	formatAmount,
 	keepSession,
 	openShop,
+	payCart,
 	scanItem,
 	setLineQty,
 } from "@/utils/shopScan";
 
-const AT_THE_COUNTER = "At the counter";
+// A cart that waits for the till, paid on the phone (waiting for its check), or checked: the page shows its code
+const SHOWS_ITS_CODE = ["At the counter", "Paid", "Checked"];
 
 const route = useRoute();
+const router = useRouter();
 const key = String(route.params.key || "");
 
 // loading | unavailable | home | scanner | cart | counter
@@ -148,6 +160,7 @@ const cart = ref({ lines: [] });
 const busy = ref(false);
 const added = ref(null);
 const refusal = ref("");
+const confirming = ref(false);
 
 const articles = computed(() => articlesIn(cart.value));
 
@@ -157,7 +170,7 @@ function money(amount) {
 
 function show(next) {
 	cart.value = next;
-	if (next.status === AT_THE_COUNTER) state.value = "counter";
+	if (SHOWS_ITS_CODE.includes(next.status)) state.value = "counter";
 }
 
 async function open() {
@@ -211,7 +224,47 @@ async function onFinish() {
 	await run(() => finishCart(token.value));
 }
 
-onMounted(open);
+/** Leave for the payment page of the cart (lot 4): the cart takes no more scan from now; it comes back to this page. */
+async function onPay() {
+	busy.value = true;
+	refusal.value = "";
+	try {
+		const { payment_url } = await payCart(token.value);
+		window.location.assign(payment_url);
+	} catch (error) {
+		refusal.value = error.message;
+		busy.value = false;
+	}
+}
+
+/** Back from the payment page: paid on the provider's word, or said failed; the address loses its « payment » query. */
+async function backFromThePayment(outcome) {
+	router.replace({ query: {} });
+	if (outcome === "failed") {
+		refusal.value = __("The payment did not go through. Try again, or pay at the till.");
+		return;
+	}
+	confirming.value = true;
+	try {
+		const answer = await confirmPayment(token.value);
+		if (answer?.cart) show(answer.cart);
+		if (answer?.status === "failed") {
+			refusal.value = __("The payment did not go through. Try again, or pay at the till.");
+		} else if (answer?.status !== "paid") {
+			refusal.value = __("Your payment is not confirmed yet. Show this code at the till.");
+		}
+	} catch (error) {
+		refusal.value = error.message;
+	} finally {
+		confirming.value = false;
+	}
+}
+
+onMounted(async () => {
+	await open();
+	const outcome = String(route.query.payment || "");
+	if (token.value && outcome) await backFromThePayment(outcome);
+});
 </script>
 
 <style scoped>

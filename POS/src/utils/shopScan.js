@@ -105,6 +105,23 @@ export const scanItem = (token, barcode, qty = 1) =>
 	callShop("scan_item", { token, barcode, qty });
 export const setLineQty = (token, line, qty) => callShop("set_line_qty", { token, line, qty });
 export const finishCart = (token) => callShop("finish_shop_cart", { token });
+/** Open the payment page of the cart (lot 4): {"payment_url", "intent_name"}; the page then leaves for it. */
+export const payCart = (token) => callShop("pay_shop_cart", { token });
+
+/**
+ * Back from the payment page: ask the server whether the provider settled the payment, again while it waits for it (a
+ * minute by default). The last answer: {"status": "paid" | "awaiting_payment" | "failed", "cart"}.
+ */
+export async function confirmPayment(token, { tries = 20, delayMs = 3000, wait } = {}) {
+	const pause = wait || ((ms) => new Promise((resolve) => setTimeout(resolve, ms)));
+	let answer = null;
+	for (let attempt = 0; attempt < tries; attempt++) {
+		answer = await callShop("confirm_shop_payment", { token });
+		if (answer?.status !== "awaiting_payment") return answer;
+		await pause(delayMs);
+	}
+	return answer;
+}
 
 /** The number of articles of a cart, the free ones apart. */
 export function articlesIn(cart) {

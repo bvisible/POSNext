@@ -99,3 +99,19 @@ def price_the_cart(invoice_doc):
 	with _as_the_system():
 		invoice_doc.run_method("calculate_taxes_and_totals")
 	return invoice_doc
+
+
+def keep_the_phones_prices(doc, method=None):
+	"""Sales Invoice before_validate: the draft of a phone's cart keeps the prices it was written with, whoever saves it.
+
+	The `payments` app books a settled payment on the draft with a plain save (reconcile_payment_intent), and ERPNext then set
+	the price list rate back on a line under an offer (the trap of #2228): the amount paid no longer met the draft's total, and
+	the cart was never said paid. A shop cart is priced here only (price_the_cart), and saved with its prices kept."""
+	if doc.docstatus != 0 or not doc.get("is_pos") or not doc.name or doc.flags.get("shop_prices_kept"):
+		return
+	if not frappe.db.exists("Guest Order Token", {"invoice": doc.name, "mode": "shop"}):
+		return
+	from pos_next.api.guest_ordering import _without_repricing
+
+	doc.flags.shop_prices_kept = True
+	_without_repricing(doc)

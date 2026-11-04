@@ -19,7 +19,8 @@
   "invoice",
   "customer",
   "cart_code",
-  "cart_status"
+  "cart_status",
+  "paid_lines"
  ],
  "fields": [
   {
@@ -108,19 +109,28 @@
    "search_index": 1
   },
   {
-   "description": "Where the cart of a shop session stands: the customer is scanning, or the cart waits for the till.",
+   "description": "Where the cart of a shop session stands: the customer is scanning, the cart waits for the till, it is paid on the phone and waits for its check, or the seller checked it.",
    "fieldname": "cart_status",
    "fieldtype": "Select",
    "label": "Cart Status",
    "no_copy": 1,
-   "options": "\nScanning\nAt the counter",
+   "options": "\nScanning\nAt the counter\nPaid\nChecked",
+   "read_only": 1
+  },
+  {
+   "description": "The lines of a shop cart as the customer paid them on the phone (item, quantity, amount): what the check at the counter is measured against.",
+   "fieldname": "paid_lines",
+   "fieldtype": "Long Text",
+   "hidden": 1,
+   "label": "Paid Lines",
+   "no_copy": 1,
    "read_only": 1
   }
  ],
  "index_web_link_preview": 0,
  "issingle": 0,
  "links": [],
- "modified": "2026-11-04 12:00:00.000000",
+ "modified": "2026-11-04 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "Guest Order Token",

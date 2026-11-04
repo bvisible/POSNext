@@ -17,6 +17,8 @@
   "enable_shop_scan",
   "shop_cart_lifetime_hours",
   "shop_scan_key",
+  "shop_scan_phone_payment",
+  "shop_scan_validation_on_phone",
   "section_break_restaurant",
   "enable_restaurant_mode",
   "restaurant",
@@ -212,6 +214,23 @@
    "label": "Key of the Shop's QR Code",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "default": "1",
+   "depends_on": "enable_shop_scan",
+   "description": "The customer may pay the cart on the phone, by the payment page the restaurant's guests pay on. A paid cart is always checked at the counter before the customer leaves.",
+   "fieldname": "shop_scan_phone_payment",
+   "fieldtype": "Check",
+   "label": "Pay on the Phone"
+  },
+  {
+   "default": "Blocks the payment",
+   "depends_on": "eval:doc.enable_shop_scan && doc.shop_scan_phone_payment",
+   "description": "What an article a seller checks (ticked on the item or on its item group) does on the phone: the cart is paid at the till, or it is paid on the phone and the seller checks the article at the counter.",
+   "fieldname": "shop_scan_validation_on_phone",
+   "fieldtype": "Select",
+   "label": "An Article to Check, on the Phone",
+   "options": "Blocks the payment\nPaid, checked at the counter"
   },
   {
    "depends_on": "eval:frappe.boot.neoresto_active",
@@ -922,7 +941,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-04 12:00:00.000000",
+ "modified": "2026-11-04 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "POS Settings",

@@ -1,7 +1,8 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The page a shop's fixed QR code opens (ShopScan.vue): a refusal is
  * //// said politely, a cart that waits for the till shows its code at once, a scanned article is said added, and a
- * //// session the server no longer takes is opened again.
+ * //// session the server no longer takes is opened again. Paying on the phone (lot 4): the page leaves for the payment
+ * //// page, and back from it shows the cart paid on the server's word, or says the payment failed.
  * @vitest-environment jsdom
  */
 import { flushPromises, mount } from "@vue/test-utils";
@@ -12,13 +13,19 @@ vi.hoisted(() => {
 		args ? msgid.replace(/\{(\d+)\}/g, (_match, index) => args[Number(index)]) : msgid;
 });
 
-vi.mock("vue-router", () => ({ useRoute: () => ({ params: { key: "KEY" } }) }));
+const route = vi.hoisted(() => ({ params: { key: "KEY" }, query: {}, replace: null }));
+vi.mock("vue-router", () => ({
+	useRoute: () => route,
+	useRouter: () => ({ replace: (...args) => route.replace?.(...args) }),
+}));
 
 const server = vi.hoisted(() => ({
 	openShop: vi.fn(),
 	scanItem: vi.fn(),
 	setLineQty: vi.fn(),
 	finishCart: vi.fn(),
+	payCart: vi.fn(),
+	confirmPayment: vi.fn(),
 }));
 vi.mock("@/utils/shopScan", async (original) => ({ ...(await original()), ...server }));
 
@@ -68,6 +75,8 @@ async function page() {
 describe("the shop's page", () => {
 	beforeEach(() => {
 		Object.values(server).forEach((mock) => mock.mockReset());
+		route.query = {};
+		route.replace = vi.fn();
 	});
 
 	it("says politely that the shop does not let customers scan", async () => {
@@ -132,5 +141,55 @@ describe("the shop's page", () => {
 		await flushPromises();
 
 		expect(server.openShop).toHaveBeenCalledTimes(2);
+	});
+
+	it("leaves for the payment page of the cart", async () => {
+		const assign = vi.fn();
+		vi.stubGlobal("location", { ...window.location, assign });
+		server.openShop.mockResolvedValue({
+			token: "T1",
+			shopName: "The shop",
+			cart: { ...EMPTY, lines: [TEA], grand_total: 10, can_pay: true },
+		});
+		server.payCart.mockResolvedValue({ payment_url: "https://pay.example.test/1", intent_name: "PI-1" });
+		const wrapper = await page();
+		await wrapper.find(".shop-head__cart").trigger("click");
+
+		await wrapper.find(".shop-button--ink").trigger("click");
+		await flushPromises();
+
+		expect(server.payCart).toHaveBeenCalledWith("T1");
+		expect(assign).toHaveBeenCalledWith("https://pay.example.test/1");
+		vi.unstubAllGlobals();
+	});
+
+	it("back from the payment page, shows the cart paid on the server's word", async () => {
+		route.query = { payment: "done" };
+		const paid = { ...EMPTY, status: "Paid", code: "K7Q-24M", lines: [TEA], grand_total: 10, paid_amount: 10 };
+		server.openShop.mockResolvedValue({ token: "T1", shopName: "The shop", cart: { ...paid, status: "At the counter" } });
+		server.confirmPayment.mockResolvedValue({ status: "paid", cart: paid });
+
+		const text = (await page()).text();
+
+		expect(server.confirmPayment).toHaveBeenCalledWith("T1");
+		expect(route.replace).toHaveBeenCalledWith({ query: {} });
+		expect(text).toContain("Go to the reception to have your cart validated");
+		expect(text).toContain("Paid · CHF");
+		expect(text).toContain("K7Q-24M");
+	});
+
+	it("says a payment that failed, and the cart stays to pay at the till", async () => {
+		route.query = { payment: "failed" };
+		server.openShop.mockResolvedValue({
+			token: "T1",
+			shopName: "The shop",
+			cart: { ...EMPTY, status: "At the counter", code: "K7Q-24M", lines: [TEA], grand_total: 10 },
+		});
+
+		const text = (await page()).text();
+
+		expect(server.confirmPayment).not.toHaveBeenCalled();
+		expect(text).toContain("The payment did not go through.");
+		expect(text).toContain("Show this code to the seller");
 	});
 });

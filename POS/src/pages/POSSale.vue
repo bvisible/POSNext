@@ -1177,6 +1177,8 @@
 			/>
 
 			<!-- Draft Invoices Dialog -->
+			<!-- //// Neoffice — the seller's check of a cart paid on the phone (scanning in the shop, lot 4) -->
+			<ShopCartControl />
 			<DraftInvoicesDialog
 				v-model="uiStore.showDraftDialog"
 				:currency="shiftStore.profileCurrency"
@@ -2164,6 +2166,8 @@ import EditCustomerDialog from "@/components/sale/EditCustomerDialog.vue";
 import GiftCardCreatedDialog from "@/components/sale/GiftCardCreatedDialog.vue";
 import CustomerDialog from "@/components/sale/CustomerDialog.vue";
 import DraftInvoicesDialog from "@/components/sale/DraftInvoicesDialog.vue";
+//// Neoffice — the check of a cart paid on the phone (scanning in the shop, lot 4)
+import ShopCartControl from "@/components/shop/ShopCartControl.vue";
 //// Neoffice — send-to-kitchen dialog: the restaurant cart's non-payment exit
 //// (c7f6932c, 2026-03-23).
 import SendToKitchenDialog from "@/components/sale/SendToKitchenDialog.vue";

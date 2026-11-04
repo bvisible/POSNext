@@ -71,6 +71,9 @@ function timeOf(since) {
 
 /** Where the cart stands, as the planche of the canvas says it: the customer still scanning, an article to check, or to pay. */
 function stateOf(cart) {
+	if (cart.status === "Paid") {
+		return { label: __("Paid · to check"), tone: "bg-green-50 text-green-800" }
+	}
 	if (cart.status === "Scanning") {
 		return {
 			label: __("The customer is still scanning"),

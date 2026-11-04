@@ -1,6 +1,7 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The cart of a customer scanning in the shop (ShopCart.vue): its
- * //// lines, the till's offers, the amount to pay, and the changes it asks of the server.
+ * //// lines, the till's offers, the amount to pay, and the changes it asks of the server. Paying on the phone (lot 4): offered
+ * //// where the shop takes it, closed with its reason by an article a seller checks, hidden where the shop takes no payment.
  * @vitest-environment jsdom
  */
 import { mount } from "@vue/test-utils";
@@ -105,5 +106,38 @@ describe("the cart of the shop's page", () => {
 		expect(cart({ cart: { ...CART, needs_validation: true } }).text()).toContain(
 			"A seller checks an article of your cart at the counter."
 		);
+	});
+
+	it("offers to pay on the phone where the shop takes it", async () => {
+		const wrapper = cart({ cart: { ...CART, can_pay: true } });
+		const pay = wrapper.findAll("button").find((button) => button.text() === "Pay now");
+
+		await pay.trigger("click");
+
+		expect(wrapper.emitted("pay")).toHaveLength(1);
+		expect(wrapper.text()).toContain("I pay at the till");
+	});
+
+	it("closes it with its reason when an article a seller checks closes it", () => {
+		const wrapper = cart({
+			cart: {
+				...CART,
+				can_pay: false,
+				needs_validation: true,
+				pay_refusal: "An article of your cart is checked by a seller: this cart is paid at the till.",
+			},
+		});
+		const pay = wrapper.findAll("button").find((button) => button.text() === "Pay now");
+
+		expect(pay.attributes("disabled")).toBeDefined();
+		expect(wrapper.text()).toContain("this cart is paid at the till.");
+	});
+
+	it("shows no payment where the shop takes it at the till", () => {
+		const wrapper = cart({
+			cart: { ...CART, can_pay: false, pay_refusal: "This shop takes the payment at the till." },
+		});
+
+		expect(wrapper.findAll("button").some((button) => button.text() === "Pay now")).toBe(false);
 	});
 });

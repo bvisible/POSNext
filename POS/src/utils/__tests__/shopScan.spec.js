@@ -10,7 +10,7 @@ vi.hoisted(() => {
 		args ? msgid.replace(/\{(\d+)\}/g, (_match, index) => args[Number(index)]) : msgid;
 });
 
-const { articlesIn, articlesLabel, keptSession, openShop, scanItem, serverMessage, ShopRefusal } = await import(
+const { articlesIn, articlesLabel, confirmPayment, keptSession, openShop, scanItem, serverMessage, ShopRefusal } = await import(
 	"../shopScan"
 );
 
@@ -148,5 +148,26 @@ describe("the shop's page and the server", () => {
 
 		expect(articlesIn(cart)).toBe(3);
 		expect(articlesIn(null)).toBe(0);
+	});
+
+	it("asks again while the provider has not settled the payment, and stops at its word", async () => {
+		const answers = ["awaiting_payment", "awaiting_payment", "paid"];
+		serve({ confirm_shop_payment: () => answer(200, { message: { status: answers.shift(), cart: CART } }) });
+		const wait = vi.fn(async () => {});
+
+		const last = await confirmPayment("T1", { wait, delayMs: 1 });
+
+		expect(last.status).toBe("paid");
+		expect(calls.map((call) => call.args)).toEqual([{ token: "T1" }, { token: "T1" }, { token: "T1" }]);
+		expect(wait).toHaveBeenCalledTimes(2);
+	});
+
+	it("gives up waiting after its tries, with the last word", async () => {
+		serve({ confirm_shop_payment: () => answer(200, { message: { status: "awaiting_payment", cart: CART } }) });
+
+		const last = await confirmPayment("T1", { tries: 2, wait: async () => {} });
+
+		expect(last.status).toBe("awaiting_payment");
+		expect(calls).toHaveLength(2);
 	});
 });

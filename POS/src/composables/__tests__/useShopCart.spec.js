@@ -169,4 +169,30 @@ describe("a phone's cart at the till", () => {
 
 		expect(stores.toast.showWarning).not.toHaveBeenCalled()
 	})
+
+	it("takes a cart paid on the phone over as paid, and opens its check", async () => {
+		stores.call = vi.fn(async () => ({
+			...structuredClone(CART),
+			status: "Paid",
+			paid_amount: 18,
+		}))
+
+		expect(await useShopCart().takeOver("K7Q-24M")).toBe(true)
+
+		expect(stores.cart.guestPaidAmount).toBe(18)
+		expect(stores.cart.shopCartInvoice).toBe("FA-2026-00001")
+		expect(stores.cart.shopCartCheckOpen).toBe(true)
+		expect(stores.cart.shopCartCheck).toMatchObject({
+			code: "K7Q-24M",
+			invoice: "FA-2026-00001",
+			paid_amount: 18,
+		})
+		// The free rows are not checked: they are the till's offer, never a paid article
+		expect(
+			stores.cart.shopCartCheck.lines.map((line) => line.item_code),
+		).toEqual(["TEA"])
+		expect(stores.toast.showSuccess.mock.calls[0][0]).toContain(
+			"paid on the phone",
+		)
+	})
 })

@@ -608,6 +608,9 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		sentLinesAtOpen.value = [];
 		guestPaidAmount.value = 0;
 		guestTipAmount.value = 0;
+		//// Neoffice — the check of a phone's paid cart ends with its ticket (scanning in the shop, lot 4)
+		shopCartCheck.value = null;
+		shopCartCheckOpen.value = false;
 
 		// Reset offer processing state
 		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
@@ -647,6 +650,10 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	const removedSentLines = computed(() => removedSentLinesOf(sentLinesAtOpen.value, invoiceItems.value));
 	const guestPaidAmount = ref(0);
 	const guestTipAmount = ref(0);
+	//// Neoffice — scanning in the shop (lot 4): a cart the customer paid on the phone, taken over, waits for the seller's check
+	//// (components/shop/ShopCartControl.vue): its code, the lines it was paid for, what was paid; and whether the check is open.
+	const shopCartCheck = ref(null);
+	const shopCartCheckOpen = ref(false);
 
 	function setPosProfile(profile) {
 		posProfile.value = profile;
@@ -3227,6 +3234,9 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		rememberSentLines,
 		guestPaidAmount,
 		guestTipAmount,
+		//// Neoffice — the check of a phone's paid cart (scanning in the shop, lot 4)
+		shopCartCheck,
+		shopCartCheckOpen,
 		updateItemInstructions,
 		updateItemModifiers,
 		//// Neoffice — the waiter's own course for one line (service families, NeoResto lot 1).

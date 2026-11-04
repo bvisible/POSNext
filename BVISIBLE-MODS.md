@@ -146,6 +146,12 @@ manually if the script does not yet support the file format.
 | `gift_card_notification` | Link | Gift Card Notification | `options`=Notification; `depends_on`=enable_gift_cards |
 | `section_break_cash_management` | Section Break | Cash Management | — |
 | `closing_withdrawal_template` | Link | Closing Withdrawal Template | `options`=Journal Entry Template |
+| `section_break_shop_scan` | Section Break | Scan in the Shop | — (scanning in the shop, lot 1, 04.11.2026) |
+| `enable_shop_scan` | Check | Let Customers Scan Their Items | `default`=0 |
+| `shop_cart_lifetime_hours` | Int | Abandoned Cart Lifetime (Hours) | `default`=4; `depends_on`=enable_shop_scan |
+| `shop_scan_key` | Data | Key of the Shop's QR Code | `read_only`; `no_copy`; `depends_on`=enable_shop_scan |
+| `shop_scan_phone_payment` | Check | Pay on the Phone | `default`=1; `depends_on`=enable_shop_scan (lot 4) |
+| `shop_scan_validation_on_phone` | Select | An Article to Check, on the Phone | `options`=Blocks the payment / Paid, checked at the counter; `default`=Blocks the payment (lot 4) |
 
 ### Fields modified
 | Fieldname | Property | Before | After |

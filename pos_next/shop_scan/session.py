@@ -22,6 +22,8 @@ SETTINGS_FIELDS = (
 	"enable_restaurant_mode",
 	"restaurant",
 	"shop_cart_lifetime_hours",
+	"shop_scan_phone_payment",
+	"shop_scan_validation_on_phone",
 )
 
 
