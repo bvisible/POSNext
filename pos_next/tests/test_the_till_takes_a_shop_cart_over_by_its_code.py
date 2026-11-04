@@ -54,6 +54,26 @@ class TestTheTillTakesAShopCartOverByItsCode(ShopCase):
 			[(line["item_code"], line["qty"], line["rate"]) for line in cart["items"]], [(self.fx.item, 2, 9)]
 		)
 		self.assertEqual(cart["status"], "At the counter")
+		# What the till needs to put the cart in its own: the customer by name, each line's units
+		self.assertEqual(
+			cart["customer_name"], frappe.db.get_value("Customer", cart["customer"], "customer_name")
+		)
+		self.assertEqual(
+			(cart["items"][0]["stock_uom"], cart["items"][0]["conversion_factor"]),
+			(cart["items"][0]["uom"], 1),
+		)
+
+	def test_the_till_is_told_whether_it_takes_phones_carts(self):
+		# The till looks a code up as a phone's cart only where it takes them: the bootstrap hands it the setting
+		from pos_next.api.bootstrap import _get_pos_settings
+		from pos_next.api.constants import DEFAULT_POS_SETTINGS
+
+		profile = frappe.get_doc("POS Profile", self.fx.profile)
+		self.assertEqual(DEFAULT_POS_SETTINGS["enable_shop_scan"], 0)
+		self.assertEqual(_get_pos_settings(profile)["enable_shop_scan"], 1)
+
+		frappe.db.set_value("POS Settings", self.settings, "enable_shop_scan", 0)
+		self.assertEqual(_get_pos_settings(profile)["enable_shop_scan"], 0)
 
 	def test_a_code_is_read_with_or_without_its_dash(self):
 		_token, phone = self.a_finished_cart()

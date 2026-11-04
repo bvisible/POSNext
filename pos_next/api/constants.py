@@ -36,6 +36,8 @@ POS_SETTINGS_FIELDS = [
 	"allow_sales_order",
 	"allow_select_sales_order",
 	"create_only_sales_order",
+	# //// Neoffice — scanning in the shop: the till takes over the cart of a phone by its code (pos_next.shop_scan)
+	"enable_shop_scan",
 	# //// Neoffice — POS_SETTINGS_FIELDS is the whitelist the bootstrap sends to the SPA: a
 	# //// setting missing here reads as "off" in the till however it is set on the doctype. The
 	# //// customer-display settings the fork adds were absent, so the feature looked disabled
@@ -123,6 +125,8 @@ DEFAULT_POS_SETTINGS = {
 	"allow_sales_order": 0,
 	"allow_select_sales_order": 0,
 	"create_only_sales_order": 0,
+	# //// Neoffice — scanning in the shop (see POS_SETTINGS_FIELDS)
+	"enable_shop_scan": 0,
 	# //// Neoffice — DEFAULT_POS_SETTINGS has to mirror POS_SETTINGS_FIELDS above key for key, or
 	# //// the POS bootstraps without the key and the frontend reads undefined. These are the
 	# //// customer-display keys the fork added (f91dcc94, 2026-03-19; merge 1ec3eadf). Its wallet /

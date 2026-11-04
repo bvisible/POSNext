@@ -229,6 +229,8 @@ def lines_of(cart) -> list[dict]:
 			"image": row.image or frappe.db.get_value("Item", row.item_code, "image"),
 			"qty": flt(row.qty),
 			"uom": row.uom,
+			"stock_uom": row.stock_uom,
+			"conversion_factor": flt(row.conversion_factor) or 1,
 			"price_list_rate": flt(row.price_list_rate),
 			"rate": flt(row.rate),
 			"amount": flt(row.amount),

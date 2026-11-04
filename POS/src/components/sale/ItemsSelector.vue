@@ -1019,6 +1019,8 @@ import { useSearchInput } from "@/composables/useSearchInput";
 //// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 import { DEFAULT_CURRENCY, formatCurrency as formatCurrencyUtil } from "@/utils/currency";
 import { useToast } from "@/composables/useToast";
+//// Neoffice — scanning in the shop: the cart of a customer's phone, taken over by its code
+import { useShopCart } from "@/composables/useShopCart";
 import { storeToRefs } from "pinia";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import {
@@ -1058,6 +1060,8 @@ const settingsStore = usePOSSettingsStore();
 //// Neoffice — a fixed number of tiles per row (task 13): the tiles then fit their width.
 const fixedGrid = computed(() => tilesPerRow(settingsStore.settings.tiles_per_row) !== null);
 const { showError, showWarning } = useToast();
+//// Neoffice — scanning in the shop (see useSearchInput's onCartCode)
+const { takeOver: takeOverAPhonesCart } = useShopCart();
 const { isAnyDialogOpen } = useDialogState();
 
 //// Neoffice — [IMG] added: the three card states (photo / Item colour / grey plus
@@ -1120,6 +1124,8 @@ const {
 	onItemFound: selectItem,
 	showWarning,
 	isAnyDialogOpen,
+	//// Neoffice — the code a customer's phone shows is the cart the till takes over (scanning in the shop)
+	onCartCode: takeOverAPhonesCart,
 });
 
 // Keyboard-highlighted result: the parent's prop wins, else the search composable's

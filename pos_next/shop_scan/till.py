@@ -37,6 +37,7 @@ def open_cart(code: str, pos_profile: str) -> dict | None:
 		"code": display_code(session.cart_code),
 		"status": AT_THE_COUNTER,
 		"customer": cart.customer,
+		"customer_name": cart.customer_name,
 		"items": lines,
 		"additional_discount_percentage": flt(cart.additional_discount_percentage),
 		"discount_amount": flt(cart.discount_amount),

@@ -31,7 +31,9 @@ import { QueuedMutex } from "@/utils/mutex";
 //// per line (458d81a9). The real divergence of this file is the global scanner capture
 //// marked below (7fe0b7d1).
 //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
-export function useSearchInput({ itemStore, onItemFound, showWarning, isAnyDialogOpen }) {
+//// Neoffice — `onCartCode` (scanning in the shop): asked first with each scanned or typed code; true when the code was the
+//// cart of a customer's phone the till took over (composables/useShopCart), and the article lookup is then skipped.
+export function useSearchInput({ itemStore, onItemFound, showWarning, isAnyDialogOpen, onCartCode = null }) {
 	// --- Reactive state (exposed) ---
 	const searchInputRef = ref(null);
 	const scannerEnabled = ref(false);
@@ -205,6 +207,15 @@ export function useSearchInput({ itemStore, onItemFound, showWarning, isAnyDialo
 		const shouldAutoAdd = forceAutoAdd || (scannerEnabled.value && autoAddEnabled.value);
 
 		barcodeQueue.withLock(async () => {
+			//// Neoffice — the code of a phone's cart is taken over before any article is looked up (scanning in the shop)
+			try {
+				if (onCartCode && (await onCartCode(barcode))) {
+					focusSearchInput();
+					return;
+				}
+			} catch (error) {
+				console.error("Shop cart takeover error:", error);
+			}
 			try {
 				const item = await itemStore.searchByBarcode(barcode);
 				if (item) {

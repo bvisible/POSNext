@@ -40,6 +40,7 @@ vi.mock("@/pages/TakeawayOrder.vue", () => ({
 vi.mock("@/pages/GuestReservation.vue", () => ({
 	default: { template: "<div />" },
 }))
+vi.mock("@/pages/ShopScan.vue", () => ({ default: { template: "<div />" } }))
 
 const { default: router } = await import("../router")
 const { refreshTabTitle } = await import("@/utils/tabTitle")
@@ -52,6 +53,8 @@ const FRENCH = {
 	"Customer Display": "Affichage client",
 	Order: "Commande",
 	Reservation: "Réservation",
+	// A bare word ERPNext's catalogue says (pos_next leaves it empty, so as not to cover it)
+	Shop: "Boutique",
 }
 
 // [the screen, its address, its tab in English, its tab in French]
@@ -88,6 +91,12 @@ const SCREENS = [
 		"/reservation",
 		"Reservation · Neopos",
 		"Réservation · Neopos",
+	],
+	[
+		"the page a shop's customer scans from",
+		"/shop/KEY",
+		"Shop · Neopos",
+		"Boutique · Neopos",
 	],
 ]
 

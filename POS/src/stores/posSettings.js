@@ -48,6 +48,8 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		allow_sales_order: 0,
 		allow_select_sales_order: 0,
 		create_only_sales_order: 0,
+		//// Neoffice — scanning in the shop: the till takes over the cart of a phone by its code (composables/useShopCart)
+		enable_shop_scan: 0,
 		allow_return_without_invoice: 0,
 		allow_free_batch_return: 0,
 		allow_print_draft_invoices: 0,
@@ -380,6 +382,8 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 			allow_sales_order: 0,
 			allow_select_sales_order: 0,
 			create_only_sales_order: 0,
+			//// Neoffice — scanning in the shop (see the defaults above)
+			enable_shop_scan: 0,
 			allow_return_without_invoice: 0,
 			allow_free_batch_return: 0,
 			allow_print_draft_invoices: 0,
