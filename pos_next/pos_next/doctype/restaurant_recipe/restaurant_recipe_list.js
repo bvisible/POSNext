@@ -49,8 +49,11 @@ function open_library(listview) {
 				season: false,
 			};
 			// //// Neoffice — the season of each fiche, only where a season calendar is installed (lot R4): the chip and the word on each row
+			// the month in the language of the site (moment keeps the English one in this context)
 			const month_name = library.season_available
-				? moment(library.month, "M").format("MMMM")
+				? new Intl.DateTimeFormat((frappe.boot && frappe.boot.lang) || "en", {
+						month: "long",
+				  }).format(new Date(2000, library.month - 1, 1))
 				: "";
 			const season_word = (f) =>
 				({ season: __("In season"), storage: __("Stored"), out: __("Out of season") }[
