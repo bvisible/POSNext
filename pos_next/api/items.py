@@ -464,6 +464,15 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None, company=Non
 @_till_only
 def search_by_barcode(barcode, pos_profile):
 	"""Search item by barcode"""
+	# //// Neoffice — the lookup itself is find_item_by_barcode, shared with the shop scan (pos_next.shop_scan), which calls
+	# //// it for a customer's phone as the system; the till keeps its guard here.
+	return find_item_by_barcode(barcode, pos_profile)
+
+
+# //// Neoffice — added function: search_by_barcode's body, with no guard of its own (the till's endpoint and the shop scan
+# //// each guard their caller).
+def find_item_by_barcode(barcode, pos_profile):
+	"""The item a barcode names at a till, priced on its price list, or None for a code it does not sell."""
 	try:
 		# Parse pos_profile if it's a JSON string
 		if isinstance(pos_profile, str):
