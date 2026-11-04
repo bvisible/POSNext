@@ -2307,8 +2307,14 @@
 								'text-sm font-semibold px-5 rounded-neo-md bg-blue-700 text-white hover:bg-blue-800 focus-visible:ring-2 focus-visible:ring-blue-400',
 							]"
 						>
-							<FeatherIcon name="dollar-sign" class="w-4 h-4" />
-							<span dir="auto">{{ __("Exact cash {0}", [formatCurrency(remainingAmount)]) }}</span>
+							<!-- //// Neoffice — the button names the method it pays with: « Exact cash » for cash only, « Pay with -->
+							<!-- //// <method> · <amount> » for the method the cashier picked (utils/exactPayment.js). Upstream: the -->
+							<!-- //// dollar-sign icon and « Exact cash {0} » whatever was picked. -->
+							<FeatherIcon :name="isCashPaymentMethod(exactCashMethod) ? 'dollar-sign' : 'credit-card'" class="w-4 h-4" />
+							<span dir="auto">{{
+								isCashPaymentMethod(exactCashMethod) ? __("Exact cash {0}", [formatCurrency(remainingAmount)])
+								: `${__("Pay with {0}", [exactCashMethod.mode_of_payment])} · ${formatCurrency(remainingAmount)}`
+							}}</span>
 							<kbd class="text-[11px] font-mono bg-blue-600 rounded px-1.5 py-0.5">Enter</kbd>
 						</button>
 						<!-- Complete/Partial Payment Button — Full Width -->
@@ -2580,6 +2586,8 @@ import {
 	isTerminalPaymentActive,
 	terminalDialogKind,
 } from "@/utils/terminalPaymentGuard";
+//// Neoffice — the method of the « exact » button (see the file's header).
+import { exactPaymentMethod } from "@/utils/exactPayment";
 import { offlineWorker } from "@/utils/offline/workerClient";
 import { logger } from "@/utils/logger";
 //// Neoffice — Button pulled in for the partial-payment confirmation dialog added
@@ -4888,12 +4896,20 @@ function applyCustomerCredit() {
 
 // Add "Pay on Account" - Credit Sale (invoice with outstanding amount)
 // Cash method for "Exact cash", offered while nothing has been entered yet
+//// Neoffice — the method of the « exact » button follows the cashier's pick (utils/exactPayment.js): with « Carte de
+//// crédit » picked, upstream's button still read « Espèces exactes » and booked the sale in cash (osiris, 2026-11-04).
+//// Upstream: entries empty, something left and no write-off ? filteredPaymentMethods.value.find((m) =>
+//// isCashPaymentMethod(m)) : null. The name stays upstream's, so a merge finds it.
 const exactCashMethod = computed(() =>
-	paymentEntries.value.length === 0 &&
-	remainingAmount.value > 0 &&
-	!(applyWriteOff.value && canWriteOff.value)
-		? filteredPaymentMethods.value.find((m) => isCashPaymentMethod(m))
-		: null
+	exactPaymentMethod({
+		methods: filteredPaymentMethods.value,
+		picked: lastSelectedMethod.value,
+		isCash: isCashPaymentMethod,
+		canPayExact: (m) => !isWalletPaymentMethod(m.mode_of_payment) && !isReceivablePaymentMethod(m),
+		entered: paymentEntries.value.length > 0,
+		remaining: remainingAmount.value,
+		writingOff: Boolean(applyWriteOff.value && canWriteOff.value),
+	})
 );
 
 // Pay the remainder in cash, then complete (Enter)
@@ -4908,7 +4924,14 @@ async function payExactCash() {
 	) {
 		return;
 	}
-	await addCustomPayment(exactCashMethod.value, remainingAmount.value);
+	//// Neoffice — a picked method whose terminal takes the payment (card, TWINT) opens that terminal for the rest instead
+	//// of a row typed in; any other method gets its row, as cash does (utils/exactPayment.js).
+	const method = exactCashMethod.value;
+	if (!isCashPaymentMethod(method) && !props.isOffline && getMappedDriver(method.mode_of_payment)) {
+		openTerminalDialog(method);
+		return;
+	}
+	await addCustomPayment(method, remainingAmount.value);
 	await nextTick();
 	if (remainingAmount.value === 0 && canComplete.value) completePayment();
 }
