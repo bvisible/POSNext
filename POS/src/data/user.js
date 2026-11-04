@@ -58,7 +58,11 @@ userData.refresh();
 // This uses MutationObserver to detect document.cookie changes
 if (typeof window !== "undefined") {
 	let lastCookie = document.cookie;
-	setInterval(() => {
+	//// Neoffice — the watch stops once there is no document: in the test runner a spec's jsdom is torn down while this
+	//// module-level timer still runs, and its next tick threw « document is not defined » outside any test, failing a
+	//// vitest run where every test passed (2026-11-04). A browser never loses its document. Upstream: setInterval(() => {
+	const watch = setInterval(() => {
+		if (typeof document === "undefined") return clearInterval(watch);
 		if (document.cookie !== lastCookie) {
 			lastCookie = document.cookie;
 			userData.refresh();
