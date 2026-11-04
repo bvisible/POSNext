@@ -170,7 +170,8 @@ def _merged(held: list[dict], said: list[dict]) -> tuple[list[dict], list[dict]]
 			changes.append({"name": entry["name"], "change": "add"})
 			continue
 		old = rows[at]
-		new["item"], new["shelf"] = old.get("item"), old.get("shelf")
+		# The row keeps the name it has (« Crème »), whatever case the owner said it in
+		new["name"], new["item"], new["shelf"] = old["name"], old.get("item"), old.get("shelf")
 		# What the owner did not say about a row he named stays: only a quantity or a unit said changes it
 		if entry["qty"] is None and not entry["without_quantity"]:
 			new["qty"], new["without_quantity"] = old.get("qty"), old.get("without_quantity")
