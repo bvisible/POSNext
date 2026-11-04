@@ -195,6 +195,10 @@ _custom_field_names = [
 	"Supplier-restaurant_purchases_section",
 	"Supplier-order_mode",
 	"Supplier-order_email",
+	# //// Neoffice — scanning in the shop: the articles a seller checks before they are sold (pos_next.shop_scan). Shipped by the
+	# //// fixture file; listed so that an export does not drop them.
+	"Item-requires_counter_validation",
+	"Item Group-requires_counter_validation",
 	"Supplier-usual_delivery",
 ]
 if not _has_native_coupon_code_field():
@@ -450,6 +454,8 @@ scheduler_events = {
 		# //// 2026-03-20).
 		# //// add support for standalone pricing rules in promotions — 1ed8d44
 		"pos_next.tasks.cleanup_expired_promotions.cleanup_expired_promotions",
+		# //// Neoffice — a phone's cart nobody paid nor took over is deleted after the lifetime its till sets (scanning in the shop)
+		"pos_next.shop_scan.purge.purge_abandoned_carts",
 	],
 	# //// Neoffice — an online booking whose guest has not confirmed it from the e-mail by its deadline expires
 	# //// (NeoResto lot 1, task 18). It frees its tables at the deadline itself; this job writes it down soon after,

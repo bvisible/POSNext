@@ -1828,8 +1828,15 @@ _BY_KEY = {setting.key: setting for setting in SETTINGS}
 _INERT = "read by no code of the till: an option of POS Awesome that POSNext copied and never wired (Task 14)"
 _OLD_TILL = "an option of ERPNext's own till page, which this till does not use"
 _RESTAURANT_FORM = "set on the restaurant's own form, not a setting of a till"
+_SHOP_SCAN_TO_COME = (
+	"scanning in the shop (pos_next.shop_scan): set on the desk until the phone's page ships, then listed (a setting the till"
+	" shows must work)"
+)
 NOT_LISTED = {
 	POS_SETTINGS: {
+		"enable_shop_scan": _SHOP_SCAN_TO_COME,
+		"shop_cart_lifetime_hours": _SHOP_SCAN_TO_COME,
+		"shop_scan_key": _SHOP_SCAN_TO_COME,
 		"allow_return": _INERT,
 		"default_card_view": _INERT,
 		"show_customer_balance": _INERT,

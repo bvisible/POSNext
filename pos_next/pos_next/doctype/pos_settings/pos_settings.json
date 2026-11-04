@@ -13,6 +13,10 @@
   "enable_customer_display_account_creation",
   "column_break_customer_display",
   "customer_display_show_address_fields",
+  "section_break_shop_scan",
+  "enable_shop_scan",
+  "shop_cart_lifetime_hours",
+  "shop_scan_key",
   "section_break_restaurant",
   "enable_restaurant_mode",
   "restaurant",
@@ -178,6 +182,36 @@
    "label": "Show Address Fields",
    "depends_on": "enable_customer_display_account_creation",
    "description": "Show address fields in the customer creation form (both on display and in POS)"
+  },
+  {
+   "fieldname": "section_break_shop_scan",
+   "fieldtype": "Section Break",
+   "label": "Scan in the Shop"
+  },
+  {
+   "default": "0",
+   "description": "Customers scan the items of this till with their phone, from the shop's QR code, and the till takes their cart over. A shop till only.",
+   "fieldname": "enable_shop_scan",
+   "fieldtype": "Check",
+   "label": "Let Customers Scan Their Items"
+  },
+  {
+   "default": "4",
+   "depends_on": "enable_shop_scan",
+   "description": "A phone's cart that is neither paid nor taken over by the till is deleted after this many hours.",
+   "fieldname": "shop_cart_lifetime_hours",
+   "fieldtype": "Int",
+   "label": "Abandoned Cart Lifetime (Hours)",
+   "non_negative": 1
+  },
+  {
+   "depends_on": "enable_shop_scan",
+   "description": "Set by the system the first time the shop's QR code is asked for: the code opens this till's shop page and nothing else.",
+   "fieldname": "shop_scan_key",
+   "fieldtype": "Data",
+   "label": "Key of the Shop's QR Code",
+   "no_copy": 1,
+   "read_only": 1
   },
   {
    "depends_on": "eval:frappe.boot.neoresto_active",
@@ -888,7 +922,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-01 18:20:00.000000",
+ "modified": "2026-11-04 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "POS Settings",

@@ -17,7 +17,9 @@
   "created_by_user",
   "expires_at",
   "invoice",
-  "customer"
+  "customer",
+  "cart_code",
+  "cart_status"
  ],
  "fields": [
   {
@@ -42,7 +44,7 @@
    "fieldname": "mode",
    "fieldtype": "Select",
    "label": "Mode",
-   "options": "restaurant\ntakeaway"
+   "options": "restaurant\ntakeaway\nshop"
   },
   {
    "fieldname": "column_break_1",
@@ -95,12 +97,30 @@
    "fieldtype": "Link",
    "label": "Customer",
    "options": "Customer"
+  },
+  {
+   "description": "The code the phone shows for the cart of a shop session: the till takes the cart over by it.",
+   "fieldname": "cart_code",
+   "fieldtype": "Data",
+   "label": "Cart Code",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "description": "Where the cart of a shop session stands: the customer is scanning, or the cart waits for the till.",
+   "fieldname": "cart_status",
+   "fieldtype": "Select",
+   "label": "Cart Status",
+   "no_copy": 1,
+   "options": "\nScanning\nAt the counter",
+   "read_only": 1
   }
  ],
  "index_web_link_preview": 0,
  "issingle": 0,
  "links": [],
- "modified": "2026-03-28 00:00:00.000000",
+ "modified": "2026-11-04 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "Guest Order Token",
