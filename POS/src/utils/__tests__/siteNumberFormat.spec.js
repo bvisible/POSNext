@@ -92,4 +92,36 @@ describe("amounts follow the site's number format", () => {
 		initPrecision({ currency: 2, number_format: "#,##,###.##" })
 		expect(formatCurrencyNumber(12345678.9)).toBe("1,23,45,678.90")
 	})
+
+	// The narrow symbol of a currency is the browser's CLDR data: a newer CLDR names the franc
+	// « Fr. » (« fr. » in French), as Safari on macOS 27 in fr-CH and Node 26 do, where Chrome 152
+	// still writes « CHF ». Such a browser is played here, whatever the Node running the suite.
+	it("writes CHF even where the browser's CLDR names the franc « Fr. »", () => {
+		initPrecision(SWISS_SITE)
+		const RealNumberFormat = Intl.NumberFormat
+		// A function and not an arrow: currency.js calls it with `new`
+		const spy = vi
+			.spyOn(Intl, "NumberFormat")
+			.mockImplementation(function (locale, options) {
+				const real = new RealNumberFormat(locale, options)
+				if (options?.currency !== "CHF") return real
+				const franc = (parts) =>
+					parts.map((p) => (p.type === "currency" ? { ...p, value: "Fr." } : p))
+				return {
+					format: (value) =>
+						franc(real.formatToParts(value))
+							.map((p) => p.value)
+							.join(""),
+					formatToParts: (value) => franc(real.formatToParts(value)),
+					resolvedOptions: () => real.resolvedOptions(),
+				}
+			})
+		try {
+			setLocale("rm") // a language no other test formats in, so no symbol is already cached for it
+			expect(formatCurrency(29, "CHF")).toBe("CHF 29.00")
+			expect(formatCurrency(-1234.5, "CHF")).toBe("CHF -1'234.50")
+		} finally {
+			spy.mockRestore()
+		}
+	})
 })
