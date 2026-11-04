@@ -112,6 +112,36 @@ def pos_get_mapping(pos_profile: str, mode_of_payment: str) -> dict[str, Any]:
 	return _resolve_mapping(pos_profile, mode_of_payment)
 
 
+# //// Neoffice — maintenance#2244: the payment dialog read the till's mappings with frappe.client.get_list, then the
+# //// mode of their providers the same way, and a cashier may not read Payment Provider (System Manager only): every
+# //// till opened by a cashier logged four 403, and a provider in test mode never showed its simulator panel to her.
+# //// One read with the till's own rights answers both.
+@frappe.whitelist()
+def pos_get_mappings(pos_profile: str) -> list[dict[str, Any]]:
+	"""The till's enabled driver mappings, each with the mode of its provider (live or test)."""
+	_require_till(pos_profile)
+	rows = frappe.get_all(
+		"POS Payment Driver Mapping",
+		filters={"pos_profile": pos_profile, "enabled": 1},
+		fields=["mode_of_payment", "provider", "channel", "default_device", "auto_attach_device"],
+	)
+	modes = (
+		dict(
+			frappe.get_all(
+				"Payment Provider",
+				filters={"name": ["in", list({row.provider for row in rows if row.provider})]},
+				fields=["name", "mode"],
+				as_list=True,
+			)
+		)
+		if rows
+		else {}
+	)
+	for row in rows:
+		row["provider_mode"] = modes.get(row.provider)
+	return rows
+
+
 # //// Neoffice — POST only (maintenance#1721). Frappe rolls the transaction of a GET request back,
 # //// and checks no CSRF token on it: a payment step reached by opening its address happens at the
 # //// PSP while the Payment Intent keeps its old status. A refund made that way on 19.10 (through

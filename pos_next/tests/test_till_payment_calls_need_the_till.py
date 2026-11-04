@@ -58,6 +58,7 @@ def _intent(metadata=None):
 def _calls(name):
 	return [
 		("pos_get_mapping", lambda: payments.pos_get_mapping(PROFILE, "Cash")),
+		("pos_get_mappings", lambda: payments.pos_get_mappings(PROFILE)),
 		(
 			"pos_start_payment",
 			lambda: payments.pos_start_payment(None, None, PROFILE, "Cash", 100, "CHF"),

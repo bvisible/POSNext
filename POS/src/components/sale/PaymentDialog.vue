@@ -4111,48 +4111,18 @@ async function loadDriverMappings() {
 	}
 
 	try {
-		const rows = await call("frappe.client.get_list", {
-			doctype: "POS Payment Driver Mapping",
-			filters: { pos_profile: props.posProfile, enabled: 1 },
-			fields: [
-				"mode_of_payment",
-				"provider",
-				"channel",
-				"default_device",
-				"auto_attach_device",
-			],
-			limit_page_length: 0,
+		//// Neoffice — the till's own read (maintenance#2244): its mappings and the mode of their provider in one call. The two
+		//// frappe.client.get_list it replaces asked Payment Provider, which a cashier may not read: four 403 at each opening of
+		//// the till, and a provider in test mode never showed its simulator panel to a cashier.
+		const rows = await call("pos_next.api.payments.pos_get_mappings", {
+			pos_profile: props.posProfile,
 		});
 		const list = Array.isArray(rows) ? rows : rows?.message || [];
-
-		// Enrich each mapping with the provider's mode so the dialogs can
-		// render test-only UI (e.g. the QRPaymentDialog simulator panel for
-		// TWINT, which has no device to key off). One extra query for all
-		// unique providers found across the mappings — keeps it cheap.
-		const uniqueProviders = [...new Set(list.map((r) => r.provider).filter(Boolean))];
-		const providerModes = {};
-		if (uniqueProviders.length) {
-			try {
-				const provRows = await call("frappe.client.get_list", {
-					doctype: "Payment Provider",
-					filters: { name: ["in", uniqueProviders] },
-					fields: ["name", "mode"],
-					limit_page_length: 0,
-				});
-				const provList = Array.isArray(provRows) ? provRows : provRows?.message || [];
-				for (const p of provList) providerModes[p.name] = p.mode;
-			} catch (e) {
-				log.warn(
-					"[PaymentDialog] Could not fetch provider modes; simulator panel will stay hidden:",
-					e
-				);
-			}
-		}
 
 		const map = {};
 		for (const row of list) {
 			if (row.mode_of_payment) {
-				row.provider_mode = providerModes[row.provider] || null;
+				row.provider_mode = row.provider_mode || null;
 				map[row.mode_of_payment.toLowerCase()] = row;
 			}
 		}
