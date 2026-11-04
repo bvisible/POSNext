@@ -29,7 +29,7 @@
 						class="shop-head__cart"
 						@click="state = 'cart'"
 					>
-						{{ __("Cart") }} · {{ articles }} · {{ money(cart.grand_total) }}
+						{{ __("Cart") }} · {{ articles }} · {{ money(amountDue(cart)) }}
 					</button>
 				</header>
 
@@ -43,7 +43,7 @@
 						<p class="shop-hero__state">
 							{{
 								articles
-									? `${articlesLabel(articles)} · ${money(cart.grand_total)}`
+									? `${articlesLabel(articles)} · ${money(amountDue(cart))}`
 									: __("empty for now")
 							}}
 						</p>
@@ -132,6 +132,7 @@ import ShopCart from "@/components/shop/ShopCart.vue";
 import ShopCounter from "@/components/shop/ShopCounter.vue";
 import ShopScanner from "@/components/shop/ShopScanner.vue";
 import {
+	amountDue,
 	articlesIn,
 	articlesLabel,
 	confirmPayment,

@@ -21,6 +21,7 @@ from pos_next.shop_scan.cart import (
 	PAID,
 	_cart_of,
 	_locked_session,
+	amount_due,
 	display_code,
 	lines_of,
 	view,
@@ -75,7 +76,8 @@ def start(token: str) -> dict:
 	refusal = payment_refusal(token_doc, cart_doc)
 	if refusal:
 		frappe.throw(refusal)
-	owed = flt(flt(cart_doc.grand_total) - flt(cart_doc.paid_amount), 2)
+	# What the till would take: the total rounded as the till rounds it (cart.amount_due)
+	owed = flt(amount_due(cart_doc) - flt(cart_doc.paid_amount), 2)
 	if owed <= 0:
 		frappe.throw(_("This cart is paid."))
 	if token_doc.cart_status != AT_THE_COUNTER:
@@ -163,7 +165,7 @@ def book(invoice: str) -> bool:
 			with _as_the_system():
 				reconcile_payment_intent(intent.name)
 	cart_doc = frappe.get_doc("Sales Invoice", invoice)
-	paid = cart_doc.docstatus == 0 and flt(cart_doc.paid_amount) >= flt(cart_doc.grand_total) > 0
+	paid = cart_doc.docstatus == 0 and flt(cart_doc.paid_amount) + 0.005 >= amount_due(cart_doc) > 0
 	if paid and session.cart_status != PAID:
 		hours = (
 			cint(

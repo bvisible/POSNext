@@ -135,6 +135,14 @@ export function articlesLabel(count) {
 	return Number(count) === 1 ? __("1 article") : __("{0} articles", [count]);
 }
 
+/**
+ * What the customer pays for the cart: the amount the till takes, its total rounded as the till rounds it (CHF 0.05),
+ * which the server answers as `amount_due`; the total itself from a server that does not say it yet.
+ */
+export function amountDue(cart) {
+	return Number(cart?.amount_due ?? cart?.grand_total ?? 0);
+}
+
 /** An amount as the customer's phone writes money; the number alone for a currency it does not know. */
 export function formatAmount(amount, currency) {
 	try {

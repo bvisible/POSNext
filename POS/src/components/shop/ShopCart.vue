@@ -65,6 +65,11 @@
 				<span>{{ __("The till's offers") }}</span
 				><span>− {{ money(cart.discount) }}</span>
 			</p>
+			<!-- //// The till rounds the sale to the smallest coin (CHF 0.05): the phone says the same amount, and why -->
+			<p v-if="cart.rounding" class="shop-cart__row">
+				<span>{{ __("Rounding") }}</span
+				><span>{{ money(cart.rounding) }}</span>
+			</p>
 		</div>
 
 		<p v-if="cart.needs_validation" class="shop-cart__notice" role="note">
@@ -76,7 +81,7 @@
 				<p class="shop-cart__band-title">{{ __("You will pay") }}</p>
 				<p class="shop-cart__band-hint">{{ __("the same amount at the till") }}</p>
 			</div>
-			<p class="shop-cart__band-amount">{{ money(cart.grand_total) }}</p>
+			<p class="shop-cart__band-amount">{{ money(amountDue(cart)) }}</p>
 		</div>
 
 		<!-- //// Paying on the phone (lot 4, boards 4 and 6): offered where the shop takes it; an article a seller checks may -->
@@ -114,7 +119,7 @@
 
 <script setup>
 import { computed } from "vue";
-import { formatAmount } from "@/utils/shopScan";
+import { amountDue, formatAmount } from "@/utils/shopScan";
 
 const props = defineProps({
 	cart: { type: Object, required: true },

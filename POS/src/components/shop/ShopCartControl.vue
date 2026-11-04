@@ -103,14 +103,16 @@
 <script setup>
 import { useToast } from "@/composables/useToast"
 import { usePOSCartStore } from "@/stores/posCart"
+import { usePOSSettingsStore } from "@/stores/posSettings"
 import { usePOSShiftStore } from "@/stores/posShift"
 import { call } from "@/utils/apiWrapper"
-import { formatCurrency } from "@/utils/currency"
+import { formatCurrency, roundCurrency, roundTotal } from "@/utils/currency"
 import { Button, Dialog } from "frappe-ui"
 import { computed, reactive, ref, watch } from "vue"
 
 const cartStore = usePOSCartStore()
 const shiftStore = usePOSShiftStore()
+const settingsStore = usePOSSettingsStore()
 const { showSuccess, showWarning } = useToast()
 
 const check = computed(() => cartStore.shopCartCheck)
@@ -139,16 +141,21 @@ const ready = computed(
 		decided.value === check.value.lines.length &&
 		!busy.value,
 )
-// What the missing articles were paid: refunded on the payment of the phone
-const refund = computed(() =>
-	(check.value?.lines || []).reduce(
+// What the missing articles were paid, refunded on the payment of the phone: what was paid less what the till takes for
+// what is left, its total rounded as the till rounds it (CHF 0.05), as the server refunds it (shop_scan.control.validate)
+const refund = computed(() => {
+	const missingAmount = (check.value?.lines || []).reduce(
 		(sum, line) =>
 			sum +
 			(Number(missing[line.line]) || 0) *
 				(Number(line.amount) / Number(line.qty || 1)),
 		0,
-	),
-)
+	)
+	if (missingAmount <= 0) return 0
+	const left = Number(check.value?.grand_total || 0) - missingAmount
+	const due = settingsStore.disableRoundedTotal ? left : roundTotal(left)
+	return Math.max(0, roundCurrency(Number(check.value?.paid_amount || 0) - due))
+})
 
 function money(value) {
 	return formatCurrency(

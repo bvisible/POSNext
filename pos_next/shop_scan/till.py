@@ -9,7 +9,15 @@ a draft, is found. The till also lists its phones' carts (list_carts), so that a
 import frappe
 from frappe.utils import flt, now_datetime
 
-from pos_next.shop_scan.cart import AT_THE_COUNTER, PAID, SCANNING, display_code, lines_of, read_code
+from pos_next.shop_scan.cart import (
+	AT_THE_COUNTER,
+	PAID,
+	SCANNING,
+	amount_due,
+	display_code,
+	lines_of,
+	read_code,
+)
 from pos_next.shop_scan.catalogue import needs_counter_validation
 
 # The carts a till lists at most: more than a shop has customers at once
@@ -48,6 +56,8 @@ def open_cart(code: str, pos_profile: str) -> dict | None:
 		"discount_amount": flt(cart.discount_amount),
 		"apply_discount_on": cart.apply_discount_on,
 		"grand_total": flt(cart.grand_total),
+		# What the customer pays for it: the total rounded as the till rounds it (cart.amount_due)
+		"amount_due": amount_due(cart),
 		"needs_validation": any(line["needs_validation"] for line in lines),
 		# What the phone paid (lot 4): the till takes the rest, or the seller checks and validates the cart
 		"paid_amount": flt(cart.paid_amount),
@@ -96,6 +106,8 @@ def list_carts(pos_profile: str) -> list[dict]:
 				"customer",
 				"customer_name",
 				"grand_total",
+				"rounded_total",
+				"disable_rounded_total",
 				"paid_amount",
 				"currency",
 				"creation",
@@ -122,6 +134,7 @@ def list_carts(pos_profile: str) -> list[dict]:
 				"customer": draft.customer,
 				"customer_name": draft.customer_name,
 				"grand_total": flt(draft.grand_total),
+				"amount_due": amount_due(draft),
 				"paid_amount": flt(draft.paid_amount),
 				"currency": draft.currency,
 				"articles": flt(sum(flt(line.qty) for line in own)),

@@ -28,7 +28,7 @@
 			<p class="shop-counter__code">{{ cart.code }}</p>
 			<p class="shop-counter__summary">
 				{{ articlesLabel(articles) }} ·
-				<strong>{{ money(cart.grand_total) }}</strong>
+				<strong>{{ money(amountDue(cart)) }}</strong>
 			</p>
 		</div>
 
@@ -60,7 +60,7 @@
 <script setup>
 import QRCode from "qrcode";
 import { computed, ref, watchEffect } from "vue";
-import { articlesIn, articlesLabel, formatAmount } from "@/utils/shopScan";
+import { amountDue, articlesIn, articlesLabel, formatAmount } from "@/utils/shopScan";
 
 const props = defineProps({
 	cart: { type: Object, required: true },
@@ -85,7 +85,7 @@ const title = computed(() => {
 
 const qr = ref("");
 const articles = computed(() => articlesIn(props.cart));
-const amount = computed(() => money(props.cart?.grand_total));
+const amount = computed(() => money(amountDue(props.cart)));
 
 function money(value) {
 	return formatAmount(value, props.cart?.currency);

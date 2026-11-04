@@ -73,6 +73,21 @@ describe("the cart of the shop's page", () => {
 		expect(text).toMatch(/39[.,]00/);
 	});
 
+	it("says the amount the till takes, rounded to 5 centimes, and the rounding on its own line", () => {
+		const text = cart({
+			cart: { ...CART, grand_total: 38.98, rounding: 0.02, amount_due: 39 },
+		}).text();
+
+		expect(text).toContain("Rounding");
+		expect(text).toMatch(/0[.,]02/);
+		expect(text).toMatch(/39[.,]00/);
+		expect(text).not.toMatch(/38[.,]98/);
+	});
+
+	it("shows no rounding line when the total needs none", () => {
+		expect(cart().text()).not.toContain("Rounding");
+	});
+
 	it("asks one more, and one less, of a line", async () => {
 		const wrapper = cart();
 		const [less, more] = wrapper.findAll(".shop-line")[0].findAll("button");

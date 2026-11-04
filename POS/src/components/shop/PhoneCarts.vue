@@ -58,8 +58,9 @@ const carts = ref([])
 const takingOver = ref(null)
 
 function money(cart) {
+	// What the customer pays: the total rounded as the till rounds it (the server's amount_due)
 	return formatCurrency(
-		cart.grand_total,
+		cart.amount_due ?? cart.grand_total,
 		cart.currency || usePOSShiftStore().profileCurrency || undefined,
 	)
 }

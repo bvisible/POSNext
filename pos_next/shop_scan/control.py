@@ -15,7 +15,7 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
-from pos_next.shop_scan.cart import CHECKED, PAID, display_code, read_code
+from pos_next.shop_scan.cart import CHECKED, PAID, amount_due, display_code, read_code
 from pos_next.shop_scan.payment import _intents_of, book
 
 
@@ -94,9 +94,11 @@ def validate(code: str, pos_profile: str, missing=None, pos_opening_shift=None) 
 		taken = _take_the_missing_off(cart_doc, missing)
 		_without_repricing(cart_doc)
 		cart_doc.calculate_taxes_and_totals()
-		if flt(cart_doc.paid_amount) + 0.005 < flt(cart_doc.grand_total):
+		# Measured against what the till takes for what is left: its total rounded as the till rounds it
+		due = amount_due(cart_doc)
+		if flt(cart_doc.paid_amount) + 0.005 < due:
 			frappe.throw(_("This cart is not paid in full: take the rest with the till's payment."))
-		refunded = flt(flt(cart_doc.paid_amount) - flt(cart_doc.grand_total), 2) if taken else 0
+		refunded = flt(flt(cart_doc.paid_amount) - due, 2) if taken else 0
 		if refunded > 0.005:
 			_refund(cart_doc, refunded)
 			# The money is back with the customer: the sale says so before anything else can fail, and a second

@@ -8,7 +8,7 @@ the till takes (« not a centime more, not a centime less », 04.11.2026).
 """
 
 import frappe
-from frappe.utils import flt
+from frappe.utils import cint, flt
 
 
 def _offers_of_the_till(invoice_doc, rows):
@@ -95,6 +95,11 @@ def price_the_cart(invoice_doc):
 	if header_percentage > 0 or flt(result.get("discount_amount")) > 0:
 		invoice_doc.apply_discount_on = result.get("apply_discount_on") or "Grand Total"
 
+	# Rounded as the till rounds its sale: to the currency's smallest coin unless the till's profile disables it
+	# (api/invoices.py sets the same flag on the till's own sale)
+	invoice_doc.disable_rounded_total = cint(
+		frappe.get_cached_value("POS Profile", invoice_doc.pos_profile, "disable_rounded_total")
+	)
 	_without_repricing(invoice_doc)
 	with _as_the_system():
 		invoice_doc.run_method("calculate_taxes_and_totals")

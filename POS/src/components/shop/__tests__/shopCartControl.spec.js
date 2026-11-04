@@ -13,8 +13,14 @@ vi.hoisted(() => {
 	globalThis.__ = (s, args) => s.replace(/{(\d+)}/g, (_, n) => args?.[n] ?? _)
 })
 
-const fx = vi.hoisted(() => ({ cart: null, call: null, toast: null }))
+const fx = vi.hoisted(() => ({
+	cart: null,
+	call: null,
+	toast: null,
+	settings: { disableRoundedTotal: false },
+}))
 vi.mock("@/stores/posCart", () => ({ usePOSCartStore: () => fx.cart }))
+vi.mock("@/stores/posSettings", () => ({ usePOSSettingsStore: () => fx.settings }))
 vi.mock("@/stores/posShift", () => ({
 	usePOSShiftStore: () => ({
 		profileName: "Shop till",
@@ -25,6 +31,9 @@ vi.mock("@/utils/apiWrapper", () => ({ call: (...args) => fx.call(...args) }))
 vi.mock("@/utils/currency", () => ({
 	formatCurrency: (value, currency) =>
 		`${currency} ${Number(value).toFixed(2)}`,
+	roundCurrency: (value) => Math.round(value * 100) / 100,
+	// The till's rounding of a total to the smallest Swiss coin, CHF 0.05
+	roundTotal: (value) => Math.round(value * 20) / 20,
 }))
 vi.mock("@/composables/useToast", () => ({ useToast: () => fx.toast }))
 vi.mock("frappe-ui", () => ({
@@ -88,6 +97,7 @@ describe("the seller's check of a cart paid on the phone", () => {
 			grand_total: 38,
 		}))
 		fx.toast = { showSuccess: vi.fn(), showWarning: vi.fn() }
+		fx.settings = { disableRoundedTotal: false }
 	})
 
 	it("lists the paid lines, says the one a seller checks, and waits for each to be decided", async () => {
@@ -150,6 +160,48 @@ describe("the seller's check of a cart paid on the phone", () => {
 		expect(fx.toast.showSuccess).toHaveBeenCalledWith(
 			"Cart K7Q-24M validated, CHF 9.00 refunded.",
 		)
+	})
+
+	it("refunds down to what the till takes for what is left, rounded as the till rounds it", async () => {
+		// 28.98 is 29.00 at the till: the filter missing, 10.00 is left and 19.00 goes back (not 18.98)
+		fx.cart.shopCartCheck = {
+			...structuredClone(CHECK),
+			paid_amount: 29,
+			grand_total: 28.98,
+			lines: [
+				{ line: "L1", item_name: "Filter", qty: 1, amount: 18.98, needs_validation: false },
+				{ line: "L2", item_name: "Tea", qty: 1, amount: 10, needs_validation: false },
+			],
+		}
+		const wrapper = aCheck()
+		await wrapper.find("#check-L2").setValue(true)
+		await wrapper
+			.findAll("button")
+			.find((button) => button.text() === "Missing")
+			.trigger("click")
+
+		expect(validateButton(wrapper).text()).toBe("Refund CHF 19.00 and validate")
+	})
+
+	it("refunds the exact amount where the till does not round", async () => {
+		fx.settings = { disableRoundedTotal: true }
+		fx.cart.shopCartCheck = {
+			...structuredClone(CHECK),
+			paid_amount: 28.98,
+			grand_total: 28.98,
+			lines: [
+				{ line: "L1", item_name: "Filter", qty: 1, amount: 18.98, needs_validation: false },
+				{ line: "L2", item_name: "Tea", qty: 1, amount: 10, needs_validation: false },
+			],
+		}
+		const wrapper = aCheck()
+		await wrapper.find("#check-L2").setValue(true)
+		await wrapper
+			.findAll("button")
+			.find((button) => button.text() === "Missing")
+			.trigger("click")
+
+		expect(validateButton(wrapper).text()).toBe("Refund CHF 18.98 and validate")
 	})
 
 	it("says why the cart could not be validated, and keeps it", async () => {

@@ -252,11 +252,24 @@ def lines_of(cart) -> list[dict]:
 	]
 
 
+def amount_due(cart) -> float:
+	"""What the customer pays for the cart: the amount the till takes, its total rounded as the till rounds it (to the
+	currency's smallest coin, CHF 0.05), or the exact total where the till's profile disables the rounding. A cart of 18.98
+	is 19.00 at the till, and so on the phone."""
+	if not cart:
+		return 0
+	if cint(cart.disable_rounded_total) or not flt(cart.rounded_total):
+		return flt(cart.grand_total)
+	return flt(cart.rounded_total)
+
+
 def view(token_doc, cart) -> dict:
-	"""The cart as the phone shows it: its lines, the total before the offers, what the offers take off, the VAT, the amount."""
+	"""The cart as the phone shows it: its lines, the total before the offers, what the offers take off, the VAT, the total,
+	the rounding of the till and the amount the customer pays (`amount_due`)."""
 	lines = lines_of(cart) if cart else []
 	total = sum(line["price_list_rate"] * line["qty"] for line in lines if not line["is_free_item"])
 	amount = flt(cart.grand_total) if cart else 0
+	due = amount_due(cart)
 	return {
 		"code": display_code(token_doc.cart_code) if cart else None,
 		"status": token_doc.cart_status or SCANNING,
@@ -268,6 +281,8 @@ def view(token_doc, cart) -> dict:
 		),
 		"tax": flt(cart.total_taxes_and_charges) if cart else 0,
 		"grand_total": amount,
+		"rounding": flt(due - amount, 2),
+		"amount_due": due,
 		# The phone writes the amounts in it (an empty cart has no invoice yet: the till's currency)
 		"currency": (cart.currency if cart else None)
 		or frappe.get_cached_value("POS Profile", token_doc.pos_profile, "currency"),
