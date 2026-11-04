@@ -90,7 +90,7 @@ def tabs():
 
 	items = _borrowed(operations.tabs(), "items")
 	sales = _borrowed(retail.tabs(), "invoices")
-	space = [overview_tab(), _ours(floor_tab()), _ours(cards_tab())]
+	space = [overview_tab(), _ours(floor_tab()), _ours(cards_tab()), _ours(recipes_tab())]
 	# //// Neoffice — the purchases of the restaurant (NeoResto purchases, lot A): the Achats page, once the site shows them. The
 	# //// tab ships dark: where `neoresto_purchases_active` is off, the space is the one it was.
 	if supply_catalogue.purchases_active():
@@ -169,6 +169,19 @@ def cards_tab():
 			"route": "/app/restaurant-menu",
 			"doctype": "Restaurant Menu",
 		},
+	}
+
+
+def recipes_tab():
+	"""The recipes of the restaurant: its own and those it added from the free library. Like every tab of this space, it is there only where the
+	site runs NeoResto (tabs() answers nothing elsewhere)."""
+	return {
+		"key": "recipes",
+		"label": _("Recipes"),
+		"archetype": "document",
+		"essential": True,
+		"doctype": "Restaurant Recipe",
+		"views": recipe_views,
 	}
 
 
@@ -303,6 +316,16 @@ def tip_views(today):
 	return [
 		{"key": "collected", "label": _("Collected"), "filters": [["status", "=", "Collected"]]},
 		{"key": "distributed", "label": _("Distributed"), "filters": [["status", "=", "Distributed"]]},
+	]
+
+
+def recipe_views(today):
+	"""The recipes read and approved, those a person has still to read, and those that are not complete."""
+	return [
+		{"key": "validated", "label": _("Validated"), "filters": [["status", "=", "Validated"]]},
+		{"key": "to_review", "label": _("To review"), "filters": [["status", "=", "To review"]]},
+		{"key": "draft", "label": _("Draft"), "filters": [["status", "=", "Draft"]]},
+		{"key": "all", "label": _("All"), "filters": []},
 	]
 
 

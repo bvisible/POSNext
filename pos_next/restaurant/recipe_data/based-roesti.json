@@ -1,0 +1,89 @@
+{
+  "id": "based-roesti",
+  "version": "9d4a31a040ee-fr-1",
+  "title": "Rösti, petits pois et œufs",
+  "subtitle": "Un classique suisse avec carottes et oignons.",
+  "time": 40,
+  "vegetarian": true,
+  "basePortions": 4,
+  "ingredients": [
+    {
+      "id": "pommes-de-terre",
+      "name": "Pommes de terre fermes",
+      "quantity": 800,
+      "unit": "g",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "carottes",
+      "name": "Carottes",
+      "quantity": 2,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "petits-pois",
+      "name": "Petits pois",
+      "quantity": 500,
+      "unit": "g",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "oeufs",
+      "name": "Œufs",
+      "quantity": 4,
+      "unit": "pièce",
+      "category": "Alimentation"
+    },
+    {
+      "id": "oignon",
+      "name": "Oignons moyens",
+      "quantity": 2,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    }
+  ],
+  "unquantifiedIngredients": [
+    "Beurre pour la poêle et le pourtour du rösti, quantité non indiquée",
+    "Assaisonnement au goût (non détaillé par la source)",
+    "Un peu d’eau pour les légumes"
+  ],
+  "steps": [
+    "Râper grossièrement les pommes de terre crues ou déjà cuites puis refroidies. Mélanger avec la moitié des oignons coupés en dés et assaisonner.",
+    "Chauffer du beurre dans une grande poêle. Ajouter les pommes de terre, remuer quelques minutes puis former une galette d’environ 1 à 1,5 cm d’épaisseur.",
+    "Ajouter quelques copeaux de beurre sur le pourtour. Cuire jusqu’à formation d’une croûte ; contrôler la coloration après 5 à 10 minutes.",
+    "Pendant ce temps, couper le reste des oignons et les carottes. Les cuire à couvert avec les petits pois et un peu d’eau.",
+    "Retourner le rösti avec une assiette, puis cuire l’autre face à feu plus doux jusqu’à la cuisson souhaitée.",
+    "Faire cuire les œufs prévus dans la poêle et servir avec le rösti et les légumes."
+  ],
+  "tip": "La source propose aussi des épinards : cette version retient les petits pois. Aucune conservation antérieure n’est déduite.",
+  "allergens": "Œufs et lait dans le beurre. Vérifier les produits.",
+  "provenance": {
+    "kind": "catalog",
+    "sources": [
+      {
+        "id": "based:roesti",
+        "title": "Rösti",
+        "url": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/content/roesti.md",
+        "author": "elias-pahls",
+        "license": "Unlicense / domaine public déclaré par Based Cooking",
+        "licenseUrl": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/README.md#license",
+        "revision": "9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2",
+        "contentHash": "14ebcbe7ce1144e6b9eed8e27966d4e5b7e01961a78d4f21110c33810778fb1e",
+        "language": "en"
+      }
+    ],
+    "parents": [],
+    "lineage": [],
+    "changes": [
+      "Traduction et organisation françaises par Encore à table ; brouillon assisté, sans revue humaine ni essai culinaire.",
+      "Les étapes renvoient aux quantités de la liste ; seules ces quantités sont recalculées avec les portions. Durées, températures et ingrédients à doser ne sont pas multipliés.",
+      "Variante petits pois choisie ; bacon optionnel mentionné dans les étapes non retenu.",
+      "La liste source donne 4 œufs mais l’étape dit d’en frire 2 : les étapes françaises sont alignées sur les 4 œufs de la liste."
+    ],
+    "editorialStatus": "draft",
+    "culinaryStatus": "not-tested",
+    "portionNote": "4 portions indiquées par la source ; rendement non mesuré ici.",
+    "durationNote": "40 minutes : somme des durées de préparation et de cuisson annoncées par la source, non chronométrée ici."
+  }
+}

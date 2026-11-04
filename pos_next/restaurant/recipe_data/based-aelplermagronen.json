@@ -1,0 +1,104 @@
+{
+  "id": "based-aelplermagronen",
+  "version": "9d4a31a040ee-fr-1",
+  "title": "Macaronis des Alpes",
+  "subtitle": "Pommes de terre, lardons, fromage et compote.",
+  "time": 40,
+  "vegetarian": false,
+  "basePortions": 4,
+  "ingredients": [
+    {
+      "id": "lardons",
+      "name": "Lardons",
+      "quantity": 150,
+      "unit": "g",
+      "category": "Alimentation"
+    },
+    {
+      "id": "oignon",
+      "name": "Oignons moyens",
+      "quantity": 3,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "pommes-de-terre",
+      "name": "Pommes de terre fermes",
+      "quantity": 400,
+      "unit": "g",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "lait",
+      "name": "Lait",
+      "quantity": 1,
+      "unit": "l",
+      "category": "Produits laitiers"
+    },
+    {
+      "id": "macaronis-secs",
+      "name": "Macaronis secs",
+      "quantity": 400,
+      "unit": "g",
+      "category": "Épicerie"
+    },
+    {
+      "id": "appenzeller",
+      "name": "Appenzeller",
+      "quantity": 150,
+      "unit": "g",
+      "category": "Produits laitiers"
+    },
+    {
+      "id": "compote-de-pommes",
+      "name": "Compote de pommes",
+      "quantity": 1,
+      "unit": "bocal",
+      "category": "Épicerie"
+    }
+  ],
+  "unquantifiedIngredients": [
+    "Lait supplémentaire, à ajuster progressivement à la cuisson des pâtes",
+    "Beurre si nécessaire pour faire revenir, quantité non indiquée",
+    "Sel, au goût",
+    "Muscade (facultative), quantité non indiquée"
+  ],
+  "steps": [
+    "Faire revenir les lardons dans une casserole suffisamment grande. Émincer les oignons et les ajouter ; ajouter du beurre si nécessaire.",
+    "Éplucher les pommes de terre, les couper en dés d’environ 1 cm et les ajouter lorsque les oignons sont tendres.",
+    "Ajouter assez de lait pour couvrir et cuire les pommes de terre environ 10 minutes.",
+    "Ajouter les macaronis et du lait pour couvrir. Poursuivre la cuisson des pâtes en remuant ; ajuster le lait progressivement pour cuire les pâtes sans assécher le plat.",
+    "Râper le fromage et l’ajouter une à deux minutes avant la fin de cuisson des pâtes. La préparation épaissit légèrement en refroidissant.",
+    "Assaisonner au goût et servir avec la compote de pommes à côté."
+  ],
+  "tip": "La compote fait partie du plat. Le format du bocal et le lait effectivement nécessaire doivent être précisés avant les courses.",
+  "allergens": "Lait ; blé / gluten et éventuellement œufs dans les pâtes. Vérifier les lardons et les autres produits.",
+  "provenance": {
+    "kind": "catalog",
+    "sources": [
+      {
+        "id": "based:aelplermagronen",
+        "title": "Älplermagronen (Alpine macaroni)",
+        "url": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/content/aelplermagronen.md",
+        "author": "alexander-bocken",
+        "license": "Unlicense / domaine public déclaré par Based Cooking",
+        "licenseUrl": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/README.md#license",
+        "revision": "9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2",
+        "contentHash": "f2142fdc73999267b74d7dc26c761cd9237703580c8d1728b42099494787e0bc",
+        "language": "en"
+      }
+    ],
+    "parents": [],
+    "lineage": [],
+    "changes": [
+      "Traduction et organisation françaises par Encore à table ; brouillon assisté, sans revue humaine ni essai culinaire.",
+      "Les étapes renvoient aux quantités de la liste ; seules ces quantités sont recalculées avec les portions. Durées, températures et ingrédients à doser ne sont pas multipliés.",
+      "Appenzeller choisi parmi les fromages proposés. Lait séparé : 1 litre de base puis jusqu’à 1 litre d’ajustement, sans masquer la fourchette source.",
+      "Beurre, sel et muscade mentionnés dans les étapes ajoutés aux ingrédients à préciser."
+    ],
+    "editorialStatus": "draft",
+    "culinaryStatus": "not-tested",
+    "portionNote": "4 portions indiquées par la source ; rendement non mesuré ici.",
+    "durationNote": "Estimation éditoriale de 40 minutes au total : source environ 30 minutes de cuisson, préparation non chiffrée ; durée non mesurée."
+  }
+}

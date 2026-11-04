@@ -1,0 +1,74 @@
+{
+  "id": "based-cinque-pi",
+  "version": "9d4a31a040ee-fr-1",
+  "title": "Pâtes Cinque Pi",
+  "subtitle": "Crème, tomate, fromage et persil.",
+  "time": 30,
+  "vegetarian": true,
+  "basePortions": 4,
+  "ingredients": [
+    {
+      "id": "pates",
+      "name": "Pâtes",
+      "quantity": 800,
+      "unit": "g",
+      "category": "Épicerie"
+    },
+    {
+      "id": "creme",
+      "name": "Crème",
+      "quantity": 4,
+      "unit": "dl",
+      "category": "Produits laitiers"
+    },
+    {
+      "id": "concentre-de-tomate",
+      "name": "Concentré de tomate",
+      "quantity": 2,
+      "unit": "TS (source)",
+      "category": "Épicerie"
+    }
+  ],
+  "unquantifiedIngredients": [
+    "Fromage râpé type parmesan, quantité au goût",
+    "Persil, quantité non indiquée",
+    "Poivre, quantité non indiquée"
+  ],
+  "steps": [
+    "Cuire les pâtes selon leur paquet.",
+    "Dans une casserole, mélanger crème et concentré de tomate et porter à ébullition.",
+    "Réduire le feu, ajouter le fromage selon le goût et laisser cuire doucement jusqu’à la fin de cuisson des pâtes.",
+    "Ajouter persil haché et poivre. Mélanger la sauce aux pâtes ou servir séparément.",
+    "Servir avec éventuellement un peu de fromage et de persil supplémentaires."
+  ],
+  "tip": "Choisir un fromage à présure compatible pour conserver la variante végétarienne. Les 800 g de pâtes pour quatre portions proviennent de la source.",
+  "allergens": "Lait ; blé / gluten et éventuellement œufs dans les pâtes. Vérifier les produits.",
+  "provenance": {
+    "kind": "catalog",
+    "sources": [
+      {
+        "id": "based:cinque-pi",
+        "title": "Cinque Pi",
+        "url": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/content/cinque-pi.md",
+        "author": "elias-pahls",
+        "license": "Unlicense / domaine public déclaré par Based Cooking",
+        "licenseUrl": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/README.md#license",
+        "revision": "9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2",
+        "contentHash": "6b7de2850ec7e062c896522300be12e3221a8f0348aa639e7f86b387f00fd747",
+        "language": "en"
+      }
+    ],
+    "parents": [],
+    "lineage": [],
+    "changes": [
+      "Traduction et organisation françaises par Encore à table ; brouillon assisté, sans revue humaine ni essai culinaire.",
+      "Les étapes renvoient aux quantités de la liste ; seules ces quantités sont recalculées avec les portions. Durées, températures et ingrédients à doser ne sont pas multipliés.",
+      "Abréviation TS conservée, signification à préciser avant mesure ; aucune conversion effectuée. Poivre mentionné dans les étapes ajouté à la liste.",
+      "Fromage type parmesan à présure végétarienne choisi pour cette variante ; pas de garantie pour un Parmigiano traditionnel."
+    ],
+    "editorialStatus": "draft",
+    "culinaryStatus": "not-tested",
+    "portionNote": "4 portions indiquées par la source ; rendement non mesuré ici.",
+    "durationNote": "30 minutes : somme des durées de préparation et de cuisson annoncées par la source, non chronométrée ici."
+  }
+}

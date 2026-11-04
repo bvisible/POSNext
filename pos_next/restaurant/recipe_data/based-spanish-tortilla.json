@@ -1,0 +1,73 @@
+{
+  "id": "based-spanish-tortilla",
+  "version": "9d4a31a040ee-fr-1",
+  "title": "Tortilla aux pommes de terre",
+  "subtitle": "Une omelette épaisse aux pommes de terre et à l’oignon.",
+  "time": 40,
+  "vegetarian": true,
+  "basePortions": 6,
+  "ingredients": [
+    {
+      "id": "oeufs",
+      "name": "Œufs",
+      "quantity": 8,
+      "unit": "pièce",
+      "category": "Alimentation"
+    },
+    {
+      "id": "pommes-de-terre",
+      "name": "Pommes de terre",
+      "quantity": 1000,
+      "unit": "g",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "oignon",
+      "name": "Oignon blanc",
+      "quantity": 1,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    }
+  ],
+  "unquantifiedIngredients": [
+    "Huile d’olive pour cuire les pommes de terre et l’oignon, quantité non indiquée",
+    "Sel, au goût"
+  ],
+  "steps": [
+    "Éplucher, rincer et sécher les pommes de terre. Les couper en fines tranches, puis saler au goût.",
+    "Les cuire environ 20 minutes à feu doux dans une poêle avec suffisamment d’huile d’olive.",
+    "Pendant ce temps, battre les œufs. Émincer l’oignon et le faire revenir doucement dans une autre poêle huilée.",
+    "Égoutter soigneusement l’oignon et les pommes de terre, puis les mélanger aux œufs. Laisser reposer au moins 5 minutes.",
+    "Retirer l’huile excédentaire de la première poêle. Y verser le mélange et cuire environ 5 minutes à feu moyen-vif.",
+    "Retourner avec une grande assiette et cuire l’autre face environ 5 minutes, jusqu’à la prise des œufs."
+  ],
+  "tip": "La cuisson dépend de l’épaisseur : les durées ne se multiplient pas avec les portions.",
+  "allergens": "Œufs. Vérifier les autres produits.",
+  "provenance": {
+    "kind": "catalog",
+    "sources": [
+      {
+        "id": "based:spanish-tortilla",
+        "title": "Spanish Tortilla",
+        "url": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/content/spanish-tortilla.md",
+        "author": "octopusonfire",
+        "license": "Unlicense / domaine public déclaré par Based Cooking",
+        "licenseUrl": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/README.md#license",
+        "revision": "9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2",
+        "contentHash": "4e36c04768240d1397075b8ae17e2cf204c195c79be801f18f6fb3df1609b68f",
+        "language": "en"
+      }
+    ],
+    "parents": [],
+    "lineage": [],
+    "changes": [
+      "Traduction et organisation françaises par Encore à table ; brouillon assisté, sans revue humaine ni essai culinaire.",
+      "Les étapes renvoient aux quantités de la liste ; seules ces quantités sont recalculées avec les portions. Durées, températures et ingrédients à doser ne sont pas multipliés.",
+      "1 kg écrit comme 1 000 g, conversion de masse exacte. Sel présent dans les étapes conservé à doser."
+    ],
+    "editorialStatus": "draft",
+    "culinaryStatus": "not-tested",
+    "portionNote": "6 portions indiquées par la source ; rendement non mesuré ici.",
+    "durationNote": "40 minutes : somme des durées de préparation et de cuisson annoncées par la source, non chronométrée ici."
+  }
+}

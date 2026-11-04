@@ -1,0 +1,133 @@
+{
+  "id": "based-tomato-and-grilled-paprika-soup",
+  "version": "9d4a31a040ee-fr-1",
+  "title": "Soupe de tomates et poivrons grillés",
+  "subtitle": "Une soupe mixée avec paprika et crème.",
+  "time": 30,
+  "vegetarian": true,
+  "basePortions": 12,
+  "ingredients": [
+    {
+      "id": "tomates",
+      "name": "Tomates",
+      "quantity": 10,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "poivron",
+      "name": "Poivrons rouges",
+      "quantity": 2,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "oignon",
+      "name": "Oignons",
+      "quantity": 2,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "ail",
+      "name": "Ail",
+      "quantity": 1,
+      "unit": "gousse",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "bouillon-de-legumes",
+      "name": "Bouillon de légumes",
+      "quantity": 1,
+      "unit": "l",
+      "category": "Épicerie"
+    },
+    {
+      "id": "poivre-de-cayenne",
+      "name": "Poivre de Cayenne",
+      "quantity": 0.75,
+      "unit": "t (source)",
+      "category": "Épicerie"
+    },
+    {
+      "id": "paprika",
+      "name": "Paprika",
+      "quantity": 1,
+      "unit": "t (source)",
+      "category": "Épicerie"
+    },
+    {
+      "id": "herbes-pour-bruschetta",
+      "name": "Herbes pour bruschetta",
+      "quantity": 3,
+      "unit": "t (source)",
+      "category": "Épicerie"
+    },
+    {
+      "id": "origan",
+      "name": "Origan",
+      "quantity": 1,
+      "unit": "t (source)",
+      "category": "Épicerie"
+    },
+    {
+      "id": "sirop-de-gingembre",
+      "name": "Sirop de gingembre",
+      "quantity": 1,
+      "unit": "t (source)",
+      "category": "Épicerie"
+    },
+    {
+      "id": "huile-d-olive",
+      "name": "Huile d’olive",
+      "quantity": 2,
+      "unit": "T (source)",
+      "category": "Épicerie"
+    },
+    {
+      "id": "creme-entiere",
+      "name": "Crème entière",
+      "quantity": 2,
+      "unit": "T (source)",
+      "category": "Produits laitiers"
+    }
+  ],
+  "unquantifiedIngredients": [],
+  "steps": [
+    "Couper les poivrons en deux et retirer les graines. Les griller au four ou sur un gril jusqu’à ce que leur peau puisse être retirée, puis les peler.",
+    "Peler et couper les tomates en quartiers. Émincer les oignons et écraser l’ail.",
+    "Faire revenir oignons et ail dans l’huile dans une grande casserole.",
+    "Ajouter bouillon, tomates et poivrons ; mixer avec un mixeur plongeant.",
+    "Ajouter épices, herbes, sirop de gingembre et crème. Mélanger et réchauffer avant de servir."
+  ],
+  "tip": "La source ne détaille pas le temps de grillage ni celui des tomates : cette fiche reste à essayer.",
+  "allergens": "Lait ; céleri ou autres allergènes possibles dans le bouillon et le mélange d’herbes. Vérifier les étiquettes.",
+  "provenance": {
+    "kind": "catalog",
+    "sources": [
+      {
+        "id": "based:tomato-and-grilled-paprika-soup",
+        "title": "Tomato and Grilled Bell Pepper soup",
+        "url": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/content/tomato-and-grilled-paprika-soup.md",
+        "author": "thijs-wester",
+        "license": "Unlicense / domaine public déclaré par Based Cooking",
+        "licenseUrl": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/README.md#license",
+        "revision": "9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2",
+        "contentHash": "dff2eb151227d33640052da09c52197eb8e4881d949d22a0f51495b715a9d858",
+        "language": "en"
+      }
+    ],
+    "parents": [],
+    "lineage": [],
+    "changes": [
+      "Traduction et organisation françaises par Encore à table ; brouillon assisté, sans revue humaine ni essai culinaire.",
+      "Les étapes renvoient aux quantités de la liste ; seules ces quantités sont recalculées avec les portions. Durées, températures et ingrédients à doser ne sont pas multipliés.",
+      "Bouillon de légumes explicitement choisi. Abréviations t et T conservées telles quelles : leur signification doit être confirmée avant la mesure, aucune conversion effectuée.",
+      "Étape finale de réchauffage explicitée ; aucune durée ni température de grillage inventée. Recommandation de conservation source non reprise."
+    ],
+    "editorialStatus": "draft",
+    "culinaryStatus": "not-tested",
+    "portionNote": "12 portions indiquées par la source ; rendement non mesuré ici.",
+    "durationNote": "30 minutes de cuisson annoncées ; préparation et grillage non séparés. Durée totale à confirmer."
+  }
+}

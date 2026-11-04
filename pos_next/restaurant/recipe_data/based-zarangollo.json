@@ -1,0 +1,65 @@
+{
+  "id": "based-zarangollo",
+  "version": "9d4a31a040ee-fr-1",
+  "title": "Poêlée d’aubergine et d’oignon",
+  "subtitle": "Un accompagnement simple d’inspiration murcienne.",
+  "time": 20,
+  "vegetarian": true,
+  "basePortions": 2,
+  "ingredients": [
+    {
+      "id": "oignon",
+      "name": "Oignon blanc",
+      "quantity": 1,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "aubergine",
+      "name": "Aubergine",
+      "quantity": 1,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    }
+  ],
+  "unquantifiedIngredients": [
+    "Huile d’olive pour cuire les légumes, quantité non indiquée",
+    "Œuf (facultatif), quantité non précisée dans la liste source"
+  ],
+  "steps": [
+    "Émincer l’oignon en julienne. Couper l’aubergine en petits morceaux.",
+    "Mettre les légumes dans une poêle assez profonde avec de l’huile. Cuire à feu moyen en remuant jusqu’à ce qu’ils soient tendres.",
+    "Augmenter brièvement le feu pour colorer, en surveillant que l’huile ne brûle pas.",
+    "Si un œuf est choisi, l’ajouter et poursuivre la cuisson jusqu’à ce qu’il soit pris ; le brouiller si souhaité.",
+    "Servir en accompagnement."
+  ],
+  "tip": "Le titre source est conservé dans les crédits. Cette version contient l’aubergine indiquée par cette source.",
+  "allergens": "Œuf si l’option est choisie. Vérifier les produits utilisés.",
+  "provenance": {
+    "kind": "catalog",
+    "sources": [
+      {
+        "id": "based:zarangollo",
+        "title": "Zarangollo",
+        "url": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/content/zarangollo.md",
+        "author": "enrique95",
+        "license": "Unlicense / domaine public déclaré par Based Cooking",
+        "licenseUrl": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/README.md#license",
+        "revision": "9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2",
+        "contentHash": "57abd978af80cb6ad64b70b7ab7abc5363203a1494aaf34a494f4d268b0a2088",
+        "language": "en"
+      }
+    ],
+    "parents": [],
+    "lineage": [],
+    "changes": [
+      "Traduction et organisation françaises par Encore à table ; brouillon assisté, sans revue humaine ni essai culinaire.",
+      "Les étapes renvoient aux quantités de la liste ; seules ces quantités sont recalculées avec les portions. Durées, températures et ingrédients à doser ne sont pas multipliés.",
+      "Cuisson de l’œuf optionnel poursuivie explicitement jusqu’à prise, au lieu de dépendre uniquement de la chaleur résiduelle de la source."
+    ],
+    "editorialStatus": "draft",
+    "culinaryStatus": "not-tested",
+    "portionNote": "2 portions indiquées par la source ; rendement non mesuré ici.",
+    "durationNote": "20 minutes : 5 minutes de préparation + borne haute des 10–15 minutes de cuisson annoncées."
+  }
+}

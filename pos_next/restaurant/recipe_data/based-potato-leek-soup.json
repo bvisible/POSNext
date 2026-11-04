@@ -1,0 +1,96 @@
+{
+  "id": "based-potato-leek-soup",
+  "version": "9d4a31a040ee-fr-1",
+  "title": "Soupe de pommes de terre et poireaux",
+  "subtitle": "Une soupe mixée, au bouillon de légumes et à la crème.",
+  "time": 95,
+  "vegetarian": true,
+  "basePortions": 2,
+  "ingredients": [
+    {
+      "id": "beurre",
+      "name": "Beurre non salé",
+      "quantity": 3,
+      "unit": "c. à soupe",
+      "category": "Produits laitiers"
+    },
+    {
+      "id": "poireau",
+      "name": "Gros poireaux",
+      "quantity": 2,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "bouillon-de-legumes",
+      "name": "Bouillon de légumes",
+      "quantity": 1,
+      "unit": "quart (source)",
+      "category": "Épicerie"
+    },
+    {
+      "id": "pommes-de-terre",
+      "name": "Pommes de terre pelées",
+      "quantity": 11,
+      "unit": "oz (source)",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "laurier",
+      "name": "Laurier",
+      "quantity": 1,
+      "unit": "feuille",
+      "category": "Épicerie"
+    },
+    {
+      "id": "creme-entiere",
+      "name": "Crème entière",
+      "quantity": 0.75,
+      "unit": "cup (source)",
+      "category": "Produits laitiers"
+    }
+  ],
+  "unquantifiedIngredients": [
+    "Poivre blanc, quantité non indiquée",
+    "Sel, au goût",
+    "Muscade moulue (facultative), à ajuster ; source pour 2 portions : 1/2 c. à café",
+    "Aneth (facultatif), à ajuster ; source pour 2 portions : 1/2 c. à soupe"
+  ],
+  "steps": [
+    "Nettoyer les poireaux et couper leurs parties blanches et vert clair. Couper les pommes de terre.",
+    "Faire fondre le beurre à feu moyen-doux. Ajouter poireaux et pommes de terre, puis remuer jusqu’à ce que les poireaux aient sué.",
+    "Ajouter le bouillon, le laurier et le poivre, ainsi que muscade et aneth si souhaités. Laisser mijoter jusqu’à ce que les pommes de terre soient tendres.",
+    "Retirer du feu et ôter le laurier. Mixer jusqu’à la texture souhaitée.",
+    "Incorporer la crème puis saler au goût."
+  ],
+  "tip": "Quart, oz et cup restent les unités de la source : leur normalisation métrique n’a pas été reçue.",
+  "allergens": "Lait ; céleri ou autres allergènes possibles dans le bouillon. Vérifier les produits.",
+  "provenance": {
+    "kind": "catalog",
+    "sources": [
+      {
+        "id": "based:potato-leek-soup",
+        "title": "Potato Leek Soup",
+        "url": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/content/potato-leek-soup.md",
+        "author": "cactar",
+        "license": "Unlicense / domaine public déclaré par Based Cooking",
+        "licenseUrl": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/README.md#license",
+        "revision": "9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2",
+        "contentHash": "bda3167fa46405df729245d7e0a859fa13de4402fb658337d42b16ddce7e1ded",
+        "language": "en"
+      }
+    ],
+    "parents": [],
+    "lineage": [],
+    "changes": [
+      "Traduction et organisation françaises par Encore à table ; brouillon assisté, sans revue humaine ni essai culinaire.",
+      "Les étapes renvoient aux quantités de la liste ; seules ces quantités sont recalculées avec les portions. Durées, températures et ingrédients à doser ne sont pas multipliés.",
+      "Bouillon de légumes choisi parmi poulet ou légumes, pour cette variante végétarienne.",
+      "Sel présent dans la dernière étape ajouté à la liste. Muscade et aneth restent options explicites, non ajoutées automatiquement aux courses."
+    ],
+    "editorialStatus": "draft",
+    "culinaryStatus": "not-tested",
+    "portionNote": "2 portions indiquées par la source ; rendement non mesuré ici.",
+    "durationNote": "95 minutes : somme des durées de préparation et de cuisson annoncées par la source, non chronométrée ici."
+  }
+}

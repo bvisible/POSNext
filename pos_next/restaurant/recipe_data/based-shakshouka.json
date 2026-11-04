@@ -1,0 +1,75 @@
+{
+  "id": "based-shakshouka",
+  "version": "9d4a31a040ee-fr-1",
+  "title": "Œufs à la tomate façon chakchouka",
+  "subtitle": "Une poêle de tomates, oignon et œufs.",
+  "time": 20,
+  "vegetarian": true,
+  "basePortions": 2,
+  "ingredients": [
+    {
+      "id": "tomates",
+      "name": "Petites tomates",
+      "quantity": 5,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "oeufs",
+      "name": "Œufs",
+      "quantity": 5,
+      "unit": "pièce",
+      "category": "Alimentation"
+    },
+    {
+      "id": "oignon",
+      "name": "Oignon blanc",
+      "quantity": 1,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    }
+  ],
+  "unquantifiedIngredients": [
+    "Huile pour faire revenir, quantité non indiquée",
+    "Ciboulette, quantité non indiquée",
+    "Cumin, quantité non indiquée",
+    "Paprika doux, quantité non indiquée",
+    "Assaisonnement au goût (non détaillé par la source)"
+  ],
+  "steps": [
+    "Ébouillanter les tomates pour les peler, puis les couper en dés.",
+    "Hacher l’oignon et le faire revenir dans l’huile. Ajouter les tomates, le cumin et le paprika.",
+    "Remuer et laisser épaissir la sauce.",
+    "Casser les œufs dans la sauce, couvrir et cuire jusqu’à ce qu’ils soient pris.",
+    "Ajuster l’assaisonnement et ajouter la ciboulette avant de servir."
+  ],
+  "tip": "Les quantités d’huile et d’épices doivent être précisées avant les courses.",
+  "allergens": "Œufs. Vérifier les épices et l’huile utilisées.",
+  "provenance": {
+    "kind": "catalog",
+    "sources": [
+      {
+        "id": "based:shakshouka",
+        "title": "Shakshouka",
+        "url": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/content/shakshouka.md",
+        "author": "jakub-korsak",
+        "license": "Unlicense / domaine public déclaré par Based Cooking",
+        "licenseUrl": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/README.md#license",
+        "revision": "9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2",
+        "contentHash": "76a9f184f94de3b33e5e92f2f51bf5b69596830342132e6f2af86d8fef03371d",
+        "language": "en"
+      }
+    ],
+    "parents": [],
+    "lineage": [],
+    "changes": [
+      "Traduction et organisation françaises par Encore à table ; brouillon assisté, sans revue humaine ni essai culinaire.",
+      "Les étapes renvoient aux quantités de la liste ; seules ces quantités sont recalculées avec les portions. Durées, températures et ingrédients à doser ne sont pas multipliés.",
+      "Huile utilisée dans les étapes ajoutée aux ingrédients à doser. Épices et assaisonnement non quantifiés conservés."
+    ],
+    "editorialStatus": "draft",
+    "culinaryStatus": "not-tested",
+    "portionNote": "2 portions indiquées par la source ; rendement non mesuré ici.",
+    "durationNote": "20 minutes : somme des durées de préparation et de cuisson annoncées par la source, non chronométrée ici."
+  }
+}

@@ -1,0 +1,146 @@
+{
+  "id": "based-greek-salad",
+  "version": "9d4a31a040ee-fr-1",
+  "title": "Salade grecque à la feta",
+  "subtitle": "Tomates, concombre et olives avec une vinaigrette aux herbes.",
+  "time": 15,
+  "vegetarian": true,
+  "basePortions": 4,
+  "ingredients": [
+    {
+      "id": "laitue",
+      "name": "Laitue",
+      "quantity": 2,
+      "unit": "cup (source)",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "tomates",
+      "name": "Tomates",
+      "quantity": 4,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "concombre",
+      "name": "Concombre",
+      "quantity": 1,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "poivron",
+      "name": "Poivron",
+      "quantity": 1,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "oignon",
+      "name": "Petit oignon",
+      "quantity": 1,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "olives-noires-denoyautees",
+      "name": "Olives noires dénoyautées",
+      "quantity": 0.5,
+      "unit": "cup (source)",
+      "category": "Épicerie"
+    },
+    {
+      "id": "feta-emiettee",
+      "name": "Feta émiettée",
+      "quantity": 0.6,
+      "unit": "cup (source)",
+      "category": "Produits laitiers"
+    },
+    {
+      "id": "huile-d-olive",
+      "name": "Huile d’olive",
+      "quantity": 6,
+      "unit": "c. à soupe",
+      "category": "Épicerie"
+    },
+    {
+      "id": "vinaigre-de-vin-rouge",
+      "name": "Vinaigre de vin rouge",
+      "quantity": 1,
+      "unit": "c. à café",
+      "category": "Épicerie"
+    },
+    {
+      "id": "ail-hache",
+      "name": "Ail haché",
+      "quantity": 0.5,
+      "unit": "c. à café",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "origan",
+      "name": "Origan",
+      "quantity": 0.5,
+      "unit": "c. à café",
+      "category": "Épicerie"
+    },
+    {
+      "id": "aneth",
+      "name": "Aneth",
+      "quantity": 0.5,
+      "unit": "c. à café",
+      "category": "Épicerie"
+    },
+    {
+      "id": "persil-hache",
+      "name": "Persil haché",
+      "quantity": 0.25,
+      "unit": "cup (source)",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "jus-de-citron",
+      "name": "Jus de citron",
+      "quantity": 2,
+      "unit": "c. à soupe",
+      "category": "Fruits et légumes"
+    }
+  ],
+  "unquantifiedIngredients": [
+    "Sel et poivre, au goût"
+  ],
+  "steps": [
+    "Laver et couper la laitue, les tomates, le concombre, le poivron et l’oignon. Les réunir avec les olives dans un saladier.",
+    "Dans un bol, fouetter l’huile, le vinaigre, l’ail, les herbes et le jus de citron. Saler et poivrer au goût.",
+    "Verser la vinaigrette sur la salade, puis répartir la feta et servir."
+  ],
+  "tip": "Choisir une feta à présure compatible avec le régime végétarien souhaité.",
+  "allergens": "Lait ; sulfites possibles dans le vinaigre. Vérifier les étiquettes.",
+  "provenance": {
+    "kind": "catalog",
+    "sources": [
+      {
+        "id": "based:greek-salad",
+        "title": "Greek Salad",
+        "url": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/content/greek-salad.md",
+        "author": "joel-maxuel",
+        "license": "Unlicense / domaine public déclaré par Based Cooking",
+        "licenseUrl": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/README.md#license",
+        "revision": "9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2",
+        "contentHash": "fff0eff27772db73b3e03f252c09b9eba3467b5abcb5218922c64b69fb2bf850",
+        "language": "en"
+      }
+    ],
+    "parents": [],
+    "lineage": [],
+    "changes": [
+      "Traduction et organisation françaises par Encore à table ; brouillon assisté, sans revue humaine ni essai culinaire.",
+      "Les étapes renvoient aux quantités de la liste ; seules ces quantités sont recalculées avec les portions. Durées, températures et ingrédients à doser ne sont pas multipliés.",
+      "Source 4–6 portions : base 4 retenue explicitement. Fraction 3/5 cup de feta écrite en décimal 0,6 cup, sans conversion."
+    ],
+    "editorialStatus": "draft",
+    "culinaryStatus": "not-tested",
+    "portionNote": "Source : 4 à 6 portions. Hypothèse de calcul retenue : 4.",
+    "durationNote": "15 minutes de préparation annoncées par la source ; aucune cuisson."
+  }
+}

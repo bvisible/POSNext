@@ -1,0 +1,291 @@
+{
+ "autoname": "field:recipe_name",
+ "creation": "2026-11-04T00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "restaurant",
+  "recipe_name",
+  "family",
+  "subtitle",
+  "vegetarian",
+  "column_break_state",
+  "status",
+  "culinary_status",
+  "base_portions",
+  "total_minutes",
+  "section_ingredients",
+  "ingredients",
+  "section_steps",
+  "steps",
+  "tip",
+  "allergens",
+  "section_source",
+  "source_kind",
+  "source_title",
+  "source_author",
+  "source_url",
+  "column_break_source",
+  "source_license",
+  "source_license_url",
+  "source_revision",
+  "source_hash",
+  "source_ref",
+  "source_changes"
+ ],
+ "fields": [
+  {
+   "fieldname": "restaurant",
+   "fieldtype": "Link",
+   "label": "Restaurant",
+   "options": "Restaurant",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "recipe_name",
+   "fieldtype": "Data",
+   "label": "Recipe",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "family",
+   "fieldtype": "Data",
+   "label": "Family",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "Soups, salads, main dishes... as the restaurant calls them."
+  },
+  {
+   "fieldname": "subtitle",
+   "fieldtype": "Small Text",
+   "label": "Short description"
+  },
+  {
+   "fieldname": "vegetarian",
+   "fieldtype": "Check",
+   "label": "Vegetarian",
+   "default": "0",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "column_break_state",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nTo review\nValidated",
+   "default": "Draft",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "Draft: still to complete. To review: complete, nobody has read it yet. Validated: read and approved."
+  },
+  {
+   "fieldname": "culinary_status",
+   "fieldtype": "Select",
+   "label": "Cooked and tested",
+   "options": "Not tested\nTested",
+   "default": "Not tested"
+  },
+  {
+   "fieldname": "base_portions",
+   "fieldtype": "Int",
+   "label": "Portions",
+   "default": "4",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "The quantities below are for this number of portions."
+  },
+  {
+   "fieldname": "total_minutes",
+   "fieldtype": "Int",
+   "label": "Minutes"
+  },
+  {
+   "fieldname": "section_ingredients",
+   "fieldtype": "Section Break",
+   "label": "Ingredients"
+  },
+  {
+   "fieldname": "ingredients",
+   "fieldtype": "Table",
+   "label": "Ingredients",
+   "options": "Restaurant Recipe Ingredient"
+  },
+  {
+   "fieldname": "section_steps",
+   "fieldtype": "Section Break",
+   "label": "Steps"
+  },
+  {
+   "fieldname": "steps",
+   "fieldtype": "Long Text",
+   "label": "Steps",
+   "description": "One step per line."
+  },
+  {
+   "fieldname": "tip",
+   "fieldtype": "Small Text",
+   "label": "Tip"
+  },
+  {
+   "fieldname": "allergens",
+   "fieldtype": "Small Text",
+   "label": "Allergens",
+   "description": "An indication only: always check the products that are used."
+  },
+  {
+   "fieldname": "section_source",
+   "fieldtype": "Section Break",
+   "label": "Source",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "source_kind",
+   "fieldtype": "Select",
+   "label": "Origin",
+   "options": "Own\nLibrary",
+   "default": "Own",
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "source_title",
+   "fieldtype": "Data",
+   "label": "Source title",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_author",
+   "fieldtype": "Data",
+   "label": "Author",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_url",
+   "fieldtype": "Data",
+   "label": "Source link",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_source",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "source_license",
+   "fieldtype": "Small Text",
+   "label": "Licence",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_license_url",
+   "fieldtype": "Data",
+   "label": "Licence link",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_revision",
+   "fieldtype": "Data",
+   "label": "Revision",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_hash",
+   "fieldtype": "Data",
+   "label": "Fingerprint of the source",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_ref",
+   "fieldtype": "Data",
+   "label": "Library reference",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "source_changes",
+   "fieldtype": "Long Text",
+   "label": "What was changed",
+   "read_only": 1
+  }
+ ],
+ "modified": "2026-11-04T00:00:00.000000",
+ "module": "POS Next",
+ "name": "Restaurant Recipe",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "submit": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "report": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "role": "Sales Manager",
+   "read": 1,
+   "submit": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "report": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "role": "POSNext Cashier",
+   "read": 1
+  },
+  {
+   "role": "Restaurant Manager",
+   "read": 1,
+   "export": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "report": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "role": "Admin",
+   "read": 1,
+   "export": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "report": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "role": "Nexus POS Manager",
+   "read": 1,
+   "export": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "report": 1,
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "recipe_name",
+ "track_changes": 1
+}

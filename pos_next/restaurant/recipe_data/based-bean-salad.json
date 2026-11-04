@@ -1,0 +1,131 @@
+{
+  "id": "based-bean-salad",
+  "version": "9d4a31a040ee-fr-1",
+  "title": "Salade aux trois haricots",
+  "subtitle": "Une salade de conserves avec vinaigrette au cidre.",
+  "time": 70,
+  "vegetarian": true,
+  "basePortions": 8,
+  "ingredients": [
+    {
+      "id": "huile-d-olive",
+      "name": "Huile d’olive",
+      "quantity": 0.3333333333333333,
+      "unit": "cup (source)",
+      "category": "Épicerie"
+    },
+    {
+      "id": "vinaigre-de-cidre",
+      "name": "Vinaigre de cidre",
+      "quantity": 0.5,
+      "unit": "cup (source)",
+      "category": "Épicerie"
+    },
+    {
+      "id": "sel",
+      "name": "Sel",
+      "quantity": 1,
+      "unit": "c. à café",
+      "category": "Épicerie"
+    },
+    {
+      "id": "poivre",
+      "name": "Poivre",
+      "quantity": 0.5,
+      "unit": "c. à café",
+      "category": "Épicerie"
+    },
+    {
+      "id": "sucre",
+      "name": "Sucre",
+      "quantity": 0.25,
+      "unit": "cup (source)",
+      "category": "Épicerie"
+    },
+    {
+      "id": "graines-de-celeri",
+      "name": "Graines de céleri",
+      "quantity": 0.5,
+      "unit": "c. à café",
+      "category": "Épicerie"
+    },
+    {
+      "id": "haricots-verts-en-conserve",
+      "name": "Haricots verts en conserve",
+      "quantity": 1,
+      "unit": "boîte",
+      "category": "Épicerie"
+    },
+    {
+      "id": "haricots-beurre-en-conserve",
+      "name": "Haricots beurre en conserve",
+      "quantity": 1,
+      "unit": "boîte",
+      "category": "Épicerie"
+    },
+    {
+      "id": "haricots-rouges-en-conserve",
+      "name": "Haricots rouges en conserve",
+      "quantity": 1,
+      "unit": "boîte",
+      "category": "Épicerie"
+    },
+    {
+      "id": "carottes",
+      "name": "Carotte",
+      "quantity": 1,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "oignon",
+      "name": "Petit oignon",
+      "quantity": 1,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "poivron",
+      "name": "Poivron",
+      "quantity": 1,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    }
+  ],
+  "unquantifiedIngredients": [],
+  "steps": [
+    "Fouetter l’huile, le vinaigre, le sel, le poivre, le sucre et les graines de céleri dans un grand saladier.",
+    "Égoutter et rincer les trois conserves de haricots.",
+    "Couper finement la carotte, l’oignon et le poivron. Les ajouter à la vinaigrette avec les haricots, puis mélanger délicatement.",
+    "Réfrigérer au moins une heure avant de servir, en mélangeant de temps en temps."
+  ],
+  "tip": "La taille des boîtes n’est pas fournie par la source : conserver « boîte » et vérifier les formats avant achat.",
+  "allergens": "Céleri dans les graines de céleri. Vérifier les conserves et les autres emballages.",
+  "provenance": {
+    "kind": "catalog",
+    "sources": [
+      {
+        "id": "based:bean-salad",
+        "title": "Three Bean Salad",
+        "url": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/content/bean-salad.md",
+        "author": "joel-maxuel",
+        "license": "Unlicense / domaine public déclaré par Based Cooking",
+        "licenseUrl": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/README.md#license",
+        "revision": "9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2",
+        "contentHash": "217c6439f31d3a66660c736e9232c440ceac26b8473e4949aed59449ba6644bf",
+        "language": "en"
+      }
+    ],
+    "parents": [],
+    "lineage": [],
+    "changes": [
+      "Traduction et organisation françaises par Encore à table ; brouillon assisté, sans revue humaine ni essai culinaire.",
+      "Les étapes renvoient aux quantités de la liste ; seules ces quantités sont recalculées avec les portions. Durées, températures et ingrédients à doser ne sont pas multipliés.",
+      "Huile d’olive choisie parmi les trois huiles proposées. Aucun poids inventé pour les boîtes ni conversion de cup."
+    ],
+    "editorialStatus": "draft",
+    "culinaryStatus": "not-tested",
+    "portionNote": "8 portions indiquées par la source ; rendement non mesuré ici.",
+    "durationNote": "10 minutes de préparation + au moins 60 minutes au frais indiquées dans les étapes : 70 minutes minimum."
+  }
+}

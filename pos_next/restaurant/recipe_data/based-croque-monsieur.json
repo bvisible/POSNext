@@ -1,0 +1,101 @@
+{
+  "id": "based-croque-monsieur",
+  "version": "9d4a31a040ee-fr-1",
+  "title": "Croque-monsieur à la béchamel",
+  "subtitle": "Pain, jambon et fromage gratinés au four.",
+  "time": 20,
+  "vegetarian": false,
+  "basePortions": 6,
+  "ingredients": [
+    {
+      "id": "beurre",
+      "name": "Beurre",
+      "quantity": 50,
+      "unit": "g",
+      "category": "Produits laitiers"
+    },
+    {
+      "id": "farine",
+      "name": "Farine",
+      "quantity": 50,
+      "unit": "g",
+      "category": "Épicerie"
+    },
+    {
+      "id": "lait",
+      "name": "Lait",
+      "quantity": 1,
+      "unit": "l",
+      "category": "Produits laitiers"
+    },
+    {
+      "id": "pain-de-mie",
+      "name": "Pain de mie",
+      "quantity": 12,
+      "unit": "tranche",
+      "category": "Boulangerie"
+    },
+    {
+      "id": "moutarde",
+      "name": "Moutarde",
+      "quantity": 2,
+      "unit": "c. à soupe",
+      "category": "Épicerie"
+    },
+    {
+      "id": "jambon-aux-herbes",
+      "name": "Jambon aux herbes",
+      "quantity": 12,
+      "unit": "tranche fine",
+      "category": "Alimentation"
+    },
+    {
+      "id": "fromage-rape",
+      "name": "Fromage râpé",
+      "quantity": 80,
+      "unit": "g",
+      "category": "Produits laitiers"
+    }
+  ],
+  "unquantifiedIngredients": [
+    "Sel et poivre, au goût",
+    "Noix de muscade : une pincée dans les étapes source"
+  ],
+  "steps": [
+    "Faire fondre le beurre dans une casserole à fond épais. Ajouter la farine, le sel, le poivre et la muscade, puis mélanger.",
+    "Incorporer le lait petit à petit en fouettant, jusqu’à épaississement.",
+    "Préchauffer le four à 180 °C. Poser la moitié des tranches de pain sur une plaque.",
+    "Étaler la moutarde puis une couche de béchamel. Répartir les tranches fines de jambon prévues, du fromage et de la béchamel.",
+    "Refermer avec les tranches de pain restantes. Couvrir d’une fine couche de béchamel et du reste du fromage.",
+    "Cuire environ 10 minutes. On peut terminer par 3 à 4 minutes sous le gril en surveillant."
+  ],
+  "tip": "Le litre de lait et les douze tranches de jambon suivent la liste source ; rendement et quantité de béchamel à essayer.",
+  "allergens": "Blé / gluten, lait et moutarde ; autres allergènes possibles dans le pain et le jambon. Vérifier leurs étiquettes.",
+  "provenance": {
+    "kind": "catalog",
+    "sources": [
+      {
+        "id": "based:croque-monsieur",
+        "title": "Croque-monsieur bites",
+        "url": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/content/croque-monsieur.md",
+        "author": "SofianeHamlaoui",
+        "license": "Unlicense / domaine public déclaré par Based Cooking",
+        "licenseUrl": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/README.md#license",
+        "revision": "9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2",
+        "contentHash": "257e83fbba51fceaec1ae0c0a8fa92e3a69b5aa3bd49702c4f22d5053af05979",
+        "language": "en"
+      }
+    ],
+    "parents": [],
+    "lineage": [],
+    "changes": [
+      "Traduction et organisation françaises par Encore à table ; brouillon assisté, sans revue humaine ni essai culinaire.",
+      "Les étapes renvoient aux quantités de la liste ; seules ces quantités sont recalculées avec les portions. Durées, températures et ingrédients à doser ne sont pas multipliés.",
+      "La source liste 12 tranches de jambon mais en place une dans chaque croque : cette version répartit les 12 tranches, soit deux par croque."
+    ],
+    "editorialStatus": "draft",
+    "culinaryStatus": "not-tested",
+    "portionNote": "6 portions indiquées par la source ; rendement non mesuré ici.",
+    "durationNote": "20 minutes : 10 min préparation + 10 min cuisson annoncées ; option gril 3–4 minutes en supplément."
+  }
+}

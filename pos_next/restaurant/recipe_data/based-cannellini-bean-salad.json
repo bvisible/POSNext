@@ -1,0 +1,101 @@
+{
+  "id": "based-cannellini-bean-salad",
+  "version": "9d4a31a040ee-fr-1",
+  "title": "Haricots blancs à la tomate et roquette",
+  "subtitle": "Haricots chauds, paprika fumé et jambon cru.",
+  "time": 15,
+  "vegetarian": false,
+  "basePortions": 2,
+  "ingredients": [
+    {
+      "id": "haricots-cannellini-en-conserve",
+      "name": "Haricots cannellini en conserve",
+      "quantity": 1,
+      "unit": "boîte",
+      "category": "Épicerie"
+    },
+    {
+      "id": "ail-hache",
+      "name": "Ail haché",
+      "quantity": 2,
+      "unit": "c. à soupe",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "oignon",
+      "name": "Oignon",
+      "quantity": 0.5,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "paprika-fume",
+      "name": "Paprika fumé",
+      "quantity": 1,
+      "unit": "c. à café",
+      "category": "Épicerie"
+    },
+    {
+      "id": "cumin-moulu",
+      "name": "Cumin moulu",
+      "quantity": 0.5,
+      "unit": "c. à café",
+      "category": "Épicerie"
+    },
+    {
+      "id": "tomates-en-des",
+      "name": "Tomates en dés",
+      "quantity": 1,
+      "unit": "boîte de 15 oz",
+      "category": "Épicerie"
+    },
+    {
+      "id": "persil-seche",
+      "name": "Persil séché",
+      "quantity": 1,
+      "unit": "c. à soupe",
+      "category": "Épicerie"
+    }
+  ],
+  "unquantifiedIngredients": [
+    "Huile d’olive pour faire revenir, quantité non indiquée",
+    "Jambon cru (prosciutto), quantité non indiquée",
+    "Roquette, quantité non indiquée",
+    "Sel et poivre, au goût"
+  ],
+  "steps": [
+    "Égoutter et rincer les haricots. Faire revenir l’ail et l’oignon émincé dans l’huile jusqu’à ce que l’oignon soit translucide.",
+    "Ajouter les tomates, le paprika, le cumin et le persil. Saler et poivrer au goût, puis laisser mijoter 3 minutes.",
+    "Ajouter les haricots, mélanger et laisser mijoter encore 2 minutes.",
+    "Servir sur la roquette et répartir des morceaux de jambon cru."
+  ],
+  "tip": "Quantifier le jambon, la roquette et l’huile avant de finaliser les courses. Le format des haricots n’est pas précisé.",
+  "allergens": "Vérifier les étiquettes du jambon, des conserves et des épices ; cette fiche ne garantit pas une absence d’allergènes.",
+  "provenance": {
+    "kind": "catalog",
+    "sources": [
+      {
+        "id": "based:cannellini-bean-salad",
+        "title": "Cannellini Bean Salad",
+        "url": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/content/cannellini-bean-salad.md",
+        "author": "carl-zimmerman",
+        "license": "Unlicense / domaine public déclaré par Based Cooking",
+        "licenseUrl": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/README.md#license",
+        "revision": "9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2",
+        "contentHash": "ce0496130d24e9d3675cb0deb16085e89ae8a1ed6cbca2e4aa5587df1523216b",
+        "language": "en"
+      }
+    ],
+    "parents": [],
+    "lineage": [],
+    "changes": [
+      "Traduction et organisation françaises par Encore à table ; brouillon assisté, sans revue humaine ni essai culinaire.",
+      "Les étapes renvoient aux quantités de la liste ; seules ces quantités sont recalculées avec les portions. Durées, températures et ingrédients à doser ne sont pas multipliés.",
+      "Huile d’olive et sel/poivre présents dans les étapes ajoutés à la liste des ingrédients à doser. Quantités manquantes conservées sans estimation."
+    ],
+    "editorialStatus": "draft",
+    "culinaryStatus": "not-tested",
+    "portionNote": "2 portions indiquées par la source ; rendement non mesuré ici.",
+    "durationNote": "15 minutes : somme des durées de préparation et de cuisson annoncées par la source, non chronométrée ici."
+  }
+}

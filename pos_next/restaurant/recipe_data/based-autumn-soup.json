@@ -1,0 +1,100 @@
+{
+  "id": "based-autumn-soup",
+  "version": "9d4a31a040ee-fr-1",
+  "title": "Soupe de courge d’automne",
+  "subtitle": "Courge, carottes et pommes de terre cuites au four.",
+  "time": 60,
+  "vegetarian": false,
+  "basePortions": 4,
+  "ingredients": [
+    {
+      "id": "courge-moyenne",
+      "name": "Courge moyenne",
+      "quantity": 1,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "pommes-de-terre",
+      "name": "Pommes de terre",
+      "quantity": 3,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "carottes",
+      "name": "Carottes",
+      "quantity": 4,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "oignon",
+      "name": "Petit oignon",
+      "quantity": 1,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "bouillon-de-poulet",
+      "name": "Bouillon de poulet",
+      "quantity": 1,
+      "unit": "cube",
+      "category": "Épicerie"
+    },
+    {
+      "id": "eau",
+      "name": "Eau",
+      "quantity": 1,
+      "unit": "cup (source)",
+      "category": "Épicerie"
+    },
+    {
+      "id": "lait",
+      "name": "Lait",
+      "quantity": 2,
+      "unit": "cup (source)",
+      "category": "Produits laitiers"
+    }
+  ],
+  "unquantifiedIngredients": [
+    "Sel, au goût",
+    "Poivre, au goût"
+  ],
+  "steps": [
+    "Éplucher et couper la courge, les pommes de terre, les carottes et l’oignon. Les placer dans un récipient allant au four.",
+    "Ajouter le bouillon et l’eau prévus. Cuire à environ 180 °C jusqu’à ce que les légumes soient tendres ; surveiller qu’ils ne sèchent pas.",
+    "Si le liquide est excessif, en réserver une partie. Réduire les légumes en purée en ajoutant le lait progressivement.",
+    "Ajuster la consistance avec le liquide réservé, puis saler et poivrer au goût."
+  ],
+  "tip": "Les cups de la source sont conservées ; leur contenance exacte doit être précisée avant une conversion métrique.",
+  "allergens": "Lait ; céleri ou autres allergènes possibles dans le cube de bouillon. Vérifier son étiquette.",
+  "provenance": {
+    "kind": "catalog",
+    "sources": [
+      {
+        "id": "based:autumn-soup",
+        "title": "Autumn Soup",
+        "url": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/content/autumn-soup.md",
+        "author": "joel-maxuel",
+        "license": "Unlicense / domaine public déclaré par Based Cooking",
+        "licenseUrl": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/README.md#license",
+        "revision": "9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2",
+        "contentHash": "151f364c4740ff0949ff0c884384ddecc74e9bb290914b59385b9e7ec1350431",
+        "language": "en"
+      }
+    ],
+    "parents": [],
+    "lineage": [],
+    "changes": [
+      "Traduction et organisation françaises par Encore à table ; brouillon assisté, sans revue humaine ni essai culinaire.",
+      "Les étapes renvoient aux quantités de la liste ; seules ces quantités sont recalculées avec les portions. Durées, températures et ingrédients à doser ne sont pas multipliés.",
+      "Version au bouillon de poulet conservée : cette fiche n’est pas végétarienne.",
+      "350 °F convertis et arrondis à environ 180 °C. Le liquide excédentaire est réservé au lieu d’être jeté."
+    ],
+    "editorialStatus": "draft",
+    "culinaryStatus": "not-tested",
+    "portionNote": "4 portions indiquées par la source ; rendement non mesuré ici.",
+    "durationNote": "60 minutes : somme des durées de préparation et de cuisson annoncées par la source, non chronométrée ici."
+  }
+}

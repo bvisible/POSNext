@@ -1,0 +1,80 @@
+{
+  "id": "based-frittata",
+  "version": "9d4a31a040ee-fr-1",
+  "title": "Frittata au poivron et à l’oignon",
+  "subtitle": "Une base aux œufs à terminer au four.",
+  "time": 40,
+  "vegetarian": true,
+  "basePortions": 4,
+  "ingredients": [
+    {
+      "id": "oeufs",
+      "name": "Œufs",
+      "quantity": 4,
+      "unit": "pièce",
+      "category": "Alimentation"
+    },
+    {
+      "id": "oignon",
+      "name": "Oignon",
+      "quantity": 0.5,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "poivron",
+      "name": "Poivron",
+      "quantity": 1,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "creme-entiere",
+      "name": "Crème entière",
+      "quantity": 2,
+      "unit": "c. à soupe",
+      "category": "Produits laitiers"
+    }
+  ],
+  "unquantifiedIngredients": [
+    "Sel et poivre, au goût",
+    "Matière grasse pour la poêle : non précisée par la source"
+  ],
+  "steps": [
+    "Couper le poivron et l’oignon en dés. Les faire revenir à feu moyen dans une poêle allant au four. Préchauffer le gril du four à faible puissance.",
+    "Battre les œufs avec la crème, le sel et le poivre. Verser sur les légumes et répartir régulièrement.",
+    "Cuire sur la plaque jusqu’à ce que les bords commencent à se détacher et les œufs à prendre.",
+    "Placer sous le gril et surveiller jusqu’à ce que les œufs soient pris à cœur. Laisser tiédir avant de démouler."
+  ],
+  "tip": "Version de base sans viande ni fromage optionnels. Le foyer pourra décider séparément d’une garniture.",
+  "allergens": "Œufs et lait. Vérifier la matière grasse employée.",
+  "provenance": {
+    "kind": "catalog",
+    "sources": [
+      {
+        "id": "based:frittata",
+        "title": "Frittata",
+        "url": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/content/frittata.md",
+        "author": "aj",
+        "license": "Unlicense / domaine public déclaré par Based Cooking",
+        "licenseUrl": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/README.md#license",
+        "revision": "9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2",
+        "contentHash": "51d65016604f866eb1ea4b6a592c0d8f19ebbe5bef46adefc63050b59631c6d9",
+        "language": "en"
+      }
+    ],
+    "parents": [],
+    "lineage": [],
+    "changes": [
+      "Traduction et organisation françaises par Encore à table ; brouillon assisté, sans revue humaine ni essai culinaire.",
+      "Les étapes renvoient aux quantités de la liste ; seules ces quantités sont recalculées avec les portions. Durées, températures et ingrédients à doser ne sont pas multipliés.",
+      "Version végétarienne choisie : viande et fromage facultatifs non retenus. La source originale conserve ces options.",
+      "Source 4–6 œufs et 4–6 portions : borne basse 4 retenue dans les deux champs ; rendement non mesuré.",
+      "Cuisson complète des œufs explicitée ; matière grasse non spécifiée signalée sans quantité inventée."
+    ],
+    "editorialStatus": "draft",
+    "culinaryStatus": "not-tested",
+    "portionNote": "Source : 4 à 6 portions et 4 à 6 œufs. Hypothèse retenue : 4 portions avec 4 œufs.",
+    "durationNote": "40 minutes : somme des durées de préparation et de cuisson annoncées par la source, non chronométrée ici."
+  }
+}

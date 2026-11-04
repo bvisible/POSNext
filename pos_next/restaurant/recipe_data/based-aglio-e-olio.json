@@ -1,0 +1,86 @@
+{
+  "id": "based-aglio-e-olio",
+  "version": "9d4a31a040ee-fr-1",
+  "title": "Spaghetti à l’ail et à l’huile d’olive",
+  "subtitle": "Une sauce courte à émulsionner avec l’eau des pâtes.",
+  "time": 15,
+  "vegetarian": true,
+  "basePortions": 4,
+  "ingredients": [
+    {
+      "id": "spaghetti",
+      "name": "Spaghetti",
+      "quantity": 500,
+      "unit": "g",
+      "category": "Épicerie"
+    },
+    {
+      "id": "huile-d-olive",
+      "name": "Huile d’olive",
+      "quantity": 110,
+      "unit": "g",
+      "category": "Épicerie"
+    },
+    {
+      "id": "ail",
+      "name": "Ail",
+      "quantity": 5,
+      "unit": "gousse",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "piment-en-flocons",
+      "name": "Piment en flocons",
+      "quantity": 0.25,
+      "unit": "c. à café",
+      "category": "Épicerie"
+    },
+    {
+      "id": "persil-frais",
+      "name": "Persil frais",
+      "quantity": 1,
+      "unit": "bouquet",
+      "category": "Fruits et légumes"
+    }
+  ],
+  "unquantifiedIngredients": [
+    "Assaisonnement à ajuster au goût (non détaillé par la source)"
+  ],
+  "steps": [
+    "Cuire les spaghetti selon leur paquet. Émincer l’ail et hacher le persil.",
+    "Chauffer doucement l’huile et l’ail dans une grande poêle, jusqu’à une légère coloration dorée. Ajouter le piment puis baisser le feu.",
+    "Égoutter les pâtes en réservant une partie de leur eau de cuisson.",
+    "Mélanger vivement les pâtes dans la poêle avec un peu de cette eau. En ajouter progressivement pour lier la sauce.",
+    "Ajouter le persil au dernier moment, ajuster l’assaisonnement et servir."
+  ],
+  "tip": "La source donne 5 à 6 gousses : cette version retient 5. Garder l’eau de cuisson pour ajuster la texture.",
+  "allergens": "Blé / gluten dans les spaghetti ; œufs possibles selon le paquet. Vérifier les emballages.",
+  "provenance": {
+    "kind": "catalog",
+    "sources": [
+      {
+        "id": "based:aglio-e-olio",
+        "title": "Spaghetti aglio e olio",
+        "url": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/content/aglio-e-olio.md",
+        "author": "robert5800",
+        "license": "Unlicense / domaine public déclaré par Based Cooking",
+        "licenseUrl": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/README.md#license",
+        "revision": "9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2",
+        "contentHash": "5253f1f9b79e09604b9569019b75a558e12a04fa3689509c4803254c8f1eaf66",
+        "language": "en"
+      }
+    ],
+    "parents": [],
+    "lineage": [],
+    "changes": [
+      "Traduction et organisation françaises par Encore à table ; brouillon assisté, sans revue humaine ni essai culinaire.",
+      "Les étapes renvoient aux quantités de la liste ; seules ces quantités sont recalculées avec les portions. Durées, températures et ingrédients à doser ne sont pas multipliés.",
+      "Quantité métrique de spaghetti retenue telle qu’écrite (500 g), malgré l’équivalence source arrondie « 1 pound ». Huile conservée en masse : 110 g présents dans la source.",
+      "Fourchette 5–6 gousses ramenée explicitement à 5 ; aucune conversion de gousse ou de cup en grammes."
+    ],
+    "editorialStatus": "draft",
+    "culinaryStatus": "not-tested",
+    "portionNote": "4 portions indiquées par la source ; rendement non mesuré ici.",
+    "durationNote": "15 minutes de cuisson annoncées par la source ; préparation non chiffrée séparément."
+  }
+}

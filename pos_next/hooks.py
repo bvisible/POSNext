@@ -190,6 +190,9 @@ _custom_field_names = [
 	# //// Neoffice — the ingredients of a dish (NeoResto purchases, lot E): a reminder, never a bill of materials.
 	"Item-dish_ingredients_section",
 	"Item-dish_ingredients",
+	# //// Neoffice — the recipe of a dish (NeoResto, lot R3): a link on the article sold, which the desk shows only where the site runs
+	# //// NeoResto (`frappe.boot.neoresto_active`). Shipped by the fixture file; listed so that an export does not drop it.
+	"Item-restaurant_recipe",
 	"Item Supplier-supply_uom",
 	# //// Neoffice — how the restaurant orders from a supplier (NeoResto purchases, lot B): by e-mail, by phone or on site.
 	"Supplier-restaurant_purchases_section",

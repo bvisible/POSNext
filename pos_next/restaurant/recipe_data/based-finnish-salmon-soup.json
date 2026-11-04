@@ -1,0 +1,101 @@
+{
+  "id": "based-finnish-salmon-soup",
+  "version": "9d4a31a040ee-fr-1",
+  "title": "Soupe finlandaise au saumon",
+  "subtitle": "Pommes de terre, poireau, crème et saumon.",
+  "time": 50,
+  "vegetarian": false,
+  "basePortions": 6,
+  "ingredients": [
+    {
+      "id": "filet-de-saumon",
+      "name": "Filet de saumon",
+      "quantity": 2,
+      "unit": "pièce",
+      "category": "Alimentation"
+    },
+    {
+      "id": "eau",
+      "name": "Eau",
+      "quantity": 4,
+      "unit": "cup (source)",
+      "category": "Épicerie"
+    },
+    {
+      "id": "poireau",
+      "name": "Poireau",
+      "quantity": 1,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "beurre",
+      "name": "Beurre",
+      "quantity": 0.25,
+      "unit": "cup (source)",
+      "category": "Produits laitiers"
+    },
+    {
+      "id": "pommes-de-terre",
+      "name": "Pommes de terre",
+      "quantity": 5,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "carottes",
+      "name": "Carotte",
+      "quantity": 1,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "creme-entiere",
+      "name": "Crème entière",
+      "quantity": 1,
+      "unit": "cup (source)",
+      "category": "Produits laitiers"
+    }
+  ],
+  "unquantifiedIngredients": [
+    "Sel et poivre, au goût",
+    "Aneth pour servir, quantité non indiquée"
+  ],
+  "steps": [
+    "Laver, préparer et couper les légumes. Retirer les écailles des filets de saumon ou enlever leur peau ; vérifier les arêtes puis couper en dés.",
+    "Faire fondre le beurre dans une casserole. Faire revenir le poireau environ 5 minutes.",
+    "Ajouter l’eau, les pommes de terre et la carotte. Porter à ébullition puis cuire 10 à 15 minutes à feu moyen, jusqu’à ce que les pommes de terre soient tendres.",
+    "Ajouter le saumon et la crème. Poursuivre 5 à 10 minutes, jusqu’à cuisson du poisson.",
+    "Assaisonner et servir avec l’aneth."
+  ],
+  "tip": "Le poids des deux filets n’est pas indiqué. Le préciser avant d’ajuster les quantités ou de comparer les portions.",
+  "allergens": "Poisson et lait. Vérifier la crème et les autres produits.",
+  "provenance": {
+    "kind": "catalog",
+    "sources": [
+      {
+        "id": "based:finnish-salmon-soup",
+        "title": "Finnish Salmon Soup",
+        "url": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/content/finnish-salmon-soup.md",
+        "author": "tara-brennan",
+        "license": "Unlicense / domaine public déclaré par Based Cooking",
+        "licenseUrl": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/README.md#license",
+        "revision": "9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2",
+        "contentHash": "ed2aae9974e642d4467733276b0256d501c8a453de6690680ae26d57870253da",
+        "language": "en"
+      }
+    ],
+    "parents": [],
+    "lineage": [],
+    "changes": [
+      "Traduction et organisation françaises par Encore à table ; brouillon assisté, sans revue humaine ni essai culinaire.",
+      "Les étapes renvoient aux quantités de la liste ; seules ces quantités sont recalculées avec les portions. Durées, températures et ingrédients à doser ne sont pas multipliés.",
+      "Eau choisie parmi eau ou bouillon. Borne basse retenue : 5 pommes de terre et 1 carotte. Vérification des arêtes explicitée en complément du choix source écailles ou peau.",
+      "La source annonce 6–8 portions ; base de calcul fixée à 6 sans mesure du rendement."
+    ],
+    "editorialStatus": "draft",
+    "culinaryStatus": "not-tested",
+    "portionNote": "Source : 6 à 8 portions. Hypothèse explicite de calcul : 6 ; poids des filets non fourni.",
+    "durationNote": "50 minutes : somme des durées de préparation et de cuisson annoncées par la source, non chronométrée ici."
+  }
+}

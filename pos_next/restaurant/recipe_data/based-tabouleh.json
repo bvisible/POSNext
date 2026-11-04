@@ -1,0 +1,133 @@
+{
+  "id": "based-tabouleh",
+  "version": "9d4a31a040ee-fr-1",
+  "title": "Taboulé au boulgour et aux herbes",
+  "subtitle": "Menthe, persil, concombre et citron.",
+  "time": 45,
+  "vegetarian": true,
+  "basePortions": 12,
+  "ingredients": [
+    {
+      "id": "boulgour",
+      "name": "Boulgour",
+      "quantity": 2,
+      "unit": "cup (source)",
+      "category": "Épicerie"
+    },
+    {
+      "id": "eau-tres-chaude",
+      "name": "Eau très chaude",
+      "quantity": 2,
+      "unit": "cup (source)",
+      "category": "Épicerie"
+    },
+    {
+      "id": "concombre",
+      "name": "Concombre",
+      "quantity": 1,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "tomates",
+      "name": "Petites tomates",
+      "quantity": 2,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "oignons-nouveaux",
+      "name": "Oignons nouveaux",
+      "quantity": 1,
+      "unit": "botte",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "menthe-fraiche-hachee",
+      "name": "Menthe fraîche hachée",
+      "quantity": 0.5,
+      "unit": "cup (source)",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "persil-frais-hache",
+      "name": "Persil frais haché",
+      "quantity": 2,
+      "unit": "cup (source)",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "ail",
+      "name": "Ail",
+      "quantity": 1,
+      "unit": "gousse",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "jus-de-citron",
+      "name": "Jus de citron",
+      "quantity": 0.5,
+      "unit": "cup (source)",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "huile-d-olive",
+      "name": "Huile d’olive",
+      "quantity": 0.75,
+      "unit": "cup (source)",
+      "category": "Épicerie"
+    },
+    {
+      "id": "poivre",
+      "name": "Poivre",
+      "quantity": 1,
+      "unit": "c. à soupe",
+      "category": "Épicerie"
+    },
+    {
+      "id": "sel",
+      "name": "Sel",
+      "quantity": 2,
+      "unit": "c. à café",
+      "category": "Épicerie"
+    }
+  ],
+  "unquantifiedIngredients": [
+    "Eau supplémentaire éventuelle selon les instructions du boulgour"
+  ],
+  "steps": [
+    "Faire gonfler le boulgour dans l’eau très chaude jusqu’à absorption, environ 30 minutes ou selon le paquet.",
+    "Égoutter l’excédent si nécessaire. Couper le concombre, les tomates et les oignons nouveaux ; hacher les herbes et l’ail.",
+    "Mélanger boulgour, légumes, herbes et ail dans un saladier.",
+    "Mélanger huile, jus de citron, sel et poivre, puis incorporer au taboulé. Servir frais ou à température ambiante."
+  ],
+  "tip": "La quantité de poivre est celle de la source ; l’ajuster au goût et à la tablée.",
+  "allergens": "Blé / gluten dans le boulgour. Vérifier les produits.",
+  "provenance": {
+    "kind": "catalog",
+    "sources": [
+      {
+        "id": "based:tabouleh",
+        "title": "Tabouleh",
+        "url": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/content/tabouleh.md",
+        "author": "joel-maxuel",
+        "license": "Unlicense / domaine public déclaré par Based Cooking",
+        "licenseUrl": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/README.md#license",
+        "revision": "9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2",
+        "contentHash": "1ed2e36444360eb331e32776abe3f0c3f35b16a6d2ffc2733a8226cecfffb3c9",
+        "language": "en"
+      }
+    ],
+    "parents": [],
+    "lineage": [],
+    "changes": [
+      "Traduction et organisation françaises par Encore à table ; brouillon assisté, sans revue humaine ni essai culinaire.",
+      "Les étapes renvoient aux quantités de la liste ; seules ces quantités sont recalculées avec les portions. Durées, températures et ingrédients à doser ne sont pas multipliés.",
+      "Eau donnée comme 2 cups « ou selon indications » : ajustement signalé hors calcul. Cups conservées sans conversion."
+    ],
+    "editorialStatus": "draft",
+    "culinaryStatus": "not-tested",
+    "portionNote": "12 portions indiquées par la source ; rendement non mesuré ici.",
+    "durationNote": "15 minutes de préparation + 30 minutes de gonflement annoncées : 45 minutes, sans refroidissement supplémentaire."
+  }
+}

@@ -1,0 +1,77 @@
+{
+ "creation": "2026-11-04T00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "ingredient_name",
+  "qty",
+  "unit",
+  "to_taste",
+  "unit_to_convert",
+  "shelf",
+  "item",
+  "item_name"
+ ],
+ "fields": [
+  {
+   "fieldname": "ingredient_name",
+   "fieldtype": "Data",
+   "label": "Ingredient",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "qty",
+   "fieldtype": "Float",
+   "label": "Quantity",
+   "in_list_view": 1,
+   "non_negative": 1
+  },
+  {
+   "fieldname": "unit",
+   "fieldtype": "Data",
+   "label": "Unit",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "to_taste",
+   "fieldtype": "Check",
+   "label": "Without quantity",
+   "default": "0",
+   "in_list_view": 1,
+   "description": "Salt, pepper, oil... nobody gave a quantity on purpose."
+  },
+  {
+   "fieldname": "unit_to_convert",
+   "fieldtype": "Check",
+   "label": "Unit to convert",
+   "default": "0",
+   "read_only": 1,
+   "description": "The unit comes from a source that is not metric (cup, ounce...): it is converted when the ingredient is linked to an article."
+  },
+  {
+   "fieldname": "shelf",
+   "fieldtype": "Data",
+   "label": "Shelf"
+  },
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "label": "Article",
+   "options": "Item"
+  },
+  {
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "label": "Article name",
+   "fetch_from": "item.item_name",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "modified": "2026-11-04T00:00:00.000000",
+ "module": "POS Next",
+ "name": "Restaurant Recipe Ingredient",
+ "owner": "Administrator",
+ "permissions": []
+}

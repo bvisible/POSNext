@@ -1,0 +1,80 @@
+{
+  "id": "based-tzatziki",
+  "version": "9d4a31a040ee-fr-1",
+  "title": "Tzatziki au concombre",
+  "subtitle": "Yaourt grec, ail, aneth et citron.",
+  "time": 8,
+  "vegetarian": true,
+  "basePortions": 3,
+  "ingredients": [
+    {
+      "id": "yaourt-grec",
+      "name": "Yaourt grec",
+      "quantity": 2,
+      "unit": "cup (source)",
+      "category": "Produits laitiers"
+    },
+    {
+      "id": "concombre",
+      "name": "Concombre",
+      "quantity": 3,
+      "unit": "pouce (source)",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "ail",
+      "name": "Ail",
+      "quantity": 1,
+      "unit": "gousse",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "huile-d-olive",
+      "name": "Huile d’olive",
+      "quantity": 1,
+      "unit": "c. à café",
+      "category": "Épicerie"
+    }
+  ],
+  "unquantifiedIngredients": [
+    "Aneth, quantité non indiquée",
+    "Jus de citron, quantité non indiquée",
+    "Sel et poivre, au goût",
+    "Huile d’olive supplémentaire (facultative), quantité non indiquée"
+  ],
+  "steps": [
+    "Râper finement le morceau de concombre et hacher l’aneth. Égoutter soigneusement le concombre dans un linge propre.",
+    "Écraser l’ail avec l’huile dans un mortier.",
+    "Mélanger concombre, aneth et ail au yaourt. Ajouter le jus de citron selon le goût.",
+    "Assaisonner avec sel et poivre, puis éventuellement un peu d’huile supplémentaire. Mélanger et servir."
+  ],
+  "tip": "La source mesure le concombre en longueur : trois pouces sont conservés comme tels, sans poids inventé.",
+  "allergens": "Lait. Vérifier les produits et les accompagnements choisis.",
+  "provenance": {
+    "kind": "catalog",
+    "sources": [
+      {
+        "id": "based:tzatziki",
+        "title": "Tzatziki",
+        "url": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/content/tzatziki.md",
+        "author": "Contributeurs Based Cooking (auteur non indiqué dans cette fiche)",
+        "license": "Unlicense / domaine public déclaré par Based Cooking",
+        "licenseUrl": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/README.md#license",
+        "revision": "9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2",
+        "contentHash": "a582cc8885f3e3027bd8d27ddc6a575039efa60f834502073c0da21a02503e4e",
+        "language": "en"
+      }
+    ],
+    "parents": [],
+    "lineage": [],
+    "changes": [
+      "Traduction et organisation françaises par Encore à table ; brouillon assisté, sans revue humaine ni essai culinaire.",
+      "Les étapes renvoient aux quantités de la liste ; seules ces quantités sont recalculées avec les portions. Durées, températures et ingrédients à doser ne sont pas multipliés.",
+      "Gousse d’ail choisie parmi « clove/teaspoon ». Citron choisi parmi citron, citron vert ou vinaigre. Auteur non indiqué : attribution au dépôt et à ses contributeurs."
+    ],
+    "editorialStatus": "draft",
+    "culinaryStatus": "not-tested",
+    "portionNote": "3 portions indiquées par la source ; rendement non mesuré ici.",
+    "durationNote": "8 minutes selon les champs source (2 min préparation + 6 min intitulées cuisson), bien que les étapes soient sans cuisson ; durée d’égouttage à confirmer."
+  }
+}

@@ -1,0 +1,186 @@
+{
+ "provider": "based.cooking",
+ "revision": "9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2",
+ "retrieved_at": "2026-09-20",
+ "editorial_version": "b2-fr-1",
+ "license_evidence": [
+  {
+   "file": "README.md",
+   "sha256": "207a6e49834bf21011f98d50b895ecb45233102de7e6fc0d391cc70560b68923"
+  },
+  {
+   "file": "LICENSE.md",
+   "sha256": "6b0382b16279f26ff69014300541967a356a666eb0b91b422f6862f6b7dad17e"
+  }
+ ],
+ "entries": [
+  {
+   "id": "based-aelplermagronen",
+   "version": "9d4a31a040ee-fr-1",
+   "file_sha256": "057bd5ffcd83fef59da60530b9590e8ddef9cbaa0d6109e7c15e22d41b289163",
+   "source_id": "based:aelplermagronen",
+   "source_sha256": "f2142fdc73999267b74d7dc26c761cd9237703580c8d1728b42099494787e0bc"
+  },
+  {
+   "id": "based-aglio-e-olio",
+   "version": "9d4a31a040ee-fr-1",
+   "file_sha256": "dda3bbeaeb89843d99ed468c9feb0179a05f36b0b282d64cb176e07845df459a",
+   "source_id": "based:aglio-e-olio",
+   "source_sha256": "5253f1f9b79e09604b9569019b75a558e12a04fa3689509c4803254c8f1eaf66"
+  },
+  {
+   "id": "based-autumn-soup",
+   "version": "9d4a31a040ee-fr-1",
+   "file_sha256": "9f7e6534d710e3011f0526050fb2587a33797865836c1ff83022d663b1cd8dfb",
+   "source_id": "based:autumn-soup",
+   "source_sha256": "151f364c4740ff0949ff0c884384ddecc74e9bb290914b59385b9e7ec1350431"
+  },
+  {
+   "id": "based-baked-pasta-with-broccoli",
+   "version": "9d4a31a040ee-fr-1",
+   "file_sha256": "7f7414bc31f0d67397676c9f608e8d9a5dde620459d3c29a21861a1e5e03d436",
+   "source_id": "based:baked-pasta-with-broccoli",
+   "source_sha256": "74d24fa7715337d3422aa51fd2755120011c7605d2db2ed6b8dafb30dafa624f"
+  },
+  {
+   "id": "based-bean-salad",
+   "version": "9d4a31a040ee-fr-1",
+   "file_sha256": "db0a9121625ad72aaf7ac2388fc359867894ec6dac30e88892f24fed4926e2be",
+   "source_id": "based:bean-salad",
+   "source_sha256": "217c6439f31d3a66660c736e9232c440ceac26b8473e4949aed59449ba6644bf"
+  },
+  {
+   "id": "based-cannellini-bean-salad",
+   "version": "9d4a31a040ee-fr-1",
+   "file_sha256": "6927c6821c64e99fc1e0bd5c72f4852434757fb0319d33107b0c06ace0b8c91b",
+   "source_id": "based:cannellini-bean-salad",
+   "source_sha256": "ce0496130d24e9d3675cb0deb16085e89ae8a1ed6cbca2e4aa5587df1523216b"
+  },
+  {
+   "id": "based-cinque-pi",
+   "version": "9d4a31a040ee-fr-1",
+   "file_sha256": "fbb6f7e517449c446125b12fea98111e6c69d234ac474124740754b636b0b8c5",
+   "source_id": "based:cinque-pi",
+   "source_sha256": "6b7de2850ec7e062c896522300be12e3221a8f0348aa639e7f86b387f00fd747"
+  },
+  {
+   "id": "based-classic-bechamel-sauce",
+   "version": "9d4a31a040ee-fr-1",
+   "file_sha256": "b049c36ac51de02080967c159ad2838d97918804ac4137a80ad496d2f355e2d1",
+   "source_id": "based:classic-bechamel-sauce",
+   "source_sha256": "26088c477b6a6c4415afb7b92f13d03ab5287e7feba6088816d50bce2ddfafb3"
+  },
+  {
+   "id": "based-croque-monsieur",
+   "version": "9d4a31a040ee-fr-1",
+   "file_sha256": "c7694172087330ff43f944221596be6bf096f6cb4749b7f53a4240000086ab9c",
+   "source_id": "based:croque-monsieur",
+   "source_sha256": "257e83fbba51fceaec1ae0c0a8fa92e3a69b5aa3bd49702c4f22d5053af05979"
+  },
+  {
+   "id": "based-finnish-salmon-soup",
+   "version": "9d4a31a040ee-fr-1",
+   "file_sha256": "cca7ab29b1429a50a8873a56379c7530cea6a025c5e2928cab0622ae3f84949f",
+   "source_id": "based:finnish-salmon-soup",
+   "source_sha256": "ed2aae9974e642d4467733276b0256d501c8a453de6690680ae26d57870253da"
+  },
+  {
+   "id": "based-frittata",
+   "version": "9d4a31a040ee-fr-1",
+   "file_sha256": "abe9536a3555492c94b103dae631ee6f894db8563ac649a44ece1a7b569e8566",
+   "source_id": "based:frittata",
+   "source_sha256": "51d65016604f866eb1ea4b6a592c0d8f19ebbe5bef46adefc63050b59631c6d9"
+  },
+  {
+   "id": "based-greek-salad",
+   "version": "9d4a31a040ee-fr-1",
+   "file_sha256": "37943c2d359857f59ec6b86dec2e9352dbb6fdd473836bf19257e367471cdecb",
+   "source_id": "based:greek-salad",
+   "source_sha256": "fff0eff27772db73b3e03f252c09b9eba3467b5abcb5218922c64b69fb2bf850"
+  },
+  {
+   "id": "based-potato-leek-soup",
+   "version": "9d4a31a040ee-fr-1",
+   "file_sha256": "fe34fe168b917ff6d65d7e4a7430a5899254c0530f63ad82889d9adcbbcbb6e3",
+   "source_id": "based:potato-leek-soup",
+   "source_sha256": "bda3167fa46405df729245d7e0a859fa13de4402fb658337d42b16ddce7e1ded"
+  },
+  {
+   "id": "based-ratatouille",
+   "version": "9d4a31a040ee-fr-1",
+   "file_sha256": "a66dbae221f8257dc539a77029e13bfa18684b360088e792c9f78e9089e39220",
+   "source_id": "based:ratatouille",
+   "source_sha256": "8ce91adb4d9726ce89bd2141dd7d21e9212b3c6777e5a7049488482b46a2acaf"
+  },
+  {
+   "id": "based-red-lentil-dahl",
+   "version": "9d4a31a040ee-fr-1",
+   "file_sha256": "91238bdf9b9556d917c6c9ed3c17aa97045e4fd13dba4c3100a43a3d02f43a1b",
+   "source_id": "based:red-lentil-dahl",
+   "source_sha256": "a0dd96577df60b391b5044437ca3b8681aadcd74864961a436cc3b20f08adb78"
+  },
+  {
+   "id": "based-roesti",
+   "version": "9d4a31a040ee-fr-1",
+   "file_sha256": "bd270863e7d224465a544fcc9936a220e8bedc2f60447627b0c331f6e557594d",
+   "source_id": "based:roesti",
+   "source_sha256": "14ebcbe7ce1144e6b9eed8e27966d4e5b7e01961a78d4f21110c33810778fb1e"
+  },
+  {
+   "id": "based-shakshouka",
+   "version": "9d4a31a040ee-fr-1",
+   "file_sha256": "919fb4fb8af89ddc867a31a9097d7e1c40b3a0307fd6027862d5862900d25228",
+   "source_id": "based:shakshouka",
+   "source_sha256": "76a9f184f94de3b33e5e92f2f51bf5b69596830342132e6f2af86d8fef03371d"
+  },
+  {
+   "id": "based-spanish-tortilla",
+   "version": "9d4a31a040ee-fr-1",
+   "file_sha256": "e87c9a9569a89b0f05c00a54405ae8fdf0cf5ce40fada2d62863c11a1a4df957",
+   "source_id": "based:spanish-tortilla",
+   "source_sha256": "4e36c04768240d1397075b8ae17e2cf204c195c79be801f18f6fb3df1609b68f"
+  },
+  {
+   "id": "based-stracciatella-soup",
+   "version": "9d4a31a040ee-fr-1",
+   "file_sha256": "ef0cc56cf3aaf958029e992b68dcf5bb0fd086254be752450d030db86936c8aa",
+   "source_id": "based:stracciatella-soup",
+   "source_sha256": "a7c6402fb1aabb8e73b641f11edef7f2c579f92532ac0139026e2cc4545451c3"
+  },
+  {
+   "id": "based-tabouleh",
+   "version": "9d4a31a040ee-fr-1",
+   "file_sha256": "f7f259e82ea29c03eeed7a50c03d282c90c5b0499ebbb219f204106b1f95797b",
+   "source_id": "based:tabouleh",
+   "source_sha256": "1ed2e36444360eb331e32776abe3f0c3f35b16a6d2ffc2733a8226cecfffb3c9"
+  },
+  {
+   "id": "based-tomato-and-grilled-paprika-soup",
+   "version": "9d4a31a040ee-fr-1",
+   "file_sha256": "4a145bfcffa391d7a8019def86564fbccbd742b02bcb649de3aba64c0c4251fb",
+   "source_id": "based:tomato-and-grilled-paprika-soup",
+   "source_sha256": "dff2eb151227d33640052da09c52197eb8e4881d949d22a0f51495b715a9d858"
+  },
+  {
+   "id": "based-turkish-red-lentil-soup",
+   "version": "9d4a31a040ee-fr-1",
+   "file_sha256": "98b0651588b4d1fc05c0b797f3b9820f0a4773c66403c4491c511862347884ae",
+   "source_id": "based:turkish-red-lentil-soup",
+   "source_sha256": "bb41a179d6fb95d79453b03bd72351879e08c0529fa8032c1c2ec098a2d7076a"
+  },
+  {
+   "id": "based-tzatziki",
+   "version": "9d4a31a040ee-fr-1",
+   "file_sha256": "bb47c63b9d72060063550876b9173a6f67ae619e005b40db44c9126ba4f7fce9",
+   "source_id": "based:tzatziki",
+   "source_sha256": "a582cc8885f3e3027bd8d27ddc6a575039efa60f834502073c0da21a02503e4e"
+  },
+  {
+   "id": "based-zarangollo",
+   "version": "9d4a31a040ee-fr-1",
+   "file_sha256": "3231c0470d47a77a5c85dbe3073cc215bb130c978d4152166820f8c2453093fa",
+   "source_id": "based:zarangollo",
+   "source_sha256": "57abd978af80cb6ad64b70b7ab7abc5363203a1494aaf34a494f4d268b0a2088"
+  }
+ ]
+}

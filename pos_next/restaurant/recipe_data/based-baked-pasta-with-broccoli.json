@@ -1,0 +1,88 @@
+{
+  "id": "based-baked-pasta-with-broccoli",
+  "version": "9d4a31a040ee-fr-1",
+  "title": "Gratin de pâtes, brocoli et œufs",
+  "subtitle": "Scamorza et béchamel entre les couches de pâtes.",
+  "time": 45,
+  "vegetarian": true,
+  "basePortions": 4,
+  "ingredients": [
+    {
+      "id": "pates",
+      "name": "Pâtes",
+      "quantity": 500,
+      "unit": "g",
+      "category": "Épicerie"
+    },
+    {
+      "id": "brocoli",
+      "name": "Brocoli",
+      "quantity": 500,
+      "unit": "g",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "oeufs",
+      "name": "Œufs",
+      "quantity": 4,
+      "unit": "pièce",
+      "category": "Alimentation"
+    },
+    {
+      "id": "scamorza",
+      "name": "Scamorza",
+      "quantity": 200,
+      "unit": "g",
+      "category": "Produits laitiers"
+    },
+    {
+      "id": "bechamel-preparee",
+      "name": "Béchamel préparée",
+      "quantity": 400,
+      "unit": "g",
+      "category": "Produits laitiers"
+    }
+  ],
+  "unquantifiedIngredients": [
+    "Sel pour l’eau et l’assaisonnement, à doser",
+    "Poivre, quantité non indiquée",
+    "Sauge (facultative), quantité non indiquée",
+    "Parmesan (facultatif), quantité non indiquée"
+  ],
+  "steps": [
+    "Préchauffer le four à 180 °C. Cuire les pâtes selon leur paquet dans de l’eau salée.",
+    "Cuire le brocoli et les œufs pendant environ 10 minutes. Égoutter le brocoli ; refroidir, écaler et couper les œufs. Couper la scamorza en dés.",
+    "Dans un plat, alterner béchamel, pâtes, brocoli, œufs et scamorza. Assaisonner. Répéter les couches.",
+    "Ajouter éventuellement sauge et parmesan. Enfourner 15 à 20 minutes puis faire gratiner 5 à 10 minutes sous le gril en surveillant."
+  ],
+  "tip": "Choisir les fromages et la béchamel compatibles avec le régime végétarien souhaité.",
+  "allergens": "Œufs, lait ; blé / gluten dans les pâtes et généralement la béchamel. Vérifier chaque produit.",
+  "provenance": {
+    "kind": "catalog",
+    "sources": [
+      {
+        "id": "based:baked-pasta-with-broccoli",
+        "title": "Baked pasta with broccoli, boiled eggs and scamorza cheese",
+        "url": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/content/baked-pasta-with-broccoli.md",
+        "author": "davide-costa",
+        "license": "Unlicense / domaine public déclaré par Based Cooking",
+        "licenseUrl": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/README.md#license",
+        "revision": "9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2",
+        "contentHash": "74d24fa7715337d3422aa51fd2755120011c7605d2db2ed6b8dafb30dafa624f",
+        "language": "en"
+      }
+    ],
+    "parents": [],
+    "lineage": [],
+    "changes": [
+      "Traduction et organisation françaises par Encore à table ; brouillon assisté, sans revue humaine ni essai culinaire.",
+      "Les étapes renvoient aux quantités de la liste ; seules ces quantités sont recalculées avec les portions. Durées, températures et ingrédients à doser ne sont pas multipliés.",
+      "Les œufs présents dans la liste, mais oubliés dans le montage source, sont explicitement ajoutés aux couches.",
+      "Le dosage source « une poignée de sel par litre » n’est pas repris ; sel à doser. Fromages avec présure compatible pour la variante végétarienne."
+    ],
+    "editorialStatus": "draft",
+    "culinaryStatus": "not-tested",
+    "portionNote": "4 portions indiquées par la source ; rendement non mesuré ici.",
+    "durationNote": "45 minutes : préparation 15 min + borne haute de cuisson annoncée 30 min. À ajuster selon le four."
+  }
+}

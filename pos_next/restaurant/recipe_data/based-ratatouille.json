@@ -1,0 +1,94 @@
+{
+  "id": "based-ratatouille",
+  "version": "9d4a31a040ee-fr-1",
+  "title": "Ratatouille mijotée",
+  "subtitle": "Tomates, aubergine, courgette et poivrons en cocotte.",
+  "time": 87,
+  "vegetarian": true,
+  "basePortions": 12,
+  "ingredients": [
+    {
+      "id": "tomates",
+      "name": "Tomates",
+      "quantity": 3.5,
+      "unit": "lb (source)",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "aubergine",
+      "name": "Aubergine",
+      "quantity": 1.5,
+      "unit": "lb (source)",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "courgettes",
+      "name": "Courgettes",
+      "quantity": 1,
+      "unit": "lb (source)",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "poivron",
+      "name": "Poivrons",
+      "quantity": 3,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "oignon",
+      "name": "Oignons",
+      "quantity": 2,
+      "unit": "lb (source)",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "ail",
+      "name": "Ail",
+      "quantity": 6,
+      "unit": "gousse",
+      "category": "Fruits et légumes"
+    }
+  ],
+  "unquantifiedIngredients": [
+    "Huile d’olive pour faire revenir et ajuster en cuisson, quantité non indiquée",
+    "Herbes de Provence, quantité non indiquée",
+    "Sel et poivre, au goût",
+    "Concentré de tomate (facultatif), à ajuster ; source pour 12 portions : 140 g"
+  ],
+  "steps": [
+    "Ébouillanter les tomates 2 minutes puis les égoutter et les peler. Retirer les pédoncules.",
+    "Hacher l’oignon et l’ail, couper les poivrons en lanières. Les faire revenir dans l’huile dans une cocotte à fond épais. Couvrir et cuire 20 minutes en remuant souvent.",
+    "Ajouter les tomates et les herbes, éventuellement le concentré de tomate. Mélanger et cuire 15 minutes.",
+    "Couper l’aubergine et les courgettes en rondelles, les ajouter et poursuivre environ 30 minutes, jusqu’à tendreté. Ajuster l’assaisonnement."
+  ],
+  "tip": "Les poids sont conservés en livres de la source. Le concentré reste facultatif et doit être choisi explicitement.",
+  "allergens": "Vérifier les produits et les herbes utilisées. Aucune absence d’allergènes n’est garantie.",
+  "provenance": {
+    "kind": "catalog",
+    "sources": [
+      {
+        "id": "based:ratatouille",
+        "title": "Ratatouille",
+        "url": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/content/ratatouille.md",
+        "author": "joel-maxuel",
+        "license": "Unlicense / domaine public déclaré par Based Cooking",
+        "licenseUrl": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/README.md#license",
+        "revision": "9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2",
+        "contentHash": "8ce91adb4d9726ce89bd2141dd7d21e9212b3c6777e5a7049488482b46a2acaf",
+        "language": "en"
+      }
+    ],
+    "parents": [],
+    "lineage": [],
+    "changes": [
+      "Traduction et organisation françaises par Encore à table ; brouillon assisté, sans revue humaine ni essai culinaire.",
+      "Les étapes renvoient aux quantités de la liste ; seules ces quantités sont recalculées avec les portions. Durées, températures et ingrédients à doser ne sont pas multipliés.",
+      "Poids en lb conservés sans conversion ; huile et herbes non chiffrées signalées. Option concentré séparée des courses automatiques."
+    ],
+    "editorialStatus": "draft",
+    "culinaryStatus": "not-tested",
+    "portionNote": "12 portions indiquées par la source ; rendement non mesuré ici.",
+    "durationNote": "87 minutes : somme des durées de préparation et de cuisson annoncées par la source, non chronométrée ici."
+  }
+}

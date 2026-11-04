@@ -1,0 +1,63 @@
+{
+  "id": "based-stracciatella-soup",
+  "version": "9d4a31a040ee-fr-1",
+  "title": "Soupe aux œufs stracciatella",
+  "subtitle": "Des œufs battus versés dans un bouillon chaud.",
+  "time": 15,
+  "vegetarian": true,
+  "basePortions": 1,
+  "ingredients": [
+    {
+      "id": "oeufs",
+      "name": "Œufs",
+      "quantity": 2,
+      "unit": "pièce",
+      "category": "Alimentation"
+    },
+    {
+      "id": "bouillon-de-legumes",
+      "name": "Bouillon de légumes",
+      "quantity": 500,
+      "unit": "ml",
+      "category": "Épicerie"
+    }
+  ],
+  "unquantifiedIngredients": [
+    "Huile d’olive (facultative), quantité non indiquée"
+  ],
+  "steps": [
+    "Battre les œufs dans un bol.",
+    "Porter le bouillon à ébullition.",
+    "Verser les œufs dans le bouillon chaud en maintenant la casserole sur le feu. Fouetter jusqu’à ce qu’ils coagulent.",
+    "Servir ensemble le bouillon et les œufs. Ajouter éventuellement un filet d’huile d’olive."
+  ],
+  "tip": "La source conseille du pain grillé en accompagnement ; il n’est pas inclus dans les ingrédients de cette soupe.",
+  "allergens": "Œufs ; céleri ou autres allergènes possibles dans le bouillon. Vérifier son étiquette.",
+  "provenance": {
+    "kind": "catalog",
+    "sources": [
+      {
+        "id": "based:stracciatella-soup",
+        "title": "Stracciatella soup",
+        "url": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/content/stracciatella-soup.md",
+        "author": "pestanzul",
+        "license": "Unlicense / domaine public déclaré par Based Cooking",
+        "licenseUrl": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/README.md#license",
+        "revision": "9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2",
+        "contentHash": "a7c6402fb1aabb8e73b641f11edef7f2c579f92532ac0139026e2cc4545451c3",
+        "language": "en"
+      }
+    ],
+    "parents": [],
+    "lineage": [],
+    "changes": [
+      "Traduction et organisation françaises par Encore à table ; brouillon assisté, sans revue humaine ni essai culinaire.",
+      "Les étapes renvoient aux quantités de la liste ; seules ces quantités sont recalculées avec les portions. Durées, températures et ingrédients à doser ne sont pas multipliés.",
+      "Le type de bouillon n’est pas spécifié : variante au bouillon de légumes explicitement choisie. Pain d’accompagnement non inclus, comme dans la liste source."
+    ],
+    "editorialStatus": "draft",
+    "culinaryStatus": "not-tested",
+    "portionNote": "1 portions indiquées par la source ; rendement non mesuré ici.",
+    "durationNote": "15 minutes annoncées comme préparation ; la source ne sépare pas la durée de cuisson."
+  }
+}

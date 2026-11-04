@@ -45,6 +45,7 @@ DOCTYPES = (
 	"Preparation Workflow",
 	"Restaurant Card",
 	"Restaurant Menu",
+	"Restaurant Recipe",
 	"Product Option Group",
 	"Menu Badge",
 	"Menu Design Template",

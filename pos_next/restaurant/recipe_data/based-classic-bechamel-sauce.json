@@ -1,0 +1,80 @@
+{
+  "id": "based-classic-bechamel-sauce",
+  "version": "9d4a31a040ee-fr-1",
+  "title": "Béchamel au lait entier",
+  "subtitle": "Une base de sauce au roux, à ajuster en cuisson.",
+  "time": 20,
+  "vegetarian": true,
+  "basePortions": 8,
+  "ingredients": [
+    {
+      "id": "beurre",
+      "name": "Beurre non salé",
+      "quantity": 5,
+      "unit": "c. à café",
+      "category": "Produits laitiers"
+    },
+    {
+      "id": "farine",
+      "name": "Farine",
+      "quantity": 5,
+      "unit": "c. à café",
+      "category": "Épicerie"
+    },
+    {
+      "id": "lait-entier",
+      "name": "Lait entier",
+      "quantity": 1,
+      "unit": "l",
+      "category": "Produits laitiers"
+    },
+    {
+      "id": "noix-de-muscade",
+      "name": "Noix de muscade",
+      "quantity": 1,
+      "unit": "pincée",
+      "category": "Épicerie"
+    }
+  ],
+  "unquantifiedIngredients": [
+    "Sel, au goût",
+    "Poivre, au goût"
+  ],
+  "steps": [
+    "Faire fondre le beurre doucement dans une casserole.",
+    "Ajouter la farine et mélanger à feu moyen-doux jusqu’à une légère coloration et une odeur de noisette.",
+    "Ajouter le lait progressivement, en petites fois au début, sans cesser de fouetter pour délayer le roux.",
+    "Quand le mélange est homogène, incorporer le reste du lait. Cuire à feu doux en remuant, notamment dans les coins de la casserole.",
+    "Arrêter à la consistance souhaitée ; assaisonner avec sel, poivre et muscade."
+  ],
+  "tip": "La source indique bien cinq cuillères à café de beurre et de farine pour un litre de lait. Cette proportion reste à essayer.",
+  "allergens": "Lait et blé / gluten. Vérifier la farine et le beurre.",
+  "provenance": {
+    "kind": "catalog",
+    "sources": [
+      {
+        "id": "based:classic-bechamel-sauce",
+        "title": "Classic béchamel sauce",
+        "url": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/content/classic-bechamel-sauce.md",
+        "author": "yiusa",
+        "license": "Unlicense / domaine public déclaré par Based Cooking",
+        "licenseUrl": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/README.md#license",
+        "revision": "9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2",
+        "contentHash": "26088c477b6a6c4415afb7b92f13d03ab5287e7feba6088816d50bce2ddfafb3",
+        "language": "en"
+      }
+    ],
+    "parents": [],
+    "lineage": [],
+    "changes": [
+      "Traduction et organisation françaises par Encore à table ; brouillon assisté, sans revue humaine ni essai culinaire.",
+      "Les étapes renvoient aux quantités de la liste ; seules ces quantités sont recalculées avec les portions. Durées, températures et ingrédients à doser ne sont pas multipliés.",
+      "Portions absentes de la source : convention éditoriale de 8 portions de sauce pour ce lot ; ni rendement mesuré ni portion de repas.",
+      "Teaspoons conservées en cuillères à café, sans conversion en masse."
+    ],
+    "editorialStatus": "draft",
+    "culinaryStatus": "not-tested",
+    "portionNote": "Hypothèse de travail : 8 portions de sauce pour le lot de 1 litre de lait ; aucune portion indiquée ou mesurée par la source.",
+    "durationNote": "20 minutes : borne haute des 15–20 minutes de cuisson annoncées, sans préparation chiffrée."
+  }
+}

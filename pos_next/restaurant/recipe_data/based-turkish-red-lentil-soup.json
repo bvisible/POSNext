@@ -1,0 +1,137 @@
+{
+  "id": "based-turkish-red-lentil-soup",
+  "version": "9d4a31a040ee-fr-1",
+  "title": "Soupe turque de lentilles corail",
+  "subtitle": "Lentilles mixées et huile au paprika.",
+  "time": 40,
+  "vegetarian": true,
+  "basePortions": 6,
+  "ingredients": [
+    {
+      "id": "lentilles-corail",
+      "name": "Lentilles corail",
+      "quantity": 1,
+      "unit": "cup (source)",
+      "category": "Épicerie"
+    },
+    {
+      "id": "huile-d-olive",
+      "name": "Huile d’olive",
+      "quantity": 5,
+      "unit": "c. à soupe",
+      "category": "Épicerie"
+    },
+    {
+      "id": "paprika",
+      "name": "Paprika",
+      "quantity": 1,
+      "unit": "c. à soupe",
+      "category": "Épicerie"
+    },
+    {
+      "id": "piment-en-flocons",
+      "name": "Piment en flocons",
+      "quantity": 0.5,
+      "unit": "c. à soupe",
+      "category": "Épicerie"
+    },
+    {
+      "id": "oignon",
+      "name": "Gros oignon",
+      "quantity": 1,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "carottes",
+      "name": "Grande carotte",
+      "quantity": 1,
+      "unit": "pièce",
+      "category": "Fruits et légumes"
+    },
+    {
+      "id": "concentre-de-tomate",
+      "name": "Concentré de tomate",
+      "quantity": 4,
+      "unit": "c. à café",
+      "category": "Épicerie"
+    },
+    {
+      "id": "cumin",
+      "name": "Cumin",
+      "quantity": 2,
+      "unit": "c. à café",
+      "category": "Épicerie"
+    },
+    {
+      "id": "menthe-sechee",
+      "name": "Menthe séchée",
+      "quantity": 0.5,
+      "unit": "c. à café",
+      "category": "Épicerie"
+    },
+    {
+      "id": "thym",
+      "name": "Thym",
+      "quantity": 0.5,
+      "unit": "c. à café",
+      "category": "Épicerie"
+    },
+    {
+      "id": "bouillon-de-legumes",
+      "name": "Bouillon de légumes",
+      "quantity": 4,
+      "unit": "cup (source)",
+      "category": "Épicerie"
+    },
+    {
+      "id": "eau",
+      "name": "Eau",
+      "quantity": 4,
+      "unit": "cup (source)",
+      "category": "Épicerie"
+    }
+  ],
+  "unquantifiedIngredients": [
+    "Sel, au goût",
+    "Citron pour servir (facultatif), quantité non indiquée"
+  ],
+  "steps": [
+    "Réserver la moitié du paprika et du piment. Trier, rincer puis égoutter les lentilles.",
+    "Faire revenir l’oignon dans deux cinquièmes de l’huile prévue avec une pincée de sel pendant 3 minutes. Ajouter la carotte et poursuivre 3 minutes.",
+    "Ajouter le concentré de tomate, mélanger une minute. Ajouter cumin, menthe, thym et les épices non réservées pendant 10 secondes.",
+    "Ajouter aussitôt lentilles, eau et bouillon. Porter à ébullition puis couvrir partiellement et mijoter 15 à 20 minutes, jusqu’à ce que les lentilles et les carottes soient tendres.",
+    "Chauffer le reste de l’huile avec les épices réservées. Retirer du feu dès que le paprika commence à frémir.",
+    "Mixer la soupe, ajuster l’assaisonnement et servir avec l’huile au paprika et éventuellement du citron."
+  ],
+  "tip": "Le piment de la source est conservé ; adapter sa quantité explicitement selon les goûts.",
+  "allergens": "Céleri ou autres allergènes possibles dans le bouillon et les épices. Vérifier les produits.",
+  "provenance": {
+    "kind": "catalog",
+    "sources": [
+      {
+        "id": "based:turkish-red-lentil-soup",
+        "title": "Turkish Red Lentil Soup",
+        "url": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/content/turkish-red-lentil-soup.md",
+        "author": "joel-maxuel",
+        "license": "Unlicense / domaine public déclaré par Based Cooking",
+        "licenseUrl": "https://github.com/LukeSmithxyz/based.cooking/blob/9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2/README.md#license",
+        "revision": "9d4a31a040eedd61e4fb608cb0c114ff9a7c4dd2",
+        "contentHash": "bb41a179d6fb95d79453b03bd72351879e08c0529fa8032c1c2ec098a2d7076a",
+        "language": "en"
+      }
+    ],
+    "parents": [],
+    "lineage": [],
+    "changes": [
+      "Traduction et organisation françaises par Encore à table ; brouillon assisté, sans revue humaine ni essai culinaire.",
+      "Les étapes renvoient aux quantités de la liste ; seules ces quantités sont recalculées avec les portions. Durées, températures et ingrédients à doser ne sont pas multipliés.",
+      "Thym choisi parmi thym ou origan. Citron conseillé dans l’introduction ajouté comme option à doser.",
+      "Sel présent dans les étapes ajouté à la liste ; « Red Paper Flakes » interprété comme piment en flocons."
+    ],
+    "editorialStatus": "draft",
+    "culinaryStatus": "not-tested",
+    "portionNote": "6 portions indiquées par la source ; rendement non mesuré ici.",
+    "durationNote": "40 minutes : somme des durées de préparation et de cuisson annoncées par la source, non chronométrée ici."
+  }
+}
