@@ -15,7 +15,14 @@ const invoices = [
 
 describe("unpaidInvoiceBucket", () => {
 	it("puts every invoice in exactly one bucket, so the counts sum to the tab", () => {
-		const counts = Object.groupBy(invoices, unpaidInvoiceBucket)
+		//// Neoffice — the buckets without Object.groupBy, which Node has only from 21: our CI runs this suite on Node 20, the
+		//// Node the till is built with (frontend-tests.yml), where it threw « Object.groupBy is not a function » (04.11).
+		//// Upstream: const counts = Object.groupBy(invoices, unpaidInvoiceBucket)
+		const counts = {}
+		for (const invoice of invoices) {
+			const bucket = unpaidInvoiceBucket(invoice)
+			counts[bucket] = [...(counts[bucket] || []), invoice]
+		}
 		expect(counts.overdue).toHaveLength(3)
 		expect(counts.partial).toHaveLength(3)
 		expect(counts.unpaid).toHaveLength(2)

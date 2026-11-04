@@ -56,6 +56,29 @@ async function cachedHash() {
 	return JSON.parse(localStorage.getItem(HASH_KEY))
 }
 
+// A right code caches its hash in the background, without being waited for (PBKDF2, 100,000 rounds). On a slow machine (the
+// CI runner, 04.11) that write landed in the NEXT test, after its localStorage.clear(), and « is not made by a wrong code »
+// found a hash: each test waits for the hashing it started.
+const hashing = new Set()
+for (const step of ["importKey", "deriveBits"]) {
+	const original = crypto.subtle[step].bind(crypto.subtle)
+	vi.spyOn(crypto.subtle, step).mockImplementation((...args) => {
+		const promise = original(...args)
+		hashing.add(promise)
+		return promise
+	})
+}
+
+async function hashingDone() {
+	while (hashing.size) {
+		const started = [...hashing]
+		hashing.clear()
+		await Promise.allSettled(started)
+		// What follows a step (the next step, the hex, the write) runs before this timer
+		await new Promise((resolve) => setTimeout(resolve, 0))
+	}
+}
+
 describe("unlocking with the personal code", () => {
 	let lock
 
@@ -70,10 +93,11 @@ describe("unlocking with the personal code", () => {
 		lock.lockNow()
 	})
 
-	afterEach(() => {
+	afterEach(async () => {
 		lock.stopActivityTracking()
 		lock.clearLock()
 		vi.useRealTimers()
+		await hashingDone()
 	})
 
 	describe("online", () => {
