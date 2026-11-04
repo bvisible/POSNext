@@ -163,6 +163,27 @@ def listing() -> dict:
 	}
 
 
+def find(text, known: dict | None = None) -> list[dict]:
+	"""The fiches of the library that fit what the owner said: an id (`based-frittata`), or words (every word asked is in the title, the family
+	or the description, plurals forgiven), the nearest first. Nothing fits by guessing."""
+	known = known or listing()
+	said = " ".join(str(text or "").split())
+	rows = known["recipes"]
+	exact = [r for r in rows if r["id"] == said]
+	if exact:
+		return exact
+	wanted = recipes._stems(said)
+	if not wanted:
+		return []
+	fits = []
+	for row in rows:
+		title = recipes._stems(row["title"])
+		hay = title + recipes._stems(f"{row.get('family') or ''} {row.get('subtitle') or ''}")
+		if all(w in hay for w in wanted):
+			fits.append((-sum(1 for w in wanted if w in title), row["title"].lower(), row))
+	return [row for _score, _title, row in sorted(fits, key=lambda t: t[:2])]
+
+
 def _document(manifest: dict, data: dict) -> dict:
 	source = data["provenance"]["sources"][0]
 	rows = [

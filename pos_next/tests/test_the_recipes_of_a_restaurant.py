@@ -351,6 +351,155 @@ class TestARecipeIsProposedThenWritten(RecipeCase):
 		self.assertEqual((row.item, row.qty, row.unit, row.unit_to_convert), (self.dish, 240, "ml", 0))
 
 
+class TestAnIngredientIsLinkedToAnArticleThenWritten(RecipeCase):
+	def setUp(self):
+		super().setUp()
+		self.milk = an_item("_Test RC Lait entier de Zurich", self.mains, self.company)
+		self.broth = an_item("_Test RC Bouillon de legumes de Zurich", self.mains, self.company)
+		self.squash = an_item("_Test RC Courge musquee de Zurich", self.mains, self.company)
+		self.butter_a = an_item("_Test RC Beurre doux de Zurich", self.mains, self.company)
+		self.butter_b = an_item("_Test RC Beurre sale de Zurich", self.mains, self.company)
+
+	def row(self, recipe, name):
+		return next(
+			r for r in frappe.get_doc("Restaurant Recipe", recipe).ingredients if r.ingredient_name == name
+		)
+
+	def test_an_ingredient_said_with_its_article_is_proposed_then_linked(self):
+		self.a_recipe()
+		line = self.propose(
+			{"name": SOUP, "ingredients": [{"name": "Courge", "item": "courge musquee de zurich"}]}
+		)["recipes"][0]
+		link = next(i for i in line["ingredients"] if i["name"] == "Courge")["link"]
+		self.assertEqual((link["status"], link["item"]), ("matched", self.squash))
+		self.assertFalse(self.row(SOUP, "Courge").item, "the proposal writes nothing")
+		self.apply({"recipes": [line]})
+		self.assertEqual(self.row(SOUP, "Courge").item, self.squash)
+		self.assertEqual(self.row(SOUP, "Courge").qty, 800, "the figure is the owner's, linking leaves it")
+
+	def test_a_quantity_in_cups_is_linked_only_with_the_figure_as_the_article_is_bought(self):
+		self.a_recipe()
+		said = {"name": SOUP, "ingredients": [{"name": "Bouillon", "item": "bouillon de legumes de zurich"}]}
+		line = self.propose(said)["recipes"][0]
+		self.assertTrue(any("as the article is bought" in need for need in line["needs"]), line["needs"])
+		with self.assertRaises(frappe.ValidationError):
+			self.apply({"recipes": [line]})
+		self.assertFalse(self.row(SOUP, "Bouillon").item)
+		said["ingredients"][0].update(qty=2.4, unit="dl")
+		line = self.propose(said)["recipes"][0]
+		self.assertEqual(line["needs"], [])
+		self.apply({"recipes": [line]})
+		row = self.row(SOUP, "Bouillon")
+		self.assertEqual((row.item, row.qty, row.unit, row.unit_to_convert), (self.broth, 2.4, "dl", 0))
+
+	def test_two_articles_that_fit_make_the_owner_choose_and_the_choice_is_written(self):
+		said = self.said(
+			name="Brioche zurichoise de test",
+			ingredients=[{"name": "Beurre", "qty": 200, "unit": "g", "item": "beurre de zurich"}],
+		)
+		line = self.propose(said)["recipes"][0]
+		link = line["ingredients"][0]["link"]
+		self.assertEqual(link["status"], "ambiguous")
+		self.assertEqual({c["item"] for c in link["candidates"]}, {self.butter_a, self.butter_b})
+		with self.assertRaises(frappe.ValidationError):
+			self.apply({"recipes": [line]})
+		self.assertFalse(frappe.db.exists("Restaurant Recipe", "Brioche zurichoise de test"))
+		link["item"] = self.butter_b
+		self.apply({"recipes": [line]})
+		self.assertEqual(self.row("Brioche zurichoise de test", "Beurre").item, self.butter_b)
+
+	def test_an_article_nobody_buys_is_refused_never_made_up(self):
+		self.a_recipe()
+		line = self.propose(
+			{"name": SOUP, "ingredients": [{"name": "Courge", "item": "truffe blanche introuvable"}]}
+		)["recipes"][0]
+		self.assertEqual(
+			next(i for i in line["ingredients"] if i["name"] == "Courge")["link"]["status"], "unknown"
+		)
+		with self.assertRaises(frappe.ValidationError):
+			self.apply({"recipes": [line]})
+
+	def test_all_the_ingredients_can_be_linked_at_once_and_what_cannot_waits(self):
+		self.a_recipe(
+			ingredients=[
+				{"ingredient_name": "Courge musquee de Zurich", "qty": 800, "unit": "g"},
+				{"ingredient_name": "Lait entier de Zurich", "qty": 2, "unit": "cup (source)"},
+				{"ingredient_name": "Truffe blanche introuvable", "qty": 1, "unit": "g"},
+				{"ingredient_name": "Sel fin", "to_taste": 1},
+			]
+		)
+		line = self.propose({"name": SOUP, "link_ingredients": True})["recipes"][0]
+		links = {i["name"]: (i["link"] or {}).get("status") for i in line["ingredients"]}
+		self.assertEqual(
+			links,
+			{
+				"Courge musquee de Zurich": "matched",
+				"Lait entier de Zurich": "needs_conversion",
+				"Truffe blanche introuvable": None,
+				"Sel fin": None,
+			},
+		)
+		self.assertEqual(line["needs"], [], "what cannot be linked yet does not stop the others")
+		self.apply({"recipes": [line]})
+		self.assertEqual(self.row(SOUP, "Courge musquee de Zurich").item, self.squash)
+		self.assertFalse(self.row(SOUP, "Lait entier de Zurich").item, "a cup is never converted by guessing")
+		self.assertEqual(self.row(SOUP, "Lait entier de Zurich").qty, 2)
+
+
+class TestAFicheOfTheFreeLibraryIsAddedAfterAYes(RecipeCase):
+	def test_a_fiche_named_is_proposed_nothing_written_then_added_to_review(self):
+		before = frappe.db.count("Restaurant Recipe")
+		proposal = self.propose({"library": "soupe de courge"})
+		line = proposal["recipes"][0]
+		self.assertEqual((line["status"], line["library"]["status"]), ("library", "matched"))
+		self.assertEqual(line["library"]["id"], "based-autumn-soup")
+		self.assertIn("Unlicense", line["library"]["license"])
+		self.assertEqual(proposal["counts"]["from_library"], 1)
+		self.assertEqual(frappe.db.count("Restaurant Recipe"), before, "the proposal writes nothing")
+		made = self.apply(proposal)
+		doc = frappe.get_doc("Restaurant Recipe", made["recipes"][0]["recipe"])
+		self.assertEqual(
+			(doc.status, doc.source_kind, doc.source_ref), ("To review", "Library", "based-autumn-soup")
+		)
+
+	def test_a_fiche_already_added_is_not_added_twice(self):
+		self.apply(self.propose({"library": "soupe de courge"}))
+		line = self.propose({"library": "soupe de courge"})["recipes"][0]
+		self.assertEqual((line["status"], line["library"]["status"]), ("unchanged", "present"))
+
+	def test_several_fiches_that_fit_make_the_owner_choose(self):
+		line = self.propose({"library": "soupe"})["recipes"][0]
+		self.assertEqual(line["library"]["status"], "ambiguous")
+		self.assertGreater(len(line["library"]["candidates"]), 1)
+		with self.assertRaises(frappe.ValidationError):
+			self.apply({"recipes": [line]})
+		line["library"]["id"] = line["library"]["candidates"][1]["item"]
+		made = self.apply({"recipes": [line]})
+		self.assertEqual(
+			frappe.db.get_value("Restaurant Recipe", made["recipes"][0]["recipe"], "source_ref"),
+			line["library"]["id"],
+		)
+
+	def test_a_fiche_nobody_has_is_never_made_up(self):
+		line = self.propose({"library": "zzzz aucune fiche"})["recipes"][0]
+		self.assertEqual(line["library"]["status"], "unknown")
+		self.assertTrue(line["needs"])
+		with self.assertRaises(frappe.ValidationError):
+			self.apply({"recipes": [line]})
+
+	def test_a_fiche_may_be_added_and_linked_to_a_dish_in_one_yes(self):
+		line = self.propose({"library": "soupe de courge", "dish": "Soupe du jour zurichoise"})["recipes"][0]
+		self.assertEqual(line["dish"]["status"], "matched")
+		made = self.apply({"recipes": [line]})
+		self.assertEqual(
+			frappe.db.get_value("Item", self.dish, "restaurant_recipe"), made["recipes"][0]["recipe"]
+		)
+
+	def test_a_cashier_cannot_add_a_fiche(self):
+		with as_role("cashier"), self.assertRaises(frappe.PermissionError):
+			recipe_plan.propose([{"library": "soupe de courge"}])
+
+
 class TestWhoMayDoIt(RecipeCase):
 	def test_nothing_answers_where_the_site_does_not_run_neoresto(self):
 		self.a_recipe()
