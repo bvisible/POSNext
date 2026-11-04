@@ -22197,3 +22197,19 @@ msgstr "Connectez-vous pour associer votre compte à cette table."
 #, python-brace-format
 msgid "You are signed in as {0}."
 msgstr "Vous êtes connecté en tant que {0}."
+
+#: pos_next/api/guest_ordering.py:86
+#: pos_next/tests/test_the_restaurant_switch_closes_the_qr_order.py:28
+msgid "Ordering from the table's QR code is not enabled here."
+msgstr "La commande par code QR de table n'est pas activée dans cet établissement."
+
+#: pos_next/api/guest_ordering.py:1251
+#: pos_next/tests/test_a_guest_payment_is_booked_by_the_provider.py:167
+msgid "The tip cannot be negative, nor the whole payment."
+msgstr "Le pourboire ne peut pas être négatif, ni couvrir à lui seul le paiement."
+
+#: pos_next/api/guest_ordering.py:1253
+#: pos_next/tests/test_a_guest_payment_is_booked_by_the_provider.py:170
+#: pos_next/tests/test_a_guest_payment_is_booked_by_the_provider.py:176
+msgid "This payment is more than the order still owes."
+msgstr "Ce paiement dépasse le montant encore dû pour votre commande."
