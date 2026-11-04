@@ -8,7 +8,7 @@
 		<template #body-content>
 			<div v-if="check" class="flex flex-col gap-3">
 				<div class="flex flex-wrap items-center gap-2">
-					<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-50 text-green-800">
+					<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-50 text-green-800 dark:text-green-200">
 						{{ __("Paid · to check") }}
 					</span>
 					<span class="text-sm text-gray-600 tabular-nums">
@@ -31,7 +31,7 @@
 								<span class="font-semibold">{{ line.item_name }}</span>
 								<span
 									v-if="line.needs_validation"
-									class="ms-2 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800"
+									class="ms-2 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 dark:text-amber-200"
 								>
 									{{ __("To check by a seller") }}
 								</span>
@@ -49,7 +49,7 @@
 								{{ __("Missing") }}
 							</button>
 							<template v-else>
-								<span class="text-xs font-semibold text-red-700">{{ __("Missing:") }}</span>
+								<span class="text-xs font-semibold text-red-700 dark:text-red-200">{{ __("Missing:") }}</span>
 								<button
 									type="button"
 									class="h-8 w-8 rounded border border-gray-300"
@@ -73,19 +73,20 @@
 					</li>
 				</ul>
 
-				<div class="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-900">
+				<!-- The till's dark theme tints the -50 backgrounds but leaves green and red text dark: a lighter text there -->
+				<div class="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-900 dark:text-green-200">
 					{{ __("Paid on the phone: {0}", [money(check.paid_amount)]) }}
 				</div>
 				<div
 					:class="[
 						'flex items-center justify-between rounded-lg px-3 py-2',
-						refund > 0 ? 'bg-red-50 text-red-900' : 'bg-orange-50 text-orange-900',
+						refund > 0 ? 'bg-red-50 text-red-900 dark:text-red-200' : 'bg-orange-50 text-orange-900',
 					]"
 				>
 					<span class="text-sm font-semibold">{{ refund > 0 ? __("To refund") : __("Left to pay") }}</span>
 					<span class="text-lg font-bold tabular-nums">{{ money(refund > 0 ? refund : 0) }}</span>
 				</div>
-				<p v-if="error" class="text-sm text-red-700" role="alert">{{ error }}</p>
+				<p v-if="error" class="text-sm text-red-700 dark:text-red-200" role="alert">{{ error }}</p>
 			</div>
 		</template>
 		<template #actions>

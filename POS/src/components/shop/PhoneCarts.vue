@@ -73,7 +73,11 @@ function timeOf(since) {
 /** Where the cart stands, as the planche of the canvas says it: the customer still scanning, an article to check, or to pay. */
 function stateOf(cart) {
 	if (cart.status === "Paid") {
-		return { label: __("Paid · to check"), tone: "bg-green-50 text-green-800" }
+		// The till's dark theme tints the -50 backgrounds but leaves green and amber text dark: a lighter text there
+		return {
+			label: __("Paid · to check"),
+			tone: "bg-green-50 text-green-800 dark:text-green-200",
+		}
 	}
 	if (cart.status === "Scanning") {
 		return {
@@ -84,7 +88,7 @@ function stateOf(cart) {
 	if (cart.needs_validation) {
 		return {
 			label: __("An article to check"),
-			tone: "bg-amber-50 text-amber-800",
+			tone: "bg-amber-50 text-amber-800 dark:text-amber-200",
 		}
 	}
 	return {
