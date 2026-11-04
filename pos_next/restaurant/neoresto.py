@@ -50,6 +50,8 @@ MODULE = "POS Next"
 
 # A table with its guests: seated, or paid at the table (a QR payment) and not yet cleared by the cashier
 OCCUPIED = [["status", "in", ["Occupied", "Paid"]]]
+# The report of the tips by server, a standard report of this app (pos_next/report/tips_by_server)
+TIPS_REPORT = "Tips by Server"
 # A booking whose guests have not come: waiting for the restaurant's answer, or confirmed and not seated yet
 TO_COME = [["status", "in", ["Pending", "Confirmed"]]]
 # What a till sold: submitted POS invoices, the returns apart (the theme's own reading of "sold" at the point of sale)
@@ -109,8 +111,37 @@ def tabs():
 	if sales:
 		# The point of sale's own invoices tab, under the restaurant's word for it
 		space.append(_ours(sales, key="sales", label=_("Sales"), essential=True))
+	# //// Neoffice — the till's back office, in the restaurant's own space (NeoResto lot 1, product owner, 04.11.2026: the point of
+	# //// sale space had its sessions, closings, reports and offers and NeoResto had none of them; « tout ce que fait le restaurateur se
+	# //// centralise dans NeoResto »). Borrowed from the point of sale, never written twice: a change there is a change here, and a
+	# //// restaurant keeps one closing, one set of reports and one page of the manual. Each tab is shown to whoever may read what it lists.
+	space += _the_tills_back_office(retail.tabs())
 	space.append(settings_tab())
 	return {SPACE: space}
+
+
+# The tabs of the point of sale's space that a restaurant's desk shows too, in the order it shows them: the tills' sessions
+# and closings, the reports, then the coupons and promotions
+BORROWED_FROM_THE_TILL = ("sessions", "closings", "reports", "coupons", "promotions")
+
+
+def _the_tills_back_office(retail_tabs):
+	"""The tabs the point of sale's space declares for the till's own documents, as NeoResto shows them (none of them where the
+	theme does not declare it): the reports tab keeps the point of sale's reports and adds the restaurant's own."""
+	found = []
+	for key in BORROWED_FROM_THE_TILL:
+		tab = _borrowed(retail_tabs, key)
+		if not tab:
+			continue
+		if key == "reports":
+			tab = dict(tab, groups=[*(tab.get("groups") or []), restaurant_reports()])
+		found.append(_ours(tab))
+	return found
+
+
+def restaurant_reports():
+	"""The reports of the restaurant itself, which the point of sale has no use for."""
+	return {"label": _("Restaurant"), "reports": [TIPS_REPORT]}
 
 
 def _ours(tab, **changes):

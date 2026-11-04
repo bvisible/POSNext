@@ -101,6 +101,9 @@ Whole new doctypes; every field in them is ours. At a merge they can only confli
   NeoResto lot 1 task 15 — the drawer movements of a shift, stored on its closing like upstream's `POS Closing Shift Expense`).
 - **Report**: `pos_next/pos_next/report/neopos_register/neopos_register.json` (`0a45914d`,
   2026-04-12 — the Neopos Register report; no upstream equivalent).
+- **Report**: `pos_next/pos_next/report/tips_by_server/tips_by_server.json` (NeoResto lot 1, 04.11.2026 — the tips of a
+  restaurant by server and by way of paying, for the end of a day or a week; no upstream equivalent. Its `.py` and `.js`
+  carry the `////` header).
 
 ### Fixtures
 

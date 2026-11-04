@@ -13,6 +13,7 @@ figures are tested on tables, bookings, tills, sales and shifts built here, for 
 """
 
 import importlib
+import json
 import os
 import unittest
 from contextlib import contextmanager
@@ -53,15 +54,25 @@ TAB_KEYS = [
 	"overview",
 	"floor",
 	"cards",
+	"recipes",
 	"items",
 	"options",
 	"stations",
 	"reservations",
 	"tips",
 	"sales",
+	"sessions",
+	"closings",
+	"reports",
+	"coupons",
+	"promotions",
 	"settings",
 ]
-ESSENTIAL = {"overview", "floor", "cards", "reservations", "sales"}
+ESSENTIAL = {"overview", "floor", "cards", "recipes", "reservations", "sales", "sessions", "closings"}
+# The purchases' two tabs stand after the recipes where the site shows them (the purchases' own test says when): not counted here
+PURCHASES = ("purchases", "shopping")
+# What a restaurant's desk takes from the point of sale's space, in the order it shows them (04.11.2026)
+FROM_THE_TILL = ["sessions", "closings", "reports", "coupons", "promotions"]
 # The restaurant's own lists: what this module declares (the items and the sales are the theme's)
 OUR_LISTS = {
 	"floor": "Restaurant Table",
@@ -239,7 +250,7 @@ class TestTheTabs(FrappeTestCase):
 		return {tab["key"]: tab for tab in tabs()["Resto"]}
 
 	def test_the_restaurant_tabs(self):
-		space = tabs()["Resto"]
+		space = [t for t in tabs()["Resto"] if t["key"] not in PURCHASES]
 		self.assertEqual([t["key"] for t in space], TAB_KEYS)
 		self.assertTrue(all(t["bundle"][0] == "Resto" for t in space))
 		self.assertEqual({t["key"] for t in space if t.get("essential")}, ESSENTIAL)
@@ -329,6 +340,58 @@ class TestTheTabs(FrappeTestCase):
 		)
 		self.assertEqual(next(t for t in operations.tabs() if t["key"] == "items")["bundle"], items["bundle"])
 
+	def test_the_tills_back_office_is_the_point_of_sales_own_tabs(self):
+		retail = theme_or_skip("neoffice_theme.workspace_spaces.retail", "tabs")
+		space = self.space()
+		for key in FROM_THE_TILL:
+			with self.subTest(tab=key):
+				theirs = next(t for t in retail.tabs() if t["key"] == key)
+				# The same list, with the same views and figures, kept in step with the point of sale: a change there is a change here
+				for field in ("archetype", "doctype", "views", "figures", "base", "essential", "links"):
+					self.assertEqual(space[key].get(field), theirs.get(field), field)
+				# The reports tab has no bundle of its own in the theme: it follows its space's page
+				self.assertEqual(space[key]["bundle"], ["Resto", *(theirs.get("bundle") or [])])
+				# Borrowing copies: the point of sale's own tab is as it was
+				self.assertEqual(
+					next(t for t in retail.tabs() if t["key"] == key).get("bundle"), theirs.get("bundle")
+				)
+		self.assertEqual([key for key in space if key in FROM_THE_TILL], FROM_THE_TILL)
+
+	def test_the_reports_are_the_point_of_sales_and_the_restaurants_own(self):
+		retail = theme_or_skip("neoffice_theme.workspace_spaces.retail", "tabs")
+		theirs = next(t for t in retail.tabs() if t["key"] == "reports")
+		groups = self.space()["reports"]["groups"]
+		# The tills' reports first, as the point of sale lists them, then the restaurant's own
+		self.assertEqual(groups[:-1], theirs["groups"])
+		self.assertEqual(groups[-1], {"label": _("Restaurant"), "reports": [neoresto.TIPS_REPORT]})
+		# The charts are the point of sale's: built afresh at each call, so their keys are what is compared
+		self.assertEqual(
+			[c["key"] for c in self.space()["reports"]["charts"]], [c["key"] for c in theirs["charts"]]
+		)
+		# The point of sale's own groups are left as they were
+		listed = [
+			name
+			for group in next(t for t in retail.tabs() if t["key"] == "reports")["groups"]
+			for name in group["reports"]
+		]
+		self.assertNotIn(neoresto.TIPS_REPORT, listed)
+
+	def test_the_restaurants_report_is_a_standard_report_of_this_app(self):
+		with open(
+			frappe.get_app_path("pos_next", "pos_next", "report", "tips_by_server", "tips_by_server.json")
+		) as report:
+			declared = json.load(report)
+		self.assertEqual(declared["name"], neoresto.TIPS_REPORT)
+		self.assertEqual((declared["ref_doctype"], declared["is_standard"]), ("Restaurant Tip", "Yes"))
+
+	def test_a_theme_that_does_not_declare_the_tills_tabs_leaves_them_out(self):
+		retail = theme_or_skip("neoffice_theme.workspace_spaces.retail", "tabs")
+		invoices_only = [t for t in retail.tabs() if t["key"] == "invoices"]
+		with patch.object(retail, "tabs", return_value=invoices_only):
+			keys = [t["key"] for t in tabs()["Resto"]]
+		self.assertFalse(set(FROM_THE_TILL) & set(keys), keys)
+		self.assertIn("sales", keys)
+
 	def test_the_settings_group_what_a_restaurant_sets_up(self):
 		settings = self.space()["settings"]
 		self.assertEqual(settings["archetype"], "settings")
@@ -345,10 +408,11 @@ class TestTheTabs(FrappeTestCase):
 		wt = theme_or_skip("neoffice_theme.workspace_tabs", "_code_catalogue")
 		frappe.local.neo_declared_business_apps = None
 		catalogue = wt._code_catalogue()
-		self.assertEqual([t["key"] for t in catalogue["Resto"]], TAB_KEYS)
+		self.assertEqual([t["key"] for t in catalogue["Resto"] if t["key"] not in PURCHASES], TAB_KEYS)
 		# Every list of the space opens for a reader who holds everything, the settings' groups with their entries
 		visible = {t["key"]: t for t in wt._visible_tabs("Resto", with_reports=False)}
-		self.assertTrue(set(TAB_KEYS) - {"overview"} <= set(visible), set(visible))
+		# (the reports tab is built apart from the lists: `with_reports`)
+		self.assertTrue(set(TAB_KEYS) - {"overview", "reports"} <= set(visible), set(visible))
 		# ... the cards with the way to the menus, which a reader of the menus is offered
 		link = wt._view_link(visible["cards"])
 		self.assertEqual((link["label"], link["route"]), (_("Menus"), "/app/restaurant-menu"))
