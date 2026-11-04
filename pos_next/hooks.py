@@ -589,9 +589,3 @@ boot_session = ["pos_next.restaurant.mode.extend_boot"]
 # //// application shows only where the site's `neoresto_active` says 1. Upstream has neither hook.
 neoffice_business_apps = ["pos_next.restaurant.neoresto.business_apps"]
 neoffice_workspace_tabs = ["pos_next.restaurant.neoresto.tabs"]
-
-# //// Neoffice — a core Frappe hook of the fork's sign-in engine (`frappe.passwordless`), not an extension point of POS Next: the mail that carries
-# //// a guest's code speaks for the restaurant of the page that asked for it (`guest_account.request_code` names it for the length of that call;
-# //// empty otherwise, so the engine's other callers are untouched). The engine takes the first name any app gives it, so on a site that also
-# //// runs the shop the shop's name comes first. Upstream has no such hook. (neoffice-maintenance#2192)
-passwordless_brand = ["pos_next.restaurant.guest_account.brand"]

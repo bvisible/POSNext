@@ -47,12 +47,6 @@ def _engine():
 	return passwordless
 
 
-def brand():
-	"""Hook `passwordless_brand`: the name the sign-in mail speaks for is the restaurant of the guest page that asked for the code (set by
-	`request_code` for the length of that one call), nothing otherwise. A caller of the engine cannot choose a name: it comes from here."""
-	return frappe.flags.get("pos_next_guest_brand") or ""
-
-
 def clean_email(address):
 	"""The address as it is compared (lower case, trimmed); a message for what is not one."""
 	address = (address or "").strip().lower()
@@ -74,7 +68,11 @@ def default_customer(pos_profile):
 def customer_of(token_doc, invoice_doc=None):
 	"""(customer, source) of a guest session: the one the table's order has when it is not the till's default customer ("till" when the
 	till put it there, "account" when this session's sign-in did), else the one the session signed in as; (None, None) for nobody."""
-	if invoice_doc and invoice_doc.customer and invoice_doc.customer != default_customer(token_doc.pos_profile):
+	if (
+		invoice_doc
+		and invoice_doc.customer
+		and invoice_doc.customer != default_customer(token_doc.pos_profile)
+	):
 		return invoice_doc.customer, ("account" if invoice_doc.customer == token_doc.customer else "till")
 	if token_doc.customer:
 		return token_doc.customer, "account"
@@ -136,17 +134,18 @@ def describe(token_doc, invoice_doc=None):
 
 def request_code(token_doc, address, redirect_to=None):
 	"""Ask the engine to mail a code and a link to `address`. Its answer ({"ok", "resend_in", "expires_in"}) is the same whatever the address
-	is, and so is what comes back from here. The mail speaks for the restaurant of the page."""
+	is, and so is what comes back from here. The mail speaks for the restaurant of the page: the engine reads the name from the flag below,
+	before the hooks of the apps, so on a site that also runs the shop the shop's name does not come first. The name is ours, never the browser's."""
 	passwordless = _engine()
 	from pos_next.restaurant.settings import get_restaurant_settings_for_profile
 
-	frappe.flags.pos_next_guest_brand = (
+	frappe.flags.passwordless_brand = (
 		get_restaurant_settings_for_profile(token_doc.pos_profile).get("restaurant_name") or ""
 	)
 	try:
 		answer = passwordless.request_code(address, redirect_to)
 	finally:
-		frappe.flags.pos_next_guest_brand = None
+		frappe.flags.passwordless_brand = None
 	if not answer.get("ok"):
 		if answer.get("reason") == "invalid_address":
 			frappe.throw(_("Please enter a valid email address."))
@@ -210,7 +209,9 @@ def website_user(user):
 
 def customer_by_email(address):
 	"""The customer an address belongs to: the e-mail of the customer, else an address of a contact that is linked to one."""
-	customer = frappe.db.get_value("Customer", {"email_id": address, "disabled": 0}, "name", order_by="creation asc")
+	customer = frappe.db.get_value(
+		"Customer", {"email_id": address, "disabled": 0}, "name", order_by="creation asc"
+	)
 	if customer:
 		return customer
 	rows = frappe.db.sql(
@@ -322,7 +323,9 @@ def open_account(address, customer_name=None, mobile_no=None, pos_profile=None):
 		)
 		try:
 			user.insert(ignore_permissions=True)
-		except frappe.DuplicateEntryError:  # a parallel request opened it first; the mailbox is proven all the same
+		except (
+			frappe.DuplicateEntryError
+		):  # a parallel request opened it first; the mailbox is proven all the same
 			frappe.clear_messages()
 
 	customer = customer or _make_customer(name, address, mobile_no, pos_profile)

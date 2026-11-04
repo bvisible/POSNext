@@ -36,6 +36,11 @@ def an_address():
 	return f"guest-{frappe.generate_hash(length=8)}@yopmail.com"
 
 
+def the_shops_name():
+	"""Stands for the `passwordless_brand` hook of the shop, which names the site being served."""
+	return "The Shop"
+
+
 class GuestAccountCase(ServiceCase):
 	def setUp(self):
 		super().setUp()
@@ -46,7 +51,11 @@ class GuestAccountCase(ServiceCase):
 		frappe.db.set_value(
 			"Restaurant",
 			self.a,
-			{"enable_qr_ordering": 1, "qr_order_validation": "Direct to Kitchen", "guest_account_mode": "Optional"},
+			{
+				"enable_qr_ordering": 1,
+				"qr_order_validation": "Direct to Kitchen",
+				"guest_account_mode": "Optional",
+			},
 		)
 		self.on_the_guest_menu(self.a, self.cola, self.soup, self.salad, self.penne, self.steak, self.tart)
 		self.token = self.a_token()
@@ -69,7 +78,12 @@ class GuestAccountCase(ServiceCase):
 
 	def a_token(self):
 		return frappe.get_doc(
-			{"doctype": "Guest Order Token", "mode": "restaurant", "table": self.table_a, "pos_profile": self.fx.profile}
+			{
+				"doctype": "Guest Order Token",
+				"mode": "restaurant",
+				"table": self.table_a,
+				"pos_profile": self.fx.profile,
+			}
 		).insert(ignore_permissions=True)
 
 	def as_guest(self, method, *args, **kwargs):
@@ -167,7 +181,7 @@ class TestTheCode(GuestAccountCase):
 		seen = []
 
 		def engine_call(address, redirect_to=None):
-			seen.append((guest_account.brand(), redirect_to))
+			seen.append((frappe.flags.get("passwordless_brand"), redirect_to))
 			return {"ok": True, "resend_in": 30, "expires_in": 600}
 
 		with patch.object(passwordless, "request_code", side_effect=engine_call):
@@ -175,7 +189,25 @@ class TestTheCode(GuestAccountCase):
 
 		name = frappe.db.get_value("Restaurant", self.a, "restaurant_name")
 		self.assertEqual(seen, [(name, f"/pos/guest/{self.token.token}")])
-		self.assertEqual(guest_account.brand(), "")
+		self.assertFalse(frappe.flags.get("passwordless_brand"))
+
+	def test_the_mail_carries_the_restaurants_name_even_where_the_shop_names_the_site_too(self):
+		"""The shop's hook comes first in the install order: the mail of a table used to read "your code for <the shop>"."""
+		name = frappe.db.get_value("Restaurant", self.a, "restaurant_name")
+		self.assertTrue(name)
+		real = frappe.get_hooks
+
+		def hooks(hook=None, *args, **kwargs):
+			if hook == "passwordless_brand":
+				return ["pos_next.tests.test_guest_account.the_shops_name"]
+			return real(hook, *args, **kwargs)
+
+		with patch("frappe.get_hooks", side_effect=hooks):
+			self.ask_for_a_code(an_address())
+
+		self.assertEqual(self.mails[-1]["args"]["brand"], name)
+		self.assertIn(name, self.mails[-1]["subject"])
+		self.assertNotIn("The Shop", self.mails[-1]["subject"])
 
 	def test_the_answer_is_the_same_for_a_known_address_and_an_unknown_one(self):
 		known, unknown = an_address(), an_address()
@@ -371,10 +403,17 @@ class TestOpeningAnAccount(GuestAccountCase):
 
 		self.register(address, "Jean Martin")
 
-		user = frappe.db.get_value("User", address, ["user_type", "enabled", "first_name", "last_name"], as_dict=True)
-		self.assertEqual((user.user_type, user.enabled, user.first_name, user.last_name), ("Website User", 1, "Jean", "Martin"))
+		user = frappe.db.get_value(
+			"User", address, ["user_type", "enabled", "first_name", "last_name"], as_dict=True
+		)
+		self.assertEqual(
+			(user.user_type, user.enabled, user.first_name, user.last_name),
+			("Website User", 1, "Jean", "Martin"),
+		)
 		self.assertIn("Customer", frappe.get_roles(address))
-		self.assertFalse({"System Manager", "Sales User", "Accounts User", "Stock User"} & set(frappe.get_roles(address)))
+		self.assertFalse(
+			{"System Manager", "Sales User", "Accounts User", "Stock User"} & set(frappe.get_roles(address))
+		)
 
 	def test_the_account_is_tied_to_its_customer_by_a_contact(self):
 		address = an_address()
@@ -422,7 +461,9 @@ class TestOpeningAnAccount(GuestAccountCase):
 		self.sign_in(address)
 
 		with self.assertRaises(frappe.PermissionError):
-			self.as_guest(guest_ordering.register_guest_account, self.token.token, self.the_last_code(), "Jean Martin")
+			self.as_guest(
+				guest_ordering.register_guest_account, self.token.token, self.the_last_code(), "Jean Martin"
+			)
 
 		self.assertFalse(frappe.db.exists("User", address))
 
@@ -454,7 +495,10 @@ class TestOpeningAnAccount(GuestAccountCase):
 		with self.assertRaises(frappe.ValidationError):
 			self.register(second, "Paul Durand")
 
-		self.assertEqual(frappe.db.get_value("Guest Order Token", self.token.name, "customer"), guest_account.customer_of_user(first))
+		self.assertEqual(
+			frappe.db.get_value("Guest Order Token", self.token.name, "customer"),
+			guest_account.customer_of_user(first),
+		)
 		self.assertEqual(frappe.db.get_value("User", second, "user_type"), "Website User")
 
 
@@ -473,7 +517,9 @@ class TestNoSessionOnThePhone(GuestAccountCase):
 		self.ask_for_a_code(address)
 
 		with self.assertRaises(frappe.ValidationError):
-			self.as_guest(guest_account.check_code, address, "000000" if self.the_last_code() != "000000" else "111111")
+			self.as_guest(
+				guest_account.check_code, address, "000000" if self.the_last_code() != "000000" else "111111"
+			)
 
 		self.assertIs(frappe.local.login_manager, self.manager)
 
@@ -542,7 +588,9 @@ class TestWhatTheRestaurantRequires(GuestAccountCase):
 	def test_the_page_is_told_the_mode(self):
 		self.set_mode("Mandatory")
 
-		self.assertEqual(self.as_guest(guest_ordering.validate_token, self.token.token)["guest_account_mode"], "Mandatory")
+		self.assertEqual(
+			self.as_guest(guest_ordering.validate_token, self.token.token)["guest_account_mode"], "Mandatory"
+		)
 
 	def test_where_no_code_can_be_mailed_nothing_is_offered_and_nothing_is_required(self):
 		self.set_mode("Mandatory")
@@ -614,7 +662,8 @@ class TestWhatTheCustomerHas(GuestAccountCase):
 		account = self.as_guest(guest_ordering.validate_token, self.token.token)["account"]
 
 		self.assertEqual(
-			(account["loyalty_points"], account["loyalty_value"], account["loyalty_program"]), (40, 20.0, program.name)
+			(account["loyalty_points"], account["loyalty_value"], account["loyalty_program"]),
+			(40, 20.0, program.name),
 		)
 
 	def test_a_customer_with_no_programme_has_no_points(self):
@@ -626,13 +675,20 @@ class TestWhatTheCustomerHas(GuestAccountCase):
 
 		account = self.as_guest(guest_ordering.validate_token, self.token.token)["account"]
 
-		self.assertEqual((account["loyalty_points"], account["loyalty_value"], account["loyalty_program"]), (0, 0, None))
+		self.assertEqual(
+			(account["loyalty_points"], account["loyalty_value"], account["loyalty_program"]), (0, 0, None)
+		)
 
 	def test_the_menu_is_priced_for_the_customer(self):
 		customer = self.a_customer(an_address())
 		self.save([self.line(self.cola)], customer=customer)
 		frappe.get_doc(
-			{"doctype": "Restaurant Card", "card_name": "_Test Account Card", "is_active": 1, "items": [{"item_type": "Item", "item": self.cola}]}
+			{
+				"doctype": "Restaurant Card",
+				"card_name": "_Test Account Card",
+				"is_active": 1,
+				"items": [{"item_type": "Item", "item": self.cola}],
+			}
 		).insert(ignore_permissions=True)
 		frappe.db.set_value("Restaurant", self.a, "guest_menu", "_Test Account Card")
 		frappe.clear_document_cache("Restaurant")
