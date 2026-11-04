@@ -29,6 +29,8 @@ vi.mock("@/composables/useToast", () => ({
 vi.mock("@/stores/posShift", () => ({ usePOSShiftStore: () => ({}) }));
 vi.mock("@/stores/posCart", () => ({ usePOSCartStore: () => ({ currentDraftId: "D-OPEN" }) }));
 vi.mock("@/stores/posDrafts", () => ({ usePOSDraftsStore: () => ({ returnDraftSerials: vi.fn() }) }));
+//// Neoffice — the carts of the till's phones above the held invoices have their own spec (phoneCartsAtTheTill)
+vi.mock("@/components/shop/PhoneCarts.vue", () => ({ default: { template: "<div />" } }));
 
 const { default: DraftInvoicesDialog } = await import("../DraftInvoicesDialog.vue");
 

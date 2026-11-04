@@ -47,3 +47,12 @@ def open_shop_cart(code, pos_profile):
 
 	require_till_user(pos_profile)
 	return till.open_cart(code, pos_profile)
+
+
+@frappe.whitelist()
+def list_shop_carts(pos_profile):
+	"""The phones' carts of the cashier's till still waiting to be sold (the till's drafts list shows them)."""
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user(pos_profile)
+	return till.list_carts(pos_profile)

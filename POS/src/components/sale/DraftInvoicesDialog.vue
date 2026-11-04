@@ -14,6 +14,8 @@
 	<Dialog v-model="show" :options="{ title: __('Draft Invoices'), size: 'lg' }">
 		<template #body-content>
 			<div class="flex flex-col gap-3">
+				<!-- //// Neoffice — scanning in the shop: the carts of the till's phones, above its held invoices (lot 3) -->
+				<PhoneCarts @taken-over="show = false" />
 				<!-- Empty State -->
 				<div v-if="drafts.length === 0" class="text-center py-8">
 					<div
@@ -238,6 +240,8 @@ import { usePOSDraftsStore } from "@/stores/posDrafts";
 import { useRestaurantStore } from "@/stores/restaurant";
 //// Neoffice — and the kitchen status of its order by a label, not by the stored English word (NeoResto lot 1, task 9)
 import { kitchenStatusLabel } from "@/utils/kitchenStatus";
+//// Neoffice — the carts of the till's phones, taken over from here as by their code (scanning in the shop, lot 3)
+import PhoneCarts from "@/components/shop/PhoneCarts.vue";
 import { Button, Dialog, FeatherIcon } from "frappe-ui";
 import { onMounted, ref, watch } from "vue";
 
