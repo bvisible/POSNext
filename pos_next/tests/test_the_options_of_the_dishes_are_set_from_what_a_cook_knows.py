@@ -103,6 +103,8 @@ class TestWhatACookKnows(unittest.TestCase):
 class OptionPlanCase(FrappeTestCase):
 	def setUp(self):
 		super().setUp()
+		# Whatever a test built is rolled back at its end (the next test builds the same families), even when this setUp stops halfway
+		self.addCleanup(frappe.db.rollback)
 		patcher = patch.dict(frappe.conf, FLAG)
 		patcher.start()
 		self.addCleanup(patcher.stop)

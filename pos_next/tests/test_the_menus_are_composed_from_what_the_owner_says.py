@@ -21,7 +21,9 @@ from frappe.tests.roles import as_role
 from frappe.tests.utils import FrappeTestCase
 
 from pos_next.api import restaurant as till
+from pos_next.pos_next.doctype.restaurant.restaurant import Restaurant
 from pos_next.restaurant import menu_plan
+from pos_next.restaurant.settings import default_restaurant
 from pos_next.tests.test_service_families import a_group, an_item, the_root
 
 FLAG = {"neoresto_card_with_nora_active": 1}
@@ -41,13 +43,15 @@ MENU = "_Test MP Menu midi zurichois"
 class MenuPlanCase(FrappeTestCase):
 	def setUp(self):
 		super().setUp()
+		# Whatever a test built is rolled back at its end (the next test builds the same families), even when this setUp stops halfway
+		self.addCleanup(frappe.db.rollback)
 		patcher = patch.dict(frappe.conf, FLAG)
 		patcher.start()
 		self.addCleanup(patcher.stop)
 		self.company = frappe.db.get_value("Company", {}, "name")
-		self.restaurant = frappe.db.get_value("Restaurant", {}, "name")
-		if not self.restaurant:
-			self.skipTest("The site has no restaurant")
+		if not self.company:
+			self.skipTest("The site has no company")
+		self.restaurant = default_restaurant() or self.a_restaurant()
 		self.root = a_group(ROOT, the_root(), is_group=1)
 		self.mains = a_group(MAINS, self.root, family="Main")
 		self.softs = a_group(SOFTS, self.root, family="Drink")
@@ -69,6 +73,17 @@ class MenuPlanCase(FrappeTestCase):
 				],
 			}
 		).insert(ignore_permissions=True)
+
+	def a_restaurant(self):
+		"""A fresh site has none: one of the test's own (its tip provisioning is the doctype's own test, switched off here)."""
+		for method in ("_ensure_tip_account", "_ensure_tip_item"):
+			patcher = patch.object(Restaurant, method)
+			patcher.start()
+			self.addCleanup(patcher.stop)
+		doc = frappe.get_doc(
+			{"doctype": "Restaurant", "restaurant_name": "_Test MP Restaurant", "company": self.company}
+		)
+		return doc.insert(ignore_permissions=True).name
 
 	def menu(self, **more):
 		return {
