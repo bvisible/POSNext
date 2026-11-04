@@ -23042,3 +23042,25 @@ msgstr "«{0}» est exprimé en {1} : indiquez sa quantité et son unité, telle
 #, python-brace-format
 msgid "«{0}» was changed since it was checked"
 msgstr "«{0}» a changé depuis sa vérification"
+
+#: POS/src/composables/useShopCart.js:101
+#: pos_next/public/pos/assets/POSSale-CxcsUU6K.js:17
+msgid "A seller checks an article of this cart before it is sold."
+msgstr "Le vendeur vérifie un article de ce panier avant la vente."
+
+#: POS/src/composables/useShopCart.js:98
+#: pos_next/public/pos/assets/POSSale-CxcsUU6K.js:17
+#, python-brace-format
+msgid "Cart {0} of a phone taken over."
+msgstr "Panier {0} repris depuis le téléphone."
+
+#: POS/src/composables/useShopCart.js:87
+#: pos_next/public/pos/assets/POSSale-CxcsUU6K.js:17
+msgid "Empty the cart before taking over the cart of a phone."
+msgstr "Videz le panier en cours avant de reprendre celui d'un téléphone."
+
+#: POS/src/composables/useShopCart.js:57
+#: pos_next/public/pos/assets/POSSale-CxcsUU6K.js:17
+#, python-brace-format
+msgid "The phone said {0}, the till {1}: an offer changed."
+msgstr "Le téléphone indiquait {0}, la caisse affiche {1} : une offre a changé."
