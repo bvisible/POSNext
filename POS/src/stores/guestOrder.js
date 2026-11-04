@@ -352,8 +352,9 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 			const ask = () =>
 				guestFetch("pos_next.api.guest_ordering.confirm_guest_payment", { token: token.value, amount, tip })
 			let result = await ask()
-			// //// Neoffice — a takeaway order is recorded only once the payment provider has confirmed the money, which can come a few seconds after the
-			// //// browser's return: ask again for a minute before saying so (neoffice-maintenance#2132)
+			// //// Neoffice — a payment is recorded only once the payment provider has confirmed the money, which can come a few seconds after the
+			// //// browser's return: ask again for a minute before saying so (a takeaway order, neoffice-maintenance#2132; a table's, #1973). The amount
+			// //// and the tip sent are not read by the server any more: it books what the provider settled
 			for (let attempt = 0; result?.status === "awaiting_payment" && attempt < 20; attempt++) {
 				await new Promise((resolve) => setTimeout(resolve, 3000))
 				result = await ask()

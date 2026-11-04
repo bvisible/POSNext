@@ -341,11 +341,14 @@ class TestAConfirmedPayment(TakeawayCase):
 
 		self.assertEqual([line.kds_status for line in self.lines(invoice)], ["Preparing", "Pending"])
 
-	def test_a_table_payment_is_recorded_as_before_with_no_provider_word_asked(self):
-		# The tables keep what they did (a diner sits in the room): the gate is for the sessions anybody can make
+	def test_a_table_payment_is_the_providers_word_too_and_hands_out_no_pickup_number(self):
+		# A table's payment is booked by what the provider settled as well (maintenance#1973, test_a_guest_payment_is_booked_by_the_provider);
+		# only a takeaway order is given a number to show at pickup
 		self.token = self.a_token()
 		invoice = self.order((self.cola, 1))["invoice"]
 		total = frappe.db.get_value("Sales Invoice", invoice, "grand_total")
+		self.assertEqual(self.confirm(total)["status"], "awaiting_payment")
+		self.the_provider_confirms(invoice)
 
 		answer = self.confirm(total)
 

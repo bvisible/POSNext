@@ -74,6 +74,18 @@ def _get_restaurant_settings(pos_profile=None):
 	return get_restaurant_settings_for_profile(pos_profile)
 
 
+# //// Neoffice — the restaurant's switch closes the order on the server, not only the till's QR button: a code printed or stuck on a table outlives
+# //// the switch, and every phone that scanned it could still send orders to the kitchen.
+def _require_ordering_open(token_doc, settings):
+	"""Refuse a new order where the restaurant of the session takes none from a phone: QR ordering for a table, web takeaway for a takeaway
+	session. Only the order is closed: the menu still shows, and a payment and its return go through."""
+	if token_doc.mode == "takeaway":
+		if not settings.get("enable_web_takeaway"):
+			frappe.throw(_("Takeaway web ordering is not enabled."))
+	elif not settings.get("enable_qr_ordering"):
+		frappe.throw(_("Ordering from the table's QR code is not enabled here."))
+
+
 def _get_active_pos_opening(pos_profile):
 	"""Return the name of the current open POS Opening Entry for a profile."""
 	result = frappe.db.get_value(
@@ -271,7 +283,9 @@ def _build_menu_from_card(card_name, warehouse=None, colors=None):
 					"SELECT SUM(actual_qty) FROM `tabBin` WHERE item_code=%s",
 					ci.item,
 				)[0][0] or 0
-			item_data["actual_qty"] = float(stock_qty)
+			# //// Neoffice — whether the dish is in stock, never how many: the menu is a public page, and the quantity in the warehouse is the
+			# //// business's figure, not the guest's (the page only greys a dish out at zero, GuestMenuView.isOutOfStock)
+			item_data["in_stock"] = flt(stock_qty) > 0
 
 		current_category["menu_items"].append(item_data)
 		counted_items.append(item_data)
@@ -356,84 +370,128 @@ def _get_item_product_options(item_code):
 	return result
 
 
-def _apply_pricing_rules_to_items(invoice_doc, items):
-	"""Apply pricing rules server-side so the guest sees discounted prices.
+# //// Neoffice — the till's offers (Pricing Rules, promotional schemes) on what a guest is shown and pays (maintenance#2077). `apply_offers` is the
+# //// till's calculation and refused the guest (« Guest has no access to Sales Invoice »), whatever `ignore_permissions` said: no discount ever showed on
+# //// the QR page, and every menu wrote two rows to the Error Log. It is a calculation over lines the server built (the card's dishes, the draft's rows),
+# //// so it runs as the system. A guest's draft keeps the card's prices, because the till reloads a table taking each line's `rate` as its catalogue
+# //// price and applies its offers on it (composables/useInvoice.js, replaceAllItems): a discounted rate there was discounted twice. The discount is
+# //// shown, and written on the lines only when the guest's phone pays the whole order (_write_the_offers).
+def _sells_with_offers():
+	"""Whether the site has an offer a till could apply: most have none, and their menu is not priced again for nothing."""
+	return bool(
+		frappe.db.exists("Pricing Rule", {"disable": 0, "selling": 1, "coupon_code_based": 0})
+	)
 
-	The POS frontend calculates discounts dynamically via apply_offers() on every
-	load, but those discounts are NOT persisted in the draft invoice. The guest
-	reads from the draft and therefore sees undiscounted prices. This helper
-	calls the same pricing engine to enrich items with discount info.
-	"""
-	if not items or not invoice_doc.pos_profile:
-		return items
 
-	# Only apply to draft invoices (submitted invoices have final prices)
-	if invoice_doc.docstatus == 1:
-		return items
-
-	# Guest user has no permission to read Pricing Rules — elevate temporarily
-	original_ignore = frappe.flags.ignore_permissions
-	frappe.flags.ignore_permissions = True
+def _offers_on(pos_profile, customer, lines, posting_date=None):
+	"""The till's offers on `lines` ([{item_code, item_name, qty, price}]), in their order: None for a line without one, else
+	{"rate": the unit price after the offer, "discount_percentage", "pricing_rules"}. Never raises: a failure is logged and gives no discount.
+	A rule that sets a rate (`Rate`) is said as the percentage it takes off the line's price, the form the line and the page carry."""
+	if not lines or not pos_profile or not _sells_with_offers():
+		return [None] * len(lines)
 	queued = _messages_queued()
-
 	try:
 		from pos_next.api.invoices import apply_offers
 
-		# Build a minimal invoice payload matching what the POS frontend sends
+		profile = frappe.get_cached_doc("POS Profile", pos_profile)
 		invoice_data = {
 			"doctype": "Sales Invoice",
-			"name": invoice_doc.name,
-			"pos_profile": invoice_doc.pos_profile,
-			"customer": invoice_doc.customer,
-			"currency": invoice_doc.currency,
-			"posting_date": str(invoice_doc.posting_date or invoice_doc.creation),
+			"pos_profile": pos_profile,
+			"customer": customer
+			or profile.customer
+			or frappe.db.get_single_value("Selling Settings", "customer")
+			or "Guest",
+			"currency": profile.currency or frappe.defaults.get_global_default("currency"),
 			"is_pos": 1,
 			"items": [
 				{
-					"item_code": item.item_code,
-					"item_name": item.item_name,
-					"qty": flt(item.qty),
-					# rate in the draft = catalogue price (discounts not persisted)
-					"price_list_rate": flt(item.rate),
-					"rate": flt(item.rate),
+					"item_code": line["item_code"],
+					"item_name": line.get("item_name"),
+					"qty": flt(line.get("qty") or 1),
+					"price_list_rate": flt(line["price"]),
+					"rate": flt(line["price"]),
 					"discount_percentage": 0,
 					"discount_amount": 0,
 				}
-				for item in items
+				for line in lines
 			],
 		}
-
-		result = apply_offers(invoice_data)
-		if not result or not result.get("items"):
-			return items
-
-		result_items = result["items"]
-
-		# Enrich original items with discount info from pricing engine
-		for i, item in enumerate(items):
-			if i >= len(result_items):
-				break
-			ri = result_items[i]
-			discount_pct = flt(ri.get("discount_percentage") or 0)
-			if discount_pct > 0:
-				original_rate = flt(item.rate)
-				discounted_rate = round(original_rate * (1 - discount_pct / 100), 2)
-				item["price_list_rate"] = original_rate
-				item["discount_percentage"] = discount_pct
-				item["rate"] = discounted_rate
-				item["amount"] = round(discounted_rate * flt(item.qty), 2)
-			else:
-				item["price_list_rate"] = flt(item.rate)
-				item["discount_percentage"] = 0
-
+		if posting_date:
+			invoice_data["posting_date"] = str(posting_date)
+		with _as_the_system():
+			result = apply_offers(invoice_data)
 	except Exception as e:
-		# Non-blocking: if pricing rules fail, guest still sees undiscounted prices
 		_forget_messages_after(queued)
-		frappe.log_error("Guest pricing rules failed", str(e))
-	finally:
-		frappe.flags.ignore_permissions = original_ignore
+		frappe.log_error("Guest offers failed", str(e))
+		return [None] * len(lines)
 
-	return items
+	priced = (result or {}).get("items") or []
+	offers = []
+	for index, line in enumerate(lines):
+		offer = None
+		row = priced[index] if index < len(priced) else {}
+		price = flt(line["price"])
+		percentage = flt(row.get("discount_percentage"))
+		rate = flt(flt(row.get("price_list_rate") or price) * (1 - percentage / 100), 2)
+		if price > 0 and rate < price:
+			offer = {
+				"rate": rate,
+				"discount_percentage": flt((1 - rate / price) * 100, 4),
+				"pricing_rules": row.get("pricing_rules") or "",
+			}
+		offers.append(offer)
+	return offers
+
+
+def _tip_item(token_doc):
+	"""The item a tip is a line of, in the restaurant of the session (None where tips are not set up)."""
+	settings = _get_restaurant_settings(token_doc.pos_profile)
+	return (settings.get("tip_item") if settings else None) or None
+
+
+def _write_the_offers(invoice_doc, tip_item=None):
+	"""Write the till's offers on the lines of a draft the guest pays, and work its totals out again: what the guest's page shows as the order's
+	total, and what the phone charges. The lines are the draft's priced ones, the tip apart, that the till has not discounted itself (a line the till
+	discounted, or an offered one, is the till's word). In memory: the caller saves, or does not. Returns the draft."""
+	rows = [
+		row
+		for row in invoice_doc.items
+		if row.item_code != tip_item and flt(row.rate) > 0 and not flt(row.discount_percentage)
+	]
+	offers = _offers_on(
+		invoice_doc.pos_profile,
+		invoice_doc.customer,
+		[{"item_code": r.item_code, "item_name": r.item_name, "qty": r.qty, "price": r.rate} for r in rows],
+		invoice_doc.posting_date,
+	)
+	for row, offer in zip(rows, offers, strict=True):
+		if offer:
+			row.price_list_rate = flt(row.rate)
+			row.discount_percentage = offer["discount_percentage"]
+			row.discount_amount = flt(row.rate) - offer["rate"]
+			row.rate = offer["rate"]
+			row.pricing_rules = offer["pricing_rules"]
+	with _as_the_system():
+		invoice_doc.run_method("calculate_taxes_and_totals")
+	return invoice_doc
+
+
+def _still_owed(invoice_doc, tip_item):
+	"""What the guest's order still owes, the till's offers taken off: the total of the order as the page shows it, less what was paid for it. A
+	tip is on both sides (its line is in the total, its money in what was paid), so it owes nothing. Worked out on a copy: the draft is not touched."""
+	if invoice_doc.docstatus != 0:
+		return 0
+	priced = _write_the_offers(frappe.get_doc("Sales Invoice", invoice_doc.name), tip_item)
+	return flt(flt(priced.grand_total) - flt(priced.paid_amount), 2)
+
+
+def _without_repricing(invoice_doc):
+	"""Have the next save of the draft keep its lines' prices and discounts as they are written, like the till's (pos_next.api.invoices)."""
+	from pos_next.api.invoices import _patch_set_missing_item_details
+
+	invoice_doc.ignore_pricing_rule = 1
+	invoice_doc.flags.ignore_pricing_rule = True
+	_patch_set_missing_item_details(invoice_doc)
 
 
 # //// Neoffice — a pricing attempt that fails as the guest leaves its messages in the answer (« Guest has no access to Sales Invoice », « Error
@@ -451,72 +509,22 @@ def _forget_messages_after(count):
 
 
 def _apply_pricing_rules_to_menu(pos_profile, categories, customer=None):
-	"""Annotate menu items with discount info from pricing rules.
-
-	Calls apply_offers with the POS profile's default customer so the guest
-	menu shows discounted prices and discount badges before ordering.
-	//// Neoffice — with the customer the guest signed in as (or the till put on the table) when there is one: the rules of that customer's group apply (Daniel, 02.11.2026).
+	"""Annotate the menu's dishes with the till's offers: `discount_percentage` and `discounted_price`, which the page shows next to the price.
+	//// Neoffice — for the customer the guest signed in as (or the till put on the table) when there is one: the rules of that customer's group apply (Daniel, 02.11.2026).
+	The dishes are priced in one call, one of each: a rule on a quantity bought together may show here on a dish one serving of which does not
+	get it. What the guest pays is the order's own lines, priced with their quantities (get_order_status, _write_the_offers).
 	"""
-	# Collect all menu items across categories
-	all_items = []
-	item_refs = []  # (cat_index, item_index) for mapping back
-	for ci, cat in enumerate(categories):
-		for ii, item in enumerate(cat.get("menu_items") or []):
-			all_items.append(item)
-			item_refs.append((ci, ii))
-
-	if not all_items:
-		return
-
-	original_ignore = frappe.flags.ignore_permissions
-	frappe.flags.ignore_permissions = True
-	queued = _messages_queued()
-	try:
-		from pos_next.api.invoices import apply_offers
-
-		profile = frappe.get_cached_doc("POS Profile", pos_profile)
-		customer = customer or profile.customer or frappe.db.get_single_value("Selling Settings", "customer") or "Guest"
-
-		invoice_data = {
-			"doctype": "Sales Invoice",
-			"pos_profile": pos_profile,
-			"customer": customer,
-			"currency": profile.currency or frappe.defaults.get_global_default("currency"),
-			"is_pos": 1,
-			"items": [
-				{
-					"item_code": item.get("item_code"),
-					"item_name": item.get("item_name"),
-					"qty": 1,
-					"price_list_rate": float(item.get("price") or 0),
-					"rate": float(item.get("price") or 0),
-					"discount_percentage": 0,
-					"discount_amount": 0,
-				}
-				for item in all_items
-			],
-		}
-
-		result = apply_offers(invoice_data)
-		if not result or not result.get("items"):
-			return
-
-		result_items = result["items"]
-		for i, (ci, ii) in enumerate(item_refs):
-			if i >= len(result_items):
-				break
-			ri = result_items[i]
-			discount_pct = flt(ri.get("discount_percentage") or 0)
-			if discount_pct > 0:
-				original_price = float(categories[ci]["menu_items"][ii].get("price") or 0)
-				discounted_price = round(original_price * (1 - discount_pct / 100), 2)
-				categories[ci]["menu_items"][ii]["discount_percentage"] = discount_pct
-				categories[ci]["menu_items"][ii]["discounted_price"] = discounted_price
-	except Exception as e:
-		_forget_messages_after(queued)
-		frappe.log_error("Guest menu pricing rules failed", str(e))
-	finally:
-		frappe.flags.ignore_permissions = original_ignore
+	dishes = [dish for category in categories for dish in category.get("menu_items") or []]
+	offers = _offers_on(
+		pos_profile,
+		customer,
+		[{"item_code": d.get("item_code"), "item_name": d.get("item_name"), "qty": 1, "price": d.get("price") or 0} for d in dishes],
+	)
+	for dish, offer in zip(dishes, offers, strict=True):
+		if offer:
+			# The page shows it as it is (« -10% »): rounded, the line keeps the exact one
+			dish["discount_percentage"] = flt(offer["discount_percentage"], 1)
+			dish["discounted_price"] = offer["rate"]
 
 
 def _broadcast_order_update(table_name, event_type, data):
@@ -663,8 +671,9 @@ def get_guest_menu(token):
 
 # //// Neoffice — the menu of a token, built once for the page that shows it (get_guest_menu) and for the order that prices its lines by it
 # //// (submit_guest_order, maintenance#2198)
-def _guest_menu_categories(token_doc, settings):
-	"""(card names, categories) of the menu the page of `token_doc` is served: its cards, its families' colours, its customer's prices."""
+def _guest_menu_categories(token_doc, settings, offers=True):
+	"""(card names, categories) of the menu the page of `token_doc` is served: its cards, its families' colours, its customer's prices, and
+	with `offers` the till's offers on each dish (an order prices its lines by the card alone, see _rate_on_the_menu)."""
 	# Resolve warehouse from POS Profile for stock display
 	warehouse = None
 	if token_doc.pos_profile:
@@ -695,7 +704,7 @@ def _guest_menu_categories(token_doc, settings):
 		all_categories.extend(result.get("categories", []))
 
 	# Apply pricing rules to menu items so guest sees discounts before ordering
-	if token_doc.pos_profile:
+	if offers and token_doc.pos_profile:
 		# //// Neoffice — priced for the customer of the session when it has one
 		account = _account_of(token_doc)
 		_apply_pricing_rules_to_menu(
@@ -707,7 +716,8 @@ def _guest_menu_categories(token_doc, settings):
 
 # //// Neoffice — the price of a guest's line is the menu's, read on the server, never the one the page sends (maintenance#2198). The page computes
 # //// it in the browser (the dish's price, or its discounted price, plus the price of its options) and the server wrote it as sent: whoever held
-# //// the token of a table could order a dish at 0.05, and pay that much (#1973).
+# //// the token of a table could order a dish at 0.05, and pay that much (#1973). The line takes the card's price, the offer is not on it: the
+# //// till applies its offers on a table's lines when it reloads them, and a discounted line would be discounted twice (maintenance#2077).
 def _dishes_of(categories):
 	"""{item_code: dish} of a menu, each dish as it first shows (the page lists the dishes in that order)."""
 	dishes = {}
@@ -718,14 +728,13 @@ def _dishes_of(categories):
 
 
 def _rate_on_the_menu(item, dishes):
-	"""The rate of a guest's line as the menu prices it, the way the page adds it up (stores/guestOrder.js, addToCart): the dish's discounted price,
-	else its price, plus the price of each option the line names. A dish the menu does not offer, or an option the dish does not have, is refused."""
+	"""The rate of a guest's line as the card prices it: the dish's price plus the price of each option the line names (the page adds the offer
+	to it, stores/guestOrder.js, addToCart; the draft does not). A dish the menu does not offer, or an option the dish does not have, is refused."""
 	code = item.get("item_code")
 	dish = dishes.get(code)
 	if not dish:
 		frappe.throw(_("{0} is not on the menu").format(frappe.db.get_value("Item", code, "item_name") or code))
-	discounted = dish.get("discounted_price")
-	rate = flt(dish.get("price") if discounted is None else discounted)
+	rate = flt(dish.get("price"))
 	offered = {
 		(group.get("group_name"), option.get("option_name")): flt(option.get("price_adjustment"))
 		for group in dish.get("product_options") or []
@@ -777,6 +786,7 @@ def submit_guest_order(token, items):
 		frappe.throw(_("No items provided."))
 
 	settings = _get_restaurant_settings(token_doc.pos_profile)
+	_require_ordering_open(token_doc, settings)
 	validation_mode = settings.qr_order_validation or "Direct to Kitchen"
 	# //// Neoffice — a web takeaway order is paid before the kitchen starts it: its lines wait (held, like a dish the waiter keeps back) until the payment is
 	# //// proven, then `_release_paid_takeaway` sends them (neoffice-maintenance#2132)
@@ -785,7 +795,7 @@ def submit_guest_order(token, items):
 	# //// Neoffice — a dish the kitchen has no portion of left is refused, whatever the guest's page still shows (NeoResto lot 1, Daniel, 02.11.2026); before anything is created
 	_refuse_what_is_sold_out(items)
 	# //// Neoffice — every line priced by the menu the page is served, before anything is created (maintenance#2198)
-	_cards, menu = _guest_menu_categories(token_doc, settings)
+	_cards, menu = _guest_menu_categories(token_doc, settings, offers=False)
 	dishes = _dishes_of(menu)
 	rates = {index: _rate_on_the_menu(item, dishes) for index, item in enumerate(items) if item.get("item_code")}
 	quantities = {index: _quantity_of(items[index]) for index in rates}
@@ -881,6 +891,10 @@ def submit_guest_order(token, items):
 				row.posa_item_modifiers = mod_str
 
 	invoice_doc.flags.ignore_permissions = True
+	# //// Neoffice — saved as the till saves a table's order (pos_next.api.invoices): ERPNext does not price the lines again by its Pricing Rules (it
+	# //// would take the price list's price, not the card's, and the till would then apply its offers on top), and a discount the till wrote on its
+	# //// own lines is kept (maintenance#2077)
+	_without_repricing(invoice_doc)
 	with _as_the_system():
 		if is_new_invoice:
 			invoice_doc.insert()
@@ -966,7 +980,7 @@ def get_order_status(token):
 	if not invoice_doc:
 		return {"invoice": None, "items": [], "grand_total": 0, "net_total": 0, "account": _account_of(token_doc)}
 
-	item_fields = ["item_code", "item_name", "qty", "rate", "amount"]
+	item_fields = ["name", "item_code", "item_name", "qty", "rate", "amount"]
 	if frappe.db.has_column("Sales Invoice Item", "kds_status"):
 		item_fields.append("kds_status")
 	if frappe.db.has_column("Sales Invoice Item", "kds_batch"):
@@ -984,11 +998,16 @@ def get_order_status(token):
 		"Sales Invoice Item",
 		filters={"parent": invoice_doc.name},
 		fields=item_fields,
+		order_by="idx asc",
 	)
 
 	# Get tip item code to exclude from order items display
-	settings = _get_restaurant_settings(token_doc.pos_profile)
-	tip_item_code = getattr(settings, "tip_item", None) or settings.get("tip_item") if settings else None
+	tip_item_code = _tip_item(token_doc)
+
+	# //// Neoffice — the order as the guest pays it: a draft with the till's offers written on its lines, in memory (the draft keeps the card's
+	# //// prices, maintenance#2077); a submitted invoice is what was paid. Its total is the one the phone charges (_still_owed).
+	priced = _write_the_offers(frappe.get_doc("Sales Invoice", invoice_doc.name), tip_item_code) if invoice_doc.docstatus == 0 else invoice_doc
+	priced_rows = {row.name: row for row in priced.items}
 
 	# Separate order items from tip items
 	order_items = []
@@ -996,27 +1015,24 @@ def get_order_status(token):
 	for item in all_items:
 		if tip_item_code and item.item_code == tip_item_code:
 			tip_total += flt(item.amount)
-		else:
-			order_items.append(item)
+			continue
+		row = priced_rows.get(item.name)
+		item["price_list_rate"] = flt(item.rate)
+		item["discount_percentage"] = 0
+		if row is not None and flt(row.rate) < flt(item.rate):
+			item["discount_percentage"] = flt(row.discount_percentage, 1)
+			item["rate"] = flt(row.rate)
+			item["amount"] = flt(row.amount)
+		item.pop("name", None)
+		order_items.append(item)
 
-	# Apply pricing rules so guest sees discounted prices
-	order_items = _apply_pricing_rules_to_items(invoice_doc, order_items)
 	# « Offert » in the guest's language (the request's): the till's translations are not open to a guest
 	for item in order_items:
 		if item.get(OFFERED):
 			item["offered_label"] = offered_label()
 
-	# Calculate total discount from pricing rules and subtract from invoice grand_total
-	# (taxes may be included in item rates, so we can't just sum items + taxes)
-	invoice_grand_total = flt(invoice_doc.grand_total) - tip_total
-	discount_total = 0
-	for item in order_items:
-		plr = flt(item.get("price_list_rate") or 0)
-		rate = flt(item.get("rate") or 0)
-		if plr > rate:
-			discount_total += (plr - rate) * flt(item.get("qty") or 1)
-	order_grand_total = invoice_grand_total - round(discount_total, 2)
-	tax_amount = flt(invoice_doc.total_taxes_and_charges) if hasattr(invoice_doc, "total_taxes_and_charges") else 0
+	order_grand_total = flt(priced.grand_total) - tip_total
+	tax_amount = flt(priced.total_taxes_and_charges)
 
 	# paid_amount for the guest excludes tips (tips are voluntary extras, not shared debt)
 	paid_amount = flt(invoice_doc.paid_amount) if hasattr(invoice_doc, "paid_amount") else 0
@@ -1026,7 +1042,7 @@ def get_order_status(token):
 		"invoice": invoice_doc.name,
 		"items": order_items,
 		"grand_total": order_grand_total,
-		"net_total": flt(invoice_doc.net_total),
+		"net_total": flt(priced.net_total),
 		"paid_amount": paid_order_amount,
 		"tip_total": tip_total,
 		"total_taxes_and_charges": tax_amount,
@@ -1221,12 +1237,20 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 
 	amount = flt(amount)
 	tip = flt(tip)
+	# //// Neoffice — what the order still owes, the till's offers taken off as the page shows them (maintenance#2077)
+	owed = _still_owed(invoice_doc, _tip_item(token_doc))
 	# //// Neoffice — a takeaway order is paid whole, for what the server says it still owes (no split, no tip: the page cannot choose to pay less; #2132)
 	if token_doc.mode == "takeaway":
 		tip = 0
-		amount = flt(invoice_doc.grand_total) - flt(invoice_doc.paid_amount)
+		amount = owed
 	if amount <= 0:
 		frappe.throw(_("Payment amount must be greater than zero."))
+	# //// Neoffice — a table pays the part of the order it wants, and a tip on top: never a negative tip, never more for the order than it still owes
+	# //// (maintenance#1973; what is booked is what the provider settles, but an amount the order cannot take is not sent to be charged)
+	if tip < 0 or tip >= amount:
+		frappe.throw(_("The tip cannot be negative, nor the whole payment."))
+	if flt(amount - tip, 2) > owed + 0.01:
+		frappe.throw(_("This payment is more than the order still owes."))
 
 	currency = invoice_doc.currency or frappe.defaults.get_global_default("currency")
 
@@ -1275,6 +1299,8 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 				"line_items": line_items,
 				"token": token,
 				"tip": tip,
+				# //// Neoffice — the mode of payment the `payments` app books the settled money under on the order (reconcile_payment_intent)
+				"mode_of_payment": _wallee_mode_of_payment(),
 				"success_url": success_url or None,
 				"failed_url": failed_url or None,
 			},
@@ -1326,12 +1352,27 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 	return result
 
 
+def _wallee_mode_of_payment():
+	"""The Mode of Payment a guest's card payment is booked under: the one of the enabled Wallee provider's settings."""
+	# After the wallee_integration → payments merger (ADR-005) the Wallee Settings singleton became a per-provider DocType (it now carries a
+	# `provider` link), so it is looked up by provider instead of get_single_value.
+	wallee_provider = _resolve_wallee_provider(required=False)
+	wallee_mop = None
+	if wallee_provider:
+		wallee_mop = frappe.db.get_value("Wallee Settings", {"provider": wallee_provider}, "pos_mode_of_payment")
+	# The name of the card Mode of Payment record our (French-language) instances carry: a record name to look up, not a text to translate
+	return wallee_mop or "Carte de crédit"
+
+
 @frappe.whitelist(allow_guest=True)
-def confirm_guest_payment(token, amount, tip=0):
+def confirm_guest_payment(token, amount=None, tip=0):
 	"""
-	Confirm a guest payment after Wallee redirect success.
-	Records the payment via Frappe ORM (same as POS).
-	If fully paid, submits the invoice (creates GL entries).
+	Record on a table's order the payments the provider settled for it, when the guest comes back from the payment page; submit the order once
+	it is paid.
+	//// Neoffice — the provider's word, never the page's (maintenance#1973): the page sends the amount and the tip it says it paid, and the order was
+	//// booked, submitted and its table marked paid on that word, without asking the provider whether anything was charged. `amount` and `tip` are
+	//// ignored now: each Payment Intent of the order that the provider settled is booked once, for what it settled (_book_the_payment), and the
+	//// answer is {"status": "awaiting_payment"} while the payment the guest came back from is not settled yet (the page asks again for a minute).
 	"""
 	token_doc = _require_valid_token(token)
 	invoice_doc = _get_or_create_invoice(token_doc)
@@ -1343,173 +1384,126 @@ def confirm_guest_payment(token, amount, tip=0):
 	if token_doc.mode == "takeaway":
 		return _settle_takeaway_order(invoice_doc)
 
-	amount = flt(amount)
-	tip = flt(tip)
-	order_payment = flt(amount) - flt(tip)
+	tip_item = _tip_item(token_doc)
+	intents = _intents_of(invoice_doc.name)
+	for intent in intents:
+		if intent.status == "succeeded":
+			_book_the_payment(token_doc, invoice_doc.name, intent, tip_item)
+	frappe.db.commit()
 
-	try:
-		# Get mode of payment from the per-provider Wallee Settings record.
-		# After the wallee_integration → payments merger (ADR-005) the
-		# Wallee Settings singleton became a per-provider DocType (it now
-		# carries a `provider` link), so we look it up by provider instead of
-		# get_single_value.
-		wallee_provider = _resolve_wallee_provider(required=False)
-		wallee_mop = None
-		if wallee_provider:
-			wallee_mop = frappe.db.get_value(
-				"Wallee Settings", {"provider": wallee_provider}, "pos_mode_of_payment"
-			)
-		if not wallee_mop:
-			# The name of the card Mode of Payment record our (French-language) instances carry: a record
-			# name to look up, not a text to translate
-			wallee_mop = "Carte de crédit"
+	# The payment the guest came back from is the order's newest: until the provider settles it, nothing is said paid
+	if not intents or intents[-1].status in ("requires_action", "processing"):
+		return {"status": "awaiting_payment"}
+	if intents[-1].status != "succeeded":
+		return {"status": "failed"}
 
-		# Prevent duplicate confirmation: check if a Restaurant Tip or payment
-		# with the same exact amount was recorded in the last 60 seconds
-		# (catches double-fire from frontend redirect)
-		recent_dup = frappe.db.sql("""
-			SELECT name FROM `tabRestaurant Tip`
-			WHERE sales_invoice=%s AND amount=%s
-			AND TIMESTAMPDIFF(SECOND, creation, NOW()) < 60
-		""", (invoice_doc.name, flt(amount)))
-		if not recent_dup:
-			# Also check payment rows for the exact order_payment amount
-			recent_dup = frappe.db.sql("""
-				SELECT name FROM `tabSales Invoice Payment`
-				WHERE parent=%s AND mode_of_payment=%s AND ABS(amount - %s) < 0.01
-			""", (invoice_doc.name, wallee_mop, flt(amount)))
-		if recent_dup:
-			current_paid = flt(invoice_doc.paid_amount)
-			return {"status": "already_confirmed", "paid_amount": current_paid, "grand_total": flt(invoice_doc.grand_total)}
+	invoice_doc = frappe.get_doc("Sales Invoice", invoice_doc.name)
+	submitted = False
+	if flt(invoice_doc.grand_total) > 0 and _still_owed(invoice_doc, tip_item) <= 0:
+		_submit_the_paid_order(invoice_doc, tip_item)
+		submitted = True
+		# Table → Paid (guest payment — cashier sees it and decides next step)
+		if token_doc.table and frappe.db.exists("Restaurant Table", token_doc.table):
+			frappe.db.set_value("Restaurant Table", token_doc.table, "status", "Paid")
+		frappe.db.commit()
+		frappe.publish_realtime("table_update")
 
-		# Fallback: also check if payment would exceed total
-		current_paid = flt(invoice_doc.paid_amount)
-		grand_total = flt(invoice_doc.grand_total)
-		if grand_total > 0 and current_paid + order_payment > grand_total * 1.01:
-			return {"status": "already_paid", "paid_amount": current_paid, "grand_total": grand_total}
+	invoice_doc = frappe.get_doc("Sales Invoice", invoice_doc.name)
+	if token_doc.table:
+		_publish_to_the_tills("guest_payment_received", token_doc.table, {
+			"table": token_doc.table,
+			"invoice": invoice_doc.name,
+			"paid_amount": flt(invoice_doc.paid_amount),
+			"grand_total": flt(invoice_doc.grand_total),
+			"submitted": submitted,
+		})
 
-		# Reload full invoice via ORM (not stale cached version)
-		invoice_doc = frappe.get_doc("Sales Invoice", invoice_doc.name)
+	return {
+		"status": "success",
+		"paid_amount": flt(invoice_doc.paid_amount),
+		"grand_total": flt(invoice_doc.grand_total),
+		"submitted": submitted,
+	}
 
-		# Add TIP item to invoice if tip > 0
-		if flt(tip) > 0:
-			settings = _get_restaurant_settings(token_doc.pos_profile)
-			tip_item_code = getattr(settings, "tip_item", None) or settings.get("tip_item")
-			tip_account = getattr(settings, "tip_account", None) or settings.get("tip_account")
-			if tip_item_code:
+
+def _intents_of(invoice_name):
+	"""The Payment Intents of an order, oldest first."""
+	if not frappe.db.table_exists("Payment Intent"):
+		return []
+	return frappe.get_all(
+		"Payment Intent",
+		filters={"reference_doctype": "Sales Invoice", "reference_name": invoice_name},
+		fields=["name", "status", "amount", "metadata_json"],
+		order_by="creation asc",
+	)
+
+
+def _book_the_payment(token_doc, invoice_name, intent, tip_item):
+	"""Book on a table's draft one Payment Intent the provider settled, once: its tip (a line of the tip item and a Restaurant Tip that names the
+	intent), then its money (the payment row the `payments` app writes, with the provider's reference: it never writes it twice). The tip is the
+	one the intent was created with, never more than the intent settled. A second call books nothing."""
+	# One booking of an intent at a time: the page asking again, or a second tab, waits here for the first to commit
+	frappe.db.sql("SELECT name FROM `tabPayment Intent` WHERE name=%s FOR UPDATE", intent.name)
+	metadata = frappe.parse_json(intent.metadata_json or "{}") or {}
+	tip = min(max(flt(metadata.get("tip")), 0), flt(intent.amount) / 100)
+	with _as_the_system():
+		if tip > 0 and not frappe.db.exists("Restaurant Tip", {"payment_intent": intent.name}):
+			invoice_doc = frappe.get_doc("Sales Invoice", invoice_name)
+			if tip_item:
 				# Cumulate with existing TIP item if present (e.g. previous partial payment had a tip)
-				existing_tip = None
-				for item in invoice_doc.items:
-					if item.item_code == tip_item_code:
-						existing_tip = item
-						break
+				existing_tip = next((row for row in invoice_doc.items if row.item_code == tip_item), None)
 				if existing_tip:
-					existing_tip.rate = flt(existing_tip.rate) + flt(tip)
+					existing_tip.rate = flt(existing_tip.rate) + tip
 				else:
+					settings = _get_restaurant_settings(token_doc.pos_profile)
 					invoice_doc.append("items", {
-						"item_code": tip_item_code,
+						"item_code": tip_item,
 						"item_name": _("Tip"),
 						"qty": 1,
-						"rate": flt(tip),
-						"income_account": tip_account or None,
+						"rate": tip,
+						"income_account": settings.get("tip_account") or None,
 						"cost_center": invoice_doc.cost_center,
 						"description": _("Gratuity", context="Restaurant tip line"),
 					})
-				# Recalculate totals with tip item
-				invoice_doc.run_method("calculate_taxes_and_totals")
-
-		# Payment amount = order + tip (full Wallee charge)
-		total_payment = flt(amount)
-
-		# Find existing payment row with same mode_of_payment, or create one
-		existing_row = None
-		for row in invoice_doc.payments:
-			if row.mode_of_payment == wallee_mop:
-				existing_row = row
-				break
-
-		if existing_row:
-			existing_row.amount = flt(existing_row.amount) + total_payment
-		else:
-			invoice_doc.append("payments", {
-				"mode_of_payment": wallee_mop,
-				"amount": total_payment,
-			})
-
-		# Remove zero-amount payment rows (e.g. the default cash mode of payment at 0.00)
-		invoice_doc.payments = [p for p in invoice_doc.payments if flt(p.amount) > 0]
-
-		# Recalculate paid_amount
-		new_paid = sum(flt(p.amount) for p in invoice_doc.payments)
-		invoice_doc.paid_amount = new_paid
-
-		# Set payment accounts (same as POS submit flow)
-		from pos_next.api.invoices import _set_payment_accounts
-		_set_payment_accounts(invoice_doc.payments, invoice_doc.company)
-
-		fully_paid = new_paid >= grand_total and grand_total > 0
-
-		if fully_paid:
-			# Submit the invoice (creates GL entries, Payment Entry, etc.)
-			invoice_doc.ignore_pricing_rule = 1
-			invoice_doc.flags.ignore_pricing_rule = True
-			invoice_doc.flags.ignore_permissions = True
-			invoice_doc.flags.ignore_version = True
-			frappe.flags.ignore_account_permission = True
-			with _as_the_system():
+				_without_repricing(invoice_doc)
+				invoice_doc.flags.ignore_permissions = True
+				invoice_doc.flags.ignore_version = True
 				invoice_doc.save()
-				invoice_doc.submit()
-
-			# Table → Paid (guest payment — cashier sees it and decides next step)
-			if token_doc.table and frappe.db.exists("Restaurant Table", token_doc.table):
-				frappe.db.set_value("Restaurant Table", token_doc.table, "status", "Paid")
-			frappe.publish_realtime("table_update")
-		else:
-			# Partial payment — just save the draft
-			invoice_doc.flags.ignore_permissions = True
-			invoice_doc.flags.ignore_version = True
-			with _as_the_system():
-				invoice_doc.save()
-
-		frappe.db.commit()
-
-		# Create Restaurant Tip record (always create if guest sends a tip)
-		if flt(tip) > 0 and frappe.db.exists("DocType", "Restaurant Tip"):
-			try:
+			if frappe.db.exists("DocType", "Restaurant Tip"):
 				frappe.get_doc({
 					"doctype": "Restaurant Tip",
 					"restaurant": _get_restaurant_settings(token_doc.pos_profile).get("name"),
 					"tip_date": frappe.utils.today(),
-					"sales_invoice": invoice_doc.name,
+					"sales_invoice": invoice_name,
 					"restaurant_table": token_doc.table,
 					"server": invoice_doc.owner or "Administrator",
-					"amount": flt(tip),
-					"payment_method": wallee_mop,
+					"amount": tip,
+					"payment_method": metadata.get("mode_of_payment") or _wallee_mode_of_payment(),
+					"payment_intent": intent.name,
 					"status": "Collected",
 				}).insert(ignore_permissions=True)
-				frappe.db.commit()
-			except Exception as tip_err:
-				frappe.log_error("Guest tip record failed", str(tip_err))
 
-		if token_doc.table:
-			_publish_to_the_tills("guest_payment_received", token_doc.table, {
-				"table": token_doc.table,
-				"invoice": invoice_doc.name,
-				"paid_amount": new_paid,
-				"grand_total": grand_total,
-				"submitted": fully_paid,
-			})
+		from payments.api.reconciliation import reconcile_payment_intent
 
-		return {"status": "success", "paid_amount": new_paid, "grand_total": grand_total, "submitted": fully_paid}
+		reconcile_payment_intent(intent.name)
 
-	except Exception as e:
-		import traceback
-		frappe.log_error(
-			"Guest payment confirmation failed",
-			f"Invoice: {invoice_doc.name}, Amount: {amount}\n"
-			f"Error: {str(e)}\n{traceback.format_exc()}"
-		)
-		return {"status": "error"}
+
+def _submit_the_paid_order(invoice_doc, tip_item):
+	"""Submit a guest's order the provider settled in full: the till's offers the page showed written on its lines (maintenance#2077), no payment row
+	at zero (the till's default cash row), the payment accounts set as the till sets them."""
+	from pos_next.api.invoices import _set_payment_accounts
+
+	with _as_the_system():
+		invoice_doc = _write_the_offers(frappe.get_doc("Sales Invoice", invoice_doc.name), tip_item)
+		invoice_doc.payments = [p for p in invoice_doc.payments if flt(p.amount) > 0]
+		_set_payment_accounts(invoice_doc.payments, invoice_doc.company)
+		_without_repricing(invoice_doc)
+		invoice_doc.flags.ignore_permissions = True
+		invoice_doc.flags.ignore_version = True
+		frappe.flags.ignore_account_permission = True
+		invoice_doc.save()
+		invoice_doc.submit()
+	return invoice_doc
 
 
 # //// Neoffice — the payment of a web takeaway order, and what follows it (neoffice-maintenance#2132).
@@ -1525,8 +1519,10 @@ def _succeeded_intents(invoice_name):
 
 
 def _provider_confirmed(invoice_doc):
-	"""Whether the provider has settled the whole order: the intents that succeeded hold at least its total (they are in minor units)."""
-	return sum(cint(intent.amount) for intent in _succeeded_intents(invoice_doc.name)) >= round(flt(invoice_doc.grand_total) * 100) > 0
+	"""Whether the provider has settled the whole order: the intents that succeeded hold at least its total, the till's offers taken off as the page
+	showed them (they are in minor units)."""
+	owed = _write_the_offers(frappe.get_doc("Sales Invoice", invoice_doc.name)).grand_total
+	return sum(cint(intent.amount) for intent in _succeeded_intents(invoice_doc.name)) >= round(flt(owed) * 100) > 0
 
 
 def _settle_takeaway_order(invoice_doc):
@@ -1544,13 +1540,14 @@ def _settle_takeaway_order(invoice_doc):
 			reconcile_payment_intent(intent.name)
 		invoice_doc = frappe.get_doc("Sales Invoice", invoice_doc.name)
 		if invoice_doc.docstatus == 0:
+			# //// Neoffice — the order as it was paid: the till's offers the page showed written on its lines (maintenance#2077)
+			_write_the_offers(invoice_doc)
 			if flt(invoice_doc.paid_amount) < flt(invoice_doc.grand_total):
 				frappe.throw(_("The payment of this order is not recorded yet. Please try again."))
 			from pos_next.api.invoices import _set_payment_accounts
 
 			_set_payment_accounts(invoice_doc.payments, invoice_doc.company)
-			invoice_doc.ignore_pricing_rule = 1
-			invoice_doc.flags.ignore_pricing_rule = True
+			_without_repricing(invoice_doc)
 			invoice_doc.flags.ignore_permissions = True
 			invoice_doc.flags.ignore_version = True
 			frappe.flags.ignore_account_permission = True
@@ -1851,9 +1848,9 @@ def submit_takeaway_order(token, items, customer=None):
 
 	invoice_doc = frappe.get_doc(invoice_data)
 
-	# //// Neoffice — the lines priced by the takeaway card, read on the server, for its customer, never by the page's `rate` (maintenance#2198)
+	# //// Neoffice — the lines priced by the takeaway card, read on the server, never by the page's `rate` (maintenance#2198); the card's price, the
+	# //// till's offers are not written on them (maintenance#2077, see _rate_on_the_menu)
 	takeaway_menu = _build_menu_from_card(card_name)["categories"]
-	_apply_pricing_rules_to_menu(pos_profile, takeaway_menu, customer=customer_name)
 	dishes = _dishes_of(takeaway_menu)
 
 	has_kds = frappe.db.has_column("Sales Invoice Item", "kds_status")
@@ -1873,6 +1870,7 @@ def submit_takeaway_order(token, items, customer=None):
 			row.kds_status = "Pending"
 
 	invoice_doc.flags.ignore_permissions = True
+	_without_repricing(invoice_doc)
 	with _as_the_system():
 		invoice_doc.insert()
 		# A web takeaway order takes its ticket number like the till's (NeoResto lot 1, task 38b)

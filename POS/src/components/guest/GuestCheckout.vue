@@ -456,6 +456,12 @@ onMounted(async () => {
 		window.history.replaceState({}, "", window.location.pathname)
 		// //// Neoffice — a takeaway payment the provider has not confirmed yet is not a success (the store says why); a confirmed one hands the page the number to show at pickup (neoffice-maintenance#2132)
 		if (confirmed?.status === "awaiting_payment") return
+		//// Neoffice — the provider did not settle the payment the guest came back from (failed or cancelled): it is not a success (neoffice-maintenance#1973)
+		if (confirmed?.status === "failed") {
+			paymentState.value = "failed"
+			guestStore.error = __("Payment was cancelled or failed. Please try again.")
+			return
+		}
 		paymentState.value = "success"
 		showPaymentDialog.value = true
 		if (confirmed?.ticket) emit("order-confirmed", confirmed.ticket)

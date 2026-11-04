@@ -409,7 +409,8 @@ function initialOf(item) {
 function isOutOfStock(item) {
 	//// Neoffice — a dish the kitchen counts by portions is sold out when none is left (NeoResto lot 1, Daniel, 02.11.2026); a guest is never offered a dish that is sold out
 	if (item.portions_left != null && item.portions_left <= 0) return true
-	return item.is_stock_item && item.actual_qty != null && item.actual_qty <= 0
+	//// Neoffice — the menu says whether a stock item is in stock, not its quantity (guest_ordering._build_menu_from_card)
+	return Boolean(item.is_stock_item) && item.in_stock === false
 }
 
 function openItemModal(item) {
