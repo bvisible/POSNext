@@ -15,12 +15,17 @@ from contextlib import contextmanager
 
 import frappe
 from frappe import _
-from frappe.utils import cint, now_datetime, flt
+from frappe.rate_limiter import rate_limit
+from frappe.utils import cint, flt, now_datetime
 
 from pos_next.restaurant import guest_account, permissions, portions, scope, service_families, tickets
 from pos_next.restaurant.mode import require_neoresto
 from pos_next.restaurant.settings import get_restaurant_settings_for_profile
 from pos_next.restaurant.text import plain_text
+
+# A takeaway session is kept for the tab (the page asks again only when its session is gone): a visitor starts one or two
+# an hour; the room left above that is for the visitors who share an address (a mobile network, a shop's Wi-Fi)
+TAKEAWAY_SESSIONS_PER_VISITOR = 20
 
 
 # ==========================================
@@ -157,7 +162,8 @@ def _require_accounts_proposed(token_doc):
 def _get_timeslot_cards(settings):
 	"""Find restaurant cards active for the current time slot (Opening Hours logic)."""
 	import calendar
-	from frappe.utils import nowtime, get_time, nowdate, getdate
+
+	from frappe.utils import get_time, getdate, nowdate, nowtime
 
 	if not settings.opening_hours:
 		return []
@@ -1329,7 +1335,7 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 		import traceback
 		frappe.log_error("Guest payment creation failed",
 			f"Amount: {amount}, Tip: {tip}, Invoice: {invoice_doc.name}\n"
-			f"Error: {str(e)}\n{traceback.format_exc()}")
+			f"Error: {e!s}\n{traceback.format_exc()}")
 		frappe.throw(_("Failed to initiate payment. Please try again or contact staff."))
 
 	# Store pending payment info in the transaction result for later confirmation
@@ -1654,7 +1660,7 @@ def create_table_token(table, pos_profile):
 			# included: InnoDB rolls the transaction back when it picks this request as the victim, and going on
 			# would commit what is left of it
 			frappe.db.set_value("Guest Order Token", t_name, "status", "Expired")
-			frappe.log_error("Token expire fallback", f"Token {t_name}: {str(e)}")
+			frappe.log_error("Token expire fallback", f"Token {t_name}: {e!s}")
 
 	# //// Neoffice — a code made by a till that no longer belongs to this restaurant (the shop's till of before the restaurant had its own) finds no restaurant, so no guest menu:
 	# //// its page read « Invalid or expired » on a phone (product owner, 03.11.2026, the QR of a table made on 12.10 and printed since). The code is the one placed on the
@@ -1728,24 +1734,16 @@ def _takeaway_pos_profile(restaurant):
 
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])
+@rate_limit(limit=TAKEAWAY_SESSIONS_PER_VISITOR, seconds=60 * 60)
 def create_takeaway_token():
 	"""
 	Create a Guest Order Token for a takeaway web order (no table binding).
 	Called when a visitor starts a takeaway order.
-	Rate-limited: max 10 tokens per IP per hour.
+	Rate-limited per visitor (IP): TAKEAWAY_SESSIONS_PER_VISITOR an hour. The count used to be the whole site's (50 an
+	hour for every visitor together): one visitor could close takeaway ordering for all (neoffice-maintenance#2220).
 	Not behind the guard of NeoResto (mode.require_neoresto): the takeaway page asks for its token on every mount, the
 	return from a payment included. The restaurant's own web-takeaway setting closes it.
 	"""
-	# Rate limiting: max 10 takeaway tokens per IP per hour
-	client_ip = frappe.local.request_ip
-	one_hour_ago = frappe.utils.add_to_date(now_datetime(), hours=-1)
-	recent_count = frappe.db.count(
-		"Guest Order Token",
-		{"mode": "takeaway", "creation": (">=", one_hour_ago), "owner": "Guest"}
-	)
-	if recent_count >= 50:
-		frappe.throw(_("Too many requests. Please try again later."), frappe.RateLimitExceededError)
-
 	settings = _get_restaurant_settings()
 	if not settings.enable_web_takeaway:
 		frappe.throw(_("Takeaway web ordering is not enabled."))
