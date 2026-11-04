@@ -22663,3 +22663,382 @@ msgstr "Récapitulatif de votre commande"
 msgctxt "Takeaway pickup email"
 msgid "Total paid"
 msgstr "Total payé"
+
+#: pos_next/restaurant/recipe_library.py:75
+msgid "a recipe has an unexpected name"
+msgstr "une recette porte un nom inattendu"
+
+#: pos_next/restaurant/recipe_plan.py:80
+#, python-brace-format
+msgid "A recipe is {name, portions, ingredients, steps}."
+msgstr "Une recette est {name, portions, ingredients, steps}."
+
+#: pos_next/restaurant/recipe_plan.py:420
+msgid "A recipe to write is a line `propose` answered."
+msgstr "Une recette à rédiger est une ligne `propose` à laquelle on a répondu."
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:75
+msgid "A suggestion is only a suggestion: nothing is linked until you press the button."
+msgstr "Une suggestion reste une suggestion : rien n'est lié tant que vous n'avez pas appuyé sur le bouton."
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:35
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:78
+msgid "Add from the free library"
+msgstr "Ajouter depuis la bibliothèque libre"
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:38
+msgid "Add to my recipes"
+msgstr "Ajouter à mes recettes"
+
+#. Label of a Small Text field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:138
+msgid "Allergens"
+msgstr "Allergènes"
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:30
+msgid "Already in your recipes"
+msgstr "Déjà dans vos recettes"
+
+#. Description of the 'Allergens' (Small Text) field in DocType 'Restaurant
+#. Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:139
+msgid "An indication only: always check the products that are used."
+msgstr "Indication donnée à titre indicatif : vérifiez toujours les produits utilisés."
+
+#: pos_next/restaurant/recipes.py:392
+#, python-brace-format
+msgid "An ingredient to link is {idx, item}."
+msgstr "Un ingrédient à lier est {idx, item}."
+
+#. Label of a Data field in DocType 'Restaurant Recipe Ingredient'
+#: pos_next/pos_next/doctype/restaurant_recipe_ingredient/restaurant_recipe_ingredient.json:66
+msgid "Article name"
+msgstr "Nom de l'article"
+
+#: pos_next/restaurant/recipe_library.py:219
+#: pos_next/restaurant/recipe_plan.py:76 pos_next/restaurant/recipe_plan.py:414
+#, python-brace-format
+msgid "At most {0} recipes at a time."
+msgstr "Pas plus de {0} recettes à la fois."
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:148
+msgid "Change the portions"
+msgstr "Modifier les portions"
+
+#. Label of a Select field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:90
+msgid "Cooked and tested"
+msgstr "Cuisinée et testée"
+
+#. Description of the 'Status' (Select) field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:85
+msgid "Draft: still to complete. To review: complete, nobody has read it yet. Validated: read and approved."
+msgstr "Brouillon : reste à compléter. À valider : complète, personne ne l'a encore relue. Validé : relue et approuvée."
+
+#: pos_next/restaurant/recipe_library.py:160
+msgid "Drafts written from public-domain recipes: nobody has read them or cooked them. Check the quantities before relying on them."
+msgstr "Brouillons rédigés à partir de recettes du domaine public : personne ne les a encore relus ni cuisinés. Vérifiez les quantités avant de vous y fier."
+
+#. Label of a Data field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:199
+msgid "Fingerprint of the source"
+msgstr "Empreinte de la source"
+
+#: pos_next/restaurant/recipe_library.py:53
+msgid "its manifest cannot be read"
+msgstr "son manifeste ne peut pas être lu"
+
+#. Label of a Data field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:205
+msgid "Library reference"
+msgstr "Référence de la bibliothèque"
+
+#. Label of a Data field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:187
+msgid "Licence link"
+msgstr "Lien de la licence"
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:109
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:149
+msgid "Link the ingredients to articles"
+msgstr "Lier les ingrédients aux articles"
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:151
+msgid "Mark as validated"
+msgstr "Marquer comme validée"
+
+#: pos_next/restaurant/recipe_plan.py:83 pos_next/restaurant/recipes.py:110
+msgid "Name the recipe."
+msgstr "Nommez la recette."
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:158
+msgid "Nobody has read this recipe yet. Check the quantities and the steps, then mark it as validated."
+msgstr "Personne n'a encore relu cette recette. Vérifiez les quantités et les étapes, puis marquez-la comme validée."
+
+#. Option for the 'Cooked and tested' (Select) field in DocType 'Restaurant
+#. Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:91
+msgid "Not tested"
+msgstr "Non testée"
+
+#: pos_next/restaurant/recipe_plan.py:412
+msgid "Nothing to write."
+msgstr "Rien à rédiger."
+
+#. Description of the 'Steps' (Long Text) field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:128
+msgid "One step per line."
+msgstr "Une étape par ligne."
+
+#: pos_next/restaurant/recipes.py:231
+msgid "Only the quantities of the list change with the portions: the times and the temperatures in the steps do not."
+msgstr "Seules les quantités de la liste changent avec le nombre de portions : les durées et les températures indiquées dans les étapes restent les mêmes."
+
+#. Option for the 'Origin' (Select) field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:151
+msgid "Own"
+msgstr "Maison"
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:24
+msgid "Quantities for another number of portions"
+msgstr "Quantités pour un autre nombre de portions"
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:98
+msgid "Quantity as the article is bought"
+msgstr "Quantité telle que vous achetez l'article"
+
+#. Label of a Data field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:47
+msgid "Recipe"
+msgstr "Recette"
+
+#: pos_next/restaurant/neoresto.py:180
+msgid "Recipes"
+msgstr "Recettes"
+
+#: pos_next/restaurant/recipes.py:332
+msgid "Recipes are not set up on this site yet."
+msgstr "Les recettes ne sont pas encore configurées sur ce site."
+
+#. Name of a DocType
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:218
+msgid "Restaurant Recipe"
+msgstr "Recette du restaurant"
+
+#. Name of a DocType
+#: pos_next/pos_next/doctype/restaurant_recipe_ingredient/restaurant_recipe_ingredient.json:74
+msgid "Restaurant Recipe Ingredient"
+msgstr "Ingrédient de recette du restaurant"
+
+#: pos_next/restaurant/recipes.py:122
+#, python-brace-format
+msgid "Row {0}: name the ingredient."
+msgstr "Ligne {0} : nommez l'ingrédient."
+
+#: pos_next/restaurant/recipes.py:124
+#, python-brace-format
+msgid "Row {0}: the quantity cannot be negative."
+msgstr "Ligne {0} : la quantité ne peut pas être négative."
+
+#: pos_next/restaurant/recipes.py:132
+#, python-brace-format
+msgid "Row {0}: «{1}» is already in the list."
+msgstr "Ligne {0} : «{1}» figure déjà dans la liste."
+
+#. Description of the 'Without quantity' (Check) field in DocType 'Restaurant
+#. Recipe Ingredient'
+#: pos_next/pos_next/doctype/restaurant_recipe_ingredient/restaurant_recipe_ingredient.json:42
+msgid "Salt, pepper, oil... nobody gave a quantity on purpose."
+msgstr "Sel, poivre, huile… : aucune quantité n'est indiquée, c'est voulu."
+
+#: pos_next/restaurant/recipes.py:386
+msgid "Say which ingredients to link."
+msgstr "Indiquez les ingrédients à lier."
+
+#: pos_next/restaurant/recipe_plan.py:74
+msgid "Say which recipe to write."
+msgstr "Indiquez la recette à rédiger."
+
+#: pos_next/restaurant/recipe_library.py:216
+msgid "Say which recipes to add."
+msgstr "Indiquez les recettes à ajouter."
+
+#. Description of the 'Family' (Data) field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:59
+msgid "Soups, salads, main dishes... as the restaurant calls them."
+msgstr "Soupes, salades, plats principaux… selon le vocabulaire du restaurant."
+
+#. Label of a Data field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:171
+msgid "Source link"
+msgstr "Lien de la source"
+
+#. Label of a Data field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:159
+msgid "Source title"
+msgstr "Titre de la source"
+
+#. Option for the 'Cooked and tested' (Select) field in DocType 'Restaurant
+#. Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:91
+msgid "Tested"
+msgstr "Testée"
+
+#: pos_next/restaurant/recipe_library.py:78
+#, python-brace-format
+msgid "the file of «{0}» is missing"
+msgstr "le fichier de «{0}» est absent"
+
+#: pos_next/restaurant/recipe_library.py:46
+#, python-brace-format
+msgid "The free recipe library is not intact: {0}."
+msgstr "La bibliothèque libre de recettes n'est pas intacte : {0}."
+
+#: pos_next/restaurant/recipes.py:114 pos_next/restaurant/recipes.py:198
+#, python-brace-format
+msgid "The portions are a number between 1 and {0}."
+msgstr "Les portions sont un nombre compris entre 1 et {0}."
+
+#. Description of the 'Portions' (Int) field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:101
+msgid "The quantities below are for this number of portions."
+msgstr "Les quantités ci-dessous correspondent à ce nombre de portions."
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:99
+#, python-brace-format
+msgid "The source says {0} {1}"
+msgstr "La source indique {0} {1}"
+
+#. Description of the 'Unit to convert' (Check) field in DocType 'Restaurant
+#. Recipe Ingredient'
+#: pos_next/pos_next/doctype/restaurant_recipe_ingredient/restaurant_recipe_ingredient.json:50
+msgid "The unit comes from a source that is not metric (cup, ounce...): it is converted when the ingredient is linked to an article."
+msgstr "L'unité provient d'une source qui n'est pas métrique (tasse, once…) : elle est convertie lorsque l'ingrédient est lié à un article."
+
+#: pos_next/restaurant/recipes.py:334 pos_next/restaurant/recipes.py:396
+#, python-brace-format
+msgid "There is no article named «{0}»."
+msgstr "Il n'existe aucun article nommé «{0}»."
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:66
+msgid "There is no ingredient to link."
+msgstr "Il n'y a aucun ingrédient à lier."
+
+#: pos_next/restaurant/recipes.py:194 pos_next/restaurant/recipes.py:338
+#: pos_next/restaurant/recipes.py:364
+#, python-brace-format
+msgid "There is no recipe named «{0}»."
+msgstr "Il n'existe aucune recette nommée «{0}»."
+
+#: pos_next/restaurant/recipe_library.py:60
+#, python-brace-format
+msgid "There is no recipe «{0}» in the free library."
+msgstr "Il n'existe aucune recette «{0}» dans la bibliothèque libre."
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:44
+msgid "Tick the recipes to add."
+msgstr "Cochez les recettes à ajouter."
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:15
+msgid "To convert"
+msgstr "À convertir"
+
+#. Label of a Check field in DocType 'Restaurant Recipe Ingredient'
+#: pos_next/pos_next/doctype/restaurant_recipe_ingredient/restaurant_recipe_ingredient.json:47
+msgid "Unit to convert"
+msgstr "Unité à convertir"
+
+#: pos_next/restaurant/recipes.py:140
+#, python-brace-format
+msgid "Validated needs a quantity for every ingredient (or «without quantity»): {0}."
+msgstr "La validation exige une quantité pour chaque ingrédient (ou «Sans quantité») : {0}."
+
+#: pos_next/restaurant/recipes.py:145
+msgid "Validated needs ingredients and steps."
+msgstr "La validation exige des ingrédients et des étapes."
+
+#. Label of a Long Text field in DocType 'Restaurant Recipe'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.json:212
+msgid "What was changed"
+msgstr "Ce qui a été modifié"
+
+#: pos_next/restaurant/recipe_plan.py:432
+#, python-brace-format
+msgid "Which dish is «{0}»? Choose one first."
+msgstr "Quel plat est «{0}» ? Choisissez-en un d'abord."
+
+#. Label of a Check field in DocType 'Restaurant Recipe Ingredient'
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:13
+#: pos_next/pos_next/doctype/restaurant_recipe_ingredient/restaurant_recipe_ingredient.json:39
+msgid "Without quantity"
+msgstr "Sans quantité"
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe.js:72
+#, python-brace-format
+msgid "{0} of {1} ingredients are linked."
+msgstr "{0} ingrédients sur {1} sont liés."
+
+#: pos_next/pos_next/doctype/restaurant_recipe/restaurant_recipe_list.js:54
+#, python-brace-format
+msgid "{0} recipes added, to review."
+msgstr "{0} recettes ajoutées, à valider."
+
+#: pos_next/restaurant/recipe_plan.py:67
+#, python-brace-format
+msgid "{0}: a number between {1} and {2}."
+msgstr "{0} : un nombre compris entre {1} et {2}."
+
+#: pos_next/restaurant/recipe_plan.py:53
+#, python-brace-format
+msgid "{0}: a quantity is a number (250), not «{1}»."
+msgstr "{0} : une quantité est un nombre (250), et non «{1}»."
+
+#: pos_next/restaurant/recipe_plan.py:55
+#, python-brace-format
+msgid "{0}: a quantity is a number above zero."
+msgstr "{0} : une quantité est un nombre supérieur à zéro."
+
+#: pos_next/restaurant/recipe_plan.py:65
+#, python-brace-format
+msgid "{0}: a whole number is expected."
+msgstr "{0} : un nombre entier est attendu."
+
+#: pos_next/restaurant/recipe_plan.py:94
+#, python-brace-format
+msgid "{0}: an ingredient is {name, qty, unit}."
+msgstr "{0} : un ingrédient est {name, qty, unit}."
+
+#: pos_next/restaurant/recipe_plan.py:88
+#, python-brace-format
+msgid "{0}: the ingredients are a list of at most {1}."
+msgstr "{0} : les ingrédients forment une liste de {1} éléments au plus."
+
+#: pos_next/restaurant/recipe_plan.py:110
+#, python-brace-format
+msgid "{0}: the steps are a list of at most {1}."
+msgstr "{0} : les étapes forment une liste de {1} éléments au plus."
+
+#: pos_next/restaurant/recipe_library.py:114
+#, python-brace-format
+msgid "«{0}» does not match its manifest ({1})"
+msgstr "«{0}» ne correspond pas à son manifeste ({1})"
+
+#: pos_next/restaurant/recipe_plan.py:430
+#, python-brace-format
+msgid "«{0}» is not a dish the restaurant sells."
+msgstr "«{0}» n'est pas un plat vendu par le restaurant."
+
+#: pos_next/restaurant/recipe_plan.py:424
+#, python-brace-format
+msgid "«{0}» is not ready to be written: it needs {1}."
+msgstr "«{0}» n'est pas prêt à être rédigé : il lui manque {1}."
+
+#: pos_next/restaurant/recipes.py:401
+#, python-brace-format
+msgid "«{0}» is written in {1}: give its quantity and its unit as the article is bought."
+msgstr "«{0}» est exprimé en {1} : indiquez sa quantité et son unité, telles que l'article est acheté."
+
+#: pos_next/restaurant/recipe_library.py:80
+#, python-brace-format
+msgid "«{0}» was changed since it was checked"
+msgstr "«{0}» a changé depuis sa vérification"
