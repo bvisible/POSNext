@@ -114,6 +114,36 @@ class TestTheSellerChecksAPaidShopCart(PaidCase):
 		self.assertIn("added at the counter", _comments(sold.name)[0])
 		self.assertEqual(self.session_of(token).cart_status, "Checked")
 
+	def test_the_rest_paid_by_the_phones_own_mode_keeps_the_phones_payment(self):
+		# The phone's card money is booked under the mode the till pays the rest by card with: both stay on the sale
+		token, cart = self.a_paid_cart(1)
+		draft = self.the_draft(token)
+		extra = self.an_item("_PNXT shop check extra", "PNXT-SHOP-X", price=5)
+		lines = [
+			{
+				"item_code": row.item_code,
+				"qty": row.qty,
+				"rate": row.rate,
+				"price_list_rate": row.price_list_rate,
+			}
+			for row in draft.items
+		] + [{"item_code": extra, "qty": 1, "rate": 5, "price_list_rate": 5}]
+		sale = _sale(
+			self.fx, name=draft.name, items=lines, payments=[{"mode_of_payment": self.web_mode, "amount": 5}]
+		)
+
+		saved = self.as_cashier(invoices.update_invoice, json.dumps(sale))
+		self.as_cashier(
+			invoices.submit_invoice, invoice=json.dumps({**sale, "name": saved["name"]}), data="{}"
+		)
+
+		sold = frappe.get_doc("Sales Invoice", draft.name)
+		self.assertEqual(
+			sorted(flt(row.amount) for row in sold.payments if flt(row.amount) > 0),
+			sorted([cart["grand_total"], 5]),
+		)
+		self.assertEqual(flt(sold.paid_amount), flt(cart["grand_total"] + 5))
+
 	def test_an_unpaid_cart_is_not_validated(self):
 		token = self.a_session()
 		self.as_guest(shop_scan.scan_item, token, "PNXT-SHOP-A", 1)

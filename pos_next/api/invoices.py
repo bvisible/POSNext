@@ -1164,6 +1164,59 @@ def _require_till_document(payload):
 		require_till_access(stored_profile)
 
 
+# //// Neoffice — added (no upstream equivalent). The payment rows a guest or a phone already paid, kept across the till's
+# //// save and submit, which replace the whole `payments` table with the till's rows (8bf46a28): a row of a mode the till
+# //// does not pay with, as before; and, since the phone pays its cart in the shop (lot 4), a row a guest's settled Payment
+# //// Intent of this invoice booked, whatever its mode. The phone's card money is booked under the mode the till pays the
+# //// rest by card with (« Carte de crédit » on a Wallee site), and the till's row of that mode dropped it: the sale lost
+# //// what the customer had paid. A guest's intent carries the session's token; the till's own terminal payments carry
+# //// none and keep the old rule, so that they are never counted twice.
+def _guest_payments_to_keep(invoice_doc, incoming_payments):
+	incoming_payments = incoming_payments or []
+	pos_payment_modes = {p.get("mode_of_payment") for p in incoming_payments if p.get("mode_of_payment")}
+	incoming_references = {p.get("reference_no") for p in incoming_payments if p.get("reference_no")}
+	settled = _guest_settled_references(invoice_doc.name)
+	kept = []
+	for row in invoice_doc.payments:
+		if flt(row.amount) <= 0:
+			continue
+		by_a_guest = (
+			bool(row.reference_no)
+			and row.reference_no in settled
+			and row.reference_no not in incoming_references
+		)
+		if row.mode_of_payment not in pos_payment_modes or by_a_guest:
+			kept.append(
+				{
+					"mode_of_payment": row.mode_of_payment,
+					"amount": row.amount,
+					"account": row.account,
+					**({"reference_no": row.reference_no} if row.reference_no else {}),
+				}
+			)
+	return kept
+
+
+def _guest_settled_references(invoice_name):
+	"""The references a guest's settled Payment Intents of the invoice are booked under (the provider's id, else the intent's name)."""
+	if not invoice_name or not frappe.db.table_exists("Payment Intent"):
+		return set()
+	references = set()
+	for intent in frappe.get_all(
+		"Payment Intent",
+		filters={
+			"reference_doctype": "Sales Invoice",
+			"reference_name": invoice_name,
+			"status": ["in", ["succeeded", "refunded"]],
+		},
+		fields=["name", "provider_intent_id", "metadata_json"],
+	):
+		metadata = frappe.parse_json(intent.metadata_json or "{}") or {}
+		if metadata.get("token"):
+			references.add(intent.provider_intent_id or intent.name)
+	return references
+
+
 @frappe.whitelist()
 def update_invoice(data):
 	"""Create or update invoice draft (Step 1)."""
@@ -1259,21 +1312,8 @@ def update_invoice(data):
 			# (Sales Order has no `payments` child table, accessing it would AttributeError).
 			guest_payments = []
 			if doctype == "Sales Invoice":
-				pos_payment_modes = {
-					p.get("mode_of_payment") for p in data.get("payments", []) if p.get("mode_of_payment")
-				}
-				for existing_payment in invoice_doc.payments:
-					if (
-						flt(existing_payment.amount) > 0
-						and existing_payment.mode_of_payment not in pos_payment_modes
-					):
-						guest_payments.append(
-							{
-								"mode_of_payment": existing_payment.mode_of_payment,
-								"amount": existing_payment.amount,
-								"account": existing_payment.account,
-							}
-						)
+				# //// Neoffice — kept by _guest_payments_to_keep (a phone's payment under a mode the till also pays with; lot 4)
+				guest_payments = _guest_payments_to_keep(invoice_doc, data.get("payments", []))
 
 			# Preserve TIP items (e.g. guest tips via Wallee) before POS overwrites items
 			saved_tip_items = _extract_tip_items(invoice_doc)
@@ -2252,21 +2292,8 @@ def submit_invoice(invoice=None, data=None):
 			# Sales Order has no `payments` child table → accessing it would AttributeError.
 			guest_payments = []
 			if doctype == "Sales Invoice":
-				pos_payment_modes = {
-					p.get("mode_of_payment") for p in invoice.get("payments", []) if p.get("mode_of_payment")
-				}
-				for existing_payment in invoice_doc.payments:
-					if (
-						flt(existing_payment.amount) > 0
-						and existing_payment.mode_of_payment not in pos_payment_modes
-					):
-						guest_payments.append(
-							{
-								"mode_of_payment": existing_payment.mode_of_payment,
-								"amount": existing_payment.amount,
-								"account": existing_payment.account,
-							}
-						)
+				# //// Neoffice — kept by _guest_payments_to_keep (a phone's payment under a mode the till also pays with; lot 4)
+				guest_payments = _guest_payments_to_keep(invoice_doc, invoice.get("payments", []))
 
 			# Preserve TIP items (e.g. guest tips via Wallee) before POS overwrites items
 			saved_tip_amount = sum(

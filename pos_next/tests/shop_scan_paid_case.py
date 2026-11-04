@@ -68,7 +68,9 @@ class PaidCase(ShopCase):
 				"currency": draft.currency,
 				"reference_doctype": "Sales Invoice",
 				"reference_name": draft.name,
-				"metadata_json": frappe.as_json({"shop_cart": 1, "mode_of_payment": self.web_mode}),
+				"metadata_json": frappe.as_json(
+					{"shop_cart": 1, "token": token, "mode_of_payment": self.web_mode}
+				),
 			}
 		).insert(ignore_permissions=True, ignore_mandatory=True, ignore_links=True)
 
