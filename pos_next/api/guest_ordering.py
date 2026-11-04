@@ -16,7 +16,8 @@ from contextlib import contextmanager
 import frappe
 from frappe import _
 from frappe.rate_limiter import rate_limit
-from frappe.utils import cint, flt, now_datetime
+from frappe.utils import add_to_date, cint, flt, now_datetime
+from frappe.utils.synchronization import filelock
 
 from pos_next.restaurant import guest_account, permissions, portions, scope, service_families, tickets
 from pos_next.restaurant.mode import require_neoresto
@@ -107,6 +108,10 @@ def _get_or_create_invoice(token_doc):
 	if token_doc.invoice:
 		if frappe.db.exists("Sales Invoice", {"name": token_doc.invoice, "docstatus": 0}):
 			return frappe.get_doc("Sales Invoice", token_doc.invoice)
+		# //// Neoffice — a web takeaway order that was settled keeps its link: the page that comes back from the payment asks for it, and the first call that
+		# //// found it submitted used to forget it (the server settles a paid order now, before the page is back; neoffice-maintenance#2132).
+		if token_doc.mode == "takeaway" and frappe.db.exists("Sales Invoice", {"name": token_doc.invoice, "docstatus": 1}):
+			return None
 		# Invoice was submitted or cancelled — clear the link via DB (avoids TimestampMismatchError)
 		frappe.db.set_value("Guest Order Token", token_doc.name, "invoice", None)
 		token_doc.invoice = None
@@ -1381,6 +1386,12 @@ def confirm_guest_payment(token, amount=None, tip=0):
 	//// answer is {"status": "awaiting_payment"} while the payment the guest came back from is not settled yet (the page asks again for a minute).
 	"""
 	token_doc = _require_valid_token(token)
+	# //// Neoffice — the order may have been settled while the page was away (the server settles a paid web takeaway order itself; neoffice-maintenance#2132):
+	# //// the page that comes back is told so, with the number to show at pickup, not "No active order".
+	if token_doc.mode == "takeaway" and token_doc.invoice:
+		settled = _already_settled_takeaway_order(token_doc.invoice)
+		if settled:
+			return settled
 	invoice_doc = _get_or_create_invoice(token_doc)
 
 	if not invoice_doc:
@@ -1531,7 +1542,33 @@ def _provider_confirmed(invoice_doc):
 	return sum(cint(intent.amount) for intent in _succeeded_intents(invoice_doc.name)) >= round(flt(owed) * 100) > 0
 
 
+def _already_settled_takeaway_order(invoice_name):
+	"""The answer of `confirm_guest_payment` for a web takeaway order that is already submitted and paid (settled by the page's earlier call, or by the server
+	while the page was away), or None. Releasing again sends nothing twice: a line already sent is not touched."""
+	order = frappe.db.get_value("Sales Invoice", invoice_name, ["docstatus", "paid_amount", "grand_total"], as_dict=True)
+	if not order or order.docstatus != 1 or flt(order.paid_amount) < flt(order.grand_total):
+		return None
+	return {
+		"status": "success",
+		"paid_amount": flt(order.paid_amount),
+		"grand_total": flt(order.grand_total),
+		"submitted": True,
+		"ticket": _release_paid_takeaway(invoice_name),
+	}
+
+
 def _settle_takeaway_order(invoice_doc):
+	"""One settlement of an order at a time: the customer's page asks for it and so does the background job the provider's confirmation starts
+	(neoffice-maintenance#2132, 04.11). The second to arrive waits, sees an order already submitted and released, and does nothing twice. The wait
+	ends the transaction first: InnoDB reads what it read before the wait, and a stale draft would be submitted a second time."""
+	if not _provider_confirmed(invoice_doc):
+		return {"status": "awaiting_payment"}
+	with filelock(f"settle_takeaway_order_{invoice_doc.name}", timeout=60):
+		frappe.db.commit()
+		return _settle_the_takeaway_order(frappe.get_doc("Sales Invoice", invoice_doc.name))
+
+
+def _settle_the_takeaway_order(invoice_doc):
 	"""What `confirm_guest_payment` is for a web takeaway order. The page's word is not a payment: the order is paid when the provider settled its
 	total, whatever amount the page says. Then the `payments` app's own reconciliation puts the money on the invoice (it does it by itself when the
 	intent succeeds; asked again it does nothing twice), the invoice is submitted, and its held lines go to the kitchen. Until then the answer is
@@ -1588,6 +1625,71 @@ def _release_paid_takeaway(invoice_name):
 				kitchen_send(invoice_name, batch)
 			frappe.publish_realtime("kds_update")
 	return frappe.db.get_value("Sales Invoice", invoice_name, "posa_ticket_no") or None
+
+
+# //// Neoffice — a paid web takeaway order is settled by the server when the provider says so, not only when the customer's page comes back (neoffice-maintenance#2132,
+# //// 04.11.2026). Played for real on osiris: the customer paid on the provider's page, the money was booked on the invoice by the `payments` app, and the
+# //// order stayed a draft with its lines held, so the kitchen never heard of it, because the page that asks for the settlement (`confirm_guest_payment`) had
+# //// not come back (another browser, a closed tab, a phone that lost its session on the way back from the bank's page). A customer who paid must be served.
+def _is_a_held_web_takeaway(invoice_name):
+	"""A web takeaway order not yet settled: a draft that a takeaway session made. The till's own takeaway sales are not this: nobody is waiting for
+	a page to come back for them."""
+	return (
+		frappe.db.get_value("Sales Invoice", invoice_name, "docstatus") == 0
+		and frappe.db.exists("Guest Order Token", {"invoice": invoice_name, "mode": "takeaway"})
+	)
+
+
+def settle_takeaway_on_payment(doc, method=None):
+	"""`Payment Intent` on_update: the provider just settled a payment of a web takeaway order (its webhook, or the poll that backs the webhook up), so the
+	order is settled in the background, whoever opens the page afterwards. Queued after the commit: the settlement submits an invoice and prints
+	tickets, which is not for the transaction of an intent's update."""
+	if doc.status != "succeeded" or doc.reference_doctype != "Sales Invoice" or not doc.reference_name:
+		return
+	if not _is_a_held_web_takeaway(doc.reference_name):
+		return
+	frappe.enqueue(
+		"pos_next.api.guest_ordering.settle_paid_takeaway_order",
+		queue="short",
+		enqueue_after_commit=True,
+		invoice=doc.reference_name,
+	)
+
+
+def settle_paid_takeaway_order(invoice):
+	"""The background half of `confirm_guest_payment` for a web takeaway order: what the page asks for, asked by the server. An order the provider has not
+	settled in full is left as it is, and one already settled (by the page, or by an earlier run) is not touched. A failure is logged and never raised: the
+	next run of `settle_paid_takeaway_orders` tries again."""
+	if not _is_a_held_web_takeaway(invoice):
+		return
+	try:
+		_settle_takeaway_order(frappe.get_doc("Sales Invoice", invoice))
+	except Exception:
+		frappe.db.rollback()
+		frappe.log_error("A paid takeaway order could not be settled", f"{invoice}\n{frappe.get_traceback()}")
+
+
+def settle_paid_takeaway_orders():
+	"""Every five minutes: the web takeaway orders the provider has paid and nobody settled (the job was lost to a restart, or the intent was settled by
+	a path that fires no event). Two days back, twenty at a time: an order older than that is the restaurant's to look at."""
+	if not frappe.db.table_exists("Payment Intent"):
+		return
+	names = frappe.db.sql_list(
+		"""
+		select i.name
+		from `tabSales Invoice` i
+		where i.docstatus = 0
+			and i.creation > %s
+			and exists (select 1 from `tabGuest Order Token` t where t.invoice = i.name and t.mode = 'takeaway')
+			and exists (select 1 from `tabPayment Intent` p where p.reference_doctype = 'Sales Invoice'
+				and p.reference_name = i.name and p.status = 'succeeded')
+		order by i.creation
+		limit 20
+		""",
+		(add_to_date(now_datetime(), days=-2),),
+	)
+	for name in names:
+		settle_paid_takeaway_order(name)
 
 
 # ==========================================

@@ -281,6 +281,11 @@ doc_events = {
 		"on_submit": "pos_next.restaurant.figures.figures_changed",
 		"on_cancel": "pos_next.restaurant.figures.figures_changed",
 	},
+	# //// Neoffice — added entry (no upstream equivalent): a web takeaway order the provider has paid is settled and sent to the kitchen by the server,
+	# //// whether or not the customer's page comes back (neoffice-maintenance#2132). Played for real: the order stayed a draft with its lines held.
+	"Payment Intent": {
+		"on_update": "pos_next.api.guest_ordering.settle_takeaway_on_payment",
+	},
 	"Restaurant Reservation": {
 		"on_update": "pos_next.restaurant.figures.figures_changed",
 		"on_trash": "pos_next.restaurant.figures.figures_changed",
@@ -452,6 +457,8 @@ scheduler_events = {
 	"cron": {
 		"*/5 * * * *": [
 			"pos_next.api.reservations.expire_unconfirmed_reservations",
+			# //// Neoffice — the safety net of the settlement above: a paid web takeaway order nobody settled (neoffice-maintenance#2132).
+			"pos_next.api.guest_ordering.settle_paid_takeaway_orders",
 		],
 	},
 }

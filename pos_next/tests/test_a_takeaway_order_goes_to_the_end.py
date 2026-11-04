@@ -12,6 +12,9 @@ wanted a payment on an order that it had not made. The suite pins the way that w
   amount the page says; the page cannot choose to pay less nor add a tip, the server says what the order owes;
 - a settled payment (which the `payments` app puts on the invoice by itself) has the invoice submitted, sends its lines to the kitchen once, and
   gives the customer the number to show at pickup.
+- a payment the provider settled is settled by the SERVER, whether or not the customer's page comes back: the intent's update queues the settlement, a job
+  every five minutes catches what that missed, and the page and the job together settle once (played for real on osiris, 04.11: the money was on the
+  invoice, the order a draft with its lines held, because the page had come back in another browser).
 
 The suite builds everything it needs and rolls back; the engine is pinned on, its connection and its login are in memory.
 """
@@ -354,3 +357,171 @@ class TestAConfirmedPayment(TakeawayCase):
 
 		self.assertEqual(answer["status"], "success")
 		self.assertNotIn("ticket", answer)
+
+
+class TestAPaidOrderIsSettledWithoutThePage(TakeawayCase):
+	def queued(self, queue_mock):
+		return [call for call in queue_mock.call_args_list if call.args and call.args[0].endswith("settle_paid_takeaway_order")]
+
+	def test_the_provider_settling_the_payment_queues_the_settlement_of_the_order(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		invoice = self.an_order()
+		with patch("frappe.enqueue") as enqueue:
+			self.the_provider_confirms(invoice)
+
+		queued = self.queued(enqueue)
+		self.assertEqual(len(queued), 1)
+		self.assertEqual(queued[0].kwargs["invoice"], invoice)
+		self.assertTrue(queued[0].kwargs["enqueue_after_commit"])
+
+	def test_an_intent_that_did_not_succeed_queues_nothing(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		invoice = self.an_order()
+		with patch("frappe.enqueue") as enqueue:
+			self.the_provider_confirms(invoice, status="requires_action")
+			self.the_provider_confirms(invoice, status="failed")
+
+		self.assertEqual(self.queued(enqueue), [])
+
+	def test_an_order_already_settled_queues_nothing_more(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		invoice = self.an_order()
+		self.the_provider_confirms(invoice)
+		self.confirm(frappe.db.get_value("Sales Invoice", invoice, "grand_total"))
+
+		with patch("frappe.enqueue") as enqueue:
+			self.the_provider_confirms(invoice)
+
+		self.assertEqual(self.queued(enqueue), [])
+
+	def test_a_payment_for_something_that_is_not_a_web_takeaway_order_queues_nothing(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		invoice = self.an_order()
+		# the same invoice, with no takeaway session behind it: the till's own sale, which nobody waits a page for
+		frappe.db.set_value("Guest Order Token", self.token.name, "mode", "restaurant")
+		with patch("frappe.enqueue") as enqueue:
+			self.the_provider_confirms(invoice)
+
+		self.assertEqual(self.queued(enqueue), [])
+
+	def test_the_job_pays_the_order_and_sends_it_to_the_kitchen_with_no_page_in_sight(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		invoice = self.an_order()
+		with patch("frappe.enqueue"):
+			self.the_provider_confirms(invoice)
+		self.assertEqual(frappe.db.get_value("Sales Invoice", invoice, "docstatus"), 0)
+
+		guest_ordering.settle_paid_takeaway_order(invoice)
+
+		self.assertEqual(frappe.db.get_value("Sales Invoice", invoice, "docstatus"), 1)
+		self.assertEqual({line.kds_status for line in self.lines(invoice)}, {"Pending"})
+		self.kitchen.assert_called_once_with(invoice, 1)
+
+	def test_the_page_coming_back_afterwards_finds_it_done_and_sends_nothing_twice(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		invoice = self.an_order()
+		total = frappe.db.get_value("Sales Invoice", invoice, "grand_total")
+		with patch("frappe.enqueue"):
+			self.the_provider_confirms(invoice)
+		guest_ordering.settle_paid_takeaway_order(invoice)
+
+		answer = self.confirm(total)
+
+		self.assertEqual(answer["status"], "success")
+		self.assertIsNotNone(answer["ticket"])
+		self.assertEqual(frappe.db.get_value("Sales Invoice", invoice, "docstatus"), 1)
+		self.kitchen.assert_called_once_with(invoice, 1)
+
+	def test_the_session_keeps_its_settled_order_to_be_found_by_the_page_that_comes_back(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		invoice = self.an_order()
+		with patch("frappe.enqueue"):
+			self.the_provider_confirms(invoice)
+		guest_ordering.settle_paid_takeaway_order(invoice)
+
+		# what any call of the page does first: look for the session's draft. The order is no longer a draft, and the link to it must stay
+		self.assertIsNone(guest_ordering._get_or_create_invoice(frappe.get_doc("Guest Order Token", self.token.name)))
+		self.assertEqual(frappe.db.get_value("Guest Order Token", self.token.name, "invoice"), invoice)
+
+	def test_a_table_session_still_forgets_a_submitted_order(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		# the rule of the tables is unchanged: their link is cleared once their invoice is submitted
+		invoice = self.an_order()
+		with patch("frappe.enqueue"):
+			self.the_provider_confirms(invoice)
+		guest_ordering.settle_paid_takeaway_order(invoice)
+		frappe.db.set_value("Guest Order Token", self.token.name, "mode", "restaurant")
+
+		guest_ordering._get_or_create_invoice(frappe.get_doc("Guest Order Token", self.token.name))
+
+		self.assertIsNone(frappe.db.get_value("Guest Order Token", self.token.name, "invoice"))
+
+	def test_asked_twice_by_the_page_the_settled_order_answers_the_same_number(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		invoice = self.an_order()
+		total = frappe.db.get_value("Sales Invoice", invoice, "grand_total")
+		with patch("frappe.enqueue"):
+			self.the_provider_confirms(invoice)
+		guest_ordering.settle_paid_takeaway_order(invoice)
+
+		first = self.confirm(total)
+		second = self.confirm(total)
+
+		self.assertEqual(first["ticket"], second["ticket"])
+		self.assertEqual(second["status"], "success")
+		self.kitchen.assert_called_once_with(invoice, 1)
+
+	def test_the_job_run_twice_does_nothing_the_second_time(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		invoice = self.an_order()
+		with patch("frappe.enqueue"):
+			self.the_provider_confirms(invoice)
+
+		guest_ordering.settle_paid_takeaway_order(invoice)
+		guest_ordering.settle_paid_takeaway_order(invoice)
+
+		self.assertEqual(self.kitchen.call_count, 1)
+
+	def test_an_order_the_provider_has_not_settled_in_full_is_left_alone(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		invoice = self.an_order()
+		with patch("frappe.enqueue"):
+			self.the_provider_confirms(invoice, minor=100)
+
+		guest_ordering.settle_paid_takeaway_order(invoice)
+
+		self.assertEqual(frappe.db.get_value("Sales Invoice", invoice, "docstatus"), 0)
+		self.assertEqual({line.kds_status for line in self.lines(invoice)}, {"Waiting"})
+		self.kitchen.assert_not_called()
+
+	def test_an_order_nobody_paid_is_left_alone(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		invoice = self.an_order()
+
+		guest_ordering.settle_paid_takeaway_order(invoice)
+
+		self.assertEqual(frappe.db.get_value("Sales Invoice", invoice, "docstatus"), 0)
+		self.kitchen.assert_not_called()
+
+	def test_a_failure_is_logged_and_never_raised(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		invoice = self.an_order()
+		with patch("frappe.enqueue"):
+			self.the_provider_confirms(invoice)
+
+		with (
+			patch.object(guest_ordering, "_settle_takeaway_order", side_effect=RuntimeError("boom")),
+			patch("frappe.log_error") as log_error,
+			patch("frappe.db.rollback"),
+		):
+			guest_ordering.settle_paid_takeaway_order(invoice)
+
+		log_error.assert_called_once()
+		self.assertEqual(log_error.call_args.args[0], "A paid takeaway order could not be settled")
+
+	def test_the_job_every_five_minutes_settles_what_the_event_missed(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		paid = self.an_order()
+		with patch("frappe.enqueue"):
+			self.the_provider_confirms(paid)
+		# a second customer, on a session of their own (a session keeps one customer)
+		self.token = self.a_takeaway_token()
+		unpaid = self.an_order()
+
+		guest_ordering.settle_paid_takeaway_orders()
+
+		self.assertEqual(frappe.db.get_value("Sales Invoice", paid, "docstatus"), 1)
+		self.assertEqual(frappe.db.get_value("Sales Invoice", unpaid, "docstatus"), 0)
+
+	def test_the_events_are_wired(self):  # role-check: ok the settlement is a background job, which runs as Administrator
+		hooks = frappe.get_hooks()
+
+		self.assertIn("pos_next.api.guest_ordering.settle_takeaway_on_payment", hooks["doc_events"]["Payment Intent"]["on_update"])
+		cron = hooks["scheduler_events"]["cron"]["*/5 * * * *"]
+		self.assertIn("pos_next.api.guest_ordering.settle_paid_takeaway_orders", cron)
