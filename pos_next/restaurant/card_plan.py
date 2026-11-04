@@ -127,6 +127,10 @@ def _read(plan) -> list[dict]:
 						"description": (item.get("description") or "").strip() or None,
 						"buy_price": _price(item.get("buy_price")),
 						"supplier": _name(item.get("supplier")) or None,
+						# //// Neoffice — the recipe a dish carries (lot R5): one of the restaurant's own (`recipe`, by its name), or a fiche of the
+						# //// free library (`library`, by its id or words), added « To review » at the click
+						"recipe": _name(item.get("recipe")) or None,
+						"library": _name(item.get("library")) or None,
 					}
 				)
 			if items:
@@ -474,6 +478,118 @@ def _has_price(item_code, price_list):
 	)
 
 
+# ─── The recipe of a dish (lot R5) ───────────────────────────────────────────
+# What a dish proposed with a recipe becomes: `matched` (one of the restaurant's recipes), `present` (a fiche of the library the restaurant
+# already has as a recipe), `library_new` (a fiche of the library, added « To review » at the click), `already_linked` (the dish has another
+# recipe: left as it is). The others write nothing and say why: `ambiguous`, `unknown`, `name_taken`, `unavailable`.
+LINKING = ("matched", "present", "library_new")
+
+
+def _recipe_context(families, warnings) -> dict | None:
+	"""What the recipes of a plan are resolved against, read once; None where no dish of the plan names a recipe."""
+	wanted = any(i.get("recipe") or i.get("library") for f in families for s in f["subs"] for i in s["items"])
+	if not wanted:
+		return None
+	from pos_next.restaurant import recipe_library, recipes
+	from pos_next.restaurant.mode import neoresto_active
+
+	if not neoresto_active() or not frappe.get_meta("Item").has_field(recipes.ITEM_FIELD):
+		warnings.append(_("Recipes are not available on this site: the dishes are proposed without one."))
+		return {"available": False}
+	try:
+		permissions.require(recipes.DOCTYPE, "read")
+	except frappe.PermissionError:
+		frappe.clear_messages()
+		warnings.append(_("You may not read the recipes: the dishes are proposed without one."))
+		return {"available": False}
+	return {
+		"available": True,
+		"recipes": frappe.get_all(
+			recipes.DOCTYPE, fields=["name", "recipe_name", "source_ref"], limit_page_length=0
+		),
+		"library": recipe_library.listing(),
+		"used": {},
+	}
+
+
+def _resolve_recipe(item, code, context, warnings) -> dict | None:
+	"""The recipe a dish of the plan carries, as it will be written; None when the dish names none. Writes nothing."""
+	said_recipe, said_library = item.get("recipe"), item.get("library")
+	if context is None or not (said_recipe or said_library):
+		return None
+	if not context["available"]:
+		return {"status": "unavailable", "recipe": None}
+	from pos_next.restaurant import recipe_library, recipes
+
+	current = frappe.db.get_value("Item", code, recipes.ITEM_FIELD) if code else None
+	if said_recipe:
+		wanted = recipes._stems(said_recipe)
+		exact = [r for r in context["recipes"] if _fold(r["recipe_name"]) == _fold(said_recipe)]
+		found = exact or [
+			r
+			for r in context["recipes"]
+			if wanted and all(w in recipes._stems(r["recipe_name"]) for w in wanted)
+		]
+		if len(found) > 1:
+			warnings.append(
+				_("Several recipes fit «{0}»: {1}. Say which one.").format(
+					said_recipe, ", ".join(r["recipe_name"] for r in found[:5])
+				)
+			)
+			return {"status": "ambiguous", "recipe": None, "candidates": [r["name"] for r in found[:5]]}
+		if not found:
+			warnings.append(
+				_("The restaurant has no recipe «{0}»: {1} is left without one.").format(
+					said_recipe, item["name"]
+				)
+			)
+			return {"status": "unknown", "recipe": None}
+		link = {"status": "matched", "recipe": found[0]["name"], "title": found[0]["recipe_name"]}
+	else:
+		fiches = recipe_library.find(said_library, context["library"])
+		if len(fiches) > 1:
+			warnings.append(
+				_("Several fiches of the free library fit «{0}»: {1}. Say which one.").format(
+					said_library, ", ".join(f["title"] for f in fiches[:5])
+				)
+			)
+			return {"status": "ambiguous", "recipe": None, "candidates": [f["id"] for f in fiches[:5]]}
+		if not fiches:
+			warnings.append(
+				_("The free library has no fiche «{0}»: {1} is left without a recipe.").format(
+					said_library, item["name"]
+				)
+			)
+			return {"status": "unknown", "recipe": None}
+		fiche = fiches[0]
+		link = {
+			"title": fiche["title"],
+			"author": fiche["author"],
+			"license": fiche["license"],
+			"id": fiche["id"],
+		}
+		if fiche["state"] == "present":
+			link.update({"status": "present", "recipe": fiche["recipe"]})
+		elif fiche["state"] == "name_taken":
+			warnings.append(
+				_(
+					"A recipe named «{0}» already exists and does not come from the library: name it, to link it."
+				).format(fiche["title"])
+			)
+			return {"status": "name_taken", "recipe": None, **link}
+		else:
+			earlier = context["used"].get(fiche["id"])
+			link.update({"status": "library_new", "recipe": None})
+			if earlier:
+				link["also_for"] = earlier
+			else:
+				context["used"][fiche["id"]] = item["name"]
+	if current and current != link.get("recipe"):
+		warnings.append(_("{0} already has the recipe {1}: left as it is.").format(item["name"], current))
+		return {"status": "already_linked", "recipe": current}
+	return link
+
+
 def _resolve(plan) -> dict:
 	"""What the plan means on this site, decided once for `propose` and for `apply`; writes nothing."""
 	plan = plan or {}
@@ -502,6 +618,9 @@ def _resolve(plan) -> dict:
 		"without_price": 0,
 	}
 	resolved, in_plan = [], set()
+	recipe_context = _recipe_context(families, warnings)
+	if recipe_context is not None:
+		counts["recipes"] = 0
 	for family in families:
 		counts["families"] += 1
 		found = _group(family["name"])
@@ -568,6 +687,9 @@ def _resolve(plan) -> dict:
 				counts["without_price"] += 1 if needs_price else 0
 				if found_item and found_item.disabled:
 					warnings.append(_("{0} is disabled: left as it is.").format(found_item.item_name))
+				recipe_link = _resolve_recipe(item, code, recipe_context, warnings)
+				if recipe_link and recipe_link["status"] in LINKING:
+					counts["recipes"] += 1
 				sub_entry["items"].append(
 					{
 						"name": found_item.item_name if found_item else item["name"],
@@ -579,6 +701,7 @@ def _resolve(plan) -> dict:
 						"description": item["description"],
 						"buy_price": item["buy_price"],
 						"supplier": item["supplier"],
+						**({"recipe": recipe_link} if recipe_link else {}),
 					}
 				)
 			entry["subs"].append(sub_entry)
@@ -768,6 +891,8 @@ def apply(plan: dict) -> dict:
 		"rows": [],
 		"row_changes": [],
 		"sort_before": {},
+		"recipes_added": [],
+		"recipe_links": [],
 	}
 	_check_rights(resolved)
 	price_list, currency = resolved["price_list"], resolved["currency"]
@@ -796,6 +921,7 @@ def apply(plan: dict) -> dict:
 			for item in sub["items"]:
 				code = _write_item(item, group, family, resolved["restaurant"], manifest)
 				item["item_code"] = code
+				_link_recipe(item, code, manifest)
 				if item["price"] and not _has_price(code, price_list):
 					price = frappe.get_doc(
 						{
@@ -830,8 +956,33 @@ def _check_rights(resolved) -> None:
 		permissions.require("Item Price", "create")
 	if any(f["station_id"] for f in resolved["families"]):
 		permissions.require("Preparation Station", "write")
+	linked = [i["recipe"] for i in items if i.get("recipe") and i["recipe"]["status"] in LINKING]
+	if linked:
+		permissions.require("Item", "write")
+	if any(link["status"] == "library_new" for link in linked):
+		permissions.require("Restaurant Recipe", "create")
 	if not resolved["card"]["exists"]:
 		permissions.require("Restaurant Card", "create")
+
+
+def _link_recipe(item, code, manifest) -> None:
+	"""Link a dish to the recipe it carries: one of the restaurant's own, or a fiche of the free library added « To review » first. The link
+	and the recipe it added are written in the manifest, for `undo`."""
+	link = item.get("recipe")
+	if not link or link["status"] not in LINKING:
+		return
+	from pos_next.restaurant import recipe_library, recipes
+
+	recipe = link["recipe"]
+	if link["status"] == "library_new":
+		recipe = frappe.db.get_value(recipes.DOCTYPE, {"source_ref": link["id"]}, "name")
+		if not recipe:
+			recipe = recipe_library.add_to_restaurant([link["id"]])["added"][0]["recipe"]
+			manifest["recipes_added"].append(recipe)
+	if frappe.db.get_value("Item", code, recipes.ITEM_FIELD):
+		return
+	frappe.db.set_value("Item", code, recipes.ITEM_FIELD, recipe)
+	manifest["recipe_links"].append({"item": code, "recipe": recipe})
 
 
 def _ensure_is_group(name, manifest) -> None:
@@ -1006,6 +1157,29 @@ def _insert_at(sequence, heading, sub_heading) -> int:
 # ─── Taking a step back ──────────────────────────────────────────────────────
 
 
+def _unlink_recipes(manifest, kept) -> None:
+	"""Take back the recipe links a step made, and the recipes it added from the free library: a recipe somebody has since touched, written
+	a status on or linked to another dish stays (and is said)."""
+	for link in manifest.get("recipe_links") or []:
+		if (
+			frappe.db.exists("Item", link["item"])
+			and frappe.db.get_value("Item", link["item"], "restaurant_recipe") == link["recipe"]
+		):
+			frappe.db.set_value("Item", link["item"], "restaurant_recipe", None)
+	for name in manifest.get("recipes_added") or []:
+		if not frappe.db.exists("Restaurant Recipe", name):
+			continue
+		doc = frappe.get_doc("Restaurant Recipe", name)
+		if (
+			frappe.db.exists("Item", {"restaurant_recipe": name})
+			or doc.status != "To review"
+			or str(doc.modified) != str(doc.creation)
+		):
+			kept.append(name)
+			continue
+		frappe.delete_doc("Restaurant Recipe", name, ignore_permissions=True, force=True)
+
+
 def undo(manifest: dict) -> dict:
 	"""Take a step back: what it made goes, what was there before stays as it was. Answers what went and what had to stay.
 
@@ -1057,6 +1231,7 @@ def undo(manifest: dict) -> dict:
 			except frappe.LinkExistsError:
 				frappe.db.set_value("Item", item, "disabled", 1)
 				kept.append(item)
+	_unlink_recipes(manifest, kept)
 	for change in manifest.get("item_changes") or []:
 		if frappe.db.exists("Item", change["item"]) and not frappe.db.exists(
 			"Sales Invoice Item", {"item_code": change["item"]}

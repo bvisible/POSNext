@@ -23657,3 +23657,41 @@ msgstr "L'affiche n'a pas pu être imprimée."
 #: pos_next/till_settings/registry.py:1834
 msgid "The shop's QR code"
 msgstr "Le QR du magasin"
+
+#: pos_next/restaurant/card_plan.py:1
+#, python-brace-format
+msgid "A recipe named «{0}» already exists and does not come from the library: name it, to link it."
+msgstr "Une recette nommée «{0}» existe déjà et ne vient pas de la bibliothèque : nommez-la pour la relier."
+
+#: pos_next/restaurant/card_plan.py:1
+msgid "Recipes are not available on this site: the dishes are proposed without one."
+msgstr "Les recettes ne sont pas disponibles sur ce site : les plats sont proposés sans recette."
+
+#: pos_next/restaurant/card_plan.py:1
+#, python-brace-format
+msgid "Several fiches of the free library fit «{0}»: {1}. Say which one."
+msgstr "Plusieurs fiches de la bibliothèque libre correspondent à «{0}» : {1}. Précisez laquelle."
+
+#: pos_next/restaurant/card_plan.py:1
+#, python-brace-format
+msgid "Several recipes fit «{0}»: {1}. Say which one."
+msgstr "Plusieurs recettes correspondent à «{0}» : {1}. Précisez laquelle."
+
+#: pos_next/restaurant/card_plan.py:1
+#, python-brace-format
+msgid "The free library has no fiche «{0}»: {1} is left without a recipe."
+msgstr "La bibliothèque libre n'a pas de fiche «{0}» : {1} reste sans recette."
+
+#: pos_next/restaurant/card_plan.py:1
+#, python-brace-format
+msgid "The restaurant has no recipe «{0}»: {1} is left without one."
+msgstr "Le restaurant n'a pas de recette «{0}» : {1} reste sans recette."
+
+#: pos_next/restaurant/card_plan.py:1
+msgid "You may not read the recipes: the dishes are proposed without one."
+msgstr "Vous ne pouvez pas consulter les recettes : les plats sont proposés sans recette."
+
+#: pos_next/restaurant/card_plan.py:1
+#, python-brace-format
+msgid "{0} already has the recipe {1}: left as it is."
+msgstr "{0} a déjà la recette {1} : elle reste telle quelle."
