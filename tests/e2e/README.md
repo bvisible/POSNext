@@ -32,6 +32,11 @@ Nothing of a test stays. Each test makes **its own table and its own throwaway d
 the only kind of address the clean-up will touch), and takes them away afterwards: the table, its token, the orders on
 them (a paid one is cancelled first), the Payment Intents, the mail queue rows, and the diner's User, Customer and Contact.
 The clean-up takes about 90 s on osiris (each deletion wakes the search indexes of the other apps).
+The instance is shared, so a deletion can wait for a row another run holds ("can not be deleted right now"): the
+clean-up is played again up to four times, each step checking that its target still exists. Each test then checks that
+its OWN table, user and customer are gone (not that no "E2E" table exists anywhere: one abandoned by another run made
+the next tests fail for something they did not do), and a global setup sweeps the tables an earlier run abandoned
+(`E2E …` tables older than 30 minutes).
 
 - **The code** is read from the server's mail queue (`fixtures/code.js`): the mail is queued by Frappe before it leaves,
   so its row holds exactly what the mailbox would. Nothing mints or bypasses a code.

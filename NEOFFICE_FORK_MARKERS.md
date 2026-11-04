@@ -153,6 +153,16 @@ NeoResto lot 1, the floor alerts (a notice and a sound on the till when a guest 
 the French is Haiku's, except « Voir la table », the product owner's own words. A `.po` cannot carry a comment, so they are recorded here.
 The same lot makes `composables/useOpenTable.js` out of the body of `FloorPlanEditor.vue`'s `selectTable` (marked in place), so that the floor's list and the notice open a table through one function.
 
+The guests' pages in German and Italian (neoffice-maintenance#2192, 2026-11-04): `de.po` and `it.po` are **added files** (no upstream
+equivalent) and carry only what a guest reads: the QR page of a table, the web takeaway order, the sign-in sheet and the refusals those
+endpoints say (177 strings, found by reading `__()` / `_()` in `components/guest/`, `GuestOrder.vue`, `GuestReservation.vue`,
+`PublicMenu.vue`, `TakeawayOrder.vue`, `stores/guestOrder.js`, `utils/publicMenu.js`, `api/guest_ordering.py`,
+`restaurant/guest_account.py`); the German (Swiss spelling, « Sie ») and the Italian (« Lei ») are Haiku's. The rest of the app stays English in
+these two languages, and on a site whose POS Settings list no allowed language, the till's language switcher now offers them (it lists the
+`locale/*.po` files). The bare states a guest's cart prints (« Preparing », « Ready », « Waiting », « Delivered ») and « of {0} », « Phone »,
+the address placeholder are written as bare entries by hand: the page's dictionary is keyed by the bare word, and the translator's tool leaves a
+word empty when the catalogue says it through a context. A `.po` cannot carry a comment, so they are recorded here.
+
 ### Images
 
 `pos_next/public/icons/badges/*.svg` (23) and `pos_next/public/icons/badges/png/*.png` (23) — the

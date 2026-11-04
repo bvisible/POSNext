@@ -8,7 +8,7 @@
 ////
 //// Needs POSNEXT_E2E_SSH_HOST and POSNEXT_E2E_SITE (~/.config/pos-next-e2e.env).
 
-const {execFileSync} = require('node:child_process');
+const { execFileSync } = require("node:child_process");
 
 const HOST = process.env.POSNEXT_E2E_SSH_HOST;
 const SITE = process.env.POSNEXT_E2E_SITE;
@@ -16,13 +16,18 @@ const SITE = process.env.POSNEXT_E2E_SITE;
 //// The script travels on STDIN: quoting a multi-line Python snippet through a shell, through ssh and through
 //// execFileSync is three levels of escaping.
 function onTheServer(snippet) {
-	if (!HOST || !SITE) throw new Error('POSNEXT_E2E_SSH_HOST and POSNEXT_E2E_SITE are needed to read the server');
+	if (!HOST || !SITE)
+		throw new Error("POSNEXT_E2E_SSH_HOST and POSNEXT_E2E_SITE are needed to read the server");
 	const script = `import frappe, json\nfrappe.init(site="${SITE}")\nfrappe.connect()\nfrappe.set_user("Administrator")\n${snippet}\n`;
-	return execFileSync('ssh', [HOST, 'cd /home/neoffice/frappe-bench/sites && ../env/bin/python -'], {
-		input: script,
-		encoding: 'utf8',
-		timeout: 240_000,
-	}).trim();
+	return execFileSync(
+		"ssh",
+		[HOST, "cd /home/neoffice/frappe-bench/sites && ../env/bin/python -"],
+		{
+			input: script,
+			encoding: "utf8",
+			timeout: 240_000,
+		}
+	).trim();
 }
 
 /** A JavaScript value as a Python expression (JSON's null, true and false are not Python's). */
@@ -31,7 +36,7 @@ function py(value) {
 }
 
 function json(out) {
-	return JSON.parse(out.split('\n').pop().trim());
+	return JSON.parse(out.split("\n").pop().trim());
 }
 
 /** A throwaway address of the suite: the only kind the clean-up will touch. */
@@ -66,10 +71,12 @@ print(json.dumps({"table": table.name, "table_name": table.table_name, "token": 
 }
 
 /** What the server holds for a token and the diner behind it. */
-function stateOf({tokenName = null, tokenValue = null, address}) {
+function stateOf({ tokenName = null, tokenValue = null, address }) {
 	return json(
 		onTheServer(`
-name = ${py(tokenName)} or frappe.db.get_value("Guest Order Token", {"token": ${py(tokenValue)}}, "name")
+name = ${py(tokenName)} or frappe.db.get_value("Guest Order Token", {"token": ${py(
+			tokenValue
+		)}}, "name")
 token = frappe.db.get_value("Guest Order Token", name, ["name", "customer", "invoice", "mode", "pos_profile", "table"], as_dict=True) if name else None
 invoices = []
 if token:
@@ -78,9 +85,15 @@ if token:
         doc = frappe.db.get_value("Sales Invoice", name, ["name", "customer", "docstatus", "is_takeaway", "pos_profile", "grand_total", "paid_amount", "posa_ticket_no"], as_dict=True)
         doc["lines"] = frappe.get_all("Sales Invoice Item", filters={"parent": name}, fields=["item_code", "qty", "rate", "kds_status"], order_by="idx asc")
         invoices.append(doc)
-user = frappe.db.get_value("User", ${py(address)}, ["name", "user_type", "enabled", "full_name"], as_dict=True) if ${py(address)} else None
+user = frappe.db.get_value("User", ${py(
+			address
+		)}, ["name", "user_type", "enabled", "full_name"], as_dict=True) if ${py(
+			address
+		)} else None
 roles = frappe.get_roles(${py(address)}) if user else []
-customer = frappe.db.get_value("Customer", {"email_id": ${py(address)}}, ["name", "customer_name", "mobile_no"], as_dict=True) if ${py(address)} else None
+customer = frappe.db.get_value("Customer", {"email_id": ${py(
+			address
+		)}}, ["name", "customer_name", "mobile_no"], as_dict=True) if ${py(address)} else None
 contact = frappe.db.get_value("Contact", {"user": ${py(address)}}, "name") if user else None
 linked = frappe.db.get_value("Dynamic Link", {"parent": contact, "parenttype": "Contact", "link_doctype": "Customer"}, "link_name") if contact else None
 print(json.dumps({"token": token, "invoices": invoices, "user": user, "roles": roles, "customer": customer, "contact_user": bool(contact), "contact_customer": linked}, default=str))
@@ -93,7 +106,11 @@ function theProviderSettles(invoice) {
 	return json(
 		onTheServer(`
 total = frappe.db.get_value("Sales Invoice", ${py(invoice)}, "grand_total")
-doc = frappe.get_doc({"doctype": "Payment Intent", "status": "succeeded", "amount": int(round(total * 100)), "currency": frappe.db.get_value("Sales Invoice", ${py(invoice)}, "currency"), "reference_doctype": "Sales Invoice", "reference_name": ${py(invoice)}}).insert(ignore_permissions=True, ignore_mandatory=True, ignore_links=True)
+doc = frappe.get_doc({"doctype": "Payment Intent", "status": "succeeded", "amount": int(round(total * 100)), "currency": frappe.db.get_value("Sales Invoice", ${py(
+			invoice
+		)}, "currency"), "reference_doctype": "Sales Invoice", "reference_name": ${py(
+			invoice
+		)}}).insert(ignore_permissions=True, ignore_mandatory=True, ignore_links=True)
 frappe.db.commit()
 print(json.dumps({"intent": doc.name, "total": total}))
 `)
@@ -104,7 +121,7 @@ print(json.dumps({"intent": doc.name, "total": total}))
  * Take away everything a test made: its table, its token, the orders on them (a paid one is cancelled first), the
  * intents, and the accounts of the throwaway diners it used (only ones that match the suite's address pattern).
  */
-function cleanUp({table = null, tables: more = [], tokenNames = [], addresses = []}) {
+function cleanUpOnce({ table = null, tables: more = [], tokenNames = [], addresses = [] }) {
 	return onTheServer(`${ONLY_OURS}
 tables = [t for t in [${py(table)}] + ${py(more)} if t]
 tokens = ${py(tokenNames)}
@@ -153,13 +170,57 @@ print(json.dumps({"invoices": sorted(invoices), "customers": customers, "address
 `);
 }
 
-/** What is left of the suite on the server: must be empty after a clean-up. */
-function leftovers(addresses) {
+/** True when the server answered a lock wait (another session's suite or a worker holds a row we delete). */
+function isALockWait(error) {
+	return /Lock wait timeout|QueryTimeoutError|being modified by another user|Deadlock/i.test(
+		String((error && (error.stderr || error.message)) || error)
+	);
+}
+
+function pause(seconds) {
+	Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, seconds * 1000);
+}
+
+/**
+ * The clean-up, played again when the instance is busy: the target is shared, and a deletion that waits for a row
+ * another run holds raised "can not be deleted right now" and left the table of the test behind. Every step of the
+ * clean-up checks that its target still exists, so a second pass finishes what the first one began.
+ */
+function cleanUp(what, attempts = 4) {
+	for (let attempt = 1; ; attempt += 1) {
+		try {
+			return cleanUpOnce(what);
+		} catch (error) {
+			if (attempt >= attempts || !isALockWait(error)) throw error;
+			pause(15 * attempt);
+		}
+	}
+}
+
+/**
+ * Take away the tables a run abandoned (its clean-up failed, or the run was killed): the suite's tables are named
+ * "E2E …", and one older than `minutes` belongs to nobody who is still running. Called once before a run.
+ */
+function sweepStale(minutes = 30) {
+	const stale = json(
+		onTheServer(`
+limit = frappe.utils.add_to_date(frappe.utils.now_datetime(), minutes=-${Number(minutes)})
+tables = frappe.get_all("Restaurant Table", filters={"table_name": ["like", "E2E %"], "creation": ["<", limit]}, pluck="name")
+tokens = frappe.get_all("Guest Order Token", filters={"table": ["in", tables or ["-"]]}, pluck="name")
+print(json.dumps({"tables": tables, "tokens": tokens}))
+`)
+	);
+	if (stale.tables.length) cleanUp({ tables: stale.tables, tokenNames: stale.tokens });
+	return stale;
+}
+
+/** What is left of one test on the server (its own tables and diners): must be empty after its clean-up. */
+function leftovers({ tables = [], addresses = [] } = {}) {
 	return json(
 		onTheServer(`${ONLY_OURS}
 addresses = [a for a in ${py(addresses)} if OURS.match(a or "")]
 print(json.dumps({
-    "tables": frappe.get_all("Restaurant Table", filters={"table_name": ["like", "E2E %"]}, pluck="name"),
+    "tables": [t for t in ${py(tables)} if t and frappe.db.exists("Restaurant Table", t)],
     "users": [a for a in addresses if frappe.db.exists("User", a)],
     "customers": frappe.get_all("Customer", filters={"email_id": ["in", addresses or ["-"]]}, pluck="name"),
 }))
@@ -186,9 +247,12 @@ print(json.dumps({"user": user.name}))
  */
 function aSessionOf(user) {
 	const out = execFileSync(
-		'ssh',
-		[HOST, `cd /home/neoffice/frappe-bench && bench --site ${SITE} browse --user "${user}" --user-for-audit "pos-next-e2e" 2>&1`],
-		{encoding: 'utf8', timeout: 90_000}
+		"ssh",
+		[
+			HOST,
+			`cd /home/neoffice/frappe-bench && bench --site ${SITE} browse --user "${user}" --user-for-audit "pos-next-e2e" 2>&1`,
+		],
+		{ encoding: "utf8", timeout: 90_000 }
 	);
 	const match = out.match(/sid=([A-Za-z0-9]+)/);
 	if (!match) throw new Error(`no session for ${user}: ${out.slice(-300)}`);
@@ -223,4 +287,16 @@ print(json.dumps({"token": token.token, "token_name": token.name, "invoice": ord
 	);
 }
 
-module.exports = {onTheServer, aDiner, aTable, stateOf, theProviderSettles, cleanUp, leftovers, aWebsiteUser, aSessionOf, aHeldTakeawayOrder};
+module.exports = {
+	onTheServer,
+	aDiner,
+	aTable,
+	stateOf,
+	theProviderSettles,
+	cleanUp,
+	sweepStale,
+	leftovers,
+	aWebsiteUser,
+	aSessionOf,
+	aHeldTakeawayOrder,
+};

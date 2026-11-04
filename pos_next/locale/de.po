@@ -1,0 +1,1173 @@
+# German translations for POS Next (the guests' pages: QR order, takeaway order, sign-in).
+# This file is distributed under the same license as the POS Next project.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: POS Next\n"
+"Language: de\n"
+"Language-Team: none\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: pos_next/api/guest_ordering.py:1802
+msgid "A customer account is required for takeaway orders."
+msgstr "Für Take-away-Bestellungen ist ein Kundenkonto erforderlich."
+
+#: pos_next/api/guest_ordering.py:142
+msgid "Accounts are not proposed here."
+msgstr "Hier werden keine Konten angeboten."
+
+#: POS/src/components/guest/GuestCart.vue:27
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+msgid "Add items from the menu"
+msgstr "Gerichte aus dem Menü hinzufügen"
+
+#: POS/src/components/guest/GuestMenuView.vue:261
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+msgid "Add to cart"
+msgstr "In den Warenkorb"
+
+#: POS/src/components/guest/GuestMenuView.vue:19
+#: POS/src/components/guest/GuestMenuView.vue:39
+#: POS/src/components/restaurant/CardFamilyChips.vue:23
+#: POS/src/components/restaurant/ReservationForm.vue:116
+#: POS/src/components/restaurant/RoomStationFilterLine.vue:132
+#: POS/src/components/restaurant/RoomStationFilterLine.vue:133
+#: POS/src/components/restaurant/phone/PhoneOrderScreen.vue:110
+#: POS/src/components/sale/EditItemDialog.vue:585
+#: POS/src/components/settings/TillSettingField.vue:197
+#: POS/src/components/settings/TillSettingField.vue:203
+#: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:137
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+#: pos_next/public/pos/assets/KDS-v9Wypq0I.js:1
+#: pos_next/public/pos/assets/POSSale-DU_AQXZv.js:241
+#: pos_next/public/pos/assets/Runner-1nMuEkOM.js:1
+#: pos_next/public/pos/assets/followLiveReading-uT70joir.js:1
+#: pos_next/restaurant/neoresto.py:279 pos_next/restaurant/neoresto.py:319
+msgid "All"
+msgstr "Alle"
+
+#: POS/src/pages/GuestReservation.vue:191
+#: pos_next/public/pos/assets/GuestReservation-Dak1pwuJ.js:1
+#: pos_next/public/pos/assets/GuestReservation-Dq1mf9Gp.js:1
+msgid "Allergies, birthday, high chair..."
+msgstr "Allergien, Geburtstag, Hochstuhl..."
+
+#: POS/src/components/guest/GuestCheckout.vue:119
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+msgid "Already paid"
+msgstr "Bereits bezahlt"
+
+#: POS/src/components/guest/GuestCheckout.vue:202
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+msgid "Amount to pay"
+msgstr "Zu zahlender Betrag"
+
+#: POS/src/components/sale/CouponManagement.vue:1562
+#: POS/src/components/sale/CouponManagement.vue:1565
+#: POS/src/components/sale/CouponManagement.vue:1567
+#: POS/src/components/sale/CouponManagement.vue:1571
+#: POS/src/components/sale/PromotionManagement.vue:1741
+#: POS/src/components/sale/PromotionManagement.vue:1745
+#: POS/src/components/sale/PromotionManagement.vue:1747
+#: POS/src/components/sale/PromotionManagement.vue:1752
+#: POS/src/composables/useToast.js:112 POS/src/pages/GuestReservation.vue:300
+#: POS/src/pages/GuestReservation.vue:302
+#: pos_next/public/pos/assets/GuestReservation-Dak1pwuJ.js:1
+#: pos_next/public/pos/assets/GuestReservation-Dq1mf9Gp.js:1
+#: pos_next/public/pos/assets/POSSale-DU_AQXZv.js:237
+#: pos_next/public/pos/assets/POSSale-mjI4Nuks.js:37
+#: pos_next/public/pos/assets/index-CoTS2n3P.js:86
+msgid "An error occurred"
+msgstr "Ein Fehler ist aufgetreten"
+
+#: POS/src/components/ShiftOpeningDialog.vue:239
+#: POS/src/components/restaurant/TableHeaderBar.vue:88
+#: POS/src/components/restaurant/TableHeaderBar.vue:94
+#: POS/src/pages/GuestOrder.vue:49
+#: pos_next/public/pos/assets/GuestOrder-fuPtvyUd.js:1
+#: pos_next/public/pos/assets/GuestOrder-v_UClcF0.js:1
+#: pos_next/public/pos/assets/POSSale-DU_AQXZv.js:241
+#: pos_next/public/pos/assets/ShiftOpeningDialog-DHJcbMRQ.js:2
+msgid "Back"
+msgstr "Zurück"
+
+#: POS/src/pages/GuestReservation.vue:18
+#: pos_next/public/pos/assets/GuestReservation-Dak1pwuJ.js:1
+#: pos_next/public/pos/assets/GuestReservation-Dq1mf9Gp.js:1
+msgid "Book a Table"
+msgstr "Tisch reservieren"
+
+#: POS/src/pages/GuestReservation.vue:213
+#: pos_next/public/pos/assets/GuestReservation-Dak1pwuJ.js:1
+#: pos_next/public/pos/assets/GuestReservation-Dq1mf9Gp.js:1
+msgid "Book Now"
+msgstr "Jetzt reservieren"
+
+#: POS/src/pages/GuestOrder.vue:159 POS/src/pages/POSSale.vue:491
+#: POS/src/pages/TakeawayOrder.vue:131
+#: pos_next/public/pos/assets/GuestOrder-fuPtvyUd.js:1
+#: pos_next/public/pos/assets/GuestOrder-v_UClcF0.js:1
+#: pos_next/public/pos/assets/POSSale-DU_AQXZv.js:241
+#: pos_next/public/pos/assets/POSSale-mjI4Nuks.js:41
+#: pos_next/public/pos/assets/TakeawayOrder-B78uanCX.js:1
+#: pos_next/public/pos/assets/TakeawayOrder-B_4XXoCm.js:1
+msgid "Cart"
+msgstr "Warenkorb"
+
+#: POS/src/pages/GuestReservation.vue:53
+#: pos_next/public/pos/assets/GuestReservation-Dak1pwuJ.js:1
+#: pos_next/public/pos/assets/GuestReservation-Dq1mf9Gp.js:1
+msgid "Check your spam folder if you don't see the email."
+msgstr "Falls Sie die E-Mail nicht sehen, prüfen Sie Ihren Spam-Ordner."
+
+#: POS/src/components/ShiftClosingDialog.vue:1594
+#: POS/src/components/common/InstallAppBadge.vue:93
+#: POS/src/components/guest/GuestAccountSheet.vue:22
+#: POS/src/components/invoices/InvoiceDetailDialog.vue:491
+#: POS/src/components/invoices/InvoiceManagement.vue:88
+#: POS/src/components/invoices/KDSOrderCard.vue:150
+#: POS/src/components/invoices/KDSOrderCard.vue:202
+#: POS/src/components/invoices/KDSOrderCard.vue:301
+#: POS/src/components/invoices/RunnerOrderCard.vue:79
+#: POS/src/components/payments/CardPresentDialog.vue:52
+#: POS/src/components/payments/CardPresentDialog.vue:279
+#: POS/src/components/payments/QRPaymentDialog.vue:46
+#: POS/src/components/payments/QRPaymentDialog.vue:263
+#: POS/src/components/pos/CashDrawerDialog.vue:59
+#: POS/src/components/pos/CashInOutDialog.vue:72
+#: POS/src/components/pos/ShortcutsDialog.vue:38
+#: POS/src/components/restaurant/AddPortionsDialog.vue:73
+#: POS/src/components/restaurant/CardEditor.vue:429
+#: POS/src/components/restaurant/CardPickerDialog.vue:38
+#: POS/src/components/restaurant/TableQRCode.vue:114
+#: POS/src/components/restaurant/TablesList.vue:153
+#: POS/src/components/sale/CouponDialog.vue:299
+#: POS/src/components/sale/DraftInvoicesDialog.vue:175
+#: POS/src/components/sale/EditCustomerDialog.vue:357
+#: POS/src/components/sale/ExpenseDialog.vue:45
+#: POS/src/components/sale/GiftCardCreatedDialog.vue:178
+#: POS/src/components/sale/InvoiceHistoryDialog.vue:162
+#: POS/src/components/sale/OffersDialog.vue:272
+#: POS/src/components/sale/OfflineInvoicesDialog.vue:363
+#: POS/src/components/sale/PromotionManagement.vue:51
+#: POS/src/components/sale/PromotionManagement.vue:465
+#: POS/src/components/sale/ReturnInvoiceDialog.vue:338
+#: POS/src/components/sale/ShiftHistoryDialog.vue:43
+#: POS/src/components/sale/WarehouseAvailabilityDialog.vue:846
+#: POS/src/components/settings/TillSettingsScreen.vue:70
+#: POS/src/pages/POSSale.vue:1786 POS/src/pages/POSSale.vue:1847
+#: POS/src/pages/POSSale.vue:1931 POS/src/utils/printInvoice.js:385
+#: POS/src/utils/printInvoice.js:835 pos_next/public/js/coupon_code_list.js:146
+#: pos_next/public/pos/assets/KDS-hGXufJ6y.js:1
+#: pos_next/public/pos/assets/POSSale-DU_AQXZv.js:2
+#: pos_next/public/pos/assets/POSSale-DU_AQXZv.js:109
+#: pos_next/public/pos/assets/POSSale-DU_AQXZv.js:210
+#: pos_next/public/pos/assets/POSSale-DU_AQXZv.js:241
+#: pos_next/public/pos/assets/POSSale-mjI4Nuks.js:2
+#: pos_next/public/pos/assets/POSSale-mjI4Nuks.js:41
+#: pos_next/public/pos/assets/Runner-7CN7gdAf.js:1
+#: pos_next/public/pos/assets/ShiftOpeningDialog-CXdnqfG2.js:108
+#: pos_next/public/pos/assets/ShiftOpeningDialog-DHJcbMRQ.js:2
+msgid "Close"
+msgstr "Schliessen"
+
+#: POS/src/components/guest/GuestAccountSheet.vue:112
+#: POS/src/components/invoices/KDSOrderCard.vue:133
+#: POS/src/components/restaurant/ReservationList.vue:124
+#: POS/src/components/restaurant/ReservationList.vue:129
+#: POS/src/components/sale/EditItemDialog.vue:653
+#: POS/src/components/sale/ExpenseDialog.vue:584
+#: POS/src/components/sale/ExpenseDialog.vue:591
+#: POS/src/components/sale/ItemModifiersDialog.vue:95
+#: POS/src/components/sale/PickerDialogFooter.vue:16
+#: pos_next/public/pos/assets/KDS-hGXufJ6y.js:1
+#: pos_next/public/pos/assets/KDS-v9Wypq0I.js:1
+#: pos_next/public/pos/assets/POSSale-mjI4Nuks.js:37
+msgid "Confirm"
+msgstr "Bestätigen"
+
+#: POS/src/components/guest/GuestAccountSheet.vue:41
+#: POS/src/components/sale/PaymentDialog.vue:2479
+#: pos_next/public/pos/assets/TakeawayOrder-B_4XXoCm.js:1
+msgid "Continue"
+msgstr "Weiter"
+
+#: POS/src/components/guest/GuestAccountSheet.vue:56
+#, python-brace-format
+msgid "Continue as {0}"
+msgstr "Weiter als {0}"
+
+#: POS/src/components/guest/GuestAccountSheet.vue:147
+msgid "Create my account"
+msgstr "Mein Konto erstellen"
+
+#. Option for the 'Paper Format' (Select) field in DocType 'Menu Design
+#. Template'
+#: POS/src/components/guest/GuestCheckout.vue:227
+#: POS/src/components/restaurant/MenuSettings.vue:118
+#: POS/src/components/sale/PaymentDialog.vue:1860
+#: pos_next/pos_next/doctype/menu_design_template/menu_design_template.json:88
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+msgid "Custom"
+msgstr "Anderer Betrag"
+
+#: pos_next/api/guest_ordering.py:1805
+#, python-brace-format
+msgid "Customer {0} not found."
+msgstr "Kunde {0} nicht gefunden."
+
+#. Label of a Date field in DocType 'POS Payment Entry Reference'
+#. Label of a Date field in DocType 'Restaurant Reservation'
+#. Label of a Date field in DocType 'Restaurant Shopping List'
+#. Label of a Date field in DocType 'Restaurant Tip'
+#. Label of a Date field in DocType 'Sales Invoice Reference'
+#: POS/src/components/invoices/InvoiceManagement.vue:451
+#: POS/src/components/restaurant/ReservationForm.vue:17
+#: POS/src/components/sale/ReturnInvoiceDialog.vue:387
+#: POS/src/components/sale/ReturnInvoiceDialog.vue:427
+#: POS/src/components/sale/ShiftHistoryDialog.vue:410
+#: POS/src/pages/GuestReservation.vue:62
+#: pos_next/pos_next/doctype/pos_closing_shift/closing_shift_details.html:67
+#: pos_next/pos_next/doctype/pos_payment_entry_reference/pos_payment_entry_reference.json:30
+#: pos_next/pos_next/doctype/restaurant_reservation/restaurant_reservation.json:75
+#: pos_next/pos_next/doctype/restaurant_shopping_list/restaurant_shopping_list.json:31
+#: pos_next/pos_next/doctype/restaurant_tip/restaurant_tip.json:33
+#: pos_next/pos_next/doctype/sales_invoice_reference/sales_invoice_reference.json:30
+#: pos_next/pos_next/report/payments_and_cash_control_report/payments_and_cash_control_report.py:37
+#: pos_next/pos_next/report/sales_vs_shifts_report/sales_vs_shifts_report.py:562
+#: pos_next/public/pos/assets/GuestReservation-Dak1pwuJ.js:1
+#: pos_next/public/pos/assets/GuestReservation-Dq1mf9Gp.js:1
+#: pos_next/public/pos/assets/POSSale-mjI4Nuks.js:16
+msgid "Date"
+msgstr "Datum"
+
+#: POS/src/utils/kitchenStatus.js:44
+#: pos_next/public/pos/assets/kitchenStatus-BT-1TIhO.js:1
+msgctxt "Kitchen order status"
+msgid "Delivered"
+msgstr "Serviert"
+
+#: POS/src/components/guest/GuestCheckout.vue:110
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+msgid "Download receipt"
+msgstr "Quittung herunterladen"
+
+#. Label of a Data field in DocType 'Restaurant Reservation'
+#: POS/src/components/customer-display/CreateCustomerModal.vue:91
+#: POS/src/components/invoices/InvoiceDetailDialog.vue:502
+#: POS/src/components/restaurant/ReservationForm.vue:171
+#: POS/src/components/sale/CouponManagement.vue:766
+#: POS/src/components/sale/CreateCustomerDialog.vue:176
+#: POS/src/components/sale/CustomerFormDialog.vue:197
+#: POS/src/components/sale/InvoiceCart.vue:244
+#: POS/src/pages/GuestReservation.vue:171 POS/src/pages/POSSale.vue:1857
+#: pos_next/pos_next/doctype/restaurant_reservation/restaurant_reservation.json:129
+#: pos_next/public/pos/assets/CustomerDisplay-CUU4jVLr.js:1
+#: pos_next/public/pos/assets/CustomerDisplay-wzc84K7r.js:1
+#: pos_next/public/pos/assets/GuestReservation-Dak1pwuJ.js:1
+#: pos_next/public/pos/assets/GuestReservation-Dq1mf9Gp.js:1
+#: pos_next/public/pos/assets/POSSale-DU_AQXZv.js:241
+#: pos_next/public/pos/assets/POSSale-mjI4Nuks.js:41
+#: pos_next/public/pos/assets/TakeawayOrder-B_4XXoCm.js:1
+msgid "Email"
+msgstr "E-Mail"
+
+#: pos_next/api/guest_ordering.py:1307
+msgid "Failed to initiate payment. Please try again or contact staff."
+msgstr "Die Zahlung konnte nicht gestartet werden. Bitte versuchen Sie es erneut oder wenden Sie sich ans Personal."
+
+#: POS/src/pages/TakeawayOrder.vue:233
+#: pos_next/public/pos/assets/TakeawayOrder-B78uanCX.js:1
+#: pos_next/public/pos/assets/TakeawayOrder-B_4XXoCm.js:1
+msgid "Failed to load takeaway menu"
+msgstr "Das Take-away-Menü konnte nicht geladen werden."
+
+#: POS/src/components/guest/GuestCheckout.vue:211
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+msgid "Full"
+msgstr "Alles"
+
+#: pos_next/api/guest_ordering.py:1416 pos_next/api/invoices.py:3044
+#: pos_next/pos_next/doctype/restaurant/restaurant.py:124
+#: pos_next/pos_next/doctype/restaurant_settings/restaurant_settings.py:97
+msgctxt "Restaurant tip line"
+msgid "Gratuity"
+msgstr "Trinkgeld"
+
+#: POS/src/components/guest/GuestAccountSheet.vue:28
+#: POS/src/utils/translation.ts:21
+#, python-brace-format
+msgid "Hello {0}"
+msgstr "Hallo {0}"
+
+#: POS/src/components/guest/GuestCart.vue:176
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+msgid "In queue"
+msgstr "In Warteschlange"
+
+#: POS/src/pages/GuestOrder.vue:44
+#: pos_next/public/pos/assets/GuestOrder-fuPtvyUd.js:1
+#: pos_next/public/pos/assets/GuestOrder-v_UClcF0.js:1
+msgid "Invalid or expired link"
+msgstr "Ungültiger oder abgelaufener Link"
+
+#: pos_next/api/guest_ordering.py:56
+msgid "Invalid or unknown token."
+msgstr "Ungültiges oder unbekanntes Token."
+
+#: pos_next/api/guest_ordering.py:1153
+msgid "Invoice not found."
+msgstr "Rechnung nicht gefunden."
+
+#: POS/src/pages/GuestOrder.vue:19 POS/src/pages/PublicMenu.vue:17
+#: pos_next/public/pos/assets/GuestOrder-fuPtvyUd.js:1
+#: pos_next/public/pos/assets/GuestOrder-v_UClcF0.js:1
+#: pos_next/public/pos/assets/PublicMenu-CFcJqcsg.js:1
+msgid "Loading menu..."
+msgstr "Menü wird geladen..."
+
+#: POS/src/components/common/LoadingSpinner.vue:29
+#: POS/src/components/restaurant/ReservationList.vue:46
+#: POS/src/components/restaurant/ReservationStats.vue:20
+#: POS/src/components/sale/CouponManagement.vue:76
+#: POS/src/components/sale/PaymentDialog.vue:204
+#: POS/src/components/sale/PaymentDialog.vue:346
+#: POS/src/components/sale/PaymentDialog.vue:1299
+#: POS/src/components/sale/ProductManagement.vue:102
+#: POS/src/components/sale/PromotionManagement.vue:181
+#: POS/src/pages/TakeawayOrder.vue:14
+#: pos_next/public/pos/assets/POSSale-DU_AQXZv.js:2
+#: pos_next/public/pos/assets/POSSale-mjI4Nuks.js:2
+#: pos_next/public/pos/assets/TakeawayOrder-B78uanCX.js:1
+#: pos_next/public/pos/assets/TakeawayOrder-B_4XXoCm.js:1
+msgid "Loading..."
+msgstr "Wird geladen..."
+
+#: POS/src/components/guest/GuestAccountSheet.vue:34
+msgid "Loyalty points"
+msgstr "Treuepunkte"
+
+#. Option for the 'Type' (Select) field in DocType 'Restaurant Card Item'
+#. Label of a Link field in DocType 'Restaurant Card Item'
+#: POS/src/pages/GuestOrder.vue:137 POS/src/pages/TakeawayOrder.vue:111
+#: pos_next/pos_next/doctype/restaurant_card_item/restaurant_card_item.json:22
+#: pos_next/pos_next/doctype/restaurant_card_item/restaurant_card_item.json:54
+#: pos_next/public/pos/assets/GuestOrder-fuPtvyUd.js:1
+#: pos_next/public/pos/assets/GuestOrder-v_UClcF0.js:1
+#: pos_next/public/pos/assets/TakeawayOrder-B78uanCX.js:1
+#: pos_next/public/pos/assets/TakeawayOrder-B_4XXoCm.js:1
+msgid "Menu"
+msgstr "Menü"
+
+#: POS/src/pages/GuestReservation.vue:396
+#: pos_next/public/pos/assets/GuestReservation-Dak1pwuJ.js:1
+#: pos_next/public/pos/assets/GuestReservation-Dq1mf9Gp.js:1
+msgid "Network error. Please try again."
+msgstr "Netzwerkfehler. Bitte versuchen Sie es erneut."
+
+#: POS/src/components/guest/GuestCart.vue:70
+#: POS/src/components/guest/GuestCart.vue:124
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+msgid "New items"
+msgstr "Neue Positionen"
+
+#: pos_next/api/guest_ordering.py:1220 pos_next/api/guest_ordering.py:1340
+msgid "No active order found for this session."
+msgstr "Für diese Sitzung wurde keine aktive Bestellung gefunden."
+
+#: POS/src/pages/GuestReservation.vue:90
+#: pos_next/public/pos/assets/GuestReservation-Dak1pwuJ.js:1
+#: pos_next/public/pos/assets/GuestReservation-Dq1mf9Gp.js:1
+msgid "No available slots for this date"
+msgstr "Für dieses Datum sind keine Zeiten verfügbar."
+
+#: pos_next/api/guest_ordering.py:1198
+msgid "No enabled Wallee Payment Provider configured on this instance."
+msgstr "Auf dieser Instanz ist kein aktiver Wallee-Zahlungsanbieter konfiguriert."
+
+#: pos_next/api/guest_ordering.py:686
+msgid "No guest menu is configured. Please contact staff."
+msgstr "Es ist noch kein Gästemenü eingerichtet. Bitte wenden Sie sich ans Personal."
+
+#: pos_next/api/guest_ordering.py:1149
+msgid "No invoice found for this session."
+msgstr "Für diese Sitzung wurde keine Rechnung gefunden."
+
+#: POS/src/components/guest/GuestMenuView.vue:83
+#: POS/src/components/sale/PromotionManagement.vue:631
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+msgid "No items found"
+msgstr "Keine Gerichte gefunden"
+
+#: pos_next/api/guest_ordering.py:777 pos_next/api/guest_ordering.py:1797
+msgid "No items provided."
+msgstr "Keine Positionen angegeben."
+
+#: POS/src/components/guest/GuestCheckout.vue:17
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+msgid "No order yet"
+msgstr "Noch keine Bestellung"
+
+#: pos_next/api/guest_ordering.py:1834
+msgid "No POS Profile is available for takeaway orders."
+msgstr "Für Take-away-Bestellungen ist kein POS-Profil verfügbar."
+
+#: pos_next/api/guest_ordering.py:804
+msgid "No POS Profile linked to this session."
+msgstr "Diese Sitzung ist mit keinem POS-Profil verknüpft."
+
+#: pos_next/api/guest_ordering.py:1824
+msgid "No takeaway menu is configured."
+msgstr "Es ist noch kein Take-away-Menü eingerichtet."
+
+#: pos_next/api/cash_entry.py:33 pos_next/api/cash_entry.py:37
+#: pos_next/api/cash_entry.py:57 pos_next/api/cash_entry.py:82
+#: pos_next/api/cash_entry.py:101 pos_next/api/customer_display.py:44
+#: pos_next/api/guest_ordering.py:1622 pos_next/api/guest_ordering.py:1634
+#: pos_next/api/invoices.py:1148 pos_next/api/kitchen_events.py:73
+#: pos_next/api/payments.py:53 pos_next/api/payments.py:65
+#: pos_next/api/restaurant.py:498 pos_next/api/restaurant.py:766
+#: pos_next/api/restaurant.py:1299 pos_next/api/restaurant.py:1320
+#: pos_next/api/restaurant.py:1727 pos_next/api/restaurant.py:2432
+#: pos_next/api/restaurant.py:3364 pos_next/api/restaurant.py:3483
+#: pos_next/api/restaurant_devices.py:168 pos_next/api/session.py:103
+#: pos_next/api/shifts.py:85 pos_next/api/table_qr_ticket.py:76
+#: pos_next/api/table_qr_ticket.py:79
+#: pos_next/pos_next/doctype/pos_closing_shift/pos_closing_shift.py:474
+#: pos_next/pos_next/doctype/pos_closing_shift/pos_closing_shift.py:1015
+#: pos_next/pos_next/doctype/pos_closing_shift/pos_closing_shift.py:1018
+#: pos_next/pos_next/doctype/pos_closing_shift/pos_closing_shift.py:1044
+#: pos_next/pos_next/doctype/pos_closing_shift/pos_closing_shift.py:1066
+#: pos_next/restaurant/devices.py:156 pos_next/restaurant/permissions.py:90
+msgid "Not permitted"
+msgstr "Nicht erlaubt"
+
+#: POS/src/pages/GuestReservation.vue:95
+#: pos_next/public/pos/assets/GuestReservation-Dak1pwuJ.js:1
+#: pos_next/public/pos/assets/GuestReservation-Dq1mf9Gp.js:1
+msgid "Number of Guests"
+msgstr "Anzahl Gäste"
+
+#: POS/src/components/sale/ReturnInvoiceDialog.vue:559
+#: POS/src/components/sale/ReturnInvoiceDialog.vue:646
+#, python-brace-format
+msgctxt "item qty"
+msgid "of {0}"
+msgstr "von {0}"
+
+#: POS/src/pages/GuestReservation.vue:38
+#: pos_next/public/pos/assets/GuestReservation-Dak1pwuJ.js:1
+#: pos_next/public/pos/assets/GuestReservation-Dq1mf9Gp.js:1
+msgid "Online reservations are not available"
+msgstr "Online-Reservationen sind nicht möglich."
+
+#: POS/src/components/sale/InvoiceCart.vue:395
+#: POS/src/components/sale/InvoiceCart.vue:535 POS/src/pages/GuestOrder.vue:67
+#: POS/src/pages/POSSale.vue:2059 POS/src/router.js:88 POS/src/router.js:95
+#: pos_next/public/pos/assets/GuestOrder-fuPtvyUd.js:1
+#: pos_next/public/pos/assets/GuestOrder-v_UClcF0.js:1
+#: pos_next/public/pos/assets/POSSale-DU_AQXZv.js:241
+#: pos_next/public/pos/assets/POSSale-mjI4Nuks.js:41
+#: pos_next/public/pos/assets/index-CoTS2n3P.js:88
+msgid "Order"
+msgstr "Bestellung"
+
+#: POS/src/pages/TakeawayOrder.vue:38
+#: pos_next/public/pos/assets/TakeawayOrder-B78uanCX.js:1
+#: pos_next/public/pos/assets/TakeawayOrder-B_4XXoCm.js:1
+msgid "Order confirmed!"
+msgstr "Bestellung bestätigt!"
+
+#: POS/src/components/guest/GuestCart.vue:17
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+msgid "Order paid"
+msgstr "Bestellung bezahlt"
+
+#: POS/src/pages/GuestOrder.vue:199
+#: pos_next/public/pos/assets/GuestOrder-fuPtvyUd.js:1
+#: pos_next/public/pos/assets/GuestOrder-v_UClcF0.js:1
+msgid "Order sent!"
+msgstr "Bestellung gesendet!"
+
+#: POS/src/components/guest/GuestCheckout.vue:133
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+msgid "Order Summary"
+msgstr "Bestellübersicht"
+
+#: pos_next/api/guest_ordering.py:1244
+#, python-brace-format
+msgid "Order {0}"
+msgstr "Bestellung {0}"
+
+#. Option for the 'State' (Select) field in DocType 'Restaurant Shopping List
+#. Line'
+#: POS/src/components/guest/GuestCart.vue:34
+#: pos_next/pos_next/doctype/restaurant_shopping_list_line/restaurant_shopping_list_line.json:87
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:97
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+msgid "Ordered"
+msgstr "Bestellt"
+
+#: pos_next/api/guest_ordering.py
+msgid "Ordering from the table's QR code is not enabled here."
+msgstr "Bestellen über den QR-Code des Tisches ist hier nicht aktiviert."
+
+#. Option for the 'Station Type' (Select) field in DocType 'Preparation
+#. Station'
+#: POS/src/components/guest/GuestCheckout.vue:179
+#: POS/src/components/pos/CashDrawerDialog.vue:102
+#: pos_next/pos_next/doctype/preparation_station/preparation_station.json:59
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+#: pos_next/public/pos/assets/POSSale-mjI4Nuks.js:2
+msgid "Other"
+msgstr "Andere"
+
+#. Option for the 'Status' (Select) field in DocType 'Restaurant Table'
+#: POS/src/components/invoices/InvoiceFilters.vue:416
+#: POS/src/components/invoices/InvoiceManagement.vue:453
+#: POS/src/components/partials/PartialPayments.vue:251
+#: POS/src/components/pos/FloorPlanEditor.vue:487
+#: POS/src/components/sale/PaymentDialog.vue:961
+#: POS/src/components/sale/PaymentDialog.vue:2521
+#: POS/src/composables/useInvoiceFilters.js:265
+#: POS/src/pages/GuestOrder.vue:175 POS/src/utils/tablesOfTheService.js:114
+#: pos_next/pos_next/doctype/restaurant_table/restaurant_table.json:56
+#: pos_next/public/pos/assets/GuestOrder-fuPtvyUd.js:1
+#: pos_next/public/pos/assets/GuestOrder-v_UClcF0.js:1
+#: pos_next/public/pos/assets/POSSale-DU_AQXZv.js:237
+#: pos_next/public/pos/assets/POSSale-mjI4Nuks.js:18
+msgid "Paid"
+msgstr "Bezahlt"
+
+#: POS/src/components/sale/InvoiceCart.vue:2068
+#: POS/src/components/sale/PaymentDialog.vue:2060
+#: POS/src/pages/GuestOrder.vue:181
+#: pos_next/public/pos/assets/GuestOrder-fuPtvyUd.js:1
+#: pos_next/public/pos/assets/GuestOrder-v_UClcF0.js:1
+msgid "Pay"
+msgstr "Bezahlen"
+
+#: POS/src/pages/TakeawayOrder.vue:143
+#: pos_next/public/pos/assets/TakeawayOrder-B78uanCX.js:1
+#: pos_next/public/pos/assets/TakeawayOrder-B_4XXoCm.js:1
+msgid "Pay & Order"
+msgstr "Bezahlen & bestellen"
+
+#: POS/src/components/guest/GuestCheckout.vue:294
+#, python-brace-format
+msgid "Pay {0}"
+msgstr "{0} bezahlen"
+
+#: pos_next/api/guest_ordering.py:1229
+msgid "Payment amount must be greater than zero."
+msgstr "Der Zahlungsbetrag muss grösser als null sein."
+
+#: POS/src/components/guest/GuestCheckout.vue:59
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+msgid "Payment complete"
+msgstr "Zahlung abgeschlossen"
+
+#: pos_next/api/guest_ordering.py:1819
+msgid "Payment must be completed before placing a takeaway order."
+msgstr "Die Zahlung muss abgeschlossen sein, bevor eine Take-away-Bestellung aufgegeben wird."
+
+#: POS/src/components/guest/GuestCheckout.vue:33
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+msgid "Payment received"
+msgstr "Zahlung erhalten"
+
+#: POS/src/components/guest/GuestCheckout.vue:464
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+msgid "Payment was cancelled or failed. Please try again."
+msgstr "Die Zahlung wurde abgebrochen oder ist fehlgeschlagen. Bitte versuchen Sie es erneut."
+
+#: POS/src/components/sale/EditCustomerDialog.vue:209
+#: POS/src/components/sale/EditCustomerDialog.vue:210
+msgctxt "Address book"
+msgid "Phone"
+msgstr "Telefon"
+
+#: POS/src/components/guest/GuestAccountSheet.vue:137
+msgid "Phone (optional)"
+msgstr "Telefon (optional)"
+
+#: POS/src/pages/PublicMenu.vue:21
+#: pos_next/public/pos/assets/PublicMenu-CFcJqcsg.js:1
+msgid "Please ask a member of our team."
+msgstr "Bitte wenden Sie sich an unser Team."
+
+#: POS/src/pages/GuestOrder.vue:45
+#: pos_next/public/pos/assets/GuestOrder-fuPtvyUd.js:1
+#: pos_next/public/pos/assets/GuestOrder-v_UClcF0.js:1
+msgid "Please ask your server to generate a new QR code."
+msgstr "Bitte bitten Sie das Personal, einen neuen QR-Code zu erstellen."
+
+#: POS/src/pages/GuestReservation.vue:39
+#: pos_next/public/pos/assets/GuestReservation-Dak1pwuJ.js:1
+#: pos_next/public/pos/assets/GuestReservation-Dq1mf9Gp.js:1
+msgid "Please call us to make a reservation"
+msgstr "Bitte rufen Sie uns an, um eine Reservation vorzunehmen."
+
+#: POS/src/pages/GuestReservation.vue:52
+#: pos_next/public/pos/assets/GuestReservation-Dak1pwuJ.js:1
+#: pos_next/public/pos/assets/GuestReservation-Dq1mf9Gp.js:1
+msgid "Please check your email to confirm the reservation."
+msgstr "Bitte prüfen Sie Ihre E-Mails, um die Reservation zu bestätigen."
+
+#: pos_next/api/guest_ordering.py:756
+msgid "Please choose a whole number of dishes"
+msgstr "Bitte wählen Sie eine ganze Anzahl Gerichte."
+
+#: pos_next/restaurant/guest_account.py:60
+#: pos_next/restaurant/guest_account.py:152
+msgid "Please enter a valid email address."
+msgstr "Bitte geben Sie eine gültige E-Mail-Adresse ein."
+
+#: pos_next/api/guest_ordering.py:1105 pos_next/restaurant/guest_account.py:307
+msgid "Please enter your name."
+msgstr "Bitte geben Sie Ihren Namen ein."
+
+#: POS/src/components/guest/GuestCart.vue:131
+#: pos_next/api/guest_ordering.py:799
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+msgid "Please sign in to order."
+msgstr "Bitte melden Sie sich an, um zu bestellen."
+
+#: POS/src/pages/GuestReservation.vue:127
+#: pos_next/public/pos/assets/GuestReservation-Dak1pwuJ.js:1
+#: pos_next/public/pos/assets/GuestReservation-Dq1mf9Gp.js:1
+msgid "Preferred Table"
+msgstr "Bevorzugter Tisch"
+
+#: POS/src/utils/kitchenStatus.js:40
+#: pos_next/public/pos/assets/kitchenStatus-BT-1TIhO.js:1
+msgctxt "Kitchen order status"
+msgid "Preparing"
+msgstr "In Zubereitung"
+
+#: POS/src/utils/kitchenStatus.js:42
+#: pos_next/public/pos/assets/kitchenStatus-BT-1TIhO.js:1
+msgctxt "Kitchen order status"
+msgid "Ready"
+msgstr "Bereit"
+
+#: POS/src/components/guest/GuestCheckout.vue:42
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+#, python-brace-format
+msgid "Remaining to pay on this table: {0}"
+msgstr "Am Tisch noch offen: {0}"
+
+#: POS/src/components/guest/GuestCheckout.vue:126
+#: POS/src/components/guest/GuestCheckout.vue:250
+#: POS/src/pages/POSSale.vue:1838
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+#: pos_next/public/pos/assets/POSSale-mjI4Nuks.js:41
+#, python-brace-format
+msgid "Remaining: {0}"
+msgstr "Verbleibend: {0}"
+
+#: POS/src/components/guest/GuestAccountSheet.vue:67
+#: pos_next/public/pos/assets/TakeawayOrder-B_4XXoCm.js:1
+msgid "Required to receive your order"
+msgstr "Für den Erhalt Ihrer Bestellung erforderlich"
+
+#: POS/src/pages/GuestReservation.vue:51
+#: pos_next/public/pos/assets/GuestReservation-Dak1pwuJ.js:1
+#: pos_next/public/pos/assets/GuestReservation-Dq1mf9Gp.js:1
+msgid "Reservation Submitted!"
+msgstr "Reservation übermittelt!"
+
+#: POS/src/pages/GuestReservation.vue:19
+#: pos_next/public/pos/assets/GuestReservation-Dak1pwuJ.js:1
+#: pos_next/public/pos/assets/GuestReservation-Dq1mf9Gp.js:1
+msgid "Reserve your table online"
+msgstr "Tisch online reservieren"
+
+#: POS/src/components/guest/GuestMenuView.vue:62
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+msgid "Search in menu..."
+msgstr "Im Menü suchen..."
+
+#: POS/src/components/guest/GuestAccountSheet.vue:117
+msgid "Send a new code"
+msgstr "Neuen Code senden"
+
+#: POS/src/components/guest/GuestAccountSheet.vue:117
+#, python-brace-format
+msgid "Send a new code in {0} s"
+msgstr "Neuen Code in {0} s senden"
+
+#: POS/src/components/guest/GuestAccountSheet.vue:88
+msgid "Send me a code"
+msgstr "Mir einen Code senden"
+
+#: POS/src/components/guest/GuestCart.vue:143
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+msgid "Send Order"
+msgstr "Bestellung senden"
+
+#: POS/src/components/guest/GuestCheckout.vue:18
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+msgid "Send your order first, then pay here"
+msgstr "Senden Sie zuerst Ihre Bestellung, bezahlen Sie danach hier."
+
+#: POS/src/components/guest/GuestCart.vue:182
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+msgid "Sent"
+msgstr "Gesendet"
+
+#: POS/src/pages/TakeawayOrder.vue:24
+#: pos_next/public/pos/assets/TakeawayOrder-B78uanCX.js:1
+#: pos_next/public/pos/assets/TakeawayOrder-B_4XXoCm.js:1
+msgid "Service unavailable"
+msgstr "Zurzeit nicht verfügbar"
+
+#: POS/src/pages/TakeawayOrder.vue:41
+#: pos_next/public/pos/assets/TakeawayOrder-B78uanCX.js:1
+#: pos_next/public/pos/assets/TakeawayOrder-B_4XXoCm.js:1
+msgid "Show this number when you pick up your order."
+msgstr "Zeigen Sie diese Nummer bei der Abholung Ihrer Bestellung vor."
+
+#: POS/src/components/guest/GuestAccountSheet.vue:20
+#: POS/src/pages/GuestOrder.vue:90 POS/src/pages/Login.vue:119
+#: pos_next/public/pos/assets/GuestOrder-fuPtvyUd.js:1
+#: pos_next/public/pos/assets/Login-BohumO-p.js:2
+#: pos_next/public/pos/assets/Login-CaAf41_g.js:2
+msgid "Sign in"
+msgstr "Anmelden"
+
+#: POS/src/components/guest/GuestCheckout.vue:271
+msgid "Sign in for next time"
+msgstr "Für das nächste Mal anmelden"
+
+#: POS/src/components/guest/GuestAccountSheet.vue:69
+msgid "Sign in to earn and use your loyalty points. We send you a code by email, no password needed."
+msgstr "Melden Sie sich an, um Treuepunkte zu sammeln und einzulösen. Wir senden Ihnen einen Code per E-Mail, ein Passwort brauchen Sie nicht."
+
+#: POS/src/components/guest/GuestCheckout.vue:270
+msgid "Sign in to earn loyalty points"
+msgstr "Anmelden, um Treuepunkte zu sammeln"
+
+#: POS/src/stores/guestOrder.js:315 pos_next/api/guest_ordering.py:1137
+msgid "Sign in to link your account to this table."
+msgstr "Melden Sie sich an, um Ihr Konto mit diesem Tisch zu verknüpfen."
+
+#: POS/src/components/guest/GuestCheckout.vue:268
+msgid "Sign in to pay"
+msgstr "Anmelden, um zu bezahlen"
+
+#: POS/src/components/guest/GuestAccountSheet.vue:70
+msgid "Sign in with your email address. We send you a code, no password needed."
+msgstr "Melden Sie sich mit Ihrer E-Mail-Adresse an. Wir senden Ihnen einen Code, ein Passwort brauchen Sie nicht."
+
+#: pos_next/restaurant/guest_account.py:185
+msgid "Signing in with a code is not available for this account."
+msgstr "Die Anmeldung mit Code ist für dieses Konto nicht verfügbar."
+
+#: pos_next/restaurant/guest_account.py:46
+#: pos_next/restaurant/guest_account.py:153
+msgid "Signing in with a code is not available here."
+msgstr "Die Anmeldung mit Code ist hier nicht verfügbar."
+
+#: POS/src/components/guest/GuestAccountSheet.vue:218
+#: POS/src/composables/useTillCode.js:92
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/index-CoTS2n3P.js:104
+msgid "Something went wrong. Please try again."
+msgstr "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+
+#: POS/src/pages/GuestReservation.vue:184
+#: pos_next/public/pos/assets/GuestReservation-Dak1pwuJ.js:1
+#: pos_next/public/pos/assets/GuestReservation-Dq1mf9Gp.js:1
+msgid "Special Requests"
+msgstr "Besondere Wünsche"
+
+#: POS/src/components/restaurant/CardEditor.vue:251
+#: POS/src/pages/PublicMenu.vue:48 POS/src/pages/PublicMenu.vue:49
+#: pos_next/public/pos/assets/PublicMenu-CFcJqcsg.js:1
+#, python-brace-format
+msgid "Spice level {0}"
+msgstr "Schärfegrad {0}"
+
+#: POS/src/components/customer-display/CreateCustomerModal.vue:238
+#: POS/src/pages/GuestReservation.vue:213
+#: pos_next/public/pos/assets/CustomerDisplay-CUU4jVLr.js:1
+#: pos_next/public/pos/assets/CustomerDisplay-wzc84K7r.js:1
+#: pos_next/public/pos/assets/GuestReservation-Dak1pwuJ.js:1
+#: pos_next/public/pos/assets/GuestReservation-Dq1mf9Gp.js:1
+msgid "Submitting..."
+msgstr "Wird übermittelt..."
+
+#: POS/src/components/customer-display/DisplayCart.vue:98
+#: POS/src/components/guest/GuestCheckout.vue:88
+#: POS/src/components/guest/GuestCheckout.vue:151
+#: POS/src/components/sale/InvoiceCart.vue:1826
+#: POS/src/components/sale/OfflineInvoicesDialog.vue:314
+#: POS/src/components/sale/PaymentDialog.vue:902 POS/src/pages/CFD.vue:57
+#: pos_next/public/pos/assets/CFD-BVqcBpPE.js:1
+#: pos_next/public/pos/assets/CFD-C9BIKvnb.js:1
+#: pos_next/public/pos/assets/CustomerDisplay-CUU4jVLr.js:1
+#: pos_next/public/pos/assets/CustomerDisplay-wzc84K7r.js:1
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+msgid "Subtotal"
+msgstr "Zwischensumme"
+
+#: pos_next/api/guest_ordering.py:1630
+#, python-brace-format
+msgid "Table {0} not found."
+msgstr "Tisch {0} nicht gefunden."
+
+#: POS/src/pages/TakeawayOrder.vue:50
+#: pos_next/public/pos/assets/TakeawayOrder-B78uanCX.js:1
+#: pos_next/public/pos/assets/TakeawayOrder-B_4XXoCm.js:1
+msgid "Takeaway Order"
+msgstr "Take-away-Bestellung"
+
+#: pos_next/api/guest_ordering.py:1754
+msgid "Takeaway web ordering is not enabled."
+msgstr "Online-Bestellung zum Mitnehmen ist nicht aktiviert."
+
+#: POS/src/components/guest/GuestCart.vue:18 POS/src/pages/CFD.vue:82
+#: pos_next/public/pos/assets/CFD-BVqcBpPE.js:1
+#: pos_next/public/pos/assets/CFD-C9BIKvnb.js:1
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+msgid "Thank you for your visit!"
+msgstr "Danke für Ihren Besuch!"
+
+#: POS/src/components/guest/GuestCheckout.vue:39
+#: POS/src/components/guest/GuestCheckout.vue:60
+#: POS/src/pages/GuestOrder.vue:32
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+#: pos_next/public/pos/assets/GuestOrder-fuPtvyUd.js:1
+#: pos_next/public/pos/assets/GuestOrder-v_UClcF0.js:1
+msgid "Thank you for your visit, we hope to see you again soon!"
+msgstr "Danke für Ihren Besuch, wir freuen uns, Sie bald wieder bei uns zu begrüssen!"
+
+#: POS/src/components/guest/GuestCheckout.vue:33
+#: POS/src/pages/GuestOrder.vue:30
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+#: pos_next/public/pos/assets/GuestOrder-fuPtvyUd.js:1
+#: pos_next/public/pos/assets/GuestOrder-v_UClcF0.js:1
+msgid "Thank you!"
+msgstr "Danke!"
+
+#: pos_next/api/guest_ordering.py:1548
+msgid "The payment of this order is not recorded yet. Please try again."
+msgstr "Die Zahlung dieser Bestellung ist noch nicht verbucht. Bitte versuchen Sie es erneut."
+
+#: pos_next/api/guest_ordering.py
+msgid "The tip cannot be negative, nor the whole payment."
+msgstr "Das Trinkgeld darf weder negativ sein noch die ganze Zahlung betragen."
+
+#: pos_next/api/guest_ordering.py:1082
+msgid "This account cannot be used to order here."
+msgstr "Mit diesem Konto kann hier nicht bestellt werden."
+
+#: pos_next/restaurant/guest_account.py:193
+msgid "This confirmation has expired. Please ask for a new code."
+msgstr "Diese Bestätigung ist abgelaufen. Bitte fordern Sie einen neuen Code an."
+
+#: pos_next/api/guest_ordering.py:1791
+msgid "This endpoint is only valid for takeaway sessions."
+msgstr "Diese Schnittstelle gilt nur für Take-away-Sitzungen."
+
+#: POS/src/pages/PublicMenu.vue:20 POS/src/pages/PublicMenu.vue:107
+#: pos_next/api/public_menu.py:115
+#: pos_next/public/pos/assets/PublicMenu-CFcJqcsg.js:1
+msgid "This menu is not available"
+msgstr "Dieses Menü ist nicht verfügbar"
+
+#: POS/src/pages/GuestOrder.vue:33
+#: pos_next/public/pos/assets/GuestOrder-fuPtvyUd.js:1
+#: pos_next/public/pos/assets/GuestOrder-v_UClcF0.js:1
+msgid "This page will close automatically."
+msgstr "Diese Seite schliesst sich automatisch."
+
+#: pos_next/api/guest_ordering.py
+msgid "This payment is more than the order still owes."
+msgstr "Diese Zahlung übersteigt den noch offenen Betrag der Bestellung."
+
+#: POS/src/pages/PublicMenu.vue:32
+#: pos_next/public/pos/assets/PublicMenu-CFcJqcsg.js:1
+msgid "This restaurant has not published its menu yet."
+msgstr "Dieses Restaurant hat sein Menü noch nicht veröffentlicht."
+
+#: pos_next/api/guest_ordering.py:64
+msgid "This session has expired or is no longer active."
+msgstr "Diese Sitzung ist abgelaufen oder nicht mehr aktiv."
+
+#: pos_next/restaurant/guest_account.py:350
+msgid "This table is already linked to another customer account."
+msgstr "Dieser Tisch ist bereits mit einem anderen Kundenkonto verknüpft."
+
+#. Label of a Time field in DocType 'Restaurant Reservation'
+#: POS/src/components/ShiftClosingDialog.vue:470
+#: POS/src/components/restaurant/ReservationForm.vue:44
+#: POS/src/pages/GuestReservation.vue:74
+#: pos_next/pos_next/doctype/restaurant_reservation/restaurant_reservation.json:82
+#: pos_next/public/pos/assets/GuestReservation-Dak1pwuJ.js:1
+#: pos_next/public/pos/assets/GuestReservation-Dq1mf9Gp.js:1
+#: pos_next/public/pos/assets/ShiftOpeningDialog-DHJcbMRQ.js:2
+msgid "Time"
+msgstr "Uhrzeit"
+
+#: POS/src/components/guest/GuestCheckout.vue:158
+#: POS/src/components/guest/GuestCheckout.vue:195
+#: POS/src/components/sale/PaymentDialog.vue:1035
+#: pos_next/api/guest_ordering.py:1253 pos_next/api/guest_ordering.py:1411
+#: pos_next/api/invoices.py:3037
+#: pos_next/pos_next/doctype/restaurant/restaurant.py:119
+#: pos_next/pos_next/doctype/restaurant_settings/restaurant_settings.py:92
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+msgid "Tip"
+msgstr "Trinkgeld"
+
+#: POS/src/components/guest/GuestCheckout.vue:160
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+msgid "Tip already paid"
+msgstr "Trinkgeld bereits bezahlt"
+
+#: POS/src/components/guest/GuestCheckout.vue:190
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+msgid "Tip amount"
+msgstr "Trinkgeldbetrag"
+
+#: pos_next/api/guest_ordering.py:1750
+msgid "Too many requests. Please try again later."
+msgstr "Zu viele Anfragen. Bitte versuchen Sie es später erneut."
+
+#: pos_next/restaurant/guest_account.py:183
+msgid "Too many wrong codes. Please ask for a new one."
+msgstr "Zu viele falsche Codes. Bitte fordern Sie einen neuen an."
+
+#: POS/src/components/customer-display/DisplayCart.vue:116
+#: POS/src/components/guest/GuestCheckout.vue:96
+#: POS/src/components/invoices/InvoiceManagement.vue:617
+#: POS/src/components/sale/ItemSelectionDialog.vue:301
+#: POS/src/components/sale/PaymentDialog.vue:2517
+#: POS/src/components/sale/ReturnInvoiceDialog.vue:393
+#: POS/src/composables/useCartSort.js:36
+#: pos_next/public/pos/assets/CustomerDisplay-CUU4jVLr.js:1
+#: pos_next/public/pos/assets/CustomerDisplay-wzc84K7r.js:1
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+#: pos_next/public/pos/assets/POSSale-DU_AQXZv.js:213
+#: pos_next/public/pos/assets/POSSale-mjI4Nuks.js:9
+msgid "Total"
+msgstr "Summe"
+
+#: POS/src/components/guest/GuestCheckout.vue:127
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+#, python-brace-format
+msgid "Total: {0}"
+msgstr "Summe: {0}"
+
+#: POS/src/components/settings/TillSettingsScreen.vue:130
+#: POS/src/pages/TakeawayOrder.vue:27
+#: pos_next/public/pos/assets/TakeawayOrder-B78uanCX.js:1
+#: pos_next/public/pos/assets/TakeawayOrder-B_4XXoCm.js:1
+msgid "Try again"
+msgstr "Erneut versuchen"
+
+#: POS/src/components/guest/GuestCheckout.vue:92
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+msgid "TVA"
+msgstr "MWST"
+
+#: POS/src/components/guest/GuestMenuView.vue:105
+#: POS/src/components/guest/GuestMenuView.vue:154
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+msgid "Unavailable"
+msgstr "Nicht verfügbar"
+
+#: POS/src/components/guest/GuestAccountSheet.vue:59
+#: POS/src/components/guest/GuestAccountSheet.vue:115
+msgid "Use another address"
+msgstr "Andere Adresse verwenden"
+
+#: POS/src/utils/kitchenStatus.js:36
+#: pos_next/public/pos/assets/kitchenStatus-BT-1TIhO.js:1
+msgctxt "Kitchen order status"
+msgid "Waiting"
+msgstr "Wartet"
+
+#: pos_next/api/guest_ordering.py:1285
+msgid "Wallee transaction creation failed"
+msgstr "Die Wallee-Transaktion konnte nicht erstellt werden."
+
+#: POS/src/components/guest/GuestAccountSheet.vue:67
+msgid "We send you a code by email, no password needed."
+msgstr "Wir senden Ihnen einen Code per E-Mail. Sie brauchen kein Passwort."
+
+#: POS/src/components/guest/GuestAccountSheet.vue:94
+#, python-brace-format
+msgid "We sent a code to {0}."
+msgstr "Wir haben einen Code an {0} gesendet."
+
+#: POS/src/components/guest/GuestAccountSheet.vue:124
+msgid "Welcome! Tell us your name to create your account."
+msgstr "Willkommen! Nennen Sie uns Ihren Namen, damit wir Ihr Konto erstellen können."
+
+#: POS/src/components/guest/GuestAccountSheet.vue:37
+#, python-brace-format
+msgid "Worth {0}"
+msgstr "Wert {0}"
+
+#: pos_next/restaurant/guest_account.py:186
+msgid "Wrong code, or the code has expired. Please check it or ask for a new one."
+msgstr "Falscher Code oder Code abgelaufen. Bitte prüfen Sie ihn oder fordern Sie einen neuen an."
+
+#: POS/src/components/guest/GuestAccountSheet.vue:48
+#, python-brace-format
+msgid "You are signed in as {0}."
+msgstr "Sie sind als {0} angemeldet."
+
+#: POS/src/components/guest/GuestAccountSheet.vue:20
+msgid "Your account"
+msgstr "Ihr Konto"
+
+#: POS/src/components/guest/GuestCart.vue:26
+#: POS/src/components/sale/InvoiceCart.vue:996
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+msgid "Your cart is empty"
+msgstr "Ihr Warenkorb ist leer"
+
+#: POS/src/components/guest/GuestAccountSheet.vue:20
+#: pos_next/public/pos/assets/TakeawayOrder-B_4XXoCm.js:1
+msgid "Your details"
+msgstr "Ihre Angaben"
+
+#: POS/src/pages/GuestReservation.vue:153
+#: pos_next/public/pos/assets/GuestReservation-Dak1pwuJ.js:1
+#: pos_next/public/pos/assets/GuestReservation-Dq1mf9Gp.js:1
+msgid "Your Name"
+msgstr "Ihr Name"
+
+#: POS/src/components/guest/GuestAccountSheet.vue:129
+#: pos_next/public/pos/assets/TakeawayOrder-B_4XXoCm.js:1
+msgid "Your name"
+msgstr "Ihr Name"
+
+#: POS/src/pages/GuestOrder.vue:200
+#: pos_next/public/pos/assets/GuestOrder-fuPtvyUd.js:1
+#: pos_next/public/pos/assets/GuestOrder-v_UClcF0.js:1
+msgid "Your order has been sent to the kitchen. You can continue browsing the menu."
+msgstr "Ihre Bestellung wurde an die Küche gesendet. Sie können weiter im Menü stöbern."
+
+#: POS/src/pages/TakeawayOrder.vue:39
+#: pos_next/public/pos/assets/TakeawayOrder-B78uanCX.js:1
+#: pos_next/public/pos/assets/TakeawayOrder-B_4XXoCm.js:1
+msgid "Your order number"
+msgstr "Ihre Bestellnummer"
+
+#: POS/src/pages/GuestOrder.vue:31
+#: pos_next/public/pos/assets/GuestOrder-fuPtvyUd.js:1
+#: pos_next/public/pos/assets/GuestOrder-v_UClcF0.js:1
+msgid "Your payment has been recorded."
+msgstr "Ihre Zahlung wurde verbucht."
+
+#: POS/src/stores/guestOrder.js:363
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+msgid "Your payment is not confirmed yet. Please reload this page in a moment."
+msgstr "Ihre Zahlung ist noch nicht bestätigt. Bitte laden Sie diese Seite in einem Moment neu."
+
+#: POS/src/components/guest/GuestCheckout.vue:36
+#: pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+#: pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+#, python-brace-format
+msgid "Your payment of {0} has been recorded."
+msgstr "Ihre Zahlung von {0} wurde verbucht."
+
+#: POS/src/components/guest/GuestAccountSheet.vue:31
+msgid "Your server linked this table to your account."
+msgstr "Ihr Service hat diesen Tisch mit Ihrem Konto verknüpft."
+
+#: pos_next/api/guest_ordering.py:726
+#: pos_next/tests/test_a_guest_order_is_priced_by_the_menu.py:149
+#, python-brace-format
+msgid "{0} is not on the menu"
+msgstr "{0} steht nicht auf dem Menü."
+
+#: pos_next/api/guest_ordering.py:311
+#, python-brace-format
+msgid "{0} is sold out"
+msgstr "{0} ist ausverkauft."
+
+#: POS/src/pages/GuestOrder.vue:82
+#: pos_next/public/pos/assets/GuestOrder-fuPtvyUd.js:1
+#, python-brace-format
+msgid "{0} pts"
+msgstr "{0} Pkt."
+
+#: pos_next/api/guest_ordering.py:738 pos_next/api/guest_ordering.py:746
+#, python-brace-format
+msgid "{0}: an option is no longer offered, please reload the menu"
+msgstr "{0}: Eine Option wird nicht mehr angeboten, bitte laden Sie das Menü neu."
+
+#: POS/src/components/guest/GuestCart.vue:180 POS/src/components/restaurant/WorkflowEditor.vue:69 pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+msgid "Delivered"
+msgstr "Serviert"
+
+#: POS/src/components/guest/GuestCart.vue:178 pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1 pos_next/public/pos/assets/GuestCheckout-DjQYtFM3.js:1
+msgid "Preparing"
+msgstr "In Zubereitung"
+
+#: POS/src/components/guest/GuestCart.vue:179 POS/src/components/pos/POSHeader.vue:724 POS/src/components/pos/POSHeader.vue:757
+msgid "Ready"
+msgstr "Bereit"
+
+#: POS/src/components/guest/GuestCart.vue:177 POS/src/components/pos/FloorPlanEditor.vue:480 pos_next/public/pos/assets/GuestAccountSheet-MxIaKjnk.js:1
+msgid "Waiting"
+msgstr "Wartet"
+
+#: POS/src/components/guest/GuestCheckout.vue:246
+msgid "of {0}"
+msgstr "von {0}"
+
+#: POS/src/components/restaurant/ReservationForm.vue:84 POS/src/components/sale/InvoiceCart.vue:233 POS/src/pages/GuestReservation.vue:162
+msgid "Phone"
+msgstr "Telefon"
+
+#: POS/src/components/guest/GuestAccountSheet.vue:77 pos_next/public/pos/assets/TakeawayOrder-B_4XXoCm.js:1
+msgid "your@email.com"
+msgstr "ihre@email.com"
