@@ -25921,3 +25921,45 @@ msgstr ""
 #, python-brace-format
 msgid "{0} already has the recipe {1}: left as it is."
 msgstr ""
+
+#: pos_next/restaurant/recipe_shopping.py:1
+#, python-brace-format
+msgid "Say the dishes as a list: [{"name": ..., "portions": ...}]."
+msgstr ""
+
+#: pos_next/restaurant/recipe_shopping.py:1
+msgid "Name at least one dish, with its number of portions."
+msgstr ""
+
+#: pos_next/restaurant/recipe_shopping.py:1
+#, python-brace-format
+msgid "At most {0} dishes at a time."
+msgstr ""
+
+#: pos_next/restaurant/recipe_shopping.py:1
+msgid "A dish has no name."
+msgstr ""
+
+#: pos_next/restaurant/recipe_shopping.py:1
+#, python-brace-format
+msgid "«{0}»: say the number of portions (between 1 and {1})."
+msgstr ""
+
+#: pos_next/restaurant/recipe_shopping.py:1
+#, python-brace-format
+msgid "There is no recipe or dish named «{0}»."
+msgstr ""
+
+#: pos_next/restaurant/recipe_shopping.py:1
+#, python-brace-format
+msgid "Several fit «{0}»: {1}. Say which one."
+msgstr ""
+
+#: pos_next/restaurant/recipe_shopping.py:1
+#, python-brace-format
+msgid "The coefficient is a number above 0 and up to {0}."
+msgstr ""
+
+#: pos_next/restaurant/recipe_shopping.py:1
+msgid "The cost is partial: a price worked out from it would be too low."
+msgstr ""

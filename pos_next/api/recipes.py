@@ -7,7 +7,7 @@ import json
 
 import frappe
 
-from pos_next.restaurant import recipe_library, recipe_plan, recipes, season
+from pos_next.restaurant import recipe_library, recipe_plan, recipe_shopping, recipes, season
 
 
 def _json(value):
@@ -79,3 +79,15 @@ def propose_recipes(recipes_said):
 def apply_recipes(recipes_said):
 	"""Write what the owner confirmed, as `propose_recipes` answered it: all of it, or none."""
 	return recipe_plan.apply(_json(recipes_said))
+
+
+@frappe.whitelist()
+def plan_recipe_shopping(dishes):
+	"""What the dishes planned come to on the shopping list (a JSON list of {name, portions}); nothing is written."""
+	return recipe_shopping.plan(_json(dishes))
+
+
+@frappe.whitelist()
+def recipe_cost(name, portions=None, markup=None):
+	"""What a portion of a dish costs from the last prices paid; a selling price only when the owner's coefficient (`markup`) is given."""
+	return recipe_shopping.cost(name, portions or None, markup or None)

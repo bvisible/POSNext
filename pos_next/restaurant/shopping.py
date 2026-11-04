@@ -186,6 +186,8 @@ def add_article_lines(list_name: str, lines: list[dict]) -> int:
 			line.get("qty") or 1,
 			line.get("supplier") or None,
 			line.get("uom") or None,
+			# //// Neoffice — a line made from a dish says so (lot R6); a line without an origin stays « Manual »
+			origin=line.get("origin") if line.get("origin") in ("Dish", "Stores round") else "Manual",
 		)
 	return len(lines)
 

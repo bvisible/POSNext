@@ -23695,3 +23695,45 @@ msgstr "Vous ne pouvez pas consulter les recettes : les plats sont proposés san
 #, python-brace-format
 msgid "{0} already has the recipe {1}: left as it is."
 msgstr "{0} a déjà la recette {1} : elle reste telle quelle."
+
+#: pos_next/restaurant/recipe_shopping.py:1
+msgid "A dish has no name."
+msgstr "Un plat n'a pas de nom."
+
+#: pos_next/restaurant/recipe_shopping.py:1
+#, python-brace-format
+msgid "At most {0} dishes at a time."
+msgstr "Au maximum {0} plats à la fois."
+
+#: pos_next/restaurant/recipe_shopping.py:1
+msgid "Name at least one dish, with its number of portions."
+msgstr "Nommez au moins un plat, avec son nombre de portions."
+
+#: pos_next/restaurant/recipe_shopping.py:1
+#, python-brace-format
+msgid "Say the dishes as a list: [{\"name\": ..., \"portions\": ...}]."
+msgstr "Indiquez les plats sous forme de liste : [{\"name\": ..., \"portions\": ...}]."
+
+#: pos_next/restaurant/recipe_shopping.py:1
+#, python-brace-format
+msgid "Several fit «{0}»: {1}. Say which one."
+msgstr "Plusieurs correspondent à «{0}» : {1}. Précisez lequel vous voulez."
+
+#: pos_next/restaurant/recipe_shopping.py:1
+#, python-brace-format
+msgid "The coefficient is a number above 0 and up to {0}."
+msgstr "Le coefficient est un nombre supérieur à 0 et pouvant aller jusqu'à {0}."
+
+#: pos_next/restaurant/recipe_shopping.py:1
+msgid "The cost is partial: a price worked out from it would be too low."
+msgstr "Le coût est partiel : un prix calculé à partir de lui serait trop bas."
+
+#: pos_next/restaurant/recipe_shopping.py:1
+#, python-brace-format
+msgid "There is no recipe or dish named «{0}»."
+msgstr "Aucune recette ni aucun plat ne porte le nom «{0}»."
+
+#: pos_next/restaurant/recipe_shopping.py:1
+#, python-brace-format
+msgid "«{0}»: say the number of portions (between 1 and {1})."
+msgstr "«{0}» : indiquez le nombre de portions (entre 1 et {1})."
