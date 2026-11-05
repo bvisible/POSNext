@@ -512,6 +512,9 @@ scheduler_events = {
 # override_doctype_dashboards = {
 # 	"Task": "pos_next.task.get_dashboard_data"
 # }
+# //// Neoffice — the Connections of the POS Profile form point at the documents a till of this app makes (its sales invoices, its
+# //// opening and closing sessions, its POSNext settings), not at ERPNext's own point of sale's (NeoResto lot 1, task 13b).
+override_doctype_dashboards = {"POS Profile": "pos_next.pos_profile_dashboard.get_dashboard_data"}
 
 # exempt linked doctypes from being automatically cancelled
 #
