@@ -121,6 +121,21 @@ describe("the public menu page", () => {
 			expect(wrapper.find(".menu-logo").attributes("src")).toBe("/files/logo.png")
 		})
 
+		it("shows the restaurant's own logo in the bar at the top, and its name there where it has none", async () => {
+			// The page is the restaurant's, not Neoffice's (05.11.2026): its logo top left, as it keeps it
+			await open(answers(MENU))
+			const logo = wrapper.find(".menu-bar .menu-logo")
+			expect(logo.attributes("src")).toBe("/files/logo.png")
+			expect(logo.attributes("alt")).toBe("The Bistro")
+			expect(wrapper.find(".menu-bar__name").exists()).toBe(false)
+			wrapper.unmount()
+			forgetPublicMenu()
+
+			await open(answers({ ...MENU, restaurant: { ...MENU.restaurant, logo: "" } }))
+			expect(wrapper.find(".menu-logo").exists()).toBe(false)
+			expect(wrapper.find(".menu-bar .menu-bar__name").text()).toBe("The Bistro")
+		})
+
 		it("lists the dishes under the title of their section, in the order of the card", async () => {
 			await open(answers(MENU))
 

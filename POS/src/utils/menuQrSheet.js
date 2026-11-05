@@ -1,6 +1,8 @@
 //// Neoffice — added file (no upstream equivalent). The sheet that carries the QR code of a restaurant's public menu, to
-//// be printed and stood on the tables (NeoResto lot 1, task 17): the code large, the restaurant's name, and one line
-//// that says what to do with it. It is a page of its own, printed through a hidden frame like the receipts of the
+//// be printed and stood on the tables (NeoResto lot 1, task 17): the code large, the restaurant's logo (or its name), and
+//// one line that says what to do with it. The restaurant shows it to its own guests: it carries the restaurant's logo as
+//// it keeps it and none of Neoffice's design (05.11.2026, design system §7.6): the system's sans-serif face, ink and
+//// gray, no web font fetched. It is a page of its own, printed through a hidden frame like the receipts of the
 //// till (printInvoice.browserPrintDoc), so that the till under it, whatever is open on it, never ends up on the paper.
 
 /** The text of a name or an address, safe to write into the sheet's HTML. */
@@ -24,29 +26,28 @@ export async function menuQrSvg(url) {
 	})
 }
 
-// The faces of the Design System: Forum for the title, Karla for the text. A white page: the printer leaves the margins
-// of a page unpainted, so a cream one would show as a frame.
-const FONTS = "https://fonts.googleapis.com/css2?family=Forum&family=Karla:wght@400;600&display=swap"
-
+// A white page in the system's sans-serif face: the printer leaves the margins of a page unpainted, so a tinted one would
+// show as a frame
 const STYLE = `
 	@page { size: A4 portrait; margin: 18mm; }
 	* { box-sizing: border-box; }
-	html, body { margin: 0; background: #ffffff; color: #141414; }
-	body { font-family: "Karla", "Inter", system-ui, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+	html, body { margin: 0; background: #ffffff; color: #171717; }
+	body { font-family: "Inter", system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 	.sheet { display: flex; flex-direction: column; align-items: center; gap: 9mm; padding-top: 14mm; text-align: center; }
-	.sheet__name { margin: 0; max-width: 100%; font-family: "Forum", serif; font-size: 40pt; font-weight: 400; line-height: 1.1; letter-spacing: -0.01em; color: #141414; overflow-wrap: anywhere; }
-	.sheet__rule { width: 14mm; height: 0; margin: 0; border: 0; border-top: 0.6mm solid #d68a59; }
+	.sheet__logo { display: block; max-width: 90mm; max-height: 32mm; width: auto; height: auto; object-fit: contain; }
+	.sheet__name { margin: 0; max-width: 100%; font-size: 34pt; font-weight: 700; line-height: 1.15; color: #171717; overflow-wrap: anywhere; }
 	.sheet__qr { width: 130mm; max-width: 100%; }
 	.sheet__qr svg { display: block; width: 100%; height: auto; }
-	.sheet__caption { margin: 0; font-size: 26pt; font-weight: 600; line-height: 1.2; color: #141414; }
-	.sheet__url { margin: 0; max-width: 100%; font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; font-size: 10pt; line-height: 1.4; color: #6f665a; overflow-wrap: anywhere; }
+	.sheet__caption { margin: 0; font-size: 26pt; font-weight: 700; line-height: 1.2; color: #171717; }
+	.sheet__url { margin: 0; max-width: 100%; font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; font-size: 10pt; line-height: 1.4; color: #7c7c7c; overflow-wrap: anywhere; }
 `
 
 /**
- * The page to print: the restaurant's name, the QR code of the address of its public menu, and « Scan to see the menu ».
- * The name and the address are written as text, escaped; the code is drawn from the address alone.
+ * The page to print: the restaurant's logo (or its name), the QR code of the address of its public menu, and « Scan to see
+ * the menu ». The name and the address are written as text, escaped; the code is drawn from the address alone. The logo,
+ * where the restaurant has one, stands at the top in its own proportions, in place of the name.
  */
-export async function menuQrSheetHtml({ restaurantName, url }) {
+export async function menuQrSheetHtml({ restaurantName, logo, url }) {
 	const svg = await menuQrSvg(url)
 	const name = escapeHtml(restaurantName)
 	return `<!DOCTYPE html>
@@ -54,13 +55,11 @@ export async function menuQrSheetHtml({ restaurantName, url }) {
 <head>
 <meta charset="utf-8">
 <title>${name}</title>
-<link rel="stylesheet" href="${escapeHtml(FONTS)}">
 <style>${STYLE}</style>
 </head>
 <body>
 <main class="sheet">
-<h1 class="sheet__name">${name}</h1>
-<hr class="sheet__rule">
+${logo ? `<img class="sheet__logo" src="${escapeHtml(logo)}" alt="${name}">` : `<h1 class="sheet__name">${name}</h1>`}
 <div class="sheet__qr" data-url="${escapeHtml(url)}">${svg}</div>
 <p class="sheet__caption">${escapeHtml(__("Scan to see the menu"))}</p>
 <p class="sheet__url">${escapeHtml(url)}</p>
@@ -108,6 +107,6 @@ export function printHtml(html) {
 }
 
 /** Print the sheet of a restaurant's public menu. */
-export async function printMenuQr({ restaurantName, url }) {
-	await printHtml(await menuQrSheetHtml({ restaurantName, url }))
+export async function printMenuQr({ restaurantName, logo, url }) {
+	await printHtml(await menuQrSheetHtml({ restaurantName, logo, url }))
 }

@@ -11,6 +11,10 @@ import { nextTick } from "vue"
 
 const printMenuQr = vi.hoisted(() => vi.fn(async () => {}))
 const showError = vi.hoisted(() => vi.fn())
+// The public menu as a visitor reads it: the sheet takes its logo from there (05.11.2026)
+const fetchPublicMenu = vi.hoisted(() =>
+	vi.fn(async () => ({ restaurant: { name: "The Bistro", logo: "/files/logo.png" } })),
+)
 
 vi.hoisted(() => {
 	globalThis.__ = (text) => text
@@ -24,6 +28,7 @@ vi.mock("@/stores/restaurant", async () => {
 })
 vi.mock("@/composables/useToast", () => ({ useToast: () => ({ showError }) }))
 vi.mock("@/utils/menuQrSheet", () => ({ printMenuQr }))
+vi.mock("@/utils/publicMenu", async (importOriginal) => ({ ...(await importOriginal()), fetchPublicMenu }))
 
 const { restaurantStore } = await import("@/stores/restaurant")
 const { default: PublicMenuQr } = await import("../PublicMenuQr.vue")
@@ -142,8 +147,20 @@ describe("« Print the menu QR »", () => {
 			expect(printMenuQr).toHaveBeenCalledTimes(1)
 			expect(printMenuQr).toHaveBeenCalledWith({
 				restaurantName: "The Bistro",
+				// The logo the public menu shows, as a full address: the sheet prints from a page of its own
+				logo: `${window.location.origin}/files/logo.png`,
 				url: `${window.location.origin}/pos/menu/The%20Bistro`,
 			})
+		})
+
+		it("prints the restaurant's name alone where its menu cannot be read for a logo", async () => {
+			fetchPublicMenu.mockRejectedValueOnce(new Error("HTTP 403"))
+			entry({ can: { manage_settings: true }, enabled: true, label: "The Bistro" })
+
+			await wrapper.find("button").trigger("click")
+			await flushPromises()
+
+			expect(printMenuQr.mock.calls[0][0]).toMatchObject({ restaurantName: "The Bistro", logo: "" })
 		})
 
 		it("writes the address of a restaurant with spaces, accents and signs as a visitor's browser will read it", async () => {

@@ -35,7 +35,7 @@ import { computed, ref } from "vue"
 import { useToast } from "@/composables/useToast"
 import { useRestaurantStore } from "@/stores/restaurant"
 import { printMenuQr } from "@/utils/menuQrSheet"
-import { publicMenuUrl } from "@/utils/publicMenu"
+import { fetchPublicMenu, publicMenuUrl } from "@/utils/publicMenu"
 
 const restaurantStore = useRestaurantStore()
 const { showError } = useToast()
@@ -55,11 +55,25 @@ const visible = computed(
 		!!restaurant.value,
 )
 
+/**
+ * The logo the public menu shows (the restaurant's, else its company's), as a full address: the sheet is printed from a
+ * page of its own. None where the menu cannot be read: the sheet then names the restaurant.
+ */
+async function logoOfTheMenu() {
+	try {
+		const logo = (await fetchPublicMenu(restaurant.value))?.restaurant?.logo
+		return logo ? new URL(logo, window.location.origin).href : ""
+	} catch {
+		return ""
+	}
+}
+
 async function print() {
 	printing.value = true
 	try {
 		await printMenuQr({
 			restaurantName: restaurantStore.restaurantName || restaurant.value,
+			logo: await logoOfTheMenu(),
 			url: publicMenuUrl(restaurant.value),
 		})
 	} catch {

@@ -60,17 +60,31 @@ describe("the sheet of the menu's QR code", () => {
 			const sheet = theSheet(await menuQrSheetHtml({ restaurantName: "The Bistro", url: URL_OF_THE_MENU }))
 
 			const order = [...sheet.querySelector("main").children].map((node) => node.className || node.tagName)
-			expect(order).toEqual(["sheet__name", "sheet__rule", "sheet__qr", "sheet__caption", "sheet__url"])
+			expect(order).toEqual(["sheet__name", "sheet__qr", "sheet__caption", "sheet__url"])
 		})
 
-		it("is a white A4 page in the faces of the Design System", async () => {
+		it("carries the restaurant's own logo in place of its name, its address written as text", async () => {
+			const logo = `https://bistro.example.test/files/logo.png" onerror="alert(1)`
+			const sheet = theSheet(await menuQrSheetHtml({ restaurantName: "The Bistro", logo, url: URL_OF_THE_MENU }))
+
+			const image = sheet.querySelector(".sheet__logo")
+			expect(image.getAttribute("src")).toBe(logo)
+			expect(image.getAttribute("onerror")).toBeNull()
+			expect(image.getAttribute("alt")).toBe("The Bistro")
+			expect(sheet.querySelector("h1")).toBeNull()
+			const order = [...sheet.querySelector("main").children].map((node) => node.className || node.tagName)
+			expect(order).toEqual(["sheet__logo", "sheet__qr", "sheet__caption", "sheet__url"])
+		})
+
+		it("is a white A4 page in the system's face, with none of Neoffice's design", async () => {
+			// The restaurant shows it to its own guests: no Forum, no Karla, no web font fetched (05.11.2026)
 			const html = await menuQrSheetHtml({ restaurantName: "The Bistro", url: URL_OF_THE_MENU })
 
 			expect(html).toContain("size: A4 portrait")
 			expect(html).toContain("background: #ffffff")
-			expect(html).toContain('"Forum"')
-			expect(html).toContain('"Karla"')
-			expect(html).toContain("fonts.googleapis.com/css2?family=Forum&amp;family=Karla")
+			expect(html).not.toContain("Forum")
+			expect(html).not.toContain("Karla")
+			expect(html).not.toContain("fonts.googleapis.com")
 		})
 
 		it("writes a name and an address as text: nothing a restaurant typed becomes markup", async () => {

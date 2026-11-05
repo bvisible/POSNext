@@ -6,13 +6,9 @@
 	<!-- //// (GuestOrder.vue, tied to the table's draft ticket) stays as it is. Upstream POSNext has no guest -->
 	<!-- //// surface. Where the restaurant does not publish its menu, whatever the reason, the page says so -->
 	<!-- //// politely and shows nothing of what the server answered. -->
+	<!-- //// The page is the restaurant's, not Neoffice's (05.11.2026, design system §7.6): neutral as the table's QR page, -->
+	<!-- //// the restaurant's own logo top left as it keeps it -->
 	<div class="menu-page">
-		<div class="menu-canvas" aria-hidden="true">
-			<div class="menu-canvas__grid"></div>
-			<div class="menu-canvas__fade"></div>
-			<div class="menu-canvas__glow"></div>
-		</div>
-
 		<main class="menu-scroll" :aria-busy="state === 'loading'">
 			<p v-if="state === 'loading'" class="menu-status" role="status">{{ __("Loading menu...") }}</p>
 
@@ -22,15 +18,24 @@
 			</section>
 
 			<template v-else>
-				<header class="menu-head">
-					<img v-if="menu.restaurant.logo" class="menu-logo" :src="menu.restaurant.logo" alt="" />
-					<h1 class="menu-title">{{ menu.restaurant.name }}</h1>
+				<header class="menu-bar">
+					<img
+						v-if="menu.restaurant.logo"
+						class="menu-logo"
+						:src="menu.restaurant.logo"
+						:alt="menu.restaurant.name"
+					/>
+					<p v-else class="menu-bar__name">{{ menu.restaurant.name }}</p>
+				</header>
+				<div class="menu-head">
+					<!-- The bar above names the restaurant to the eye; the page's title still names it to a screen reader -->
+					<h1 class="menu-title menu-title--named-above">{{ menu.restaurant.name }}</h1>
 					<template v-if="menu.card">
 						<p class="menu-eyebrow">{{ menu.card.name }}</p>
 						<p v-if="menu.card.description" class="menu-lede">{{ menu.card.description }}</p>
 					</template>
 					<p v-else class="menu-lede">{{ __("This restaurant has not published its menu yet.") }}</p>
-				</header>
+				</div>
 
 				<section v-for="(section, s) in menu.sections" :key="s" class="menu-section">
 					<h2 v-if="section.label" class="menu-section__title">{{ section.label }}</h2>
@@ -123,75 +128,35 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* The paper canvas of the Design System (mobile): a warm paper, a faint 32px grid that eases in under the header, and
-   the terracotta glow top right. It is fixed behind the page, so that it needs no height of its own. Forum sets the
-   titles, Karla the text, and the clay is the colour of a price, as at the till. */
+/* A neutral page, as the restaurant's table page (GuestOrder): the restaurant offers it to its own guests, so it carries
+   the restaurant's logo and not Neoffice's design (05.11.2026, design system §7.6). frappe-ui's grays, Inter, a price in
+   ink; no paper, no grid, no glow, no Forum. */
 .menu-page {
-	--paper: #faf3ea;
-	--paper-bright: #fffdf8;
+	--paper: #f8f8f8;
 	--surface: #ffffff;
-	--surface-sunken: #f6f3ed;
-	--border: #dcd4c7;
-	--rule: #ece7de;
-	--ink: #141414;
-	--ink-muted: #524b41;
-	--ink-dim: #968c7c;
-	--clay: #a15a2e;
-	--grid: rgba(60, 45, 20, 0.11);
+	--surface-sunken: #f3f3f3;
+	--border: #e2e2e2;
+	--rule: #ededed;
+	--ink: #171717;
+	--ink-muted: #525252;
+	--ink-dim: #7c7c7c;
 
 	position: relative;
 	flex: 0 0 auto;
 	min-height: 100dvh;
 	color: var(--ink);
-	font-family: "Karla", "Inter", system-ui, sans-serif;
+	background: var(--paper);
+	font-family: "Inter", system-ui, sans-serif;
 	font-size: 15px;
 	line-height: 20px;
 	-webkit-text-size-adjust: 100%;
 }
 
-.menu-canvas {
-	position: fixed;
-	inset: 0;
-	z-index: 0;
-	overflow: hidden;
-	pointer-events: none;
-	background: linear-gradient(135deg, var(--paper) 0%, var(--paper-bright) 60%);
-}
-.menu-canvas__grid {
-	position: absolute;
-	inset: 0;
-	background-image: linear-gradient(to right, var(--grid) 1px, transparent 1px),
-		linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
-	background-size: 32px 32px;
-}
-.menu-canvas__fade {
-	position: absolute;
-	inset: 0 0 auto 0;
-	height: 260px;
-	background: linear-gradient(
-		to bottom,
-		var(--paper) 0%,
-		var(--paper) 35%,
-		rgba(250, 243, 234, 0.7) 60%,
-		rgba(250, 243, 234, 0.35) 85%,
-		rgba(250, 243, 234, 0) 100%
-	);
-}
-.menu-canvas__glow {
-	position: absolute;
-	top: -18%;
-	right: -28%;
-	width: 116%;
-	height: 52%;
-	background: radial-gradient(ellipse at 70% 0%, rgba(214, 138, 89, 0.11) 0%, rgba(214, 138, 89, 0) 70%);
-}
-
 .menu-scroll {
 	position: relative;
-	z-index: 1;
 	max-width: 640px;
 	margin: 0 auto;
-	padding: 40px 16px 56px;
+	padding: 20px 16px 56px;
 }
 
 .menu-status {
@@ -200,43 +165,68 @@ onMounted(async () => {
 	color: var(--ink-muted);
 }
 
+/* A white bar across the top, as the table's QR page: the restaurant's logo, or its name where it has none */
+.menu-bar {
+	display: flex;
+	align-items: center;
+	min-height: 60px;
+	margin: -20px -16px 0;
+	padding: 10px 16px;
+	background: var(--surface);
+	border-bottom: 1px solid var(--border);
+}
+/* The logo as the restaurant keeps it: its own proportions, never cropped, tinted or framed */
+.menu-logo {
+	display: block;
+	height: 40px;
+	width: auto;
+	max-width: 60%;
+	object-fit: contain;
+}
+.menu-bar__name {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 700;
+	line-height: 22px;
+	color: var(--ink);
+	overflow-wrap: anywhere;
+}
 .menu-head {
 	display: flex;
 	flex-direction: column;
-	align-items: center;
 	gap: 4px;
-	padding: 8px 4px 20px;
-	text-align: center;
-}
-.menu-logo {
-	max-width: 160px;
-	max-height: 56px;
-	margin-bottom: 8px;
-	object-fit: contain;
+	padding: 20px 4px 4px;
 }
 /* A heading declares its colour: the global reset would otherwise decide it */
 .menu-title {
 	margin: 0;
-	font-family: "Forum", serif;
-	font-size: 34px;
-	font-weight: 400;
-	line-height: 38px;
-	letter-spacing: -0.4px;
+	font-size: 22px;
+	font-weight: 700;
+	line-height: 28px;
 	color: var(--ink);
 	overflow-wrap: anywhere;
 }
+/* Named above by the bar: kept for a screen reader, out of the eye's way */
+.menu-title--named-above {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+/* The card's name, the heading the guest reads */
 .menu-eyebrow {
-	margin: 6px 0 0;
-	font-size: 11px;
-	font-weight: 600;
-	line-height: 16px;
-	letter-spacing: 0.5px;
-	text-transform: uppercase;
-	color: var(--ink-muted);
+	margin: 0;
+	font-size: 22px;
+	font-weight: 700;
+	line-height: 28px;
+	color: var(--ink);
 }
 .menu-lede {
 	max-width: 34em;
-	margin: 4px auto 0;
+	margin: 4px 0 0;
 	font-size: 15px;
 	line-height: 20px;
 	color: var(--ink-muted);
@@ -251,9 +241,12 @@ onMounted(async () => {
 	padding: 32px 20px;
 	text-align: center;
 	background: var(--surface);
-	border: 1px solid var(--border);
-	border-radius: 18px;
-	box-shadow: 0 2px 8px rgba(60, 45, 20, 0.04);
+	border: 1px solid var(--rule);
+	border-radius: 16px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+.menu-notice .menu-lede {
+	margin: 0 auto;
 }
 
 .menu-section {
@@ -261,11 +254,9 @@ onMounted(async () => {
 }
 .menu-section__title {
 	margin: 0 4px 12px;
-	font-family: "Forum", serif;
-	font-size: 24px;
-	font-weight: 400;
-	line-height: 28px;
-	letter-spacing: -0.2px;
+	font-size: 18px;
+	font-weight: 700;
+	line-height: 24px;
 	color: var(--ink);
 }
 
@@ -275,9 +266,9 @@ onMounted(async () => {
 	overflow: hidden;
 	list-style: none;
 	background: var(--surface);
-	border: 1px solid var(--border);
-	border-radius: 18px;
-	box-shadow: 0 2px 8px rgba(60, 45, 20, 0.04);
+	border: 1px solid var(--rule);
+	border-radius: 16px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 .dish {
 	display: flex;
@@ -377,7 +368,7 @@ onMounted(async () => {
 	line-height: 22px;
 	text-align: end;
 	white-space: nowrap;
-	color: var(--clay);
+	color: var(--ink);
 }
 .dish__price--text {
 	font-size: 14px;
