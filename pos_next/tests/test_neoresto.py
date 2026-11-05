@@ -29,7 +29,7 @@ from pymysql.err import OperationalError
 
 from pos_next import install
 from pos_next.restaurant import mode, neoresto
-from pos_next.restaurant.neoresto import business_apps, setup, tabs
+from pos_next.restaurant.neoresto import business_apps, setup, tabs, till_settings_entry
 from pos_next.tests.test_opening_a_restaurant_till import (
 	BAD_FIELD_ERROR,
 	MIXED,
@@ -439,9 +439,16 @@ class TestTheTabs(FrappeTestCase):
 			[(group["label"], group["items"]) for group in settings["groups"]],
 			[
 				(_("Restaurants"), ["Restaurant"]),
-				(_("Tills"), ["POS Settings", "POS Profile"]),
+				(_("Tills"), [till_settings_entry(), "POS Settings", "POS Profile"]),
 				(_("Preparation"), ["Preparation Workflow", "Menu Badge", "Menu Design Template"]),
 			],
+		)
+		# The first door of the Tills is the office's page, which asks nothing of the reader but the right to read POS Settings
+		# and to open the page (a theme that does not know `page` shows it on the first alone)
+		entry = settings["groups"][1]["items"][0]
+		self.assertEqual(
+			(entry["doctype"], entry["page"], entry["route"]),
+			("POS Settings", "till-settings", "/app/till-settings"),
 		)
 
 	def test_the_theme_builds_the_space_from_the_declaration(self):
@@ -461,6 +468,15 @@ class TestTheTabs(FrappeTestCase):
 			[group["label"] for group in panel["groups"]], [_("Restaurants"), _("Tills"), _("Preparation")]
 		)
 		self.assertEqual(panel["groups"][0]["items"][0]["route"], "/app/restaurant")
+		# ... and the Tills open on the office's page of the till settings, then on the two original forms
+		self.assertEqual(
+			[(item["label"], item["route"]) for item in panel["groups"][1]["items"]],
+			[
+				(_("Till settings"), "/app/till-settings"),
+				(_("POS Settings"), "/app/pos-settings"),
+				(_("POS Profile"), "/app/pos-profile"),
+			],
+		)
 		# A site that does not run NeoResto has no such space
 		with a_site_where_neoresto_is(0):
 			self.assertNotIn("Resto", wt._code_catalogue())

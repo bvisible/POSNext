@@ -316,6 +316,25 @@ def tips_tab():
 	}
 
 
+# //// Neoffice — the door to the office's page of a till's settings (NeoResto lot 1, task 13b, 05.11.2026): the page is first in the
+# //// « Tills » group, before the two original forms it replaces (they stay, with a banner that sends to the page: hiding them is
+# //// the product owner's to decide). `doctype` is the right to read that the entry needs (and what a theme that does not know
+# //// `page` checks alone); `page` makes the theme show it only where the page opens for the reader.
+TILL_SETTINGS_PAGE = "till-settings"
+
+
+def till_settings_entry():
+	return {
+		"doctype": "POS Settings",
+		"page": TILL_SETTINGS_PAGE,
+		"label": _("Till settings"),
+		"route": "/app/" + TILL_SETTINGS_PAGE,
+		"description": _(
+			"All the settings of a till on one page: its own tabs, and the office's (payments, loyalty, accounting)."
+		),
+	}
+
+
 def settings_tab():
 	"""What a restaurant sets up: the restaurants themselves, their tills, the preparation."""
 	from neoffice_theme.workspace_spaces.common import settings
@@ -324,7 +343,7 @@ def settings_tab():
 		settings(
 			[
 				{"label": _("Restaurants"), "items": ["Restaurant"]},
-				{"label": _("Tills"), "items": ["POS Settings", "POS Profile"]},
+				{"label": _("Tills"), "items": [till_settings_entry(), "POS Settings", "POS Profile"]},
 				{
 					"label": _("Preparation"),
 					"items": ["Preparation Workflow", "Menu Badge", "Menu Design Template"],

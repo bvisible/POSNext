@@ -26367,3 +26367,7 @@ msgstr ""
 #: pos_next/pos_next/doctype/pos_settings/pos_settings.js:58 pos_next/public/js/pos_profile.js:15
 msgid "Open the till settings page"
 msgstr ""
+
+#: pos_next/restaurant/neoresto.py:333
+msgid "All the settings of a till on one page: its own tabs, and the office's (payments, loyalty, accounting)."
+msgstr ""

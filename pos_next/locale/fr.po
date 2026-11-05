@@ -24103,3 +24103,7 @@ msgstr "{0} réglages d'une caisse restaurant ne sont pas affichés : cette cais
 #, python-brace-format
 msgid "{0} settings of a shop till are not shown: this till is a restaurant till."
 msgstr "{0} réglages d'une caisse boutique ne sont pas affichés : cette caisse est une caisse restaurant."
+
+#: pos_next/restaurant/neoresto.py:333
+msgid "All the settings of a till on one page: its own tabs, and the office's (payments, loyalty, accounting)."
+msgstr "Tous les réglages d'une caisse sur une seule page : ses propres onglets, et ceux du bureau (paiements, fidélité, comptabilité)."
