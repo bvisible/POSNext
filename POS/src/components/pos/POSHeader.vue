@@ -502,6 +502,23 @@
 						</svg>
 					</button>
 
+					<!-- //// Neoffice — the till's full-screen switch: the desk's sidebar and the customer display have one, the till had none; drawn only where the browser can do it (NeoResto lot 1, product owner, 05.11.2026) -->
+					<button
+						v-if="fullscreen.supported"
+						type="button"
+						data-test="fullscreen-toggle"
+						@click="fullscreen.toggle"
+						class="flex p-1.5 sm:p-2 min-h-target min-w-target hover:bg-gray-100/70 active:bg-gray-200/70 rounded-neo-sm transition-colors touch-manipulation items-center justify-center"
+						:title="fullscreen.isFullscreen.value ? __('Exit full screen') : __('Full screen')"
+						:aria-label="fullscreen.isFullscreen.value ? __('Exit full screen') : __('Full screen')"
+						:aria-pressed="fullscreen.isFullscreen.value ? 'true' : 'false'"
+					>
+						<svg class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+							<path v-if="!fullscreen.isFullscreen.value" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+							<path v-else d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
+						</svg>
+					</button>
+
 					<!-- //// Neoffice — NOT our change. This divider is upstream's own line (c3ac72bf, -->
 					<!-- //// engahmed1190, 2025-11-26 "move language switcher to user menu on mobile for compact -->
 					<!-- //// header"). It only shows up as modified in the BASE..HEAD diff because the fork -->
@@ -542,6 +559,8 @@ import LanguageSwitcher from "@/components/common/LanguageSwitcher.vue";
 import { DEFAULT_LOCALE } from "@/utils/currency";
 //// Neoffice — computed added for the CloudPRNT printer state (maintenance#1935).
 import { computed, ref } from "vue";
+//// Neoffice — the till's full-screen switch (NeoResto lot 1, 05.11.2026)
+import { useFullscreen } from "@/composables/useFullscreen";
 import { version } from "../../../package.json";
 //// Neoffice — posShift is what pins the customer display to THIS cashier's opening entry
 //// (9a807f74, 2026-06-01 "customer display follows the launching POS's exact shift").
@@ -556,6 +575,8 @@ import { usePOSShiftStore } from "@/stores/posShift";
 //// cashier's cart as soon as two shifts share a profile (9a807f74, 2026-06-01).
 const shiftStore = usePOSShiftStore();
 const showCacheTooltip = ref(false);
+//// Neoffice — the till's full-screen switch: drawn only where the browser has the API (see composables/useFullscreen.js)
+const fullscreen = useFullscreen();
 //// Neoffice — state of the "Leave POS?" confirmation that comes with the logo exit path
 //// (87f168fe, 2026-03-20). Upstream POSNext has no way out of the till.
 const showExitDialog = ref(false);
