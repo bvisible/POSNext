@@ -397,7 +397,10 @@ const {
 	wakeLockSupported,
 	setSetting: setAwakeSetting,
 	noteTickets,
-} = useScreenAwake("kitchen")
+} = useScreenAwake("kitchen", {
+	//// Neoffice — a ticket that blinks is waiting for a cook: the screen does not rest while it does, and wakes if it was resting (product owner, 05.11.2026: « faut la laisser clignoter jusqu'à ce qu'on ait validé »)
+	hold: () => flashingOrders.value.length > 0,
+})
 const { courseOrder, setCourseOrder } = useCourseOrder()
 const { oldestRight, setOldestRight } = useTicketSide()
 const { showRunnerTickets, setShowRunnerTickets } = useRunnerTickets()

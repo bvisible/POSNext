@@ -12,6 +12,10 @@
 //// The settings (utils/screenAwake) are the built-in defaults, the restaurant's values when it has some (`restaurantDefaults`, to come from the
 //// till's settings screen) and what THIS DEVICE chose, kept in localStorage like the text size. "Let the tablet sleep after N more minutes of rest"
 //// RELEASES the lock so that the tablet's own auto-lock takes over (a web page cannot wake a locked tablet: a ticket then lights nothing).
+////
+//// (3) HOLD — something at the screen is waiting for a cook (a table that ordered its next course, its ticket blinking): the screen does not rest, and wakes if it was resting
+//// (NeoResto lot 1, product owner, 05.11.2026: « faut la laisser clignoter jusqu'à ce qu'on ait validé »). A new ticket woke the screen and started the count again; N minutes later the blinking
+//// ticket was covered by the rest layer, still unseen. The count starts again when the last ticket that blinked is taken up.
 import {
 	computed,
 	getCurrentInstance,
@@ -19,6 +23,7 @@ import {
 	onMounted,
 	ref,
 	unref,
+	watch,
 } from "vue"
 import {
 	cleanSetting,
@@ -71,8 +76,9 @@ const pageIsVisible = () =>
 
 /**
  * @param {string} screen - "kitchen", "runner" or "display": the defaults of the screen (utils/screenAwake)
- * @param {{ rest?: boolean, restaurantDefaults?: object }} [options]
+ * @param {{ rest?: boolean, restaurantDefaults?: object, hold?: import("vue").Ref<boolean>|(() => boolean) }} [options]
  *   rest: false for a page that is never touched, the customer display: its screen is kept on and never drawn dark.
+ *   hold: true while something waits for a cook (a ticket that blinks): the screen does not rest, and wakes when it was resting.
  *   restaurantDefaults: the restaurant's values (a plain object or a ref), between the built-in defaults and the device's choice.
  * @returns {{
  *   settings: import("vue").Ref<object>,
@@ -92,7 +98,7 @@ const pageIsVisible = () =>
  */
 export function useScreenAwake(
 	screen,
-	{ rest = true, restaurantDefaults = {} } = {},
+	{ rest = true, restaurantDefaults = {}, hold = false } = {},
 ) {
 	// Read now, not on mount: the first paint must already be the right one
 	const device = ref(readDeviceSettings())
@@ -122,6 +128,8 @@ export function useScreenAwake(
 	let seenTickets = null
 
 	const restMinutes = () => (rest ? settings.value.rest_after_minutes : 0)
+	// Something at the screen waits for a cook (a ref, a function or a plain boolean)
+	const held = () => Boolean(typeof hold === "function" ? hold() : unref(hold))
 	const wantsLock = () =>
 		started && settings.value.keep_screen_on && !releasedByRest
 
@@ -200,7 +208,8 @@ export function useScreenAwake(
 		idleTimer = null
 		lastActivity = Date.now()
 		const minutes = restMinutes()
-		if (!started || resting.value || !minutes) return
+		// A ticket that blinks keeps the screen awake: the count starts when the last of them is taken up (see the watch of `held` below)
+		if (!started || resting.value || !minutes || held()) return
 		idleTimer = setTimeout(beginRest, minutes * MINUTE)
 	}
 
@@ -224,7 +233,7 @@ export function useScreenAwake(
 
 	function beginRest() {
 		idleTimer = null
-		if (!started || !restMinutes()) return
+		if (!started || !restMinutes() || held()) return
 		resting.value = true
 		armRelease()
 	}
@@ -396,6 +405,19 @@ export function useScreenAwake(
 		}
 		armRelease()
 	}
+
+	// ---- the hold --------------------------------------------------------------------------------------------------------------
+	// A ticket starts to blink: the screen wakes if it was resting, and does not rest while it blinks. The last one is taken up: the count to the rest starts again from that moment.
+	watch(held, (isHeld) => {
+		if (!started) return
+		if (isHeld) {
+			if (resting.value) leaveRest()
+			clearTimer(idleTimer)
+			idleTimer = null
+		} else if (!resting.value) {
+			armIdle()
+		}
+	})
 
 	// ---- the tickets -----------------------------------------------------------------------------------------------------------
 	function noteTickets(counts) {

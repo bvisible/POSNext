@@ -6,6 +6,7 @@
  * //// The browser's API, the clock and the document's visibility are all mocked here.
  * @vitest-environment jsdom
  */
+import { nextTick, ref } from "vue"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { useScreenAwake } from "../useScreenAwake"
 
@@ -720,5 +721,75 @@ describe("the settings of this device", () => {
 
 		expect(awake.settings.value.rest_after_minutes).toBe(30)
 		expect(awake.settings.value).not.toHaveProperty("brightness")
+	})
+})
+
+describe("a ticket that blinks keeps the screen awake (product owner, 05.11.2026: « faut la laisser clignoter jusqu'à ce qu'on ait validé »)", () => {
+	it("does not rest while something is held, however long, and rests the delay after it is taken up", async () => {
+		const held = ref(true)
+		const awake = open("kitchen", { hold: held })
+
+		await wait(90 * MINUTE)
+		expect(awake.resting.value).toBe(false)
+
+		held.value = false
+		await nextTick()
+		await wait(30 * MINUTE - 1000)
+		expect(awake.resting.value).toBe(false)
+		await wait(1000)
+		expect(awake.resting.value).toBe(true)
+	})
+
+	it("wakes a screen that was resting when something starts to be held, and keeps it awake", async () => {
+		const held = ref(false)
+		const awake = open("kitchen", { hold: held })
+		await wait(30 * MINUTE)
+		expect(awake.resting.value).toBe(true)
+
+		held.value = true
+		await nextTick()
+		expect(awake.resting.value).toBe(false)
+		await wait(120 * MINUTE)
+		expect(awake.resting.value).toBe(false)
+	})
+
+	it("counts the delay from the moment the last ticket is taken up, not from the wake", async () => {
+		const held = ref(false)
+		const awake = open("kitchen", { hold: held })
+		await wait(30 * MINUTE)
+		held.value = true
+		await nextTick()
+		await wait(20 * MINUTE)
+
+		held.value = false
+		await nextTick()
+		await wait(29 * MINUTE)
+		expect(awake.resting.value).toBe(false)
+		await wait(MINUTE)
+		expect(awake.resting.value).toBe(true)
+	})
+
+	it("takes a function as well as a ref, and a screen with no hold rests as it always did", async () => {
+		let blinking = true
+		const withFunction = open("kitchen", { hold: () => blinking })
+		await wait(40 * MINUTE)
+		expect(withFunction.resting.value).toBe(false)
+		withFunction.stop()
+
+		blinking = false
+		const plain = open("kitchen")
+		await wait(30 * MINUTE)
+		expect(plain.resting.value).toBe(true)
+	})
+
+	it("a touch still starts the count again while a ticket is held, and the held screen never rests under the finger", async () => {
+		const held = ref(true)
+		const awake = open("kitchen", { hold: held })
+
+		await tap()
+		await wait(60 * MINUTE)
+
+		expect(awake.resting.value).toBe(false)
+		expect(reached).toContain("click")
 	})
 })
