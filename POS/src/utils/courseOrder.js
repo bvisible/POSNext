@@ -2,7 +2,7 @@
 //// plats si on n'a pas fait les entrées. Les plats viennent disponibles quand on a fini les entrées. Les entrées viennent grisées [barrées] […] et puis on avance comme ça »).
 ////
 //// A ticket's dishes come in courses (utils/serviceFamilies: Starter, Main, Dessert after the drinks). The kitchen follows the order of the meal: a course WAITS, greyed and not to be touched,
-//// while a course before it still has a dish to cook (Pending or Preparing); it becomes available when that dish is ready (or delivered, or at the pass). A drink never waits and never makes another
+//// while a course before it still has a dish to cook (Pending or Preparing); it becomes available when that dish is ready (or delivered, or at the pass). A dish already begun is never held, whatever is still to cook before it (Daniel, 05.11). A drink never waits and never makes another
 //// dish wait, nor does a dish with no family, nor a dish the waiter holds back (Waiting): it is not at the kitchen yet. The rule is a choice of the SCREEN (a small kitchen that cooks everything
 //// at once turns it off), kept on the device like the size of the text, and ON by default: it is what the product owner asked.
 
@@ -17,6 +17,8 @@ export const COURSE_ORDER_KEY = "pos_next_kitchen_course_order"
 
 // A dish still to cook: the courses after it wait for it
 const TO_COOK = new Set(["Pending", "Preparing"])
+// A dish begun or done: it is never held itself (a begun dish still makes the courses after it wait, it is in TO_COOK)
+const BEGUN = new Set(["Preparing", "Ready", "Delivered"])
 
 const rankOf = (line) => {
 	const rank = COURSES.indexOf(familyOf(line))
@@ -48,6 +50,9 @@ export function lockedCourseRank(lines) {
  */
 export function isHeldByCourse(line, lines, enabled = DEFAULT_COURSE_ORDER) {
 	if (!enabled) return false
+	// A dish already begun is never held, nor is one that is done (Daniel, 05.11: « on ne grise jamais un plat commencé […] marqué en préparation, je ne comprends pas comment ça peut être
+	// en préparation et grisé »). Only a dish nobody has begun waits for its turn; a dish begun ahead of its course, or begun before a late starter was ordered, keeps its whole menu.
+	if (BEGUN.has(line?.kds_status)) return false
 	const rank = rankOf(line)
 	return rank > 0 && rank > lockedCourseRank(lines)
 }

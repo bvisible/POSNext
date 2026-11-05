@@ -121,8 +121,8 @@ describe("a course that waits for the one before it", () => {
 
 		await wrapper.get('[data-test="ticket-line-menu"] .border-blue-300').trigger("click")
 		expect(call).toHaveBeenCalledWith(UPDATE, expect.objectContaining({ item_code: "ITEM-Steak", status: "Preparing" }))
-		// The dish stays greyed: it still waits for its turn, it is only begun
-		expect(rowOf(wrapper, "Steak").attributes("data-held")).toBe("true")
+		// Begun, it is greyed no more (Daniel, 05.11: « on ne grise jamais un plat commencé »): grey says « not begun, wait for your turn »
+		expect(rowOf(wrapper, "Steak").attributes("data-held")).toBeUndefined()
 	})
 
 	it("draws the menu of a dish with the ink outline of the design system, so that it stands out from the ticket under it (Daniel, 03.11)", async () => {
@@ -143,28 +143,43 @@ describe("a course that waits for the one before it", () => {
 		expect(wrapper.find('[data-test="menu-ready"]').exists()).toBe(true)
 	})
 
-	it("offers nothing but to take the start back on a dish that waits and is begun, and says it is being prepared", async () => {
+	it("never greys a dish that is begun, even when a starter is still to cook, and gives it the whole menu (Daniel, 05.11: « marqué en préparation, je ne comprends pas comment ça peut être en préparation et grisé »)", async () => {
 		const wrapper = show([dish("Soup", "Starter", "Preparing"), dish("Steak", "Main", "Preparing"), dish("Tart", "Dessert")])
 		const steak = rowOf(wrapper, "Steak")
 
-		// Grey says « not its turn »; the word says it is being cooked all the same
-		expect(steak.get('[data-test="ticket-line-state"]').text()).toBe("Preparing")
-		// The starter is at the ticket's own state: it says nothing
-		expect(rowOf(wrapper, "Soup").find('[data-test="ticket-line-state"]').exists()).toBe(false)
-		// The dessert waits and nobody began it: its grey says so, it wears no word (Daniel, 03.11)
+		// Begun: not grey, not held, said in the words of its own state
+		expect(steak.attributes("data-held")).toBeUndefined()
+		expect(steak.classes()).not.toContain("opacity-50")
+		// The dessert nobody began still waits, greyed, with no word (Daniel, 03.11)
+		expect(rowOf(wrapper, "Tart").attributes("data-held")).toBe("true")
 		expect(rowOf(wrapper, "Tart").find('[data-test="ticket-line-state"]').exists()).toBe(false)
 
+		// Its menu is a dish's own: the way on is offered, and not only taking the start back
 		await steak.trigger("click")
-		expect(wrapper.find('[data-test="menu-ready"]').exists()).toBe(false)
-		expect(menuWords(wrapper)).toHaveLength(1)
-		expect(menuWords(wrapper)[0]).not.toBe("Preparing")
+		expect(wrapper.find('[data-test="menu-ready"]').exists()).toBe(true)
 	})
 
-	it("opens no menu on a dish that waits and is already ready: nothing is left to do on it", async () => {
+	it("holds a dish nobody began behind a late starter, and leaves the dish already begun alone (a starter ordered after the mains were sent)", () => {
+		const wrapper = show([
+			dish("Soup", "Starter", "Delivered"),
+			dish("Late soup", "Starter", "Pending", { kds_batch: 2 }),
+			dish("Steak", "Main", "Preparing"),
+			dish("Fish", "Main", "Pending"),
+		])
+
+		// The late starter is the first course open: it is available, whatever left before it
+		expect(rowOf(wrapper, "Late soup").attributes("data-held")).toBeUndefined()
+		// The steak was begun before it came: it stays a live dish
+		expect(rowOf(wrapper, "Steak").attributes("data-held")).toBeUndefined()
+		// The fish was not begun: it waits for the late starter, as the order of the meal says
+		expect(rowOf(wrapper, "Fish").attributes("data-held")).toBe("true")
+	})
+
+	it("never greys a dish that is already ready, even when a starter is still to cook (Daniel, 05.11)", () => {
 		const wrapper = show([dish("Soup", "Starter"), dish("Steak", "Main", "Ready")])
 
-		await rowOf(wrapper, "Steak").trigger("click")
-		expect(wrapper.find('[data-test="ticket-line-menu"]').exists()).toBe(false)
+		expect(rowOf(wrapper, "Steak").attributes("data-held")).toBeUndefined()
+		expect(rowOf(wrapper, "Steak").classes()).not.toContain("opacity-50")
 	})
 
 	it("lets the mains go once every starter is ready", () => {
@@ -211,13 +226,14 @@ describe("a course that waits for the one before it", () => {
 		expect(cross.classes()).toEqual(expect.arrayContaining(["h-16", "w-16", "border-2", "border-[#141414]"]))
 	})
 
-	it("cannot press the label of a course that waits when none of its dishes is to start", async () => {
-		const wrapper = show([dish("Soup", "Starter"), dish("Steak", "Main", "Preparing")])
-		const mains = sectionOf(wrapper, "Mains")
+	it("lets the label of a course be pressed when one of its dishes is begun, or can be started ahead (Daniel, 05.11)", () => {
+		// A begun main is not held any more: its course label opens the menu that finishes it
+		const begun = show([dish("Soup", "Starter"), dish("Steak", "Main", "Preparing")])
+		expect(sectionOf(begun, "Mains").attributes("data-selectable")).toBe("true")
 
-		expect(mains.attributes("data-selectable")).toBeUndefined()
-		await mains.trigger("click")
-		expect(wrapper.find('[data-test="section-menu"]').exists()).toBe(false)
+		// A main nobody began is held, and the label of its course offers to start it ahead
+		const waiting = show([dish("Soup", "Starter"), dish("Steak", "Main")])
+		expect(sectionOf(waiting, "Mains").attributes("data-selectable")).toBe("true")
 	})
 })
 

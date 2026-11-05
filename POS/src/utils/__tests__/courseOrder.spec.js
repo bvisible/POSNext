@@ -113,6 +113,36 @@ describe("a course that waits for the one before it", () => {
 	})
 })
 
+describe("a dish that is begun or done", () => {
+	it("is never held, whatever is still to cook before it (Daniel, 05.11: « on ne grise jamais un plat commencé »)", () => {
+		for (const status of ["Preparing", "Ready", "Delivered"]) {
+			const lines = [line("Starter", "Pending"), line("Main", status), line("Dessert", status)]
+			expect(isHeldByCourse(lines[1], lines), `${status} main`).toBe(false)
+			expect(isHeldByCourse(lines[2], lines), `${status} dessert`).toBe(false)
+		}
+	})
+
+	it("still makes the courses after it wait while it is being prepared", () => {
+		const lines = [line("Main", "Preparing"), line("Dessert", "Pending")]
+
+		expect(isHeldByCourse(lines[0], lines)).toBe(false)
+		expect(isHeldByCourse(lines[1], lines)).toBe(true)
+	})
+
+	it("holds only the dishes nobody began when a starter is ordered after the mains were sent", () => {
+		const lines = [
+			line("Starter", "Delivered"),
+			line("Starter", "Pending", { item_code: "late-soup" }),
+			line("Main", "Preparing", { item_code: "begun-main" }),
+			line("Main", "Pending", { item_code: "new-main" }),
+			line("Dessert", "Pending"),
+		]
+
+		// The late starter is the first course open: it is available; the main begun before it came goes on; what nobody began waits for it
+		expect(lines.map((l) => isHeldByCourse(l, lines))).toEqual([false, false, false, true, true])
+	})
+})
+
 describe("the choice a device keeps", () => {
 	it("is ON by default: the order of the meal is followed unless a device says otherwise", () => {
 		expect(DEFAULT_COURSE_ORDER).toBe(true)
