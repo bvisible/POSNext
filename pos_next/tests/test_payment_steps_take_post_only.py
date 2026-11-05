@@ -19,6 +19,7 @@ CHANGES_STATE = (
 )
 READS = (
 	payments.pos_get_mapping,
+	payments.pos_get_mappings,
 	payments.pos_get_intent_status,
 	payments.pos_get_active_devices,
 )
