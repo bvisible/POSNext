@@ -30,6 +30,15 @@ afterEach(() => {
 })
 
 describe("the name of a group", () => {
+	it("says which table it is about when it is told, and writes nothing when it is not", () => {
+		show({ table: "Table 11.1" })
+		expect(part("note-name-table").text()).toBe("Table 11.1")
+		wrapper.unmount()
+
+		show()
+		expect(part("note-name-table").exists()).toBe(false)
+	})
+
 	it("is asked for the group it names", () => {
 		show()
 

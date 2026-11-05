@@ -2028,6 +2028,7 @@
 		<!-- //// Neoffice — « How many people? » (NeoResto lot 1, covers): asked by itself when a table is opened empty and the restaurant asks it, and from the pastille of the table's header. The waiter can dismiss it and order at once. -->
 		<CoversDialog
 			v-if="covers.asking.value"
+			:table="dialogTable"
 			:mode="covers.mode.value"
 			:seats="Number(cartStore.restaurantTable?.capacity) || null"
 			:current="cartStore.restaurantCovers"
@@ -2047,8 +2048,10 @@
 			@move="notes.moveThem"
 			@keep="notes.keepThem"
 		/>
+		<!-- //// Neoffice — the dialog says which table the name is about (product owner, 05.11.2026) -->
 		<NoteNameDialog
 			v-if="notes.nameAsk.value"
+			:table="dialogTable"
 			:label="notes.namedPill.value?.label || ''"
 			:current="notes.namedPill.value?.name || ''"
 			:busy="notes.busy.value"
@@ -2367,6 +2370,8 @@ import { useLeaveTable } from "@/composables/useLeaveTable";
 import CoversDialog from "@/components/restaurant/CoversDialog.vue";
 import CoverCounter from "@/components/restaurant/CoverCounter.vue";
 import { useCovers } from "@/composables/useCovers";
+//// Neoffice — on a phone, an order left brings the waiter back to the tables (product owner, 05.11.2026).
+import { useReturnToTables } from "@/composables/useReturnToTables";
 //// Neoffice — the groups of the table (.1, .2): the pills, the question about the lines not sent, the name of a group (NeoResto lot 1, notes).
 import MoveLinesDialog from "@/components/restaurant/MoveLinesDialog.vue";
 import NoteNameDialog from "@/components/restaurant/NoteNameDialog.vue";
@@ -3946,6 +3951,10 @@ function handleLoadServerDraft(order) {
 
 //// Neoffice — the number of people at the table: the question, its dialog and the counter of portions per course (NeoResto lot 1, covers). A table opened empty asks by itself, through useOpenTable.
 const covers = useCovers();
+//// Neoffice — the table the covers' question and the group's name are about, as the header says it (a phone's dimmed header is hidden by the dialog's scrim; product owner, 05.11.2026).
+const dialogTable = computed(() => (cartStore.restaurantTable ? notes.label.value || cartStore.restaurantTable.table_name || "" : ""));
+//// Neoffice — on a phone, an order left (sent, called, paid, put back) brings the waiter back to the tables, not onto the empty cart (product owner, 05.11.2026).
+useReturnToTables({ cart: cartStore, ui: uiStore, isPhone: phoneLayout });
 //// Neoffice — the groups of the table (.1, .2) in front of the waiter: the label of the table, the pills, and the gestures that switch, add and name a group (NeoResto lot 1, notes). Taken once, for the header, the phone and the dialogs.
 const notes = useTableNotes();
 

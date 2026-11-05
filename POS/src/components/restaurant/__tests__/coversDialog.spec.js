@@ -86,6 +86,15 @@ describe("the dialog « How many people? »", () => {
 		).toBe("true")
 	})
 
+	it("says which table it asks about when it is told (a phone's dimmed header is hidden by the scrim), and writes nothing when it is not", () => {
+		dialog({ table: "Table 14" })
+		expect(find("table").text()).toBe("Table 14")
+		wrapper.unmount()
+
+		dialog()
+		expect(find("table").exists()).toBe(false)
+	})
+
 	it("starts at the table's seats when nobody is counted yet, and says how many seats it has", () => {
 		dialog({ seats: 4 })
 

@@ -12,6 +12,8 @@
 		@keydown.esc.stop="dismiss"
 	>
 		<div class="w-full max-w-[380px] rounded-[16px] bg-[#FFFDF8] p-4 shadow-xl">
+			<!-- The table the question is about (product owner, 05.11.2026: on a phone the table behind the dialog is hidden by the scrim: « je ne sais pas quelle table j'ouvre ») -->
+			<p v-if="table" data-test="covers-table" class="m-0 mb-0.5 text-[13px] font-bold uppercase leading-snug tracking-wide text-[#524B41]">{{ table }}</p>
 			<p data-test="covers-title" class="m-0 text-[16px] font-bold leading-snug text-[#141414]">{{ __("How many people?") }}</p>
 			<p v-if="seatsHint" data-test="covers-seats" class="m-0 mt-0.5 text-[14px] leading-snug text-[#524B41]">{{ seatsHint }}</p>
 
@@ -108,6 +110,8 @@ import {
  * busy:    the number is being saved: the buttons wait for the answer
  */
 const props = defineProps({
+	// The table the question is about, as its header says it (« Table 5 », « Table 5.2 · Dupont »): nothing is written when none is given
+	table: { type: String, default: "" },
 	mode: { type: String, default: "change" },
 	seats: { type: Number, default: null },
 	current: { type: Number, default: null },

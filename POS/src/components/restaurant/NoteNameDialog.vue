@@ -12,6 +12,7 @@
 		@keydown.esc.stop="emit('cancel')"
 	>
 		<div class="w-full max-w-[380px] rounded-[16px] bg-[#FFFDF8] p-4 shadow-xl">
+			<p v-if="table" data-test="note-name-table" class="m-0 mb-0.5 text-[13px] font-bold uppercase leading-snug tracking-wide text-[#524B41]">{{ table }}</p>
 			<p data-test="note-name-title" class="m-0 text-[16px] font-bold leading-snug text-[#141414]">{{ title }}</p>
 			<input
 				ref="field"
@@ -55,11 +56,13 @@ import { computed, nextTick, onMounted, ref } from "vue"
 import { NOTE_NAME_MAX } from "@/utils/tableNotes"
 
 /**
+ * table:   the table the group is seated at, as its header says it (nothing is written when none is given)
  * label:   the group's rank as the waiter says it (« .2 »)
  * current: the name the group has now, "" for none
  * busy:    the name is being saved: the field and the buttons wait for the answer
  */
 const props = defineProps({
+	table: { type: String, default: "" },
 	label: { type: String, default: "" },
 	current: { type: String, default: "" },
 	busy: { type: Boolean, default: false },
