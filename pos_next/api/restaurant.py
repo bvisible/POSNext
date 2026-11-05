@@ -18,6 +18,7 @@ from frappe.utils import cint, flt
 # //// Neoffice — and `paid_orders`: the orders paid while a dish is still at the kitchen (neoffice-maintenance#2163)
 # //// Neoffice — and `figures`: the overview of the restaurant's space is told when the service changes what it counts (neoffice-maintenance#2163)
 # //// Neoffice — and `covers`: the number of people seated at a table, and the portions of each course its order holds (NeoResto lot 1, covers)
+# //// Neoffice — and `notes`: the several open orders (.1, .2, .3) a table may hold, one per party (NeoResto lot 1, notes)
 from pos_next.restaurant import (
 	call_seen,
 	devices,
@@ -32,6 +33,7 @@ from pos_next.restaurant import (
 	tickets,
 )
 from pos_next.restaurant import covers as covers_module
+from pos_next.restaurant import notes as notes_module
 from pos_next.restaurant import settings as restaurant_config
 from pos_next.restaurant.text import plain_text
 
@@ -113,7 +115,10 @@ def _expire_code(name):
 def on_invoice_update(doc, method):
 	"""Update table status based on invoice status."""
 	if doc.get("restaurant_table"):
-		if doc.docstatus == 0:
+		# //// Neoffice — a table holds several notes (NeoResto lot 1, notes): paying or cancelling one leaves the table Occupied while another note of it is open,
+		# //// and only the last one to leave frees it. A table with one note (every table, until a second note is opened) behaves exactly as before.
+		another_note_is_open = doc.docstatus != 0 and notes_module.another_note_is_open(doc.restaurant_table, doc.get("name"))
+		if doc.docstatus == 0 or another_note_is_open:
 			frappe.db.set_value("Restaurant Table", doc.restaurant_table, "status", "Occupied")
 		elif doc.docstatus == 1:
 			frappe.db.set_value("Restaurant Table", doc.restaurant_table, "status", "Cleaning")
@@ -197,33 +202,47 @@ def get_tables(restaurant=None):
 			"Sales Invoice",
 			filters={"docstatus": 0, "restaurant_table": ["in", occupied_names]},
 			# The total of the open order: the list of tables says it under each table (NeoResto lot 1, task 26)
-			fields=["name", "restaurant_table", "owner", "creation", "kds_status", "grand_total"],
+			# //// Neoffice — and the rank and the name of its note: a table may hold several open orders (NeoResto lot 1, notes)
+			fields=["name", "restaurant_table", "owner", "creation", "kds_status", "grand_total", *notes_module.order_fields()],
 			order_by="modified desc"
 		)
 		# The ticket number of each order (NeoResto lot 1, task 38b): what the floor plan and the list of tables read aloud
 		tickets.stamp(orders, restaurant)
 		# //// Neoffice — the number of people seated at each table, from the same one read (NeoResto lot 1, covers): the floor plan and the list of tables show it
 		covers_module.stamp(orders)
+		# //// Neoffice — the number of lines of every open order, in ONE read (it was one count per table)
+		lines = notes_module.count_lines(order.name for order in orders)
+		# //// Neoffice — a table holds one open order per note (NeoResto lot 1, notes): its tile SUMS them (total, lines, covers) and lists the names of the
+		# //// parties for the search. The tile of a table with one note is what it always was. The note opened first says since when and by whom the table is
+		# //// seated, the note of the lowest rank says the ticket number the list reads aloud, and the kitchen state is the one that most needs a look.
+		by_table = {}
 		for order in orders:
-			tbl = order.restaurant_table
-			if tbl in order_map:
-				continue
-			item_count = frappe.db.count("Sales Invoice Item", {"parent": order.name})
+			by_table.setdefault(order.restaurant_table, []).append(order)
+		for tbl, table_orders in by_table.items():
+			by_rank = sorted(table_orders, key=lambda order: notes_module.effective_rank(order.get(notes_module.FIELD)))
+			first_opened = min(table_orders, key=lambda order: order.creation)
+			lowest = by_rank[0]
 			# Get user initials from full name
-			full_name = frappe.db.get_value("User", order.owner, "full_name") or order.owner
+			full_name = frappe.db.get_value("User", first_opened.owner, "full_name") or first_opened.owner
 			initials = "".join([p[0].upper() for p in full_name.split() if p][:2])
+			seated = [order.covers for order in table_orders if order.covers]
 			order_map[tbl] = {
-				"item_count": item_count,
-				"opened_at": str(order.creation),
+				"item_count": sum(lines.get(order.name, 0) for order in table_orders),
+				"opened_at": str(first_opened.creation),
 				"opened_by": initials,
-				"kds_status": order.kds_status or "Pending",
-				"ticket_no": order.ticket_no,
-				"ticket_digits": order.ticket_digits,
-				# //// Neoffice — the people seated at the table (int, None when nobody said how many)
-				"covers": order.covers,
+				"kds_status": notes_module.kds_status_of_table(order.kds_status for order in table_orders),
+				"ticket_no": lowest.ticket_no,
+				"ticket_digits": lowest.ticket_digits,
+				# //// Neoffice — the people seated at the table (int, None when nobody said how many): the sum of its notes' covers
+				"covers": sum(seated) or None,
+				# //// Neoffice — how many open notes the table holds and the names of its parties, in rank order (NeoResto lot 1, notes)
+				"notes_count": len(table_orders),
+				"note_names": [
+					order.get(notes_module.NAME_FIELD) for order in by_rank if order.get(notes_module.NAME_FIELD)
+				],
 			}
 			if tell_totals:
-				order_map[tbl]["grand_total"] = flt(order.grand_total)
+				order_map[tbl]["grand_total"] = sum(flt(order.grand_total) for order in table_orders)
 
 	# Auto-fix orphaned "Occupied" tables with no active draft
 	orphaned = [t.name for t in tables if t.status == "Occupied" and t.name not in order_map]
@@ -366,8 +385,57 @@ def set_table_covers(invoice, covers):
 	return {"covers": number}
 
 
+# //// Neoffice — added function (no upstream equivalent). The name of the party of a note, changed from the table's header (NeoResto lot 1, notes). A table may hold several open
+# //// orders, one per party (.1, .2, .3), and a party may be given a name (« Dupont », « les deux couples ») shown beside its rank and searched on the floor plan. The name lives on the
+# //// note's draft (`restaurant_note_name`) and is written by the till's save when the order is validated; this is the way to name or rename a note that already exists, without saving the
+# //// whole cart. POST only, a write of the waiter's till: the rule of `set_table_covers`.
+@frappe.whitelist(methods=["POST"])
+def set_table_note_name(invoice, note_name):
+	"""Name the party of an open note of a table (nothing or an empty text clears the name), and tell the screens.
+
+	`note_name` is a text of at most 60 characters (longer is cut, its tags removed, its white space collapsed); nothing, an empty text, or white space alone
+	clears it. Answers `{"note_name": <the name stored, None when none>}`. The order's own modification time is left alone: naming a party is no change of the
+	order the kitchen should read as new.
+
+	Refused: whoever may not work at the order's till, a restaurant that is not the caller's (a till of another restaurant, a user kept to another restaurant),
+	an invoice that is submitted or sits at no table (a takeaway or a counter sale: only an open note has a party), and a name that is not a text.
+	"""
+	from pos_next.api.cash_entry import require_document_till
+
+	require_document_till("Sales Invoice", invoice)
+	# A body that is not a name (a JSON list or dict would be read by the query as a filter) names no invoice
+	if not isinstance(invoice, str):
+		frappe.throw(_("Sales Invoice {0} not found").format(invoice), frappe.DoesNotExistError)
+	order = frappe.db.get_value("Sales Invoice", invoice, ["name", "docstatus", "restaurant_table"], as_dict=True)
+	if not order:
+		frappe.throw(_("Sales Invoice {0} not found").format(invoice), frappe.DoesNotExistError)
+	if order.docstatus != 0 or not order.restaurant_table:
+		frappe.throw(_("Only the open order of a table has a party to name"))
+
+	restaurant = scope.restaurant_of_record("Restaurant Table", order.restaurant_table)
+	permissions.require_restaurant(restaurant)
+	# The caller's own till, when he has one open, is that of this restaurant
+	profile = scope.current_profile()
+	if profile and scope.current_restaurant(profile) != restaurant:
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+	name = notes_module.clean_name(note_name)
+	if not notes_module.has_columns():
+		frappe.throw(_("The name of the party cannot be saved yet: this site has to be updated first"))
+
+	# A save of the till locks the lines of the order before it reads the order, and writes it back whole: waiting for that lock means
+	# this name is written after the save, not lost under it (the same lock `set_table_covers` takes)
+	service_families.stored_lines(order.name, lock=True)
+	# An empty name is stored '' and read back as None
+	frappe.db.set_value("Sales Invoice", order.name, notes_module.NAME_FIELD, name or "", update_modified=False)
+	frappe.db.commit()
+	frappe.publish_realtime("kds_update")
+	frappe.publish_realtime("table_update")
+	return {"note_name": name}
+
+
 @frappe.whitelist()
-def get_table_payment_summary(table_name):
+def get_table_payment_summary(table_name: str):
 	"""Get payment summary for a Paid/Cleaning table (for the server dialog)."""
 	# //// Neoffice — its caller is the till (POSSale), so only the till's users pass
 	# //// (cash_entry.require_till_user).
@@ -375,7 +443,8 @@ def get_table_payment_summary(table_name):
 
 	require_till_user()
 	# //// Neoffice — `change_amount` too: what was handed back is not what the restaurant collected (neoffice-maintenance#2163)
-	invoice_fields = ["name", "grand_total", "paid_amount", "change_amount", "creation"]
+	# //// Neoffice — and the rank and the name of the note the summary is of: a table holds one order per note, and the dialog says which was paid (NeoResto lot 1, notes)
+	invoice_fields = ["name", "grand_total", "paid_amount", "change_amount", "creation", *notes_module.order_fields()]
 	# Priority 1: draft invoice linked directly to the table
 	invoice = frappe.get_all(
 		"Sales Invoice",
@@ -403,6 +472,9 @@ def get_table_payment_summary(table_name):
 			"paid_amount": 0,
 			"change_amount": 0,
 			"collected_amount": 0,
+			# //// Neoffice — the table has no order, so no note (NeoResto lot 1, notes)
+			"note": 1,
+			"note_name": None,
 		}
 
 	inv = invoice[0]
@@ -444,6 +516,9 @@ def get_table_payment_summary(table_name):
 		"items": items,
 		"tip_total": tip_total,
 		"payment_count": len(payments),
+		# //// Neoffice — the note this summary is of: the dialog of a table with several notes says which party paid (NeoResto lot 1, notes)
+		"note": notes_module.effective_rank(inv.get(notes_module.FIELD)),
+		"note_name": inv.get(notes_module.NAME_FIELD) or None,
 	}
 
 
@@ -474,6 +549,12 @@ def _put_table_back(table_name):
 	status goes back to Empty, the guest order tokens of the table expire, and the draft invoices that still name it are
 	unlinked so that the next order starts fresh. Whoever calls it has checked who may, and tells the other tills.
 	"""
+	# //// Neoffice — a table that holds an open note is not empty (NeoResto lot 1, notes): a party may have been seated since the table was marked for cleaning (or a note was
+	# //// opened as the last one was paid), and unlinking its order below would make it vanish from the floor with its dishes at the kitchen. It is put back to Occupied instead.
+	if notes_module.another_note_is_open(table_name):
+		frappe.db.set_value("Restaurant Table", table_name, "status", "Occupied")
+		return False
+
 	frappe.db.set_value("Restaurant Table", table_name, "status", "Empty")
 	# //// Neoffice — the overview of the space counts the tables with guests (#2163)
 	figures.figures_changed()
@@ -490,6 +571,7 @@ def _put_table_back(table_name):
 	)
 	for inv_name in draft_invoices:
 		frappe.db.set_value("Sales Invoice", inv_name, "restaurant_table", None, update_modified=False)
+	return True
 
 
 # //// Neoffice — added function (no upstream equivalent). A table's order cancelled as a whole (NeoResto lot 1, Daniel, 03.11.2026): the waiter took off the LAST dish
@@ -548,7 +630,10 @@ def free_cleaning_tables(area, restaurant=None):
 	permissions.require_restaurant(restaurant)
 	# A room is named by its name: anything else (a dict from a JSON body, which frappe.db.exists would read as filters)
 	# is no room
-	if not isinstance(area, str) or not area or not frappe.db.exists("Restaurant Area", area):
+	# //// Neoffice — the type is checked on a statement of its own, so that the check of the web methods sees the filter is a name (NeoResto lot 1, notes); the answer is the same
+	if not isinstance(area, str):
+		frappe.throw(_("Area not found"))
+	if not area or not frappe.db.exists("Restaurant Area", area):
 		frappe.throw(_("Area not found"))
 	if scope.restaurant_of_record("Restaurant Area", area) != restaurant:
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
@@ -563,8 +648,9 @@ def free_cleaning_tables(area, restaurant=None):
 		# Another till may have seated the table since it was listed: it is freed only if it is still being cleaned
 		if frappe.db.get_value("Restaurant Table", table_name, "status", for_update=True) != "Cleaning":
 			continue
-		_put_table_back(table_name)
-		freed.append(table_name)
+		# //// Neoffice — a table that holds an open note was seated again: it is not freed (see _put_table_back)
+		if _put_table_back(table_name):
+			freed.append(table_name)
 
 	if freed:
 		frappe.publish_realtime("table_update")
@@ -975,49 +1061,91 @@ def _offered_fields():
 	return ["price_list_rate", FIELD] if frappe.db.has_column("Sales Invoice Item", FIELD) else ["price_list_rate"]
 
 
+def _notes_part(open_notes, note, note_name):
+	"""The keys an answer about the order of a table gains with the notes (NeoResto lot 1, notes).
+
+	`note` is the rank of the order the answer is about and `note_name` its party's name; `notes` the table's open notes (see `notes.read_open`), sorted by rank,
+	and `next_note` the rank a new note would take (None when the table holds all 99)."""
+	return {
+		"note": note,
+		"note_name": note_name,
+		"notes": open_notes,
+		"next_note": notes_module.next_free_rank(note_row["note"] for note_row in open_notes),
+	}
+
+
+# //// Neoffice — `note`: a table may hold several open orders, one per party (NeoResto lot 1, notes); the answer says which note it is and lists the table's open notes
 @frappe.whitelist()
-def get_table_order(table_name: str):
-	"""Get the active invoice for a specific table (draft or recently submitted)."""
+def get_table_order(table_name: str, note=None):
+	"""Get the active invoice for a specific table (draft or recently submitted).
+
+	`note` names the rank of the open order wanted (a whole number from 1 to 99); nothing is the note of the lowest rank. A rank no open order of the table has
+	answers an EMPTY new order of that rank (`is_new`; nothing is created, a draft is made by the first save). The answer says which note it is (`note`,
+	`note_name`) and lists the table's open notes (`notes`, see `notes.read_open`).
+	"""
 	# //// Neoffice — its caller is the till (POSSale, useInvoice), so only the till's users pass
 	# //// (cash_entry.require_till_user).
 	from pos_next.api.cash_entry import require_till_user
 
 	require_till_user()
+	rank = notes_module.clean_rank(note)
 	# //// Neoffice — `customer_name` too: the till names the table's customer by his name (neoffice-maintenance#2163)
 	order_fields = ["name", "customer", "customer_name", "restaurant_table", "kds_status", "grand_total", "paid_amount"]
 	# First try draft
-	orders = frappe.get_all(
-		"Sales Invoice",
-		filters={
-			"docstatus": 0,
-			"restaurant_table": table_name,
-		},
-		fields=order_fields,
-		order_by="modified desc",
-		limit=1
-	)
+	# //// Neoffice — the open note asked for, else the one of the lowest rank (the only draft of a table with one note), instead of the most recently changed
+	open_notes = notes_module.read_open([table_name]).get(table_name, [])
+	chosen = notes_module.lowest(open_notes) if rank is None else notes_module.of_rank(open_notes, rank)
+	orders = []
+	if chosen:
+		orders = frappe.get_all(
+			"Sales Invoice",
+			filters={"name": chosen["name"]},
+			fields=[*order_fields, *notes_module.order_fields()],
+		)
 
 	# If no draft, check for recently submitted (e.g. after guest payment)
-	if not orders:
+	# //// Neoffice — only when no note was asked for: an order already paid is no note one can open
+	if not orders and rank is None:
 		orders = frappe.get_all(
 			"Sales Invoice",
 			filters={
 				"docstatus": 1,
 				"restaurant_table": table_name,
 			},
-			fields=order_fields,
+			fields=[*order_fields, *notes_module.order_fields()],
 			order_by="modified desc",
 			limit=1
 		)
 
 	if not orders:
-		return None
+		if rank is None:
+			return None
+		# //// Neoffice — the note asked for has no open order yet: the till starts it empty, and its first save creates the draft
+		return {
+			"name": None,
+			"customer": None,
+			"customer_name": None,
+			"restaurant_table": table_name,
+			"kds_status": None,
+			"grand_total": 0,
+			"paid_amount": 0,
+			"items": [],
+			"tip_total": 0,
+			"is_new": True,
+			"covers": None,
+			**_notes_part(open_notes, rank, None),
+		}
 
 	order = orders[0]
 	# The ticket number of the order (NeoResto lot 1, task 38b): what the till's order screen reads; the name stays for its calls
 	tickets.stamp([order], scope.restaurant_of_record("Restaurant Table", table_name))
 	# //// Neoffice — the number of people seated at the table (NeoResto lot 1, covers): int, None when nobody said how many
 	covers_module.stamp([order])
+	# //// Neoffice — which note this is and the table's other open notes (NeoResto lot 1, notes)
+	order["is_new"] = False
+	order.update(
+		_notes_part(open_notes, notes_module.effective_rank(order.get(notes_module.FIELD)), order.get(notes_module.NAME_FIELD) or None)
+	)
 
 	# Fetch items
 	# stock_uom and conversion_factor: the unit the line is in and what it is worth in stock units (task 22)
@@ -1275,12 +1403,16 @@ def get_kds_orders(station=None, restaurant=None):
 
 	# //// Neoffice — every line says its family and the color of its category (Daniel, 01.11: « séparer entrée, plat, dessert » and a
 	# //// pastel background for the categories). One read of the items and of the group tree for ALL the lines of the call.
-	service_families.stamp_lines(item for order in orders for item in order.get("items", []))
+	group_maps = service_families.stamp_lines(item for order in orders for item in order.get("items", []))
 
 	# //// Neoffice — the people seated at each table and the portions of each course its WHOLE order holds, not only the station's lines: the ticket reads « Mains 2/3 »
-	# //// (NeoResto lot 1, covers). One read of the covers and one of the lines for all the orders of the call.
+	# //// (NeoResto lot 1, covers). One read of the covers and one of the lines for all the orders of the call; the group tree read above is handed on, not read again.
 	covers_module.stamp(orders)
-	covers_module.stamp_family_counts(orders, covers_module.tip_item_of(restaurant))
+	covers_module.stamp_family_counts(orders, covers_module.tip_item_of(restaurant), group_maps)
+
+	# //// Neoffice — a table may hold several notes, each its own ticket (NeoResto lot 1, notes): every order says its rank and its party's name, and how many open notes its table
+	# //// has, so that its card reads « Table 5.2 » (`table_label`) and the card of a table with one note is unchanged. One read for all the orders of the call.
+	notes_module.stamp(orders)
 
 	# //// Neoffice — the call of the next course that the screens of this station took up (`call_seen`): a ticket stops blinking on every tablet that shows the same thing (Daniel, 01.11)
 	call_seen.stamp(orders, station)
@@ -1777,10 +1909,15 @@ def delete_station(name):
 	return {"status": "success"}
 
 
+# //// Neoffice — `note`: a table may hold several open orders, one per party (NeoResto lot 1, notes); the answer says which note it is and lists the table's open notes
 @frappe.whitelist()
-def open_table(table_name: str, pos_profile, customer=None):
+def open_table(table_name: str, pos_profile, customer=None, note=None):
 	"""Open a table by creating a draft Sales Invoice linked to it.
 	Returns the existing draft if one already exists for this table.
+
+	`note` names the rank of the open order wanted (a whole number from 1 to 99); nothing is the note of the lowest rank. A rank no open order of the table
+	has answers an EMPTY new order of that rank (`is_new`; nothing is created, the first save makes the draft). The answer says which note it is (`note`,
+	`note_name`) and lists the table's open notes (`notes`, see `notes.read_open`).
 	"""
 	# The till named is one the caller works at (lot 0's rule for a till's endpoint), and he makes invoices there
 	from pos_next.api.cash_entry import require_till_access
@@ -1793,23 +1930,30 @@ def open_table(table_name: str, pos_profile, customer=None):
 		frappe.throw(_("Table {0} not found").format(table_name))
 
 	# Check for existing draft first
+	# //// Neoffice — the open note asked for, else the one of the lowest rank (the only draft of a table with one note), instead of the most recently changed (NeoResto lot 1, notes)
+	rank = notes_module.clean_rank(note)
+	open_notes = notes_module.read_open([table_name]).get(table_name, [])
+	chosen = notes_module.lowest(open_notes) if rank is None else notes_module.of_rank(open_notes, rank)
 	# //// Neoffice — `customer_name` too: the till names the table's customer by his name, not by his record's
 	# //// name, which is a code on a site that numbers its customers (neoffice-maintenance#2163)
-	existing = frappe.get_all(
-		"Sales Invoice",
-		filters={"docstatus": 0, "restaurant_table": table_name},
-		# //// Neoffice — `restaurant_covers` too: the people seated at the table come back with its draft (NeoResto lot 1, covers)
-		fields=[
-			"name",
-			"customer",
-			"customer_name",
-			"kds_status",
-			"paid_amount",
-			*tickets.order_fields(),
-			*covers_module.order_fields(),
-		],
-		order_by="modified desc",
-		limit=1
+	existing = (
+		frappe.get_all(
+			"Sales Invoice",
+			filters={"name": chosen["name"]},
+			# //// Neoffice — `restaurant_covers` too: the people seated at the table come back with its draft (NeoResto lot 1, covers)
+			fields=[
+				"name",
+				"customer",
+				"customer_name",
+				"kds_status",
+				"paid_amount",
+				*tickets.order_fields(),
+				*covers_module.order_fields(),
+				*notes_module.order_fields(),
+			],
+		)
+		if chosen
+		else []
 	)
 	if existing:
 		# Draft already exists — return it
@@ -1873,6 +2017,10 @@ def open_table(table_name: str, pos_profile, customer=None):
 			),
 			# //// Neoffice — the people seated at the table: int, None when nobody said how many (NeoResto lot 1, covers)
 			"covers": cint(order.get(covers_module.FIELD)) or None,
+			# //// Neoffice — which note this is and the table's other open notes (NeoResto lot 1, notes)
+			**_notes_part(
+				open_notes, notes_module.effective_rank(order.get(notes_module.FIELD)), order.get(notes_module.NAME_FIELD) or None
+			),
 		}
 
 	# No existing draft — return empty result, the draft will be created when the cashier first validates the order
@@ -1885,6 +2033,8 @@ def open_table(table_name: str, pos_profile, customer=None):
 		"is_new": True,
 		# //// Neoffice — nobody is seated yet: the same shape as a draft that comes back (NeoResto lot 1, covers)
 		"covers": None,
+		# //// Neoffice — the note this empty order will be: the one asked for, else the first of a table that has none (NeoResto lot 1, notes)
+		**_notes_part(open_notes, rank or 1, None),
 	}
 
 
@@ -3309,12 +3459,14 @@ def get_runner_orders(area: str | None = None, restaurant=None):
 			result.append(order)
 
 	# //// Neoffice — every line says its family and the color of its category, as the kitchen's list does: ONE read for all the lines (Daniel, 01.11)
-	service_families.stamp_lines(item for order in result for item in order["items"])
+	group_maps = service_families.stamp_lines(item for order in result for item in order["items"])
 
 	# //// Neoffice — the people seated at each table and the portions of each course its WHOLE order holds, not only the dishes at the pass: the card reads « Mains 2/3 »
-	# //// (NeoResto lot 1, covers). One read of the covers and one of the lines for all the orders of the call.
+	# //// (NeoResto lot 1, covers). One read of the covers and one of the lines for all the orders of the call; the group tree read above is handed on, not read again.
 	covers_module.stamp(result)
-	covers_module.stamp_family_counts(result, covers_module.tip_item_of(restaurant))
+	covers_module.stamp_family_counts(result, covers_module.tip_item_of(restaurant), group_maps)
+	# //// Neoffice — the rank and the party of the note each card is of, and how many open notes its table has (NeoResto lot 1, notes): see get_kds_orders
+	notes_module.stamp(result)
 
 	# What the runner's card reads aloud besides the table (NeoResto lot 1, task 38b): the ticket number and its digits, and the
 	# code of the room, never the invoice's name (which stays in the row for the calls the screen makes)

@@ -172,6 +172,10 @@ _custom_field_names = [
 	# //// Neoffice — the people seated at a table (NeoResto lot 1, covers): kept on the table's open order and told to the kitchen's screens and ticket.
 	# //// Shipped by the fixture file; listed so that an export does not drop it.
 	"Sales Invoice-restaurant_covers",
+	# //// Neoffice — the notes of a table (NeoResto lot 1, notes): the rank of an order on its table (.1, .2, .3) and the optional name of its party. A note is a
+	# //// draft Sales Invoice on a table, and a table may hold several. Shipped by the fixture file; listed so that an export does not drop them.
+	"Sales Invoice-restaurant_note",
+	"Sales Invoice-restaurant_note_name",
 	"Sales Invoice-kds_status",
 	# //// Neoffice — the ticket number of a restaurant order and the business day it was counted in (NeoResto lot 1,
 	# //// task 38b, rulings 122 and 124): the kitchen shows it instead of the draft's Sales Invoice number.

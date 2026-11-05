@@ -136,12 +136,14 @@ def tip_item_of(restaurant: str | None) -> str | None:
 	return restaurant_config.get_restaurant_settings(restaurant).get("tip_item") or None
 
 
-def stamp_family_counts(rows: list, tip_item: str | None = None) -> list:
+def stamp_family_counts(rows: list, tip_item: str | None = None, maps=None) -> list:
 	"""Tell each order row of a list (a dict with a `name`) its `family_counts`: the portions of its whole order per course.
 
 	The lines of ALL the orders are read together, and so are their families (one read of the items, one of the groups), whatever
 	the number of orders: a list of forty tickets must not ask the database forty times. They are read as stored, so the count is not
 	the screen's own list of lines (cut to a station, or to what is at the pass) and does not move when the screen changes its mind.
+
+	`maps` are the group maps the call's own stamp of its lines already read (`service_families.stamp_lines` answers them): the group tree is read once per call.
 	"""
 	names = [row.get("name") for row in rows if row.get("name")]
 	by_order: dict[str, list] = {}
@@ -154,7 +156,7 @@ def stamp_family_counts(rows: list, tip_item: str | None = None) -> list:
 			filters={"parent": ["in", names], "parenttype": "Sales Invoice"},
 			fields=fields,
 		)
-		service_families.stamp_lines(lines)
+		service_families.stamp_lines(lines, maps)
 		for line in lines:
 			by_order.setdefault(line.parent, []).append(line)
 	for row in rows:

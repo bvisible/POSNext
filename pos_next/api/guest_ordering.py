@@ -20,6 +20,9 @@ from frappe.utils import add_to_date, cint, flt, fmt_money, now_datetime, valida
 from frappe.utils.synchronization import filelock
 
 from pos_next.restaurant import guest_account, permissions, portions, scope, service_families, tickets
+
+# //// Neoffice — the several open orders (.1, .2, .3) a table may hold: a guest's order goes onto the first (NeoResto lot 1, notes)
+from pos_next.restaurant import notes as notes_module
 from pos_next.restaurant.mode import require_neoresto
 from pos_next.restaurant.settings import get_restaurant_settings_for_profile
 from pos_next.restaurant.text import plain_text
@@ -118,12 +121,9 @@ def _get_or_create_invoice(token_doc):
 
 	if token_doc.mode == "restaurant" and token_doc.table:
 		# Look for an existing draft on the table
-		existing = frappe.db.get_value(
-			"Sales Invoice",
-			{"docstatus": 0, "restaurant_table": token_doc.table},
-			"name",
-			order_by="creation desc",
-		)
+		# //// Neoffice — a table may hold several open orders, one per party (NeoResto lot 1, notes): the guest's order attaches to the one of the LOWEST rank (the table's first note),
+		# //// not to whichever was made last. A session that already serves a draft keeps it (the first branch above): the guest keeps seeing his own earlier lines.
+		existing = notes_module.lowest_open_note(token_doc.table)
 		if existing:
 			# Link token to invoice via DB (avoids TimestampMismatchError)
 			frappe.db.set_value("Guest Order Token", token_doc.name, "invoice", existing)
@@ -840,6 +840,9 @@ def submit_guest_order(token, items):
 		}
 		if token_doc.table:
 			invoice_data["restaurant_table"] = token_doc.table
+			# //// Neoffice — the first order of a table is its note 1 (NeoResto lot 1, notes); a site not migrated yet has no such field
+			if notes_module.has_columns():
+				invoice_data[notes_module.FIELD] = 1
 		# //// Neoffice — a takeaway order is flagged as one before its first save: it takes the takeaway tax category and its ticket number then (#2132)
 		if token_doc.mode == "takeaway" and frappe.db.has_column("Sales Invoice", "is_takeaway"):
 			invoice_data["is_takeaway"] = 1

@@ -315,17 +315,20 @@ def color_of_group(group) -> str:
 	return group_colors().get(group, "")
 
 
-def stamp_lines(lines) -> None:
+def stamp_lines(lines, maps=None):
 	"""Give each line of a kitchen or runner list its `service_family` and its `service_color`, in the line itself.
 
 	The family is the one the line was stored with (the waiter may have given one line another), else that of its item's group.
 	The color is that of its item's group, or of the nearest ancestor that has one (`""` for none). The items and the groups are
 	each read ONCE for all the lines given, whatever their number: a list of forty tickets must not ask the database forty times.
+
+	Answers the group maps it used (`(families, colors)`, None when there was no line to stamp): a second stamp of the same call (the covers' count
+	of an order's whole lines) hands them back as `maps` instead of reading the group tree again.
 	"""
 	lines = [line for line in lines or [] if line]
 	if not lines:
-		return
-	families, colors = _group_maps()
+		return maps
+	families, colors = maps or _group_maps()
 	groups: dict[str, str] = {}
 	if families or colors:
 		codes = {line.get("item_code") for line in lines if line.get("item_code")}
@@ -336,6 +339,7 @@ def stamp_lines(lines) -> None:
 		group = groups.get(line.get("item_code"))
 		line[FIELD] = _family(line) or families.get(group, "")
 		line[COLOR_FIELD] = colors.get(group, "")
+	return families, colors
 
 
 # ---------------------------------------------------------------------------------------------------- the send path

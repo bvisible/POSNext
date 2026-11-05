@@ -1232,6 +1232,14 @@ def update_invoice(data):
 
 	covers_sent = isinstance(data, dict) and covers_module.FIELD in data
 	covers_to_store = covers_module.clean_covers(data.get(covers_module.FIELD)) if covers_sent else None
+	# //// Neoffice — the notes of a table (NeoResto lot 1, notes): a table may hold several open orders, one per party (.1, .2, .3). The till may send the order's rank
+	# //// (`restaurant_note`, a whole number from 1 to 99) and its party's name (`restaurant_note_name`, absent = leave alone, empty or null = clear). Checked here, before the try, like the
+	# //// covers: a rank nobody can open is refused and not logged as an "Update Invoice Error". Both are written after the save below, never through the document.
+	from pos_next.restaurant import notes as notes_module
+
+	note_asked = notes_module.clean_rank(data.get(notes_module.FIELD)) if isinstance(data, dict) else None
+	note_name_sent = isinstance(data, dict) and notes_module.NAME_FIELD in data
+	note_name_to_store = notes_module.clean_name(data.get(notes_module.NAME_FIELD)) if note_name_sent else None
 	try:
 		data = json.loads(data) if isinstance(data, str) else data
 		data = _strip_server_managed_fields(data)
@@ -1239,6 +1247,9 @@ def update_invoice(data):
 		# //// `data` is a copy here, so the caller's own payload keeps its key.
 		if isinstance(data, dict):
 			data.pop(covers_module.FIELD, None)
+			# //// Neoffice — and the rank and the party's name of the note, for the same reason (NeoResto lot 1, notes)
+			data.pop(notes_module.FIELD, None)
+			data.pop(notes_module.NAME_FIELD, None)
 
 		pos_profile = data.get("pos_profile")
 		doctype = data.get("doctype", "Sales Invoice")
@@ -1277,14 +1288,37 @@ def update_invoice(data):
 		if not data.get("name"):
 			restaurant_table = data.get("restaurant_table")
 			if restaurant_table:
-				existing_draft = frappe.db.get_value(
-					doctype,
-					{"docstatus": 0, "restaurant_table": restaurant_table},
-					"name",
-					order_by="modified desc",
-				)
+				# //// Neoffice — the draft of THIS NOTE, not any draft of the table (NeoResto lot 1, notes): a table may hold several open orders and a save of one must never
+				# //// land on, or overwrite, another. The note is the payload's rank, else the first; the table's row is locked while it is looked for, so that two tills opening
+				# //// the same note at the same moment are served one after the other and the second finds the draft the first made.
+				if doctype == "Sales Invoice":
+					notes_module.lock_table(restaurant_table)
+					existing_draft = notes_module.draft_of_note(restaurant_table, note_asked or 1, lock=True)
+				else:
+					existing_draft = frappe.db.get_value(
+						doctype,
+						{"docstatus": 0, "restaurant_table": restaurant_table},
+						"name",
+						order_by="modified desc",
+					)
 				if existing_draft:
 					data["name"] = existing_draft
+
+		# //// Neoffice — the save of a note that already exists may change its rank (or its table): refused, translated, when another open order of the target table holds that
+		# //// rank. A save that leaves the rank and the table as they are is never refused, whatever older data the table holds (NeoResto lot 1, notes).
+		creating_a_draft = not data.get("name")
+		note_table = data.get("restaurant_table")
+		stored_note = None
+		if doctype == "Sales Invoice" and notes_module.has_columns() and data.get("name"):
+			stored_note = frappe.db.get_value(
+				doctype, data["name"], ["restaurant_table", notes_module.FIELD], as_dict=True
+			)
+			note_table = note_table or (stored_note and stored_note.restaurant_table)
+			if stored_note and note_table:
+				stored_rank = notes_module.effective_rank(stored_note.get(notes_module.FIELD))
+				target_rank = note_asked or stored_rank
+				if note_table != stored_note.restaurant_table or target_rank != stored_rank:
+					notes_module.refuse_a_rank_that_is_taken(note_table, target_rank, data["name"])
 
 		# //// Neoffice — restaurant mode: the units of each line the kitchen has cooked and the runner has delivered (kitchen test of
 		# //// 01.11, a line of six marked ready for four) are Custom Fields of the fork, like kds_status. The table's draft is rebuilt from
@@ -1728,7 +1762,19 @@ def update_invoice(data):
 		# //// Neoffice — and the people seated at the table (NeoResto lot 1, covers), in the same write, when the payload carried the key: a number, or none (0 or nothing)
 		# //// to take it away. A Sales Order has no such field, and a site not migrated yet has no column: nothing to write there.
 		store_covers = covers_sent and doctype == "Sales Invoice" and covers_module.has_covers_column()
-		if data.get("restaurant_table") or data.get("kds_status") or data.get("is_takeaway") or store_covers:
+		# //// Neoffice — and the note of the order (NeoResto lot 1, notes), in the same write: the rank of a draft made at a table (the payload's, else 1) or sent with the save of one that
+		# //// exists, and the party's name when the payload carried the key. A Sales Order has no such field, and a site not migrated yet has no column.
+		can_store_notes = doctype == "Sales Invoice" and bool(note_table) and notes_module.has_columns()
+		store_note = can_store_notes and (creating_a_draft or note_asked is not None)
+		store_note_name = can_store_notes and note_name_sent
+		if (
+			data.get("restaurant_table")
+			or data.get("kds_status")
+			or data.get("is_takeaway")
+			or store_covers
+			or store_note
+			or store_note_name
+		):
 			update_data = {}
 			if data.get("restaurant_table"):
 				update_data["restaurant_table"] = data.get("restaurant_table")
@@ -1742,6 +1788,11 @@ def update_invoice(data):
 			if store_covers:
 				# An Int column is NOT NULL: none is stored as 0 and read back as None
 				update_data[covers_module.FIELD] = covers_to_store or 0
+			# //// Neoffice — the rank and the party's name of the note (NeoResto lot 1, notes); an empty name is stored '' and read back as None
+			if store_note:
+				update_data[notes_module.FIELD] = note_asked or 1
+			if store_note_name:
+				update_data[notes_module.NAME_FIELD] = note_name_to_store or ""
 
 			frappe.db.set_value(invoice_doc.doctype, invoice_doc.name, update_data, update_modified=False)
 
@@ -2208,6 +2259,11 @@ def submit_invoice(invoice=None, data=None):
 	# //// the coupon lookup and the offline reservation below, so a refused call writes nothing.
 	_require_till_document(invoice)
 	invoice = _strip_server_managed_fields(invoice)
+	# //// Neoffice — the note a payment is of (NeoResto lot 1, notes): the payload's rank finds the draft of the note again when the till lost its id (below), and is checked before
+	# //// anything is written. A payment never rewrites the rank or the party's name of an order that exists (see the pop below), as it never rewrites the covers.
+	from pos_next.restaurant import notes as notes_module
+
+	note_asked = notes_module.clean_rank(invoice.get(notes_module.FIELD))
 
 	# //// Neoffice — the POS posts the coupon CODE, but `coupon_code` is a Link that
 	# //// holds the document NAME. `update_invoice` (the draft step) already resolved
@@ -2265,12 +2321,16 @@ def submit_invoice(invoice=None, data=None):
 		if not invoice_name or not frappe.db.exists(doctype, invoice_name):
 			restaurant_table = invoice.get("restaurant_table")
 			if restaurant_table:
-				existing_draft = frappe.db.get_value(
-					doctype,
-					{"docstatus": 0, "restaurant_table": restaurant_table},
-					"name",
-					order_by="modified desc",
-				)
+				# //// Neoffice — the draft of the note paid, not any draft of the table (NeoResto lot 1, notes): the other notes of the table stay open
+				if doctype == "Sales Invoice":
+					existing_draft = notes_module.draft_of_note(restaurant_table, note_asked or 1)
+				else:
+					existing_draft = frappe.db.get_value(
+						doctype,
+						{"docstatus": 0, "restaurant_table": restaurant_table},
+						"name",
+						order_by="modified desc",
+					)
 				if existing_draft:
 					invoice_name = existing_draft
 					invoice["name"] = existing_draft
@@ -2321,6 +2381,9 @@ def submit_invoice(invoice=None, data=None):
 			# //// Neoffice — the people seated at the table are the order's, kept by its save and by `restaurant.set_table_covers`: a payment's payload never rewrites
 			# //// them, so the number survives to the submitted invoice whatever the payload says of it (NeoResto lot 1, covers).
 			invoice.pop("restaurant_covers", None)
+			# //// Neoffice — nor the rank and the party's name of its note (NeoResto lot 1, notes)
+			invoice.pop(notes_module.FIELD, None)
+			invoice.pop(notes_module.NAME_FIELD, None)
 
 			existing_customer = invoice_doc.customer
 			invoice_doc.update(invoice)
@@ -2559,7 +2622,9 @@ def submit_invoice(invoice=None, data=None):
 		# Set restaurant table to Cleaning after successful submission
 		restaurant_table = frappe.db.get_value("Sales Invoice", invoice_doc.name, "restaurant_table")
 		if restaurant_table and frappe.db.exists("Restaurant Table", restaurant_table):
-			frappe.db.set_value("Restaurant Table", restaurant_table, "status", "Cleaning")
+			# //// Neoffice — paying one note of a table leaves it Occupied while another note of it is open; the last one paid sends it to Cleaning (NeoResto lot 1, notes)
+			still_open = notes_module.another_note_is_open(restaurant_table, invoice_doc.name)
+			frappe.db.set_value("Restaurant Table", restaurant_table, "status", "Occupied" if still_open else "Cleaning")
 			frappe.publish_realtime("table_update")
 
 		# Handle wallet transaction reversal for returns
