@@ -26260,3 +26260,17 @@ msgstr ""
 #, python-brace-format
 msgid "{0} seats"
 msgstr ""
+
+#: POS/src/components/restaurant/WorkflowEditor.vue:69
+#, python-brace-format
+msgid "Used by {0}"
+msgstr ""
+
+#: pos_next/api/restaurant.py:3231
+msgid "The default workflow cannot be deleted: make another one the default first."
+msgstr ""
+
+#: pos_next/api/restaurant.py:3236
+#, python-brace-format
+msgid "This workflow is used by {0}: give them another workflow first."
+msgstr ""

@@ -3084,6 +3084,21 @@ def _get_workflow_steps(workflow_name):
 	return steps or DEFAULT_WORKFLOW_STEPS
 
 
+def _stations_using_workflows(names):
+	"""The stations that name each of the workflows, as {workflow: [station names]}: a workflow one of them names cannot be deleted."""
+	if not names:
+		return {}
+	used = {}
+	for row in frappe.get_all(
+		"Preparation Station",
+		filters={"workflow": ["in", list(names)]},
+		fields=["workflow", "name", "station_name"],
+		order_by="station_name asc",
+	):
+		used.setdefault(row.workflow, []).append(row.station_name or row.name)
+	return used
+
+
 @frappe.whitelist()
 def get_preparation_workflows():
 	"""Fetch all preparation workflows with their steps for the editor."""
@@ -3093,7 +3108,10 @@ def get_preparation_workflows():
 		fields=["name", "workflow_name", "is_default"],
 		order_by="is_default desc, workflow_name asc"
 	)
+	# The stations that name each workflow (the editor shows what uses it, and offers « Delete » only where nothing does)
+	used = _stations_using_workflows([wf.name for wf in workflows])
 	for wf in workflows:
+		wf["stations"] = used.get(wf.name, [])
 		wf["steps"] = frappe.get_all(
 			"Preparation Workflow Step",
 			filters={"parent": wf.name, "parenttype": "Preparation Workflow"},
@@ -3182,7 +3200,7 @@ def create_preparation_workflow(workflow_name, steps=None):
 
 
 @frappe.whitelist()
-def delete_preparation_workflow(name):
+def delete_preparation_workflow(name: str):
 	"""Delete a preparation workflow."""
 	# //// Neoffice — its caller is the till (WorkflowEditor), so only the till's users pass
 	# //// (cash_entry.require_till_user).
@@ -3191,6 +3209,15 @@ def delete_preparation_workflow(name):
 	require_till_user()
 	# And whoever may delete a workflow (not a cashier), deleted as that user
 	permissions.require("Preparation Workflow", "delete", name)
+	# Say why a delete is refused, in the till's words: the link check alone answers « linked with Preparation Station » and the till
+	# showed only « Failed to delete workflow »
+	if frappe.db.get_value("Preparation Workflow", name, "is_default"):
+		frappe.throw(_("The default workflow cannot be deleted: make another one the default first."))
+	stations = _stations_using_workflows([name]).get(name)
+	if stations:
+		frappe.throw(
+			_("This workflow is used by {0}: give them another workflow first.").format(", ".join(stations))
+		)
 	frappe.delete_doc("Preparation Workflow", name)
 	return {"status": "success"}
 
