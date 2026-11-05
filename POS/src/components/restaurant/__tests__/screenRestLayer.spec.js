@@ -72,15 +72,19 @@ describe("the layer of a screen at rest", () => {
 		expect(wrapper.find('[data-test="rest-moon"]').exists()).toBe(true)
 	})
 
-	it("draws the clock BIG, as much of the screen as it can take, with the rest of the words small under it (Daniel, 01.11: « le temps affiché en grand est intéressant »)", () => {
+	it("draws the clock BIG, as much of the screen as it can take, and the words under it big too (Daniel, 01.11: « le temps affiché en grand est intéressant »; 05.11: « beaucoup plus grand, on a de la place sur la tablette »)", () => {
 		const wrapper = open()
 		const clock = wrapper.get('[data-test="rest-clock"]').classes().join(" ")
 
-		// the size follows the screen (a tablet in either position, a phone), never a fixed number of pixels
-		expect(clock).toContain("text-[length:min(30vw,44vh)]")
+		// the size follows the screen (a tablet in either position, a phone), never a fixed number of pixels; the words keep a floor so that a phone reads them
+		expect(clock).toContain("text-[length:min(40vw,58vh)]")
 		expect(clock).not.toMatch(/text-\[\d+px\]/)
-		expect(wrapper.get('[data-test="rest-count"]').classes()).not.toContain("text-lg")
-		expect(wrapper.get('[data-test="rest-hint"]').classes()).toContain("text-sm")
+		const count = wrapper.get('[data-test="rest-count"]').classes()
+		const hint = wrapper.get('[data-test="rest-hint"]').classes()
+		expect(count).toContain("text-[length:max(18px,min(5vw,7.5vh))]")
+		expect(hint).toContain("text-[length:max(14px,min(3.4vw,4.8vh))]")
+		expect(count).not.toContain("text-base")
+		expect(hint).not.toContain("text-sm")
 	})
 
 	it("goes plain BLACK when the device is set so: the same layer over the whole screen, with no clock, no moon and no words (Daniel, 01.11: « éteindre l'écran au lieu de la veille avec l'heure »)", () => {

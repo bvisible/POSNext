@@ -10,14 +10,15 @@
 		data-test="screen-rest"
 		role="status"
 		:aria-label="__('Screen at rest')"
-		class="fixed inset-0 z-[9999] flex touch-none select-none flex-col items-center justify-center gap-3 bg-black text-center text-ds-sand-400"
+		class="fixed inset-0 z-[9999] flex touch-none select-none flex-col items-center justify-center gap-[min(2vw,2.5vh)] bg-black text-center text-ds-sand-400"
 	>
 		<!-- //// Neoffice — a device set to go BLACK draws the layer and nothing on it (Daniel, 01.11: « éteindre l'écran au lieu de la veille avec l'heure ») -->
-		<LucideMoon v-if="!blank" data-test="rest-moon" class="h-5 w-5" aria-hidden="true" />
-		<!-- //// Neoffice — the clock is the page's big word (Daniel, 01.11: « le temps affiché en grand est intéressant »): its size follows the screen, whichever way the tablet is held, and the rest is small under it -->
-		<time v-if="!blank" data-test="rest-clock" class="font-display text-[length:min(30vw,44vh)] leading-none tabular-nums">{{ clock }}</time>
-		<p v-if="!blank" data-test="rest-count" class="text-base font-medium">{{ label }}</p>
-		<p v-if="!blank" data-test="rest-hint" class="text-sm">{{ __("Touch the screen to wake it") }}</p>
+		<LucideMoon v-if="!blank" data-test="rest-moon" class="h-[max(20px,min(4.5vw,6.5vh))] w-[max(20px,min(4.5vw,6.5vh))]" aria-hidden="true" />
+		<!-- //// Neoffice — the clock is the page's big word (Daniel, 01.11: « le temps affiché en grand est intéressant »): its size follows the screen, whichever way the tablet is held. 05.11: « beaucoup plus grand, on a de la place sur la tablette »: -->
+		<!-- //// the clock takes about 58 % of the screen's height (40 % of its width at most), and the words under it are read from across a kitchen: the count at 7.5 % of the height, the hint at 4.8 %, never under 14 and 18 px -->
+		<time v-if="!blank" data-test="rest-clock" class="font-display text-[length:min(40vw,58vh)] leading-none tabular-nums">{{ clock }}</time>
+		<p v-if="!blank" data-test="rest-count" class="text-[length:max(18px,min(5vw,7.5vh))] font-medium leading-tight">{{ label }}</p>
+		<p v-if="!blank" data-test="rest-hint" class="text-[length:max(14px,min(3.4vw,4.8vh))] leading-tight">{{ __("Touch the screen to wake it") }}</p>
 	</div>
 </template>
 
