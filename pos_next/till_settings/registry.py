@@ -42,6 +42,9 @@ TILL_TYPES = (ALL, SHOP, RESTAURANT_TILL)
 SECTION_RESTAURANT = "restaurant"
 SECTION_TILL = "till"
 SECTION_DESK = "desk"
+# //// Neoffice — the first tab of the office's page (NeoResto lot 1, task 13b, 05.11.2026): what a till needs first — its name, who uses
+# //// it, whether it is a restaurant till. The office's, never at the till.
+SECTION_SETUP = "setup"
 
 # What a group's settings apply to: the badge a screen shows next to the group's title
 SCOPES = ("restaurant", "till", "site", "device", "computer")
@@ -176,6 +179,8 @@ def equals(key: str, value: str) -> When:
 
 
 TABS = (
+	# The office's first tab: a till's identity, its users, its restaurant tick
+	Tab("setup", _lt("Getting started"), SECTION_SETUP),
 	# The restaurant's tabs, on a restaurant till only
 	Tab("restaurant", _lt("Restaurant"), SECTION_RESTAURANT),
 	Tab("hours", _lt("Hours and cards"), SECTION_RESTAURANT),
@@ -259,9 +264,9 @@ _GROUPS = (
 	Group("shop_scan", "shop_scan", _lt("Customers scan their articles"), 1),
 	Group("shop_scan_payment", "shop_scan", _lt("Paying on the phone"), 2),
 	# The office only
-	Group("till_identity", "general", _lt("This till"), 1),
-	Group("till_users", "general", _lt("Users"), 2),
-	Group("restaurant_till", "general", _lt("Restaurant till"), 3),
+	Group("till_identity", "setup", _lt("This till"), 1),
+	Group("till_users", "setup", _lt("Users"), 2),
+	Group("restaurant_till", "setup", _lt("Restaurant till"), 3),
 	Group("payment_methods", "payments", _lt("Payment methods"), 1),
 	Group("loyalty", "loyalty", _lt("Loyalty program"), 1),
 	Group("accounts", "accounting", _lt("Accounts"), 1),

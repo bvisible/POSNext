@@ -28,6 +28,11 @@ computer or of the printer rows is the till screen's own business. Whoever opens
 as for the till; the office's own settings are saved only by someone the ERP lets write the document they live on (a
 till manager's role is not enough for money and accounts). A field hidden on purpose is never served: the list leaves
 it out, and a test refuses a listed setting that its doctype hides.
+
+A new till is made from the same page (`create_till`; product owner, 05.11.2026: « tu arrives, tu es un simple utilisateur [...] ils
+vont jamais s'en sortir »): its name and its company, and optionally the till whose settings it takes, instead of ERPNext's long
+profile form where the POSNext settings are not. ERPNext does the same in its version 16: one profile, in tabs, with the till's
+configuration inside.
 """
 
 import json
@@ -47,6 +52,7 @@ from pos_next.till_settings.registry import (
 	RESTAURANT,
 	SECTION_DESK,
 	SECTION_RESTAURANT,
+	SECTION_SETUP,
 	SECTION_TILL,
 	SETTING,
 )
@@ -101,6 +107,151 @@ def save_desk_settings(pos_profile: str, values):
 	"""Save what changed on the office's page (`values`: {key of the list: value}), the office's settings included, and
 	answer as `get_desk_settings` does."""
 	return _save(pos_profile, values, desk=True)
+
+
+# What a new till copied from another does not take: the identity (its own), the key of the shop's QR code (set by the system for
+# each till), and the site's negative stock (one setting of the whole site: copying it would save Stock Settings)
+COPY_NEVER = ("pos_profile", "shop_scan_key", "allow_negative_stock")
+# The columns a row of a child table never carries over to another document
+ROW_BOOKKEEPING = (
+	"name",
+	"idx",
+	"parent",
+	"parenttype",
+	"parentfield",
+	"owner",
+	"creation",
+	"modified",
+	"modified_by",
+	"docstatus",
+	"doctype",
+)
+
+
+# //// Neoffice — a new till from the office's page (NeoResto lot 1, task 13b, 05.11.2026).
+@frappe.whitelist(methods=["POST"])
+def create_till(till_name: str, company: str, copy_from: str | None = None):
+	"""Make a till: its POS Profile, then its POSNext settings (the profile's `after_insert` makes them), and answer its name.
+
+	Who may: a till manager who also holds the ERP's right to create a POS Profile (what the profile is: its accounts, its
+	payments). The new till takes the accounts, the price list, the warehouse, the customer and the payment methods of
+	`copy_from` (and its POSNext settings), else of the company's first till, else what the company itself says. It takes no
+	user and no payment terminal: those are the new till's own."""
+	from pos_next.api.cash_entry import require_till_manager
+
+	require_till_manager()
+	frappe.has_permission(POS_PROFILE, "create", throw=True)
+	name = (till_name or "").strip()
+	if not name:
+		frappe.throw(_("A till needs a name"))
+	if frappe.db.exists(POS_PROFILE, name):
+		frappe.throw(_("A till named {0} already exists").format(name))
+	source = (copy_from or "").strip() or None
+	if source:
+		if not frappe.db.exists(POS_PROFILE, source):
+			frappe.throw(_("POS Profile not found"), frappe.DoesNotExistError)
+		frappe.has_permission(POS_PROFILE, "read", doc=source, throw=True)
+		# A copy stays in the company of the till it copies: its accounts and its warehouse are that company's
+		company = frappe.db.get_value(POS_PROFILE, source, "company")
+	if not company or not frappe.db.exists("Company", company):
+		frappe.throw(_("Company {0} not found").format(company or ""), frappe.DoesNotExistError)
+
+	profile = _new_profile(name, company, source)
+	profile.insert()
+	if source:
+		_copy_settings(source, profile.name)
+	return profile.name
+
+
+def _new_profile(name, company, source):
+	"""The POS Profile of a new till, not inserted yet."""
+	template = source or frappe.db.get_value(
+		POS_PROFILE, {"company": company, "disabled": 0}, "name", order_by="creation asc"
+	)
+	if template:
+		profile = frappe.copy_doc(frappe.get_doc(POS_PROFILE, template))
+		profile.set("applicable_for_users", [])
+		profile.set("custom_active_payment_devices", [])
+		profile.disabled = 0
+	else:
+		profile = _profile_from_the_company(company)
+	profile.name = name
+	return profile
+
+
+def _profile_from_the_company(company):
+	"""A POS Profile for a company that has no till yet, from what the company says: its currency, its cost centre, its write-off
+	account, a warehouse, a selling price list in its currency and a mode of payment wired to its accounts (cash first)."""
+	company_doc = frappe.get_cached_doc("Company", company)
+	currency = company_doc.default_currency
+	cost_center = company_doc.cost_center or frappe.db.get_value(
+		"Cost Center", {"company": company, "is_group": 0}, "name"
+	)
+	write_off_account = company_doc.write_off_account or frappe.db.get_value(
+		"Account", {"company": company, "is_group": 0, "root_type": "Expense", "disabled": 0}, "name"
+	)
+	warehouse = frappe.db.get_value(
+		"Warehouse", {"company": company, "is_group": 0, "disabled": 0}, "name", order_by="creation asc"
+	)
+	price_list = frappe.db.get_value(
+		"Price List", {"selling": 1, "enabled": 1, "currency": currency}, "name", order_by="creation asc"
+	)
+	mode = frappe.db.sql(
+		"""select mpa.parent from `tabMode of Payment Account` mpa
+		join `tabMode of Payment` mp on mp.name = mpa.parent
+		where mpa.company = %s and ifnull(mpa.default_account, '') != '' and mp.enabled = 1
+		order by mp.type = 'Cash' desc, mpa.parent limit 1""",
+		company,
+	)
+	missing = [
+		label
+		for label, value in (
+			(_("a warehouse"), warehouse),
+			(_("a selling price list in {0}").format(currency), price_list),
+			(_("a write-off account"), write_off_account),
+			(_("a cost centre"), cost_center),
+			(_("a mode of payment wired to its accounts"), mode),
+		)
+		if not value
+	]
+	if missing:
+		frappe.throw(_("{0} has no till to start from, and lacks: {1}").format(company, ", ".join(missing)))
+	return frappe.get_doc(
+		{
+			"doctype": POS_PROFILE,
+			"company": company,
+			"currency": currency,
+			"warehouse": warehouse,
+			"selling_price_list": price_list,
+			"cost_center": cost_center,
+			"write_off_account": write_off_account,
+			"write_off_cost_center": cost_center,
+			"write_off_limit": 1,
+			"payments": [{"mode_of_payment": mode[0][0], "default": 1}],
+		}
+	)
+
+
+def _copy_settings(source, target):
+	"""The POSNext settings of a till onto those of the new one (the row the new till's profile made with the defaults): every
+	setting of POS Settings the list names, but the identity, the shop's QR key and the site's negative stock."""
+	old = frappe.db.get_value(POS_SETTINGS, {"pos_profile": source})
+	new = frappe.db.get_value(POS_SETTINGS, {"pos_profile": target})
+	if not old or not new:
+		return
+	old, doc = frappe.get_doc(POS_SETTINGS, old), frappe.get_doc(POS_SETTINGS, new)
+	for setting in registry.document_settings(POS_SETTINGS):
+		if setting.key in COPY_NEVER or not frappe.get_meta(POS_SETTINGS).has_field(setting.key):
+			continue
+		value = old.get(setting.key)
+		if isinstance(value, list):
+			value = [
+				{key: row.get(key) for key in row.as_dict() if key not in ROW_BOOKKEEPING} for row in value
+			]
+		doc.set(setting.key, value)
+	# Made by the profile's own hook, now filled: the new till's managers saved nothing themselves
+	doc.flags.ignore_permissions = True
+	doc.save()
 
 
 def _save(pos_profile, values, desk):
@@ -260,7 +411,7 @@ def _tab_is_open(tab, till, can, desk=False):
 		return till.restaurant_till and (can["till"] or can["restaurant"])
 	if tab.section == SECTION_TILL:
 		return can["till"]
-	return bool(desk and tab.section == SECTION_DESK and can["till"])
+	return bool(desk and tab.section in (SECTION_SETUP, SECTION_DESK) and can["till"])
 
 
 def _shown(till, can, desk=False):
@@ -362,7 +513,57 @@ def _answer(till, can, desk=False):
 	if desk:
 		answer["company"] = till.profile.company
 		answer["left_out"] = _left_out_for_the_type(till)
+		answer["people"] = _people_of_the_till(till)
+		answer["readiness"] = _readiness(till, answer["people"])
 	return answer
+
+
+def _people_of_the_till(till):
+	"""The people the till's POS Profile lists as its users, with what each can do at the till: the roles of the till they hold and
+	whether they can open it (an enabled desk account holding one of them). A person listed with none opens nothing: the page says
+	so, as the profile's own form never did. Read as the profile is stored, not as a draft."""
+	from pos_next.api.cash_entry import TILL_MANAGER_ROLES
+	from pos_next.restaurant.permissions import CASHIER_ROLE
+
+	till_roles = {CASHIER_ROLE, "Restaurant Manager", *TILL_MANAGER_ROLES}
+	people = []
+	for row in till.profile.get("applicable_for_users") or []:
+		user = frappe.db.get_value(
+			"User", row.user, ["full_name", "enabled", "user_type"], as_dict=True
+		) or frappe._dict(full_name=row.user, enabled=0, user_type="")
+		roles = sorted(till_roles & set(frappe.get_roles(row.user))) if user.enabled else []
+		people.append(
+			{
+				"user": row.user,
+				"full_name": user.full_name or row.user,
+				"enabled": cint(user.enabled),
+				"default": cint(row.default),
+				"roles": roles,
+				"can_open": bool(user.enabled and user.user_type == "System User" and roles),
+			}
+		)
+	return people
+
+
+def _readiness(till, people):
+	"""What a till needs to open, as a list the page shows at its top: {key, ok, label, tab}. Only what is known to stop a till: someone who
+	can open it, a payment method marked as the default, a warehouse, and, for a restaurant till, its restaurant."""
+	payments = till.profile.get("payments") or []
+	checks = [
+		("users", any(person["can_open"] for person in people), _("Someone can open the till"), "setup"),
+		(
+			"payments",
+			sum(1 for row in payments if row.default) == 1,
+			_("One payment method is the default"),
+			"payments",
+		),
+		("warehouse", bool(till.profile.warehouse), _("A warehouse is chosen"), "stock"),
+	]
+	if till.settings.enable_restaurant_mode:
+		checks.append(
+			("restaurant", bool(till.restaurant), _("The restaurant of the till is chosen"), "setup")
+		)
+	return [{"key": key, "ok": bool(ok), "label": str(label), "tab": tab} for key, ok, label, tab in checks]
 
 
 def _describe_for_the_office(setting, definition):

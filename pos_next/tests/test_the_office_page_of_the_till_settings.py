@@ -21,7 +21,7 @@ from pos_next.tests.test_till_settings import (
 	by_key,
 	till_tabs,
 )
-from pos_next.tests.test_till_writes_need_the_till import TILL, _user
+from pos_next.tests.test_till_writes_need_the_till import CASHIER_ROLE, OTHER_TILL, TILL, _user
 from pos_next.till_settings import registry
 from pos_next.till_settings.api import (
 	get_desk_settings,
@@ -32,9 +32,11 @@ from pos_next.till_settings.api import (
 
 # What an office clerk holds: the till manager's role, the accountant's (POS Profile) and the stock manager's (Stock Settings)
 OFFICE = "till-settings-office@yopmail.com"
+DISABLED = "till-settings-disabled@yopmail.com"
 # The site's administrator is Administrator alone: no account of a customer holds System Manager, which is what the site's
 # negative stock asks (Stock Settings writes Property Setters)
 SYSTEM = "Administrator"
+SETUP_TAB = ["setup"]
 OFFICE_TABS = ["payments", "loyalty", "accounting"]
 SHOP_TABS = ["general", "sale_screen", "prices", "sales", "stock", "printing", "closing", "shop_scan"]
 RESTAURANT_TABS = ["restaurant", "hours", "online", "reservations"]
@@ -54,7 +56,10 @@ class TestTheOfficePage(TillSettingsCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		_user(OFFICE, ["Nexus POS Manager", "Accounts Manager", "Stock Manager"], "System User")
-		frappe.clear_cache(user=OFFICE)
+		_user(DISABLED, [CASHIER_ROLE], "System User")
+		frappe.db.set_value("User", DISABLED, "enabled", 0)
+		for user in (OFFICE, DISABLED):
+			frappe.clear_cache(user=user)
 
 	# ------------------------------------------------------------------------------------------------ what it shows
 	def test_it_shows_the_office_tabs_after_the_till_s_own_and_every_office_setting(self):
@@ -62,7 +67,7 @@ class TestTheOfficePage(TillSettingsCase):
 
 		answer = get_desk_settings(self.shop_till)
 
-		self.assertEqual(till_tabs(answer), SHOP_TABS + OFFICE_TABS)
+		self.assertEqual(till_tabs(answer), SETUP_TAB + SHOP_TABS + OFFICE_TABS)
 		settings = by_key(answer)
 		self.assertTrue(office_keys() <= set(settings), sorted(office_keys() - set(settings)))
 		for key in ("company", "payments", "enable_restaurant_mode", "restaurant", "allow_negative_stock"):
@@ -74,7 +79,7 @@ class TestTheOfficePage(TillSettingsCase):
 
 		answer = get_desk_settings(self.restaurant_till)
 
-		self.assertEqual(till_tabs(answer), RESTAURANT_TABS + SHOP_TABS[:-1] + OFFICE_TABS)
+		self.assertEqual(till_tabs(answer), SETUP_TAB + RESTAURANT_TABS + SHOP_TABS[:-1] + OFFICE_TABS)
 		hours = by_key(answer)["opening_hours"]
 		self.assertEqual(hours["widget"], "special")
 		self.assertEqual(
@@ -371,7 +376,7 @@ class TestTheOfficePage(TillSettingsCase):
 
 		self.assertTrue(answer["restaurant_till"])
 		self.assertEqual(answer["restaurant"], self.restaurant)
-		self.assertEqual(till_tabs(answer)[: len(RESTAURANT_TABS)], RESTAURANT_TABS)
+		self.assertEqual(till_tabs(answer)[1 : 1 + len(RESTAURANT_TABS)], RESTAURANT_TABS)
 
 	# ------------------------------------------------------------------------------------------------ who opens it
 	def test_a_restaurant_manager_opens_the_restaurant_tabs_only_and_changes_no_office_setting(self):
@@ -398,3 +403,72 @@ class TestTheOfficePage(TillSettingsCase):
 
 		with self.assertRaises(frappe.DoesNotExistError):
 			get_desk_settings("A till that is not there")
+
+	# ------------------------------------------------------------------------------------------------ getting started
+	def test_the_first_tab_holds_the_identity_the_users_and_the_restaurant_tick(self):
+		self.as_user(OFFICE)
+
+		answer = get_desk_settings(self.shop_till)
+
+		self.assertEqual(till_tabs(answer)[0], "setup")
+		first = {key for key, setting in by_key(answer).items() if setting["tab"] == "setup"}
+		self.assertEqual(
+			first,
+			{
+				"pos_profile",
+				"enabled",
+				"disabled",
+				"company",
+				"company_address",
+				"applicable_for_users",
+				"enable_restaurant_mode",
+				"restaurant",
+			},
+		)
+		# The till's own screen never has it
+		self.assertNotIn("setup", till_tabs(get_till_settings(self.shop_till)))
+
+	def test_the_people_of_a_till_say_who_can_open_it_and_why_not(self):
+		# The restaurant till is the cashier's; the other two people are added to it
+		profile = frappe.get_doc("POS Profile", self.restaurant_till)
+		profile.append("applicable_for_users", {"user": OTHER_TILL})
+		profile.append("applicable_for_users", {"user": DISABLED})
+		profile.save(ignore_permissions=True)
+		self.as_user(OFFICE)
+
+		people = {person["user"]: person for person in get_desk_settings(self.restaurant_till)["people"]}
+
+		self.assertEqual(people[TILL]["roles"], ["POSNext Cashier"])
+		self.assertTrue(people[TILL]["can_open"])
+		# A person listed on the till with no role of the till opens nothing
+		self.assertEqual(people[OTHER_TILL]["roles"], [])
+		self.assertFalse(people[OTHER_TILL]["can_open"])
+		self.assertEqual((people[DISABLED]["enabled"], people[DISABLED]["can_open"]), (0, False))
+
+	def test_the_page_says_what_a_till_still_needs_to_open(self):
+		self.as_user(OFFICE)
+
+		ready = {check["key"]: check for check in get_desk_settings(self.restaurant_till)["readiness"]}
+
+		self.assertEqual(set(ready), {"users", "payments", "warehouse", "restaurant"})
+		self.assertTrue(all(check["ok"] for check in ready.values()), ready)
+		self.assertEqual(
+			{key: check["tab"] for key, check in ready.items()},
+			{"users": "setup", "payments": "payments", "warehouse": "stock", "restaurant": "setup"},
+		)
+
+	def test_a_till_nobody_can_open_and_with_two_default_payments_is_not_ready(self):
+		profile = frappe.get_doc("POS Profile", self.shop_till)
+		profile.set("applicable_for_users", [{"user": OTHER_TILL}])
+		profile.append("payments", {"mode_of_payment": profile.payments[0].mode_of_payment, "default": 1})
+		profile.flags.ignore_validate = True
+		profile.save(ignore_permissions=True)
+		self.as_user(OFFICE)
+
+		ready = {check["key"]: check["ok"] for check in get_desk_settings(self.shop_till)["readiness"]}
+
+		self.assertFalse(ready["users"])
+		self.assertFalse(ready["payments"])
+		self.assertTrue(ready["warehouse"])
+		# A shop till has no restaurant to choose
+		self.assertNotIn("restaurant", ready)

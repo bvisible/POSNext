@@ -56,6 +56,13 @@
 		".tsp-control .form-group{margin-bottom:0}" +
 		".tsp-control .control-label,.tsp-control .help-box{display:none!important}" +
 		".tsp-control .grid-footer,.tsp-control .grid-heading-row{font-size:12px}" +
+		".tsp-ready{display:flex;flex-wrap:wrap;gap:8px;align-items:center}" +
+		".tsp-chip{display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:0 12px;border-radius:999px;border:1px solid #DCD4C7;background:#fff;color:#141414;font-size:12.5px;font-weight:600;cursor:pointer}" +
+		".tsp-chip.ok{background:#E9F7EE;border-color:#BFE3CB;color:#11663A}" +
+		".tsp-chip.todo{background:#FFF4DB;border-color:#EBCB8B;color:#8A5A00}" +
+		".tsp-people{margin-top:8px;display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#3A342C}" +
+		".tsp-people .bad{color:#8A5A00}" +
+		".tsp-people .good{color:#11663A}" +
 		".tsp-note{padding:8px 12px;border-radius:10px;background:#F6F3ED;color:#3A342C;font-size:13px;line-height:1.45}" +
 		".tsp-empty{padding:48px 16px;text-align:center;color:#6F665A}" +
 		"@media (max-width:991px){.tsp-body{flex-direction:column}.tsp-rail{flex:none;width:100%;flex-direction:row;flex-wrap:wrap;position:static}" +
@@ -173,7 +180,7 @@
 	// The rail: the restaurant's tabs (a restaurant till only), the till's, the office's
 	function railSections(screen) {
 		var tabs = (screen && screen.tabs) || [];
-		return ["restaurant", "till", "desk"]
+		return ["setup", "restaurant", "till", "desk"]
 			.map(function (key) {
 				return {
 					key: key,
@@ -199,6 +206,7 @@
 	}
 
 	function section_label(key) {
+		if (key === "setup") return __("This till");
 		if (key === "restaurant") return __("Restaurant");
 		if (key === "desk") return __("Office");
 		return __("Till");
@@ -263,6 +271,9 @@
 		this.page.set_primary_action(__("Save"), function () {
 			self.save();
 		});
+		this.page.set_secondary_action(__("New till"), function () {
+			self.new_till();
+		});
 		this.page.add_menu_item(__("Discard the changes"), function () {
 			self.load(self.profile);
 		});
@@ -292,6 +303,58 @@
 				self.on_change();
 			}, 150)
 		);
+	};
+
+	// A new till, from a short form: its name, its company, and optionally the till it copies. The rest is set on this page, in its tabs.
+	TillSettingsPage.prototype.new_till = function () {
+		var self = this;
+		var dialog = new frappe.ui.Dialog({
+			title: __("New till"),
+			fields: [
+				{
+					fieldname: "till_name",
+					fieldtype: "Data",
+					label: __("Name of the till"),
+					reqd: 1,
+				},
+				{
+					fieldname: "company",
+					fieldtype: "Link",
+					options: "Company",
+					label: __("Company"),
+					default: frappe.defaults.get_user_default("Company") || "",
+					depends_on: "eval:!doc.copy_from",
+				},
+				{
+					fieldname: "copy_from",
+					fieldtype: "Link",
+					options: "POS Profile",
+					label: __("Copy the settings of another till"),
+					description: __(
+						"The new till takes the company, the accounts, the payment methods and the settings of that till, but not its users nor its payment terminals."
+					),
+				},
+			],
+			primary_action_label: __("Create the till"),
+			primary_action: function (values) {
+				dialog.hide();
+				frappe
+					.call({
+						method: API + "create_till",
+						args: {
+							till_name: values.till_name,
+							company: values.company || "",
+							copy_from: values.copy_from || "",
+						},
+						freeze: true,
+						freeze_message: __("Creating the till..."),
+					})
+					.then(function (r) {
+						if (r && r.message) frappe.set_route("till-settings", r.message);
+					});
+			},
+		});
+		dialog.show();
 	};
 
 	TillSettingsPage.prototype.open_form = function (doctype, filters) {
@@ -419,6 +482,7 @@
 			'<span class="tsp-dirty" style="display:none">' +
 			esc(__("Not Saved")) +
 			"</span></div>";
+		html += this.readiness_html(screen);
 		html +=
 			'<div class="tsp-body"><nav class="tsp-rail" role="tablist" aria-label="' +
 			esc(__("Tabs of the settings")) +
@@ -459,6 +523,50 @@
 		this.render_foot();
 		this.refresh_greying();
 		this.show_state();
+	};
+
+	// What the till needs to open: one chip each, green when it is there, amber when not; a click opens the tab that sets it
+	TillSettingsPage.prototype.readiness_html = function (screen) {
+		var checks = screen.readiness || [];
+		if (!checks.length) return "";
+		return (
+			'<div class="tsp-ready" aria-label="' +
+			esc(__("What this till needs to open")) +
+			'">' +
+			checks
+				.map(function (check) {
+					return (
+						'<button type="button" class="tsp-chip ' +
+						(check.ok ? "ok" : "todo") +
+						'" data-tab="' +
+						esc(check.tab) +
+						'">' +
+						(check.ok ? "✓ " : "! ") +
+						esc(check.label) +
+						"</button>"
+					);
+				})
+				.join("") +
+			"</div>"
+		);
+	};
+
+	// Who can do what at the till, under the table of its users: the roles of the till each holds, or why they cannot open it
+	TillSettingsPage.prototype.people_html = function () {
+		var people = (this.screen && this.screen.people) || [];
+		if (!people.length) return "";
+		var lines = people.map(function (person) {
+			var who = "<b>" + esc(person.full_name) + "</b> · ";
+			if (person.can_open)
+				return (
+					'<div class="good">' + who + esc(person.roles.map(__).join(", ")) + "</div>"
+				);
+			var why = person.enabled
+				? __("has no role of the till: cannot open it (it needs the role POSNext Cashier)")
+				: __("is disabled: cannot open the till");
+			return '<div class="bad">' + who + esc(why) + "</div>";
+		});
+		return '<div class="tsp-people">' + lines.join("") + "</div>";
 	};
 
 	TillSettingsPage.prototype.render_group = function ($column, group) {
@@ -529,6 +637,7 @@
 			$control = $('<div class="tsp-control"></div>').appendTo($setting);
 		}
 		this.make_control(setting, $control);
+		if (setting.key === "applicable_for_users") $setting.append(this.people_html());
 		if (setting.help && !carries_help)
 			$setting.append(
 				'<p class="tsp-help" style="display:none">' + esc(setting.help) + "</p>"

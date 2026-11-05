@@ -24107,3 +24107,99 @@ msgstr "{0} réglages d'une caisse boutique ne sont pas affichés : cette caisse
 #: pos_next/restaurant/neoresto.py:333
 msgid "All the settings of a till on one page: its own tabs, and the office's (payments, loyalty, accounting)."
 msgstr "Tous les réglages d'une caisse sur une seule page : ses propres onglets, et ceux du bureau (paiements, fidélité, comptabilité)."
+
+#: pos_next/till_settings/api.py:212
+msgid "a cost centre"
+msgstr "un centre de coûts"
+
+#: pos_next/till_settings/api.py:184
+msgid "a mode of payment wired to its accounts"
+msgstr "un mode de paiement relié à ses comptes"
+
+#: pos_next/till_settings/api.py:184
+#, python-brace-format
+msgid "a selling price list in {0}"
+msgstr "une liste de prix de vente en {0}"
+
+#: pos_next/till_settings/api.py:148
+#, python-brace-format
+msgid "A till named {0} already exists"
+msgstr "Une caisse nommée {0} existe déjà"
+
+#: pos_next/till_settings/api.py:146
+msgid "A till needs a name"
+msgstr "Une caisse doit avoir un nom"
+
+#: pos_next/till_settings/api.py:184
+msgid "a warehouse"
+msgstr "un entrepôt"
+
+#: pos_next/till_settings/api.py:560
+msgid "A warehouse is chosen"
+msgstr "Un entrepôt est choisi"
+
+#: pos_next/till_settings/api.py:211
+msgid "a write-off account"
+msgstr "un compte de reprise"
+
+#: pos_next/till_settings/api.py:157
+#, python-brace-format
+msgid "Company {0} not found"
+msgstr "Société {0} introuvable"
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:332
+msgid "Copy the settings of another till"
+msgstr "Copier les réglages d'une autre caisse"
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:338
+msgid "Create the till"
+msgstr "Créer la caisse"
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:350
+msgid "Creating the till..."
+msgstr "Création de la caisse..."
+
+#: pos_next/till_settings/registry.py:183
+msgid "Getting started"
+msgstr "Mise en route"
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:565
+msgid "has no role of the till: cannot open it (it needs the role POSNext Cashier)"
+msgstr "n'a aucun rôle de caisse : ne peut pas ouvrir la caisse (il faut le rôle POSNext Cashier)"
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:566
+msgid "is disabled: cannot open the till"
+msgstr "compte désactivé : ne peut pas ouvrir la caisse"
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:317
+msgid "Name of the till"
+msgstr "Nom de la caisse"
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:274
+msgid "New till"
+msgstr "Nouvelle caisse"
+
+#: pos_next/till_settings/api.py:557
+msgid "One payment method is the default"
+msgstr "Un mode de paiement est défini par défaut"
+
+#: pos_next/till_settings/api.py:553
+msgid "Someone can open the till"
+msgstr "Quelqu'un peut ouvrir la caisse"
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:334
+msgid "The new till takes the company, the accounts, the payment methods and the settings of that till, but not its users nor its payment terminals."
+msgstr "La nouvelle caisse reprend la société, les comptes, les modes de paiement et les réglages de cette caisse, mais pas ses utilisateurs ni ses terminaux de paiement."
+
+#: pos_next/till_settings/api.py:564
+msgid "The restaurant of the till is chosen"
+msgstr "Le restaurant de la caisse est choisi"
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:534
+msgid "What this till needs to open"
+msgstr "Ce dont cette caisse a besoin pour ouvrir"
+
+#: pos_next/till_settings/api.py:1
+#, python-brace-format
+msgid "{0} has no till to start from, and lacks: {1}"
+msgstr "{0} n'a aucune caisse de départ, et il lui manque : {1}"

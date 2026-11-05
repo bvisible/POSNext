@@ -133,7 +133,7 @@ class TestTheList(FrappeTestCase):
 					self.assertEqual(other.desk_only and not setting.desk_only, False)
 
 	def test_the_tabs_of_the_till_are_the_eleven_of_the_mockup(self):
-		till = [tab.key for tab in registry.TABS if tab.section != registry.SECTION_DESK]
+		till = [tab.key for tab in registry.TABS if tab.section not in (registry.SECTION_DESK, registry.SECTION_SETUP)]
 		self.assertEqual(till, RESTAURANT_TABS + SHOP_TABS + SHOP_SCAN_TAB)
 		# The office's own settings never sit in a tab of the restaurant
 		for setting in registry.SETTINGS:
@@ -1248,9 +1248,8 @@ class TestASaveThatReallyCommits(FrappeTestCase):
 				"payments": [{"mode_of_payment": _cash_mode(company), "default": 1}],
 			}
 		).insert(ignore_permissions=True)
-		frappe.get_doc({"doctype": "POS Settings", "pos_profile": COMMITTED_TILL, "enabled": 1}).insert(
-			ignore_permissions=True
-		)
+		# The profile's own hook has made its POS Settings, enabled as every new till's are (a second row would be refused)
+		self.assertEqual(frappe.db.get_value("POS Settings", {"pos_profile": COMMITTED_TILL}, "enabled"), 1)
 		frappe.db.commit()
 
 	def remove(self):

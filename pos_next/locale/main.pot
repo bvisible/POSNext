@@ -26371,3 +26371,99 @@ msgstr ""
 #: pos_next/restaurant/neoresto.py:333
 msgid "All the settings of a till on one page: its own tabs, and the office's (payments, loyalty, accounting)."
 msgstr ""
+
+#: pos_next/till_settings/api.py:553
+msgid "Someone can open the till"
+msgstr ""
+
+#: pos_next/till_settings/api.py:557
+msgid "One payment method is the default"
+msgstr ""
+
+#: pos_next/till_settings/api.py:560
+msgid "A warehouse is chosen"
+msgstr ""
+
+#: pos_next/till_settings/api.py:564
+msgid "The restaurant of the till is chosen"
+msgstr ""
+
+#: pos_next/till_settings/api.py:146
+msgid "A till needs a name"
+msgstr ""
+
+#: pos_next/till_settings/api.py:148
+#, python-brace-format
+msgid "A till named {0} already exists"
+msgstr ""
+
+#: pos_next/till_settings/api.py:157
+#, python-brace-format
+msgid "Company {0} not found"
+msgstr ""
+
+#: pos_next/till_settings/api.py:184
+msgid "a warehouse"
+msgstr ""
+
+#: pos_next/till_settings/api.py:184
+#, python-brace-format
+msgid "a selling price list in {0}"
+msgstr ""
+
+#: pos_next/till_settings/api.py:211
+msgid "a write-off account"
+msgstr ""
+
+#: pos_next/till_settings/api.py:212
+msgid "a cost centre"
+msgstr ""
+
+#: pos_next/till_settings/api.py:184
+msgid "a mode of payment wired to its accounts"
+msgstr ""
+
+#: pos_next/till_settings/api.py:1
+#, python-brace-format
+msgid "{0} has no till to start from, and lacks: {1}"
+msgstr ""
+
+#: pos_next/till_settings/registry.py:183
+msgid "Getting started"
+msgstr ""
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:274
+msgid "New till"
+msgstr ""
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:317
+msgid "Name of the till"
+msgstr ""
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:332
+msgid "Copy the settings of another till"
+msgstr ""
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:334
+msgid "The new till takes the company, the accounts, the payment methods and the settings of that till, but not its users nor its payment terminals."
+msgstr ""
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:338
+msgid "Create the till"
+msgstr ""
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:350
+msgid "Creating the till..."
+msgstr ""
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:534
+msgid "What this till needs to open"
+msgstr ""
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:565
+msgid "has no role of the till: cannot open it (it needs the role POSNext Cashier)"
+msgstr ""
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:566
+msgid "is disabled: cannot open the till"
+msgstr ""

@@ -410,7 +410,12 @@ doc_events = {
 		],
 		"on_cancel": "pos_next.api.gift_cards.process_gift_card_on_cancel",
 	},
-	"POS Profile": {"on_update": "pos_next.realtime_events.emit_pos_profile_updated_event"},
+	"POS Profile": {
+		# //// Neoffice — a new profile has its POSNext settings (POS Settings) from the moment it exists, not from the first time
+		# //// the till opens with it (NeoResto lot 1, task 13b, 05.11.2026).
+		"after_insert": "pos_next.pos_profile_settings.create_for_new_profile",
+		"on_update": "pos_next.realtime_events.emit_pos_profile_updated_event",
+	},
 	"Sales Person": {
 		"validate": "pos_next.pos_next.utils.sales_person_commission.validate_sales_person_commission_tables"
 	},

@@ -45,6 +45,7 @@ const check = (key, extra = {}) => ({
 
 const LIST = {
 	tabs: [
+		{ key: "setup", label: "Getting started", section: "setup" },
 		{ key: "restaurant", label: "Restaurant", section: "restaurant" },
 		{ key: "general", label: "General", section: "till" },
 		{ key: "payments", label: "Payments", section: "desk" },
@@ -199,12 +200,20 @@ describe("the office page decides what the till's screen decides", () => {
 		}
 	});
 
-	it("lays the rail out as the till does, and adds the office's tabs last", () => {
+	it("lays the rail out as the till does, with the office's first tab before and its other tabs after", () => {
 		const mine = desk.railSections(LIST);
 		const theirs = till.railSections(LIST);
-		expect(mine.map((section) => section.key)).toEqual(["restaurant", "till", "desk"]);
-		expect(mine.slice(0, theirs.length)).toEqual(theirs);
-		expect(mine[2].tabs.map((tab) => tab.key)).toEqual(["payments"]);
+		expect(mine.map((section) => section.key)).toEqual([
+			"setup",
+			"restaurant",
+			"till",
+			"desk",
+		]);
+		// The till's own rail never has the office's tabs: what it draws is the middle of the office's
+		expect(theirs.map((section) => section.key)).toEqual(["restaurant", "till"]);
+		expect(mine.slice(1, 1 + theirs.length)).toEqual(theirs);
+		expect(mine[0].tabs.map((tab) => tab.key)).toEqual(["setup"]);
+		expect(mine[3].tabs.map((tab) => tab.key)).toEqual(["payments"]);
 		expect(desk.railSections(null)).toEqual([]);
 	});
 });
