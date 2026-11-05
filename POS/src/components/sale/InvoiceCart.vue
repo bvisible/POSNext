@@ -1481,10 +1481,11 @@
 									>
 									<!-- Quantity × price as separate boxes, so they order with the page direction -->
 									<!-- //// Neoffice — « 1 × CHF 21.50 » repeats the line's total, so on a phone it only shows when the quantity is not one or a price is struck out (kitchen test, 01.11). -->
+									<!-- //// Neoffice — compact cart line, a quantity of one says nothing its total does not: the line hides « 1 × price » at every width (NeoResto lot 1, product owner, 05.11.2026) -->
 									<span
-										class="inline-flex items-center gap-1 tabular-nums"
-										:class="Number(item.quantity) === 1 && !getLineStrikePrice(item) ? 'max-sm:hidden' : ''"
-									>
+											class="inline-flex items-center gap-1 tabular-nums"
+											:class="Number(item.quantity) === 1 && !getLineStrikePrice(item) ? 'max-sm:hidden cart-line-single' : ''"
+										>
 										<bdi>{{ formatQuantity(item.quantity) }}</bdi>
 										<span aria-hidden="true">×</span>
 										<s v-if="getLineStrikePrice(item)" class="text-gray-500"
@@ -1744,8 +1745,10 @@
 									<!-- //// product option (c7f6932c + 87f168fe, 2026-03-20/23; 4df0caf1). The line shown is a copy -->
 									<!-- //// (nestFreeRows): both hand over the cart row behind it (cartRowOf, osiris 30.10.2026). -->
 									<div class="contents cart-line-actions">
+									<!-- //// Neoffice — compact cart line, the send button sits under the name, on the chips' row (NeoResto lot 1, product owner, 05.11.2026) -->
 									<button
 										v-if="cartStore.restaurantTable && item.kds_status === 'Waiting'"
+										data-cart-send
 										type="button"
 										@click="
 											commitTypedQuantity();
@@ -1758,9 +1761,11 @@
 										<FeatherIcon name="zap" class="w-4 h-4" />
 									</button>
 									<!-- //// Neoffice — the options button too hands over the cart row behind the copy shown (cartRowOf). -->
+									<!-- //// Neoffice — compact cart line, the note button has its own column (NeoResto lot 1, product owner, 05.11.2026) -->
 									<button
 										@click="$emit('open-modifiers', cartRowOf(item))"
 										v-if="cartStore.restaurantTable"
+										data-cart-notes
 										type="button"
 										:class="[
 											'w-10 h-10 max-[1100px]:w-11 max-[1100px]:h-11 flex items-center justify-center rounded-md text-gray-500 hover:text-blue-700 hover:bg-blue-50 touch-manipulation',
@@ -3884,183 +3889,5 @@ defineExpose({
 </script>
 ```
 
-<style scoped>
-/* //// Neoffice — the compact line of a restaurant till's cart (NeoResto lot 1, product owner, 05.11.2026: « on voit 3 choses par ticket, c'est pas terrible », « la quantité est plus
-   //// importante visuellement que le texte »). The card holds one grid and its parts sit where the grid says (`data-cart-*`, see utils/cartLayout.js): on one row the name, the quantity, the
-   //// total and the bin; under it the chips of the kitchen and the notes' buttons; under those the quantity × price, the options and the offer. Wide enough (the card measures its OWN width, so the
-   //// phone, the tablet and a narrowed cart each get their own): everything of the first row on one row; narrower: the name and the total on the first row, the quantity and the buttons under
-   //// them. Only a card that carries `cart-line--compact` is touched: a shop's cart keeps the lines it always had. */
-.cart-line {
-	container-type: inline-size;
-}
-
-.cart-line--compact {
-	padding: 0.375rem 0.5rem;
-}
-
-.cart-line--compact .cart-line-body {
-	display: grid;
-	grid-template-columns: 2rem minmax(0, 1fr) auto auto auto;
-	align-items: center;
-	column-gap: 0.5rem;
-	row-gap: 0.125rem;
-}
-
-/* No thumbnail: its column is not there, and the gap that followed it with it */
-.cart-line--no-thumb .cart-line-body {
-	grid-template-columns: 0 minmax(0, 1fr) auto auto auto;
-	margin-inline-start: -0.5rem;
-}
-
-.cart-line--compact .cart-line-main,
-.cart-line--compact .cart-line-head,
-.cart-line--compact .cart-line-controls {
-	display: contents;
-}
-
-.cart-line--compact [data-cart-thumb] {
-	grid-column: 1;
-	grid-row: 1;
-	width: 2rem;
-	height: 2rem;
-}
-
-/* The first letters of the name over the colour said nothing the name does not say */
-.cart-line--compact [data-cart-thumb] span {
-	display: none;
-}
-
-.cart-line--compact [data-cart-name] {
-	grid-column: 2;
-	grid-row: 1;
-	font-size: 0.875rem;
-	line-height: 1.2;
-}
-
-.cart-line--compact [data-cart-stepper],
-.cart-line--compact [data-cart-serial] {
-	grid-column: 3;
-	grid-row: 1;
-}
-
-/* The quantity is a control, not a headline: a stepper as tall as a finger needs and no wider than its three parts */
-.cart-line--compact [data-cart-stepper] button {
-	width: 2rem;
-	height: 2.25rem;
-}
-
-.cart-line--compact [data-cart-stepper] input {
-	width: 2.25rem;
-	height: 2.25rem;
-	font-size: 0.875rem;
-}
-
-.cart-line--compact [data-cart-total] {
-	grid-column: 4;
-	grid-row: 1;
-	min-width: 3.5rem;
-	text-align: end;
-}
-
-.cart-line--compact [data-cart-total] > div:first-child {
-	font-size: 0.9375rem;
-}
-
-.cart-line--compact [data-cart-remove] {
-	grid-column: 5;
-	grid-row: 1;
-}
-
-.cart-line--compact [data-cart-remove],
-.cart-line--compact .cart-line-actions button {
-	width: 2rem;
-	height: 2rem;
-}
-
-.cart-line--compact [data-cart-chips] {
-	grid-column: 2 / 4;
-	grid-row: 2;
-	margin-top: 0;
-}
-
-.cart-line--compact .cart-line-actions {
-	display: flex;
-	align-items: center;
-	grid-column: 4 / 6;
-	grid-row: 2;
-	justify-self: end;
-}
-
-.cart-line--compact [data-cart-meta] {
-	grid-column: 2 / -1;
-	grid-row: 3;
-	margin-top: 0;
-}
-
-.cart-line--compact [data-cart-mods] {
-	grid-column: 2 / -1;
-	grid-row: 4;
-	margin-top: 0;
-}
-
-.cart-line--compact [data-cart-uom] {
-	grid-column: 2 / -1;
-	grid-row: 5;
-	justify-self: start;
-}
-
-.cart-line--compact [data-cart-saving] {
-	grid-column: 1 / -1;
-	grid-row: 6;
-	margin-top: 0.25rem;
-}
-
-/* A narrow card (a phone, a cart squeezed by the menu): the name and the total keep the first row, the quantity and the buttons go under them */
-@container (max-width: 23.75rem) {
-	.cart-line--compact [data-cart-name] {
-		grid-column: 2 / 5;
-	}
-
-	.cart-line--compact [data-cart-total] {
-		grid-column: 5;
-	}
-
-	.cart-line--compact [data-cart-stepper],
-	.cart-line--compact [data-cart-serial] {
-		grid-column: 1 / 4;
-		grid-row: 2;
-		justify-self: start;
-	}
-
-	.cart-line--compact .cart-line-actions {
-		grid-column: 4;
-		grid-row: 2;
-	}
-
-	.cart-line--compact [data-cart-remove] {
-		grid-column: 5;
-		grid-row: 2;
-	}
-
-	.cart-line--compact [data-cart-chips] {
-		grid-column: 1 / -1;
-		grid-row: 3;
-	}
-
-	.cart-line--compact [data-cart-meta] {
-		grid-row: 4;
-	}
-
-	.cart-line--compact [data-cart-mods] {
-		grid-row: 5;
-	}
-
-	.cart-line--compact [data-cart-uom] {
-		grid-row: 6;
-	}
-
-	.cart-line--compact [data-cart-saving] {
-		grid-row: 7;
-	}
-}
-</style>
+<!-- //// Neoffice — the compact cart line's style is its own file (cartLines.css, an added file: the style of a restaurant till's cart, NeoResto lot 1, product owner, 05.11.2026), `scoped` to this component. -->
+<style scoped src="./cartLines.css"></style>

@@ -136,6 +136,17 @@ describe("the cart of a restaurant till", () => {
 		expect(actions.classes()).toContain("contents")
 	})
 
+	it("marks the note button of a table's line and hides « 1 × price » only for a quantity of one", () => {
+		cart.addItem(dish("ONE"))
+		cart.addItem(dish("TWO"))
+		cart.addItem(dish("TWO"))
+		mountCart()
+
+		expect(lineOf("ONE").find("[data-cart-notes]").exists()).toBe(true)
+		expect(lineOf("ONE").find(".cart-line-single").exists()).toBe(true)
+		expect(lineOf("TWO").find(".cart-line-single").exists()).toBe(false)
+	})
+
 	it("draws a thumbnail only for a dish with a photo or a colour", () => {
 		cart.addItem(dish("PLAIN"))
 		cart.addItem(dish("PHOTO", { image: "/files/photo.jpg" }))
