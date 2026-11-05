@@ -31,6 +31,23 @@ export function tileGridStyle(setting) {
 	return count ? { gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))` } : {}
 }
 
+// How tall the restaurant card's tiles are (the till's « Tile height », POS Settings.tile_height; NeoResto lot 1, product owner, 05.11.2026: « arriver à caser en
+// hauteur plus de boutons »): « Compact » (short pictures, a name-only tile just high enough for two lines), « Standard » (the default), or « Large » (square pictures,
+// the tall name-only tile the grid always had). Anything else (an older till, a typo) is Standard.
+export const TILE_HEIGHT_COMPACT = "Compact"
+export const TILE_HEIGHT_STANDARD = "Standard"
+export const TILE_HEIGHT_LARGE = "Large"
+export const TILE_HEIGHTS = [TILE_HEIGHT_COMPACT, TILE_HEIGHT_STANDARD, TILE_HEIGHT_LARGE]
+
+export function tileHeightOf(setting) {
+	return TILE_HEIGHTS.includes(setting) ? setting : TILE_HEIGHT_STANDARD
+}
+
+// The class a card grid carries for its tile height: the grid's styles read the sizes from it
+export function tileHeightClass(setting) {
+	return `tile-grid-h-${tileHeightOf(setting).toLowerCase()}`
+}
+
 // The class of the shop's item grid besides its own: the fixed grid's, or none
 export function tileGridClass(setting) {
 	return tilesPerRow(setting) ? FIXED_GRID_CLASS : ""

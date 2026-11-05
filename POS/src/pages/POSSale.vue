@@ -645,6 +645,7 @@
 											:show-categories="!selectedCardCategory"
 											:show-subcategories="!selectedCardSub"
 											:tiles-per-row="posSettingsStore.settings.tiles_per_row"
+											:tile-height="posSettingsStore.settings.tile_height"
 											:pictures="settingIsOn(posSettingsStore.settings.till_card_pictures)"
 											:colors="settingIsOn(posSettingsStore.settings.tile_colors)"
 											:stock-of="getCardItemStock"

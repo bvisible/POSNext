@@ -91,6 +91,8 @@ POS_SETTINGS_FIELDS = [
 	# //// colour of its item or of its item group. Missing here, the till would read the defaults whatever the manager chose.
 	"till_card_pictures",
 	"tile_colors",
+	# //// Neoffice — how tall the restaurant card's tiles are (NeoResto lot 1, product owner, 05.11.2026): missing here, the till would read "Standard" whatever the manager chose.
+	"tile_height",
 	# //// Neoffice — same whitelist: the till's own popup and sound when a guest orders or pays from the QR code of a table (NeoResto lot 1, Daniel, 01.11), and the
 	# //// volume it rings at, which is the kitchen alerts' (the tablets read that one from get_restaurant_settings, the till reads it here). Missing here, a till would
 	# //// ring Chime for 30 s whatever the manager chose.
@@ -175,6 +177,8 @@ DEFAULT_POS_SETTINGS = {
 	# //// Neoffice — mirrors POS_SETTINGS_FIELDS: today's till (pictures shown) and the new colours on until a manager says otherwise (Daniel, 03.11.2026).
 	"till_card_pictures": 1,
 	"tile_colors": 1,
+	# //// Neoffice — mirrors POS_SETTINGS_FIELDS: the tiles as tall as the grid draws them by default until a manager chooses (product owner, 05.11.2026).
+	"tile_height": "Standard",
 	# //// Neoffice — mirrors POS_SETTINGS_FIELDS: the doctype's defaults (a popup of 30 seconds and a chime), so that a site not migrated yet rings as a migrated one.
 	"floor_guest_popup": 1,
 	# //// Neoffice — the notice of a guest's order stays until somebody has seen it (Daniel, 02.11.2026)

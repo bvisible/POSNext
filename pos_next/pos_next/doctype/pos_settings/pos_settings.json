@@ -76,6 +76,7 @@
   "phone_card_pictures",
   "till_card_pictures",
   "tile_colors",
+  "tile_height",
   "show_customer_balance",
   "column_break_display",
   "hide_expected_amount",
@@ -634,6 +635,15 @@
    "label": "Colours of the tiles"
   },
   {
+   "default": "Standard",
+   "depends_on": "eval:doc.enable_restaurant_mode",
+   "description": "How tall the tiles of the restaurant's card are. \u00ab Compact \u00bb: short pictures, and a tile with no picture just high enough for its name, so that more tiles fit without scrolling. \u00ab Large \u00bb: square pictures.",
+   "fieldname": "tile_height",
+   "fieldtype": "Select",
+   "label": "Tile height",
+   "options": "Compact\nStandard\nLarge"
+  },
+  {
    "default": "0",
    "description": "Display customer balance on screen",
    "fieldname": "show_customer_balance",
@@ -941,7 +951,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-04 18:00:00.000000",
+ "modified": "2026-11-05 13:00:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "POS Settings",

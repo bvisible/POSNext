@@ -288,6 +288,14 @@ TILES_PER_ROW = (
 	*((str(count), str(count)) for count in range(TILES_PER_ROW_MIN, TILES_PER_ROW_MAX + 1)),
 )
 
+# //// Neoffice — the heights of the restaurant card's tiles at the till (NeoResto lot 1, product owner, 05.11.2026: « arriver à caser en hauteur plus de boutons »), the default first
+TILE_HEIGHT_STANDARD = "Standard"
+TILE_HEIGHT = (
+	("Compact", _lt("Compact")),
+	(TILE_HEIGHT_STANDARD, _lt("Standard")),
+	("Large", _lt("Large")),
+)
+
 SETTINGS = (
 	# ---------------------------------------------------------------- Restaurant
 	Setting(
@@ -949,6 +957,20 @@ SETTINGS = (
 		"segmented",
 		doctype=POS_SETTINGS,
 		options=TILES_PER_ROW,
+	),
+	# //// Neoffice — how tall the restaurant card's tiles are (NeoResto lot 1, product owner, 05.11.2026): a till with many dishes and drinks wants more tiles in the height of the screen
+	Setting(
+		"tile_height",
+		"items",
+		_lt("Tile height"),
+		_lt(
+			"How tall the tiles of the restaurant's card are. « Compact »: short pictures, and a tile with no picture"
+			" just high enough for its name, so that more tiles fit without scrolling. « Large »: square pictures."
+		),
+		"segmented",
+		doctype=POS_SETTINGS,
+		till=RESTAURANT_TILL,
+		options=TILE_HEIGHT,
 	),
 	# A phone shows the restaurant card as buttons without pictures unless the till asks for them
 	# (NeoResto lot 1, task 27; design § G: « no pictures by default, a setting with or without »)

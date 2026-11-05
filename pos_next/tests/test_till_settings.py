@@ -817,6 +817,42 @@ class TestTilesPerRow(TillSettingsCase):
 		self.assertEqual(_get_pos_settings(profile)["tiles_per_row"], "8")
 
 
+class TestTileHeight(TillSettingsCase):
+	"""How tall the tiles of the restaurant's card are (POS Settings.tile_height; NeoResto lot 1, product owner, 05.11.2026)."""
+
+	def test_a_restaurant_till_starts_with_the_standard_height(self):
+		self.assertEqual(self.stored_settings(self.restaurant_till, "tile_height").tile_height, "Standard")
+		self.as_user(TILL_MANAGER)
+		self.assertEqual(get_till_settings(self.restaurant_till)["values"]["tile_height"], "Standard")
+
+	def test_the_screen_offers_compact_standard_and_large_to_a_restaurant_till(self):
+		self.as_user(TILL_MANAGER)
+		options = by_key(get_till_settings(self.restaurant_till))["tile_height"]["options"]
+
+		self.assertEqual([option["value"] for option in options], ["Compact", "Standard", "Large"])
+
+	def test_the_document_refuses_a_height_it_does_not_offer_and_keeps_the_ones_it_does(self):
+		doc = frappe.get_doc(
+			"POS Settings", frappe.db.get_value("POS Settings", {"pos_profile": self.restaurant_till})
+		)
+		for refused in ("Huge", "compact", "3"):
+			doc.tile_height = refused
+			with self.subTest(value=refused), self.assertRaises(frappe.ValidationError):
+				doc.save(ignore_permissions=True)
+		doc.reload()
+		for kept in ("Compact", "Large", "Standard"):
+			doc.tile_height = kept
+			doc.save(ignore_permissions=True)
+			self.assertEqual(self.stored_settings(self.restaurant_till, "tile_height").tile_height, kept)
+
+	def test_the_bootstrap_hands_it_to_the_till(self):
+		from pos_next.api.bootstrap import _get_pos_settings
+
+		frappe.db.set_value("POS Settings", {"pos_profile": self.restaurant_till}, "tile_height", "Compact")
+		profile = frappe.get_doc("POS Profile", self.restaurant_till)
+		self.assertEqual(_get_pos_settings(profile)["tile_height"], "Compact")
+
+
 class TestTheLockAndTheStaffSession(TillSettingsCase):
 	"""The lock of the till and the days it keeps its staff signed in were fields of the old settings dialog before they were
 	settings of the list (NeoResto lot 1, 01.11.2026): the list holds the same ranges as the document and the session."""

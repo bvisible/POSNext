@@ -33,6 +33,7 @@
 			:class="[
 				'grid gap-1.5 sm:gap-2.5',
 				cardGridClasses(tilesPerRow),
+				tileHeightClass(tileHeight),
 				showCategories && group.category ? 'mt-1' : 'mt-0',
 			]"
 			:style="tileGridStyle(tilesPerRow)"
@@ -48,6 +49,7 @@
 						? 'opacity-50 ' + (counted(item) ? 'cursor-pointer' : 'cursor-not-allowed')
 						: 'cursor-pointer hover:shadow-neo-md ' + (tileColor(item) ? '' : 'hover:border-blue-400'),
 					isText(item) ? 'tile--text' : '',
+					overhangs(item) ? 'tile--badge' : '',
 				]"
 				:style="tileStyle(item)"
 				@click="emit('pick', item)"
@@ -87,7 +89,7 @@
 				>
 				<div
 					:class="[
-						'relative aspect-square rounded-neo-sm mb-1.5 sm:mb-2 overflow-hidden',
+						'relative tile-well-picture rounded-neo-sm mb-1.5 sm:mb-2 overflow-hidden',
 						isText(item) ? 'tile-well--text' : '',
 					]"
 					:style="wellStyle(item)"
@@ -150,7 +152,7 @@ import { useStock } from "@/composables/useStock"
 import { isLightColor } from "@/utils/itemColors"
 import { cardColor, softTint } from "@/utils/phoneCard"
 import { tintOf } from "@/utils/ticketFamilies"
-import { cardGridClasses, tileGridStyle, tilesPerRow as fixedCount } from "@/utils/tileGrid"
+import { cardGridClasses, tileGridStyle, tileHeightClass, tilesPerRow as fixedCount } from "@/utils/tileGrid"
 
 const props = defineProps({
 	// The card's entries by category: [{ category, items }]
@@ -159,6 +161,8 @@ const props = defineProps({
 	showCategories: { type: Boolean, default: true },
 	// The till's « Tiles per row »: "Automatic" or a number from 3 to 8
 	tilesPerRow: { type: [String, Number], default: "Automatic" },
+	// The till's « Tile height »: "Compact", "Standard" or "Large" (how tall a tile is, with or without a picture)
+	tileHeight: { type: String, default: "Standard" },
 	// The stock of an entry to show (null: no stock to show), and how a price reads
 	stockOf: { type: Function, default: () => null },
 	formatPrice: { type: Function, default: (amount) => String(amount) },
@@ -182,6 +186,12 @@ const fixed = computed(() => fixedCount(props.tilesPerRow) !== null)
 function outOfStock(item) {
 	const stock = props.stockOf(item)
 	return stock !== null && stock <= 0
+}
+
+// Whether something overhangs the tile's top corners (the stock count, the « + » of a counted product): the name of a tile with no picture then keeps clear of it
+function overhangs(item) {
+	const stock = props.stockOf(item)
+	return (stock !== null && stock > 0) || counted(item)
 }
 
 function counted(item) {
@@ -264,20 +274,43 @@ function nameClasses(item) {
 	container-type: inline-size;
 }
 
+/* //// Neoffice — the till's « Tile height » (POS Settings.tile_height; product owner, 05.11.2026: « arriver à caser en hauteur plus de boutons »): the grid says how tall its tiles are, in
+   //// the ratio of a picture and the least height of the well of a dish with no picture. Large is the tile as it always was (square picture, three lines of name). */
+.tile-grid-h-compact {
+	--tile-picture-ratio: 16 / 9;
+	--tile-text-min: 2.5rem;
+}
+
+.tile-grid-h-standard {
+	--tile-picture-ratio: 4 / 3;
+	--tile-text-min: 3.5rem;
+}
+
+.tile-grid-h-large {
+	--tile-picture-ratio: 1 / 1;
+	--tile-text-min: 4.5rem;
+}
+
+.tile-well-picture {
+	aspect-ratio: var(--tile-picture-ratio, 1 / 1);
+}
+
 /* //// Neoffice — a dish with no picture to show (the till shows none, or the dish has none) is a compact tile in every grid, the automatic one too: its name once, in a well as high as its
-   //// name needs and clear of the stock badge that overhangs the corner, its price under it; a row of names only is shorter than a row of pictures, and the well takes the height its row
-   //// leaves (product owner, 03.11.2026: « c'est affiché grand si on affiche sans photo ») */
+   //// name needs (and no higher than the tile height asks) and clear of the stock badge that overhangs the corner when there is one, its price under it; a row of names only is shorter than
+   //// a row of pictures, and the well takes the height its row leaves (product owner, 03.11.2026: « c'est affiché grand si on affiche sans photo ») */
 .tile--text {
 	display: flex;
 	flex-direction: column;
+	padding: 0.375rem;
 }
 
 .tile-well--text {
 	aspect-ratio: auto;
-	min-height: 4.5rem;
+	min-height: var(--tile-text-min, 4.5rem);
 	flex: 1 0 auto;
 	display: flex;
 	flex-direction: column;
+	margin-bottom: 0.125rem;
 }
 
 .tile--text > div:last-child {
@@ -287,7 +320,19 @@ function nameClasses(item) {
 .tile--text .tile-well-name {
 	height: auto;
 	flex: 1 1 auto;
-	padding: 0.875rem 0.375rem 0.375rem;
+	padding: 0.25rem 0.375rem;
+}
+
+/* The stock count and the « + » of a counted product overhang the top corners: the name keeps clear of them */
+.tile--badge .tile-well-name {
+	padding-top: 0.875rem;
+}
+
+/* A compact tile says its name on two lines at most, a little smaller, and keeps its edges close */
+.tile-grid-h-compact .tile-well-name span {
+	-webkit-line-clamp: 2;
+	font-size: 0.875rem;
+	line-height: 1.15;
 }
 
 /* A long word breaks rather than leaving the tile */
@@ -295,11 +340,6 @@ function nameClasses(item) {
 .tile-name-repeat {
 	overflow-wrap: anywhere;
 	hyphens: auto;
-}
-
-.tile--text .tile-name-repeat,
-.tile--text [data-tile-name] {
-	display: none;
 }
 
 .tile-grid-fixed .tile-name-repeat {
@@ -312,5 +352,13 @@ function nameClasses(item) {
 .tile-grid-fixed .tile-price {
 	font-size: 0.75rem;
 	white-space: nowrap;
+}
+
+/* //// Neoffice — a tile with no picture says its name once, in its well, in the fixed grid as in the automatic one: written after the fixed grid's rules and doubled in specificity, because the
+   //// fixed grid's own rule for the repeated name (`display: -webkit-box`, the same specificity) came later in this file and brought the name back under its well (product owner, 05.11.2026:
+   //// « il affiche deux fois le nom »). */
+.tile--text.tile--text .tile-name-repeat,
+.tile--text.tile--text [data-tile-name] {
+	display: none;
 }
 </style>
