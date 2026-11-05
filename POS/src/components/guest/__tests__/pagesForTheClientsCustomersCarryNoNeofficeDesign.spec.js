@@ -33,6 +33,8 @@ const PAGES = [
 
 // A Tailwind class of a ramp the till maps to clay, with or without a variant (`active:bg-blue-700`)
 const CLAY_CLASS = /(?<![\w-])(?:[a-z]+:)*(?:bg|text|border|ring|from|to|via|fill|stroke|outline|decoration|accent)-(?:blue|indigo|violet|purple)-\d{2,3}\b/g
+// A selection stands in ink, as a chosen slot of the reservation does: never a tint of amber
+const AMBER_SELECTION = /\? ?['"]bg-amber-100 text-amber-800/g
 // The clay and the signal written as colours (#a15a2e, #c2723f, #d68a59, #f55d1a, #aa3700)
 const CLAY_HEX = /#(?:a15a2e|c2723f|d68a59|f55d1a|aa3700)\b/gi
 
@@ -50,6 +52,7 @@ describe("the pages a client shows its own customers", () => {
 
 		expect(source.match(CLAY_CLASS) || []).toEqual([])
 		expect(source.match(CLAY_HEX) || []).toEqual([])
+		expect(source.match(AMBER_SELECTION) || []).toEqual([])
 		// The face named in a rule (« font-family: "Forum" »), not a word in a comment that says it is gone
 		expect(source).not.toMatch(/["']Forum["']/)
 	})

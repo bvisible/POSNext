@@ -14,7 +14,7 @@
 					@click="selectedCategory = null"
 					class="px-2 py-1 rounded text-[10px] sm:text-xs font-medium whitespace-nowrap transition-colors"
 					:class="!selectedCategory
-						? 'bg-amber-100 text-amber-800'
+						? 'bg-gray-900 text-white dark:bg-[#f3f3f3] dark:text-[#171717]'
 						: 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'"
 				>{{ __("All") }}</button>
 				<button
@@ -23,7 +23,7 @@
 					@click="selectedCategory = cat"
 					class="px-2 py-1 rounded text-[10px] sm:text-xs font-medium whitespace-nowrap transition-colors"
 					:class="selectedCategory === cat
-						? 'bg-amber-100 text-amber-800'
+						? 'bg-gray-900 text-white dark:bg-[#f3f3f3] dark:text-[#171717]'
 						: 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'"
 				>{{ cat }}</button>
 			</div>
