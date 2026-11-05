@@ -2,8 +2,8 @@
 """The notes of a table (NeoResto lot 1): several parties at one table, each with its own order, covers, kitchen ticket and payment.
 
 A note is a draft Sales Invoice on a table, and a table may hold several, told « table 5, .1, .2, .3 » (« je rajoute une bouteille sur la
-table 4, mais ce serait le .2 »). A table with ONE note is « T5 » as ever; « T5.1 », « T5.2 » appear only when it holds a second open note,
-with the optional name of the party beside the rank (« T5.2 · Dupont »). The rank lives on the draft in the hidden Custom Field
+table 4, mais ce serait le .2 »). A table with ONE note is « T5 » as ever; « T5.0 », « T5.1 » appear only when it holds a second open note,
+with the optional name of the party beside the rank (« T5.1 · Dupont »). The rank lives on the draft in the hidden Custom Field
 `restaurant_note` (an Int, 0 stored meaning legacy and read as 1) and the name in `restaurant_note_name` (a Small Text). The suite pins:
 
 - the rules (`pos_next.restaurant.notes`): the effective rank, the ranks and names a payload may carry, the next free rank, the label of a
@@ -146,17 +146,20 @@ class TestTheRulesOfNotes(FrappeTestCase):
 				self.assertEqual(notes.table_label("T5", 2, "Dupont", count), "T5", "a lone note is the table, named or not")
 
 	def test_a_table_with_several_notes_adds_the_rank_and_the_name_of_the_party(self):
-		self.assertEqual(notes.table_label("T5", 2, None, 2), "T5.2")
-		self.assertEqual(notes.table_label("T5", 2, "Dupont", 2), "T5.2 · Dupont")
-		self.assertEqual(notes.table_label("T5", 1, "Les deux couples", 3), "T5.1 · Les deux couples")
+		self.assertEqual(notes.table_label("T5", 2, None, 2), "T5.1")
+		self.assertEqual(notes.table_label("T5", 2, "Dupont", 2), "T5.1 · Dupont")
+		self.assertEqual(notes.table_label("T5", 1, "Les deux couples", 3), "T5.0 · Les deux couples")
+
+	def test_the_number_after_the_dot_counts_from_zero(self):
+		self.assertEqual([notes.rank_number(rank) for rank in (None, 0, 1, 2, 3)], [0, 0, 0, 1, 2])
 
 	def test_the_label_of_an_unranked_or_unnamed_note_is_the_first_note_with_no_name(self):
-		self.assertEqual(notes.table_label("T5", None, "", 2), "T5.1")
-		self.assertEqual(notes.table_label("T5", 0, "   ", 2), "T5.1")
-		self.assertEqual(notes.table_label(None, 2, None, 2), ".2")
+		self.assertEqual(notes.table_label("T5", None, "", 2), "T5.0")
+		self.assertEqual(notes.table_label("T5", 0, "   ", 2), "T5.0")
+		self.assertEqual(notes.table_label(None, 2, None, 2), ".1")
 
 	def test_the_label_cleans_the_name_it_is_given(self):
-		self.assertEqual(notes.table_label("T5", 2, "  Du   pont\n", 2), "T5.2 · Du pont")
+		self.assertEqual(notes.table_label("T5", 2, "  Du   pont\n", 2), "T5.1 · Du pont")
 
 	def test_the_tile_tells_the_kitchen_state_that_most_needs_a_look(self):
 		for states, told in (
@@ -749,9 +752,9 @@ class TestTheKitchenAndThePassKeepOneCardPerNote(NotesCase):
 		one = self.kitchen_order(first)
 		two = self.kitchen_order(second)
 
-		self.assertEqual((one["note"], one["note_name"], one["notes_count"], one["table_label"]), (1, None, 2, "T1.1"))
+		self.assertEqual((one["note"], one["note_name"], one["notes_count"], one["table_label"]), (1, None, 2, "T1.0"))
 		self.assertEqual(
-			(two["note"], two["note_name"], two["notes_count"], two["table_label"]), (2, "Dupont", 2, "T1.2 · Dupont")
+			(two["note"], two["note_name"], two["notes_count"], two["table_label"]), (2, "Dupont", 2, "T1.1 · Dupont")
 		)
 		self.assertEqual(one["table_display_name"], "T1", "the table's own label is unchanged")
 		self.assertEqual([row["item_code"] for row in one["items"]], [self.soup])
@@ -778,7 +781,7 @@ class TestTheKitchenAndThePassKeepOneCardPerNote(NotesCase):
 		self.assertEqual(open_one["notes_count"], 1, "the paid note does not count: the lone open note is the table")
 		self.assertEqual(open_one["table_label"], "T1")
 		self.assertEqual((paid["note"], paid["notes_count"]), (1, 2), "the paid card is still told apart from the open one")
-		self.assertEqual(paid["table_label"], "T1.1")
+		self.assertEqual(paid["table_label"], "T1.0")
 
 	def test_a_takeaway_order_is_its_own_first_note(self):
 		order = self.save(restaurant_table=None, is_takeaway=1, takeaway_number="T-001")
@@ -816,8 +819,8 @@ class TestTheKitchenAndThePassKeepOneCardPerNote(NotesCase):
 		one = self.pass_order(first)
 		two = self.pass_order(second)
 
-		self.assertEqual((one["note"], one["note_name"], one["notes_count"], one["table_label"]), (1, None, 2, "T1.1"))
-		self.assertEqual((two["note"], two["note_name"], two["notes_count"], two["table_label"]), (2, "Dupont", 2, "T1.2 · Dupont"))
+		self.assertEqual((one["note"], one["note_name"], one["notes_count"], one["table_label"]), (1, None, 2, "T1.0"))
+		self.assertEqual((two["note"], two["note_name"], two["notes_count"], two["table_label"]), (2, "Dupont", 2, "T1.1 · Dupont"))
 
 	def test_the_card_of_a_table_with_one_note_at_the_pass_is_unchanged(self):
 		order = self.save()

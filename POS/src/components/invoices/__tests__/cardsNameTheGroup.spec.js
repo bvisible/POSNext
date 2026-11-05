@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The kitchen's ticket and the pass's card name the GROUP of the table they are for (NeoResto lot 1, notes: « table 5, .1, .2, .3 »): one card per group, titled « Table 5.2 »
+ * //// Neoffice — added file (no upstream equivalent). The kitchen's ticket and the pass's card name the GROUP of the table they are for (NeoResto lot 1, notes: « table 5, .1, .2, .3 »): one card per group, titled « Table 5.1 »
  * //// with the name given to the group beside it (« · Dupont ») once the table has several groups, and « Table 5 » as ever while it has one (a group paid and gone no longer counts). The name wears the grey of the covers
  * //// line beside it, with the dark rule they wear.
  * @vitest-environment jsdom
@@ -111,24 +111,24 @@ afterEach(() => {
 })
 
 describe("the kitchen's ticket of a table with several groups", () => {
-	it("is titled « Table 5.2 » with the group's name beside it", () => {
+	it("is titled « Table 5.1 » with the group's name beside it", () => {
 		const wrapper = kitchen({ note: 2, note_name: "Dupont", notes_count: 2 })
 
-		expect(title(wrapper)).toBe("Table 5.2")
+		expect(title(wrapper)).toBe("Table 5.1")
 		expect(noteName(wrapper).text()).toBe("· Dupont")
 		const reference = wrapper.get('[data-test="ticket-ref"]')
 		const names = [...reference.element.children].map((child) => child.dataset.test)
 		expect(names.indexOf("ticket-title")).toBeLessThan(names.indexOf("ticket-note-name"))
 	})
 
-	it("is titled « Table 5.1 » for the first group, whatever the other says", () => {
-		expect(title(kitchen({ note: 1, note_name: null, notes_count: 3 }))).toBe("Table 5.1")
+	it("is titled « Table 5.0 » for the first group, whatever the other says", () => {
+		expect(title(kitchen({ note: 1, note_name: null, notes_count: 3 }))).toBe("Table 5.0")
 	})
 
 	it("has no name beside the title for a group with none", () => {
 		const wrapper = kitchen({ note: 2, note_name: null, notes_count: 2 })
 
-		expect(title(wrapper)).toBe("Table 5.2")
+		expect(title(wrapper)).toBe("Table 5.1")
 		expect(noteName(wrapper).exists()).toBe(false)
 	})
 
@@ -181,10 +181,10 @@ describe("a takeaway's ticket", () => {
 })
 
 describe("the pass's card", () => {
-	it("is titled « Table 5.2 » with the group's name beside it, as the page gives it", () => {
-		const wrapper = pass({ title: "Table 5.2", noteName: "Dupont" })
+	it("is titled « Table 5.1 » with the group's name beside it, as the page gives it", () => {
+		const wrapper = pass({ title: "Table 5.1", noteName: "Dupont" })
 
-		expect(title(wrapper)).toBe("Table 5.2")
+		expect(title(wrapper)).toBe("Table 5.1")
 		expect(noteName(wrapper).text()).toBe("· Dupont")
 		expect(noteName(wrapper).classes()).toEqual(expect.arrayContaining(["text-gray-600", "dark:[&&]:!text-gray-300"]))
 	})

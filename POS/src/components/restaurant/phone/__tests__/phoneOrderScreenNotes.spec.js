@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The groups of the table, on the waiter's phone (NeoResto lot 1, notes: « table 5, .1, .2, .3 »): the ink header names the table « Table 5 » while it has one note and
- * //// carries a discreet icon « ＋ » (a dashed 44 px target) that opens a second group; from two notes on the name is « Table 5.2 · Dupont » and a row of pills `[.1 Dupont] [.2] [＋]` stands under the header, the current one in
+ * //// carries a discreet icon « ＋ » (a dashed 44 px target) that opens a second group; from two notes on the name is « Table 5.1 · Dupont » and a row of pills `[.1 Dupont] [.2] [＋]` stands under the header, the current one in
  * //// paper on the ink. A tap on a pill, the ＋ and the ✎ are told to the page, which asks the questions and reads the other group. A takeaway has none of it.
  * @vitest-environment jsdom
  */
@@ -120,15 +120,15 @@ describe("a table with several notes, on the phone", () => {
 		state.cart.restaurantNote = 2
 	})
 
-	it("is named « Table 5.2 », with the group's name when it has one", () => {
+	it("is named « Table 5.1 », with the group's name when it has one", () => {
 		screen()
-		expect(name()).toBe("Table 5.2")
+		expect(name()).toBe("Table 5.1")
 		wrapper.unmount()
 
 		state.cart.restaurantNote = 1
 		state.cart.restaurantNoteName = "Dupont"
 		screen()
-		expect(name()).toBe("Table 5.1 · Dupont")
+		expect(name()).toBe("Table 5.0 · Dupont")
 	})
 
 	it("draws the row of pills inside the ink header, the current one marked", () => {
@@ -136,7 +136,7 @@ describe("a table with several notes, on the phone", () => {
 
 		expect(strip().exists()).toBe(true)
 		expect(wrapper.get("header").element.contains(strip().element)).toBe(true)
-		expect(pills().map((pill) => pill.find('[data-test="note-pill-label"]').text())).toEqual([".1", ".2"])
+		expect(pills().map((pill) => pill.find('[data-test="note-pill-label"]').text())).toEqual([".0", ".1"])
 		expect(pills().map((pill) => pill.attributes("aria-pressed"))).toEqual(["false", "true"])
 	})
 
@@ -181,7 +181,7 @@ describe("a table with several notes, on the phone", () => {
 		screen()
 
 		expect(pills().map((pill) => pill.attributes("aria-pressed"))).toEqual(["false", "true"])
-		expect(name()).toBe("Table 5.2")
+		expect(name()).toBe("Table 5.1")
 	})
 })
 

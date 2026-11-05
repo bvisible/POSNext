@@ -21,7 +21,7 @@ from frappe.utils.synchronization import filelock
 
 from pos_next.restaurant import guest_account, permissions, portions, scope, service_families, tickets
 
-# //// Neoffice — the several open orders (.1, .2, .3) a table may hold: a guest's order goes onto the first (NeoResto lot 1, notes)
+# //// Neoffice — the several open orders (.0, .1, .2) a table may hold: a guest's order goes onto the first (NeoResto lot 1, notes)
 from pos_next.restaurant import notes as notes_module
 from pos_next.restaurant.mode import require_neoresto
 from pos_next.restaurant.settings import get_restaurant_settings_for_profile

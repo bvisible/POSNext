@@ -18,7 +18,7 @@ from frappe.utils import cint, flt
 # //// Neoffice — and `paid_orders`: the orders paid while a dish is still at the kitchen (neoffice-maintenance#2163)
 # //// Neoffice — and `figures`: the overview of the restaurant's space is told when the service changes what it counts (neoffice-maintenance#2163)
 # //// Neoffice — and `covers`: the number of people seated at a table, and the portions of each course its order holds (NeoResto lot 1, covers)
-# //// Neoffice — and `notes`: the several open orders (.1, .2, .3) a table may hold, one per party (NeoResto lot 1, notes)
+# //// Neoffice — and `notes`: the several open orders (.0, .1, .2) a table may hold, one per party (NeoResto lot 1, notes)
 from pos_next.restaurant import (
 	call_seen,
 	devices,
@@ -386,7 +386,7 @@ def set_table_covers(invoice, covers):
 
 
 # //// Neoffice — added function (no upstream equivalent). The name of the party of a note, changed from the table's header (NeoResto lot 1, notes). A table may hold several open
-# //// orders, one per party (.1, .2, .3), and a party may be given a name (« Dupont », « les deux couples ») shown beside its rank and searched on the floor plan. The name lives on the
+# //// orders, one per party (.0, .1, .2), and a party may be given a name (« Dupont », « les deux couples ») shown beside its rank and searched on the floor plan. The name lives on the
 # //// note's draft (`restaurant_note_name`) and is written by the till's save when the order is validated; this is the way to name or rename a note that already exists, without saving the
 # //// whole cart. POST only, a write of the waiter's till: the rule of `set_table_covers`.
 @frappe.whitelist(methods=["POST"])

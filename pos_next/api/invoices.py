@@ -1232,7 +1232,7 @@ def update_invoice(data):
 
 	covers_sent = isinstance(data, dict) and covers_module.FIELD in data
 	covers_to_store = covers_module.clean_covers(data.get(covers_module.FIELD)) if covers_sent else None
-	# //// Neoffice — the notes of a table (NeoResto lot 1, notes): a table may hold several open orders, one per party (.1, .2, .3). The till may send the order's rank
+	# //// Neoffice — the notes of a table (NeoResto lot 1, notes): a table may hold several open orders, one per party (.0, .1, .2). The till may send the order's rank
 	# //// (`restaurant_note`, a whole number from 1 to 99) and its party's name (`restaurant_note_name`, absent = leave alone, empty or null = clear). Checked here, before the try, like the
 	# //// covers: a rank nobody can open is refused and not logged as an "Update Invoice Error". Both are written after the save below, never through the document.
 	from pos_next.restaurant import notes as notes_module

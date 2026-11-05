@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The waiter's gestures on the notes of a table (NeoResto lot 1, notes: « table 5, .1, .2, .3 »), with the real cart and the real way a table is opened, the server's answers
- * //// played by a script. Tapping another note reads it; with lines NOT SENT in the cart it first asks « Move the N new lines to .2? » — « Move them » carries those lines to the other note, « Keep them on .1 » changes nothing,
+ * //// played by a script. Tapping another note reads it; with lines NOT SENT in the cart it first asks « Move the N new lines to .1? » — « Move them » carries those lines to the other note, « Keep them on .0 » changes nothing,
  * //// and the lines already SENT to the kitchen never move; a dish taken off after it was sent keeps the waiter on the note; « ＋ » opens a new note (the next rank after the highest) that the server does not have until its
  * //// first « Valider »; a group is named on the server when its order exists, in the cart when it does not.
  * @vitest-environment jsdom
@@ -95,15 +95,15 @@ describe("what the header draws of the notes", () => {
 		expect(notes.showAddGroup.value).toBe(true)
 	})
 
-	it("is a table with two notes: « Table 5.1 · Dupont », the row of pills and no « ＋ Group »", async () => {
+	it("is a table with two notes: « Table 5.0 · Dupont », the row of pills and no « ＋ Group »", async () => {
 		await openOnTheFirstNote()
 
-		expect(notes.label.value).toBe("Table 5.1 · Dupont")
+		expect(notes.label.value).toBe("Table 5.0 · Dupont")
 		expect(notes.showPills.value).toBe(true)
 		expect(notes.showAddGroup.value).toBe(false)
 		expect(notes.pills.value.map((pill) => [pill.label, pill.current])).toEqual([
-			[".1", true],
-			[".2", false],
+			[".0", true],
+			[".1", false],
 		])
 	})
 
@@ -136,7 +136,7 @@ describe("tapping another note with no line to move", () => {
 		expect(cart.restaurantNote).toBe(2)
 		expect(codes()).toEqual(["wine"])
 		expect(cart.currentDraftId).toBe("SINV-2")
-		expect(notes.label.value).toBe("Table 5.2")
+		expect(notes.label.value).toBe("Table 5.1")
 		expect(cart.noteAsk).toBeNull()
 	})
 
@@ -174,7 +174,7 @@ describe("tapping another note with no line to move", () => {
 })
 
 describe("tapping another note with lines not sent in the cart", () => {
-	it("asks « Move the N new lines to .2? » and changes nothing yet", async () => {
+	it("asks « Move the N new lines to .1? » and changes nothing yet", async () => {
 		await openOnTheFirstNote()
 		cart.addItem(dish("beer"), 2)
 		cart.addItem(dish("fries"), 1)
@@ -185,8 +185,8 @@ describe("tapping another note with lines not sent in the cart", () => {
 		expect(server.calls).toEqual([])
 		expect(cart.noteAsk).toEqual({ kind: "move", to: 2, count: 2 })
 		expect(notes.moveAsk.value.count).toBe(2)
-		expect(notes.fromLabel.value).toBe(".1")
-		expect(notes.toLabel.value).toBe(".2")
+		expect(notes.fromLabel.value).toBe(".0")
+		expect(notes.toLabel.value).toBe(".1")
 		expect(cart.restaurantNote).toBe(1)
 		expect(codes()).toEqual(["soup", "beer", "fries"])
 	})
@@ -229,7 +229,7 @@ describe("tapping another note with lines not sent in the cart", () => {
 		expect(calls("open_table")).toEqual([["open_table", { table_name: "t5", pos_profile: "Till", note: 2 }]])
 	})
 
-	it("« Keep them on .1 » changes nothing: the waiter stays with his lines and the server is not asked", async () => {
+	it("« Keep them on .0 » changes nothing: the waiter stays with his lines and the server is not asked", async () => {
 		await openOnTheFirstNote()
 		cart.addItem(dish("beer"), 1)
 		await notes.select(2)
@@ -310,11 +310,11 @@ describe("adding a group", () => {
 		expect(cart.currentDraftId).toBeNull()
 		expect(codes()).toEqual([])
 		expect(notes.pills.value.map((pill) => [pill.label, pill.pending])).toEqual([
+			[".0", false],
 			[".1", false],
-			[".2", false],
-			[".3", true],
+			[".2", true],
 		])
-		expect(notes.label.value).toBe("Table 5.3")
+		expect(notes.label.value).toBe("Table 5.2")
 	})
 
 	it("makes the second note of a table that had one", async () => {
@@ -328,7 +328,7 @@ describe("adding a group", () => {
 		expect(calls("open_table")[0][1].note).toBe(2)
 		expect(cart.restaurantNote).toBe(2)
 		expect(notes.showPills.value).toBe(true)
-		expect(notes.label.value).toBe("Table 5.2")
+		expect(notes.label.value).toBe("Table 5.1")
 	})
 
 	it("asks to move the lines not sent first, as a tap on another note does", async () => {
@@ -369,7 +369,7 @@ describe("naming a group", () => {
 
 		notes.askName()
 		expect(cart.noteAsk).toEqual({ kind: "name", rank: 1 })
-		expect(notes.namedPill.value).toMatchObject({ label: ".1", name: "Dupont" })
+		expect(notes.namedPill.value).toMatchObject({ label: ".0", name: "Dupont" })
 
 		notes.askName(2)
 		expect(cart.noteAsk).toEqual({ kind: "name", rank: 2 })
@@ -393,7 +393,7 @@ describe("naming a group", () => {
 		expect(calls("set_table_note_name")).toEqual([["set_table_note_name", { invoice: "SINV-1", note_name: "Les Martin" }]])
 		expect(cart.restaurantNoteName).toBe("Les Martin")
 		expect(notes.pills.value[0].name).toBe("Les Martin")
-		expect(notes.label.value).toBe("Table 5.1 · Les Martin")
+		expect(notes.label.value).toBe("Table 5.0 · Les Martin")
 		expect(cart.noteAsk).toBeNull()
 	})
 
@@ -431,7 +431,7 @@ describe("naming a group", () => {
 		expect(saved).toBe(true)
 		expect(server.calls).toEqual([])
 		expect(cart.restaurantNoteName).toBe("Jules")
-		expect(notes.label.value).toBe("Table 5.3 · Jules")
+		expect(notes.label.value).toBe("Table 5.2 · Jules")
 	})
 
 	it("keeps the question open and the old name when the server refuses", async () => {

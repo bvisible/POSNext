@@ -44,9 +44,17 @@ export function cleanNoteName(value) {
 	return value.replace(/\s+/g, " ").trim().slice(0, NOTE_NAME_MAX).trim()
 }
 
-/** « .2 »: the rank as the waiter says it. */
+/**
+ * The number the waiter says after the dot: the table's own first group is « .0 » (it is « Table 5 » alone), the next ones « .1 », « .2 ». The rank itself starts at 1 (the server's);
+ * what is said starts at 0, because « .1 » is the first party that joins the table (product owner, 05.11.2026: « on pourrait faire point zéro »).
+ */
+export function rankNumber(rank) {
+	return effectiveRank(rank) - 1
+}
+
+/** « .1 »: the rank as the waiter says it. */
 export function rankLabel(rank) {
-	return `.${effectiveRank(rank)}`
+	return `.${rankNumber(rank)}`
 }
 
 /**
@@ -129,7 +137,7 @@ export function nextFreeRank(ranks) {
 export function noteParts(base, { rank, name, count } = {}) {
 	const table = String(base ?? "")
 	if (!(Number(count) > 1)) return { title: table, name: "" }
-	return { title: `${table}.${effectiveRank(rank)}`, name: cleanNoteName(name) }
+	return { title: `${table}.${rankNumber(rank)}`, name: cleanNoteName(name) }
 }
 
 /**

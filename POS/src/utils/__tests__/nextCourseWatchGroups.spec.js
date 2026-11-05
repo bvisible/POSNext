@@ -1,5 +1,5 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). The kitchen's notice that the next course is ordered names the GROUP of the table whose course is called (NeoResto lot 1, notes: « table 5, .1, .2, .3 »): « Table 5.2 ·
+ * //// Neoffice — added file (no upstream equivalent). The kitchen's notice that the next course is ordered names the GROUP of the table whose course is called (NeoResto lot 1, notes: « table 5, .1, .2, .3 »): « Table 5.1 ·
  * //// Dupont » when the table has several groups, « Table 5 » as ever while it has one, so that the cooks know which of the ticket cards of the table is meant.
  */
 import { describe, expect, it } from "vitest"
@@ -34,11 +34,11 @@ const alertAfter = (extra) => {
 
 describe("the notice of the next course", () => {
 	it("names the group and its name when the table has several", () => {
-		expect(alertAfter({ note: 2, note_name: "Dupont", notes_count: 2 }).table).toBe("Table 5.2 · Dupont")
+		expect(alertAfter({ note: 2, note_name: "Dupont", notes_count: 2 }).table).toBe("Table 5.1 · Dupont")
 	})
 
 	it("names the group alone when it has no name", () => {
-		expect(alertAfter({ note: 1, note_name: null, notes_count: 2 }).table).toBe("Table 5.1")
+		expect(alertAfter({ note: 1, note_name: null, notes_count: 2 }).table).toBe("Table 5.0")
 	})
 
 	it("names the table as ever when it has one group", () => {

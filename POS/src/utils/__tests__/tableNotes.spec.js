@@ -1,6 +1,6 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The notes of a table (NeoResto lot 1, notes: « table 5, .1, .2, .3 »): a note is told apart by its rank (1 to 99, an unset one is the first) and, if the waiter wants, by a
- * //// name (at most 60 characters); a table with one note stays « Table 5 » and « Table 5.2 · Dupont » appears only when it has a second; a new note takes the rank after the table's highest; the order payload carries the rank
+ * //// name (at most 60 characters); a table with one note stays « Table 5 » and « Table 5.1 · Dupont » appears only when it has a second; a new note takes the rank after the table's highest; the order payload carries the rank
  * //// only when the table has several notes or the note is not the first; the pills of the header are the server's notes plus the new one, the current one carrying the cart's live figures; a table is found by its label or by
  * //// the name of one of its groups.
  * @vitest-environment jsdom
@@ -65,8 +65,8 @@ describe("the rank of a note", () => {
 	})
 
 	it("is said with a dot", () => {
-		expect(rankLabel(2)).toBe(".2")
-		expect(rankLabel(undefined)).toBe(".1")
+		expect(rankLabel(2)).toBe(".1")
+		expect(rankLabel(undefined)).toBe(".0")
 	})
 })
 
@@ -173,21 +173,21 @@ describe("how a table is named", () => {
 		expect(tableLabel("Table 5")).toBe("Table 5")
 	})
 
-	it("is « Table 5.2 » from the second note on, the name apart", () => {
-		expect(noteParts("Table 5", { rank: 2, name: "Dupont", count: 2 })).toEqual({ title: "Table 5.2", name: "Dupont" })
-		expect(noteParts("Table 5", { rank: 1, count: 2 })).toEqual({ title: "Table 5.1", name: "" })
+	it("is « Table 5.1 » from the second note on, the name apart", () => {
+		expect(noteParts("Table 5", { rank: 2, name: "Dupont", count: 2 })).toEqual({ title: "Table 5.1", name: "Dupont" })
+		expect(noteParts("Table 5", { rank: 1, count: 2 })).toEqual({ title: "Table 5.0", name: "" })
 	})
 
 	it("is written in one string with the name after a dot", () => {
-		expect(tableLabel("Table 5", { rank: 2, name: "Dupont", count: 3 })).toBe("Table 5.2 · Dupont")
-		expect(tableLabel("Table 5", { rank: 2, count: 3 })).toBe("Table 5.2")
+		expect(tableLabel("Table 5", { rank: 2, name: "Dupont", count: 3 })).toBe("Table 5.1 · Dupont")
+		expect(tableLabel("Table 5", { rank: 2, count: 3 })).toBe("Table 5.1")
 	})
 
 	it("is the table's name as a kitchen order says it, with the group when the table has several", () => {
 		const order = { table_display_name: "Table 5", restaurant_table: "t5", note: 2, note_name: "Dupont", notes_count: 2 }
 
-		expect(orderTableParts(order)).toEqual({ title: "Table 5.2", name: "Dupont" })
-		expect(orderTableLabel(order)).toBe("Table 5.2 · Dupont")
+		expect(orderTableParts(order)).toEqual({ title: "Table 5.1", name: "Dupont" })
+		expect(orderTableLabel(order)).toBe("Table 5.1 · Dupont")
 	})
 
 	it("is unchanged for an order of a table with one note, or an order that says nothing of notes", () => {
@@ -203,11 +203,11 @@ describe("the pills of the header", () => {
 		const pills = notePills([note(2), note(1, { note_name: "Dupont" })], { rank: 2 })
 
 		expect(pills.map((pill) => [pill.label, pill.name, pill.current, pill.pending])).toEqual([
-			[".1", "Dupont", false, false],
-			[".2", "", true, false],
+			[".0", "Dupont", false, false],
+			[".1", "", true, false],
 		])
-		expect(pills[0].text).toBe(".1 Dupont")
-		expect(pills[1].text).toBe(".2")
+		expect(pills[0].text).toBe(".0 Dupont")
+		expect(pills[1].text).toBe(".1")
 		expect(pills[0].invoice).toBe("SINV-1")
 	})
 

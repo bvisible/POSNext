@@ -1,9 +1,9 @@
 # //// Neoffice — added file (no upstream equivalent). The notes of a table (NeoResto lot 1): the several parties seated at one table, each with its own
-# //// order, covers, kitchen ticket and payment, told ".1", ".2", ".3" by the waiter (« je rajoute une bouteille sur la table 4, mais ce serait le .2 »).
+# //// order, covers, kitchen ticket and payment, told ".0" (the table's own first group), ".1", ".2" by the waiter (« je rajoute une bouteille sur la table 4, mais ce serait le .2 »; « on pourrait faire point zéro », product owner, 05.11.2026).
 """The notes of a restaurant table: a note is a draft Sales Invoice on a table, and a table may hold several.
 
-- A table has ONE note by default and is then « T5 »; « T5.1 », « T5.2 » (the RANK of the note after a dot) appear only when the table holds a
-  second open note, with the optional NAME of the party beside the rank (« T5.2 · Dupont »). See `table_label`, the one place that composes it.
+- A table has ONE note by default and is then « T5 »; « T5.0 », « T5.1 » (the NUMBER of the note after a dot, counted from zero: the table's own first group is « .0 ») appear only when the table
+  holds a second open note, with the optional NAME of the party beside the number (« T5.1 · Dupont »). See `table_label`, the one place that composes it.
 - The RANK lives on the draft, in the hidden Custom Field `restaurant_note` (an Int), the NAME in `restaurant_note_name` (a Small Text: a `text` column costs the row 10 bytes where a 60-character
   varchar costs 242, and the Sales Invoice table has no room for the second on a fleet site; the server keeps the 60 characters, see `clean_name`). Both are written by the
   till's save (`invoices.update_invoice`, when the payload carries them) and the name by `restaurant.set_table_note_name`, never by a payment. An Int
@@ -33,7 +33,7 @@ NAME_FIELD = "restaurant_note_name"
 MAX_NOTE = 99
 # The longest name a party can be given (the column is a Data of this length)
 MAX_NAME_CHARS = 60
-# What separates the rank and the name of a party on a label: « T5.2 · Dupont »
+# What separates the number and the name of a party on a label: « T5.1 · Dupont »
 NAME_SEPARATOR = " · "
 
 
@@ -99,17 +99,25 @@ def next_free_rank(ranks) -> int | None:
 	return rank if rank <= MAX_NOTE else None
 
 
+def rank_number(rank) -> int:
+	"""The number the waiter says after the dot: the table's own first group is « .0 » (it is « T5 » alone), the next ones « .1 », « .2 »…
+
+	The rank stored on the draft starts at 1 (0 means none, read as 1); what is said starts at 0, because the first group is the table itself and « .1 » is the first party that joins it
+	(product owner, 05.11.2026: « on pourrait faire point zéro, parce que c'est l'étape première »)."""
+	return effective_rank(rank) - 1
+
+
 def table_label(table_name, rank, note_name, notes_count) -> str:
 	"""How a table is named wherever the server writes a message or a printout that names one.
 
 	`table_name` is the table's own label (« T5 », its `table_name`, never its record name). A table with one open note (or none) is told by
-	its label alone, as it always was; a table with several adds the rank of the note after a dot, and the party's name after it when it has one:
-	« T5.2 » or « T5.2 · Dupont ». `notes_count` is the number of OPEN notes the table has, the one named included.
+	its label alone, as it always was; a table with several adds the number of the note after a dot (`rank_number`: « .0 » for the first group, « .1 » for the
+	next) and the party's name after it when it has one: « T5.1 » or « T5.1 · Dupont ». `notes_count` is the number of OPEN notes the table has, the one named included.
 	"""
 	label = table_name or ""
 	if cint(notes_count) <= 1:
 		return label
-	label = f"{label}.{effective_rank(rank)}"
+	label = f"{label}.{rank_number(rank)}"
 	name = clean_name(note_name) if isinstance(note_name, str) else None
 	return f"{label}{NAME_SEPARATOR}{name}" if name else label
 
@@ -224,7 +232,7 @@ def ranks_of_open_notes(tables) -> dict[str, list[tuple[str, int]]]:
 def stamp(rows: list) -> list:
 	"""Tell each order row of a list (a dict with a `name`, and a `restaurant_table` when it sits at a table) its `note`, `note_name` and `notes_count`.
 
-	The kitchen's and the pass's cards are one per order (one invoice, one note); a card writes « Table 5.2 » (and the party's name) when its table
+	The kitchen's and the pass's cards are one per order (one invoice, one note); a card writes « Table 5.1 » (and the party's name) when its table
 	holds several notes. `notes_count` is the number of OPEN notes of the order's table, the order itself included: a note already paid and still
 	on the screens counts itself, never the other notes already paid. An order that sits at no table (a takeaway) is its own note 1.
 	`table_label` is the label the rule composes, from the row's `table_display_name` (the table's label) when it has one. ONE read of the notes of
@@ -314,6 +322,6 @@ def refuse_a_rank_that_is_taken(table: str, rank, order: str | None = None) -> N
 	for name, other_rank in ranks_of_open_notes([table]).get(table, []):
 		if name != order and other_rank == rank:
 			frappe.throw(
-				_("This table already has an open note .{0}").format(rank),
+				_("This table already has an open note .{0}").format(rank_number(rank)),
 				frappe.ValidationError,
 			)
