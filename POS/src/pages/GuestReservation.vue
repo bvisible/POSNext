@@ -278,7 +278,9 @@ const timeOptions = computed(() => {
 			}
 		}
 	}
-	return options
+	//// Neoffice — each time once, in order: a service saved twice, or two services that overlap, offered a time two or
+	//// three times, and picking one lit them all (05.11.2026)
+	return [...new Set(options)].sort()
 })
 
 const isFormValid = computed(() => {

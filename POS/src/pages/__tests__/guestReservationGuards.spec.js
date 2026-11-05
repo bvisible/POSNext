@@ -78,6 +78,26 @@ afterEach(() => {
 	opened.forEach((wrapper) => wrapper.unmount())
 })
 
+describe("the times the booking page offers", () => {
+	it("offers each time once, in order, where the services of the day repeat or overlap", async () => {
+		// The same service saved twice, and a second one that overlaps it: 13:30 and 14:00 are two services' times
+		answers[SLOTS] = answer({
+			message: {
+				slots: [
+					{ from_time: "11:30:00", to_time: "14:00:00", label: "Lunch" },
+					{ from_time: "11:30:00", to_time: "14:00:00", label: "Lunch" },
+					{ from_time: "13:30:00", to_time: "15:00:00", label: "Late lunch" },
+				],
+			},
+		})
+		const wrapper = open()
+		await flushPromises()
+
+		const times = wrapper.findAll("button").map((button) => button.text()).filter((text) => /^\d\d:\d\d$/.test(text))
+		expect(times).toEqual(["11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00"])
+	})
+})
+
 describe("the booking page says what the server said", () => {
 	it("books and asks the guest to confirm from the e-mail", async () => {
 		const wrapper = open()
