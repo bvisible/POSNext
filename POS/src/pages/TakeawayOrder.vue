@@ -1,5 +1,6 @@
 <template>
 	<!-- //// Neoffice — added file (no upstream equivalent). Public takeaway ordering at -->
+	<!-- //// No clay on a page the restaurant shows its own guests (05.11.2026, design system §7.6): ink and grays -->
 	<!-- //// /pos/order: the customer orders from the web, creates an account and pays -->
 	<!-- //// before the kitchen starts. Same guest components as the QR table flow, but -->
 	<!-- //// no token bound to a table. Nothing upstream serves a customer directly -->
@@ -7,7 +8,7 @@
 	<div class="flex flex-col h-screen bg-gray-50 overflow-hidden" style="max-height: 100dvh;">
 		<!-- Loading State -->
 		<div v-if="isInitializing" class="flex-1 flex flex-col items-center justify-center p-8">
-			<svg class="w-10 h-10 text-blue-500 animate-spin mb-4" fill="none" viewBox="0 0 24 24">
+			<svg class="w-10 h-10 text-gray-400 animate-spin mb-4" fill="none" viewBox="0 0 24 24">
 				<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
 				<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
 			</svg>
@@ -23,7 +24,7 @@
 			</div>
 			<h2 class="text-xl font-bold text-gray-900 mb-2">{{ __('Service unavailable') }}</h2>
 			<p class="text-sm text-gray-500">{{ initError }}</p>
-			<button @click="initTakeaway" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium">
+			<button @click="initTakeaway" class="mt-4 px-4 py-2 bg-gray-900 dark:bg-[#f3f3f3] dark:text-[#171717] text-white rounded-lg text-sm font-medium">
 				{{ __('Try again') }}
 			</button>
 		</div>
@@ -37,7 +38,7 @@
 			</div>
 			<h2 class="text-2xl font-bold text-gray-900 mb-2">{{ __('Order confirmed!') }}</h2>
 			<p class="text-gray-600 mb-1">{{ __('Your order number') }}</p>
-			<p class="text-3xl font-bold text-blue-600 mb-6">{{ orderNumber }}</p>
+			<p class="text-3xl font-bold text-gray-900 mb-6">{{ orderNumber }}</p>
 			<p class="text-sm text-gray-500">{{ __('Show this number when you pick up your order.') }}</p>
 		</div>
 
@@ -102,7 +103,7 @@
 							@click="activeTab = 'menu'"
 							:class="[
 								'flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors',
-								activeTab === 'menu' ? 'text-blue-600' : 'text-gray-500',
+								activeTab === 'menu' ? 'text-gray-900' : 'text-gray-500',
 							]"
 						>
 							<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -114,7 +115,7 @@
 							@click="activeTab = 'cart'"
 							:class="[
 								'flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors',
-								activeTab === 'cart' ? 'text-blue-600' : 'text-gray-500',
+								activeTab === 'cart' ? 'text-gray-900' : 'text-gray-500',
 							]"
 						>
 							<div class="relative">
@@ -134,7 +135,7 @@
 							@click="goToPay"
 							:class="[
 								'flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors',
-								activeTab === 'pay' ? 'text-blue-600' : 'text-gray-500',
+								activeTab === 'pay' ? 'text-gray-900' : 'text-gray-500',
 							]"
 						>
 							<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

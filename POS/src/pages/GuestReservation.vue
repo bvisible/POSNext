@@ -1,5 +1,6 @@
 <template>
 	<!-- //// Neoffice — added file (no upstream equivalent). Public booking form at -->
+	<!-- //// No clay on a page the restaurant shows its own guests (05.11.2026, design system §7.6): ink and grays -->
 	<!-- //// /pos/reservation: a guest reserves a table from the restaurant's website, -->
 	<!-- //// with double opt-in by e-mail, service slots and per-area table choice. -->
 	<!-- //// Upstream POSNext is a retail POS and books nothing (ebc3ecc5, 2026-03-29 -->
@@ -21,7 +22,7 @@
 
 		<!-- Loading -->
 		<div v-if="isLoading" class="flex-1 flex items-center justify-center">
-			<svg class="w-8 h-8 text-blue-500 animate-spin" fill="none" viewBox="0 0 24 24">
+			<svg class="w-8 h-8 text-gray-400 animate-spin" fill="none" viewBox="0 0 24 24">
 				<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
 				<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
 			</svg>
@@ -64,7 +65,7 @@
 						v-model="form.reservation_date"
 						type="date"
 						:min="today"
-						class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-base focus:ring-2 focus:ring-blue-300 focus:border-blue-500"
+						class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-base focus:ring-2 focus:ring-gray-400 focus:border-gray-500"
 						required
 					/>
 				</div>
@@ -78,8 +79,8 @@
 							:key="slot"
 							class="px-3 py-2 text-sm rounded-lg border transition-colors"
 							:class="form.reservation_time === slot
-								? 'bg-blue-600 text-white border-blue-600'
-								: 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'"
+								? 'bg-gray-900 dark:bg-[#f3f3f3] dark:text-[#171717] text-white border-gray-900 dark:border-[#f3f3f3]'
+								: 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'"
 							@click="form.reservation_time = slot"
 						>
 							{{ slot }}
@@ -99,8 +100,8 @@
 							:key="n"
 							class="w-10 h-10 rounded-lg border text-sm font-medium transition-colors"
 							:class="form.no_of_guests === n
-								? 'bg-blue-600 text-white border-blue-600'
-								: 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'"
+								? 'bg-gray-900 dark:bg-[#f3f3f3] dark:text-[#171717] text-white border-gray-900 dark:border-[#f3f3f3]'
+								: 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'"
 							@click="form.no_of_guests = n"
 						>
 							{{ n }}
@@ -113,7 +114,7 @@
 							class="w-16 px-2 py-1 border border-gray-300 rounded-lg text-center"
 						/>
 						<button
-							class="w-10 h-10 rounded-lg border border-gray-300 text-gray-500 hover:border-blue-400"
+							class="w-10 h-10 rounded-lg border border-gray-300 text-gray-500 hover:border-gray-400"
 							@click="form.no_of_guests = form.no_of_guests > 8 ? form.no_of_guests + 1 : 9"
 						>
 							+
@@ -134,9 +135,9 @@
 							class="px-3 py-1.5 text-sm rounded-lg border transition-colors"
 							:class="[
 								selectedTables.includes(table.name)
-									? 'bg-blue-100 border-blue-500 text-blue-700'
+									? 'bg-gray-100 border-gray-900 dark:border-[#f3f3f3] text-gray-900'
 									: table.available
-										? 'bg-white border-gray-300 text-gray-700 hover:border-blue-400'
+										? 'bg-white border-gray-300 text-gray-700 hover:border-gray-400'
 										: 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
 							]"
 							:disabled="!table.available"
@@ -205,7 +206,7 @@
 			<button
 				class="w-full py-3.5 rounded-xl font-semibold text-base transition-colors"
 				:class="isFormValid
-					? 'bg-blue-600 text-white active:bg-blue-700'
+					? 'bg-gray-900 dark:bg-[#f3f3f3] dark:text-[#171717] text-white active:bg-gray-800'
 					: 'bg-gray-200 text-gray-400 cursor-not-allowed'"
 				:disabled="!isFormValid || submitting"
 				@click="submitReservation"

@@ -76,4 +76,21 @@ describe("the guest's pages", () => {
 		expect(lines[1].text()).toContain("Offert")
 		expect(lines[1].text()).not.toMatch(/-100%/)
 	})
+
+	it("the chosen split of the amount to pay stands in ink, and follows the guest's choice", async () => {
+		// No clay on a page the restaurant shows its own guests (05.11.2026, design system §7.6)
+		guest.orderItems = ORDER
+		const checkout = mountWith(GuestCheckout)
+		const splits = () =>
+			checkout
+				.findAll("button")
+				.filter((button) => ["Full", "÷2", "÷3", "÷4", "Custom"].includes(button.text()))
+		const chosen = () => splits().filter((button) => button.classes().includes("bg-gray-900"))
+
+		expect(splits()).toHaveLength(5)
+		expect(chosen().map((button) => button.text())).toEqual(["Full"])
+		await splits()[1].trigger("click")
+		expect(chosen().map((button) => button.text())).toEqual(["÷2"])
+		expect(splits()[0].classes()).toContain("bg-gray-100")
+	})
 })

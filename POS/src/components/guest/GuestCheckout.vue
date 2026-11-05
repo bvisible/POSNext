@@ -24,8 +24,8 @@
 			<div v-if="showPaymentDialog" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
 				<div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center">
 					<div class="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"
-						:class="guestStore.isFullyPaid ? 'bg-green-100' : 'bg-blue-100'">
-						<svg class="w-9 h-9" :class="guestStore.isFullyPaid ? 'text-green-600' : 'text-blue-600'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						:class="guestStore.isFullyPaid ? 'bg-green-100' : 'bg-gray-100'">
+						<svg class="w-9 h-9" :class="guestStore.isFullyPaid ? 'text-green-600' : 'text-gray-900'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
 						</svg>
 					</div>
@@ -43,7 +43,7 @@
 					</p>
 					<button
 						@click="dismissPaymentDialog"
-						class="mt-5 w-full py-3 bg-blue-600 text-white font-semibold rounded-xl active:bg-blue-700 transition-colors"
+						class="mt-5 w-full py-3 bg-gray-900 dark:bg-[#f3f3f3] dark:text-[#171717] text-white font-semibold rounded-xl active:bg-gray-800 transition-colors"
 					>{{ __('OK') }}</button>
 				</div>
 			</div>
@@ -74,7 +74,7 @@
 								class="flex items-center justify-between text-sm">
 								<span class="text-gray-700">{{ oItem.qty }}× {{ oItem.item_name }}</span>
 								<!-- An offered line (NeoResto lot 1, task 24) reads « Offert », in the guest's language -->
-								<span v-if="oItem.posa_is_offered" class="font-semibold text-[#A15A2E]">{{ oItem.offered_label }}</span>
+								<span v-if="oItem.posa_is_offered" class="font-semibold text-[#137949] dark:text-[#86E0A8]">{{ oItem.offered_label }}</span>
 								<span v-else class="flex items-center gap-1.5">
 									<span v-if="oItem.discount_percentage > 0" class="text-gray-400 line-through text-xs">{{ formatPrice(oItem.qty * oItem.price_list_rate) }}</span>
 									<span class="text-gray-500">{{ formatPrice(oItem.amount ?? oItem.qty * oItem.rate) }}</span>
@@ -140,7 +140,7 @@
 								<span v-if="oItem.discount_percentage > 0 && !oItem.posa_is_offered" class="text-[10px] font-semibold text-green-700 bg-green-100 px-1.5 py-0.5 rounded">-{{ oItem.discount_percentage }}%</span>
 							</div>
 							<!-- An offered line (NeoResto lot 1, task 24) reads « Offert », read only, in the guest's language -->
-							<span v-if="oItem.posa_is_offered" class="font-semibold text-[#A15A2E]">{{ oItem.offered_label }}</span>
+							<span v-if="oItem.posa_is_offered" class="font-semibold text-[#137949] dark:text-[#86E0A8]">{{ oItem.offered_label }}</span>
 							<span v-else class="flex items-center gap-1.5">
 								<span v-if="oItem.discount_percentage > 0" class="text-gray-400 line-through text-xs">{{ formatPrice(oItem.qty * oItem.price_list_rate) }}</span>
 								<span class="text-gray-900 font-medium">{{ formatPrice(oItem.amount ?? oItem.qty * oItem.rate) }}</span>
@@ -205,25 +205,19 @@
 							<button
 								@click="splitBy = null; customPayAmount = ''"
 								class="px-3 py-1.5 rounded-lg text-xs font-semibold border-2 transition-all"
-								:style="!splitBy
-									? 'background-color: #d68a59; color: white; border-color: #d68a59;'
-									: 'background-color: #f3f4f6; color: #374151; border-color: #e5e7eb;'"
+								:class="!splitBy ? SPLIT_CHOSEN : SPLIT_OTHER"
 							>{{ __('Full') }}</button>
 							<button
 								v-for="n in [2, 3, 4]"
 								:key="n"
 								@click="splitBy = n; customPayAmount = ''"
 								class="px-3 py-1.5 rounded-lg text-xs font-semibold border-2 transition-all"
-								:style="splitBy === n
-									? 'background-color: #d68a59; color: white; border-color: #d68a59;'
-									: 'background-color: #f3f4f6; color: #374151; border-color: #e5e7eb;'"
+								:class="splitBy === n ? SPLIT_CHOSEN : SPLIT_OTHER"
 							>÷{{ n }}</button>
 							<button
 								@click="splitBy = -1"
 								class="px-3 py-1.5 rounded-lg text-xs font-semibold border-2 transition-all"
-								:style="splitBy === -1
-									? 'background-color: #d68a59; color: white; border-color: #d68a59;'
-									: 'background-color: #f3f4f6; color: #374151; border-color: #e5e7eb;'"
+								:class="splitBy === -1 ? SPLIT_CHOSEN : SPLIT_OTHER"
 							>{{ __('Custom') }}</button>
 						</div>
 						<!-- Custom amount input -->
@@ -233,13 +227,13 @@
 								<input v-model="customPayAmount" type="number" step="0.01" min="0"
 									:max="orderRemaining"
 									:placeholder="orderRemaining.toFixed(2)"
-									class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+									class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent" />
 							</div>
 						</div>
 						<!-- Amount display -->
-						<div class="flex items-center justify-between p-3 rounded-xl" :class="basePayment < orderRemaining ? 'bg-blue-50 border border-blue-200' : 'bg-green-50 border border-green-200'">
+						<div class="flex items-center justify-between p-3 rounded-xl" :class="basePayment < orderRemaining ? 'bg-gray-100 border border-gray-200' : 'bg-green-50 border border-green-200'">
 							<div>
-								<span class="text-sm font-bold" :class="basePayment < orderRemaining ? 'text-blue-700' : 'text-green-700'">
+								<span class="text-sm font-bold" :class="basePayment < orderRemaining ? 'text-gray-900' : 'text-green-700'">
 									{{ formatPrice(payableAmount) }}
 								</span>
 								<span v-if="basePayment < orderRemaining" class="text-xs text-gray-500 ml-2">
@@ -259,18 +253,18 @@
 				<!-- //// Neoffice — the sign-in of the QR page (NeoResto lot 1, Daniel, 02.11.2026) replaces the form that collected a name, an address and a phone and kept them nowhere: the sheet of the page proves the address with a code -->
 				<div v-if="guestStore.canSignIn && !guestStore.account" class="mb-3">
 					<button
-						class="w-full flex items-center justify-between px-3 py-2.5 bg-blue-50 border border-blue-200 rounded-xl text-sm transition-colors active:bg-blue-100"
+						class="w-full flex items-center justify-between px-3 py-2.5 bg-gray-100 border border-gray-200 rounded-xl text-sm transition-colors active:bg-gray-100"
 						data-test="checkout-sign-in"
 						@click="emit('sign-in')"
 					>
-						<span class="text-blue-700 font-medium">
+						<span class="text-gray-900 font-medium">
 							{{ guestStore.mustSignIn
 								? __('Sign in to pay')
 								: guestStore.settings?.has_loyalty_program
 									? __('Sign in to earn loyalty points')
 									: __('Sign in for next time') }}
 						</span>
-						<svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
 						</svg>
 					</button>
@@ -285,7 +279,7 @@
 				<button
 					@click="handlePay"
 					:disabled="guestStore.isLoading || payableAmount === 0 || guestStore.mustSignIn || paymentState === 'pending'"
-					class="w-full py-3.5 bg-blue-600 text-white font-semibold rounded-xl active:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+					class="w-full py-3.5 bg-gray-900 dark:bg-[#f3f3f3] dark:text-[#171717] text-white font-semibold rounded-xl active:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
 				>
 					<svg v-if="guestStore.isLoading" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
 						<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
@@ -304,6 +298,11 @@ import { useGuestOrderStore } from "@/stores/guestOrder"
 
 const emit = defineEmits(["order-confirmed", "sign-in"])
 const guestStore = useGuestOrderStore()
+
+//// Neoffice — the split buttons of the amount to pay: the chosen one in ink, light in the dark theme (no clay on a page
+//// the restaurant shows its own guests, 05.11.2026, design system §7.6)
+const SPLIT_CHOSEN = "bg-gray-900 text-white border-gray-900 dark:bg-[#f3f3f3] dark:text-[#171717] dark:border-[#f3f3f3]"
+const SPLIT_OTHER = "bg-gray-100 text-gray-700 border-gray-200"
 
 const paymentState = ref(null)
 const showPaymentDialog = ref(false)

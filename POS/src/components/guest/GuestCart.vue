@@ -51,7 +51,7 @@
 							</div>
 							<div class="flex items-center gap-2 flex-shrink-0">
 								<!-- An offered line (NeoResto lot 1, task 24) reads « Offert », in the guest's language (the server's word) -->
-								<span v-if="oItem.posa_is_offered" class="text-xs font-semibold text-[#A15A2E]">{{ oItem.offered_label }}</span>
+								<span v-if="oItem.posa_is_offered" class="text-xs font-semibold text-[#137949] dark:text-[#86E0A8]">{{ oItem.offered_label }}</span>
 								<span v-else class="text-xs text-gray-500">{{ formatPrice(oItem.amount ?? oItem.qty * oItem.rate) }}</span>
 								<!-- KDS Status Badge -->
 								<span
@@ -73,7 +73,7 @@
 					<div
 						v-for="(entry, index) in cart"
 						:key="'c-' + index"
-						class="bg-white rounded-xl border border-blue-200 p-3 shadow-sm"
+						class="bg-white rounded-xl border border-gray-200 p-3 shadow-sm"
 					>
 						<div class="flex items-start gap-3">
 							<div class="flex-1 min-w-0">
@@ -86,7 +86,7 @@
 										<span v-if="mod.additional_price"> (+{{ formatPrice(mod.additional_price) }})</span>
 									</p>
 								</div>
-								<p class="text-sm font-semibold text-blue-600 mt-1">
+								<p class="text-sm font-semibold text-gray-900 mt-1">
 									{{ formatPrice(entry.price * entry.qty) }}
 								</p>
 							</div>
@@ -105,7 +105,7 @@
 									</button>
 									<span class="text-sm font-bold text-gray-900 w-5 text-center">{{ entry.qty }}</span>
 									<button @click="guestStore.updateCartQty(index, entry.qty + 1)"
-										class="w-7 h-7 rounded-full border border-blue-400 flex items-center justify-center text-blue-600 active:bg-blue-50">
+										class="w-7 h-7 rounded-full border border-gray-400 flex items-center justify-center text-gray-900 active:bg-gray-100">
 										<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
 										</svg>
@@ -186,7 +186,7 @@ function getStatusStyle(status) {
 	const styles = {
 		"Pending": "background-color: #FEF3C7; color: #92400E;",
 		"Waiting": "background-color: #E0E7FF; color: #3730A3;",
-		"Preparing": "background-color: #DBEAFE; color: #a15a2e;",
+		"Preparing": "background-color: #DBEAFE; color: #1E40AF;",
 		"Ready": "background-color: #D1FAE5; color: #065F46;",
 		"Delivered": "background-color: #F3F4F6; color: #6B7280;",
 	}

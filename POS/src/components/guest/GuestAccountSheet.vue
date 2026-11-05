@@ -32,14 +32,14 @@
 				<p v-if="account.source === 'till'" class="text-xs text-gray-500 mt-1">
 					{{ __('Your server linked this table to your account.') }}
 				</p>
-				<div v-if="guestStore.settings?.has_loyalty_program && account.loyalty_program" class="mt-3 p-3 rounded-xl bg-blue-50 border border-blue-100">
-					<p class="text-xs text-blue-700 font-medium">{{ __('Loyalty points') }}</p>
-					<p class="text-2xl font-bold text-blue-900" data-test="account-points">{{ account.loyalty_points }}</p>
-					<p v-if="account.loyalty_value > 0" class="text-xs text-blue-700">
+				<div v-if="guestStore.settings?.has_loyalty_program && account.loyalty_program" class="mt-3 p-3 rounded-xl bg-gray-100 border border-gray-200">
+					<p class="text-xs text-gray-900 font-medium">{{ __('Loyalty points') }}</p>
+					<p class="text-2xl font-bold text-gray-900" data-test="account-points">{{ account.loyalty_points }}</p>
+					<p v-if="account.loyalty_value > 0" class="text-xs text-gray-900">
 						{{ __('Worth {0}', [formatPrice(account.loyalty_value)]) }}
 					</p>
 				</div>
-				<button v-if="!embedded" class="w-full mt-4 py-3 bg-blue-600 text-white font-semibold rounded-xl" data-test="account-done" @click="emit('close')">
+				<button v-if="!embedded" class="w-full mt-4 py-3 bg-gray-900 dark:bg-[#f3f3f3] dark:text-[#171717] text-white font-semibold rounded-xl" data-test="account-done" @click="emit('close')">
 					{{ __('Continue') }}
 				</button>
 			</template>
@@ -50,7 +50,7 @@
 					{{ __('You are signed in as {0}.', [guestStore.signedIn.full_name]) }}
 				</p>
 				<button
-					class="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl disabled:opacity-50"
+					class="w-full py-3 bg-gray-900 dark:bg-[#f3f3f3] dark:text-[#171717] text-white font-semibold rounded-xl disabled:opacity-50"
 					:disabled="busy"
 					data-test="account-continue-as"
 					@click="continueAs"
@@ -78,11 +78,11 @@
 					autocomplete="email"
 					:placeholder="__('your@email.com')"
 					data-test="account-email"
-					class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+					class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
 					@keyup.enter="sendCode"
 				/>
 				<button
-					class="w-full mt-3 py-3 bg-blue-600 text-white font-semibold rounded-xl disabled:opacity-50"
+					class="w-full mt-3 py-3 bg-gray-900 dark:bg-[#f3f3f3] dark:text-[#171717] text-white font-semibold rounded-xl disabled:opacity-50"
 					:disabled="busy || !email.trim()"
 					data-test="account-send-code"
 					@click="sendCode"
@@ -101,12 +101,12 @@
 					autocomplete="one-time-code"
 					:placeholder="__('Code')"
 					data-test="account-code"
-					class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-center text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500"
+					class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-center text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-gray-400"
 					@input="onCode($event.target.value)"
 					@keyup.enter="confirmCode"
 				/>
 				<button
-					class="w-full mt-3 py-3 bg-blue-600 text-white font-semibold rounded-xl disabled:opacity-50"
+					class="w-full mt-3 py-3 bg-gray-900 dark:bg-[#f3f3f3] dark:text-[#171717] text-white font-semibold rounded-xl disabled:opacity-50"
 					:disabled="busy || code.length < 6"
 					data-test="account-confirm"
 					@click="confirmCode"
@@ -130,7 +130,7 @@
 					autocomplete="name"
 					:placeholder="__('Your name')"
 					data-test="account-name"
-					class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+					class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
 				/>
 				<input
 					v-model="mobileNo"
@@ -138,10 +138,10 @@
 					autocomplete="tel"
 					:placeholder="__('Phone (optional)')"
 					data-test="account-phone"
-					class="w-full mt-2 px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+					class="w-full mt-2 px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
 				/>
 				<button
-					class="w-full mt-3 py-3 bg-blue-600 text-white font-semibold rounded-xl disabled:opacity-50"
+					class="w-full mt-3 py-3 bg-gray-900 dark:bg-[#f3f3f3] dark:text-[#171717] text-white font-semibold rounded-xl disabled:opacity-50"
 					:disabled="busy || !customerName.trim()"
 					data-test="account-register"
 					@click="register"

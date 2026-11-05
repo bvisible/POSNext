@@ -60,7 +60,7 @@
 						v-model="searchQuery"
 						type="text"
 						:placeholder="__('Search in menu...')"
-						class="w-full text-[11px] sm:text-sm border border-gray-300 rounded-neo-sm px-2 sm:px-3 py-2 ps-7 sm:ps-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+						class="w-full text-[11px] sm:text-sm border border-gray-300 rounded-neo-sm px-2 sm:px-3 py-2 ps-7 sm:ps-10 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all"
 					/>
 				</div>
 				<div class="flex items-center gap-0.5 bg-gray-100 rounded-neo-sm p-0.5 flex-shrink-0">
@@ -97,7 +97,7 @@
 							:class="[
 								'group relative border rounded-neo-md p-1.5 sm:p-2.5 touch-manipulation transition-[border-color,box-shadow] duration-100',
 								itemColor(item) ? 'tile--colored' : 'bg-white border-gray-200',
-								isOutOfStock(item) ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:shadow-neo-md ' + (itemColor(item) ? '' : 'hover:border-blue-400')
+								isOutOfStock(item) ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:shadow-neo-md ' + (itemColor(item) ? '' : 'hover:border-gray-400')
 							]"
 							:style="colorStyle(item)"
 						>
@@ -116,7 +116,7 @@
 								<p class="text-[10px] sm:text-xs font-semibold text-gray-900 truncate mb-0.5 leading-tight">{{ item.item_name }}</p>
 								<div class="text-[9px] sm:text-[10px] leading-tight flex items-center gap-1">
 									<span v-if="item.discount_percentage > 0" class="text-gray-400 line-through">{{ formatPrice(item.price || 0) }}</span>
-									<span class="font-semibold text-blue-600">{{ formatPrice(item.discounted_price || item.price || 0) }}</span>
+									<span class="font-semibold text-gray-900">{{ formatPrice(item.discounted_price || item.price || 0) }}</span>
 									<span v-if="item.discount_percentage > 0" class="text-[8px] font-bold text-green-700 bg-green-100 px-1 py-0.5 rounded">-{{ item.discount_percentage }}%</span>
 								</div>
 							</div>
@@ -138,7 +138,7 @@
 						:class="[
 							'flex items-center gap-3 px-2 py-2 border-b border-gray-100 bg-white transition-colors',
 							itemColor(item) ? 'row--colored' : '',
-							isOutOfStock(item) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-50 cursor-pointer'
+							isOutOfStock(item) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer'
 						]"
 						:style="colorStyle(item)"
 					>
@@ -157,7 +157,7 @@
 							<span v-if="item.discount_percentage > 0" class="text-[10px] text-gray-400 line-through">{{ formatPrice(item.price || 0) }}</span>
 							<div class="flex items-center gap-1">
 								<span v-if="item.discount_percentage > 0" class="text-[9px] font-bold text-green-700 bg-green-100 px-1 py-0.5 rounded">-{{ item.discount_percentage }}%</span>
-								<span class="text-xs font-bold text-blue-600">{{ formatPrice(item.discounted_price || item.price || 0) }}</span>
+								<span class="text-xs font-bold text-gray-900">{{ formatPrice(item.discounted_price || item.price || 0) }}</span>
 							</div>
 						</div>
 					</div>
@@ -180,7 +180,7 @@
 							<h2 class="text-lg font-bold text-gray-900">{{ selectedItem.item_name }}</h2>
 							<div class="flex items-center gap-2">
 								<span v-if="selectedItem.discount_percentage > 0" class="text-sm text-gray-400 line-through">{{ formatPrice(selectedItem.price || 0) }}</span>
-								<span class="text-base font-semibold text-blue-600">{{ formatPrice(selectedItem.discounted_price || selectedItem.price || 0) }}</span>
+								<span class="text-base font-semibold text-gray-900">{{ formatPrice(selectedItem.discounted_price || selectedItem.price || 0) }}</span>
 								<span v-if="selectedItem.discount_percentage > 0" class="text-[10px] font-bold text-green-700 bg-green-100 px-1.5 py-0.5 rounded">-{{ selectedItem.discount_percentage }}%</span>
 							</div>
 							<p v-if="selectedItem.description" class="text-sm text-gray-500 mt-0.5">{{ selectedItem.description }}</p>
@@ -204,7 +204,7 @@
 									v-for="option in group.options || []"
 									:key="option.option_name"
 									class="flex items-center justify-between p-2.5 border border-gray-200 rounded-lg cursor-pointer transition-colors"
-									:class="isOptionSelected(group.group_name, option.option_name) ? 'border-blue-500 bg-blue-50' : ''"
+									:class="isOptionSelected(group.group_name, option.option_name) ? 'border-gray-900 dark:border-[#f3f3f3] bg-gray-100' : ''"
 								>
 									<div class="flex items-center gap-2.5">
 										<input
@@ -212,7 +212,7 @@
 											type="checkbox"
 											:checked="isOptionSelected(group.group_name, option.option_name)"
 											@change="toggleOption(group, option)"
-											class="w-4 h-4 text-blue-600 rounded"
+											class="w-4 h-4 text-gray-900 rounded"
 										/>
 										<input
 											v-else
@@ -220,7 +220,7 @@
 											:name="`group-${group.group_name}`"
 											:checked="isOptionSelected(group.group_name, option.option_name)"
 											@change="selectOption(group, option)"
-											class="w-4 h-4 text-blue-600"
+											class="w-4 h-4 text-gray-900"
 										/>
 										<span class="text-sm text-gray-800">{{ option.option_name }}</span>
 									</div>
@@ -246,7 +246,7 @@
 							<span class="text-2xl font-bold text-gray-900 w-8 text-center">{{ itemQty }}</span>
 							<button
 								@click="itemQty++"
-								class="w-10 h-10 rounded-full border-2 border-blue-500 flex items-center justify-center text-blue-600 active:bg-blue-50"
+								class="w-10 h-10 rounded-full border-2 border-gray-900 dark:border-[#f3f3f3] flex items-center justify-center text-gray-900 active:bg-gray-100"
 							>
 								<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
@@ -256,7 +256,7 @@
 						<button
 							@click="addToCartAndClose"
 							:disabled="!isOptionsValid"
-							class="w-full py-3.5 bg-blue-600 text-white font-semibold rounded-xl active:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+							class="w-full py-3.5 bg-gray-900 dark:bg-[#f3f3f3] dark:text-[#171717] text-white font-semibold rounded-xl active:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 						>
 							{{ __('Add to cart') }} — {{ formatPrice(itemTotal) }}
 						</button>
