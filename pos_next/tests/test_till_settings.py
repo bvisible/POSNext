@@ -853,6 +853,39 @@ class TestTileHeight(TillSettingsCase):
 		self.assertEqual(_get_pos_settings(profile)["tile_height"], "Compact")
 
 
+class TestTheLinesOfTheCart(TillSettingsCase):
+	"""How the lines of the cart look at a restaurant till (POS Settings.cart_compact_lines and cart_pictures; NeoResto lot 1, product owner, 05.11.2026)."""
+
+	def test_a_restaurant_till_starts_with_compact_lines_and_their_pictures(self):
+		stored = self.stored_settings(self.restaurant_till, "cart_compact_lines", "cart_pictures")
+		self.assertEqual((stored.cart_compact_lines, stored.cart_pictures), (1, 1))
+		self.as_user(TILL_MANAGER)
+		values = get_till_settings(self.restaurant_till)["values"]
+		self.assertEqual((values["cart_compact_lines"], values["cart_pictures"]), (1, 1))
+
+	def test_the_screen_offers_both_as_checks_to_a_restaurant_till_only(self):
+		self.as_user(TILL_MANAGER)
+		on_the_restaurant_till = by_key(get_till_settings(self.restaurant_till))
+		on_the_shop_till = by_key(get_till_settings(self.shop_till))
+
+		for key in ("cart_compact_lines", "cart_pictures"):
+			with self.subTest(key=key):
+				self.assertEqual(registry.get(key).widget, "check")
+				self.assertIn(key, on_the_restaurant_till)
+				self.assertNotIn(key, on_the_shop_till)
+
+	def test_a_manager_switches_them_off_and_the_bootstrap_hands_them_to_the_till(self):
+		from pos_next.api.bootstrap import _get_pos_settings
+
+		frappe.db.set_value(
+			"POS Settings",
+			{"pos_profile": self.restaurant_till},
+			{"cart_compact_lines": 0, "cart_pictures": 0},
+		)
+		settings = _get_pos_settings(frappe.get_doc("POS Profile", self.restaurant_till))
+		self.assertEqual((settings["cart_compact_lines"], settings["cart_pictures"]), (0, 0))
+
+
 class TestTheLockAndTheStaffSession(TillSettingsCase):
 	"""The lock of the till and the days it keeps its staff signed in were fields of the old settings dialog before they were
 	settings of the list (NeoResto lot 1, 01.11.2026): the list holds the same ranges as the document and the session."""

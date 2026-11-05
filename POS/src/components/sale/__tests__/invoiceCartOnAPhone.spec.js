@@ -89,12 +89,15 @@ describe("the cart on a phone", () => {
 	const thumbnail = (line) => line.find(".rounded-lg.flex-shrink-0")
 	const unitPrice = (line) => line.find("span.inline-flex.tabular-nums")
 
+	// The restaurant till's lines are compact by default (05.11.2026, utils/cartLayout.js): a dish with neither a photo nor a colour draws no thumbnail at any width. The `max-sm:hidden` of the
+	// comfortable line (the till switched the compact lines off) is read in invoiceCartCompactLines.spec.js
 	it("draws no thumbnail for a dish with no photo, and keeps the photo of one that has it", () => {
 		cart.addItem(dish("PLAIN"))
 		cart.addItem(dish("PHOTO", { image: "/files/photo.jpg" }))
 		mountCart()
 
-		expect(thumbnail(lineOf("PLAIN")).classes()).toContain("max-sm:hidden")
+		expect(thumbnail(lineOf("PLAIN")).exists()).toBe(false)
+		expect(thumbnail(lineOf("PHOTO")).exists()).toBe(true)
 		expect(thumbnail(lineOf("PHOTO")).classes()).not.toContain("max-sm:hidden")
 	})
 

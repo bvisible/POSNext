@@ -1390,10 +1390,12 @@
 								? 'border-blue-400 bg-blue-50'
 								: 'border-gray-200 hover:border-blue-300',
 							lineSaving(item) > 0 ? 'border-s-[3px] border-s-[#0f7a4a]' : '',
-							item.kds_status === 'Delivered' ? 'opacity-50' : '',
-						]"
-					>
-						<div class="flex gap-2">
+								item.kds_status === 'Delivered' ? 'opacity-50' : '',
+								cartLineClassesOf(item),
+							]"
+						>
+							<!-- //// Neoffice — the compact line of a restaurant till (NeoResto lot 1, product owner, 05.11.2026: « une ligne par article »): the `data-cart-*` marks tell the style below which part is which; it only lays them out in a grid when the card carries `cart-line--compact` (utils/cartLayout.js). -->
+							<div class="flex gap-2 cart-line-body">
 							<!-- Item Image Thumbnail -->
 							<!-- //// Neoffice — [IMG] the cart thumbnail paints the Item's custom_color when it -->
 							<!-- //// has no photo; upstream drew a placeholder icon, which made a restaurant cart -->
@@ -1402,8 +1404,10 @@
 							<!-- //// Neoffice — on a phone a dish with no photo draws no thumbnail at all (kitchen test, 01.11): the grey square with the first eight -->
 							<!-- //// letters of the name took 52px of a 340px line and said nothing the name beside it did not say. A photo still shows. -->
 							<div
-								class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden border border-gray-200"
-								:class="item.image ? '' : 'max-sm:hidden'"
+									v-if="lineShowsThumbOf(item)"
+									data-cart-thumb
+									class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden border border-gray-200"
+									:class="item.image ? '' : 'max-sm:hidden'"
 								:style="
 									item.image
 										? {}
@@ -1444,20 +1448,22 @@
 								</span>
 							</div>
 
-							<div class="flex-1 min-w-0">
+							<!-- //// Neoffice — compact cart line, the wrapper that lets the grid place the name, the total and the details (NeoResto lot 1, product owner, 05.11.2026) -->
+							<div class="flex-1 min-w-0 cart-line-main">
 								<!-- Name and line total; the total wraps under the name below 1100px -->
 								<!-- //// Neoffice — except on a phone (under 640px), where the cart is the whole screen: the total stays at the right of the name, on one row (kitchen test, 01.11). -->
-								<div class="flex flex-row sm:flex-col min-[1100px]:flex-row min-[1100px]:items-start gap-x-2">
+								<div class="flex flex-row sm:flex-col min-[1100px]:flex-row min-[1100px]:items-start gap-x-2 cart-line-head">
 									<!-- //// Neoffice — a delivered line is struck through where the cart is drawn by course (isStruck), its name and its total: what is done is crossed out, as on the kitchen's ticket -->
 									<h4
-										dir="auto"
-										class="flex-1 min-w-0 text-sm font-semibold text-gray-900 leading-snug line-clamp-2"
+											dir="auto"
+											data-cart-name
+											class="flex-1 min-w-0 text-sm font-semibold text-gray-900 leading-snug line-clamp-2"
 										:class="isStruck(item) ? 'line-through' : ''"
 									>
 										{{ item.item_name }}
 									</h4>
 									<!-- //// Neoffice — the total is right-aligned on a phone, where it stands beside the name -->
-									<div class="flex-shrink-0 tabular-nums max-sm:text-end min-[1100px]:text-end">
+									<div data-cart-total class="flex-shrink-0 tabular-nums max-sm:text-end min-[1100px]:text-end">
 										<div class="text-base font-bold text-[#1d2433]" :class="isStruck(item) ? 'line-through' : ''">
 											{{ formatCurrency(getLineAmount(item)) }}
 										</div>
@@ -1468,9 +1474,11 @@
 								</div>
 
 								<!-- Meta row: unit price, gift split, batch, serial, unit -->
+								<!-- //// Neoffice — compact cart line, the quantity × price row is placed by the grid (NeoResto lot 1, product owner, 05.11.2026) -->
 								<div
-									class="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-gray-600 mt-0.5"
-								>
+										data-cart-meta
+										class="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-gray-600 mt-0.5"
+									>
 									<!-- Quantity × price as separate boxes, so they order with the page direction -->
 									<!-- //// Neoffice — « 1 × CHF 21.50 » repeats the line's total, so on a phone it only shows when the quantity is not one or a price is struck out (kitchen test, 01.11). -->
 									<span
@@ -1540,9 +1548,10 @@
 										(item.preparation_station && restaurantStore.isEnabled) ||
 										(cartStore.restaurantTable && lineShowsKitchenState(item)) ||
 										showFamilyChip(item)
-									"
-									class="flex flex-wrap items-center gap-1 mt-0.5"
-								>
+										"
+										data-cart-chips
+										class="flex flex-wrap items-center gap-1 mt-0.5"
+									>
 									<!-- Special Instructions Badge (Restaurant mode) -->
 									<span
 										v-if="item.posa_special_instructions"
@@ -1585,18 +1594,23 @@
 									</span>
 								</div>
 								<!-- Item Modifiers Summary -->
+								<!-- //// Neoffice — compact cart line, the options row is placed by the grid (NeoResto lot 1, product owner, 05.11.2026) -->
 								<div
 									v-if="item.posa_item_modifiers && restaurantStore.isEnabled"
-									class="text-[10px] text-gray-500 mt-0.5 truncate"
+										data-cart-mods
+										class="text-[10px] text-gray-500 mt-0.5 truncate"
 								>
 									{{ formatModifiers(item.posa_item_modifiers) }}
 								</div>
 
 								<!-- Controls: quantity, unit, remove -->
-								<div class="flex items-center gap-2 mt-1.5" @click.stop>
+								<!-- //// Neoffice — compact cart line, the controls row hands its parts to the grid (NeoResto lot 1, product owner, 05.11.2026) -->
+								<div class="flex items-center gap-2 mt-1.5 cart-line-controls" @click.stop>
 									<!-- Serial items: count + edit serials -->
+									<!-- //// Neoffice — compact cart line, a serial count is placed like the stepper (NeoResto lot 1, product owner, 05.11.2026) -->
 									<div
 										v-if="item.has_serial_no && item.serial_no"
+										data-cart-serial
 										class="flex items-center gap-1"
 									>
 										<span
@@ -1615,8 +1629,10 @@
 										</button>
 									</div>
 									<!-- Quantity stepper (total units, including a carved gift) -->
+									<!-- //// Neoffice — compact cart line, the quantity stepper is placed by the grid (NeoResto lot 1, product owner, 05.11.2026) -->
 									<div
 										v-else
+										data-cart-stepper
 										:class="[
 											'flex items-center border rounded-md overflow-hidden',
 											item.is_resolved_barcode
@@ -1674,8 +1690,10 @@
 									</div>
 
 									<!-- UOM Selector Dropdown (only when the item has other units) -->
+									<!-- //// Neoffice — compact cart line, the unit selector is placed by the grid (NeoResto lot 1, product owner, 05.11.2026) -->
 									<div
 										v-if="item.item_uoms && item.item_uoms.length > 0"
+										data-cart-uom
 										class="relative group/uom"
 									>
 										<button
@@ -1725,6 +1743,7 @@
 									<!-- //// kitchen on its own (a restaurant sends courses one at a time) and add a note or -->
 									<!-- //// product option (c7f6932c + 87f168fe, 2026-03-20/23; 4df0caf1). The line shown is a copy -->
 									<!-- //// (nestFreeRows): both hand over the cart row behind it (cartRowOf, osiris 30.10.2026). -->
+									<div class="contents cart-line-actions">
 									<button
 										v-if="cartStore.restaurantTable && item.kds_status === 'Waiting'"
 										type="button"
@@ -1752,12 +1771,15 @@
 									>
 										<FeatherIcon name="edit-3" class="w-4 h-4" />
 									</button>
+									<!-- //// Neoffice — compact cart line, closes the group of the note and send buttons (NeoResto lot 1, product owner, 05.11.2026) -->
+									</div>
 									<!-- //// Neoffice — [CART] emits the item OBJECT, not (item_code, uom): with product options -->
 									<!-- //// the same item_code sits on several cart lines, and removing by code deleted the wrong -->
 									<!-- //// one (7e1376a3, 2026-03-31 "remove deletes only one item (by ref)"). The line shown is -->
 									<!-- //// a copy (nestFreeRows): emit the cart row behind it, or the bin does nothing (30.10.2026). -->
 									<button
 										type="button"
+										data-cart-remove
 										@click="$emit('remove-item', cartRowOf(item))"
 										:class="[
 											'w-10 h-10 max-[1100px]:w-11 max-[1100px]:h-11 flex items-center justify-center rounded-md text-gray-500 hover:text-red-700 hover:bg-red-50 touch-manipulation',
@@ -1772,10 +1794,12 @@
 
 								<!-- Saving: its own full-size line with the offer name -->
 								<!-- Saving: what the customer gets and keeps; the offer's name on its own line -->
+								<!-- //// Neoffice — compact cart line, the offer line spans the whole card (NeoResto lot 1, product owner, 05.11.2026) -->
 								<div
-									v-if="lineSaving(item) > 0"
-									class="mt-1.5 rounded-md bg-[#e9f5ef] px-2 py-1 text-sm text-[#0f7a4a]"
-								>
+										v-if="lineSaving(item) > 0"
+										data-cart-saving
+										class="mt-1.5 rounded-md bg-[#e9f5ef] px-2 py-1 text-sm text-[#0f7a4a]"
+									>
 									<div class="flex items-center justify-between gap-2">
 										<span class="flex items-center gap-1.5 min-w-0 font-bold">
 											<FeatherIcon
@@ -2321,6 +2345,8 @@ import { usePOSOffersStore } from "@/stores/posOffers";
 import { useCustomerSearchStore } from "@/stores/customerSearch";
 //// Neoffice — feat: Phase 1 restaurant module - header toggle, UI cleanup, multi-room tabs (8aa35c29, 2026-03-20).
 import { useRestaurantStore } from "@/stores/restaurant";
+//// Neoffice — the compact lines of a restaurant till's cart (NeoResto lot 1, 05.11.2026)
+import { cartIsCompact, cartLineClasses, cartShowsPictures, lineShowsThumb } from "@/utils/cartLayout";
 import { isLightColor } from "@/utils/itemColors";
 //// Neoffice — the row actions hand over the cart row behind a shown copy (utils/cartRow.js).
 import { cartRowOf, rowKeyOf } from "@/utils/cartRow";
@@ -2378,6 +2404,11 @@ const offersStore = usePOSOffersStore(); // Pinia store for offers/promotions
 const customerSearchStore = useCustomerSearchStore(); // Pinia store for customer search
 //// Neoffice — feat: Phase 1 restaurant module - header toggle, UI cleanup, multi-room tabs (8aa35c29, 2026-03-20).
 const restaurantStore = useRestaurantStore(); // Pinia store for restaurant features
+//// Neoffice — how the lines of the cart look at a restaurant till (NeoResto lot 1, product owner, 05.11.2026): compact lines (one row per article) and their pictures, two settings of the till (utils/cartLayout.js)
+const cartCompact = computed(() => cartIsCompact(settingsStore.settings, restaurantStore.isEnabled));
+const cartPictures = computed(() => cartShowsPictures(settingsStore.settings));
+const cartLineClassesOf = (item) => cartLineClasses(item, { compact: cartCompact.value, pictures: cartPictures.value });
+const lineShowsThumbOf = (item) => lineShowsThumb(item, { compact: cartCompact.value, pictures: cartPictures.value });
 //// Neoffice — whether the table shows the kitchen's state on a line: not for a station that works on paper alone (NeoResto lot 1, Daniel, 02.11.2026)
 const lineShowsKitchenState = (item) => showsKitchenState(item, restaurantStore.isPaperOnly);
 const { formatQuantity, formatDate } = useFormatters(); // Quantity and date formatting utilities
@@ -3852,3 +3883,184 @@ defineExpose({
 });
 </script>
 ```
+
+<style scoped>
+/* //// Neoffice — the compact line of a restaurant till's cart (NeoResto lot 1, product owner, 05.11.2026: « on voit 3 choses par ticket, c'est pas terrible », « la quantité est plus
+   //// importante visuellement que le texte »). The card holds one grid and its parts sit where the grid says (`data-cart-*`, see utils/cartLayout.js): on one row the name, the quantity, the
+   //// total and the bin; under it the chips of the kitchen and the notes' buttons; under those the quantity × price, the options and the offer. Wide enough (the card measures its OWN width, so the
+   //// phone, the tablet and a narrowed cart each get their own): everything of the first row on one row; narrower: the name and the total on the first row, the quantity and the buttons under
+   //// them. Only a card that carries `cart-line--compact` is touched: a shop's cart keeps the lines it always had. */
+.cart-line {
+	container-type: inline-size;
+}
+
+.cart-line--compact {
+	padding: 0.375rem 0.5rem;
+}
+
+.cart-line--compact .cart-line-body {
+	display: grid;
+	grid-template-columns: 2rem minmax(0, 1fr) auto auto auto;
+	align-items: center;
+	column-gap: 0.5rem;
+	row-gap: 0.125rem;
+}
+
+/* No thumbnail: its column is not there, and the gap that followed it with it */
+.cart-line--no-thumb .cart-line-body {
+	grid-template-columns: 0 minmax(0, 1fr) auto auto auto;
+	margin-inline-start: -0.5rem;
+}
+
+.cart-line--compact .cart-line-main,
+.cart-line--compact .cart-line-head,
+.cart-line--compact .cart-line-controls {
+	display: contents;
+}
+
+.cart-line--compact [data-cart-thumb] {
+	grid-column: 1;
+	grid-row: 1;
+	width: 2rem;
+	height: 2rem;
+}
+
+/* The first letters of the name over the colour said nothing the name does not say */
+.cart-line--compact [data-cart-thumb] span {
+	display: none;
+}
+
+.cart-line--compact [data-cart-name] {
+	grid-column: 2;
+	grid-row: 1;
+	font-size: 0.875rem;
+	line-height: 1.2;
+}
+
+.cart-line--compact [data-cart-stepper],
+.cart-line--compact [data-cart-serial] {
+	grid-column: 3;
+	grid-row: 1;
+}
+
+/* The quantity is a control, not a headline: a stepper as tall as a finger needs and no wider than its three parts */
+.cart-line--compact [data-cart-stepper] button {
+	width: 2rem;
+	height: 2.25rem;
+}
+
+.cart-line--compact [data-cart-stepper] input {
+	width: 2.25rem;
+	height: 2.25rem;
+	font-size: 0.875rem;
+}
+
+.cart-line--compact [data-cart-total] {
+	grid-column: 4;
+	grid-row: 1;
+	min-width: 3.5rem;
+	text-align: end;
+}
+
+.cart-line--compact [data-cart-total] > div:first-child {
+	font-size: 0.9375rem;
+}
+
+.cart-line--compact [data-cart-remove] {
+	grid-column: 5;
+	grid-row: 1;
+}
+
+.cart-line--compact [data-cart-remove],
+.cart-line--compact .cart-line-actions button {
+	width: 2rem;
+	height: 2rem;
+}
+
+.cart-line--compact [data-cart-chips] {
+	grid-column: 2 / 4;
+	grid-row: 2;
+	margin-top: 0;
+}
+
+.cart-line--compact .cart-line-actions {
+	display: flex;
+	align-items: center;
+	grid-column: 4 / 6;
+	grid-row: 2;
+	justify-self: end;
+}
+
+.cart-line--compact [data-cart-meta] {
+	grid-column: 2 / -1;
+	grid-row: 3;
+	margin-top: 0;
+}
+
+.cart-line--compact [data-cart-mods] {
+	grid-column: 2 / -1;
+	grid-row: 4;
+	margin-top: 0;
+}
+
+.cart-line--compact [data-cart-uom] {
+	grid-column: 2 / -1;
+	grid-row: 5;
+	justify-self: start;
+}
+
+.cart-line--compact [data-cart-saving] {
+	grid-column: 1 / -1;
+	grid-row: 6;
+	margin-top: 0.25rem;
+}
+
+/* A narrow card (a phone, a cart squeezed by the menu): the name and the total keep the first row, the quantity and the buttons go under them */
+@container (max-width: 23.75rem) {
+	.cart-line--compact [data-cart-name] {
+		grid-column: 2 / 5;
+	}
+
+	.cart-line--compact [data-cart-total] {
+		grid-column: 5;
+	}
+
+	.cart-line--compact [data-cart-stepper],
+	.cart-line--compact [data-cart-serial] {
+		grid-column: 1 / 4;
+		grid-row: 2;
+		justify-self: start;
+	}
+
+	.cart-line--compact .cart-line-actions {
+		grid-column: 4;
+		grid-row: 2;
+	}
+
+	.cart-line--compact [data-cart-remove] {
+		grid-column: 5;
+		grid-row: 2;
+	}
+
+	.cart-line--compact [data-cart-chips] {
+		grid-column: 1 / -1;
+		grid-row: 3;
+	}
+
+	.cart-line--compact [data-cart-meta] {
+		grid-row: 4;
+	}
+
+	.cart-line--compact [data-cart-mods] {
+		grid-row: 5;
+	}
+
+	.cart-line--compact [data-cart-uom] {
+		grid-row: 6;
+	}
+
+	.cart-line--compact [data-cart-saving] {
+		grid-row: 7;
+	}
+}
+</style>

@@ -77,6 +77,8 @@
   "till_card_pictures",
   "tile_colors",
   "tile_height",
+  "cart_compact_lines",
+  "cart_pictures",
   "show_customer_balance",
   "column_break_display",
   "hide_expected_amount",
@@ -644,6 +646,22 @@
    "options": "Compact\nStandard\nLarge"
   },
   {
+   "default": "1",
+   "depends_on": "eval:doc.enable_restaurant_mode",
+   "description": "Each line of the cart is one row: the name, the quantity and the price, with the details under it, so that the whole order is seen at a glance. Off: the taller lines, the buttons under the name.",
+   "fieldname": "cart_compact_lines",
+   "fieldtype": "Check",
+   "label": "Compact cart lines"
+  },
+  {
+   "default": "1",
+   "depends_on": "eval:doc.enable_restaurant_mode",
+   "description": "Each line of the cart shows the picture of the item, or its colour. Off: the name only, so that more of the name fits on the line.",
+   "fieldname": "cart_pictures",
+   "fieldtype": "Check",
+   "label": "Pictures in the cart"
+  },
+  {
    "default": "0",
    "description": "Display customer balance on screen",
    "fieldname": "show_customer_balance",
@@ -951,7 +969,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-05 13:00:00.000000",
+ "modified": "2026-11-05 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "POS Settings",

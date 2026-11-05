@@ -972,6 +972,32 @@ SETTINGS = (
 		till=RESTAURANT_TILL,
 		options=TILE_HEIGHT,
 	),
+	# //// Neoffice — how the lines of the cart look at a restaurant till (NeoResto lot 1, product owner, 05.11.2026: « on voit 3 choses par ticket, c'est pas terrible », « la quantité est
+	# //// plus importante visuellement que le texte »): one compact row per article, and the picture of the article or not
+	Setting(
+		"cart_compact_lines",
+		"items",
+		_lt("Compact cart lines"),
+		_lt(
+			"Each line of the cart is one row: the name, the quantity and the price, with the details under it, so that"
+			" the whole order is seen at a glance. Off: the taller lines, the buttons under the name."
+		),
+		"check",
+		doctype=POS_SETTINGS,
+		till=RESTAURANT_TILL,
+	),
+	Setting(
+		"cart_pictures",
+		"items",
+		_lt("Pictures in the cart"),
+		_lt(
+			"Each line of the cart shows the picture of the item, or its colour. Off: the name only, so that more of the"
+			" name fits on the line."
+		),
+		"check",
+		doctype=POS_SETTINGS,
+		till=RESTAURANT_TILL,
+	),
 	# A phone shows the restaurant card as buttons without pictures unless the till asks for them
 	# (NeoResto lot 1, task 27; design § G: « no pictures by default, a setting with or without »)
 	Setting(

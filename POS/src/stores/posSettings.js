@@ -118,6 +118,9 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		tiles_per_row: "Automatic",
 		//// Neoffice — how tall the restaurant card's tiles are: "Compact", "Standard" or "Large" (the till's « Tile height », product owner, 05.11.2026). Seeded Standard until the server says so.
 		tile_height: "Standard",
+		//// Neoffice — how the lines of a restaurant till's cart look (the till's « Compact cart lines » and « Pictures in the cart », product owner, 05.11.2026): both on until the server says so.
+		cart_compact_lines: 1,
+		cart_pictures: 1,
 		//// Neoffice — the till's « Block a sale beyond the stock » (its POS Profile's box, sent with the settings,
 		//// ruling 82): ticked until the server says, as the field's default.
 		posa_block_sale_beyond_available_qty: 1,
@@ -434,6 +437,8 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 			//// guard's box ticked (ruling 82).
 			tiles_per_row: "Automatic",
 			tile_height: "Standard",
+			cart_compact_lines: 1,
+			cart_pictures: 1,
 			posa_block_sale_beyond_available_qty: 1,
 		};
 		isLoaded.value = false;
