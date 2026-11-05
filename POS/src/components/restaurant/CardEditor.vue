@@ -91,17 +91,18 @@
 					</div>
 
 					<!-- Right: Card detail editor -->
-					<div class="flex-1 border rounded-xl p-4 overflow-y-auto bg-gray-50/50">
-						<div v-if="!selectedCard" class="flex flex-col items-center justify-center h-full text-gray-400 py-12">
+					<!-- //// Neoffice — the card's title, its actions and the buttons that add a category, a sub-category or a dish stay at the top while the rows scroll under them (NeoResto lot 1, product owner, 05.11.2026: « les boutons qui sont tout au fond, catégorie, sous-catégorie, article. Il faut les mettre en haut […] c'est absurde que ce soit en bas »): the pane no longer scrolls as a whole, only the rows do. -->
+					<div class="flex-1 min-w-0 flex flex-col border rounded-xl overflow-hidden bg-gray-50/50">
+						<div v-if="!selectedCard" class="flex flex-col items-center justify-center flex-1 text-gray-400 p-4 py-12">
 							<svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
 							</svg>
 							<p class="text-base">{{ __("Select a card to edit") }}</p>
 						</div>
 
-						<div v-else-if="cardDetail">
+						<div v-else-if="cardDetail" class="flex flex-col flex-1 min-h-0">
 							<!-- Card header -->
-							<div class="mb-4 border-b pb-3">
+							<div class="shrink-0 border-b bg-white px-4 pt-4 pb-3">
 								<div class="flex items-center justify-between">
 									<div class="flex items-center gap-2">
 										<input v-if="editingName" v-model="cardDetail.card_name" ref="nameInput"
@@ -193,8 +194,23 @@
 										{{ __("Always visible in POS, regardless of time slots") }}
 									</span>
 								</div>
+								<!-- Add: a category, a sub-category under it, a dish -->
+								<div class="flex flex-wrap items-center gap-2 mt-3" data-card-toolbar>
+									<button @click="openCategoryDialog(false)" data-add-category class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">
+										<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+										{{ __("Category") }}
+									</button>
+									<button data-add-subcategory @click="openCategoryDialog(true)" class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">
+										<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+										{{ __("Sub-category") }}
+									</button>
+									<button @click="showItemSearchDialog = true" data-add-item class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">
+										<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+										{{ __("Item") }}
+									</button>
+								</div>
 							</div>
-
+							<div class="flex-1 min-h-0 overflow-y-auto p-4">
 							<!-- Card items -->
 							<!-- //// Neoffice — what a row says without a click (NeoResto lot 1, product owner, 03.11.2026: « sans aucun clic, on ne voit pas grand-chose »): the picture or the colour of the dish, its name and its code,
 							     //// its family, its description and badges, its price (the card's, else the global one in grey), and a heading may be a sub-category, one level under the category above it -->
@@ -304,30 +320,6 @@
 									</button>
 								</div>
 							</div>
-
-							<!-- Add buttons -->
-							<div class="flex gap-2 mt-4">
-								<button @click="openCategoryDialog(false)"
-									class="flex-1 py-2 text-sm font-medium text-amber-700 bg-amber-50 rounded-lg border border-dashed border-amber-300 hover:bg-amber-100 transition-colors flex items-center justify-center gap-1">
-									<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-									</svg>
-									{{ __("Category") }}
-								</button>
-								<button data-add-subcategory @click="openCategoryDialog(true)"
-									class="flex-1 py-2 text-sm font-medium text-amber-700 bg-amber-50 rounded-lg border border-dashed border-amber-300 hover:bg-amber-100 transition-colors flex items-center justify-center gap-1">
-									<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-									</svg>
-									{{ __("Sub-category") }}
-								</button>
-								<button @click="showItemSearchDialog = true"
-									class="flex-1 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg border border-dashed border-blue-300 hover:bg-blue-100 transition-colors flex items-center justify-center gap-1">
-									<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-									</svg>
-									{{ __("Item") }}
-								</button>
 							</div>
 						</div>
 					</div>
