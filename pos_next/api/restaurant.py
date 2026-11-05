@@ -335,9 +335,10 @@ def set_table_covers(invoice, covers):
 	from pos_next.api.cash_entry import require_document_till
 
 	require_document_till("Sales Invoice", invoice)
-	order = isinstance(invoice, str) and frappe.db.get_value(
-		"Sales Invoice", invoice, ["name", "docstatus", "restaurant_table"], as_dict=True
-	)
+	# A body that is not a name (a JSON list or dict would be read by the query as a filter) names no invoice
+	if not isinstance(invoice, str):
+		frappe.throw(_("Sales Invoice {0} not found").format(invoice), frappe.DoesNotExistError)
+	order = frappe.db.get_value("Sales Invoice", invoice, ["name", "docstatus", "restaurant_table"], as_dict=True)
 	if not order:
 		frappe.throw(_("Sales Invoice {0} not found").format(invoice), frappe.DoesNotExistError)
 	if order.docstatus != 0 or not order.restaurant_table:
@@ -975,7 +976,7 @@ def _offered_fields():
 
 
 @frappe.whitelist()
-def get_table_order(table_name):
+def get_table_order(table_name: str):
 	"""Get the active invoice for a specific table (draft or recently submitted)."""
 	# //// Neoffice — its caller is the till (POSSale, useInvoice), so only the till's users pass
 	# //// (cash_entry.require_till_user).
@@ -1777,7 +1778,7 @@ def delete_station(name):
 
 
 @frappe.whitelist()
-def open_table(table_name, pos_profile, customer=None):
+def open_table(table_name: str, pos_profile, customer=None):
 	"""Open a table by creating a draft Sales Invoice linked to it.
 	Returns the existing draft if one already exists for this table.
 	"""
@@ -3106,7 +3107,7 @@ def get_next_step(station_name, current_step, item_code=None):
 
 
 @frappe.whitelist()
-def get_runner_orders(area=None, restaurant=None):
+def get_runner_orders(area: str | None = None, restaurant=None):
 	"""Fetch orders with items ready for pickup (at last workflow step, not yet Delivered).
 
 	Args:
