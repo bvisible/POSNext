@@ -292,12 +292,14 @@
 											the image on top; the grid handles RTL on its own, so the image
 											sits on the end side in both directions.
 										-->
+										<!-- //// Neoffice — the picture is a small thumbnail at the end of the form (NeoResto lot 1, product owner, 05.11.2026: « l'image du produit, on peut faire ça beaucoup plus petit […] on n'arrive pas à avoir la totalité de l'information »): upstream gave the 1fr column to the image, a square as wide as the dialog, and squeezed the fields into the narrow one, so the form ran far below the fold. -->
 										<div
-											class="grid items-start gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] min-[1536px]:grid-cols-[minmax(0,1fr)_minmax(340px,460px)]"
+											class="grid items-start gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(200px,240px)] min-[1536px]:grid-cols-[minmax(0,1fr)_minmax(220px,260px)]"
 										>
 											<!-- ============ IMAGE PANEL ============ -->
+											<!-- //// Neoffice — below xl the thumbnail is 180 px (it was 320), and from xl it is the second column, after the fields (`xl:order-last`; upstream's `xl:order-none` kept it first, in the wide column). -->
 											<aside
-												class="order-first w-full max-w-[320px] xl:order-none xl:max-w-none xl:sticky xl:top-0"
+												class="order-first w-full max-w-[180px] xl:order-last xl:max-w-none xl:sticky xl:top-0"
 											>
 												<input
 													type="file"
