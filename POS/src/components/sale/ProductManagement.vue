@@ -841,6 +841,7 @@ const rawItemGroupOptions = computed(() => {
 	const options = itemGroups.value
 		.filter((g) => !Number(g.is_group || 0))
 		.map((g) => ({ label: g.name, value: g.name }));
+	//// Neoffice — the item's own group, even a group node (see the note above)
 	const current = form.value.item_group;
 	if (current && !options.some((option) => option.value === current)) {
 		options.unshift({ label: current, value: current });
