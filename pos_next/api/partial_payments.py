@@ -1110,7 +1110,17 @@ def _has_pos_profile_access(pos_profile: str) -> bool:
 		"POS Profile User", {"parent": pos_profile, "user": frappe.session.user}
 	)
 
+	# //// Neoffice — see the check below (maintenance#2296).
+	from pos_next.api.cash_entry import reads_sales_invoices, user_permissions_leave_till
+
 	# Check if user has general Sales Invoice permission
-	has_general_access = frappe.has_permission("Sales Invoice", "read")
+	# //// Neoffice — the role, not a share, and the till left by the user's User Permissions: asked of the
+	# //// doctype alone, with no document, the check let a user kept to one company work at any till, and one
+	# //// shared invoice made a till user (maintenance#2296).
+	has_general_access = (
+		frappe.has_permission("Sales Invoice", "read")
+		and reads_sales_invoices()
+		and user_permissions_leave_till(pos_profile)
+	)
 
 	return bool(has_direct_access or has_general_access)

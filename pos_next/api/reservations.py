@@ -90,6 +90,9 @@ def get_reservations(date=None, area=None, status=None, restaurant=None):
 	permissions.require("Restaurant Reservation", "read")
 
 	restaurant = restaurant or scope.current_restaurant()
+	# //// Neoffice — the restaurant's own rule (maintenance#2296): `frappe.get_all` reads no User Permission,
+	# //// so a user kept to one restaurant read the guests of another by naming it
+	permissions.require_restaurant(restaurant)
 	if not date:
 		date = nowdate()
 
@@ -220,7 +223,8 @@ def create_reservation(
 
 
 @frappe.whitelist()
-def update_reservation_status(name, status, force=False):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def update_reservation_status(name: str | None, status, force=False):
 	"""Update reservation status (check-in, cancel, no-show, complete)."""
 	permissions.require("Restaurant Reservation", "write", name)
 
@@ -272,6 +276,12 @@ def check_table_availability(tables, date, time, duration, exclude=None):
 	permissions.require("Restaurant Reservation", "read")
 	if isinstance(tables, str):
 		tables = json.loads(tables)
+	# //// Neoffice — each table is named by a text, and read by whoever may read its restaurant: the answer
+	# //// names the guests booked on them (maintenance#2296).
+	for table in tables or []:
+		if not isinstance(table, str):
+			frappe.throw(_("Not permitted"), frappe.PermissionError)
+		permissions.require_restaurant(scope.restaurant_of_record("Restaurant Table", table))
 
 	from pos_next.pos_next.doctype.restaurant_reservation.restaurant_reservation import check_overlap
 	conflicts = check_overlap(
@@ -293,8 +303,11 @@ def get_reservation_stats(from_date, to_date, restaurant=None):
 	"""Get the reservation statistics of one restaurant (the till's own unless one is named) for a date range."""
 	permissions.require("Restaurant Reservation", "read")
 
+	# //// Neoffice — the restaurant's own rule, see get_reservations (maintenance#2296)
+	restaurant = restaurant or scope.current_restaurant()
+	permissions.require_restaurant(restaurant)
 	reservations = _reservations_of(
-		restaurant or scope.current_restaurant(),
+		restaurant,
 		filters={
 			"reservation_date": ["between", [from_date, to_date]],
 			# A booking its guest never confirmed was never one of the restaurant's: no booking, no no-show
@@ -466,6 +479,15 @@ def submit_guest_reservation(
 		# The statistics add the guests up: a booking for nobody, or for fewer than nobody, is no booking
 		frappe.throw(_("Please enter the number of guests"))
 
+	# //// Neoffice — the time first: read after the count below, a time the page does not offer gave a
+	# //// stranger, with no booking and no mail, one bit about any address (refused by the limits, or by the
+	# //// time) (maintenance#2296).
+	if not _reads_the_reservations_of(settings.get("name")):
+		# At a time the page offers, before the tables are looked at: « not available » answered at any second
+		# would
+		# draw the other guests' bookings (a staff account testing the page books at any time, as at the till)
+		_require_an_offered_time(settings, reservation_date, reservation_time)
+
 	# At most 3 bookings to come per address; refused in the words of the limits, so that the answer tells a stranger
 	# nothing about the bookings of an address
 	active_count = frappe.db.count(
@@ -482,11 +504,8 @@ def submit_guest_reservation(
 	# The restaurant's duration: a visitor who chose his own could keep every table from the opening to midnight
 	duration = _parse_duration(settings.default_reservation_duration or 5400)
 
-	if not _reads_the_reservations_of(settings.get("name")):
-		# At a time the page offers, before the tables are looked at: « not available » answered at any second would
-		# draw the other guests' bookings (a staff account testing the page books at any time, as at the till)
-		_require_an_offered_time(settings, reservation_date, reservation_time)
-
+	# //// Neoffice — the time the page offers is checked above, before the count of the address
+	# //// (maintenance#2296).
 	# Strict overlap check for web (no force override)
 	if tables:
 		from pos_next.pos_next.doctype.restaurant_reservation.restaurant_reservation import check_overlap

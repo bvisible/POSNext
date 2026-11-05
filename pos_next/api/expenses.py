@@ -28,7 +28,9 @@ EXPENSE_ACCOUNT_PAGE_LENGTH = 50
 
 
 @frappe.whitelist()
-def get_expense_dialog_data(pos_profile, pos_opening_shift):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+# permission-check: ok validate_open_shift proves the caller's own open shift at this till
+def get_expense_dialog_data(pos_profile: str | None, pos_opening_shift):
 	"""Return expense accounts and payment methods for the expense dialog."""
 	validate_pos_expense_enabled(pos_profile)
 	shift = validate_open_shift(pos_opening_shift, pos_profile)
@@ -71,10 +73,12 @@ def search_expense_accounts(pos_profile, pos_opening_shift, txt=None):
 PENDING_EXPENSE_TIMEOUT_MINUTES = 5
 
 
+# permission-check: ok validate_open_shift proves the caller's own open shift at this till
 @frappe.whitelist()
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
 def create_pos_expense(
 	pos_opening_shift,
-	pos_profile,
+	pos_profile: str | None,
 	expense_account,
 	amount,
 	mode_of_payment,
@@ -360,7 +364,8 @@ def _cleanup_failed_offline_expense_sync(sync_record_name):
 
 
 @frappe.whitelist()
-def cancel_pos_expense(journal_entry, pos_opening_shift, pos_profile, authorization_token=None):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def cancel_pos_expense(journal_entry: str | None, pos_opening_shift, pos_profile, authorization_token=None):
 	"""Cancel a POS expense Journal Entry while the opening shift is still open.
 
 	Refused once the shift is closed so closing totals and payment reconciliation
@@ -416,7 +421,9 @@ def cancel_pos_expense(journal_entry, pos_opening_shift, pos_profile, authorizat
 
 
 @frappe.whitelist()
-def attach_pos_expense_file(journal_entry, pos_opening_shift, pos_profile):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+# permission-check: ok validate_open_shift proves the caller's own open shift at this till
+def attach_pos_expense_file(journal_entry: str | None, pos_opening_shift, pos_profile):
 	"""Attach the multipart ``file`` in the request to a POS expense Journal Entry.
 
 	Cashiers typically lack Journal Entry write permission, so ``upload_file`` fails.

@@ -314,7 +314,8 @@ def _count_qr_lines_to_accept(tables, has_item_kds):
 
 
 @frappe.whitelist()
-def update_table_status(table_name, status):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def update_table_status(table_name: str | None, status):
 	"""Update the status of a specific table."""
 	# A table's status is the service's: whoever may write a table (a cashier) sets it, from a desk account. It is the
 	# right the till is told of (`set_table_status`), so that the till and the server cannot drift apart
@@ -523,7 +524,8 @@ def get_table_payment_summary(table_name: str):
 
 
 @frappe.whitelist()
-def mark_table_available(table_name):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def mark_table_available(table_name: str | None):
 	"""Mark a Cleaning table as Empty and expire its guest tokens."""
 	permissions.require_right("set_table_status")
 
@@ -580,7 +582,8 @@ def _put_table_back(table_name):
 # //// table is free again unless another order still names it. What is refused: a sale already submitted, an order that holds money (a guest paid from his phone: the money is on the
 # //// order, deleting it here would lose it), and an invoice that is no restaurant order (this is no way to delete any draft of the site).
 @frappe.whitelist(methods=["POST"])
-def cancel_table_order(invoice):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def cancel_table_order(invoice: str | None):
 	"""Cancel a table's (or a takeaway's) draft order as a whole: delete it, tell the kitchen, free the table."""
 	from pos_next.api.cash_entry import require_document_till
 
@@ -590,12 +593,24 @@ def cancel_table_order(invoice):
 
 	takeaway = ["is_takeaway"] if frappe.db.has_column("Sales Invoice", "is_takeaway") else []
 	order = frappe.db.get_value(
-		"Sales Invoice", invoice, ["docstatus", "restaurant_table", "paid_amount", *takeaway], as_dict=True
+		"Sales Invoice",
+		invoice,
+		["docstatus", "restaurant_table", "paid_amount", "pos_profile", *takeaway],
+		as_dict=True,
 	)
 	if order.docstatus != 0:
 		frappe.throw(_("Cannot delete submitted invoice {0}").format(invoice))
 	if not (order.restaurant_table or cint(order.get("is_takeaway"))):
 		frappe.throw(_("Invoice {0} is not a restaurant order").format(invoice))
+	# //// Neoffice — the order's restaurant, as `set_table_covers` and `call_next_course` ask it: the till's
+	# //// gate reads the POS Profile alone, and the delete below runs with permissions off, so a waiter kept
+	# //// to one restaurant deleted another's open order (maintenance#2296). A takeaway order is the
+	# //// restaurant's of the till that took it.
+	permissions.require_restaurant(
+		scope.restaurant_of_record("Restaurant Table", order.restaurant_table)
+		if order.restaurant_table
+		else scope.current_restaurant(order.pos_profile)
+	)
 	if flt(order.paid_amount) > 0:
 		frappe.throw(_("This order already holds a payment: it cannot be cancelled here"))
 
@@ -657,7 +672,10 @@ def free_cleaning_tables(area, restaurant=None):
 	return {"status": "success", "freed": len(freed), "tables": freed}
 
 
-@frappe.whitelist()
+# //// Neoffice — POST only: a write that commits, and a GET is not checked against CSRF, so a link followed
+# //// from another site wrote with the session of whoever opened it. The till posts (frappe-ui's `call` and
+# //// `createResource`) (maintenance#2296).
+@frappe.whitelist(methods=["POST"])
 def reset_all_tables(restaurant=None):
 	"""Reset the restaurant's occupied tables to Empty, clear their draft invoices and expire their QR codes.
 
@@ -885,7 +903,8 @@ def _advance_dishes(invoice_name, status, station=None):
 # //// a tablet's session holds no CSRF token, and a top-level GET (a link opened on it) carries its cookie; the
 # //// kitchen card calls it by POST (frappe-ui `call`).
 @frappe.whitelist(methods=["POST"])
-def update_kds_status(invoice_name, status, station=None):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def update_kds_status(invoice_name: str | None, status, station=None):
 	"""Update the KDS status of a sales invoice and of its dishes.
 
 	Without a station, the order takes the status and so does every dish that is not already further along, as
@@ -1003,6 +1022,8 @@ def get_station_items_map(restaurant=None):
 	# The till's service read: whoever reads the stations, from a desk account
 	permissions.require("Preparation Station", "read")
 	restaurant = restaurant or scope.current_restaurant()
+	# //// Neoffice — see get_kds_orders (maintenance#2296)
+	permissions.require_not_kept_out(restaurant)
 	stations = frappe.get_all(
 		"Preparation Station",
 		filters={"is_active": 1},
@@ -1226,6 +1247,11 @@ def get_kds_orders(station=None, restaurant=None):
 	if not restaurant and station:
 		restaurant = scope.restaurant_of_record("Preparation Station", station)
 	restaurant = restaurant or scope.current_restaurant()
+	# //// Neoffice — the orders are read with `frappe.get_all`: a user kept to one restaurant named another
+	# //// and read its kitchen (maintenance#2296). Any desk account still reads it: a kitchen's account needs
+	# //// no till (the sweep's _desk_calls).
+	if not device:
+		permissions.require_not_kept_out(restaurant)
 	# Only fetch submitted invoices or drafts depending on how POS Next saves KDS orders.
 	# Assuming here we fetch draft invoices that have a table and are not delivered.
 	# We remove the database-level filter on restaurant_table to prevent MariaDB NULL issues
@@ -1421,7 +1447,14 @@ def get_kds_orders(station=None, restaurant=None):
 
 
 @frappe.whitelist()
-def get_tips(from_date=None, to_date=None, server=None, table=None, restaurant=None):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_tips(
+	from_date: str | None = None,
+	to_date: str | None = None,
+	server: str | None = None,
+	table: str | None = None,
+	restaurant=None,
+):
 	"""Fetch the Restaurant Tip records of one restaurant (the till's own unless one is named), with optional filters."""
 	# //// Neoffice — its caller is the till (TipsPanel), so only the till's users pass
 	# //// (cash_entry.require_till_user).
@@ -1472,7 +1505,8 @@ def get_tips(from_date=None, to_date=None, server=None, table=None, restaurant=N
 # //// fix round 2): a tablet's session holds no CSRF token, and a top-level GET (a link opened on it)
 # //// carries its cookie; the screens and the till call it by POST (frappe-ui `call`).
 @frappe.whitelist(methods=["POST"])
-def update_item_kds_status(invoice_name, item_code, status, qty=None, restore=None):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def update_item_kds_status(invoice_name: str | None, item_code: str | None, status, qty=None, restore=None):
 	"""Update the KDS status of a specific item in a sales invoice.
 
 	The kitchen's tablet sets one of the kitchen's states (devices.KDS_STATES) on an open order of its restaurant, and a
@@ -1602,8 +1636,11 @@ def _mark_units_ready(dishes, qty):
 		)
 
 
-@frappe.whitelist()
-def save_table_positions(positions):
+# //// Neoffice — POST only: a write that commits, and a GET is not checked against CSRF, so a link followed
+# //// from another site wrote with the session of whoever opened it. The till posts (frappe-ui's `call` and
+# //// `createResource`) (maintenance#2296).
+@frappe.whitelist(methods=["POST"])
+def save_table_positions(positions: str | list):
 	"""Save table positions from the floor plan editor."""
 	import json
 
@@ -1618,7 +1655,9 @@ def save_table_positions(positions):
 
 	for pos in positions:
 		table_name = pos.get("name")
-		if not table_name or not frappe.db.exists("Restaurant Table", table_name):
+		# //// Neoffice — a name is a text: a list would be a filter of `exists` and `set_value`
+		# //// (maintenance#2296)
+		if not isinstance(table_name, str) or not frappe.db.exists("Restaurant Table", table_name):
 			continue
 		frappe.db.set_value("Restaurant Table", table_name, {
 			"pos_x": int(pos.get("pos_x") or 0),
@@ -1630,8 +1669,11 @@ def save_table_positions(positions):
 	frappe.db.commit()
 	return {"status": "success"}
 
-@frappe.whitelist()
-def save_station_positions(positions):
+# //// Neoffice — POST only: a write that commits, and a GET is not checked against CSRF, so a link followed
+# //// from another site wrote with the session of whoever opened it. The till posts (frappe-ui's `call` and
+# //// `createResource`) (maintenance#2296).
+@frappe.whitelist(methods=["POST"])
+def save_station_positions(positions: str | list):
 	"""Save station positions from the floor plan editor."""
 	import json
 
@@ -1644,7 +1686,9 @@ def save_station_positions(positions):
 
 	for pos in positions:
 		station_name = pos.get("name")
-		if not station_name or not frappe.db.exists("Preparation Station", station_name):
+		# //// Neoffice — a name is a text: a list would be a filter of `exists` and `set_value`
+		# //// (maintenance#2296)
+		if not isinstance(station_name, str) or not frappe.db.exists("Preparation Station", station_name):
 			continue
 		frappe.db.set_value("Preparation Station", station_name, {
 			"pos_x": int(pos.get("pos_x") or 0),
@@ -1656,8 +1700,12 @@ def save_station_positions(positions):
 	frappe.db.commit()
 	return {"status": "success"}
 
-@frappe.whitelist()
-def save_floor_plan_walls(area, walls_data):
+# //// Neoffice — POST only: a write that commits, and a GET is not checked against CSRF, so a link followed
+# //// from another site wrote with the session of whoever opened it. The till posts (frappe-ui's `call` and
+# //// `createResource`) (maintenance#2296).
+@frappe.whitelist(methods=["POST"])
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def save_floor_plan_walls(area: str | None, walls_data):
 	"""Save floor plan wall/door/window data for a restaurant area."""
 	import json
 
@@ -1670,8 +1718,12 @@ def save_floor_plan_walls(area, walls_data):
 	frappe.db.commit()
 	return {"status": "success"}
 
-@frappe.whitelist()
-def save_floor_plan_bg(area, file_url=None):
+# //// Neoffice — POST only: a write that commits, and a GET is not checked against CSRF, so a link followed
+# //// from another site wrote with the session of whoever opened it. The till posts (frappe-ui's `call` and
+# //// `createResource`) (maintenance#2296).
+@frappe.whitelist(methods=["POST"])
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def save_floor_plan_bg(area: str | None, file_url=None):
 	"""Save or clear the floor plan background image for a restaurant area."""
 	permissions.require("Restaurant Area", "write", area)
 	if not frappe.db.exists("Restaurant Area", area):
@@ -1720,7 +1772,8 @@ def create_table(table_name, area, capacity=4, shape="Square", pos_x=0, pos_y=0)
 
 
 @frappe.whitelist()
-def update_table(name, table_name=None, capacity=None, shape=None):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def update_table(name: str | None, table_name=None, capacity=None, shape=None):
 	"""Edit a restaurant table in place: its label, its seats or its shape. What is not passed stays as it is.
 
 	The table is the same record afterwards (the orders, the reservations and the guest tokens link to it by name), and
@@ -1803,7 +1856,8 @@ def create_station(station_name, station_type="Kitchen", color="#F97316", area=N
 
 
 @frappe.whitelist()
-def get_station_details(name):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_station_details(name: str | None):
 	"""Get full preparation station details including items and item groups."""
 	permissions.require("Preparation Station", "read", name)
 	doc = frappe.get_doc("Preparation Station", name)
@@ -1835,7 +1889,8 @@ def get_station_details(name):
 
 
 @frappe.whitelist()
-def update_station(name, station_name=None, station_type=None, color=None, workflow=None,
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def update_station(name: str | None, station_name=None, station_type=None, color=None, workflow=None,
                    is_active=None, use_runner=None, items=None, item_groups=None):
 	"""Update an existing preparation station."""
 	# //// Neoffice — its caller is the till (FloorPlanEditor), so only the till's users pass
@@ -1896,7 +1951,8 @@ def update_station(name, station_name=None, station_type=None, color=None, workf
 
 
 @frappe.whitelist()
-def delete_station(name):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def delete_station(name: str | None):
 	"""Delete a preparation station."""
 	# //// Neoffice — its caller is the till (FloorPlanEditor), so only the till's users pass
 	# //// (cash_entry.require_till_user).
@@ -2039,7 +2095,16 @@ def open_table(table_name: str, pos_profile, customer=None, note=None):
 
 
 @frappe.whitelist()
-def save_product_option_group(name, group_name=None, selection_type=None, required=None, options=None, applicable_items=None, applicable_item_groups=None):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def save_product_option_group(
+	name: str | None,
+	group_name=None,
+	selection_type=None,
+	required=None,
+	options=None,
+	applicable_items=None,
+	applicable_item_groups=None,
+):
 	"""Save a product option group."""
 	# //// Neoffice — its caller is the till (ProductOptionsEditor), so only the till's users pass
 	# //// (cash_entry.require_till_user).
@@ -2109,7 +2174,8 @@ def create_product_option_group(group_name):
 
 
 @frappe.whitelist()
-def delete_product_option_group(name):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def delete_product_option_group(name: str | None):
 	"""Delete a product option group."""
 	# //// Neoffice — its caller is the till (ProductOptionsEditor), so only the till's users pass
 	# //// (cash_entry.require_till_user).
@@ -2150,7 +2216,8 @@ def _resolve_option_doctypes():
 
 
 @frappe.whitelist()
-def get_product_options(item_code):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_product_options(item_code: str | None):
 	"""Get all product option groups applicable to an item."""
 	doctype, option_dt, item_dt = _resolve_option_doctypes()
 	permissions.require(doctype, "read")
@@ -2238,7 +2305,10 @@ def get_all_product_option_groups():
 get_all_modifier_groups = get_all_product_option_groups
 
 
-@frappe.whitelist()
+# //// Neoffice — POST only: a write that commits, and a GET is not checked against CSRF, so a link followed
+# //// from another site wrote with the session of whoever opened it. The till posts (frappe-ui's `call` and
+# //// `createResource`) (maintenance#2296).
+@frappe.whitelist(methods=["POST"])
 def reorder_areas(order):
 	"""Update area sort order."""
 	import json
@@ -2266,7 +2336,8 @@ def create_area(area_name, restaurant=None):
 	return doc.as_dict()
 
 @frappe.whitelist()
-def rename_area(name, new_name, short_code=None):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def rename_area(name: str | None, new_name, short_code=None):
 	"""Rename a restaurant area: change its label. Its name stays what it is, which is what the records link to.
 
 	With `short_code` it also sets the room's short code (at most 6 characters, the chip of a kitchen ticket); an empty
@@ -2282,7 +2353,8 @@ def rename_area(name, new_name, short_code=None):
 	return {"status": "success"}
 
 @frappe.whitelist()
-def delete_area(name):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def delete_area(name: str | None):
 	"""Delete a restaurant area (only if no tables/stations assigned)."""
 	permissions.require("Restaurant Area", "delete", name)
 
@@ -2547,6 +2619,8 @@ def get_active_cards(restaurant=None):
 	at the end. The cards the hours hide are the ones the « ⋯ » of the till offers (`get_other_cards`)."""
 	permissions.require("Restaurant Card", "read")
 	restaurant = restaurant or scope.current_restaurant()
+	# //// Neoffice — see get_kds_orders (maintenance#2296)
+	permissions.require_not_kept_out(restaurant)
 	cards = scope.stamp(
 		frappe.get_all(
 			"Restaurant Card",
@@ -2702,6 +2776,8 @@ def get_active_menus(restaurant=None):
 
 	permissions.require("Restaurant Menu", "read")
 	restaurant = restaurant or scope.current_restaurant()
+	# //// Neoffice — see get_kds_orders (maintenance#2296)
+	permissions.require_not_kept_out(restaurant)
 	filters = {"is_active": 1}
 	menus = scope.stamp(
 		frappe.get_all(
@@ -3131,7 +3207,14 @@ def get_preparation_workflows():
 
 
 @frappe.whitelist()
-def save_preparation_workflow(name, workflow_name=None, steps=None, is_default=None, applicable_items=None):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def save_preparation_workflow(
+	name: str | None,
+	workflow_name=None,
+	steps=None,
+	is_default=None,
+	applicable_items=None,
+):
 	"""Save a preparation workflow and its steps."""
 	# //// Neoffice — its caller is the till (WorkflowEditor), so only the till's users pass
 	# //// (cash_entry.require_till_user).
@@ -3304,6 +3387,9 @@ def get_runner_orders(area: str | None = None, restaurant=None):
 	else:
 		require_system_user()
 	restaurant = restaurant or scope.current_restaurant()
+	# //// Neoffice — see get_kds_orders (maintenance#2296)
+	if not device:
+		permissions.require_not_kept_out(restaurant)
 	# //// Neoffice — the takeaway flag and number go to the runner's card too: « Hand over » instead of « Deliver » (task 38b)
 	order_fields = ["name", "customer", "restaurant_table", "kds_status", "creation", "modified",
 				"is_takeaway", "takeaway_number"]
@@ -3527,7 +3613,8 @@ def _deliver_dish(dish):
 # //// fix round 2): a tablet's session holds no CSRF token, and a top-level GET (a link opened on it)
 # //// carries its cookie; the screens and the till call it by POST (frappe-ui `call`).
 @frappe.whitelist(methods=["POST"])
-def mark_items_delivered(invoice_name, item_names=None):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def mark_items_delivered(invoice_name: str | None, item_names: str | list | None = None):
 	"""Mark specific items (or all ready items) as Delivered (the runner's tablet: on an open order of its restaurant)."""
 	import json
 
@@ -3587,7 +3674,8 @@ def mark_items_delivered(invoice_name, item_names=None):
 # //// « Commander la suite » does not release anything in that rhythm, the course is already at the kitchen, marked ahead; it SIGNALS that the room wants it now.
 # //// POST only, a write of the waiter's till.
 @frappe.whitelist(methods=["POST"])
-def call_next_course(invoice, family=None, everything=0):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def call_next_course(invoice: str | None, family=None, everything=0):
 	"""The room calls the next course of a table: the kitchen is told to serve it now.
 
 	Where the restaurant prepares ahead, a food line that the room's rhythm would have held back left with the rest at « Valider », marked
@@ -3668,6 +3756,8 @@ def get_takeaway_orders(restaurant=None):
 	from pos_next.api.cash_entry import require_system_user
 
 	require_system_user()
+	# //// Neoffice — see get_kds_orders; a name is a text (maintenance#2296)
+	permissions.require_not_kept_out(restaurant or scope.current_restaurant())
 	raw_orders = frappe.get_all(
 		"Sales Invoice",
 		filters={
@@ -3722,8 +3812,12 @@ def get_next_takeaway_number():
 	return f"T-{(count + 1):03d}"
 
 
-@frappe.whitelist()
-def update_takeaway_status(invoice_name, status):
+# //// Neoffice — POST only: a write that commits, and a GET is not checked against CSRF, so a link followed
+# //// from another site wrote with the session of whoever opened it. The till posts (frappe-ui's `call` and
+# //// `createResource`) (maintenance#2296).
+@frappe.whitelist(methods=["POST"])
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def update_takeaway_status(invoice_name: str | None, status):
 	"""Update the KDS status of a takeaway order."""
 	# //// Neoffice — it is called from the takeaway screen, run by desk accounts, so a desk account is
 	# //// required (cash_entry.require_system_user). It sets one of the statuses the kds_status field offers,
@@ -3751,9 +3845,10 @@ def update_takeaway_status(invoice_name, status):
 
 
 @frappe.whitelist()
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
 def create_item(
 	item_name,
-	item_group,
+	item_group: str | None,
 	stock_uom,
 	item_code=None,
 	is_stock_item=0,
@@ -3761,10 +3856,10 @@ def create_item(
 	standard_buying_rate=0,
 	opening_stock=0,
 	warehouse=None,
-	pos_profile=None,
+	pos_profile: str | None = None,
 	image=None,
 	color=None,
-	option_groups=None,
+	option_groups: str | list | None = None,
 	description=None,
 ):
 	"""Create a new Item from the POS Card Editor with prices and optional stock."""
@@ -3873,7 +3968,8 @@ def create_item(
 	if option_groups:
 		groups = json.loads(option_groups) if isinstance(option_groups, str) else option_groups
 		for group_name in groups:
-			if frappe.db.exists("Product Option Group", group_name):
+			# //// Neoffice — a name is a text: a list would be a filter of `exists` (maintenance#2296)
+			if isinstance(group_name, str) and frappe.db.exists("Product Option Group", group_name):
 				group_doc = frappe.get_doc("Product Option Group", group_name)
 				group_doc.append("applicable_items", {
 					"item": item_doc.name,
@@ -3894,7 +3990,8 @@ def create_item(
 
 
 @frappe.whitelist()
-def get_item_creation_defaults(pos_profile=None):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_item_creation_defaults(pos_profile: str | None = None):
 	"""Get default values for the Create Item dialog."""
 	# The dialog creates an item: whoever may create one in the ERP (the till's `create_items`)
 	permissions.require_right("create_items")
@@ -4091,7 +4188,8 @@ def download_food_image(image_url, item_name):
 
 
 @frappe.whitelist()
-def duplicate_card(card_name):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def duplicate_card(card_name: str | None):
 	"""Duplicate a restaurant card with all its items."""
 	# //// Neoffice — its caller is the till (CardEditor), so only the till's users pass
 	# //// (cash_entry.require_till_user).
@@ -4110,7 +4208,8 @@ def duplicate_card(card_name):
 
 
 @frappe.whitelist()
-def get_card_items_stock(card_name):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_card_items_stock(card_name: str | None):
 	"""Get stock quantities for stock-managed items in a card, grouped by warehouse."""
 	# The card editor's: whoever manages the cards (it answers stock in every warehouse)
 	permissions.require_right("manage_cards")
@@ -4136,7 +4235,8 @@ def get_card_items_stock(card_name):
 
 
 @frappe.whitelist()
-def get_item_edit_data(item_code, pos_profile=None):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_item_edit_data(item_code: str | None, pos_profile: str | None = None):
 	"""Fetch all data needed for the item edit panel in CardEditor."""
 	from frappe.utils import flt
 
@@ -4231,8 +4331,20 @@ def get_item_edit_data(item_code, pos_profile=None):
 	}
 
 
-@frappe.whitelist()
-def update_item_details(item_code, description=None, image=None, color=None, option_groups=None, badges=None, spice_level=None):
+# //// Neoffice — POST only: a write that commits, and a GET is not checked against CSRF, so a link followed
+# //// from another site wrote with the session of whoever opened it. The till posts (frappe-ui's `call` and
+# //// `createResource`) (maintenance#2296).
+@frappe.whitelist(methods=["POST"])
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def update_item_details(
+	item_code: str | None,
+	description=None,
+	image=None,
+	color=None,
+	option_groups: str | list | None = None,
+	badges=None,
+	spice_level=None,
+):
 	"""Update an item from the card editor: only what is given changes.
 
 	The item sheet (description, image, colour) is the ERP's Item: it is saved as the user, so whoever may not edit
@@ -4290,7 +4402,8 @@ def update_item_details(item_code, description=None, image=None, color=None, opt
 
 		# Add item to selected groups
 		for group_name in (option_groups or []):
-			if frappe.db.exists("Product Option Group", group_name):
+			# //// Neoffice — a name is a text: a list would be a filter of `exists` (maintenance#2296)
+			if isinstance(group_name, str) and frappe.db.exists("Product Option Group", group_name):
 				group_doc = frappe.get_doc("Product Option Group", group_name)
 				group_doc.append("applicable_items", {
 					"item": item_code,
@@ -4302,8 +4415,18 @@ def update_item_details(item_code, description=None, image=None, color=None, opt
 	return {"status": "ok"}
 
 
-@frappe.whitelist()
-def update_item_price(item_code, price, scope="local", card_name=None, pos_profile=None):
+# //// Neoffice — POST only: a write that commits, and a GET is not checked against CSRF, so a link followed
+# //// from another site wrote with the session of whoever opened it. The till posts (frappe-ui's `call` and
+# //// `createResource`) (maintenance#2296).
+@frappe.whitelist(methods=["POST"])
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def update_item_price(
+	item_code: str | None,
+	price,
+	scope="local",
+	card_name: str | None = None,
+	pos_profile: str | None = None,
+):
 	"""Update item price locally (card only) or globally (price list + optionally all cards).
 
 	scope = "local": Only update Restaurant Card Item.price for the given card
@@ -4376,8 +4499,12 @@ def update_item_price(item_code, price, scope="local", card_name=None, pos_profi
 	return {"status": "error", "message": "Invalid scope or missing card_name"}
 
 
-@frappe.whitelist()
-def update_item_active(item_code, disabled=0, scope="local", card_name=None):
+# //// Neoffice — POST only: a write that commits, and a GET is not checked against CSRF, so a link followed
+# //// from another site wrote with the session of whoever opened it. The till posts (frappe-ui's `call` and
+# //// `createResource`) (maintenance#2296).
+@frappe.whitelist(methods=["POST"])
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def update_item_active(item_code: str | None, disabled=0, scope="local", card_name: str | None = None):
 	"""Enable or disable an item on one card or all cards.
 
 	scope = "local": Only toggle disabled on the given card
@@ -4420,7 +4547,8 @@ def update_item_active(item_code, disabled=0, scope="local", card_name=None):
 
 
 @frappe.whitelist()
-def get_card_items_extra(card_name):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_card_items_extra(card_name: str | None):
 	"""Return what the editor's list shows of each item of a card: description, badges, spice, and (NeoResto lot 1, product owner, 03.11.2026: « sans aucun clic, on ne voit pas
 	grand-chose ») its name, picture, colour (its own, else its item group's), item group and global price."""
 	permissions.require("Restaurant Card", "read", card_name)
@@ -4505,7 +4633,8 @@ def get_menu_badges():
 
 
 @frappe.whitelist()
-def get_item_badges(item_code):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_item_badges(item_code: str | None):
 	"""Return badges and spice level for a specific item."""
 	permissions.require("Menu Badge", "read")
 	permissions.require("Item", "read", item_code)
@@ -4524,8 +4653,12 @@ def get_item_badges(item_code):
 	return {"badges": badges, "spice_level": int(item.get("custom_spice_level") or 0)}
 
 
-@frappe.whitelist()
-def update_item_badges(item_code, badges=None, spice_level=0):
+# //// Neoffice — POST only: a write that commits, and a GET is not checked against CSRF, so a link followed
+# //// from another site wrote with the session of whoever opened it. The till posts (frappe-ui's `call` and
+# //// `createResource`) (maintenance#2296).
+@frappe.whitelist(methods=["POST"])
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def update_item_badges(item_code: str | None, badges=None, spice_level=0):
 	"""Update badges and spice level for an item. Called from POS CardEditor."""
 	# //// Neoffice — its caller is the till (useBadges), so only the till's users pass
 	# //// (cash_entry.require_till_user).
@@ -4569,8 +4702,33 @@ def _save_badges(item, badges=None, spice_level=None):
 	item.save()
 
 
+# //// Neoffice — the icon of a badge is a file of the badges' folder (maintenance#2296). It was a free text
+# //// joined to that folder and read whole, so an absolute path or `..` answered any file the server can
+# //// read, base64-encoded in the preview of a card, the site's database password included. The name is
+# //// checked as the public menu checks it (`public_menu.BADGE_ICON`, no separator), then the path it makes,
+# //// resolved, must stand in the folder. Anything else draws no icon: the badge keeps its name.
+def badge_icon_uri(icon):
+	import base64
+	import os
+
+	from pos_next.api.public_menu import BADGE_ICON
+
+	if not isinstance(icon, str) or not BADGE_ICON.fullmatch(icon):
+		return ""
+	folder = os.path.realpath(frappe.get_app_path("pos_next", "public", "icons", "badges", "png"))
+	path = os.path.realpath(os.path.join(folder, icon.replace(".svg", ".png")))
+	if os.path.dirname(path) != folder:
+		return ""
+	try:
+		with open(path, "rb") as f:
+			return f"data:image/png;base64,{base64.b64encode(f.read()).decode('ascii')}"
+	except FileNotFoundError:
+		return ""
+
+
 @frappe.whitelist()
-def get_card_items_with_badges(card_name):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_card_items_with_badges(card_name: str | None):
 	"""Return card items enriched with badge info for menu preview/PDF."""
 	permissions.require("Restaurant Card", "read", card_name)
 	card = frappe.get_doc("Restaurant Card", card_name)
@@ -4605,15 +4763,7 @@ def get_card_items_with_badges(card_name):
 					# Encode PNG as base64 data URI for reliable rendering in PDF
 					icon_data_uri = ""
 					if badge_doc.icon:
-						png_name = badge_doc.icon.replace(".svg", ".png")
-						png_path = frappe.get_app_path("pos_next", "public", "icons", "badges", "png", png_name)
-						try:
-							import base64
-							with open(png_path, "rb") as f:
-								b64 = base64.b64encode(f.read()).decode("ascii")
-								icon_data_uri = f"data:image/png;base64,{b64}"
-						except FileNotFoundError:
-							pass
+						icon_data_uri = badge_icon_uri(badge_doc.icon)
 					badges.append({
 						"badge_name": badge_doc.badge_name,
 						"badge_type": badge_doc.badge_type,

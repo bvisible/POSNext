@@ -290,6 +290,9 @@ def _strip_server_managed_fields(payload):
 	# //// first save (pos_next.restaurant.tickets), never taken from a till (NeoResto lot 1, task 38b, rulings 122, 124).
 	cleaned.pop("posa_ticket_no", None)
 	cleaned.pop("posa_ticket_day", None)
+	# //// Neoffice — it writes off whatever a sale leaves unpaid, whatever the till's limit: the till never
+	# //// sends it (maintenance#2296).
+	cleaned.pop("write_off_outstanding_amount_automatically", None)
 	return cleaned
 
 
@@ -956,7 +959,8 @@ def _leaf_customer_group():
 
 
 @frappe.whitelist()
-def validate_cart_items(items, pos_profile=None):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def validate_cart_items(items, pos_profile: str | None = None):
 	"""Validate cart items for available stock.
 
 	Returns a list of item dicts where requested quantity exceeds availability.
@@ -983,6 +987,47 @@ def validate_cart_items(items, pos_profile=None):
 	return errors
 
 
+# //// Neoffice — added (no upstream equivalent). The doctype a till returns against. The two return endpoints
+# //// took it from the request and read it with the query builder, which checks no right: a cashier read
+# //// Delivery Notes and POS Invoices (maintenance#2296).
+def _require_returnable_doctype(doctype):
+	if doctype != "Sales Invoice":
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+
+# //// Neoffice — added (no upstream equivalent). The return search reads with the query builder, past the
+# //// rows' permissions: it is kept here to what the caller may read at the till (maintenance#2296). A
+# //// cashier finds a sale of another till of the company, which a shop with two tills needs; his User
+# //// Permissions on Company, POS Profile and Customer cut in, as `/api/resource` cuts them in; and an
+# //// account a POS Profile User row brings to the till, with no right on invoices, reads the invoices of its
+# //// tills.
+def _within_the_reach_of_the_till(query, si, pos_profile=None):
+	from frappe.permissions import get_user_permissions
+
+	from pos_next.api.cash_entry import is_till_manager, reads_sales_invoices
+
+	user = frappe.session.user
+	kept_to = get_user_permissions(user)
+	columns = (("Company", si.company), ("POS Profile", si.pos_profile), ("Customer", si.customer))
+	for doctype, column in columns:
+		allowed = [
+			row.doc for row in kept_to.get(doctype) or [] if row.applicable_for in (None, "", "Sales Invoice")
+		]
+		if allowed:
+			query = query.where(column.isin(allowed))
+	if pos_profile:
+		query = query.where(si.company == frappe.db.get_value("POS Profile", pos_profile, "company"))
+	if not is_till_manager() and not reads_sales_invoices():
+		assigned = frappe.get_all("POS Profile User", filters={"user": user}, pluck="parent")
+		query = query.where(si.pos_profile.isin(assigned or [""]))
+	return query
+
+
+# //// Neoffice — the most invoices one call lists: `limit` came straight from the request (maintenance#2296).
+# //// The dialog asks for 50.
+RETURNABLE_INVOICES_MAX = 500
+
+
 @frappe.whitelist()
 def validate_return_items(original_invoice_name, return_items, doctype="Sales Invoice"):
 	"""Ensure that return items do not exceed the quantity from the original invoice.
@@ -996,6 +1041,9 @@ def validate_return_items(original_invoice_name, return_items, doctype="Sales In
 	from pos_next.api.cash_entry import require_till_user
 
 	require_till_user()
+	# //// Neoffice — the table is named by the code, not by the request: the query builder reads any table of
+	# //// that shape (maintenance#2296)
+	_require_returnable_doctype(doctype)
 	from frappe.query_builder.functions import Abs, Sum
 	from frappe.utils import date_diff, getdate
 
@@ -1156,12 +1204,29 @@ def _require_till_document(payload):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 	pos_profile = payload.get("pos_profile")
 	name = payload.get("name")
+	# //// Neoffice — a document is named by a text: a list would be a filter of the lookups below
+	# //// (maintenance#2296).
+	if name and not isinstance(name, str):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
 	stored_profile = None
 	if name and isinstance(name, str) and frappe.get_meta(doctype).has_field("pos_profile"):
 		stored_profile = frappe.db.get_value(doctype, name, "pos_profile")
 	require_till_access(pos_profile or stored_profile)
 	if pos_profile and stored_profile and stored_profile != pos_profile:
 		require_till_access(stored_profile)
+	# //// Neoffice — what no till made is no till's: the gate read the POS Profile of the PAYLOAD, so a till
+	# //// user rewrote and submitted, with permissions off, a draft of the desk, a Sales Order or an invoice,
+	# //// with no right on it. Such a document asks its own right, and a till's own stays the till's
+	# //// (maintenance#2296).
+	if name and not stored_profile and frappe.db.exists(doctype, name):
+		frappe.has_permission(doctype, "write", doc=name, throw=True)
+	# //// Neoffice — and a till takes Sales Orders where its settings say so (the cart's choice shows on that
+	# //// setting), or from whoever may write them anyway (maintenance#2296).
+	till = {"pos_profile": pos_profile or stored_profile}
+	if doctype == "Sales Order" and not cint(
+		frappe.db.get_value(DOCTYPE_POS_SETTINGS, till, "allow_sales_order")
+	):
+		frappe.has_permission("Sales Order", "write", throw=True)
 
 
 # //// Neoffice — added (no upstream equivalent). The payment rows a guest or a phone already paid, kept across the till's
@@ -1217,7 +1282,10 @@ def _guest_settled_references(invoice_name):
 	return references
 
 
-@frappe.whitelist()
+# //// Neoffice — POST only: a write that commits, and a GET is not checked against CSRF, so a link followed
+# //// from another site wrote with the session of whoever opened it. The till posts (frappe-ui's `call` and
+# //// `createResource`) (maintenance#2296).
+@frappe.whitelist(methods=["POST"])
 def update_invoice(data):
 	"""Create or update invoice draft (Step 1)."""
 	# //// Neoffice — only the till writes (_require_till_document above). The payload is read before the
@@ -2127,6 +2195,81 @@ def _ensure_offline_uniqueness(offline_id, pos_profile=None, customer=None):
 		return _ensure_offline_uniqueness(offline_id, pos_profile, customer)
 
 
+# //// Neoffice — added (no upstream equivalent). The till offers a write-off only under its POS Profile's
+# //// limit (PaymentDialog, `writeOffLimit > 0`): no limit, no write-off.
+def _require_write_off_within_the_limit(invoice_doc):
+	amount = flt(invoice_doc.get("write_off_amount"))
+	if amount <= 0:
+		return
+	limit = flt(frappe.db.get_value("POS Profile", invoice_doc.get("pos_profile"), "write_off_limit"))
+	if amount > limit:
+		frappe.throw(_("Write-off amount {0} exceeds limit {1}").format(amount, limit))
+
+
+# //// Neoffice — added (no upstream equivalent). The customer credit a sale redeems, from the rows the
+# //// redemption will spend (redeem_customer_credit). The till's own number, `redeemed_customer_credit`, says
+# //// nothing (maintenance#2296).
+def _credit_named_by(customer_credit_dict):
+	rows = customer_credit_dict
+	if isinstance(rows, str):
+		rows = frappe.parse_json(rows)
+	return sum(flt(row.get("credit_to_redeem")) for row in rows or [])
+
+
+# //// Neoffice — added (no upstream equivalent). A sale leaves the till paid, unless the till allows
+# //// otherwise (maintenance#2296). ERPNext asks for one payment row, of any amount, and the till's rule was
+# //// in the page alone: a row of 0, or of part of the total, handed goods out on a receivable on a till with
+# //// credit sales off, on the walk-in customer too. What the sale still owes after its save is read on the
+# //// server, ERPNext's own outstanding amount, so that change, a write-off, loyalty points and the rounding
+# //// of the total all count; the margin is the smallest coin of a cash rounding (the till rounds a total its
+# //// own way). A return owes nothing, and a till with no settings row has said nothing to hold it to.
+SALE_PAID_MARGIN = 0.05
+
+
+def _require_a_paid_sale(invoice_doc, credit):
+	if not cint(invoice_doc.get("is_pos")) or cint(invoice_doc.get("is_return")):
+		return
+	still_owed = flt(invoice_doc.get("outstanding_amount")) - flt(credit)
+	if still_owed <= SALE_PAID_MARGIN:
+		return
+	# A sale made offline has happened and its money was taken: priced by the till offline, its total may
+	# differ from the server's,
+	# and a refusal would leave it in the queue for ever (see _apply_pos_sales_team). It goes through, written
+	# to the error log. A
+	# sale with nothing paid is no such difference, whatever the request says it is.
+	if invoice_doc.flags.pos_offline_sync and flt(invoice_doc.get("paid_amount")) > 0:
+		frappe.log_error("Offline sale short of its total", f"{invoice_doc.name}: {still_owed} unpaid")
+		return
+	till = frappe.db.get_value(
+		DOCTYPE_POS_SETTINGS,
+		{"pos_profile": invoice_doc.get("pos_profile")},
+		["allow_partial_payment", "allow_credit_sale"],
+		as_dict=True,
+	)
+	if till and not (cint(till.allow_partial_payment) or cint(till.allow_credit_sale)):
+		frappe.throw(_("Credit sales are not enabled for this POS Profile."))
+
+
+# //// Neoffice — added (no upstream equivalent): what submit_invoice answers a document already submitted,
+# //// see there (maintenance#2296).
+def _the_sale_as_submitted(invoice_doc, offline_id=None):
+	answer = {
+		"name": invoice_doc.name,
+		"doctype": invoice_doc.doctype,
+		"status": invoice_doc.docstatus,
+		"grand_total": invoice_doc.grand_total,
+		"total": invoice_doc.total,
+		"net_total": invoice_doc.net_total,
+		"outstanding_amount": getattr(invoice_doc, "outstanding_amount", 0),
+		"paid_amount": getattr(invoice_doc, "paid_amount", 0),
+		"change_amount": getattr(invoice_doc, "change_amount", 0),
+		"duplicate_prevented": True,
+	}
+	if offline_id:
+		answer["offline_id"] = offline_id
+	return answer
+
+
 def _complete_offline_sync(sync_record_name, invoice_name):
 	"""
 	Mark an offline sync record as completed after successful invoice submission.
@@ -2373,6 +2516,20 @@ def submit_invoice(invoice=None, data=None):
 		else:
 			invoice_doc = frappe.get_doc(doctype, invoice_name)
 
+			# //// Neoffice — a submitted document is answered, never written again (maintenance#2296).
+			# //// Nothing looked at its docstatus: the save below ran as an update after submit with
+			# //// permissions off, so a till user moved the ledger accounts of a sale booked long ago, and a
+			# //// replayed return refunded its PSP payment again, each time on another customer's payment
+			# //// once the original was refunded. A till that lost the answer (a retry, an offline sale
+			# //// resent under a new id) gets what it would have been told, and nothing runs twice. A
+			# //// cancelled document is refused.
+			if invoice_doc.docstatus == 2:
+				frappe.throw(_("Not permitted"))
+			if invoice_doc.docstatus == 1:
+				invoice_submitted = True
+				_complete_offline_sync(sync_record_name, invoice_doc.name)
+				return _the_sale_as_submitted(invoice_doc, offline_id)
+
 			# //// Neoffice — no upstream equivalent: guest ordering (ours) pays the very invoice the
 			# //// cashier has open, and invoice_doc.update() replaces the whole `payments` table with
 			# //// what the POS sent — dropping a payment the guest already made, so money was taken and
@@ -2480,16 +2637,8 @@ def submit_invoice(invoice=None, data=None):
 					pos_profile_doc = frappe.get_cached_doc("POS Profile", pos_profile)
 					write_off_account = pos_profile_doc.write_off_account
 					write_off_cost_center = pos_profile_doc.write_off_cost_center
-					write_off_limit = flt(pos_profile_doc.write_off_limit or 0)
 
-					# Validate write-off amount is within limit
-					if write_off_limit > 0 and write_off_amount > write_off_limit:
-						frappe.throw(
-							_("Write-off amount {0} exceeds limit {1}").format(
-								write_off_amount, write_off_limit
-							)
-						)
-
+					# //// Neoffice — the limit is read below, outside this `try` (maintenance#2296).
 					# Set write-off fields on invoice
 					if write_off_account:
 						invoice_doc.write_off_account = write_off_account
@@ -2501,6 +2650,12 @@ def submit_invoice(invoice=None, data=None):
 						f"Failed to apply write-off from POS Profile {pos_profile}: {e}",
 						"POS Write-Off Error",
 					)
+
+		# //// Neoffice — the limit is read on the document, outside the `try` above, which swallowed its
+		# //// refusal: the amount was already on the document from the payload, or from the draft, and the
+		# //// sale was submitted with it (maintenance#2296).
+		if doctype == "Sales Invoice":
+			_require_write_off_within_the_limit(invoice_doc)
 
 		# //// Neoffice — redeeming loyalty points from the payment dialog has no upstream
 		# //// equivalent: the fields ERPNext needs (redeem_loyalty_points, loyalty_amount,
@@ -2548,8 +2703,11 @@ def submit_invoice(invoice=None, data=None):
 		# //// Neoffice — doctype guard added: Sales Order has no `payments` child table, so reading it
 		# //// on the Sales Order path raised AttributeError and killed the submit
 		# //// (0eb9c8a4, 2026-05-28 "step B: re-apply backend invoices.py (bug E + G fix)").
-		if doctype == "Sales Invoice" and redeemed_customer_credit and not invoice_doc.payments:
-			invoice_doc.flags.pos_next_redeemed_customer_credit = flt(redeemed_customer_credit)
+		# //// Neoffice — the credit the rows name, not the till's number (_credit_named_by): the flag let a
+		# //// sale past ERPNext's payment check on a number alone, with nothing to redeem (maintenance#2296).
+		credit_named = _credit_named_by(customer_credit_dict) if redeemed_customer_credit else 0
+		if doctype == "Sales Invoice" and credit_named and not invoice_doc.payments:
+			invoice_doc.flags.pos_next_redeemed_customer_credit = credit_named
 
 		# Allow intentional "Pay on Account" credit sales to submit without a
 		# payment row. The frontend sends is_credit_sale=1 when the cashier puts
@@ -2606,6 +2764,11 @@ def submit_invoice(invoice=None, data=None):
 		# //// submit is what tells a slow instance from a slow network (2584aa58, 2026-03-24).
 		# //// UX improvements - Complete Payment full-width, Pay on Account as disc… — 2584aa5
 		_t1 = _time.time()
+
+		# //// Neoffice — refused here, before the submit, with the totals of the save (_require_a_paid_sale,
+		# //// maintenance#2296).
+		if doctype == "Sales Invoice":
+			_require_a_paid_sale(invoice_doc, credit_named)
 
 		# //// Neoffice — a sale made offline and synced now carries this flag, so that what reacts to a
 		# //// POS sale being submitted (cloudprnt prints its receipt and opens the cash drawer) does not
@@ -2936,6 +3099,14 @@ def _find_original_intent(return_against, provider, amount_minor):
 		)
 		if linked:
 			return linked[0].name
+		# //// Neoffice — the fallback is for sales made before the link existed. An invoice whose payment IS
+		# //// linked, and already refunded, has nothing left to refund: it fell through and took the latest
+		# //// payment of the same amount, somebody else's (maintenance#2296).
+		if frappe.db.exists(
+			"Payment Intent",
+			{"reference_doctype": "Sales Invoice", "reference_name": return_against, "provider": provider},
+		):
+			return None
 	legacy = frappe.get_all(
 		"Payment Intent",
 		filters={"provider": provider, "amount": amount_minor, "status": "succeeded"},
@@ -3218,7 +3389,8 @@ def _add_tip_to_invoice(invoice_doc, tip_amount, data, record_amount=None):
 
 
 @frappe.whitelist()
-def get_invoice(invoice_name):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_invoice(invoice_name: str | None):
 	"""
 	Get a single invoice with all details for POS.
 
@@ -3516,7 +3688,8 @@ def get_draft_invoices(pos_opening_shift, doctype="Sales Invoice"):
 
 
 @frappe.whitelist()
-def delete_invoice(invoice):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def delete_invoice(invoice: str | None):
 	"""Delete draft invoice."""
 	doctype = "Sales Invoice"
 
@@ -3553,7 +3726,8 @@ def _kept_draft_exclusions():
 
 
 @frappe.whitelist()
-def cleanup_old_drafts(pos_profile=None, max_age_hours=48):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def cleanup_old_drafts(pos_profile: str | None = None, max_age_hours=48):
 	"""
 	Clean up old draft invoices to prevent stock reservation issues.
 	Deletes drafts older than max_age_hours (default 24 hours).
@@ -3664,7 +3838,8 @@ def _filter_fully_returned(invoices):
 
 
 @frappe.whitelist()
-def get_returnable_invoices(limit=50, pos_profile=None):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_returnable_invoices(limit=50, pos_profile: str | None = None):
 	"""Get list of invoices that have items available for return.
 	Filters by return validity period if configured in POS Settings.
 
@@ -3689,6 +3864,8 @@ def get_returnable_invoices(limit=50, pos_profile=None):
 	si = frappe.qb.DocType("Sales Invoice")
 
 	# Over-fetch to compensate for fully-returned invoices removed in step 2
+	# //// Neoffice — capped: see RETURNABLE_INVOICES_MAX
+	limit = min(cint(limit) or 50, RETURNABLE_INVOICES_MAX)
 	fetch_limit = cint(limit) * 2
 
 	# Step 1: fetch candidates (lightweight, no JOINs)
@@ -3713,7 +3890,8 @@ def get_returnable_invoices(limit=50, pos_profile=None):
 		cutoff_date = add_days(today(), -return_validity_days)
 		query = query.where(si.posting_date >= cutoff_date)
 
-	candidates = query.run(as_dict=True)
+	# //// Neoffice — see _within_the_reach_of_the_till
+	candidates = _within_the_reach_of_the_till(query, si, pos_profile).run(as_dict=True)
 
 	# Step 2: filter out fully-returned invoices, then trim to requested limit
 	return _filter_fully_returned(candidates)[: cint(limit)]
@@ -3750,7 +3928,8 @@ def search_invoice_by_number(search_term, pos_profile=None):
 	si = frappe.qb.DocType("Sales Invoice")
 
 	# Step 1: find matching invoices (lightweight, no JOINs)
-	candidates = (
+	# //// Neoffice — see _within_the_reach_of_the_till
+	candidates = _within_the_reach_of_the_till(
 		frappe.qb.from_(si)
 		.select(
 			si.name,
@@ -3766,7 +3945,10 @@ def search_invoice_by_number(search_term, pos_profile=None):
 		)
 		.orderby(si.posting_date, order=frappe.qb.desc)
 		.orderby(si.creation, order=frappe.qb.desc)
-		.limit(10)
+		.limit(10),
+		# //// Neoffice — see _within_the_reach_of_the_till
+		si,
+		pos_profile,
 	).run(as_dict=True)
 
 	# Step 2: filter out fully-returned invoices
@@ -3830,7 +4012,8 @@ def check_invoice_return_validity(invoice_name):
 
 
 @frappe.whitelist()
-def get_invoice_for_return(invoice_name):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_invoice_for_return(invoice_name: str | None):
 	"""Get invoice with return tracking - calculates remaining qty for each item.
 	Also validates return validity period based on POS Settings.
 
@@ -4080,7 +4263,8 @@ def _remap_foreign_payment_modes(payments_data, current_profile, original_profil
 
 
 @frappe.whitelist()
-def prepare_return_invoice(invoice_name, pos_opening_shift=None):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def prepare_return_invoice(invoice_name, pos_opening_shift: str | None = None):
 	"""Prepare a return invoice using ERPNext's make_sales_return.
 
 	This uses ERPNext's standard return document creation which properly copies
@@ -4341,6 +4525,8 @@ def search_invoices_for_return(
 	from pos_next.api.cash_entry import require_till_user
 
 	require_till_user()
+	# //// Neoffice — see _require_returnable_doctype
+	_require_returnable_doctype(doctype)
 	from frappe.query_builder.functions import Abs, Count, Sum
 
 	page = cint(page) or 1
@@ -4415,7 +4601,8 @@ def search_invoices_for_return(
 			return {"invoices": [], "has_more": False}
 
 	# Execute main query
-	invoices_list = query.run(as_dict=True)
+	# //// Neoffice — see _within_the_reach_of_the_till
+	invoices_list = _within_the_reach_of_the_till(query, si).run(as_dict=True)
 
 	if not invoices_list:
 		return {"invoices": [], "has_more": False}
@@ -4450,7 +4637,8 @@ def search_invoices_for_return(
 		if customer_ids:
 			count_query = count_query.where(si.customer.isin(customer_ids))
 
-	count_result = count_query.run(as_dict=True)
+	# //// Neoffice — see _within_the_reach_of_the_till
+	count_result = _within_the_reach_of_the_till(count_query, si).run(as_dict=True)
 	total_count = count_result[0].total if count_result else 0
 
 	# Batch fetch returned quantities for all invoices in current page
@@ -4717,6 +4905,7 @@ def _evaluate_transaction_offers(
 	}
 
 
+# permission-check: ok prices the cart the caller sends
 @frappe.whitelist()
 def apply_offers(invoice_data, selected_offers=None):
 	"""Calculate and apply promotional offers using ERPNext Pricing Rules.
@@ -4747,6 +4936,11 @@ def apply_offers(invoice_data, selected_offers=None):
 
 		if not items:
 			return {"items": []}
+
+		# //// Neoffice — a till is named by a text: a dict would be a filter of `get_cached_doc`
+		# //// (maintenance#2296).
+		if not isinstance(invoice.get("pos_profile"), str):
+			return {"items": items}
 
 		if not invoice.get("pos_profile") or not erpnext_apply_pricing_rule:
 			# Either no POS profile supplied or ERPNext promotional engine unavailable

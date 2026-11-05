@@ -130,6 +130,21 @@ def require_restaurant(restaurant: str | None) -> None:
 		require("Restaurant", "read", restaurant)
 
 
+def require_not_kept_out(restaurant: str | None) -> None:
+	"""Refuse a user a User Permission keeps from `restaurant`; nothing more is asked of anyone else.
+
+	For the reads that need no right on a Restaurant (the kitchen's screens answer any desk account, whose
+	roles may have nothing to do with one): `require_restaurant` would refuse those accounts as well.
+	"""
+	# //// Neoffice — maintenance#2296: these reads go through `frappe.get_all`, which reads no User
+	# //// Permission, so a user kept to one restaurant named another and was answered.
+	from frappe.permissions import get_user_permissions
+
+	allowed = [row.doc for row in get_user_permissions(frappe.session.user).get("Restaurant") or []]
+	if restaurant and allowed and restaurant not in allowed:
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+
 def can(right: str) -> bool:
 	"""Whether the session user may do what the till's `right` stands for (the check `require_right` makes)."""
 	from pos_next.api.cash_entry import is_desk_account

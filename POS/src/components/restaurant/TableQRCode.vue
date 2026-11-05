@@ -125,6 +125,9 @@ import QRCode from "qrcode"
 import { useBackClosesDialog } from "@/composables/useBackClosesDialog"
 import { usePrintTableQr } from "@/composables/usePrintTableQr"
 import { usePOSSettingsStore } from "@/stores/posSettings"
+// //// Neoffice — the table's name and the link are escaped before `document.write`: a window of
+// //// the same origin runs what it is given (maintenance#2296)
+import { escapeHtml } from "@/utils/menuQrSheet"
 
 const props = defineProps({
 	token: { type: String, required: true },
@@ -252,7 +255,7 @@ function printInBrowser() {
 		<!DOCTYPE html>
 		<html>
 		<head>
-			<title>${props.tableName}</title>
+			<title>${escapeHtml(props.tableName)}</title>
 			<style>
 				body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; font-family: sans-serif; }
 				img { width: 300px; height: 300px; }
@@ -262,8 +265,8 @@ function printInBrowser() {
 		</head>
 		<body>
 			<img src="${dataUrl}" alt="QR Code" />
-			<h2>${props.tableName}</h2>
-			<p>${props.url}</p>
+			<h2>${escapeHtml(props.tableName)}</h2>
+			<p>${escapeHtml(props.url)}</p>
 			<script>window.onload = () => { window.print(); window.close(); }<\/script>
 		</body>
 		</html>

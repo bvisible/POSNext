@@ -1218,6 +1218,8 @@ import {
 	roundTotal,
 } from "@/utils/currency";
 import { getInvoiceStatusColor } from "@/utils/invoice";
+//// Neoffice — every piece highlightSearchMatch writes into v-html is escaped (see there).
+import { escapeHtml } from "@/utils/menuQrSheet";
 import { Button, Dialog, FeatherIcon, createResource } from "frappe-ui";
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
 
@@ -2262,11 +2264,23 @@ function escapeRegex(str) {
  * Highlight search matches in text with yellow background
  */
 function highlightSearchMatch(text, searchTerm) {
-	if (!text || !searchTerm) return text;
+	//// Neoffice — rewritten (maintenance#2296). The result is bound with v-html, and the invoice's number,
+	//// the customer's name and the phone came straight from the database: a value stored with markup ran its
+	//// script in the session of whoever searched for it, a manager's included, on any till. Frappe's
+	//// sanitizer lets through a value that parses as JSON. Split on the match and escape every piece: the
+	//// <mark> is the only markup this function now writes.
+	if (!text || !searchTerm) return escapeHtml(text);
 	const escaped = escapeRegex(searchTerm.trim());
-	if (!escaped) return text;
+	if (!escaped) return escapeHtml(text);
 	const regex = new RegExp(`(${escaped})`, "gi");
-	return text.replace(regex, '<mark class="search-highlight">$1</mark>');
+	//// Neoffice — split and escaped: see the comment above.
+	return String(text)
+		.split(regex)
+		.map((part, index) =>
+			// split() with a capturing group puts the matches at the odd indices
+			index % 2 === 1 ? `<mark class="search-highlight">${escapeHtml(part)}</mark>` : escapeHtml(part)
+		)
+		.join("");
 }
 </script>
 

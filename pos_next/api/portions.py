@@ -39,7 +39,8 @@ def add_portions(item, quantity):
 
 
 @frappe.whitelist()
-def get_portion_setting(item):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_portion_setting(item: str | None):
 	"""What the card editor shows of a product: is it counted, how many were made today, how many are left, and whether its stock counts it."""
 	permissions.require_right("manage_cards")
 	permissions.require("Item", "read", item)
@@ -52,7 +53,8 @@ def get_portion_setting(item):
 
 
 @frappe.whitelist()
-def set_portions(item, counted, made=None):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def set_portions(item: str | None, counted, made=None):
 	"""Count a product (or stop counting it) and say how many portions the kitchen made today: the card managers'."""
 	permissions.require_right("manage_cards")
 	permissions.require("Item", "read", item)

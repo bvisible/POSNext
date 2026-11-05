@@ -7,6 +7,9 @@ import frappe
 from frappe import _
 from frappe.utils import cint, flt
 
+# //// Neoffice — a report reads no User Permission by itself: see user_permission_scope (maintenance#2296).
+from pos_next.pos_next.report import user_permission_scope
+
 
 def execute(filters=None):
 	filters = filters or {}
@@ -242,6 +245,14 @@ def _get_stock_map(item_codes, warehouse=None):
 	if not item_codes:
 		return {}
 
+	# //// Neoffice — the warehouses the user is kept to (user_permission_scope, maintenance#2296).
+	permitted = user_permission_scope.permitted_warehouses()
+	if permitted and not warehouse:
+		stock = defaultdict(float)
+		for (item_code, _warehouse), qty in _get_stock_map_by_warehouse(item_codes, permitted).items():
+			stock[item_code] += flt(qty)
+		return dict(stock)
+
 	placeholders = ", ".join(["%s"] * len(item_codes))
 
 	if warehouse:
@@ -335,7 +346,12 @@ def _get_pos_profiles_for_zero_stock(filters):
 	if filters.get("warehouse"):
 		profile_filters["warehouse"] = filters.get("warehouse")
 
-	return frappe.db.get_all("POS Profile", filters=profile_filters, fields=["name", "warehouse"])
+	# //// Neoffice — the tills the user is kept to, when he is (user_permission_scope, maintenance#2296).
+	return [
+		profile
+		for profile in frappe.db.get_all("POS Profile", filters=profile_filters, fields=["name", "warehouse"])
+		if user_permission_scope.leaves_profile(profile.name)
+	]
 
 
 def _zero_stock_item_conditions(filters):
@@ -436,6 +452,12 @@ def get_conditions(filters):
 
 	if filters.get("item_group"):
 		conditions.append("i.item_group = %(item_group)s")
+
+	# //// Neoffice — raw SQL reads no User Permission, and the report has no Company column for the
+	# //// framework's row filter: a user kept to one company or till read the others' figures
+	# //// (user_permission_scope, maintenance#2296).
+	conditions += user_permission_scope.conditions("si", filters)
+	conditions += user_permission_scope.warehouse_conditions("sii.warehouse", filters)
 
 	return " AND " + " AND ".join(conditions) if conditions else ""
 

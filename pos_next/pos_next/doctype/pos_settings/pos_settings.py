@@ -159,7 +159,8 @@ class POSSettings(Document):
 
 
 @frappe.whitelist()
-def get_pos_settings(pos_profile):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_pos_settings(pos_profile: str | None):
 	"""
 	Get POS Settings for a specific POS Profile.
 

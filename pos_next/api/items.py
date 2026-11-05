@@ -85,10 +85,13 @@ def _till_only(fn):
 			# //// read from the keywords alone left such a call checked against no till. Arguments the
 			# //// function does not accept are refused by the call itself, once the caller is known.
 			try:
-				pos_profile = signature.bind_partial(*args, **kwargs).arguments.get("pos_profile")
+				arguments = signature.bind_partial(*args, **kwargs).arguments
 			except TypeError:
-				pos_profile = kwargs.get("pos_profile")
-			_require_item_reader(pos_profile)
+				arguments = kwargs
+			_require_item_reader(arguments.get("pos_profile"))
+			# //// Neoffice — the warehouse named too (maintenance#2296): these reads are raw, so a User
+			# //// Permission on Warehouse never cut in.
+			_require_warehouse_reader(arguments.get("warehouse"))
 		return fn(*args, **kwargs)
 
 	return gated
@@ -100,6 +103,27 @@ def _require_item_reader(pos_profile=None):
 	from pos_next.api.cash_entry import require_till_user
 
 	require_till_user(pos_profile)
+
+
+# //// Neoffice — added (no upstream equivalent). A user kept to some warehouses reads the stock and the
+# //// serial numbers of those, and of the warehouse of a till he is assigned to, so that an assigned cashier
+# //// never stops (maintenance#2296). With no User Permission on Warehouse, the case of nearly every account,
+# //// nothing is read.
+def _require_warehouse_reader(warehouse):
+	from frappe.permissions import get_user_permissions
+
+	if not warehouse:
+		return
+	if not isinstance(warehouse, str):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	user = frappe.session.user
+	allowed = [row.doc for row in get_user_permissions(user).get("Warehouse") or []]
+	if not allowed or warehouse in allowed:
+		return
+	assigned = frappe.get_all("POS Profile User", filters={"user": user}, pluck="parent")
+	if assigned and frappe.db.exists("POS Profile", {"name": ["in", assigned], "warehouse": warehouse}):
+		return
+	frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 
 def _get_item_price_transaction_date(transaction_date=None):
@@ -601,7 +625,8 @@ def find_item_by_barcode(barcode, pos_profile):
 @frappe.whitelist()
 # //// Neoffice — the till's users only: see _till_only (#1137).
 @_till_only
-def get_item_stock(item_code, warehouse):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_item_stock(item_code: str | None, warehouse: str | None):
 	"""Get real-time stock for item"""
 	try:
 		# Get both quantities in a single query (performance optimization)
@@ -633,7 +658,8 @@ def get_item_stock(item_code, warehouse):
 @frappe.whitelist()
 # //// Neoffice — the till's users only: see _till_only (#1137).
 @_till_only
-def get_batch_serial_details(item_code, warehouse):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_batch_serial_details(item_code: str | None, warehouse):
 	"""Get batch/serial number details"""
 	try:
 		# Get both flags in a single query (performance optimization)
@@ -689,7 +715,8 @@ def get_batch_serial_details(item_code, warehouse):
 @frappe.whitelist()
 # //// Neoffice — the till's users only: see _till_only (#1137).
 @_till_only
-def get_item_variants(template_item, pos_profile):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_item_variants(template_item, pos_profile: str | None):
 	"""Get all variants for a template item with prices and stock"""
 	try:
 		pos_profile_doc = frappe.get_cached_doc("POS Profile", pos_profile)
@@ -1343,8 +1370,9 @@ def _get_bundle_warehouse_availability_bulk(bundle_codes, warehouses):
 @frappe.whitelist()
 # //// Neoffice — the till's users only: see _till_only (#1137).
 @_till_only
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
 def get_items(
-	pos_profile,
+	pos_profile: str | None,
 	search_term=None,
 	item_group=None,
 	start=0,
@@ -1717,8 +1745,14 @@ def get_items(
 @frappe.whitelist()
 # //// Neoffice — the till's users only: see _till_only (#1137).
 @_till_only
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
 def get_items_bulk(
-	pos_profile, item_groups=None, start=0, limit=2000, include_variants=0, show_variants_as_items=0
+	pos_profile: str | None,
+	item_groups=None,
+	start=0,
+	limit=2000,
+	include_variants=0,
+	show_variants_as_items=0,
 ):
 	"""
 	Fetch items from multiple item groups in a SINGLE query.
@@ -1900,7 +1934,14 @@ def get_items_bulk(
 @frappe.whitelist()
 # //// Neoffice — the till's users only: see _till_only (#1137).
 @_till_only
-def get_items_count(pos_profile, item_group=None, brand=None, include_variants=0, show_variants_as_items=0):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_items_count(
+	pos_profile: str | None,
+	item_group=None,
+	brand=None,
+	include_variants=0,
+	show_variants_as_items=0,
+):
 	"""
 	Get total count of POS-eligible items for progress tracking and smart pagination.
 
@@ -1953,7 +1994,8 @@ def get_items_count(pos_profile, item_group=None, brand=None, include_variants=0
 @frappe.whitelist()
 # //// Neoffice — the till's users only: see _till_only (#1137).
 @_till_only
-def get_item_details(item_code, pos_profile, customer=None, qty=1, uom=None):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_item_details(item_code: str | None, pos_profile: str | None, customer=None, qty=1, uom=None):
 	"""Get detailed item info including price, tax, stock"""
 	try:
 		# Parse pos_profile if it's a JSON string
@@ -2093,7 +2135,8 @@ def get_brands(pos_profile):
 @frappe.whitelist()
 # //// Neoffice — the till's users only: see _till_only (#1137).
 @_till_only
-def get_stock_quantities(item_codes, warehouse):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_stock_quantities(item_codes, warehouse: str | None):
 	"""
 	Lightweight endpoint to get only stock quantities for specified items.
 	Used for real-time stock updates after invoice submission.
@@ -2266,7 +2309,8 @@ def _parse_item_codes_param(item_codes):
 @frappe.whitelist()
 # //// Neoffice — the till's users only: see _till_only (#1137).
 @_till_only
-def get_item_warehouse_availability(item_code=None, item_codes=None, company=None):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_item_warehouse_availability(item_code: str | None = None, item_codes=None, company=None):
 	"""
 	Get stock availability for item(s) across all warehouses.
 	Useful for showing cashiers where out-of-stock items are available.
@@ -2413,7 +2457,8 @@ def get_item_warehouse_availability(item_code=None, item_codes=None, company=Non
 @frappe.whitelist()
 # //// Neoffice — the till's users only: see _till_only (#1137).
 @_till_only
-def get_product_bundle_availability(item_code, warehouse):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_product_bundle_availability(item_code, warehouse: str | None):
 	"""
 	Get Product Bundle availability with detailed component information.
 	Uses available_qty (actual - reserved) to prevent overselling.
@@ -2510,7 +2555,8 @@ def get_product_bundle_availability(item_code, warehouse):
 @frappe.whitelist()
 # //// Neoffice — the till's users only: see _till_only (#1137).
 @_till_only
-def get_batch_serial_data_for_items(item_codes, warehouse):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_batch_serial_data_for_items(item_codes, warehouse: str | None):
 	"""
 	Get batch and serial number data for multiple items (for offline caching).
 

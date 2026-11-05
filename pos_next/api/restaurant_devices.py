@@ -31,7 +31,8 @@ def _restaurant_to_set_up(restaurant=None) -> str:
 
 
 @frappe.whitelist(methods=["POST"])
-def create_pairing_code(screen, station=None, restaurant=None):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def create_pairing_code(screen, station: str | None = None, restaurant=None):
 	"""A one-time token that opens a tablet as the kitchen's screen (of every station, or of one) or the runner's.
 
 	Returns the address the till shows as a QR code (the token is in its fragment, which a browser never sends to the
@@ -160,7 +161,8 @@ def get_devices(restaurant=None):
 
 
 @frappe.whitelist(methods=["POST"])
-def disconnect_device(device):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def disconnect_device(device: str | None):
 	"""End every session of a tablet, drop its OAuth tokens and refuse it until it scans a new token (its account can be
 	paired again)."""
 	permissions.require_right("manage_settings")

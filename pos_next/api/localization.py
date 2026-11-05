@@ -201,7 +201,10 @@ def get_allowed_locales_from_settings():
 	return {row.language.lower() for row in pos_settings.allowed_locales if row.language}
 
 
-@frappe.whitelist()
+# //// Neoffice — POST only: a write that commits, and a GET is not checked against CSRF, so a link followed
+# //// from another site wrote with the session of whoever opened it. The till posts (frappe-ui's `call` and
+# //// `createResource`) (maintenance#2296).
+@frappe.whitelist(methods=["POST"])
 def change_user_language(locale):
 	"""
 	Change the language preference for the current user.

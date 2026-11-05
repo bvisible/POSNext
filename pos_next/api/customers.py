@@ -12,7 +12,13 @@ from pos_next.integrations.registry import (
 	validate_customer_create,
 )
 @frappe.whitelist()
-def get_customers(search_term="", pos_profile=None, limit=20, modified_since=None):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_customers(
+	search_term="",
+	pos_profile: str | None = None,
+	limit=20,
+	modified_since: str | None = None,
+):
 	"""
 	Search customers for inline customer selection in POS.
 
@@ -142,16 +148,18 @@ def get_customers(search_term="", pos_profile=None, limit=20, modified_since=Non
 # //// as mandatory on some sites (3affd2e0, 2026-05-28 "step A: re-apply backend customers.py
 # //// only (bug A + C + D fix)"). The customer_type line in the docstring is part of this.
 @frappe.whitelist()
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
 def create_customer(
 	customer_name,
 	mobile_no=None,
 	email_id=None,
-	customer_group=None,
-	territory=None,
+	# //// Neoffice — names are texts: a list from a JSON body would be read as a filter (maintenance#2296).
+	customer_group: str | None = None,
+	territory: str | None = None,
 	# //// Neoffice — step A: re-apply backend customers.py only (bug A + C + D fix) (3affd2e0, 2026-05-28).
 	customer_type="Individual",
 	company=None,
-	pos_profile=None,
+	pos_profile: str | None = None,
 	custom_governorate=None,
 	custom_district=None,
 	custom_first_name=None,
@@ -470,7 +478,8 @@ def get_default_loyalty_program_from_settings(company=None, pos_profile=None):
 
 
 @frappe.whitelist()
-def get_customer_details(customer):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_customer_details(customer: str | None):
 	"""
 	Get detailed customer information.
 
@@ -610,7 +619,8 @@ def _customer_form_layout():
 
 
 @frappe.whitelist()
-def get_customer_form(customer):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_customer_form(customer: str | None):
 	"""Return the Customer values + a grouped, meta-driven field layout for the
 	POS full-edit dialog. Custom fields are included automatically; child tables
 	and other non-editable field types are omitted."""
@@ -632,7 +642,8 @@ def get_customer_form(customer):
 
 
 @frappe.whitelist()
-def save_customer_form(customer, values):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def save_customer_form(customer: str | None, values):
 	"""Persist edited values back onto the Customer doc. Only writable,
 	non-table fields are applied; the doc's own validation runs on save."""
 	import json

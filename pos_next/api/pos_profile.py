@@ -47,7 +47,8 @@ def get_pos_profiles(mode: str | None = None):
 
 
 @frappe.whitelist()
-def get_pos_profile_data(pos_profile):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_pos_profile_data(pos_profile: str | None):
 	"""Get detailed POS Profile data with hierarchical item groups for instant UI rendering."""
 	if not pos_profile:
 		frappe.throw(_("POS Profile is required"))
@@ -59,7 +60,11 @@ def get_pos_profile_data(pos_profile):
 		frappe.throw(_("You don't have access to this POS Profile"))
 
 	profile_doc = frappe.get_doc("POS Profile", pos_profile)
-	company_doc = frappe.get_doc("Company", profile_doc.company)
+	# //// Neoffice — what the till reads of its company, not the whole document (shifts.company_of_the_till,
+	# //// maintenance#2296).
+	from pos_next.api.shifts import company_of_the_till
+
+	company_doc = company_of_the_till(profile_doc.company)
 
 	# Get POS Settings for this profile
 	pos_settings = get_pos_settings(pos_profile)
@@ -87,7 +92,8 @@ def get_pos_profile_data(pos_profile):
 
 
 @frappe.whitelist()
-def get_pos_settings(pos_profile):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_pos_settings(pos_profile: str | None):
 	"""Get POS Settings for a given POS Profile"""
 	# //// Neoffice — the till's settings: only the till's users pass (cash_entry.require_till_access);
 	# //// with no profile, a desk account still gets the defaults below. get_pos_profile_data calls it
@@ -122,7 +128,8 @@ def get_pos_settings(pos_profile):
 
 
 @frappe.whitelist()
-def get_payment_methods(pos_profile):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_payment_methods(pos_profile: str | None):
 	"""Get available payment methods from POS Profile with optimized queries"""
 	# //// Neoffice — the till's payment methods: only the till's users pass
 	# //// (cash_entry.require_till_access), checked before the try below, which would turn the refusal
@@ -177,7 +184,8 @@ def get_payment_methods(pos_profile):
 
 
 @frappe.whitelist()
-def get_receivable_accounts(pos_profile):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_receivable_accounts(pos_profile: str | None):
 	"""Receivable accounts selectable for the "Pay on Receivable Account" feature.
 
 	Lists every enabled, non-group Receivable account for the POS Profile's company,
@@ -222,7 +230,8 @@ def get_receivable_accounts(pos_profile):
 
 
 @frappe.whitelist()
-def get_taxes(pos_profile):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_taxes(pos_profile: str | None):
 	"""Get tax configuration from POS Profile"""
 	# //// Neoffice — the till's tax rows and their accounts: only the till's users pass
 	# //// (cash_entry.require_till_access), checked before the try below, which would swallow the refusal
@@ -271,7 +280,8 @@ def get_taxes(pos_profile):
 
 
 @frappe.whitelist()
-def get_warehouses(pos_profile):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_warehouses(pos_profile: str | None):
 	"""Get all warehouses for the company in POS Profile"""
 	# //// Neoffice — the till's warehouses: only the till's users pass (cash_entry.require_till_access),
 	# //// checked before the try below, which would swallow the refusal into an empty answer and log it.
@@ -305,7 +315,8 @@ def get_warehouses(pos_profile):
 
 
 @frappe.whitelist()
-def get_default_customer(pos_profile):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_default_customer(pos_profile: str | None):
 	"""Get the default customer configured in POS Profile"""
 	# //// Neoffice — the till's default customer and its group: only the till's users pass
 	# //// (cash_entry.require_till_access), checked before the try below, which would swallow the refusal
@@ -431,7 +442,8 @@ def get_wallet_payment_flags(methods):
 
 
 @frappe.whitelist()
-def get_sales_persons(pos_profile=None):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_sales_persons(pos_profile: str | None = None):
 	"""Get all active individual sales persons (not groups) for POS.
 
 	Returns only the picker fields. Item / Item Group / Brand commission overrides
@@ -689,6 +701,9 @@ def update_pos_profile(*args, **parameters):
 	customer_groups = _parse_list_parameter(customer_groups, "customer_groups")
 	brands = _parse_list_parameter(brands, "brands")
 
+	# //// Neoffice — a name is a text: a dict would be read by `get_doc` as filters (maintenance#2296)
+	if not isinstance(pos_profile_name, str):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
 	pos_profile = frappe.get_doc("POS Profile", pos_profile_name)
 
 	# Update main fields
@@ -770,7 +785,8 @@ def update_pos_profile(*args, **parameters):
 
 
 @frappe.whitelist()
-def delete_pos_profile(pos_profile):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def delete_pos_profile(pos_profile: str | None):
 	"""
 	Delete a POS Profile
 

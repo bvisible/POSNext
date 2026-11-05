@@ -32,8 +32,31 @@ def check_promotion_permissions(action="read"):
 			frappe.throw(_("You don't have permission to delete promotions"), frappe.PermissionError)
 
 
+# //// Neoffice — added (no upstream equivalent). A coupon is two documents, and its endpoints write both with
+# //// permissions off on the sole right on Promotional Scheme: an accountant refused a Pricing Rule on a
+# //// scheme's own save wrote the Pricing Rules behind coupons. Whoever writes a coupon writes both
+# //// (maintenance#2296).
+def check_coupon_permissions(ptype):
+	for doctype in ("Coupon Code", "Pricing Rule"):
+		if not frappe.has_permission(doctype, ptype):
+			frappe.throw(
+				_("You don't have permission to create or modify promotions"), frappe.PermissionError
+			)
+
+
+# //// Neoffice — added (no upstream equivalent). A gift card is a bearer instrument: its code spends its
+# //// balance. The list of the cards with their balances is the till managers'
+# //// (gift_cards.get_gift_cards_with_balance), and the promotion module read them to a cashier, who holds no
+# //// right on Coupon Code (maintenance#2296). The promotions stay on his screen.
+def reads_gift_cards():
+	from pos_next.api.cash_entry import is_till_manager
+
+	return is_till_manager() or bool(frappe.has_permission("Coupon Code", "read"))
+
+
 @frappe.whitelist()
-def get_promotions(pos_profile=None, company=None, include_disabled=False):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_promotions(pos_profile: str | None = None, company: str | None = None, include_disabled=False):
 	"""Get all promotional schemes AND standalone pricing rules for POS with simplified structure."""
 	check_promotion_permissions("read")
 
@@ -172,7 +195,8 @@ def get_promotions(pos_profile=None, company=None, include_disabled=False):
 
 
 @frappe.whitelist()
-def get_promotion_details(scheme_name):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_promotion_details(scheme_name: str | None):
 	"""Get detailed information about a promotional scheme OR standalone pricing rule."""
 	check_promotion_permissions("read")
 
@@ -361,7 +385,8 @@ def create_promotion(data):
 
 
 @frappe.whitelist()
-def update_promotion(scheme_name, data):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def update_promotion(scheme_name: str | None, data):
 	"""
 	Update an existing promotional scheme.
 	Supports updating validity dates, discount values, and slab conditions.
@@ -448,7 +473,8 @@ def update_promotion(scheme_name, data):
 
 
 @frappe.whitelist()
-def toggle_promotion(scheme_name, disable=None):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def toggle_promotion(scheme_name: str | None, disable=None):
 	"""Enable or disable a promotional scheme."""
 	check_promotion_permissions("write")
 
@@ -479,7 +505,8 @@ def toggle_promotion(scheme_name, disable=None):
 
 
 @frappe.whitelist()
-def delete_promotion(scheme_name):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def delete_promotion(scheme_name: str | None):
 	"""Delete a promotional scheme and its pricing rules."""
 	check_promotion_permissions("delete")
 
@@ -498,9 +525,21 @@ def delete_promotion(scheme_name):
 		frappe.throw(_("Failed to delete promotion: {0}").format(str(e)))
 
 
+# //// Neoffice — the three catalogue helpers of the promotion screen follow the module's rule, from a desk
+# //// account: they served the whole catalogue to any signed-in account, a portal customer's included
+# //// (maintenance#2296).
+def _require_promotion_reader():
+	from pos_next.api.cash_entry import require_system_user
+
+	require_system_user()
+	check_promotion_permissions("read")
+
+
 @frappe.whitelist()
 def get_item_groups(company=None):
 	"""Get all item groups."""
+	# //// Neoffice — see _require_promotion_reader
+	_require_promotion_reader()
 	# Item Group is a global doctype, not company-specific
 	# Return all item groups (both parent groups and leaf nodes)
 	return frappe.get_all("Item Group", fields=["name", "parent_item_group", "is_group"], order_by="name")
@@ -509,12 +548,17 @@ def get_item_groups(company=None):
 @frappe.whitelist()
 def get_brands():
 	"""Get all brands."""
+	# //// Neoffice — see _require_promotion_reader
+	_require_promotion_reader()
 	return frappe.get_all("Brand", fields=["name"], order_by="name")
 
 
 @frappe.whitelist()
-def search_items(search_term, pos_profile=None, limit=20):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def search_items(search_term, pos_profile: str | None = None, limit=20):
 	"""Search for items."""
+	# //// Neoffice — see _require_promotion_reader
+	_require_promotion_reader()
 	# Rate limiting: Track API calls per user
 	cache_key = f"search_items_rate_limit:{frappe.session.user}"
 	call_count_raw = frappe.cache().get(cache_key)
@@ -535,6 +579,10 @@ def search_items(search_term, pos_profile=None, limit=20):
 	if len(search_term) < 2:
 		return []
 
+	# //// Neoffice — an underscore is a character: left as it was, `__` matched every code of two characters
+	# //// or more (maintenance#2296).
+	search_term = search_term.replace("_", "\\_")
+
 	filters = {"disabled": 0}
 
 	if pos_profile:
@@ -544,7 +592,9 @@ def search_items(search_term, pos_profile=None, limit=20):
 			filters["item_group"] = ["in", item_groups]
 
 	# Limit results
-	limit = min(int(limit) if limit else 20, 50)  # Max 50 results
+	# //// Neoffice — `or 20` on the number: the text "0" passed the test and asked for every row
+	# //// (maintenance#2296).
+	limit = min(cint(limit) or 20, 50)  # Max 50 results
 
 	return frappe.get_all(
 		"Item",
@@ -615,6 +665,12 @@ def get_coupons(company=None, include_disabled=False, coupon_type=None):
 		as_dict=True,
 	)
 
+	# //// Neoffice — the cards are the managers' (reads_gift_cards)
+	if not reads_gift_cards():
+		from pos_next.api.gift_cards import is_gift_card
+
+		coupons = [coupon for coupon in coupons if not is_gift_card(coupon)]
+
 	# Enrich with status and customer name
 	for coupon in coupons:
 		# //// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
@@ -650,7 +706,8 @@ def get_coupons(company=None, include_disabled=False, coupon_type=None):
 
 # //// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 @frappe.whitelist()
-def get_coupon_details(coupon_name):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_coupon_details(coupon_name: str | None):
 	"""Get detailed information about a specific coupon.
 
 	Uses ERPNext Coupon Code doctype directly.
@@ -663,6 +720,11 @@ def get_coupon_details(coupon_name):
 
 	# //// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 	coupon = frappe.get_doc("Coupon Code", coupon_name)
+	# //// Neoffice — the cards are the managers' (reads_gift_cards)
+	from pos_next.api.gift_cards import is_gift_card
+
+	if is_gift_card(coupon) and not reads_gift_cards():
+		frappe.throw(_("You don't have permission to view promotions"), frappe.PermissionError)
 	data = coupon.as_dict()
 
 	# //// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
@@ -720,6 +782,8 @@ def create_coupon(data):
 	}
 	"""
 	check_promotion_permissions("write")
+	# //// Neoffice — both documents (check_coupon_permissions)
+	check_coupon_permissions("create")
 
 	import json
 
@@ -847,6 +911,8 @@ def update_coupon(data):
 		data: JSON string or dict containing 'name' and fields to update
 	"""
 	check_promotion_permissions("write")
+	# //// Neoffice — both documents (check_coupon_permissions)
+	check_coupon_permissions("write")
 
 	import json
 
@@ -855,6 +921,9 @@ def update_coupon(data):
 
 	# //// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 	coupon_name = data.get("name")
+	# //// Neoffice — a coupon is named by a text (maintenance#2296).
+	if not isinstance(coupon_name, str):
+		frappe.throw(_("Coupon name is required"))
 	if not coupon_name:
 		frappe.throw(_("Coupon name is required"))
 
@@ -913,9 +982,12 @@ def update_coupon(data):
 
 # //// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 @frappe.whitelist()
-def toggle_coupon(coupon_name, disabled=None):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def toggle_coupon(coupon_name: str | None, disabled=None):
 	"""Enable or disable a coupon by toggling its linked Pricing Rule."""
 	check_promotion_permissions("write")
+	# //// Neoffice — both documents (check_coupon_permissions)
+	check_coupon_permissions("write")
 
 	# //// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 	if not frappe.db.exists("Coupon Code", coupon_name):
@@ -960,9 +1032,12 @@ def toggle_coupon(coupon_name, disabled=None):
 
 # //// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 @frappe.whitelist()
-def delete_coupon(coupon_name):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def delete_coupon(coupon_name: str | None):
 	"""Delete a coupon (ERPNext Coupon Code and its linked Pricing Rule)."""
 	check_promotion_permissions("delete")
+	# //// Neoffice — both documents (check_coupon_permissions)
+	check_coupon_permissions("delete")
 
 	# //// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 	if not frappe.db.exists("Coupon Code", coupon_name):
@@ -1005,7 +1080,10 @@ def delete_coupon(coupon_name):
 # =============================================================================
 
 
-@frappe.whitelist()
+# //// Neoffice — POST only: a write that commits, and a GET is not checked against CSRF, so a link followed
+# //// from another site wrote with the session of whoever opened it. The till posts (frappe-ui's `call` and
+# //// `createResource`) (maintenance#2296).
+@frappe.whitelist(methods=["POST"])
 def apply_referral_code(referral_code, customer):
 	"""
 	Apply a referral code for a customer - generates coupons for both referrer and referee
@@ -1041,7 +1119,8 @@ def apply_referral_code(referral_code, customer):
 
 
 @frappe.whitelist()
-def get_referral_codes(company=None, include_disabled=False):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_referral_codes(company: str | None = None, include_disabled=False):
 	"""Get all referral codes with optional filters."""
 	# //// Neoffice — the referral codes: it asks for a desk account and what the module's other promotion
 	# //// reads ask.
@@ -1084,7 +1163,8 @@ def get_referral_codes(company=None, include_disabled=False):
 
 
 @frappe.whitelist()
-def get_referral_details(referral_name):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_referral_details(referral_name: str | None):
 	"""Get detailed information about a specific referral code."""
 	check_promotion_permissions("read")
 

@@ -29,12 +29,50 @@ def require_till_access(pos_profile, profile_optional=False):
 	require_system_user()
 	if profile_optional and not pos_profile:
 		return
-	if not pos_profile:
+	# //// Neoffice — a till is named by a text: a list from a payload was read as an operator by the row
+	# //// lookup below (maintenance#2296).
+	if not pos_profile or not isinstance(pos_profile, str):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
-	if is_till_manager():
+	# //// Neoffice — a till manager runs every till but those a User Permission keeps him from
+	# //// (maintenance#2296): see user_permissions_leave_till.
+	if is_till_manager() and user_permissions_leave_till(pos_profile):
 		return
 	if not _has_pos_profile_access(pos_profile):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+
+# //// Neoffice — added function (no upstream equivalent). Whether the caller's User Permissions leave him
+# //// this till: its POS Profile and its company. The gate asked the doctype alone, with no document, so a
+# //// user kept to one company worked at any till with permissions off, and his sales were posted to the
+# //// other company's books (maintenance#2296). A row of the till's own user table is an assignment and is
+# //// answered before this (partial_payments._has_pos_profile_access), so that no assigned cashier stops. No
+# //// User Permission at all, the case of nearly every account, costs one cached read.
+def user_permissions_leave_till(pos_profile):
+	from frappe.permissions import get_user_permissions
+
+	kept_to = get_user_permissions(frappe.session.user)
+	if not (kept_to.get("POS Profile") or kept_to.get("Company")):
+		return True
+	for doctype, value in (
+		("POS Profile", pos_profile),
+		("Company", frappe.db.get_value("POS Profile", pos_profile, "company")),
+	):
+		allowed = [
+			row.doc for row in kept_to.get(doctype) or [] if row.applicable_for in (None, "", "Sales Invoice")
+		]
+		if allowed and value not in allowed:
+			return False
+	return True
+
+
+# //// Neoffice — added function (no upstream equivalent). The right every cashier holds, read on the roles:
+# //// `frappe.has_permission` with no document is also true on one shared invoice, which is no till
+# //// (maintenance#2296).
+def reads_sales_invoices():
+	from frappe.permissions import get_role_permissions
+
+	user = frappe.session.user
+	return bool(get_role_permissions(frappe.get_meta("Sales Invoice"), user=user).get("read"))
 
 
 # //// Neoffice — added function (no upstream equivalent). Whether the session user is a desk account:
@@ -95,9 +133,8 @@ def require_till_user(pos_profile=None):
 	user = frappe.session.user
 	if user == "Administrator" or is_till_manager():
 		return
-	if not (
-		frappe.db.exists("POS Profile User", {"user": user}) or frappe.has_permission("Sales Invoice", "read")
-	):
+	# //// Neoffice — on the roles (reads_sales_invoices): one shared invoice is no till (maintenance#2296).
+	if not (frappe.db.exists("POS Profile User", {"user": user}) or reads_sales_invoices()):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 
@@ -248,7 +285,8 @@ def _till_operations(pos_profile, company, cash_account):
 
 
 @frappe.whitelist()
-def get_cash_entry_templates(company, pos_profile=None):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_cash_entry_templates(company, pos_profile: str | None = None):
 	"""The operations the till may record, with their drawer direction. ``company`` is kept for the
 	callers that send it; the till's own company is the one that counts."""
 	# //// Neoffice — the till's own endpoint: it reads the company's templates and accounts, so only the

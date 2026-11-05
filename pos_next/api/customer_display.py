@@ -16,6 +16,8 @@ Handles authentication, cart synchronization, and customer creation
 for secondary display screens.
 """
 
+# //// Neoffice — hmac: the display's secret is compared in constant time (validate_api_key)
+import hmac
 import json
 import frappe
 from frappe import _
@@ -32,6 +34,11 @@ CART_CACHE_TTL = 3600  # 1 hour TTL for cart cache
 PAYMENT_QR_CACHE_PREFIX = "pos_next_payment_qr_"
 PAYMENT_QR_CACHE_TTL = 600  # 10 minutes
 
+# //// Neoffice — the refusals one address may earn at the display's sign-in (validate_api_key): a person
+# //// mistyping stays far below it
+KEY_REFUSALS_PER_ADDRESS = 10
+KEY_REFUSALS_WINDOW = 600  # 10 minutes
+
 
 # //// Neoffice — the customer display's writes come from the till, for its own shift: a submitted POS
 # //// Opening Shift still open, the caller's own (a till manager may write to any till's), at a till the
@@ -44,8 +51,41 @@ def _require_display_writer(pos_opening_entry):
         frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 
+# //// Neoffice — added (no upstream equivalent). The key half of the display's credential is public: it ships
+# //// in the display's own page, the same on every site, and the secret is a password a person chose. Nothing
+# //// limited the guesses, on a door open to any visitor (maintenance#2296). Only refusals count, per address
+# //// nginx accepted (the display of a shop signs in at each page load, and a shop's tills share one
+# //// address). Changing the credential itself is a decision for the fleet, not this code's; the same pair is
+# //// also tried by Frappe on any route (`Authorization: token`), which no code of this app sees.
+def _key_refusals() -> str | None:
+    """Where the refusals of the caller's address are counted; None for a call made inside the server."""
+    from pos_next.restaurant.devices import request_peer_ip
+
+    if not getattr(frappe.local, "request", None):
+        return None
+    return frappe.cache.make_key(f"pos_next:display-key:{request_peer_ip() or 'unknown'}")
+
+
+def _hold_back_a_guessing_address():
+    key = _key_refusals()
+    if key and int(frappe.cache.get(key) or 0) >= KEY_REFUSALS_PER_ADDRESS:
+        frappe.throw(
+            _("You hit the rate limit because of too many requests. Please try after sometime."),
+            frappe.RateLimitExceededError,
+        )
+
+
+def _refuse_the_key(message):
+    key = _key_refusals()
+    if key:
+        frappe.cache.set(key, 0, ex=KEY_REFUSALS_WINDOW, nx=True)
+        frappe.cache.incrby(key, 1)
+    frappe.throw(message, frappe.AuthenticationError)
+
+
+# //// Neoffice — `str`: the key is a text (maintenance#2296).
 @frappe.whitelist(allow_guest=True)
-def validate_api_key(api_key_string):
+def validate_api_key(api_key_string: str | None):
     """
     Validate API key and return user information.
 
@@ -57,13 +97,17 @@ def validate_api_key(api_key_string):
     Returns:
         dict: User information if valid, error if invalid
     """
+    # //// Neoffice — first, so that a held-back address learns nothing, a right guess included (see
+    # //// _key_refusals).
+    _hold_back_a_guessing_address()
+
     if not api_key_string:
         frappe.throw(_("API key is required"), frappe.AuthenticationError)
 
     # Split api_key:api_secret
     parts = api_key_string.split(":")
     if len(parts) != 2:
-        frappe.throw(_("Invalid API key format. Expected format: api_key:api_secret"), frappe.AuthenticationError)
+        _refuse_the_key(_("Invalid API key format. Expected format: api_key:api_secret"))
 
     api_key, api_secret = parts
 
@@ -76,17 +120,17 @@ def validate_api_key(api_key_string):
     )
 
     if not user:
-        frappe.throw(_("Invalid API key"), frappe.AuthenticationError)
+        _refuse_the_key(_("Invalid API key"))
 
     # Validate API secret
     user_doc = frappe.get_doc("User", user.name)
     if not user_doc.api_secret:
-        frappe.throw(_("API secret not configured for this user"), frappe.AuthenticationError)
+        _refuse_the_key(_("API secret not configured for this user"))
 
     # Compare secrets (api_secret is stored encrypted, get_password decrypts it)
     stored_secret = user_doc.get_password("api_secret")
-    if stored_secret != api_secret:
-        frappe.throw(_("Invalid API secret"), frappe.AuthenticationError)
+    if not hmac.compare_digest(stored_secret.encode(), api_secret.encode()):
+        _refuse_the_key(_("Invalid API secret"))
 
     # Set session user for subsequent calls
     frappe.set_user(user.name)
@@ -122,8 +166,43 @@ def get_pos_profiles():
     return profiles
 
 
+# //// Neoffice — the reads of the display answer the till (maintenance#2296): a shift's cart holds the
+# //// customer and every line of the sale in progress, and it was served to any signed-in account, a portal
+# //// customer's included, by a sequential shift name. Who reads it: the shift's cashier, a till manager, or
+# //// an account assigned to the till, which is what a paired display runs under (`get_pos_profiles` lists it
+# //// the tills of its rows). A cashier of another till is none of these.
+def _require_display_reader(pos_opening_entry):
+    from pos_next.api.cash_entry import is_till_manager, require_system_user, require_till_access
+
+    require_system_user()
+    opening = isinstance(pos_opening_entry, str) and frappe.db.get_value(
+        "POS Opening Shift", pos_opening_entry, ["user", "pos_profile"], as_dict=True
+    )
+    if not opening:
+        frappe.throw(_("Not permitted"), frappe.PermissionError)
+    user = frappe.session.user
+    assigned = frappe.db.exists("POS Profile User", {"parent": opening.pos_profile, "user": user})
+    if opening.user != user and not assigned and not is_till_manager():
+        frappe.throw(_("Not permitted"), frappe.PermissionError)
+    require_till_access(opening.pos_profile)
+
+
+# //// Neoffice — what the display hears (maintenance#2296). An event with no user goes to room `all`, every
+# //// desk account of the site whatever its rights: a cart, a payment's pairing token and a new customer's
+# //// contact details reached accounts that read none of them. They now go to the shift's cashier and the
+# //// accounts assigned to the till; any other display keeps its five-second poll of get_current_cart.
+def _tell_the_display(event, pos_opening_entry, message, after_commit):
+    opening = frappe.db.get_value(
+        "POS Opening Shift", pos_opening_entry, ["user", "pos_profile"], as_dict=True
+    )
+    assigned = frappe.get_all("POS Profile User", filters={"parent": opening.pos_profile}, pluck="user")
+    for user in {opening.user, *assigned}:
+        frappe.publish_realtime(event=event, message=message, user=user, after_commit=after_commit)
+
+
+# //// Neoffice — `str | None`: a name is a text (maintenance#2296); the till's own gate, below.
 @frappe.whitelist()
-def get_pos_opening_entry(pos_profile, opening=None):
+def get_pos_opening_entry(pos_profile: str | None, opening: str | None = None):
     """
     Get the active POS Opening Entry for a given POS profile.
 
@@ -140,6 +219,12 @@ def get_pos_opening_entry(pos_profile, opening=None):
     """
     if not pos_profile:
         frappe.throw(_("POS Profile is required"))
+
+    # //// Neoffice — its answer names the till's cashier and company: the till's (see
+    # //// _require_display_reader).
+    from pos_next.api.cash_entry import require_till_access
+
+    require_till_access(pos_profile)
 
     open_entry = None
 
@@ -197,8 +282,9 @@ def get_pos_opening_entry(pos_profile, opening=None):
     }
 
 
+# //// Neoffice — `str | None`: a name is a text (maintenance#2296); the till's own gate, below.
 @frappe.whitelist()
-def get_display_settings(pos_profile):
+def get_display_settings(pos_profile: str | None):
     """
     Get customer display settings from POS Settings.
 
@@ -210,6 +296,11 @@ def get_display_settings(pos_profile):
     """
     if not pos_profile:
         frappe.throw(_("POS Profile is required"))
+
+    # //// Neoffice — the till's settings answer the till (see _require_display_reader).
+    from pos_next.api.cash_entry import require_till_access
+
+    require_till_access(pos_profile)
 
     # Get POS Settings for this profile
     settings = frappe.db.get_value(
@@ -250,8 +341,9 @@ def get_display_settings(pos_profile):
     }
 
 
+# //// Neoffice — `str | None`: a name is a text (maintenance#2296).
 @frappe.whitelist()
-def update_cart_data(pos_opening_entry, cart_data):
+def update_cart_data(pos_opening_entry: str | None, cart_data):
     """
     Store cart data in Redis cache and emit realtime event.
     Called by the main POS when cart changes.
@@ -296,18 +388,19 @@ def update_cart_data(pos_opening_entry, cart_data):
     frappe.cache().set_value(cache_key, cart_data, expires_in_sec=CART_CACHE_TTL)
 
     # Emit realtime event to customer display
-    frappe.publish_realtime(
-        event=f"pos_cart_updated_{pos_opening_entry}",
-        message=cart_data,
-        user=None,  # Broadcast to all
-        after_commit=False  # Emit immediately for responsiveness
+    # //// Neoffice — to the till and its display, not to every desk account (see _tell_the_display);
+    # //// immediately, for responsiveness
+    _tell_the_display(
+        f"pos_cart_updated_{pos_opening_entry}", pos_opening_entry, cart_data, after_commit=False
     )
 
     return {"success": True}
 
 
+# //// Neoffice — `str | None`: a name is a text (maintenance#2296); who reads a cart is
+# //// _require_display_reader's.
 @frappe.whitelist()
-def get_current_cart(pos_opening_entry):
+def get_current_cart(pos_opening_entry: str | None):
     """
     Get current cart data from cache.
 
@@ -319,6 +412,8 @@ def get_current_cart(pos_opening_entry):
     """
     if not pos_opening_entry:
         frappe.throw(_("POS Opening Entry is required"))
+
+    _require_display_reader(pos_opening_entry)
 
     # Try to get from Redis cache
     cache_key = f"{CART_CACHE_PREFIX}{pos_opening_entry}"
@@ -348,8 +443,9 @@ def get_current_cart(pos_opening_entry):
     }
 
 
+# //// Neoffice — `str | None`: a name is a text (maintenance#2296).
 @frappe.whitelist()
-def create_customer_from_display(customer_name, pos_opening_entry, email=None, mobile_no=None,
+def create_customer_from_display(customer_name, pos_opening_entry: str | None, email=None, mobile_no=None,
                                   address_line1=None, city=None, pincode=None, country=None,
                                   customer_type=None, house_number=None):
     """
@@ -504,12 +600,8 @@ def create_customer_from_display(customer_name, pos_opening_entry, email=None, m
         "created_from": "customer_display"
     }
     frappe.logger().info(f"Emitting customer_created event: {event_name} with data: {event_data}")
-    frappe.publish_realtime(
-        event=event_name,
-        message=event_data,
-        user=None,
-        after_commit=True
-    )
+    # //// Neoffice — to the till and its display, not to every desk account (see _tell_the_display)
+    _tell_the_display(event_name, pos_opening_entry, event_data, after_commit=True)
 
     return {
         "success": True,
@@ -539,9 +631,11 @@ def clear_cart_cache(pos_opening_entry):
     frappe.cache().delete_value(cache_key)
 
     # Emit event to clear display
-    frappe.publish_realtime(
-        event=f"pos_cart_updated_{pos_opening_entry}",
-        message={
+    # //// Neoffice — to the till and its display, not to every desk account (see _tell_the_display)
+    _tell_the_display(
+        f"pos_cart_updated_{pos_opening_entry}",
+        pos_opening_entry,
+        {
             "items": [],
             "customer": None,
             "customer_name": None,
@@ -554,8 +648,7 @@ def clear_cart_cache(pos_opening_entry):
             "_updated_at": now(),
             "_pos_opening_entry": pos_opening_entry
         },
-        user=None,
-        after_commit=False
+        after_commit=False,
     )
 
     return {"success": True}
@@ -582,15 +675,16 @@ def notify_sale_complete(pos_opening_entry, invoice_name=None, grand_total=0):
         frappe.throw(_("POS Opening Entry is required"))
 
     # Emit sale complete event
-    frappe.publish_realtime(
-        event=f"pos_sale_complete_{pos_opening_entry}",
-        message={
+    # //// Neoffice — to the till and its display, not to every desk account (see _tell_the_display)
+    _tell_the_display(
+        f"pos_sale_complete_{pos_opening_entry}",
+        pos_opening_entry,
+        {
             "invoice_name": invoice_name,
             "grand_total": flt(grand_total),
             "timestamp": now()
         },
-        user=None,
-        after_commit=True
+        after_commit=True,
     )
 
     # Clear cart cache after sale
@@ -645,12 +739,9 @@ def push_payment_qr(pos_opening_entry, pairing_token, amount=0, currency="CHF",
     cache_key = f"{PAYMENT_QR_CACHE_PREFIX}{pos_opening_entry}"
     frappe.cache().set_value(cache_key, payload, expires_in_sec=PAYMENT_QR_CACHE_TTL)
 
-    frappe.publish_realtime(
-        event=f"pos_payment_qr_{pos_opening_entry}",
-        message=payload,
-        user=None,  # Broadcast to all
-        after_commit=False  # Emit immediately for responsiveness
-    )
+    # //// Neoffice — to the till and its display, not to every desk account (see _tell_the_display);
+    # //// immediately, for responsiveness
+    _tell_the_display(f"pos_payment_qr_{pos_opening_entry}", pos_opening_entry, payload, after_commit=False)
 
     return {"success": True}
 
@@ -678,15 +769,16 @@ def clear_payment_qr(pos_opening_entry):
     cache_key = f"{PAYMENT_QR_CACHE_PREFIX}{pos_opening_entry}"
     frappe.cache().delete_value(cache_key)
 
-    frappe.publish_realtime(
-        event=f"pos_payment_qr_cleared_{pos_opening_entry}",
-        message={
+    # //// Neoffice — to the till and its display, not to every desk account (see _tell_the_display)
+    _tell_the_display(
+        f"pos_payment_qr_cleared_{pos_opening_entry}",
+        pos_opening_entry,
+        {
             "_cleared": True,
             "_updated_at": now(),
             "_pos_opening_entry": pos_opening_entry,
         },
-        user=None,
-        after_commit=False
+        after_commit=False,
     )
 
     return {"success": True}

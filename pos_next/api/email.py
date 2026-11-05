@@ -10,7 +10,8 @@ from frappe import _
 
 
 @frappe.whitelist()
-def send_invoice_email(invoice_name, recipients, subject=None, message=None, print_format=None):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def send_invoice_email(invoice_name: str | None, recipients, subject=None, message=None, print_format=None):
 	"""Send a Sales Invoice by email with PDF attachment.
 
 	Uses Frappe's Communication system so the email is tracked
@@ -65,7 +66,8 @@ def send_invoice_email(invoice_name, recipients, subject=None, message=None, pri
 
 
 @frappe.whitelist()
-def get_invoice_email_context(invoice_name):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_invoice_email_context(invoice_name: str | None):
 	"""Get pre-filled email context for an invoice (recipient, subject, etc.)."""
 	# //// Neoffice — its caller is the till (EmailInvoiceDialog): whoever may work at the invoice's till
 	# //// passes (cash_entry.require_document_till).

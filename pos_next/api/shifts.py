@@ -10,6 +10,13 @@ from frappe.utils import nowdate, nowtime, get_datetime, flt, cint
 from pos_next.api.utilities import get_wallet_payment_modes
 
 
+# //// Neoffice — added (no upstream equivalent). What the till reads of its company: its name and its
+# //// currency (useShift, posShift). The whole document went to a cashier who may not read Company: its
+# //// credit limit, its sales target, its registration details and its default accounts (maintenance#2296).
+def company_of_the_till(company):
+	return frappe.db.get_value("Company", company, ["name", "default_currency"], as_dict=True)
+
+
 @frappe.whitelist()
 def get_opening_dialog_data():
 	"""Get data required for opening shift dialog"""
@@ -106,7 +113,8 @@ def check_opening_shift(user=None):
 	data = {}
 	data["pos_opening_shift"] = frappe.get_doc("POS Opening Shift", shift_data["name"])
 	data["pos_profile"] = frappe.get_doc("POS Profile", shift_data["pos_profile"])
-	data["company"] = frappe.get_doc("Company", data["pos_profile"].company)
+	# //// Neoffice — see company_of_the_till (maintenance#2296)
+	data["company"] = company_of_the_till(data["pos_profile"].company)
 	# Include server timestamp so frontend can compute shift duration
 	# without timezone mismatch (period_start_date is in server timezone)
 	data["server_now"] = str(get_datetime())
@@ -120,7 +128,8 @@ def check_opening_shift(user=None):
 # //// 2026-03-28 "cash withdrawal at shift closing with suggested opening balance").
 # //// cash withdrawal at shift closing with suggested opening balance — 5783eb2
 @frappe.whitelist()
-def get_suggested_opening_balance(pos_profile):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_suggested_opening_balance(pos_profile: str | None):
 	"""Get suggested cash opening balance from the user's last closing shift."""
 	# //// Neoffice — its caller is the till (ShiftOpeningDialog), so only the till's users pass
 	# //// (cash_entry.require_till_user).
@@ -156,7 +165,8 @@ def get_suggested_opening_balance(pos_profile):
 
 
 @frappe.whitelist()
-def create_opening_shift(pos_profile, company, balance_details):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def create_opening_shift(pos_profile: str | None, company: str | None, balance_details):
 	"""Create a new POS Opening Shift"""
 	# //// Neoffice — opening a shift (inserted and submitted with permissions off) takes the till: a desk
 	# //// account assigned to the POS Profile, or reading sales invoices as every cashier does
@@ -200,13 +210,15 @@ def create_opening_shift(pos_profile, company, balance_details):
 	data = {}
 	data["pos_opening_shift"] = new_pos_opening.as_dict()
 	data["pos_profile"] = frappe.get_doc("POS Profile", pos_profile)
-	data["company"] = frappe.get_doc("Company", company)
+	# //// Neoffice — see company_of_the_till (maintenance#2296)
+	data["company"] = company_of_the_till(company)
 
 	return data
 
 
 @frappe.whitelist()
-def get_closing_shift_data(opening_shift):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_closing_shift_data(opening_shift: str | None):
 	"""Get data for closing shift"""
 	# //// Neoffice — require_shift_access added: the gate called below.
 	from pos_next.pos_next.doctype.pos_closing_shift.pos_closing_shift import (

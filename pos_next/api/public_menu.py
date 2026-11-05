@@ -30,9 +30,11 @@ from urllib.parse import quote, unquote, urlsplit
 
 import frappe
 from frappe import _
-from frappe.rate_limiter import rate_limit
 from frappe.utils import cint, cstr, flt, getdate, nowdate
 
+# //// Neoffice — the limit counts the address nginx accepted, not the first entry of X-Forwarded-For
+# //// (maintenance#2296)
+from pos_next.rate_limits import rate_limit_by_peer
 from pos_next.restaurant import settings as restaurant_settings
 from pos_next.restaurant.mode import neoresto_active
 from pos_next.restaurant.text import plain_text
@@ -100,8 +102,8 @@ def public_menu(restaurant) -> dict | None:
 
 
 @frappe.whitelist(allow_guest=True, methods=["GET"])
-@rate_limit(limit=lambda: RATE_LIMIT, seconds=RATE_WINDOW)
-def get_public_menu(restaurant=None):
+@rate_limit_by_peer(limit=lambda: RATE_LIMIT, seconds=RATE_WINDOW)
+def get_public_menu(restaurant=None):  # permission-check: ok a public door: the restaurant publishes its card
 	"""A restaurant's guest card, read only, for the page its QR code opens (`/pos/menu/<restaurant>`).
 
 	Open to guests, for reading, and limited per address (Frappe's rate limiter). It answers what `public_menu()` does, and

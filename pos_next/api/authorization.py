@@ -14,11 +14,16 @@ import json
 
 import frappe
 from frappe import _
-from frappe.rate_limiter import rate_limit
+
+# //// Neoffice — Frappe's rate_limit gave way to rate_limit_by_peer, imported below (maintenance#2296).
 from frappe.utils import flt
 
 from pos_next.authorization import gate, grants, log, policy, registry
 from pos_next.authorization import pin as pin_store
+
+# //// Neoffice — the limit counts the address nginx accepted, not the first entry of X-Forwarded-For
+# //// (maintenance#2296)
+from pos_next.rate_limits import rate_limit_by_peer
 
 # //// Neoffice — the « Void Cash Movement » action of the till's drawer movements (ours); see request_grant.
 from pos_next.authorization.actions.cash_movement import (
@@ -121,7 +126,8 @@ RATE_LIMIT_PER_MINUTE = 20
 
 
 @frappe.whitelist()
-@rate_limit(key="approver", limit=RATE_LIMIT_PER_MINUTE, seconds=60, ip_based=True)
+# //// Neoffice — by the address nginx accepted: a PIN is guessed here (maintenance#2296).
+@rate_limit_by_peer(key="approver", limit=RATE_LIMIT_PER_MINUTE, seconds=60)
 def request_grant(action: str, approver: str, pin: str, context=None) -> dict:
 
 	# //// Neoffice — it tries an approver's PIN and logs the attempt. Its callers are the till's

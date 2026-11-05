@@ -503,7 +503,8 @@ def get_pos_settings(pos_profile):
 
 
 @frappe.whitelist()
-def get_wallet_payment_methods(pos_profile):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_wallet_payment_methods(pos_profile: str | None):
 	"""Get payment methods that are wallet-enabled for a POS profile."""
 	# //// Neoffice — a till's wallet payment methods: one of the till's endpoints (nothing in the app
 	# //// calls it), so only the till's users may call it (cash_entry.require_till_user).
@@ -530,7 +531,8 @@ def get_wallet_payment_methods(pos_profile):
 
 
 @frappe.whitelist()
-def get_wallet_info(customer, company, pos_profile=None):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_wallet_info(customer: str | None, company: str | None, pos_profile=None):
 	"""
 	Get comprehensive wallet information for a customer.
 	Used by POS frontend.
@@ -644,7 +646,8 @@ def get_wallet_info(customer, company, pos_profile=None):
 # //// 2026-03-19).
 # //// native loyalty points redemption in POS payment dialog — 104959e
 @frappe.whitelist()
-def get_loyalty_details(customer, company):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_loyalty_details(customer: str | None, company):
 	"""
 	Get loyalty points details for a customer using ERPNext native loyalty system.
 	Returns points available, conversion factor, and max redeemable amount.

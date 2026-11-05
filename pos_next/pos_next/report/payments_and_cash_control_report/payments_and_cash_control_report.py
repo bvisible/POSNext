@@ -5,6 +5,9 @@ import frappe
 from frappe import _
 from frappe.utils import flt, get_datetime, time_diff_in_hours
 
+# //// Neoffice — a report reads no User Permission by itself: see user_permission_scope (maintenance#2296).
+from pos_next.pos_next.report import user_permission_scope
+
 
 def execute(filters=None):
 	data, payment_methods = get_data(filters)
@@ -393,6 +396,11 @@ def get_conditions(filters):
 
 	if filters.get("mode_of_payment"):
 		conditions.append("pr.mode_of_payment = %(mode_of_payment)s")
+
+	# //// Neoffice — raw SQL reads no User Permission, and the report has no Company column for the
+	# //// framework's row filter: a user kept to one company or till read the others' figures
+	# //// (user_permission_scope, maintenance#2296).
+	conditions += user_permission_scope.conditions("pcs", filters)
 
 	return " AND " + " AND ".join(conditions) if conditions else ""
 

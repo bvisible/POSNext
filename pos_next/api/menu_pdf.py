@@ -167,7 +167,8 @@ def _render_menu(data, default_theme):
 
 
 @frappe.whitelist()
-def get_menu_preview_data(card_name, template_name=None):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_menu_preview_data(card_name: str | None, template_name: str | None = None):
 	"""Return structured data for menu preview and PDF generation.
 
 	The printed card carries its restaurant: the restaurant's name (`restaurant_name`) and logo (`logo`) head the
@@ -324,8 +325,12 @@ def get_menu_preview_html(card_name=None, card_names=None, template_name=None, o
 	return html
 
 
-@frappe.whitelist()
-def save_card_design(card_name, template_name=None, overrides=None):
+# //// Neoffice — POST only: a write that commits, and a GET is not checked against CSRF, so a link followed
+# //// from another site wrote with the session of whoever opened it. The till posts (frappe-ui's `call` and
+# //// `createResource`) (maintenance#2296).
+@frappe.whitelist(methods=["POST"])
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def save_card_design(card_name: str | None, template_name=None, overrides=None):
 	"""Save design settings to a Restaurant Card (not to the template): the design's own keys only."""
 	# //// Neoffice — its caller is the till (MenuDesignerDialog), so only the till's users pass
 	# //// (cash_entry.require_till_user).

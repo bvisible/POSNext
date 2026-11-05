@@ -52,7 +52,9 @@ def get_csrf_token():
 	if not csrf_token:
 		frappe.throw(_("Failed to generate CSRF token"), frappe.ValidationError)
 
-	return {"csrf_token": csrf_token, "session_id": frappe.session.sid}
+	# //// Neoffice — no `session_id`: it handed the HttpOnly `sid` cookie to page script, which could replay
+	# //// it from another machine, and no caller read it (maintenance#2296).
+	return {"csrf_token": csrf_token}
 
 
 def _parse_list_parameter(value, param_name="parameter"):

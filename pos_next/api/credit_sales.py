@@ -25,7 +25,8 @@ CUSTOMER_CREDIT_OR_FILTERS = {
 
 
 @frappe.whitelist()
-def get_customer_balance(customer, company=None):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_customer_balance(customer: str | None, company: str | None = None):
 	"""
 	Get customer balance from Sales Invoices.
 
@@ -122,7 +123,8 @@ def check_credit_sale_enabled(pos_profile):
 
 
 @frappe.whitelist()
-def get_available_credit(customer, company, pos_profile=None):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_available_credit(customer: str | None, company: str | None, pos_profile=None):
 	"""
 	Get list of available credit sources for a customer.
 	Includes:
@@ -220,7 +222,8 @@ def get_available_credit(customer, company, pos_profile=None):
 
 
 @frappe.whitelist()
-def redeem_customer_credit(invoice_name, customer_credit_dict):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def redeem_customer_credit(invoice_name: str | None, customer_credit_dict):
 	"""
 	Redeem customer credit by creating Journal Entries.
 	This allocates credit from previous invoices/advances to the new invoice.
@@ -601,13 +604,18 @@ def get_credit_redeem_remarks(invoice_name):
 	return [f"{prefix} {invoice_name}" for prefix in CREDIT_REDEEM_REMARK_PREFIXES]
 
 
+# //// Neoffice — `str`: a name is a text (maintenance#2296).
 @frappe.whitelist()
-def cancel_credit_journal_entries(invoice_name):
+def cancel_credit_journal_entries(invoice_name: str | None):
 	"""Cancel the credit redemption entries of an invoice, for whoever may cancel it."""
 	# //// Neoffice — cancelling these Journal Entries needs the right to cancel the invoice itself; the
 	# //// cancel hook calls the internal function below directly, whoever cancels (an accountant on the
 	# //// desk included).
 	frappe.has_permission("Sales Invoice", "cancel", doc=invoice_name, throw=True)
+	# //// Neoffice — and the right on the entries it cancels: a cashier cancels invoices and holds no right
+	# //// on Journal Entry, and turned a settled sale into an open receivable through this door, on an
+	# //// invoice of a closed shift too (maintenance#2296).
+	frappe.has_permission("Journal Entry", "cancel", throw=True)
 	return _cancel_credit_journal_entries(invoice_name)
 
 
@@ -730,7 +738,8 @@ def get_credit_sale_summary(pos_profile):
 
 
 @frappe.whitelist()
-def get_credit_invoices(pos_profile, limit=100):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_credit_invoices(pos_profile: str | None, limit=100):
 	"""
 	Get list of credit sale invoices (with outstanding amount).
 

@@ -511,7 +511,8 @@ def get_pos_invoices(pos_opening_shift, doctype=None):
 
 
 @frappe.whitelist()
-def get_payments_entries(pos_opening_shift):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_payments_entries(pos_opening_shift: str | None):
 	# //// Neoffice — a shift's payment entries follow require_closing_form_access: the desk form's
 	# //// rights, or the shift's rule.
 	require_closing_form_access(pos_opening_shift)
@@ -730,7 +731,8 @@ def _process_invoice(
 
 
 @frappe.whitelist()
-def make_closing_shift_from_opening(opening_shift):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def make_closing_shift_from_opening(opening_shift: str | None):
 	opening_shift = json.loads(opening_shift)
 	# //// Neoffice — the closing data answers the rule of the close (require_shift_access) for the stored
 	# //// shift the payload names and describes, before anything is read or submitted; the printed drafts

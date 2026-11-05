@@ -139,7 +139,8 @@ def enqueue_after_close(doc, method=None):
 
 
 @frappe.whitelist()
-def get_eod_email_defaults(closing_shift=None):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_eod_email_defaults(closing_shift: str | None = None):
 	"""Recipients pre-filled in the e-mail form: the profile's configured list, else the
 	signed-in user's own address."""
 	configured = []

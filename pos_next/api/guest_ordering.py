@@ -15,10 +15,12 @@ from contextlib import contextmanager
 
 import frappe
 from frappe import _
-from frappe.rate_limiter import rate_limit
 from frappe.utils import add_to_date, cint, flt, fmt_money, now_datetime, validate_email_address
 from frappe.utils.synchronization import filelock
 
+# //// Neoffice — the limits count the address nginx accepted, not the first entry of X-Forwarded-For
+# //// (maintenance#2296)
+from pos_next.rate_limits import rate_limit_by_peer
 from pos_next.restaurant import guest_account, permissions, portions, scope, service_families, tickets
 
 # //// Neoffice — the several open orders (.0, .1, .2) a table may hold: a guest's order goes onto the first (NeoResto lot 1, notes)
@@ -30,6 +32,14 @@ from pos_next.restaurant.text import plain_text
 # A takeaway session is kept for the tab (the page asks again only when its session is gone): a visitor starts one or two
 # an hour; the room left above that is for the visitors who share an address (a mobile network, a shop's Wi-Fi)
 TAKEAWAY_SESSIONS_PER_VISITOR = 20
+# //// Neoffice — what one address may ask of a guest's pages (maintenance#2296): a menu is rebuilt from the
+# //// database at each call, an order saves the invoice and tells the kitchen, a receipt is rendered, a
+# //// payment calls the provider. Nothing limited them. A restaurant's Wi-Fi is one address for all its
+# //// tables: these stand well above what a full room asks.
+MENUS_PER_MINUTE = 120
+ORDERS_PER_MINUTE = 60
+RECEIPTS_PER_MINUTE = 30
+PAYMENTS_PER_HOUR = 120
 
 
 # ==========================================
@@ -60,6 +70,12 @@ def _as_the_system():
 
 def _get_token_doc(token):
 	"""Fetch Guest Order Token by token value. Throws if not found."""
+	# //// Neoffice — a token is a text (maintenance#2296). A list from a JSON body was read by `get_value` as
+	# //// an operator and a pattern, so the newest row matched without its token being known: another table's
+	# //// order, receipt and cart. Every guest and shop endpoint comes through here, whatever its own
+	# //// signature says.
+	if not token or not isinstance(token, str):
+		frappe.throw(_("Invalid or unknown token."), frappe.AuthenticationError)
 	name = frappe.db.get_value("Guest Order Token", {"token": token}, "name")
 	if not name:
 		frappe.throw(_("Invalid or unknown token."), frappe.AuthenticationError)
@@ -324,16 +340,19 @@ def _build_menu_from_card(card_name, warehouse=None, colors=None):
 
 
 # //// Neoffice — the portions the kitchen made of a product (NeoResto lot 1, Daniel, 02.11.2026): the table's order, which the guest sends from a page that may be minutes old.
-def _refuse_what_is_sold_out(items):
+def _refuse_what_is_sold_out(items, dishes):
 	"""Refuse an order that asks for more of a counted dish than the kitchen has portions left (the whole order, so that nothing is half taken)."""
 	asked = {}
 	for item in items:
 		code = item.get("item_code")
-		if code:
+		# //// Neoffice — `dishes`, the menu of the session: a code off the menu is _rate_on_the_menu's to
+		# //// refuse. Read here, a guest learnt the name of any counted item by its exact code
+		# //// (maintenance#2296).
+		if code in dishes:
 			asked[code] = asked.get(code, 0) + flt(item.get("qty", 1))
 	for code, state in portions.state(list(asked)).items():
 		if state["left"] is not None and asked[code] > state["left"]:
-			frappe.throw(_("{0} is sold out").format(frappe.db.get_value("Item", code, "item_name") or code))
+			frappe.throw(_("{0} is sold out").format(dishes[code]["item_name"]))
 
 
 def _get_item_product_options(item_code):
@@ -596,8 +615,9 @@ def _lines_of_this_order(rows):
 # ==========================================
 
 
+# //// Neoffice — `str`: see _get_token_doc (maintenance#2296).
 @frappe.whitelist(allow_guest=True)
-def validate_token(token):
+def validate_token(token: str):
 	"""
 	Validate a guest token and return table + settings info.
 	Used on guest app mount to check session validity.
@@ -661,8 +681,12 @@ def validate_token(token):
 	}
 
 
+# //// Neoffice — `str`: see _get_token_doc. The menu is rebuilt from the database at each call (some hundred
+# //// queries for a card of a hundred dishes), so its calls are counted per address like the public menu's
+# //// (maintenance#2296).
 @frappe.whitelist(allow_guest=True)
-def get_guest_menu(token):
+@rate_limit_by_peer(limit=MENUS_PER_MINUTE, seconds=60)
+def get_guest_menu(token: str):
 	"""
 	Return the guest menu (categories + items) for a valid token.
 	Uses time-slot based card selection (same as Opening Hours), falling back to
@@ -744,7 +768,10 @@ def _rate_on_the_menu(item, dishes):
 	code = item.get("item_code")
 	dish = dishes.get(code)
 	if not dish:
-		frappe.throw(_("{0} is not on the menu").format(frappe.db.get_value("Item", code, "item_name") or code))
+		# //// Neoffice — answered with what the page sent. The name was read from the Item: a guest read the
+		# //// name of any item (an ingredient, a disabled one) by its exact code, and which codes exist
+		# //// (maintenance#2296).
+		frappe.throw(_("{0} is not on the menu").format(item.get("item_name") or code))
 	rate = flt(dish.get("price"))
 	offered = {
 		(group.get("group_name"), option.get("option_name")): flt(option.get("price_adjustment"))
@@ -777,8 +804,11 @@ def _quantity_of(item):
 	return qty
 
 
+# //// Neoffice — `str`: see _get_token_doc. An order saves the invoice and tells the kitchen: its calls are
+# //// counted (maintenance#2296).
 @frappe.whitelist(allow_guest=True)
-def submit_guest_order(token, items):
+@rate_limit_by_peer(limit=ORDERS_PER_MINUTE, seconds=60)
+def submit_guest_order(token: str, items):
 	"""
 	Add items to the invoice linked to this guest token.
 	Creates a new draft invoice if none exists yet.
@@ -803,11 +833,12 @@ def submit_guest_order(token, items):
 	# //// proven, then `_release_paid_takeaway` sends them (neoffice-maintenance#2132)
 	held_until_paid = token_doc.mode == "takeaway"
 
-	# //// Neoffice — a dish the kitchen has no portion of left is refused, whatever the guest's page still shows (NeoResto lot 1, Daniel, 02.11.2026); before anything is created
-	_refuse_what_is_sold_out(items)
 	# //// Neoffice — every line priced by the menu the page is served, before anything is created (maintenance#2198)
 	_cards, menu = _guest_menu_categories(token_doc, settings, offers=False)
 	dishes = _dishes_of(menu)
+	# //// Neoffice — a dish the kitchen has no portion of left is refused, whatever the guest's page still
+	# //// shows (NeoResto lot 1, Daniel, 02.11.2026); before anything is created
+	_refuse_what_is_sold_out(items, dishes)
 	rates = {index: _rate_on_the_menu(item, dishes) for index, item in enumerate(items) if item.get("item_code")}
 	quantities = {index: _quantity_of(items[index]) for index in rates}
 
@@ -974,8 +1005,9 @@ def submit_guest_order(token, items):
 	}
 
 
+# //// Neoffice — `str`: see _get_token_doc (maintenance#2296).
 @frappe.whitelist(allow_guest=True)
-def get_order_status(token):
+def get_order_status(token: str):
 	"""
 	Return current items and totals for the guest session.
 	Also finds submitted invoices (after guest payment).
@@ -984,10 +1016,17 @@ def get_order_status(token):
 	invoice_doc = _get_or_create_invoice(token_doc)
 
 	# If no draft found, check for a recently submitted invoice for this table
+	# //// Neoffice — one written since this token was issued: a table's code is expired when the table is
+	# //// emptied, so what was settled before it is the last party's. Any submitted invoice of the table
+	# //// answered, from any shift or day: the next party read its lines and totals (maintenance#2296).
 	if not invoice_doc and token_doc.table:
 		submitted = frappe.db.get_value(
 			"Sales Invoice",
-			{"docstatus": 1, "restaurant_table": token_doc.table},
+			{
+				"docstatus": 1,
+				"restaurant_table": token_doc.table,
+				"modified": [">=", token_doc.creation],
+			},
 			"name",
 			order_by="modified desc",
 		)
@@ -1078,8 +1117,9 @@ def _guest_page_path(token_doc):
 	return "/pos/order" if token_doc.mode == "takeaway" else f"/pos/guest/{token_doc.token}"
 
 
+# //// Neoffice — `str`: see _get_token_doc (maintenance#2296).
 @frappe.whitelist(allow_guest=True, methods=["POST"])
-def request_guest_code(token, email):
+def request_guest_code(token: str, email: str | None):
 	"""Mail a sign-in code and a link to `email` for this session. The answer is the same whether the address belongs to a customer or not."""
 	require_neoresto()
 	token_doc = _require_valid_token(token)
@@ -1098,8 +1138,9 @@ def _signed_in(token_doc, customer):
 	return {"status": "signed_in", "account": _account_of(token_doc)}
 
 
+# //// Neoffice — `str`: see _get_token_doc (maintenance#2296).
 @frappe.whitelist(allow_guest=True, methods=["POST"])
-def confirm_guest_code(token, email, code):
+def confirm_guest_code(token: str, email: str | None, code):
 	"""Prove `email` with the code that was mailed to it. An address that has an account is signed in by the engine and its customer is the
 	customer of the table; an address that has none, but whose customer the shop or the till already knows, gets its account opened here with
 	nothing more to ask; any other is {"status": "needs_registration", "proof"}: the name is asked for and `register_guest_account` ends it."""
@@ -1126,8 +1167,9 @@ def confirm_guest_code(token, email, code):
 	return {"status": "needs_registration", "proof": answer["proof"]}
 
 
+# //// Neoffice — `str`: see _get_token_doc (maintenance#2296).
 @frappe.whitelist(allow_guest=True, methods=["POST"])
-def register_guest_account(token, proof, customer_name, mobile_no=None):
+def register_guest_account(token: str, proof, customer_name: str | None, mobile_no: str | None = None):
 	"""Open the account of the address a code proved (`proof`, single use: the browser never names the address), sign them in, and make
 	their customer the customer of the table."""
 	require_neoresto()
@@ -1148,8 +1190,9 @@ def register_guest_account(token, proof, customer_name, mobile_no=None):
 # //// everything else without any session (`credentials: "omit"`), so these two calls are the only ones that carry it: one asks whose session it is, so that
 # //// the page can offer « Continue as … », one links that account to the table once the guest has pressed the button. Nothing is linked silently: the
 # //// browser may hold the session of somebody who signed in at the shop on a shared phone, and a link to a table is nobody's proof of anything.
+# //// Neoffice — `str`: see _get_token_doc (maintenance#2296).
 @frappe.whitelist(allow_guest=True)
-def signed_in_account(token):
+def signed_in_account(token: str):
 	"""The customer's account the browser is signed in with, as `{"account": {"user", "full_name"}}`, or `{"account": None}` for a guest, a member of
 	the staff or a disabled account. Nothing but the name of the caller's own account is told."""
 	require_neoresto()
@@ -1158,8 +1201,9 @@ def signed_in_account(token):
 	return {"account": guest_account.website_user(frappe.session.user)}
 
 
+# //// Neoffice — `str`: see _get_token_doc (maintenance#2296).
 @frappe.whitelist(allow_guest=True, methods=["POST"])
-def claim_signed_in_account(token):
+def claim_signed_in_account(token: str):
 	"""Make the customer of the account this browser is signed in with the customer of the table. A customer's session only; one customer per
 	table, never taken over (`guest_account.bind`)."""
 	require_neoresto()
@@ -1173,8 +1217,11 @@ def claim_signed_in_account(token):
 	return _signed_in(token_doc, customer)
 
 
+# //// Neoffice — `str`: see _get_token_doc. wkhtmltopdf renders at each call: its calls are counted
+# //// (maintenance#2296).
 @frappe.whitelist(allow_guest=True)
-def get_guest_receipt_pdf(token):
+@rate_limit_by_peer(limit=RECEIPTS_PER_MINUTE, seconds=60)
+def get_guest_receipt_pdf(token: str):
 	"""Generate and return a receipt PDF for a guest token's invoice."""
 	# Accept both Active and Expired tokens (guest may re-download receipt)
 	token_doc = _get_token_doc(token)
@@ -1232,8 +1279,18 @@ def _resolve_wallee_provider(required=True):
 	return name
 
 
+# //// Neoffice — `str`: see _get_token_doc. Each call writes a Payment Intent and calls the provider twice:
+# //// they are counted (maintenance#2296).
 @frappe.whitelist(allow_guest=True)
-def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=None, failed_url=None):
+@rate_limit_by_peer(limit=PAYMENTS_PER_HOUR, seconds=60 * 60)
+def create_guest_payment(
+	token: str,
+	amount,
+	payment_items=None,
+	tip=0,
+	success_url: str | None = None,
+	failed_url: str | None = None,
+):
 	"""
 	Create a Wallee transaction for a guest payment.
 	Supports tip amount and redirect URLs for Wallee payment page.
@@ -1304,6 +1361,11 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 		# same convention as Stripe/Wallee terminal.
 		from payments.api import intent as intent_api
 
+		# //// Neoffice — the page comes back to this site. Both addresses went to the provider as the caller
+		# //// wrote them, so a payment page of a real order could send its payer to any other site
+		# //// (maintenance#2296). An address refused falls back on the driver's own.
+		from payments.utils.utils import safe_redirect_to
+
 		amount_minor = int(round(amount * 100))
 		intent = intent_api.create_intent(
 			provider=wallee_provider,
@@ -1318,8 +1380,8 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 				"tip": tip,
 				# //// Neoffice — the mode of payment the `payments` app books the settled money under on the order (reconcile_payment_intent)
 				"mode_of_payment": _wallee_mode_of_payment(),
-				"success_url": success_url or None,
-				"failed_url": failed_url or None,
+				"success_url": safe_redirect_to(success_url),
+				"failed_url": safe_redirect_to(failed_url),
 			},
 		)
 
@@ -1381,8 +1443,9 @@ def _wallee_mode_of_payment():
 	return wallee_mop or "Carte de crédit"
 
 
+# //// Neoffice — `str`: see _get_token_doc (maintenance#2296).
 @frappe.whitelist(allow_guest=True)
-def confirm_guest_payment(token, amount=None, tip=0):
+def confirm_guest_payment(token: str, amount=None, tip=0):
 	"""
 	Record on a table's order the payments the provider settled for it, when the guest comes back from the payment page; submit the order once
 	it is paid.
@@ -1940,8 +2003,9 @@ def _takeaway_pos_profile(restaurant):
 
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])
-@rate_limit(limit=TAKEAWAY_SESSIONS_PER_VISITOR, seconds=60 * 60)
-def create_takeaway_token():
+# //// Neoffice — by the address nginx accepted (pos_next.rate_limits, maintenance#2296)
+@rate_limit_by_peer(limit=TAKEAWAY_SESSIONS_PER_VISITOR, seconds=60 * 60)
+def create_takeaway_token():  # permission-check: ok a public door: the restaurant's own switch closes it
 	"""
 	Create a Guest Order Token for a takeaway web order (no table binding).
 	Called when a visitor starts a takeaway order.
@@ -1978,11 +2042,15 @@ def create_takeaway_token():
 	}
 
 
+# //// Neoffice — the order a payment paid exists: `submit_guest_order` made it before the payment, and
+# //// `_settle_takeaway_order` finishes it. This endpoint, which no page calls any more, made a second
+# //// invoice as the system, from lines and a customer of the caller's: it tested any filter against Customer
+# //// before the payment check, and put an unpaid order of any size on the kitchen's screen
+# //// (maintenance#2296). It now answers the order the payment paid, and reads nothing the caller names.
 @frappe.whitelist(allow_guest=True)
-def submit_takeaway_order(token, items, customer=None):
+def submit_takeaway_order(token: str, items):
 	"""
-	Finalize a takeaway order after payment.
-	Creates a POS Invoice flagged as takeaway.
+	Finalize a takeaway order after payment: the answer names the order its session paid.
 	Payment must be completed before this endpoint will finalize the order.
 	Not behind the guard of NeoResto (mode.require_neoresto): it finishes an order that a payment already paid.
 	"""
@@ -1996,14 +2064,6 @@ def submit_takeaway_order(token, items, customer=None):
 
 	if not items:
 		frappe.throw(_("No items provided."))
-
-	# Takeaway orders require a valid customer
-	customer_name = customer or frappe.session.user
-	if not customer_name or customer_name == "Guest":
-		frappe.throw(_("A customer account is required for takeaway orders."))
-	# Validate that the customer exists in ERPNext
-	if not frappe.db.exists("Customer", customer_name):
-		frappe.throw(_("Customer {0} not found.").format(customer_name))
 
 	# Enforce payment before order finalization.
 	# Post-merger: a succeeded Payment Intent (reference = this invoice)
@@ -2019,81 +2079,8 @@ def submit_takeaway_order(token, items, customer=None):
 	if not has_payment:
 		frappe.throw(_("Payment must be completed before placing a takeaway order."))
 
-	settings = _get_restaurant_settings(token_doc.pos_profile)
-	card_name = settings.takeaway_menu or _get_guest_menu_card(settings)
-	if not card_name:
-		frappe.throw(_("No takeaway menu is configured."))
-
-	# Determine POS profile — use first available if not linked to token
-	pos_profile = token_doc.pos_profile
-	if not pos_profile:
-		available = frappe.get_all("POS Profile", filters={"disabled": 0}, limit=1, pluck="name")
-		if available:
-			pos_profile = available[0]
-
-	if not pos_profile:
-		frappe.throw(_("No POS Profile is available for takeaway orders."))
-
-	pos_profile_doc = frappe.get_cached_doc("POS Profile", pos_profile)
-
-	invoice_data = {
-		"doctype": "Sales Invoice",
-		"is_pos": 1,
-		"pos_profile": pos_profile,
-		"company": pos_profile_doc.company,
-		"currency": pos_profile_doc.currency or frappe.defaults.get_global_default("currency"),
-		"customer": customer_name,
-		"items": [],
-	}
-
-	# Set takeaway flag if it exists
-	if frappe.db.has_column("Sales Invoice", "is_takeaway"):
-		invoice_data["is_takeaway"] = 1
-
-	invoice_doc = frappe.get_doc(invoice_data)
-
-	# //// Neoffice — the lines priced by the takeaway card, read on the server, never by the page's `rate` (maintenance#2198); the card's price, the
-	# //// till's offers are not written on them (maintenance#2077, see _rate_on_the_menu)
-	takeaway_menu = _build_menu_from_card(card_name)["categories"]
-	dishes = _dishes_of(takeaway_menu)
-
-	has_kds = frappe.db.has_column("Sales Invoice Item", "kds_status")
-	for item in items:
-		item_code = item.get("item_code")
-		if not item_code:
-			continue
-		qty = _quantity_of(item)
-		rate = _rate_on_the_menu(item, dishes)
-
-		row = invoice_doc.append("items", {
-			"item_code": item_code,
-			"qty": qty,
-			"rate": rate,
-		})
-		if has_kds:
-			row.kds_status = "Pending"
-
-	invoice_doc.flags.ignore_permissions = True
-	_without_repricing(invoice_doc)
-	with _as_the_system():
-		invoice_doc.insert()
-		# A web takeaway order takes its ticket number like the till's (NeoResto lot 1, task 38b)
-		tickets.give_ticket_number(invoice_doc.name)
-
-		token_doc.invoice = invoice_doc.name
-		token_doc.flags.ignore_version = True
-		token_doc.save(ignore_permissions=True)
-
-	# Notify POS of new takeaway web order, in the restaurant whose settings priced it
-	frappe.publish_realtime("takeaway_web_order", {
-		"restaurant": settings.get("name"),
-		"invoice": invoice_doc.name,
-		"customer": customer_name,
-		"grand_total": flt(invoice_doc.grand_total),
-	})
-
 	return {
-		"invoice": invoice_doc.name,
-		"grand_total": flt(invoice_doc.grand_total),
+		"invoice": token_doc.invoice,
+		"grand_total": flt(frappe.db.get_value("Sales Invoice", token_doc.invoice, "grand_total")),
 		"status": "created",
 	}

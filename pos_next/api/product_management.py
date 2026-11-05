@@ -221,7 +221,10 @@ def get_products(
 	return items
 
 
-@frappe.whitelist()
+# //// Neoffice — POST only: a write that commits, and a GET is not checked against CSRF, so a link followed
+# //// from another site wrote with the session of whoever opened it. The till posts (frappe-ui's `call` and
+# //// `createResource`) (maintenance#2296).
+@frappe.whitelist(methods=["POST"])
 def save_product(pos_profile: str, data: str) -> dict:
 	"""Create or update a product for POS"""
 	data = json.loads(data)

@@ -298,6 +298,28 @@ def update_coupon_usage_on_submit(doc, method=None):
 	if not doc.coupon_code:
 		return
 
+	# //// Neoffice — the cap holds under the row's lock (maintenance#2296). Two tills passed ERPNext's check
+	# //// at the same moment, and the second one's refusal was swallowed below: a single-use coupon served
+	# //// twice. A coupon with no maximum (0) was refused there on every use, which is what the swallow hid:
+	# //// it is counted here instead. A sale made offline has already happened, so it is never refused. Gift
+	# //// cards follow their balance (gift_cards.process_gift_card_on_submit), not this count.
+	from pos_next.api.gift_cards import is_gift_card
+
+	coupon = frappe.db.get_value(
+		"Coupon Code",
+		doc.coupon_code,
+		["coupon_type", "pos_next_gift_card", "maximum_use", "used"],
+		as_dict=True,
+		for_update=True,
+	)
+	if coupon and not is_gift_card(coupon):
+		spent = cint(coupon.maximum_use) and cint(coupon.used) >= cint(coupon.maximum_use)
+		if spent and not doc.flags.pos_offline_sync:
+			frappe.throw(_("Sorry, this coupon code is no longer valid"))
+		if not spent:
+			frappe.db.set_value("Coupon Code", doc.coupon_code, "used", cint(coupon.used) + 1)
+		return
+
 	try:
 		from erpnext.accounts.doctype.pricing_rule.utils import update_coupon_code_count
 

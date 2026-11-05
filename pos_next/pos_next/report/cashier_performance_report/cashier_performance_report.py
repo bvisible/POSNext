@@ -5,6 +5,9 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
+# //// Neoffice — a report reads no User Permission by itself: see user_permission_scope (maintenance#2296).
+from pos_next.pos_next.report import user_permission_scope
+
 
 def execute(filters=None):
 	columns = get_columns()
@@ -196,6 +199,11 @@ def get_conditions(filters):
 			)
 		""")
 
+	# //// Neoffice — raw SQL reads no User Permission, and the report has no Company column for the
+	# //// framework's row filter: a user kept to one company or till read the others' figures
+	# //// (user_permission_scope, maintenance#2296).
+	conditions += user_permission_scope.conditions("si", filters)
+
 	return "AND " + " AND ".join(conditions) if conditions else ""
 
 
@@ -217,6 +225,9 @@ def _build_shift_conditions(filters):
 
 	if filters.get("shift"):
 		conditions.append("pcs.name = %(shift)s")
+
+	# //// Neoffice — see get_conditions (maintenance#2296).
+	conditions += user_permission_scope.conditions("pcs", filters)
 
 	return "AND " + " AND ".join(conditions) if conditions else ""
 

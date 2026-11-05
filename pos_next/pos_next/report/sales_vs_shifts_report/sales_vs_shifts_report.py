@@ -80,6 +80,9 @@ import frappe
 from frappe import _
 from frappe.utils import cint, flt, getdate, time_diff_in_hours
 
+# //// Neoffice — a report reads no User Permission by itself: see user_permission_scope (maintenance#2296).
+from pos_next.pos_next.report import user_permission_scope
+
 
 def execute(filters=None):
 	filters = filters or {}
@@ -710,6 +713,11 @@ def build_conditions(filters):
 	if filters.get("shift"):
 		conditions.append("pcs.name = %(shift)s")
 
+	# //// Neoffice — raw SQL reads no User Permission, and the report has no Company column for the
+	# //// framework's row filter: a user kept to one company or till read the others' figures
+	# //// (user_permission_scope, maintenance#2296).
+	conditions += user_permission_scope.conditions("pcs", filters)
+
 	return "AND " + " AND ".join(conditions) if conditions else ""
 
 
@@ -1159,6 +1167,9 @@ def get_hourly_breakdown(filters):
 		conditions.append("si.pos_profile = %(pos_profile)s")
 	if filters.get("cashier"):
 		conditions.append("si.owner = %(cashier)s")
+	# //// Neoffice — the figures of the user's own companies and tills (user_permission_scope,
+	# //// maintenance#2296).
+	conditions += user_permission_scope.conditions("si", filters)
 
 	where = " AND " + " AND ".join(conditions) if conditions else ""
 
@@ -1201,6 +1212,9 @@ def get_payment_method_breakdown(filters):
 		conditions.append("si.pos_profile = %(pos_profile)s")
 	if filters.get("cashier"):
 		conditions.append("si.owner = %(cashier)s")
+	# //// Neoffice — the figures of the user's own companies and tills (user_permission_scope,
+	# //// maintenance#2296).
+	conditions += user_permission_scope.conditions("si", filters)
 
 	where = " AND " + " AND ".join(conditions) if conditions else ""
 
@@ -1244,6 +1258,9 @@ def get_daily_trend(filters):
 		conditions.append("si.pos_profile = %(pos_profile)s")
 	if filters.get("cashier"):
 		conditions.append("si.owner = %(cashier)s")
+	# //// Neoffice — the figures of the user's own companies and tills (user_permission_scope,
+	# //// maintenance#2296).
+	conditions += user_permission_scope.conditions("si", filters)
 
 	where = " AND " + " AND ".join(conditions) if conditions else ""
 

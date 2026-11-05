@@ -575,7 +575,9 @@ def get_gift_cards_with_balance(customer=None, company=None):
 # Gift Card Lookup Helper
 # ==========================================
 
-def _get_gift_card_coupon(coupon_ref, fields):
+# //// Neoffice — `for_update`: the spending of a card reads its balance under the row's lock
+# //// (process_gift_card_on_submit).
+def _get_gift_card_coupon(coupon_ref, fields, for_update=False):
 	"""
 	Look up a Coupon Code document by either its document name or its coupon_code field value.
 
@@ -595,7 +597,7 @@ def _get_gift_card_coupon(coupon_ref, fields):
 		return None
 
 	# 1. Try by document name first (handles "Gift Card GC-…" style names).
-	coupon = frappe.db.get_value("Coupon Code", coupon_ref, fields, as_dict=True)
+	coupon = frappe.db.get_value("Coupon Code", coupon_ref, fields, as_dict=True, for_update=for_update)
 	if coupon:
 		return coupon
 
@@ -604,6 +606,7 @@ def _get_gift_card_coupon(coupon_ref, fields):
 		"Coupon Code",
 		{"coupon_code": coupon_ref},
 		fields,
+		for_update=for_update,
 		as_dict=True
 	)
 	return coupon
@@ -653,9 +656,12 @@ def process_gift_card_on_submit(doc, method=None):
 	# Get the Coupon Code from ERPNext.
 	# invoice.coupon_code stores the document *name* (e.g. "Gift Card GC-MV2S-Y1G9"),
 	# so we must look up by name first, then fall back to the coupon_code field value.
+	# //// Neoffice — under the row's lock: two tills read the same balance and each wrote its own result, the
+	# //// second over the first, so a card paid more than it held (maintenance#2296).
 	coupon = _get_gift_card_coupon(
 		coupon_code,
-		["name", "coupon_type", "pos_next_gift_card", "gift_card_amount", "pricing_rule"]
+		["name", "coupon_type", "pos_next_gift_card", "gift_card_amount", "pricing_rule"],
+		for_update=True,
 	)
 
 	if not coupon:
@@ -687,6 +693,15 @@ def process_gift_card_on_submit(doc, method=None):
 	if not used_amount:
 		used_amount = flt(invoice.discount_amount) if invoice.discount_amount else gift_card_balance
 
+	# //// Neoffice — a sale spends what the card holds. The till priced the discount when the card was read,
+	# //// and another till may have spent it since: the invoice kept its whole discount and the card went to
+	# //// zero (maintenance#2296). The sale is refused and the cashier takes the card off. A sale made
+	# //// offline has already happened, its money taken: it goes through, and the card ends empty.
+	if flt(getattr(invoice, "posa_gift_card_amount_used", 0)) > gift_card_balance + 0.01 and not getattr(
+		getattr(invoice, "flags", None), "pos_offline_sync", False
+	):
+		frappe.throw(_("This gift card no longer holds {0}.").format(used_amount))
+
 	if gift_card_balance <= 0:
 		return
 
@@ -711,7 +726,8 @@ def _update_gift_card_balance(coupon_name, new_balance, pricing_rule=None):
 	"""
 	try:
 		# Get current used count and increment it
-		current_used = frappe.db.get_value("Coupon Code", coupon_name, "used") or 0
+		# //// Neoffice — under the row's lock, as the balance is read (maintenance#2296)
+		current_used = frappe.db.get_value("Coupon Code", coupon_name, "used", for_update=True) or 0
 
 		# Update Coupon Code
 		frappe.db.set_value(
@@ -836,7 +852,8 @@ def _process_gift_card_return(return_invoice):
 
 
 @frappe.whitelist()
-def get_gift_cards_from_invoice(invoice_name):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_gift_cards_from_invoice(invoice_name: str | None):
 	"""
 	Get gift cards created from a specific invoice.
 

@@ -83,12 +83,13 @@ def start(key: str) -> dict:
 	"""Open a phone's session on the till whose QR code carries `key`: {"token", "shop_name", "shop_logo", "expires_at"}."""
 	from pos_next.api.guest_ordering import _get_active_pos_opening
 
-	settings = (
-		frappe.db.get_value(
-			"POS Settings", {"shop_scan_key": key, "enabled": 1}, list(SETTINGS_FIELDS), as_dict=True
-		)
-		if key
-		else None
+	# //// Neoffice — a key is a text (maintenance#2296): a list from a JSON body was read by `get_value` as
+	# //// an operator and a pattern, so a session opened at the till of the most recent key without its
+	# //// poster being seen.
+	if not key or not isinstance(key, str):
+		_unavailable()
+	settings = frappe.db.get_value(
+		"POS Settings", {"shop_scan_key": key, "enabled": 1}, list(SETTINGS_FIELDS), as_dict=True
 	)
 	if not is_shop_till(settings):
 		_unavailable()

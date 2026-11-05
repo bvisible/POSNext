@@ -13,6 +13,19 @@ from frappe import _
 from pos_next.api.items import get_stock_quantities, in_process_item_reads
 
 
+# //// Neoffice — added (no upstream equivalent). An event with no user goes to room `all`, every desk account
+# //// of the site: the name, mobile and e-mail of each customer changed, and the customer and total of each
+# //// POS sale, reached accounts that read neither (maintenance#2296). The till is the only reader of these
+# //// events, and a till runs under an open shift: each account with one is told in its own room, which needs
+# //// nothing of the page.
+def _tell_the_tills(event, message):
+	users = frappe.get_all(
+		"POS Opening Shift", filters={"status": "Open", "docstatus": 1}, pluck="user", distinct=True
+	)
+	for user in users:
+		frappe.publish_realtime(event=event, message=message, user=user, after_commit=True)
+
+
 def emit_stock_update_event(doc, method=None):
 	"""
 	Emit real-time stock update event when Sales Invoice is submitted.
@@ -88,12 +101,9 @@ def emit_stock_update_event(doc, method=None):
 		# Emit event to all connected clients
 		# Event name: pos_stock_update
 		# Clients can subscribe to this event and filter by warehouse
-		frappe.publish_realtime(
-			event="pos_stock_update",
-			message=event_data,
-			user=None,  # Broadcast to all users
-			after_commit=True,  # Only emit after successful DB commit
-		)
+		# //// Neoffice — to the tills, not to every desk account (see _tell_the_tills); only after a
+		# //// successful commit
+		_tell_the_tills("pos_stock_update", event_data)
 
 	except Exception as e:
 		# Log error but don't fail the transaction
@@ -126,7 +136,8 @@ def emit_invoice_created_event(doc, method=None):
 			"timestamp": frappe.utils.now(),
 		}
 
-		frappe.publish_realtime(event="pos_invoice_created", message=event_data, user=None, after_commit=True)
+		# //// Neoffice — to the tills, not to every desk account (see _tell_the_tills)
+		_tell_the_tills("pos_invoice_created", event_data)
 
 	except Exception as e:
 		frappe.log_error(
@@ -209,12 +220,9 @@ def emit_customer_event(doc, method=None):
 			"timestamp": frappe.utils.now(),
 		}
 
-		frappe.publish_realtime(
-			event="pos_customer_changed",
-			message=event_data,
-			user=None,  # Broadcast to all users
-			after_commit=True,  # Only emit after successful DB commit
-		)
+		# //// Neoffice — to the tills, not to every desk account (see _tell_the_tills); only after a
+		# //// successful commit
+		_tell_the_tills("pos_customer_changed", event_data)
 
 	except Exception as e:
 		frappe.log_error(

@@ -1,6 +1,9 @@
 import { call } from "@/utils/apiWrapper";
 //// Neoffice — formatCurrencyNumber: receipt amounts in the site's number format (see formatCurrency below).
 import { formatCurrencyNumber, formatDate, formatDateTime } from "@/utils/currency";
+//// Neoffice — what a document holds is escaped before `document.write`: a window of the same origin runs
+//// what it is given (maintenance#2296).
+import { escapeHtml } from "@/utils/menuQrSheet";
 import { logger } from "@/utils/logger";
 import { getOfflineReceiptPayload } from "@/utils/offline/offlineReceiptCache";
 import { getOfflineInvoiceByOfflineId } from "@/utils/offline/sync";
@@ -195,7 +198,7 @@ export function buildReceiptHTML(invoiceData) {
 			const subtotal = offered ? 0 : qty * displayRate;
 			return `
 						<div class="item-row">
-							<div class="item-name">${item.item_name || item.item_code} ${isFree ? __("(FREE)") : ""}</div>
+							<div class="item-name">${escapeHtml(item.item_name || item.item_code) /* //// Neoffice — escaped: see the import */} ${isFree ? __("(FREE)") : ""}</div>
 							<div class="item-details">
 								<span>${qty} × ${formatCurrency(displayRate)}</span>
 								<span><strong>${formatCurrency(subtotal)}</strong></span>
@@ -218,9 +221,9 @@ export function buildReceiptHTML(invoiceData) {
 								item.serial_no
 									? `<div class="item-serials"><div class="item-serials-label">${__(
 											"Serial No:"
-									  )}</div><div class="item-serials-list">${String(
-											item.serial_no
-									  ).replace(/\n/g, ", ")}</div></div>`
+									  )}</div><div class="item-serials-list">${escapeHtml(
+											String(item.serial_no).replace(/\n/g, ", ")
+									  ) /* //// Neoffice — escaped: see the import */}</div></div>`
 									: ""
 							}
 						</div>`;
@@ -239,14 +242,14 @@ export function buildReceiptHTML(invoiceData) {
 			<div class="receipt">
 				<div class="header">
 					<!-- //// Neoffice — "Neopos" when the company name is unset (771950bd, 2026-04-02). -->
-					<div class="company-name">${invoiceData.company || "Neopos"}</div>
-					<div style="font-size: 12px;">${invoiceData.header || __("TAX INVOICE")}</div>
+					<div class="company-name">${escapeHtml(invoiceData.company || "Neopos") /* //// Neoffice — escaped: see the import */}</div>
+					<div style="font-size: 12px;">${escapeHtml(invoiceData.header || __("TAX INVOICE")) /* //// Neoffice — escaped: see the import */}</div>
 				</div>
 
 				${invoiceData.is_offline ? `<div class="offline-badge">${__("OFFLINE — PENDING SYNC")}</div>` : ""}
 
 				<div class="invoice-info">
-					<div><span>${__("Invoice #:")}</span><span><strong>${invoiceData.name}</strong></span></div>
+					<div><span>${__("Invoice #:")}</span><span><strong>${escapeHtml(invoiceData.name) /* //// Neoffice — escaped: see the import */}</strong></span></div>
 					<div><span>${__("Date:")}</span><span>${
 						invoiceData.posting_date && !invoiceData.posting_time
 							? formatDate(invoiceData.posting_date)
@@ -258,19 +261,17 @@ export function buildReceiptHTML(invoiceData) {
 					}</span></div>
 					${
 						invoiceData.customer_name || invoiceData.customer
-							? `<div><span>${__("Customer:")}</span><span>${
-									invoiceData.customer_name || invoiceData.customer
-							  }</span></div>`
+							? `<div><span>${__("Customer:")}</span><span>${escapeHtml(invoiceData.customer_name || invoiceData.customer) /* //// Neoffice — escaped: see the import */}</span></div>`
 							: ""
 					}
 					${
 						salesPersonNames
-							? `<div><span>${__("Sales Person:")}</span><span>${salesPersonNames}</span></div>`
+							? `<div><span>${__("Sales Person:")}</span><span>${escapeHtml(salesPersonNames) /* //// Neoffice — escaped: see the import */}</span></div>`
 							: ""
 					}
 					${
 						invoiceData.coupon_code
-							? `<div><span>${__("Coupon:")}</span><span>${invoiceData.coupon_code}</span></div>`
+							? `<div><span>${__("Coupon:")}</span><span>${escapeHtml(invoiceData.coupon_code) /* //// Neoffice — escaped: see the import */}</span></div>`
 							: ""
 					}
 					${
@@ -330,9 +331,7 @@ export function buildReceiptHTML(invoiceData) {
 					${invoiceData.payments
 						.map(
 							(p) =>
-								`<div class="payment-row"><span>${
-									p.mode_of_payment
-								}:</span><span>${formatCurrency(p.amount)}</span></div>`
+								`<div class="payment-row"><span>${escapeHtml(p.mode_of_payment) /* //// Neoffice — escaped: see the import */}:</span><span>${formatCurrency(p.amount)}</span></div>`
 						)
 						.join("")}
 					<div class="payment-row total-paid"><span>${__("Total Paid:")}</span><span>${formatCurrency(
@@ -370,7 +369,7 @@ export function buildReceiptHTML(invoiceData) {
 					//// purpose: an HTML comment would be part of the string and would print the vendor
 					//// name back into the source of every receipt. */ ""
 					}
-					<div style="margin-bottom: 5px;">${invoiceData.footer || __("Thank you for your business!")}</div>
+					<div style="margin-bottom: 5px;">${escapeHtml(invoiceData.footer || __("Thank you for your business!")) /* //// Neoffice — escaped: see the import */}</div>
 				</div>
 			</div>`;
 }
@@ -392,7 +391,7 @@ function buildReceiptDocumentHTML(invoiceData, { includeControls = false } = {})
 		<html>
 		<head>
 			<meta charset="UTF-8">
-			<title>${__("Invoice - {0}", [invoiceData.name])}</title>
+			<title>${escapeHtml(__("Invoice - {0}", [invoiceData.name])) /* //// Neoffice — escaped: see the import */}</title>
 			<style>${RECEIPT_STYLES}</style>
 		</head>
 		<body>
@@ -704,7 +703,7 @@ export function printProvisionalTicket(ticketData) {
 		<html>
 		<head>
 			<meta charset="UTF-8">
-			<title>${__("Provisional Ticket")} - ${ticketData.tableName}</title>
+			<title>${__("Provisional Ticket")} - ${escapeHtml(ticketData.tableName) /* //// Neoffice — escaped: see the import */}</title>
 			<style>
 				* { margin: 0; padding: 0; box-sizing: border-box; }
 				body {
@@ -737,7 +736,7 @@ export function printProvisionalTicket(ticketData) {
 		<body>
 			<div class="receipt">
 				<div class="header">
-					<div class="company-name">${ticketData.company || "Neopos"}</div>
+					<div class="company-name">${escapeHtml(ticketData.company || "Neopos") /* //// Neoffice — escaped: see the import */}</div>
 					<div style="font-size: 14px; font-weight: bold; margin-top: 5px; padding: 4px 8px; border: 2px solid #000; display: inline-block;">${__(
 						"PROVISIONAL TICKET"
 					)}</div>
@@ -745,13 +744,11 @@ export function printProvisionalTicket(ticketData) {
 				</div>
 
 				<div class="invoice-info">
-					<div><span>${__("Table:")}</span><span><strong>${ticketData.tableName}</strong></span></div>
+					<div><span>${__("Table:")}</span><span><strong>${escapeHtml(ticketData.tableName) /* //// Neoffice — escaped: see the import */}</strong></span></div>
 					<div><span>${__("Date:")}</span><span>${new Date().toLocaleString()}</span></div>
 					${
 						ticketData.customer_name
-							? `<div><span>${__("Customer:")}</span><span>${
-									ticketData.customer_name
-							  }</span></div>`
+							? `<div><span>${__("Customer:")}</span><span>${escapeHtml(ticketData.customer_name) /* //// Neoffice — escaped: see the import */}</span></div>`
 							: ""
 					}
 				</div>
@@ -775,7 +772,7 @@ export function printProvisionalTicket(ticketData) {
 							const subtotal = offered ? 0 : qty * displayRate;
 							return `
 						<div class="item-row">
-							<div class="item-name">${item.item_name || item.item_code} ${isFree ? __("(FREE)") : ""}</div>
+							<div class="item-name">${escapeHtml(item.item_name || item.item_code) /* //// Neoffice — escaped: see the import */} ${isFree ? __("(FREE)") : ""}</div>
 							<div class="item-details">
 								<span>${qty} × ${formatCurrency(displayRate)}</span>
 								<span><strong>${formatCurrency(subtotal)}</strong></span>
