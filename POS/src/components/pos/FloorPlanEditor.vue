@@ -66,6 +66,15 @@
 						>
 							{{ occupiedCount(area.name) }}
 						</span>
+						<!-- //// Neoffice — a room with tables that WAIT says so on its tab, with the same pulse as the table's number (product owner, 05.11.2026: « si on n'est pas sur la bonne salle, on ne voit pas ce qui se passe »): the red number counts the occupied tables, this one the tables that need the waiter -->
+						<span
+							v-if="waitingCount(area.name) > 0"
+							data-test="room-waiting"
+							class="floor-waiting-pulse relative z-10 inline-flex items-center justify-center min-w-5 h-5 px-1 ml-0.5 text-[11px] font-bold text-white dark:text-ds-ink bg-orange-500 rounded-full"
+							:title="__('Waiting')"
+						>
+							{{ waitingCount(area.name) }}
+						</span>
 					</button>
 
 					<!-- Area management buttons (edit mode) -->
@@ -477,7 +486,8 @@
 				<template v-if="table.order_summary && !isEditMode">
 					<div class="flex items-center gap-1 mt-0.5">
 						<span class="text-[9px] font-semibold bg-red-100 text-red-700 dark:text-ds-danger-soft px-1 rounded">{{ table.order_summary.item_count }}</span>
-						<span v-if="table.waiting_items_count > 0" class="bg-orange-500 text-white dark:text-ds-ink text-[9px] font-bold rounded-full px-1.5 py-0.5 animate-pulse" :title="__('Waiting')">{{ table.waiting_items_count }}</span>
+						<!-- //// Neoffice — the number of dishes WAITING at a table GROWS AND SHRINKS (product owner, 05.11.2026: « un 2 qui s'agrandit, qui rétrécit […] de telle manière qu'on voit vraiment quelque chose qu'il faut faire sur cette table »): `animate-pulse` only faded it, to half its opacity -->
+						<span v-if="table.waiting_items_count > 0" data-test="table-waiting" class="floor-waiting-pulse relative z-10 bg-orange-500 text-white dark:text-ds-ink text-[9px] font-bold rounded-full px-1.5 py-0.5" :title="__('Waiting')">{{ table.waiting_items_count }}</span>
 						<span class="text-[9px] text-gray-500 dark:[&&]:!text-ds-sand-300">{{ formatTime(table.order_summary.opened_at) }}</span>
 						<span class="text-[9px] font-bold text-blue-600">{{ table.order_summary.opened_by }}</span>
 					</div>
@@ -1526,6 +1536,11 @@ const filteredStations = computed(() => {
 
 function occupiedCount(areaName) {
 	return restaurantStore.occupiedCountByArea[areaName] || 0
+}
+
+//// Neoffice — the tables of a room that have dishes waiting (the tile's orange number), counted by table: one thing to do each (product owner, 05.11.2026)
+function waitingCount(areaName) {
+	return (restaurantStore.tables || []).filter((t) => t.area === areaName && Number(t.waiting_items_count) > 0).length
 }
 
 // ─── Delivery Arrows ─────────────────────────────────────────────────────────
@@ -2741,3 +2756,28 @@ onUnmounted(() => {
 })
 </script>
 
+<!-- //// Neoffice — the number of dishes waiting at a table, and the same number on its room's tab, GROWS AND SHRINKS with a ring that opens (product owner, 05.11.2026): it must be seen from the other side of the room, and from another room. Where motion is turned down, a still ring says the same. -->
+<style scoped>
+@keyframes floor-waiting-pulse {
+	0%,
+	100% {
+		transform: scale(1);
+		box-shadow: 0 0 0 0 rgba(245, 93, 26, 0.6);
+	}
+	50% {
+		transform: scale(1.65);
+		box-shadow: 0 0 0 6px rgba(245, 93, 26, 0);
+	}
+}
+.floor-waiting-pulse {
+	animation: floor-waiting-pulse 1.1s ease-in-out infinite;
+	transform-origin: center;
+}
+@media (prefers-reduced-motion: reduce) {
+	.floor-waiting-pulse {
+		animation: none;
+		outline: 2px solid #f55d1a;
+		outline-offset: 1px;
+	}
+}
+</style>
