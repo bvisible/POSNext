@@ -88,6 +88,18 @@
 							<span v-if="hasCovers" data-covers-value class="tabular-nums">{{ coversText }}</span>
 							<span v-else data-covers-empty aria-hidden="true">&ndash;</span>
 						</button>
+						<!-- //// Neoffice — « ＋ Group » (NeoResto lot 1, notes): opens a second group at a table that has one note. Icon only on the phone, where the header is narrow; from two notes on the row of pills has its own ＋. -->
+						<button
+							v-if="notes.showAddGroup.value"
+							type="button"
+							data-add-note
+							class="min-h-[44px] min-w-[44px] shrink-0 flex items-center justify-center rounded-[10px] border border-dashed border-[#FFFDF8]/50 text-[#FFFDF8] active:bg-[#FFFDF8]/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFFDF8]"
+							:aria-label="__('Add a group to this table')"
+							:title="__('Add a group to this table')"
+							@click="emit('note-add')"
+						>
+							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+						</button>
 						<div class="text-end min-w-0">
 							<div data-table-name class="font-bold text-[16px] leading-tight truncate">{{ orderName }}</div>
 						</div>
@@ -119,6 +131,18 @@
 						>
 					</button>
 					<slot name="card-row-end" />
+				</div>
+				<!-- //// Neoffice — the groups of the table, `[.1 Dupont] [.2] [＋]` (NeoResto lot 1, notes): a row under the ink header, from two notes on. The pills stand on the ink: the current one is paper. -->
+				<div v-if="notes.showPills.value" data-notes-strip class="px-3 pb-1">
+					<TableNotePills
+						:pills="notes.pills.value"
+						:can-add="notes.canAdd.value"
+						:currency="shiftStore.profileCurrency"
+						on-ink
+						@select="(rank) => emit('note-select', rank)"
+						@add="emit('note-add')"
+						@rename="(rank) => emit('note-rename', rank)"
+					/>
 				</div>
 			</header>
 
@@ -256,6 +280,9 @@ import CardButtonGrid from "./CardButtonGrid.vue"
 //// Neoffice — the people seated at the table and the counter of portions per course (NeoResto lot 1, covers)
 import CoverCounter from "@/components/restaurant/CoverCounter.vue"
 import { courseChips, normalizeCovers } from "@/utils/coverCounts"
+//// Neoffice — the groups of the table (.1, .2): the row of pills, and what the cart says of them (NeoResto lot 1, notes)
+import TableNotePills from "@/components/restaurant/TableNotePills.vue"
+import { useTableNotePills } from "@/composables/useTableNotePills"
 
 const props = defineProps({
 	// The cards the till offers right now (the restaurant store's active cards)
@@ -279,6 +306,10 @@ const emit = defineEmits([
 	"options",
 	"open-order",
 	"covers",
+	//// Neoffice — a pill of the table's groups was tapped, the ＋ pressed, a group's name asked (NeoResto lot 1, notes)
+	"note-select",
+	"note-add",
+	"note-rename",
 ])
 
 const cartStore = usePOSCartStore()
@@ -365,10 +396,12 @@ const shownButtons = computed(() => {
 	})
 })
 
+//// Neoffice — the groups of the table and the table's label, « Table 5.2 · Dupont » once it has a second note (NeoResto lot 1, notes)
+const notes = useTableNotePills()
 const orderName = computed(() =>
 	cartStore.isTakeaway
 		? cartStore.takeawayNumber || ""
-		: cartStore.restaurantTable?.table_name || cartStore.restaurantTable?.name || "",
+		: notes.label.value || cartStore.restaurantTable?.table_name || cartStore.restaurantTable?.name || "",
 )
 //// Neoffice — the people at the table, « 3 / 4 » with the seats when known (NeoResto lot 1, covers)
 const coversCount = computed(() => normalizeCovers(cartStore.restaurantCovers))

@@ -16,6 +16,8 @@
 import { earliestSendAt, latestSendAt, linesOfLatestSend } from "@/utils/courseTimer"
 import { hasLeftForTheKitchen } from "@/utils/lineKitchenState"
 import { COURSES, familyOf } from "@/utils/serviceFamilies"
+//// Neoffice — the table's label with the group's rank when the table has several (NeoResto lot 1, notes)
+import { orderTableLabel } from "@/utils/tableNotes"
 
 /** The later of two times, either of which may be NaN (no time known). */
 function later(first, second) {
@@ -25,7 +27,8 @@ function later(first, second) {
 }
 
 /** The table a notice names: what the ticket shows, else the table's code. */
-const tableOf = (order) => order.table_display_name || order.restaurant_table || ""
+//// Neoffice — « Table 5.2 · Dupont » when the table has several groups (NeoResto lot 1, notes): the notice names the group whose course is called
+const tableOf = (order) => orderTableLabel(order)
 
 /** The courses of the dishes of a send, in the order of the meal, once each. */
 function coursesOf(lines) {

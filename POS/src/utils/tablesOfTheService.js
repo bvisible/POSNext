@@ -6,6 +6,8 @@
 //// guest is calling ») are left out, not faked (Ruling 66). This module is the list's logic, and nothing else: what
 //// goes first, what each badge says, what a filter keeps. The components draw it (TablesList, TableCard).
 import { secondsSinceMidnight } from "@/utils/offerSchedule"
+//// Neoffice — the groups of a table (.1, .2) its order summary counts and names, and the search that finds a table by them (NeoResto lot 1, notes)
+import { tableMatchesSearch, tableNotesInfo } from "@/utils/tableNotes"
 
 // The filter that keeps every room: « All »
 export const ALL_ROOMS = "all"
@@ -165,6 +167,8 @@ const QUIET_TONES = {
  * @param {Date} floor.now - the instant
  * @param {string} [floor.timezone] - the site's time zone: the server's times are its wall clock
  * @param {string} floor.room - the filter: a room's name, or ALL_ROOMS
+ * @param {string} [floor.search] - what was typed to find a table: its label, or the name of one of its groups (NeoResto lot 1, notes); the tables that do not answer it are left out of the list. « All · N » and the free tables
+ *   of « Open a table » are not narrowed by it
  * @returns {{room: string, rooms: {name: string, label: string}[], activeCount: number, busy: object[], soon: object[],
  *   others: object[], free: object[]}} `busy` the tables with something going on, the most urgent first; `soon` the
  *   reservations arriving; `others` the free, cleaning and reserved tables; `free` the free tables, for « Open a table »
@@ -177,6 +181,7 @@ export function tablesOfTheService({
 	now = new Date(),
 	timezone = null,
 	room = ALL_ROOMS,
+	search = "",
 }) {
 	const clock = siteClock(timezone, now)
 	const rooms = areas.map((area) => ({
@@ -201,8 +206,15 @@ export function tablesOfTheService({
 		])
 	}
 
-	const entries = tables.map((table) =>
+	const everyEntry = tables.map((table) =>
 		entryOf(table, readyLines.get(table.name) || [], clock),
+	)
+	//// Neoffice — the search narrows what the list shows, not its counts nor the free tables of « Open a table » (NeoResto lot 1, notes): « All · N » stays the number of tables in service
+	const busyCount = everyEntry.filter((entry) =>
+		BUSY_TIERS.includes(entry.tier),
+	).length
+	const entries = everyEntry.filter((entry) =>
+		tableMatchesSearch(entry.table, search),
 	)
 	const busy = entries.filter((entry) => BUSY_TIERS.includes(entry.tier))
 	const inRoom = (entry) =>
@@ -212,13 +224,13 @@ export function tablesOfTheService({
 		room: shownRoom,
 		rooms,
 		// « Toutes · N »: every table with something going on, whatever room is shown
-		activeCount: busy.length,
+		activeCount: busyCount,
 		busy: busy.filter(inRoom).sort((a, b) => urgency(a, b) || planOrder(a, b)),
 		soon: soonOf(reservations, tables, clock, shownRoom),
 		others: entries
 			.filter((entry) => !BUSY_TIERS.includes(entry.tier) && inRoom(entry))
 			.sort(planOrder),
-		free: entries
+		free: everyEntry
 			.filter((entry) => entry.tier === "free" && inRoom(entry))
 			.sort(planOrder)
 			.map((entry) => entry.table),
@@ -239,6 +251,7 @@ function urgency(a, b) {
 function entryOf(table, readyLinesOfTable, clock) {
 	const status = table.status || "Empty"
 	const order = status === "Occupied" ? table.order_summary || null : null
+	const notes = order ? tableNotesInfo(table) : { count: 0, names: [] }
 	const seatedAt = order ? serverTime(order.opened_at) : null
 	const qrCount = Number(table.qr_waiting_count) || 0
 	const onHold = Number(table.waiting_items_count) || 0
@@ -279,6 +292,9 @@ function entryOf(table, readyLinesOfTable, clock) {
 			order && order.grand_total != null ? Number(order.grand_total) : null,
 		// The lines on hold, as the plan's chip counts them, but for the ones the QR badge already counts
 		waiting: Math.max(0, onHold - (tier === "qr" ? qrCount : 0)),
+		//// Neoffice — how many groups (.1, .2) the table seats and the names they were given, from the order summary (NeoResto lot 1, notes)
+		notesCount: notes.count,
+		noteNames: notes.names,
 		// The table's QR code, for the guests to order: on a table that is occupied or free
 		qr:
 			tier === "ready" ||

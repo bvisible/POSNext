@@ -76,11 +76,15 @@ const badgeClass = computed(
 // (the orange count the plan's table shows)
 const details = computed(() => {
 	const parts = []
+	//// Neoffice — a table with several groups says how many first, and the names they were given last (NeoResto lot 1, notes: « 2 groups · 14 min · CHF 120.00 · Dupont, Martin »): the line is one line, the names are what can be cut
+	if (props.entry.notesCount > 1) parts.push(__("{0} groups", [props.entry.notesCount]))
 	if (props.entry.minutes != null) parts.push(durationOf(props.entry.minutes))
 	if (props.entry.total != null)
 		parts.push(formatCurrency(Number(props.entry.total) || 0, props.currency))
 	if (props.entry.waiting > 0)
 		parts.push(__("{0} waiting", [props.entry.waiting]))
+	if (props.entry.notesCount > 1 && props.entry.noteNames?.length)
+		parts.push(props.entry.noteNames.join(", "))
 	return parts.join(" · ")
 })
 </script>

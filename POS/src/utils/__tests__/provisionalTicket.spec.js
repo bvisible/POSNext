@@ -399,6 +399,34 @@ describe("the provisional ticket prints where the till prints its receipts, and 
 		expect(window.open).toHaveBeenCalledTimes(1);
 	});
 
+	//// Neoffice — the bill of a group of the table says which group it is (NeoResto lot 1, notes): « Table 5.2 · Dupont » once the table has several groups, « Table 5 » as ever while it has one.
+	it("without a CloudPRNT printer: names the group of the table on the ticket the browser prints, when the table has several", async () => {
+		cloudPrnt.config = { receipt_printer: null, printers: [] };
+		cart.setRestaurantNotes([
+			{ name: "SINV-1", note: 1 },
+			{ name: "SINV-2", note: 2 },
+		]);
+		cart.setRestaurantNote(2);
+		cart.setRestaurantNoteName("Dupont");
+
+		expect(await print()).toBe("browser");
+
+		expect(printWindow.document.write.mock.calls[0][0]).toContain(
+			"Table 5.2 · Dupont",
+		);
+	});
+
+	it("without a CloudPRNT printer: names the table alone on the ticket of a table with one group", async () => {
+		cloudPrnt.config = { receipt_printer: null, printers: [] };
+		cart.setRestaurantNotes([{ name: "SINV-1", note: 1 }]);
+
+		expect(await print()).toBe("browser");
+
+		const html = printWindow.document.write.mock.calls[0][0];
+		expect(html).toContain("Table 5");
+		expect(html).not.toContain("Table 5.1");
+	});
+
 	it("without a CloudPRNT printer: prints from the browser, as before, and says why", async () => {
 		cloudPrnt.config = { receipt_printer: null, printers: [] };
 

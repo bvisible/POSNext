@@ -273,6 +273,8 @@ import { initSocket } from "@/socket"
 //// Neoffice — the screen reads again when its connection comes back and when it is looked at again, and often while the connection is down (Daniel, 01.11: ten seconds between ordering the next course and the kitchen)
 import { followLiveReading } from "@/utils/followLiveReading"
 import { isDeskSession, leaveWhenSignedOut } from "@/utils/tabletSession"
+//// Neoffice — the table's name with the group's rank when the table has several (« Table 5.2 », NeoResto lot 1, notes)
+import { orderTableLabel, orderTableParts } from "@/utils/tableNotes"
 
 const restaurantStore = useRestaurantStore()
 const runnerEnabled = computed(() => restaurantStore.runnerEnabled)
@@ -496,7 +498,9 @@ function groupByTable() {
 	return filteredOrders.value
 		.map((order) => ({
 			key: order.name,
-			title: order.table_display_name || order.restaurant_table,
+			//// Neoffice — « Table 5.2 » once the table has several groups, and the name given to the group beside it (NeoResto lot 1, notes)
+			title: orderTableParts(order).title,
+			noteName: orderTableParts(order).name,
 			subtitle: `#${order.name}`,
 			invoiceName: order.name,
 			creation: order.creation,
@@ -545,13 +549,17 @@ function groupByStation() {
 			const enrichedItem = {
 				...item,
 				_invoiceName: order.name,
-				_tableName: order.table_display_name || order.restaurant_table,
+				_tableName: orderTableLabel(order),
 			}
 			stationMap[stationId].items.push(enrichedItem)
-			const tableKey = order.restaurant_table
+			//// Neoffice — a table with several groups has one block per group at a station, as the kitchen has one ticket per group (NeoResto lot 1, notes)
+			const tableKey =
+				Number(order.notes_count) > 1
+					? `${order.restaurant_table}\u0000${order.note}`
+					: order.restaurant_table
 			if (!stationMap[stationId].tableGroups[tableKey]) {
 				stationMap[stationId].tableGroups[tableKey] = {
-					tableName: order.table_display_name || order.restaurant_table,
+					tableName: orderTableLabel(order),
 					invoiceName: order.name,
 					items: [],
 				}

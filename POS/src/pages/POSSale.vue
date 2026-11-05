@@ -553,6 +553,7 @@
 								<!-- //// the QR button of the table beside "Back" — always in view, a 44 px target, at every width. The QR button used to sit -->
 								<!-- //// at the right end of the row of the cards below, where a few cards pushed it off a phone's screen (NeoResto lot 1). -->
 								<!-- Restaurant table / takeaway banner -->
+								<!-- //// Neoffice — the title says « Table 5.2 · Dupont » once the table has a second group, « Table 5 » while it has one (NeoResto lot 1, notes: utils/tableNotes) -->
 								<TableHeaderBar
 									v-if="
 										restaurantStore.isEnabled &&
@@ -561,7 +562,7 @@
 									:title="
 										cartStore.isTakeaway
 											? cartStore.takeawayNumber
-											: cartStore.restaurantTable?.table_name
+											: (notes.label.value || cartStore.restaurantTable?.table_name)
 									"
 									:is-takeaway="cartStore.isTakeaway"
 									:item-count="cartStore.invoiceItems.length"
@@ -578,7 +579,22 @@
 									@qr="handleQRButtonClick"
 									@back="closeTable"
 									@covers="covers.ask('change')"
+									:can-add-note="notes.showAddGroup.value"
+									@add-note="notes.add"
 								>
+									<!-- //// Neoffice — the groups of the table, `[.1 Dupont] [.2] [＋]`, in a thin row under the bar, from two notes on; the bar hands over its width so that a wide pane adds a caption (people and total) under each pill (NeoResto lot 1, notes) -->
+									<template v-if="notes.showPills.value" #notes="{ wide }">
+										<TableNotePills
+											:pills="notes.pills.value"
+											:can-add="notes.canAdd.value"
+											:caption="wide"
+											:currency="shiftStore.profileCurrency"
+											:busy="notes.busy.value"
+											@select="notes.select"
+											@add="notes.add"
+											@rename="notes.askName"
+										/>
+									</template>
 									<!-- //// Neoffice — the counter of portions per course against the people seated: a thin row under the bar, only while the number is set and a course has a line (NeoResto lot 1, covers) -->
 									<template v-if="covers.chips.value.length > 0" #counter>
 										<CoverCounter :chips="covers.chips.value" />
@@ -1078,6 +1094,9 @@
 						@back="closeTable"
 						@qr="handleQRButtonClick"
 						@open-order="handleTabSwitch('cart')"
+						@note-select="notes.select"
+						@note-add="notes.add"
+						@note-rename="notes.askName"
 						@covers="covers.ask('change')"
 					/>
 				</div>
@@ -2018,6 +2037,25 @@
 			@cancel="covers.cancel"
 		/>
 
+		<!-- //// Neoffice — the lines not sent when another group of the table is tapped (« Move the 3 new lines to .2? ») and the name of a group (NeoResto lot 1, notes). Mounted once, above the phone's screen like the question about the people. -->
+		<MoveLinesDialog
+			v-if="notes.moveAsk.value"
+			:count="notes.moveAsk.value.count"
+			:from="notes.fromLabel.value"
+			:to="notes.toLabel.value"
+			:busy="notes.busy.value"
+			@move="notes.moveThem"
+			@keep="notes.keepThem"
+		/>
+		<NoteNameDialog
+			v-if="notes.nameAsk.value"
+			:label="notes.namedPill.value?.label || ''"
+			:current="notes.namedPill.value?.name || ''"
+			:busy="notes.busy.value"
+			@save="notes.saveName"
+			@cancel="notes.cancelName"
+		/>
+
 		<!-- Paid/Cleaning Table Dialog -->
 		<Dialog
 			v-model="showCleaningDialog"
@@ -2320,8 +2358,8 @@ import { kitchenTicketButton, printKitchenTicketFromTill, stationsWithAPrinter }
 import { Button, Dialog, FeatherIcon, createResource } from "frappe-ui";
 //// Neoffice — the title of the receipt window, in the header that carries its one close cross (neoffice-maintenance#2163)
 import { DialogTitle } from "reka-ui";
-//// Neoffice — a table's customer by his name, as the opening of a table gives it (neoffice-maintenance#2163)
-import { customerOfTheOrder, useOpenTable } from "@/composables/useOpenTable";
+//// Neoffice — a table's customer by his name, as the opening of a table gives it (neoffice-maintenance#2163); and the group (.1, .2) an order of the table is, kept in the cart as an opening keeps it (NeoResto lot 1, notes)
+import { customerOfTheOrder, keepTheNotesOfTheOrder, noteToReadAgain, useOpenTable } from "@/composables/useOpenTable";
 //// Neoffice — « Back » asks before it drops a dish taken off after it had left for the kitchen (NeoResto lot 1, product owner, 03.11.2026).
 import LeaveTableDialog from "@/components/restaurant/LeaveTableDialog.vue";
 import { useLeaveTable } from "@/composables/useLeaveTable";
@@ -2329,7 +2367,14 @@ import { useLeaveTable } from "@/composables/useLeaveTable";
 import CoversDialog from "@/components/restaurant/CoversDialog.vue";
 import CoverCounter from "@/components/restaurant/CoverCounter.vue";
 import { useCovers } from "@/composables/useCovers";
+//// Neoffice — the groups of the table (.1, .2): the pills, the question about the lines not sent, the name of a group (NeoResto lot 1, notes).
+import MoveLinesDialog from "@/components/restaurant/MoveLinesDialog.vue";
+import NoteNameDialog from "@/components/restaurant/NoteNameDialog.vue";
+import TableNotePills from "@/components/restaurant/TableNotePills.vue";
+import { useTableNotes } from "@/composables/useTableNotes";
 import { putUnsentLinesBack, takeUnsentLines } from "@/utils/keepUnsentLines";
+//// Neoffice — whether the note in front of the waiter is the lowest one (the QR orders of the table land on it) (NeoResto lot 1, notes).
+import { isTheLowestNote } from "@/utils/tableNotes";
 import { linesOfTheSavedOrder } from "@/utils/removedSentLines";
 import { call } from "@/utils/apiWrapper";
 //// Neoffice — reads the cash rounding step again once a shift is open (see utils/cashRounding.js).
@@ -3012,11 +3057,21 @@ onMounted(async () => {
 			try {
 				const orderData = await call("pos_next.api.restaurant.get_table_order", {
 					table_name: table.name,
+					//// Neoffice — the group in front of the waiter is the one read back (NeoResto lot 1, notes): without it the table would answer its lowest group and rebuild the cart on another one. A table with one group is asked exactly as before.
+					...noteToReadAgain(cartStore),
 				});
+				//// Neoffice — a guest's order attaches to the LOWEST open group of the table (NeoResto lot 1, notes). With the waiter on another group, or on a new one the server does not have yet, nothing of his cart changed: only the table's
+				//// list of groups is refreshed, and the lines he has not sent are not rebuilt over.
+				if (orderData?.items && !isTheLowestNote(orderData.notes, cartStore.restaurantNote)) {
+					cartStore.setRestaurantNotes(orderData.notes);
+					return;
+				}
 				if (orderData?.items) {
 					//// Neoffice — the people the waiter counted before the first « Valider » live in the cart only, and a guest who orders from the QR code creates the order without them: they are kept (and so is the question about them, if it is open) across the rebuild (NeoResto lot 1, covers).
 					const keptCovers = cartStore.restaurantCovers;
 					const keptCoversAsk = cartStore.coversAsk;
+					//// Neoffice — the group the waiter is on survives the rebuild when the server does not name one (NeoResto lot 1, notes).
+					const keptNote = cartStore.restaurantNote;
 					// Direct replacement — bypasses addItem dedup logic entirely
 					await cartStore.clearCart();
 					cartStore.setRestaurantTable(table);
@@ -3026,6 +3081,8 @@ onMounted(async () => {
 					cartStore.coversAsk = keptCoversAsk;
 					//// Neoffice — the order read back is what the kitchen has now: a removal is measured against it (NeoResto lot 1, 03.11.2026).
 					cartStore.rememberSentLines();
+					//// Neoffice — the group read back, its name and the groups the table has now (NeoResto lot 1, notes).
+					keepTheNotesOfTheOrder(cartStore, orderData, keptNote);
 					cartStore.$patch({
 						currentDraftId: orderData.name,
 						hasUnsentChanges: false,
@@ -3889,6 +3946,8 @@ function handleLoadServerDraft(order) {
 
 //// Neoffice — the number of people at the table: the question, its dialog and the counter of portions per course (NeoResto lot 1, covers). A table opened empty asks by itself, through useOpenTable.
 const covers = useCovers();
+//// Neoffice — the groups of the table (.1, .2) in front of the waiter: the label of the table, the pills, and the gestures that switch, add and name a group (NeoResto lot 1, notes). Taken once, for the header, the phone and the dialogs.
+const notes = useTableNotes();
 
 //// Neoffice — « Back » from a table, on the tablet's header and on the phone's screen alike: with a dish taken off after it had left for the kitchen it asks first (see composables/useLeaveTable), else it clears the cart as it always did.
 const { openTable } = useOpenTable();
@@ -3903,7 +3962,8 @@ const leaveTable = useLeaveTable({
 //// Neoffice — « Put the order back as it was »: the table is read again, as the kitchen has it, and the lines the waiter added and has not sent are put back on it, not lost (Daniel, 03.11).
 async function putTheTableBack() {
 	const kept = takeUnsentLines(cartStore.invoiceItems);
-	if (await openTable(cartStore.restaurantTable)) putUnsentLinesBack(cartStore, kept);
+	//// Neoffice — the order put back is the one of the group in front of the waiter (NeoResto lot 1, notes), else the table would open on its lowest group; a table with one group is read exactly as before.
+	if (await openTable(cartStore.restaurantTable, noteToReadAgain(cartStore))) putUnsentLinesBack(cartStore, kept);
 }
 
 //// Neoffice — the phone has asked about the lines not sent itself and says so, so that the question is not asked a second time (`unsentAsked`); the tablet's header emits no such news.

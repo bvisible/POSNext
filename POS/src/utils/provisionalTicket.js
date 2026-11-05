@@ -11,6 +11,8 @@
 import { reactive, toRaw } from "vue";
 import { useToast } from "@/composables/useToast";
 import { logger } from "@/utils/logger";
+//// Neoffice — « Table 5.2 · Dupont » on the bill of a group when the table has several (NeoResto lot 1, notes)
+import { tableLabel } from "@/utils/tableNotes";
 
 const log = logger.create("ProvisionalTicket");
 
@@ -82,8 +84,15 @@ export function orderToPrint(cartStore, profile) {
 /** What the browser's ticket prints: the cart as it stands (the March layout of printInvoice.js). */
 function browserTicket(cartStore, shiftStore) {
 	return {
-		tableName:
+		//// Neoffice — the group's rank and name when the table has several: the ticket is that group's bill (NeoResto lot 1, notes)
+		tableName: tableLabel(
 			cartStore.restaurantTable?.table_name || cartStore.restaurantTable?.name,
+			{
+				rank: cartStore.restaurantNote,
+				name: cartStore.restaurantNoteName,
+				count: (cartStore.restaurantNotes || []).length,
+			},
+		),
 		company: shiftStore.profileCompany,
 		items: cartStore.invoiceItems,
 		grand_total: cartStore.roundedGrandTotal,

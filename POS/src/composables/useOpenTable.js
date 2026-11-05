@@ -11,6 +11,34 @@ import { useCovers } from "@/composables/useCovers"
 import { modifiersPriceAdjustment } from "@/utils/modifiersPrice"
 // « Offert » (NeoResto lot 1, task 24): what an offered row of a table's draft keeps when the table is opened
 import { offeredSourceFields } from "@/utils/offeredRows"
+//// Neoffice — the note of the table (.1, .2) the order is, and the notes the table has (NeoResto lot 1, notes)
+import { effectiveRank, NOTE_MIN } from "@/utils/tableNotes"
+
+/**
+ * Puts the note an order of a table answers in the cart: its rank (1 for a table with no order), its name, and the notes the table has. Whoever puts an order of the table in the cart (opening it, reading it again after a
+ * guest's order) goes through this, so that the header never shows another note than the lines it holds.
+ *
+ * @param {Object} cartStore - The till's cart
+ * @param {{ note?: number, note_name?: string|null, notes?: Array<Object> }|null|undefined} order - The answer of open_table / get_table_order
+ * @param {number} [asked] - The note the caller asked for, taken when the answer does not name one
+ */
+export function keepTheNotesOfTheOrder(cartStore, order, asked = NOTE_MIN) {
+	cartStore.setRestaurantNotes(order?.notes)
+	cartStore.setRestaurantNote(effectiveRank(order?.note ?? asked))
+	cartStore.setRestaurantNoteName(order?.note_name ?? "")
+}
+
+/**
+ * What to ask the server to read the note in front of the waiter again: nothing for the first note of a table that has one, else `{ note }`. A table with one note is read exactly as before.
+ *
+ * @param {Object} cartStore - The till's cart
+ * @returns {{ note?: number }}
+ */
+export function noteToReadAgain(cartStore) {
+	const rank = effectiveRank(cartStore.restaurantNote)
+	const several = (cartStore.restaurantNotes || []).length > 1
+	return rank !== NOTE_MIN || several ? { note: rank } : {}
+}
 
 /**
  * The customer of a table's order as the cart holds a customer the till picked: his record's name and his name.
@@ -33,19 +61,24 @@ export function useOpenTable() {
 	 * Opens a table: its order is read from the server and put in the cart.
 	 *
 	 * @param {{ name: string }} table - A table of the floor
+	 * @param {{ note?: number }} [options] - `note`: the note of the table to open (its draft, or a new empty note); the lowest open note when none is given (NeoResto lot 1, notes)
 	 * @returns {Promise<boolean>} Whether the table was opened; false when its order could not be read (the cart is then as it was)
 	 */
-	async function openTable(table) {
+	async function openTable(table, { note = null } = {}) {
 		try {
 			// Fetch table data FIRST (while keeping old cart visible to avoid jolt)
 			const res = await call("pos_next.api.restaurant.open_table", {
 				table_name: table.name,
 				pos_profile: shiftStore.profileName,
+				//// Neoffice — a given note is passed on, else the server opens the lowest one: a table with one note is asked exactly as before (NeoResto lot 1, notes)
+				...(note ? { note } : {}),
 			})
 
 			// Now clear and rebuild in one batch — no visual gap
 			await cartStore.clearCart()
 			cartStore.setRestaurantTable(table)
+			//// Neoffice — which note of the table this is, and the notes the table has, for the header's pills and the payload of the next « Valider » (NeoResto lot 1, notes)
+			keepTheNotesOfTheOrder(cartStore, res, note ?? NOTE_MIN)
 
 			if (res?.name) {
 				// Existing draft found — load items into cart

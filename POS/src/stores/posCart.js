@@ -36,6 +36,8 @@ import { offlineState } from "@/utils/offline/offlineState";
 import { isOfferedRow } from "@/utils/offeredRows";
 //// Neoffice — the covers of a table: a valid number or none, and what the order payload carries for it (NeoResto lot 1, covers).
 import { coversPayload, normalizeCovers } from "@/utils/coverCounts";
+//// Neoffice — the notes of a table (.1, .2): the rank, the name and the payload keys, in one pure module (NeoResto lot 1, notes).
+import { cleanNoteName, effectiveRank, normalizeNotes, notePayload, withPendingNote } from "@/utils/tableNotes";
 //// Neoffice — added import. CHF has no coin below 0.05, so the cart computes a rounded grand
 //// total plus the rounding-adjustment line shown beside it; upstream charges the raw total
 //// (4fdb5df4, 2026-04-04 "rounding total, tips visibility, cash quick amounts"). roundCurrency
@@ -181,6 +183,10 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		restaurantTable: baseRestaurantTable,
 		//// Neoffice — the covers of the table are useInvoice's ref, exposed below as the store's own, as the takeaway flag is: submit_invoice reads the number from there (NeoResto lot 1, covers).
 		restaurantCovers,
+		//// Neoffice — the note of the table (rank, name, the server's notes) are useInvoice's refs too: the payment saves its draft on the right note (NeoResto lot 1, notes).
+		restaurantNote,
+		restaurantNoteName,
+		restaurantNotes: serverNotes,
 		//// Neoffice — the server draft of a phone's cart the sale submits (scanning in the shop, composables/useShopCart)
 		shopCartInvoice,
 		//// Neoffice — the takeaway order and its number are useInvoice's refs, exposed below as the store's own: the
@@ -607,6 +613,11 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		//// Neoffice — the number of people belongs to the table that is gone, and so does the question asked about it (NeoResto lot 1, covers): the next table starts with none.
 		restaurantCovers.value = null;
 		coversAsk.value = null;
+		//// Neoffice — and so does the note: the next table opens on its first note, with no name, and the question about moving lines or naming a group dies with the table (NeoResto lot 1, notes).
+		restaurantNote.value = 1;
+		restaurantNoteName.value = "";
+		serverNotes.value = [];
+		noteAsk.value = null;
 		isTakeaway.value = false;
 		takeawayNumber.value = "";
 		kdsStatus.value = "Pending";
@@ -650,6 +661,9 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	//// Neoffice — the question « How many people? » is open on this table: "open" (asked by itself when the table was opened empty), "change" (asked from the header), null (not asked). It lives with the table so that
 	//// clearing the cart closes it (NeoResto lot 1, covers; composables/useCovers).
 	const coversAsk = ref(null);
+	//// Neoffice — the question about a note of the table (NeoResto lot 1, notes; composables/useTableNotes): { kind: "move", to, count } asks whether the lines not sent follow the waiter to another note, { kind: "name", rank }
+	//// asks the name of a note, null is no question. It lives with the table so that clearing the cart closes it.
+	const noteAsk = ref(null);
 	//// Neoffice — isTakeaway and takeawayNumber are no longer the store's own refs: they are useInvoice's (destructured
 	//// at the top of the store), where the lines are taxed and the sale is paid (NeoResto lot 1, task 11).
 	const kdsStatus = ref("Pending");
@@ -699,6 +713,28 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	function setRestaurantCovers(covers) {
 		restaurantCovers.value = normalizeCovers(covers);
 	}
+
+	//// Neoffice — the note of the table in front of the waiter (NeoResto lot 1, notes): its rank (1 for none), its name, and the notes the server told of the table. A new note exists only here, in the cart, until its first « Valider »:
+	//// `restaurantNotes` is the server's list plus that note, which is "pending" while the server does not have it.
+	function setRestaurantNote(rank) {
+		restaurantNote.value = effectiveRank(rank);
+	}
+
+	function setRestaurantNoteName(name) {
+		restaurantNoteName.value = cleanNoteName(name);
+	}
+
+	function setRestaurantNotes(notes) {
+		serverNotes.value = normalizeNotes(notes);
+	}
+
+	/** Changes what the cart knows of a note the server has (its name after a rename): the list is the server's, only its entry for that rank moves. */
+	function patchRestaurantNote(rank, patch) {
+		const wanted = effectiveRank(rank);
+		serverNotes.value = serverNotes.value.map((note) => (note.note === wanted ? { ...note, ...patch } : note));
+	}
+
+	const restaurantNotes = computed(() => withPendingNote(serverNotes.value, restaurantNote.value, restaurantNoteName.value));
 
 	function setKdsStatus(status) {
 		kdsStatus.value = status;
@@ -1093,6 +1129,15 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			restaurant_table: restaurantTable.value?.name,
 			//// Neoffice — the covers of the table (NeoResto lot 1): every « Valider » carries the number, so the order keeps it; the key is left out when none is set
 			...coversPayload(restaurantCovers.value),
+			//// Neoffice — the note of the table (NeoResto lot 1, notes): the rank when the table has several notes or the note is not the first, so the order lands on its own note; its name too while the note has no order yet.
+			//// A table with its one first note is saved exactly as before.
+			...notePayload({
+				table: restaurantTable.value,
+				rank: restaurantNote.value,
+				name: restaurantNoteName.value,
+				notes: serverNotes.value,
+				withName: !currentDraftId.value,
+			}),
 			is_takeaway: isTakeaway.value ? 1 : 0,
 			takeaway_number: takeawayNumber.value || "",
 			kds_status: kdsStatus.value,
@@ -3240,6 +3285,15 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		restaurantCovers,
 		coversAsk,
 		setRestaurantCovers,
+		//// Neoffice — the note of the table (.1, .2), its name, the notes the table has and the question asked about them (NeoResto lot 1, notes)
+		restaurantNote,
+		restaurantNoteName,
+		restaurantNotes,
+		noteAsk,
+		setRestaurantNote,
+		setRestaurantNoteName,
+		setRestaurantNotes,
+		patchRestaurantNote,
 		isTakeaway,
 		takeawayNumber,
 		//// Neoffice — the cart's VAT per account, and the takeaway fields a sale saved offline carries (NeoResto lot 1,

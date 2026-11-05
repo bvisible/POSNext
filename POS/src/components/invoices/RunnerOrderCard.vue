@@ -36,6 +36,8 @@
 							<template v-if="card.takeaway">{{ __("Takeaway") }}</template>
 							<template v-else>{{ card.title }}</template>
 						</h3>
+						<!-- //// Neoffice — the name given to the group (« · Dupont »), beside the table's (NeoResto lot 1, notes): the kitchen ticket's own span, in the grey of the covers line, with the dark rule they wear -->
+						<span v-if="!card.takeaway && card.noteName" data-test="ticket-note-name" class="whitespace-nowrap font-medium text-gray-600 dark:[&&]:!text-gray-300" :class="[TICKET_FRAME.number, KITCHEN_FRAME.number]">· {{ card.noteName }}</span>
 						<!-- //// Neoffice — the people seated at the table, beside its name (NeoResto lot 1, covers): the kitchen ticket's own line, so that the pass reads the same. Wraps with the line, never pushes the number or the timer off the card. -->
 						<span v-if="coversLabel" data-test="ticket-covers" class="inline-flex items-baseline gap-1 whitespace-nowrap font-medium text-gray-600 dark:[&&]:!text-gray-300" :class="[TICKET_FRAME.number, KITCHEN_FRAME.number]">
 							<svg class="h-[0.95em] w-[0.95em] flex-none self-center" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>

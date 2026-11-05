@@ -57,6 +57,19 @@
 				<span v-if="hasCovers" data-test="covers-chip-value" class="tabular-nums">{{ coversText }}</span>
 				<span v-else data-test="covers-chip-empty" aria-hidden="true">&ndash;</span>
 			</button>
+			<!-- //// Neoffice — « ＋ Group » (NeoResto lot 1, notes): the discreet button of a table with ONE note, which opens a second group (.2) at the same table. From two notes on the row of pills under the bar has its own ＋ and this one is gone. A dashed outline, so that it asks for less attention than the people pastille beside it. -->
+			<button
+				v-if="canAddNote && !isTakeaway"
+				type="button"
+				data-test="add-note"
+				class="inline-flex min-h-[44px] min-w-[44px] touch-manipulation items-center justify-center gap-1 rounded-[10px] border border-dashed border-[#BFB5A4] bg-transparent px-2.5 text-sm font-semibold text-[#524B41] transition-colors hover:bg-[#F6F3ED] active:bg-[#ECE7DE] sm:h-[34px] sm:min-h-[34px]"
+				:title="__('Add a group to this table')"
+				:aria-label="__('Add a group to this table')"
+				@click="emit('add-note')"
+			>
+				<svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+				<span>{{ __("Group") }}</span>
+			</button>
 		</div>
 		<div
 			v-if="$slots.middle"
@@ -109,11 +122,19 @@
 			</button>
 		</div>
 	</div>
-	<!-- //// Neoffice — the counter of portions per course against the people seated (NeoResto lot 1, covers) sits in a thin row under the bar, not in it: the bar keeps QR and Back in view on a phone, and a row of chips would wrap it. -->
+	<!-- //// Neoffice — the row of the table's groups, `[.1 Dupont] [.2] [＋]` (NeoResto lot 1, notes), sits in a thin row under the bar and above the counter, only from two notes on. The slot is handed the bar's width, so that a wide pane can add a caption under each pill. -->
+	<div
+		v-if="$slots.notes"
+		data-test="table-header-notes"
+		class="flex-shrink-0 border-b border-[#ECE7DE] bg-[#FFFDF8] px-4 py-1 dark:border-[rgba(255,251,245,0.14)] dark:bg-[#1c1f26]"
+	>
+		<slot name="notes" :wide="wide" />
+	</div>
+	<!-- //// Neoffice — the counter of portions per course against the people seated (NeoResto lot 1, covers) sits in a thin row under the bar, not in it: the bar keeps QR and Back in view on a phone, and a row of chips would wrap it. //// Neoffice — the counter's row wears the dark ground of the row of groups above it, so that the two rows do not part ways in dark mode (NeoResto lot 1, notes). -->
 	<div
 		v-if="$slots.counter"
 		data-test="table-header-counter"
-		class="flex-shrink-0 border-b border-[#ECE7DE] bg-[#FFFDF8] px-4 py-1"
+		class="flex-shrink-0 border-b border-[#ECE7DE] bg-[#FFFDF8] px-4 py-1 dark:border-[rgba(255,251,245,0.14)] dark:bg-[#1c1f26]"
 	>
 		<slot name="counter" />
 	</div>
@@ -155,9 +176,12 @@ const props = defineProps({
 	//// Neoffice — the people seated at the table and the seats it has, null when unknown (NeoResto lot 1, covers)
 	covers: { type: Number, default: null },
 	seats: { type: Number, default: null },
+	//// Neoffice — whether « ＋ Group » is offered: a table with one note whose order exists (NeoResto lot 1, notes)
+	canAddNote: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(["qr", "back", "covers"])
+//// Neoffice — "add-note": « ＋ Group » was pressed (NeoResto lot 1, notes)
+const emit = defineEmits(["qr", "back", "covers", "add-note"])
 
 //// Neoffice — « 3 / 4 » when the table's seats are known, « 3 » when they are not
 const hasCovers = computed(() => normalizeCovers(props.covers) !== null)

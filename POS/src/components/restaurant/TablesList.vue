@@ -9,6 +9,20 @@
 		     //// as a tap on the plan does; the QR code of a table is one tap away, on its card. On a phone a bar at
 		     //// the bottom opens a free table or a takeaway order. What the list shows is worked out in
 		     //// utils/tablesOfTheService.js. -->
+		<!-- //// Neoffice — the search of a table (NeoResto lot 1, notes): by its name or by the name given to one of its groups (« Dupont » finds « Table 5.2 »). It narrows the list below, not the counts of the filters. -->
+		<div class="flex-shrink-0 px-4 pt-1 pb-1.5">
+			<input
+				type="search"
+				data-test="tables-search"
+				:value="search"
+				autocomplete="off"
+				:placeholder="__('Search a table or a group')"
+				:aria-label="__('Search a table or a group')"
+				class="h-11 w-full min-w-0 rounded-[12px] border border-[#DCD4C7] bg-white px-3 text-[15px] text-[#141414] placeholder:text-[#6F665A] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#141414] dark:border-[rgba(255,251,245,0.24)] dark:bg-transparent dark:text-ds-paper dark:placeholder:text-ds-sand-300 dark:focus-visible:outline-ds-paper"
+				@input="emit('update:search', $event.target.value)"
+			/>
+		</div>
+
 		<!-- The filters: every table with something going on, then a room of the plan -->
 		<div
 			data-test="room-filter"
@@ -201,12 +215,16 @@ const props = defineProps({
 	// A phone's list ends with the bar of « Open a table » and « Takeaway »
 	phone: { type: Boolean, default: false },
 	takeawayEnabled: { type: Boolean, default: false },
+	//// Neoffice — what was typed in the search of a table (NeoResto lot 1, notes); the page narrows `model` with it
+	search: { type: String, default: "" },
 })
 const emit = defineEmits([
 	"open-table",
 	"show-qr",
 	"start-takeaway",
 	"select-room",
+	//// Neoffice — the search field changed (NeoResto lot 1, notes)
+	"update:search",
 ])
 
 // The mockup's chips (13 px, 12 px corners, ink when chosen), 32 px high like the chips of the floor plan's line

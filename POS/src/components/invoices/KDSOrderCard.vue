@@ -42,10 +42,13 @@
 						class="rounded-md bg-gray-100 px-1.5 text-[length:var(--kds-fs-ref,11px)] font-semibold leading-snug tracking-wide text-gray-600 dark:bg-gray-700">
 						{{ roomChip }}
 					</span>
+					<!-- //// Neoffice — the title reads « Table 5.2 » once the table has several groups (NeoResto lot 1, notes), else the table's name as ever -->
 					<h3 ref="titleEl" data-test="ticket-title" class="whitespace-nowrap text-gray-900 dark:text-white" :class="[TICKET_FRAME.title, KITCHEN_FRAME.title]">
 						<template v-if="order.is_takeaway">{{ __("Takeaway") }}</template>
-						<template v-else>{{ order.table_display_name || order.restaurant_table }}</template>
+						<template v-else>{{ tableParts.title }}</template>
 					</h3>
+					<!-- //// Neoffice — the name given to the group (« · Dupont »), beside the table's, in the grey of the covers line below it: dark mode as the covers wear it (`[&&]` outranks the till's forced remap of the greys) (NeoResto lot 1, notes). -->
+					<span v-if="!order.is_takeaway && tableParts.name" data-test="ticket-note-name" class="whitespace-nowrap font-medium text-gray-600 dark:[&&]:!text-gray-300" :class="[TICKET_FRAME.number, KITCHEN_FRAME.number]">· {{ tableParts.name }}</span>
 					<!-- //// Neoffice — the people seated at the table, beside its name (NeoResto lot 1, covers): « Table 4 · 3 guests ». It wraps with the rest of the reference line, so it never pushes the number or the timer off the card; nothing when the order carries no number. -->
 					<span v-if="coversLabel" data-test="ticket-covers" class="inline-flex items-baseline gap-1 whitespace-nowrap font-medium text-gray-600 dark:[&&]:!text-gray-300" :class="[TICKET_FRAME.number, KITCHEN_FRAME.number]">
 						<svg class="h-[0.95em] w-[0.95em] flex-none self-center" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
@@ -451,6 +454,8 @@ import TicketSectionHeader from "@/components/invoices/TicketSectionHeader.vue"
 import { TINT_CLASS, inSections, sectionLabel, tintStyle } from "@/utils/ticketFamilies"
 //// Neoffice — the people seated at the table, and the count of each course against them, as the server counted them over the whole order (NeoResto lot 1, covers)
 import { ticketCoversLabel, ticketTally } from "@/utils/coverCounts"
+//// Neoffice — the table's name with the group's rank when the table has several (« Table 5.2 », NeoResto lot 1, notes)
+import { orderTableLabel, orderTableParts } from "@/utils/tableNotes"
 //// Neoffice — the order of the meal (Daniel, 01.11): a course waits, greyed, for the one before it; a course all done folds into one line; the choice is the device's
 import { useCourseOrder } from "@/composables/useCourseOrder"
 import { followsTheOrderOfTheMeal, isHeldByCourse } from "@/utils/courseOrder"
@@ -583,6 +588,8 @@ const isTakeaway = computed(() => !!props.order.is_takeaway)
 const coversLabel = computed(() =>
 	isTakeaway.value ? "" : ticketCoversLabel(props.order.covers),
 )
+//// Neoffice — « Table 5.2 » and « Dupont » when the table has several groups, the table's name alone otherwise (NeoResto lot 1, notes)
+const tableParts = computed(() => orderTableParts(props.order))
 
 //// Neoffice — the service rhythm (NeoResto lot 1, Daniel, 01.11): the restaurant's kitchen prepares ahead, or the room calls each course. The screen hands it down; the card only needs it to know that the order of the meal is off
 const serviceRhythm = inject(SERVICE_RHYTHM_KEY, ref(CALLED_BY_THE_ROOM))
@@ -599,7 +606,7 @@ const aheadOnly = computed(() => {
 const tableLabel = computed(() =>
 	isTakeaway.value
 		? __("Takeaway")
-		: props.order.table_display_name || props.order.restaurant_table || "",
+		: orderTableLabel(props.order),
 )
 function offerBack(message, entries) {
 	offerUndo({

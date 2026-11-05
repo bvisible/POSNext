@@ -30,6 +30,8 @@ import { isOfferedRow, offeredLineFields, withoutOfferedRows } from "@/utils/off
 import { authorizationFieldsFor } from "@/utils/offerApproval";
 //// Neoffice — the covers of a table ride with the ticket to submit_invoice, only when a number is set (NeoResto lot 1, covers).
 import { coversPayload } from "@/utils/coverCounts";
+//// Neoffice — the note of a table (.1, .2) the ticket is paid on rides with it, so its draft is found on its own note and never on another (NeoResto lot 1, notes).
+import { notePayload } from "@/utils/tableNotes";
 
 const log = logger.create("Invoice");
 
@@ -63,6 +65,11 @@ export function useInvoice() {
 	//// Neoffice — how many people are seated at the table of this ticket (NeoResto lot 1, covers): the number rides with the ticket to submit_invoice, as the table does, so the paid invoice keeps it.
 	//// Null for a ticket with no number (counter sale, takeaway, table whose waiter did not say).
 	const restaurantCovers = ref(null);
+	//// Neoffice — the note of the table this ticket is (NeoResto lot 1, notes): its rank, its name and the notes the server told of the table. The payment saves the ticket's draft first, WITHOUT its name, and finds it by the table and the
+	//// rank: without the rank a second note would be paid onto the first one's draft. posCart owns the setters and the reset.
+	const restaurantNote = ref(1);
+	const restaurantNoteName = ref("");
+	const restaurantNotes = ref([]);
 	//// Neoffice — the server draft a customer's phone wrote its cart in (scanning in the shop, composables/useShopCart): the
 	//// sale is that draft, saved and submitted by its name. Without it the till booked a second invoice and left the phone's
 	//// draft behind. Cleared with the ticket, as the table is.
@@ -1420,6 +1427,8 @@ export function useInvoice() {
 					restaurant_table: restaurantTable.value?.name || null,
 					//// Neoffice — the covers of the table (NeoResto lot 1): the key only when a number is set, never an invalid value
 					...coversPayload(restaurantCovers.value),
+					//// Neoffice — the note being paid (NeoResto lot 1, notes): the key only when the table has several notes or the note is not the first, so a table with one note is saved exactly as before
+					...notePayload({ table: restaurantTable.value, rank: restaurantNote.value, notes: restaurantNotes.value }),
 					items: formatItemsForSubmission(rawItems),
 					payments: invoicePayments,
 					//// Neoffice — same effective header discount as the draft payload above: a
@@ -1822,6 +1831,10 @@ export function useInvoice() {
 		restaurantTable,
 		//// Neoffice — the covers of the table, exposed so posCart owns the setter and the reset (NeoResto lot 1)
 		restaurantCovers,
+		//// Neoffice — the note of the table, exposed so posCart owns the setters and the reset (NeoResto lot 1, notes)
+		restaurantNote,
+		restaurantNoteName,
+		restaurantNotes,
 		//// Neoffice — the phone's draft the sale submits (scanning in the shop), set through posCart
 		shopCartInvoice,
 		salesTeam,

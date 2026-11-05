@@ -481,6 +481,8 @@
 						<span class="text-[9px] text-gray-500 dark:[&&]:!text-ds-sand-300">{{ formatTime(table.order_summary.opened_at) }}</span>
 						<span class="text-[9px] font-bold text-blue-600">{{ table.order_summary.opened_by }}</span>
 					</div>
+					<!-- //// Neoffice — a table with several groups (.1, .2) says how many; the tile's count of lines, like its total, is the sum of the groups (NeoResto lot 1, notes) -->
+					<span v-if="tableNotesInfo(table).count > 1" data-test="table-groups" class="mt-0.5 text-[9px] font-semibold text-gray-700 dark:[&&]:!text-ds-sand-300">{{ __("{0} groups", [tableNotesInfo(table).count]) }}</span>
 				</template>
 				<span v-else-if="table.status === 'Paid' && !isEditMode" class="text-[10px] font-semibold text-blue-600 mt-0.5 flex items-center gap-0.5">
 					<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
@@ -656,6 +658,8 @@
 			:currency="listCurrency"
 			:phone="isPhone"
 			:takeaway-enabled="Boolean(restaurantStore.takeawayEnabled)"
+			:search="listSearch"
+			@update:search="(text) => (listSearch = text)"
 			@open-table="selectTable"
 			@show-qr="showTableQR"
 			@start-takeaway="startNewTakeaway"
@@ -1040,6 +1044,8 @@ import { onDark } from "@/utils/stationColors"
 import { initSocket } from "@/socket"
 //// Neoffice — opening a table (and the Paid/Cleaning rule that goes with it) is one function now, shared with the notices of a guest's order (composables/useOpenTable.js; Daniel, 01.11). It carried « Offert » (NeoResto lot 1, task 24): what an offered row of a table's draft keeps when the table is opened.
 import { useOpenTable } from "@/composables/useOpenTable"
+//// Neoffice — how many groups (.1, .2) a table seats, from its order summary (NeoResto lot 1, notes)
+import { tableNotesInfo } from "@/utils/tableNotes"
 import { tableNeedsCleaning } from "@/utils/tableStatus"
 import { Button, Dialog } from "frappe-ui"
 import FloorPlanWalls from "@/components/pos/FloorPlanWalls.vue"
@@ -1115,6 +1121,8 @@ const qrEnabled = computed(() => Boolean(restaurantStore.qrOrderingEnabled))
 // The states whose table may have a QR code: a table in service or free (as the list's cards say, utils/tablesOfTheService)
 const QR_STATES = ["Occupied", "Empty"]
 const listRoom = ref(ALL_ROOMS)
+//// Neoffice — what was typed to find a table by its name or the name of one of its groups (NeoResto lot 1, notes)
+const listSearch = ref("")
 const reservations = ref([])
 const listCurrency = computed(() => shiftStore.profileCurrency || "CHF")
 // The till's clock, for the minutes since a table was seated, « Soon » and the phone's top, read on the site's clock. It
@@ -1138,6 +1146,7 @@ const tablesModel = computed(() =>
 		now: now.value,
 		timezone: props.siteTimezone,
 		room: listRoom.value,
+		search: listSearch.value,
 	}),
 )
 
