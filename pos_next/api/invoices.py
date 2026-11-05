@@ -4907,7 +4907,7 @@ def _evaluate_transaction_offers(
 
 # permission-check: ok prices the cart the caller sends
 @frappe.whitelist()
-def apply_offers(invoice_data, selected_offers=None):
+def apply_offers(invoice_data: str | dict, selected_offers=None):
 	"""Calculate and apply promotional offers using ERPNext Pricing Rules.
 
 	Args:
