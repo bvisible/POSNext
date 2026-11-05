@@ -46,6 +46,11 @@
 						<template v-if="order.is_takeaway">{{ __("Takeaway") }}</template>
 						<template v-else>{{ order.table_display_name || order.restaurant_table }}</template>
 					</h3>
+					<!-- //// Neoffice — the people seated at the table, beside its name (NeoResto lot 1, covers): « Table 4 · 3 guests ». It wraps with the rest of the reference line, so it never pushes the number or the timer off the card; nothing when the order carries no number. -->
+					<span v-if="coversLabel" data-test="ticket-covers" class="inline-flex items-baseline gap-1 whitespace-nowrap font-medium text-gray-600 dark:[&&]:!text-gray-300" :class="[TICKET_FRAME.number, KITCHEN_FRAME.number]">
+						<svg class="h-[0.95em] w-[0.95em] flex-none self-center" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+						<span>{{ coversLabel }}</span>
+					</span>
 					<span v-if="ticketNumber" data-test="ticket-number" class="text-gray-500 font-medium tabular-nums" :class="[TICKET_FRAME.number, KITCHEN_FRAME.number]">
 						{{ order.is_takeaway ? "· " : "" }}{{ ticketNumber }}
 					</span>
@@ -192,7 +197,7 @@
 								</template>
 								<template v-else>
 								<!-- //// Neoffice — a press on a section's label takes ALL its dishes (Daniel, 01.11: « prendre un objet ou tous les objets concernant le groupe »); a section that waits for the course before it is muted and cannot be pressed -->
-								<TicketSectionHeader v-if="item._head" :label="item._head.label" :family="item._head.family"
+								<TicketSectionHeader v-if="item._head" :label="item._head.label" :family="item._head.family" :tally="ticketTally(order, item._head.family)"
 									:selectable="Boolean(item._section) && mode !== 'ready-list' && (!isHeld(item) || sectionOffers(item._section, 'Preparing'))" :count="item._section?.idxs.length || 0" :held="isHeld(item)"
 									@click="openSection(item, $event)" />
 								<div v-if="item._section && activeSection === item._section.key" data-test="section-menu"
@@ -444,6 +449,8 @@ import { dishesOutOfSight } from "@/utils/ticketScrollHints"
 //// Neoffice — the dishes of a send in sections by family, and the pale tint of a category (Daniel, 01.11)
 import TicketSectionHeader from "@/components/invoices/TicketSectionHeader.vue"
 import { TINT_CLASS, inSections, sectionLabel, tintStyle } from "@/utils/ticketFamilies"
+//// Neoffice — the people seated at the table, and the count of each course against them, as the server counted them over the whole order (NeoResto lot 1, covers)
+import { ticketCoversLabel, ticketTally } from "@/utils/coverCounts"
 //// Neoffice — the order of the meal (Daniel, 01.11): a course waits, greyed, for the one before it; a course all done folds into one line; the choice is the device's
 import { useCourseOrder } from "@/composables/useCourseOrder"
 import { followsTheOrderOfTheMeal, isHeldByCourse } from "@/utils/courseOrder"
@@ -572,6 +579,10 @@ const textSize = inject(TEXT_SIZE_KEY, ref(DEFAULT_TEXT_SIZE))
 const fullVariables = computed(() => fullScreenVariables(textSize.value))
 //// Neoffice — a takeaway is handed over, not delivered to a table (task 38a-1)
 const isTakeaway = computed(() => !!props.order.is_takeaway)
+//// Neoffice — « 3 guests » on the reference line, for a table that has a number of people (a takeaway has none), NeoResto lot 1, covers
+const coversLabel = computed(() =>
+	isTakeaway.value ? "" : ticketCoversLabel(props.order.covers),
+)
 
 //// Neoffice — the service rhythm (NeoResto lot 1, Daniel, 01.11): the restaurant's kitchen prepares ahead, or the room calls each course. The screen hands it down; the card only needs it to know that the order of the meal is off
 const serviceRhythm = inject(SERVICE_RHYTHM_KEY, ref(CALLED_BY_THE_ROOM))

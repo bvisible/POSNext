@@ -339,6 +339,22 @@ SETTINGS = (
 		till=RESTAURANT_TILL,
 		applies=APPLIES_RESTAURANT,
 	),
+	# //// Neoffice — the covers of a table (NeoResto lot 1): whether the till asks how many people are seated when a table is first opened. A field of the Restaurant,
+	# //// so the restaurant's own choice; on unless the restaurant switches it off. The number is kept on the table's order whatever this says (pos_next.restaurant.covers).
+	Setting(
+		"ask_covers_on_open",
+		"service",
+		_lt("Ask how many people when opening a table"),
+		_lt(
+			"On: the first time a table is opened, the till asks how many people are seated (the seats of the table come first)."
+			" Off: nothing is asked, and the number is set from the table's header whenever the waiter wants. Either way it can be"
+			" changed later, and the kitchen's screens and ticket show it."
+		),
+		"check",
+		doctype=RESTAURANT,
+		till=RESTAURANT_TILL,
+		applies=APPLIES_RESTAURANT,
+	),
 	# //// Neoffice — the digits of the ticket number (NeoResto lot 1, task 38b), added to the list when this task's registry
 	# //// met the field; the server holds the same 1..9 range (Restaurant._check_ticket_number_digits).
 	Setting(

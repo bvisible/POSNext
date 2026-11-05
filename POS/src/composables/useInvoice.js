@@ -28,6 +28,8 @@ import { carriedPriceTerms, samePriceTerms } from "@/utils/linePriceTerms";
 //// (utils/offeredRows.js); the payment carries the manager's approval when a rule asks for one (utils/offerApproval.js).
 import { isOfferedRow, offeredLineFields, withoutOfferedRows } from "@/utils/offeredRows";
 import { authorizationFieldsFor } from "@/utils/offerApproval";
+//// Neoffice — the covers of a table ride with the ticket to submit_invoice, only when a number is set (NeoResto lot 1, covers).
+import { coversPayload } from "@/utils/coverCounts";
 
 const log = logger.create("Invoice");
 
@@ -58,6 +60,9 @@ export function useInvoice() {
 	//// restaurant_table to submit_invoice via useInvoice").
 	//// pass restaurant_table to submit_invoice via useInvoice (was missing,… — 45435e4
 	const restaurantTable = ref(null);
+	//// Neoffice — how many people are seated at the table of this ticket (NeoResto lot 1, covers): the number rides with the ticket to submit_invoice, as the table does, so the paid invoice keeps it.
+	//// Null for a ticket with no number (counter sale, takeaway, table whose waiter did not say).
+	const restaurantCovers = ref(null);
 	//// Neoffice — the server draft a customer's phone wrote its cart in (scanning in the shop, composables/useShopCart): the
 	//// sale is that draft, saved and submitted by its name. Without it the till booked a second invoice and left the phone's
 	//// draft behind. Cleared with the ticket, as the table is.
@@ -1413,6 +1418,8 @@ export function useInvoice() {
 					//// after the ticket was paid (45435e47, 2026-03-24 "pass restaurant_table to
 					//// submit_invoice via useInvoice").
 					restaurant_table: restaurantTable.value?.name || null,
+					//// Neoffice — the covers of the table (NeoResto lot 1): the key only when a number is set, never an invalid value
+					...coversPayload(restaurantCovers.value),
 					items: formatItemsForSubmission(rawItems),
 					payments: invoicePayments,
 					//// Neoffice — same effective header discount as the draft payload above: a
@@ -1813,6 +1820,8 @@ export function useInvoice() {
 		//// Neoffice — exposed so posCart can keep the selected table in sync with the invoice
 		//// being built (45435e47, 2026-03-24).
 		restaurantTable,
+		//// Neoffice — the covers of the table, exposed so posCart owns the setter and the reset (NeoResto lot 1)
+		restaurantCovers,
 		//// Neoffice — the phone's draft the sale submits (scanning in the shop), set through posCart
 		shopCartInvoice,
 		salesTeam,

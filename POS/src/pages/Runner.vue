@@ -513,6 +513,9 @@ function groupByTable() {
 			//// Neoffice — the code of the room the server tells (the one typed on the room, else made from its name), before the one the card derives (task 38b)
 			roomCode: order.area_code || "",
 			takeaway: !!order.is_takeaway,
+			//// Neoffice — the people seated at the table and the portions per course the server counted over the whole order, for the card's header and its course labels (NeoResto lot 1, covers)
+			covers: order.covers ?? null,
+			familyCounts: order.family_counts || {},
 		}))
 		//// Neoffice — the oldest first by the SAME time the card's timer counts from (utils/kitchenBands: the course at the kitchen), so the biggest timer is at the left on the runner too
 		.sort(byArrival)

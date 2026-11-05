@@ -41,6 +41,8 @@ RESTAURANT_ONLY_SETTINGS = (
 	"service_rhythm",
 	# What a dish with no portion left does at the till: greyed out and refused (the default), or only a warning (pos_next.restaurant.portions)
 	"grey_out_sold_out",
+	# Whether the till asks how many people are seated when a table is first opened, on by default (pos_next.restaurant.covers)
+	"ask_covers_on_open",
 )
 
 

@@ -43,6 +43,20 @@
 			>
 				{{ kdsStatusLabel }}
 			</div>
+			<!-- //// Neoffice — the people seated at the table (NeoResto lot 1, covers): « 3 / 4 » (people / seats) with a people icon, or a dash while nobody said; a press asks the number (the page opens the dialog). The button's title says the action, the pastille shows the state. A takeaway has no table to seat people at. -->
+			<button
+				v-if="!isTakeaway"
+				type="button"
+				data-test="covers-chip"
+				class="inline-flex min-h-[44px] min-w-[44px] touch-manipulation items-center justify-center gap-1.5 rounded-[10px] border border-[#DCD4C7] bg-white px-2.5 text-sm font-semibold text-[#141414] transition-colors hover:bg-[#F6F3ED] active:bg-[#ECE7DE] sm:h-[34px] sm:min-h-[34px]"
+				:title="hasCovers ? __('Change the number of people') : __('Set people')"
+				:aria-label="hasCovers ? __('Change the number of people') : __('Set people')"
+				@click="emit('covers')"
+			>
+				<FeatherIcon name="users" class="h-4 w-4 flex-shrink-0" />
+				<span v-if="hasCovers" data-test="covers-chip-value" class="tabular-nums">{{ coversText }}</span>
+				<span v-else data-test="covers-chip-empty" aria-hidden="true">&ndash;</span>
+			</button>
 		</div>
 		<div
 			v-if="$slots.middle"
@@ -95,14 +109,24 @@
 			</button>
 		</div>
 	</div>
+	<!-- //// Neoffice — the counter of portions per course against the people seated (NeoResto lot 1, covers) sits in a thin row under the bar, not in it: the bar keeps QR and Back in view on a phone, and a row of chips would wrap it. -->
+	<div
+		v-if="$slots.counter"
+		data-test="table-header-counter"
+		class="flex-shrink-0 border-b border-[#ECE7DE] bg-[#FFFDF8] px-4 py-1"
+	>
+		<slot name="counter" />
+	</div>
 </template>
 
 <script setup>
 import { FeatherIcon } from "frappe-ui"
-import { onBeforeUnmount, onMounted, ref } from "vue"
+import { computed, onBeforeUnmount, onMounted, ref } from "vue"
+//// Neoffice — the people seated at the table must be a valid count to be shown (NeoResto lot 1, covers)
+import { normalizeCovers } from "@/utils/coverCounts"
 
-// //// Neoffice — the width from which the name, the buttons of the cards and QR / Back share one line: the name and the status (about 250 px), the cards with their « ⋯ » (about 310 px), QR and Back (about 180 px)
-const WIDE_FROM = 860
+// //// Neoffice — the width from which the name, the buttons of the cards and QR / Back share one line: the name and the status (about 250 px), the people pastille beside them (about 80 px), the cards with their « ⋯ » (about 310 px), QR and Back (about 180 px)
+const WIDE_FROM = 900
 const root = ref(null)
 const wide = ref(false)
 let observer = null
@@ -118,7 +142,7 @@ onMounted(() => {
 })
 onBeforeUnmount(() => observer?.disconnect())
 
-defineProps({
+const props = defineProps({
 	// The table's label, or the takeaway ticket's number
 	title: { type: [String, Number], default: "" },
 	isTakeaway: { type: Boolean, default: false },
@@ -128,7 +152,16 @@ defineProps({
 	kdsStatusLabel: { type: String, default: "" },
 	// Whether the table can show a QR code: the restaurant has QR ordering on, and a table (not a ticket) is open
 	showQr: { type: Boolean, default: false },
+	//// Neoffice — the people seated at the table and the seats it has, null when unknown (NeoResto lot 1, covers)
+	covers: { type: Number, default: null },
+	seats: { type: Number, default: null },
 })
 
-const emit = defineEmits(["qr", "back"])
+const emit = defineEmits(["qr", "back", "covers"])
+
+//// Neoffice — « 3 / 4 » when the table's seats are known, « 3 » when they are not
+const hasCovers = computed(() => normalizeCovers(props.covers) !== null)
+const coversText = computed(() =>
+	props.seats > 0 ? `${props.covers} / ${props.seats}` : String(props.covers),
+)
 </script>

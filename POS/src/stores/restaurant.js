@@ -92,6 +92,8 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		service_rhythm: "Called by the room",
 		//// Neoffice — a dish with no portion left is greyed out and refused unless the restaurant switched this off (NeoResto lot 1, Daniel, 02.11)
 		grey_out_sold_out: true,
+		//// Neoffice — the till asks how many people are seated the first time a table is opened, unless the restaurant switched this off (NeoResto lot 1, covers). On by default, and when the server does not say.
+		ask_covers_on_open: 1,
 		enable_takeaway: false,
 		takeaway_card: null,
 		enable_qr_ordering: false,
@@ -849,6 +851,11 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 	const serviceRhythm = computed(() =>
 		rhythmOf(restaurantSettings.value.service_rhythm),
 	)
+	//// Neoffice — whether the till asks the number of people when a table is opened empty (NeoResto lot 1, covers): ON unless the restaurant says 0/false; a server that does not know the setting leaves it ON
+	const askCoversOnOpen = computed(() => {
+		const value = restaurantSettings.value.ask_covers_on_open
+		return !(value === 0 || value === false || value === "0")
+	})
 	const takeawayEnabled = computed(
 		() => !!restaurantSettings.value.enable_takeaway,
 	)
@@ -886,6 +893,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		hasCardWarning,
 		runnerEnabled,
 		serviceRhythm,
+		askCoversOnOpen,
 		takeawayEnabled,
 		takeawayCard,
 		takeawayOrders,

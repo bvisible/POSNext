@@ -18,6 +18,8 @@
   "enable_runner",
   "section_service_rhythm",
   "service_rhythm",
+  "section_covers",
+  "ask_covers_on_open",
   "section_sold_out",
   "grey_out_sold_out",
   "section_tickets",
@@ -133,6 +135,18 @@
    "fieldtype": "Select",
    "label": "Service Rhythm",
    "options": "Called by the room\nPrepared ahead"
+  },
+  {
+   "fieldname": "section_covers",
+   "fieldtype": "Section Break",
+   "label": "People at the Table"
+  },
+  {
+   "default": "1",
+   "description": "On: opening a table for the first time asks how many people are seated (the table's seats come first). Off: nothing is asked, and the number is set from the table's header whenever the waiter wants. Either way it can be changed later.",
+   "fieldname": "ask_covers_on_open",
+   "fieldtype": "Check",
+   "label": "Ask how many people when opening a table"
   },
   {
    "fieldname": "section_sold_out",
@@ -382,7 +396,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-31 20:00:00.000000",
+ "modified": "2026-11-05 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "Restaurant",

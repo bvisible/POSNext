@@ -169,6 +169,9 @@ _custom_field_names = [
 	"Coupon Code-source_invoice",
 	"Coupon Code-referral_code",
 	"Sales Invoice-restaurant_table",
+	# //// Neoffice — the people seated at a table (NeoResto lot 1, covers): kept on the table's open order and told to the kitchen's screens and ticket.
+	# //// Shipped by the fixture file; listed so that an export does not drop it.
+	"Sales Invoice-restaurant_covers",
 	"Sales Invoice-kds_status",
 	# //// Neoffice — the ticket number of a restaurant order and the business day it was counted in (NeoResto lot 1,
 	# //// task 38b, rulings 122 and 124): the kitchen shows it instead of the draft's Sales Invoice number.

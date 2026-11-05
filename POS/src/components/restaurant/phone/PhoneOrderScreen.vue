@@ -7,6 +7,7 @@
 <!-- //// opens the options sheet. Left out until their lot (Ruling 66): the course chips « For: Drinks · Starters · -->
 <!-- //// Mains · Desserts » (lot 2, the families of service), « N left » (lot 6, the portions of the day) and the covers -->
 <!-- //// of the table, which the till does not record. -->
+<!-- //// Neoffice — the covers of the table are in since NeoResto lot 1, covers: the pastille « 3 / 4 » in the ink header and the counter of portions per course under it. -->
 <template>
 	<Teleport to="body">
 		<div
@@ -58,7 +59,35 @@
 								<path d="M12 21v-1" />
 							</svg>
 						</button>
-						<!-- The covers of the table go under its name once the till records them -->
+						<!-- //// Neoffice — the people seated at the table (NeoResto lot 1, covers): « 3 / 4 » (people / seats) or a dash while nobody said; a press asks the number (the page opens the dialog). A takeaway has no table to seat people at. -->
+						<button
+							v-if="!cartStore.isTakeaway"
+							type="button"
+							data-covers
+							class="min-h-[44px] min-w-[44px] shrink-0 px-2.5 flex items-center justify-center gap-1.5 rounded-[10px] border border-[#FFFDF8]/40 text-[14px] font-semibold text-[#FFFDF8] active:bg-[#FFFDF8]/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFFDF8]"
+							:aria-label="hasCovers ? __('Change the number of people') : __('Set people')"
+							:title="hasCovers ? __('Change the number of people') : __('Set people')"
+							@click="emit('covers')"
+						>
+							<svg
+								width="18"
+								height="18"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								aria-hidden="true"
+							>
+								<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+								<circle cx="9" cy="7" r="4" />
+								<path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+								<path d="M16 3.13a4 4 0 0 1 0 7.75" />
+							</svg>
+							<span v-if="hasCovers" data-covers-value class="tabular-nums">{{ coversText }}</span>
+							<span v-else data-covers-empty aria-hidden="true">&ndash;</span>
+						</button>
 						<div class="text-end min-w-0">
 							<div data-table-name class="font-bold text-[16px] leading-tight truncate">{{ orderName }}</div>
 						</div>
@@ -92,6 +121,11 @@
 					<slot name="card-row-end" />
 				</div>
 			</header>
+
+			<!-- //// Neoffice — the portions per course against the people seated (NeoResto lot 1, covers): « Starters 3/3 ✓ · Mains 2/3 », only while the number is set and a course has a line -->
+			<div v-if="coverChips.length > 0" data-covers-counter class="shrink-0 px-3 pt-2 overflow-x-auto phone-order__strip">
+				<CoverCounter :chips="coverChips" />
+			</div>
 
 			<!-- Lot 2 (the families of service) puts its row « For: Drinks · Starters · Mains · Desserts » here -->
 
@@ -219,6 +253,9 @@ import { cardLabel } from "@/utils/cardLabel"
 import { formatCurrency, formatCurrencyNumber } from "@/utils/currency"
 import { articleCount, cardSections, formatCount, orderedByItem, softTint, unsentLines } from "@/utils/phoneCard"
 import CardButtonGrid from "./CardButtonGrid.vue"
+//// Neoffice — the people seated at the table and the counter of portions per course (NeoResto lot 1, covers)
+import CoverCounter from "@/components/restaurant/CoverCounter.vue"
+import { courseChips, normalizeCovers } from "@/utils/coverCounts"
 
 const props = defineProps({
 	// The cards the till offers right now (the restaurant store's active cards)
@@ -233,7 +270,16 @@ const props = defineProps({
 	countedBy: { type: Function, default: () => false },
 })
 
-const emit = defineEmits(["update:selectedCard", "back", "qr", "pick", "options", "open-order"])
+//// Neoffice — "covers": the pastille of the people at the table was pressed (NeoResto lot 1, covers)
+const emit = defineEmits([
+	"update:selectedCard",
+	"back",
+	"qr",
+	"pick",
+	"options",
+	"open-order",
+	"covers",
+])
 
 const cartStore = usePOSCartStore()
 const restaurantStore = useRestaurantStore()
@@ -323,6 +369,18 @@ const orderName = computed(() =>
 	cartStore.isTakeaway
 		? cartStore.takeawayNumber || ""
 		: cartStore.restaurantTable?.table_name || cartStore.restaurantTable?.name || "",
+)
+//// Neoffice — the people at the table, « 3 / 4 » with the seats when known (NeoResto lot 1, covers)
+const coversCount = computed(() => normalizeCovers(cartStore.restaurantCovers))
+const hasCovers = computed(() => coversCount.value !== null)
+const seats = computed(() => Number(cartStore.restaurantTable?.capacity) || 0)
+const coversText = computed(() =>
+	seats.value > 0
+		? `${coversCount.value} / ${seats.value}`
+		: String(coversCount.value),
+)
+const coverChips = computed(() =>
+	hasCovers.value ? courseChips(cartStore.invoiceItems, coversCount.value) : [],
 )
 const qrAvailable = computed(() =>
 	Boolean(restaurantStore.restaurantSettings?.enable_qr_ordering && cartStore.restaurantTable && !cartStore.isTakeaway),

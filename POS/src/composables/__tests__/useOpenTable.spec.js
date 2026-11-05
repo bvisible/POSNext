@@ -8,6 +8,8 @@ import { createPinia, setActivePinia } from "pinia"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const answer = vi.hoisted(() => ({ value: null, fail: false, calls: [] }))
+//// Neoffice — the restaurant's setting that makes a table opened empty ask how many people are seated (NeoResto lot 1, covers)
+const restaurant = vi.hoisted(() => ({ askCoversOnOpen: true, broken: false }))
 
 vi.hoisted(() => {
 	globalThis.__ = (s) => s
@@ -24,6 +26,14 @@ vi.mock("@/utils/apiWrapper", () => ({
 	}),
 }))
 vi.mock("@/stores/posShift", () => ({ usePOSShiftStore: () => ({ profileName: "Till" }) }))
+vi.mock("@/stores/restaurant", () => ({
+	useRestaurantStore: () => ({
+		get askCoversOnOpen() {
+			if (restaurant.broken) throw new Error("settings unavailable")
+			return restaurant.askCoversOnOpen
+		},
+	}),
+}))
 vi.mock("@/stores/posSettings", () => ({
 	usePOSSettingsStore: () => ({ shouldEnforceStockValidation: () => false }),
 }))
@@ -52,6 +62,8 @@ beforeEach(() => {
 	answer.value = structuredClone(ORDER)
 	answer.fail = false
 	answer.calls = []
+	restaurant.askCoversOnOpen = true
+	restaurant.broken = false
 })
 
 describe("opening a table", () => {
@@ -121,6 +133,137 @@ describe("opening a table", () => {
 
 		expect(opened).toBe(false)
 		expect(cart.restaurantTable).toMatchObject({ name: "t9" })
+		log.mockRestore()
+	})
+})
+
+//// Neoffice — the people seated at the table (NeoResto lot 1, covers): a table opened empty asks how many, whoever opened it; a table that has an order comes back with the number it holds
+describe("opening a table and the people seated at it", () => {
+	const EMPTY = { is_new: true }
+
+	it("asks how many people are seated when the table has no order yet and the restaurant asks it", async () => {
+		answer.value = EMPTY
+
+		const opened = await useOpenTable().openTable(TABLE)
+
+		expect(opened).toBe(true)
+		expect(cart.coversAsk).toBe("open")
+		expect(cart.restaurantCovers).toBeNull()
+	})
+
+	it("asks for a table whose answer carries no order name, even without the flag", async () => {
+		answer.value = {}
+
+		await useOpenTable().openTable(TABLE)
+
+		expect(cart.coversAsk).toBe("open")
+	})
+
+	it("does not ask when the restaurant switched the question off", async () => {
+		answer.value = EMPTY
+		restaurant.askCoversOnOpen = false
+
+		const opened = await useOpenTable().openTable(TABLE)
+
+		expect(opened).toBe(true)
+		expect(cart.coversAsk).toBeNull()
+	})
+
+	it("does not ask when the table has an order: it comes back with its people", async () => {
+		answer.value = { ...structuredClone(ORDER), is_new: false, covers: 3 }
+
+		await useOpenTable().openTable(TABLE)
+
+		expect(cart.coversAsk).toBeNull()
+		expect(cart.restaurantCovers).toBe(3)
+	})
+
+	it("does not ask for an order whose people were never said: the header's pastille is there to say them", async () => {
+		answer.value = { ...structuredClone(ORDER), is_new: false, covers: null }
+
+		await useOpenTable().openTable(TABLE)
+
+		expect(cart.coversAsk).toBeNull()
+		expect(cart.restaurantCovers).toBeNull()
+	})
+
+	it("does not ask when the order does not say its people at all (a server that does not send them)", async () => {
+		await useOpenTable().openTable(TABLE)
+
+		expect(cart.coversAsk).toBeNull()
+		expect(cart.restaurantCovers).toBeNull()
+	})
+
+	it("forgets the people of the table before it: the next one starts with none and asks", async () => {
+		answer.value = { ...structuredClone(ORDER), covers: 4 }
+		await useOpenTable().openTable({
+			name: "t9",
+			table_name: "T9",
+			status: "Occupied",
+		})
+		expect(cart.restaurantCovers).toBe(4)
+		answer.value = EMPTY
+
+		await useOpenTable().openTable(TABLE)
+
+		expect(cart.restaurantCovers).toBeNull()
+		expect(cart.coversAsk).toBe("open")
+	})
+
+	it("asks again each time an empty table is opened", async () => {
+		answer.value = EMPTY
+		await useOpenTable().openTable(TABLE)
+		cart.coversAsk = null
+
+		await useOpenTable().openTable(TABLE)
+
+		expect(cart.coversAsk).toBe("open")
+	})
+
+	it("never blocks ordering: the lines can be added while the question is open", async () => {
+		answer.value = EMPTY
+		await useOpenTable().openTable(TABLE)
+
+		cart.addItem({
+			item_code: "soup",
+			item_name: "Soup",
+			rate: 12,
+			price_list_rate: 12,
+			uom: "Unit",
+			stock_uom: "Unit",
+			conversion_factor: 1,
+		})
+
+		expect(cart.coversAsk).toBe("open")
+		expect(cart.invoiceItems).toHaveLength(1)
+	})
+
+	it("still says the table was opened when the question cannot be asked", async () => {
+		answer.value = EMPTY
+		restaurant.broken = true
+		const log = vi.spyOn(console, "error").mockImplementation(() => {})
+
+		const opened = await useOpenTable().openTable(TABLE)
+
+		expect(opened).toBe(true)
+		expect(cart.restaurantTable).toMatchObject({ name: "t1" })
+		expect(cart.coversAsk).toBeNull()
+		log.mockRestore()
+	})
+
+	it("asks nothing, and keeps the cart, when the order cannot be read", async () => {
+		await useOpenTable().openTable({
+			name: "t9",
+			table_name: "T9",
+			status: "Occupied",
+		})
+		answer.fail = true
+		const log = vi.spyOn(console, "error").mockImplementation(() => {})
+
+		const opened = await useOpenTable().openTable(TABLE)
+
+		expect(opened).toBe(false)
+		expect(cart.coversAsk).toBeNull()
 		log.mockRestore()
 	})
 })

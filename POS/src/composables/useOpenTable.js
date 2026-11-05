@@ -5,6 +5,8 @@
 import { usePOSCartStore } from "@/stores/posCart"
 import { usePOSShiftStore } from "@/stores/posShift"
 import { call } from "@/utils/apiWrapper"
+//// Neoffice — a table opened empty asks how many people are seated, whoever opened it: the plan's tile, the list, the notice of a guest's order (NeoResto lot 1, covers)
+import { useCovers } from "@/composables/useCovers"
 //// Neoffice — what the options of a line loaded from the table's draft add to its price (NeoResto lot 1, task 27).
 import { modifiersPriceAdjustment } from "@/utils/modifiersPrice"
 // « Offert » (NeoResto lot 1, task 24): what an offered row of a table's draft keeps when the table is opened
@@ -23,7 +25,10 @@ export function customerOfTheOrder(order) {
 export function useOpenTable() {
 	const cartStore = usePOSCartStore()
 	const shiftStore = usePOSShiftStore()
+	const covers = useCovers()
 
+	//// Neoffice — a table that has no order yet (`is_new`) asks how many people are seated when the restaurant asks it (the question is the cart's `coversAsk`, the page mounts its dialog): the answer of this function
+	//// is the same, it only says whether the table was opened, and the waiter can dismiss the question and order at once. A table that has an order comes back with the number it holds (NeoResto lot 1, covers).
 	/**
 	 * Opens a table: its order is read from the server and put in the cart.
 	 *
@@ -89,12 +94,23 @@ export function useOpenTable() {
 					guestPaidAmount: res.paid_amount || 0,
 					guestTipAmount: res.tip_total || 0,
 				})
+				//// Neoffice — the people the order holds (null when nobody said), so that the header and the counter show them again (NeoResto lot 1, covers)
+				cartStore.setRestaurantCovers(res.covers ?? null)
 				//// Neoffice — the customer as a customer the till picked is (his record's name and his name): the cart's header names him,
 				//// a code on a site that numbers its customers was no name, and a bare string read as no name at all (neoffice-maintenance#2163)
 				if (res.customer) cartStore.setCustomer(customerOfTheOrder(res))
 			}
 			//// Neoffice — what the kitchen has of this order, remembered: « Back » asks before it drops a dish taken off since (NeoResto lot 1, product owner, 03.11.2026)
 			cartStore.rememberSentLines()
+			//// Neoffice — a table with no order yet asks how many people are seated (when the restaurant asks it and nobody said): the answer to the caller is the same, and the waiter can dismiss the question (NeoResto lot 1, covers).
+			//// Asking is a courtesy: a failure of the question never turns an opened table into a failed one.
+			if (res?.is_new || !res?.name) {
+				try {
+					covers.askOnOpen()
+				} catch (e) {
+					console.error("[Covers] Failed to ask the number of people:", e)
+				}
+			}
 			return true
 		} catch (e) {
 			console.error("[FloorPlan] Failed to open table:", e)

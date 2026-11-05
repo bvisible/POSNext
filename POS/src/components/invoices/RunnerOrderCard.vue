@@ -36,6 +36,11 @@
 							<template v-if="card.takeaway">{{ __("Takeaway") }}</template>
 							<template v-else>{{ card.title }}</template>
 						</h3>
+						<!-- //// Neoffice — the people seated at the table, beside its name (NeoResto lot 1, covers): the kitchen ticket's own line, so that the pass reads the same. Wraps with the line, never pushes the number or the timer off the card. -->
+						<span v-if="coversLabel" data-test="ticket-covers" class="inline-flex items-baseline gap-1 whitespace-nowrap font-medium text-gray-600 dark:[&&]:!text-gray-300" :class="[TICKET_FRAME.number, KITCHEN_FRAME.number]">
+							<svg class="h-[0.95em] w-[0.95em] flex-none self-center" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+							<span>{{ coversLabel }}</span>
+						</span>
 						<!-- //// Neoffice — dark mode (task 46): the till's dark remap of `.text-gray-500` is `!important` (index.css), so no plain `dark:` colour reaches it; `[&&]` doubles the selector so that this variant outranks it. -->
 						<span v-if="numberText" data-test="ticket-number" class="font-medium tabular-nums text-gray-500 dark:[&&]:!text-gray-300" :class="[TICKET_FRAME.number, KITCHEN_FRAME.number]">
 							{{ numberText }}
@@ -97,7 +102,7 @@
 							<!-- //// Neoffice — the dishes come in SECTIONS by family, as on the kitchen's ticket (Daniel, 01.11): `inSections` (utils/ticketFamilies) puts them in the order of the meal and tells the first dish of a labelled section (`_head`) and whether a faint rule goes above a dish (`_rule`). The label stands inside the wrapper of that first dish; the dish's row takes the pale tint of its category. A card with no family at all has no label and the rules it always had. -->
 							<div v-for="item in tableItems" :key="item.name" data-ticket-line class="relative"
 								:class="{ 'border-t border-gray-50 dark:border-gray-700': item._rule, 'break-inside-avoid': fullscreen }">
-								<TicketSectionHeader v-if="item._head" :label="item._head.label" :family="item._head.family" />
+								<TicketSectionHeader v-if="item._head" :label="item._head.label" :family="item._head.family" :tally="tallyOf(item._head.family)" />
 								<div class="grid grid-cols-[2.1em_minmax(0,1fr)] content-center gap-x-1.5 py-[var(--kds-py,3px)] rounded px-1 -mx-1"
 									:class="[TICKET_FRAME.line, fullscreen ? FULLSCREEN_FRAME.line : KITCHEN_FRAME.line, lineTint(item) ? TINT_CLASS : '']"
 									:style="lineTint(item)" data-test="ticket-line">
@@ -212,6 +217,8 @@ import TicketDishNotes from "@/components/invoices/TicketDishNotes.vue"
 //// Neoffice — the dishes in sections by family, and the pale tint of a category, as on the kitchen's ticket (Daniel, 01.11)
 import TicketSectionHeader from "@/components/invoices/TicketSectionHeader.vue"
 import { TINT_CLASS, inSections, tintStyle } from "@/utils/ticketFamilies"
+//// Neoffice — the people seated at the table, and the count of each course against them, as the server counted them over the whole order (NeoResto lot 1, covers)
+import { ticketCoversLabel, ticketTally } from "@/utils/coverCounts"
 //// Neoffice — the ticket opened full screen over the board (task 38a-3, ruling 107 layer 3): its shell, the size it is drawn in, and the length it says
 import TicketFullScreen from "@/components/invoices/TicketFullScreen.vue"
 //// Neoffice — the print button's icon and the words under it (task 44), written once for the kitchen's card and the runner's
@@ -323,6 +330,21 @@ const numberText = computed(() => {
 	if (!number) return ""
 	return props.card.takeaway ? `· ${number}` : number
 })
+//// Neoffice — the people seated at the table and the count of each course against them (NeoResto lot 1, covers). The card is fed the order's `covers` and `familyCounts` (the server's, over all the lines of the order); a station's card
+//// gathers dishes of several tables and a takeaway has no table to seat people at: neither carries them.
+const showsCovers = computed(
+	() => props.viewMode !== "station" && !props.card.takeaway,
+)
+const coversLabel = computed(() =>
+	showsCovers.value ? ticketCoversLabel(props.card.covers) : "",
+)
+const tallyOf = (family) =>
+	showsCovers.value
+		? ticketTally(
+				{ covers: props.card.covers, family_counts: props.card.familyCounts },
+				family,
+			)
+		: null
 //// Neoffice — the main button's words are the kitchen's (task 38a-1, ruling 113): « Deliver », and « Hand over » for a takeaway
 const mainLabel = computed(() =>
 	kitchenActionLabel("deliver", { takeaway: !!props.card.takeaway }),

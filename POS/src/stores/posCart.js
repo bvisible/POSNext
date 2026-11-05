@@ -34,6 +34,8 @@ import {
 import { offlineState } from "@/utils/offline/offlineState";
 //// Neoffice — « Offert » (NeoResto lot 1, task 24): an offered row is never a paid line the cart addresses by item code.
 import { isOfferedRow } from "@/utils/offeredRows";
+//// Neoffice — the covers of a table: a valid number or none, and what the order payload carries for it (NeoResto lot 1, covers).
+import { coversPayload, normalizeCovers } from "@/utils/coverCounts";
 //// Neoffice — added import. CHF has no coin below 0.05, so the cart computes a rounded grand
 //// total plus the rounding-adjustment line shown beside it; upstream charges the raw total
 //// (4fdb5df4, 2026-04-04 "rounding total, tips visibility, cash quick amounts"). roundCurrency
@@ -177,6 +179,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		//// ticket was paid (45435e47, 2026-03-24).
 		//// pass restaurant_table to submit_invoice via useInvoice (was missing,… — 45435e4
 		restaurantTable: baseRestaurantTable,
+		//// Neoffice — the covers of the table are useInvoice's ref, exposed below as the store's own, as the takeaway flag is: submit_invoice reads the number from there (NeoResto lot 1, covers).
+		restaurantCovers,
 		//// Neoffice — the server draft of a phone's cart the sale submits (scanning in the shop, composables/useShopCart)
 		shopCartInvoice,
 		//// Neoffice — the takeaway order and its number are useInvoice's refs, exposed below as the store's own: the
@@ -600,6 +604,9 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		//// setRestaurantTable) and submit_invoice reads THAT copy, so clearing only the store's own
 		//// ref let the ticket after a paid table ticket be saved on the same table.
 		setRestaurantTable(null);
+		//// Neoffice — the number of people belongs to the table that is gone, and so does the question asked about it (NeoResto lot 1, covers): the next table starts with none.
+		restaurantCovers.value = null;
+		coversAsk.value = null;
 		isTakeaway.value = false;
 		takeawayNumber.value = "";
 		kdsStatus.value = "Pending";
@@ -640,6 +647,9 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	const tipAmount = ref(0);
 	const loyaltyData = ref(null);
 	const restaurantTable = ref(null);
+	//// Neoffice — the question « How many people? » is open on this table: "open" (asked by itself when the table was opened empty), "change" (asked from the header), null (not asked). It lives with the table so that
+	//// clearing the cart closes it (NeoResto lot 1, covers; composables/useCovers).
+	const coversAsk = ref(null);
 	//// Neoffice — isTakeaway and takeawayNumber are no longer the store's own refs: they are useInvoice's (destructured
 	//// at the top of the store), where the lines are taxed and the sale is paid (NeoResto lot 1, task 11).
 	const kdsStatus = ref("Pending");
@@ -683,6 +693,11 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	function setRestaurantTable(table) {
 		restaurantTable.value = table;
 		baseRestaurantTable.value = table;
+	}
+
+	//// Neoffice — how many people are seated at the table (NeoResto lot 1, covers): a whole number from 1 to 99, null for none. Anything else is no number, and is stored as none, so that a payload never carries an invalid value.
+	function setRestaurantCovers(covers) {
+		restaurantCovers.value = normalizeCovers(covers);
 	}
 
 	function setKdsStatus(status) {
@@ -1076,6 +1091,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			//// can be scoped to dine-in versus takeaway; upstream's payload is retail-only (458d81a9
 			//// 2026-03-20 restaurant mode; 644ad918 2026-03-26 "takeaway module").
 			restaurant_table: restaurantTable.value?.name,
+			//// Neoffice — the covers of the table (NeoResto lot 1): every « Valider » carries the number, so the order keeps it; the key is left out when none is set
+			...coversPayload(restaurantCovers.value),
 			is_takeaway: isTakeaway.value ? 1 : 0,
 			takeaway_number: takeawayNumber.value || "",
 			kds_status: kdsStatus.value,
@@ -3219,6 +3236,10 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 		// Restaurant features
 		restaurantTable,
+		//// Neoffice — the people at the table, the question about them, and the setter (NeoResto lot 1, covers)
+		restaurantCovers,
+		coversAsk,
+		setRestaurantCovers,
 		isTakeaway,
 		takeawayNumber,
 		//// Neoffice — the cart's VAT per account, and the takeaway fields a sale saved offline carries (NeoResto lot 1,

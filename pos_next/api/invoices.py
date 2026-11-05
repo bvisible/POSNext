@@ -1225,9 +1225,20 @@ def update_invoice(data):
 	# //// no-op.
 	data = json.loads(data) if isinstance(data, str) else data
 	_require_till_document(data)
+	# //// Neoffice — the people seated at a table (NeoResto lot 1, covers): the till may send `restaurant_covers` with the order. It is checked here, before the
+	# //// try, like the till's gate: a number nobody can seat (-1, 100, "abc", 2.5) is refused and not logged as an "Update Invoice Error". A payload without the
+	# //// key leaves the stored number alone; one with it stores it (0 or nothing: none), after the save below.
+	from pos_next.restaurant import covers as covers_module
+
+	covers_sent = isinstance(data, dict) and covers_module.FIELD in data
+	covers_to_store = covers_module.clean_covers(data.get(covers_module.FIELD)) if covers_sent else None
 	try:
 		data = json.loads(data) if isinstance(data, str) else data
 		data = _strip_server_managed_fields(data)
+		# //// Neoffice — the number of people is written after the save (below), never through the document: it is worked out once, above.
+		# //// `data` is a copy here, so the caller's own payload keeps its key.
+		if isinstance(data, dict):
+			data.pop(covers_module.FIELD, None)
 
 		pos_profile = data.get("pos_profile")
 		doctype = data.get("doctype", "Sales Invoice")
@@ -1714,7 +1725,10 @@ def update_invoice(data):
 		# //// 2026-03-29).
 		# //// table only marked Occupied when draft invoice exists, not before — c7f6932 + 07d0d49 (+7 more)
 		# Set restaurant fields via direct DB write AFTER save to avoid validation conflicts
-		if data.get("restaurant_table") or data.get("kds_status") or data.get("is_takeaway"):
+		# //// Neoffice — and the people seated at the table (NeoResto lot 1, covers), in the same write, when the payload carried the key: a number, or none (0 or nothing)
+		# //// to take it away. A Sales Order has no such field, and a site not migrated yet has no column: nothing to write there.
+		store_covers = covers_sent and doctype == "Sales Invoice" and covers_module.has_covers_column()
+		if data.get("restaurant_table") or data.get("kds_status") or data.get("is_takeaway") or store_covers:
 			update_data = {}
 			if data.get("restaurant_table"):
 				update_data["restaurant_table"] = data.get("restaurant_table")
@@ -1724,6 +1738,10 @@ def update_invoice(data):
 				update_data["is_takeaway"] = 1
 			if data.get("takeaway_number"):
 				update_data["takeaway_number"] = data.get("takeaway_number")
+			# //// Neoffice — the number of people (NeoResto lot 1, covers), written with the other restaurant fields: see `store_covers` above
+			if store_covers:
+				# An Int column is NOT NULL: none is stored as 0 and read back as None
+				update_data[covers_module.FIELD] = covers_to_store or 0
 
 			frappe.db.set_value(invoice_doc.doctype, invoice_doc.name, update_data, update_modified=False)
 
@@ -2299,6 +2317,10 @@ def submit_invoice(invoice=None, data=None):
 			saved_tip_amount = sum(
 				flt(t.get("rate", 0)) * flt(t.get("qty", 1)) for t in _extract_tip_items(invoice_doc)
 			)
+
+			# //// Neoffice — the people seated at the table are the order's, kept by its save and by `restaurant.set_table_covers`: a payment's payload never rewrites
+			# //// them, so the number survives to the submitted invoice whatever the payload says of it (NeoResto lot 1, covers).
+			invoice.pop("restaurant_covers", None)
 
 			existing_customer = invoice_doc.customer
 			invoice_doc.update(invoice)

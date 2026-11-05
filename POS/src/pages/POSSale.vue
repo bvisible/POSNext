@@ -573,9 +573,16 @@
 												cartStore.restaurantTable
 										)
 									"
+									:covers="cartStore.restaurantCovers"
+									:seats="Number(cartStore.restaurantTable?.capacity) || null"
 									@qr="handleQRButtonClick"
 									@back="closeTable"
+									@covers="covers.ask('change')"
 								>
+									<!-- //// Neoffice — the counter of portions per course against the people seated: a thin row under the bar, only while the number is set and a course has a line (NeoResto lot 1, covers) -->
+									<template v-if="covers.chips.value.length > 0" #counter>
+										<CoverCounter :chips="covers.chips.value" />
+									</template>
 									<!-- //// Neoffice — the buttons of the cards are in the bar itself, beside the name on a wide pane (NeoResto lot 1, product owner, 03.11.2026: « fusionner le bandeau et la ligne des cartes ») -->
 									<template v-if="restaurantStore.shownCards.length > 0" #middle>
 										<!-- //// Neoffice — the row of card buttons is a component since NeoResto lot 1, task 25: it marks the cards opened by hand and ends with the « ⋯ » that fetches a card the opening hours keep off the till. -->
@@ -1070,6 +1077,7 @@
 						@back="closeTable"
 						@qr="handleQRButtonClick"
 						@open-order="handleTabSwitch('cart')"
+						@covers="covers.ask('change')"
 					/>
 				</div>
 			</div>
@@ -1997,6 +2005,18 @@
 			@leave="leaveTable.leaveAnyway"
 		/>
 
+		<!-- //// Neoffice — « How many people? » (NeoResto lot 1, covers): asked by itself when a table is opened empty and the restaurant asks it, and from the pastille of the table's header. The waiter can dismiss it and order at once. -->
+		<CoversDialog
+			v-if="covers.asking.value"
+			:mode="covers.mode.value"
+			:seats="Number(cartStore.restaurantTable?.capacity) || null"
+			:current="cartStore.restaurantCovers"
+			:busy="covers.busy.value"
+			@confirm="covers.confirm"
+			@later="covers.later"
+			@cancel="covers.cancel"
+		/>
+
 		<!-- Paid/Cleaning Table Dialog -->
 		<Dialog
 			v-model="showCleaningDialog"
@@ -2304,6 +2324,10 @@ import { customerOfTheOrder, useOpenTable } from "@/composables/useOpenTable";
 //// Neoffice — « Back » asks before it drops a dish taken off after it had left for the kitchen (NeoResto lot 1, product owner, 03.11.2026).
 import LeaveTableDialog from "@/components/restaurant/LeaveTableDialog.vue";
 import { useLeaveTable } from "@/composables/useLeaveTable";
+//// Neoffice — the number of people at the table: the question, its dialog and the counter of portions per course (NeoResto lot 1, covers).
+import CoversDialog from "@/components/restaurant/CoversDialog.vue";
+import CoverCounter from "@/components/restaurant/CoverCounter.vue";
+import { useCovers } from "@/composables/useCovers";
 import { putUnsentLinesBack, takeUnsentLines } from "@/utils/keepUnsentLines";
 import { linesOfTheSavedOrder } from "@/utils/removedSentLines";
 import { call } from "@/utils/apiWrapper";
@@ -2989,10 +3013,16 @@ onMounted(async () => {
 					table_name: table.name,
 				});
 				if (orderData?.items) {
+					//// Neoffice — the people the waiter counted before the first « Valider » live in the cart only, and a guest who orders from the QR code creates the order without them: they are kept (and so is the question about them, if it is open) across the rebuild (NeoResto lot 1, covers).
+					const keptCovers = cartStore.restaurantCovers;
+					const keptCoversAsk = cartStore.coversAsk;
 					// Direct replacement — bypasses addItem dedup logic entirely
 					await cartStore.clearCart();
 					cartStore.setRestaurantTable(table);
 					cartStore.replaceAllItems(orderData.items);
+					//// Neoffice — the number the server holds wins; an order with none keeps the waiter's (NeoResto lot 1, covers).
+					cartStore.setRestaurantCovers(orderData.covers ?? keptCovers);
+					cartStore.coversAsk = keptCoversAsk;
 					//// Neoffice — the order read back is what the kitchen has now: a removal is measured against it (NeoResto lot 1, 03.11.2026).
 					cartStore.rememberSentLines();
 					cartStore.$patch({
@@ -3855,6 +3885,9 @@ function handleLoadServerDraft(order) {
 	// Mark as no unsent changes since we just loaded from server
 	cartStore.markChangesSent();
 }
+
+//// Neoffice — the number of people at the table: the question, its dialog and the counter of portions per course (NeoResto lot 1, covers). A table opened empty asks by itself, through useOpenTable.
+const covers = useCovers();
 
 //// Neoffice — « Back » from a table, on the tablet's header and on the phone's screen alike: with a dish taken off after it had left for the kitchen it asks first (see composables/useLeaveTable), else it clears the cart as it always did.
 const { openTable } = useOpenTable();

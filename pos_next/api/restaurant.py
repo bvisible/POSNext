@@ -17,6 +17,7 @@ from frappe.utils import cint, flt
 # //// Neoffice — so did `call_seen`: the call of the next course the screens of a station took up, carried by each reading of the orders (Daniel, 01.11)
 # //// Neoffice — and `paid_orders`: the orders paid while a dish is still at the kitchen (neoffice-maintenance#2163)
 # //// Neoffice — and `figures`: the overview of the restaurant's space is told when the service changes what it counts (neoffice-maintenance#2163)
+# //// Neoffice — and `covers`: the number of people seated at a table, and the portions of each course its order holds (NeoResto lot 1, covers)
 from pos_next.restaurant import (
 	call_seen,
 	devices,
@@ -30,6 +31,7 @@ from pos_next.restaurant import (
 	service_families,
 	tickets,
 )
+from pos_next.restaurant import covers as covers_module
 from pos_next.restaurant import settings as restaurant_config
 from pos_next.restaurant.text import plain_text
 
@@ -200,6 +202,8 @@ def get_tables(restaurant=None):
 		)
 		# The ticket number of each order (NeoResto lot 1, task 38b): what the floor plan and the list of tables read aloud
 		tickets.stamp(orders, restaurant)
+		# //// Neoffice — the number of people seated at each table, from the same one read (NeoResto lot 1, covers): the floor plan and the list of tables show it
+		covers_module.stamp(orders)
 		for order in orders:
 			tbl = order.restaurant_table
 			if tbl in order_map:
@@ -215,6 +219,8 @@ def get_tables(restaurant=None):
 				"kds_status": order.kds_status or "Pending",
 				"ticket_no": order.ticket_no,
 				"ticket_digits": order.ticket_digits,
+				# //// Neoffice — the people seated at the table (int, None when nobody said how many)
+				"covers": order.covers,
 			}
 			if tell_totals:
 				order_map[tbl]["grand_total"] = flt(order.grand_total)
@@ -309,6 +315,55 @@ def update_table_status(table_name, status):
 
 	frappe.publish_realtime("table_update")
 	return {"status": "success"}
+
+
+# //// Neoffice — added function (no upstream equivalent). The number of people seated at a table, changed from the table's header (NeoResto lot 1, covers). The number lives on the
+# //// table's open order (`restaurant_covers`) and is written by the till's save when the order is validated; this is the way to change it on an order that already exists, without
+# //// saving the whole cart. POST only, a write of the waiter's till: the rule of `call_next_course` (the order's till, the order's restaurant, the caller's own till), not a tablet's.
+@frappe.whitelist(methods=["POST"])
+def set_table_covers(invoice, covers):
+	"""Set how many people are seated at the table of an open order (0 or nothing: nobody has said), and tell the screens.
+
+	`covers` is a whole number from 0 to 99 (a number or the text of one, the web sends text); 0, nothing or an empty text clears it.
+	Answers `{"covers": n}` with the number stored (None when none). The order's own modification time is left alone, as the other
+	restaurant fields are: counting the people is no change of the order the kitchen should read as new.
+
+	Refused: whoever may not work at the order's till, a restaurant that is not the caller's (a till of another restaurant, a user kept
+	to another restaurant), an invoice that is submitted or sits at no table (a takeaway or a counter sale), and a number that is not a whole
+	number from 0 to 99.
+	"""
+	from pos_next.api.cash_entry import require_document_till
+
+	require_document_till("Sales Invoice", invoice)
+	order = isinstance(invoice, str) and frappe.db.get_value(
+		"Sales Invoice", invoice, ["name", "docstatus", "restaurant_table"], as_dict=True
+	)
+	if not order:
+		frappe.throw(_("Sales Invoice {0} not found").format(invoice), frappe.DoesNotExistError)
+	if order.docstatus != 0 or not order.restaurant_table:
+		frappe.throw(_("Only the open order of a table has people seated"))
+
+	restaurant = scope.restaurant_of_record("Restaurant Table", order.restaurant_table)
+	permissions.require_restaurant(restaurant)
+	# The caller's own till, when he has one open, is that of this restaurant
+	profile = scope.current_profile()
+	if profile and scope.current_restaurant(profile) != restaurant:
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+	number = covers_module.clean_covers(covers)
+	if not covers_module.has_covers_column():
+		frappe.throw(_("The number of people cannot be saved yet: this site has to be updated first"))
+
+	# A save of the till locks the lines of the order before it reads the order, and writes it back whole: waiting for that lock means
+	# this number is written after the save, not lost under it (the same lock `call_next_course` takes)
+	service_families.stored_lines(order.name, lock=True)
+	# An Int column is NOT NULL: none is stored as 0 and read back as None (``covers.read`)
+	frappe.db.set_value("Sales Invoice", order.name, covers_module.FIELD, number or 0, update_modified=False)
+	frappe.db.commit()
+	frappe.publish_realtime("kds_update")
+	frappe.publish_realtime("table_update")
+	return {"covers": number}
+
 
 @frappe.whitelist()
 def get_table_payment_summary(table_name):
@@ -960,6 +1015,8 @@ def get_table_order(table_name):
 	order = orders[0]
 	# The ticket number of the order (NeoResto lot 1, task 38b): what the till's order screen reads; the name stays for its calls
 	tickets.stamp([order], scope.restaurant_of_record("Restaurant Table", table_name))
+	# //// Neoffice — the number of people seated at the table (NeoResto lot 1, covers): int, None when nobody said how many
+	covers_module.stamp([order])
 
 	# Fetch items
 	# stock_uom and conversion_factor: the unit the line is in and what it is worth in stock units (task 22)
@@ -1218,6 +1275,11 @@ def get_kds_orders(station=None, restaurant=None):
 	# //// Neoffice — every line says its family and the color of its category (Daniel, 01.11: « séparer entrée, plat, dessert » and a
 	# //// pastel background for the categories). One read of the items and of the group tree for ALL the lines of the call.
 	service_families.stamp_lines(item for order in orders for item in order.get("items", []))
+
+	# //// Neoffice — the people seated at each table and the portions of each course its WHOLE order holds, not only the station's lines: the ticket reads « Mains 2/3 »
+	# //// (NeoResto lot 1, covers). One read of the covers and one of the lines for all the orders of the call.
+	covers_module.stamp(orders)
+	covers_module.stamp_family_counts(orders, covers_module.tip_item_of(restaurant))
 
 	# //// Neoffice — the call of the next course that the screens of this station took up (`call_seen`): a ticket stops blinking on every tablet that shows the same thing (Daniel, 01.11)
 	call_seen.stamp(orders, station)
@@ -1735,7 +1797,16 @@ def open_table(table_name, pos_profile, customer=None):
 	existing = frappe.get_all(
 		"Sales Invoice",
 		filters={"docstatus": 0, "restaurant_table": table_name},
-		fields=["name", "customer", "customer_name", "kds_status", "paid_amount", *tickets.order_fields()],
+		# //// Neoffice — `restaurant_covers` too: the people seated at the table come back with its draft (NeoResto lot 1, covers)
+		fields=[
+			"name",
+			"customer",
+			"customer_name",
+			"kds_status",
+			"paid_amount",
+			*tickets.order_fields(),
+			*covers_module.order_fields(),
+		],
 		order_by="modified desc",
 		limit=1
 	)
@@ -1799,6 +1870,8 @@ def open_table(table_name, pos_profile, customer=None):
 			**tickets.told(
 				order.get("posa_ticket_no"), tickets.ticket_settings(scope.restaurant_of_record("Restaurant Table", table_name)).digits
 			),
+			# //// Neoffice — the people seated at the table: int, None when nobody said how many (NeoResto lot 1, covers)
+			"covers": cint(order.get(covers_module.FIELD)) or None,
 		}
 
 	# No existing draft — return empty result, the draft will be created when the cashier first validates the order
@@ -1809,6 +1882,8 @@ def open_table(table_name, pos_profile, customer=None):
 		"customer": None,
 		"kds_status": None,
 		"is_new": True,
+		# //// Neoffice — nobody is seated yet: the same shape as a draft that comes back (NeoResto lot 1, covers)
+		"covers": None,
 	}
 
 
@@ -2578,6 +2653,8 @@ def get_restaurant_settings(restaurant=None):
 		"service_rhythm": service_families.normalise_rhythm(settings.get("service_rhythm")),
 		# //// Neoffice — what a sold-out dish does at the till, the restaurant's choice (NeoResto lot 1, Daniel, 02.11: « c'est le patron qui décide si on grise ou pas »); on unless the restaurant switched it off
 		"grey_out_sold_out": settings.get("grey_out_sold_out") in (None, 1, True, "1"),
+		# //// Neoffice — whether the till asks how many people are seated the first time a table is opened, the restaurant's choice (NeoResto lot 1, covers); on unless it switched it off
+		"ask_covers_on_open": covers_module.asks_on_open(settings),
 		"enable_takeaway": bool(till.enable_takeaway),
 		"takeaway_card": till.takeaway_card or None,
 		"enable_tips": bool(settings.enable_tips),
@@ -3232,6 +3309,11 @@ def get_runner_orders(area=None, restaurant=None):
 
 	# //// Neoffice — every line says its family and the color of its category, as the kitchen's list does: ONE read for all the lines (Daniel, 01.11)
 	service_families.stamp_lines(item for order in result for item in order["items"])
+
+	# //// Neoffice — the people seated at each table and the portions of each course its WHOLE order holds, not only the dishes at the pass: the card reads « Mains 2/3 »
+	# //// (NeoResto lot 1, covers). One read of the covers and one of the lines for all the orders of the call.
+	covers_module.stamp(result)
+	covers_module.stamp_family_counts(result, covers_module.tip_item_of(restaurant))
 
 	# What the runner's card reads aloud besides the table (NeoResto lot 1, task 38b): the ticket number and its digits, and the
 	# code of the room, never the invoice's name (which stays in the row for the calls the screen makes)
