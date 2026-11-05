@@ -334,6 +334,9 @@ describe("the action row of the panel", () => {
 		expect(part("ticket-close").className).toContain("absolute")
 		expect(part("ticket-close").className).toContain("end-3")
 		expect(part("ticket-close").className).toContain("top-3")
+		// The header leaves room for it on the end side: important, because the frame's own `!px-…` sets both sides and would cancel a plain `pe-…`
+		// (the timer ran under the × on osiris, 05.11.2026)
+		expect(part("ticket-header").className).toContain("!pe-[calc(var(--kds-btn-h,44px)+20px)]")
 	})
 })
 

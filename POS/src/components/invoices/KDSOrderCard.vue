@@ -35,7 +35,7 @@
 		<!-- //// carries one (the server fills it in with the ticket counter), and for a takeaway the counter it has had until then. The state is NOT -->
 		<!-- //// written here: the left border and the band the card stands in carry it. `showState` writes it beside the timer for a screen that mixes -->
 		<!-- //// the states (placement A of ruling 126). The second timer, the table's total time, shows only in the large sizes. -->
-		<div ref="headerEl" class="flex-shrink-0 border-b border-gray-100 dark:border-gray-700" :class="[TICKET_FRAME.header, KITCHEN_FRAME.header, fullscreen ? 'relative pe-[calc(var(--kds-btn-h,44px)+20px)]' : '']" data-test="ticket-header">
+		<div ref="headerEl" class="flex-shrink-0 border-b border-gray-100 dark:border-gray-700" :class="[TICKET_FRAME.header, KITCHEN_FRAME.header, fullscreen ? 'relative !pe-[calc(var(--kds-btn-h,44px)+20px)]' : '']" data-test="ticket-header">
 			<!-- //// Neoffice — the way out of the panel is a × in the top-right corner of the header, as everywhere (it stood beside the print button: a finger could hit the wrong one, and it read as « delete the ticket »); the timer makes room for it, to its left (NeoResto lot 1, product owner, 05.11.2026) -->
 			<button v-if="fullscreen" type="button" data-test="ticket-close"
 				class="absolute end-3 top-3 flex h-[var(--kds-btn-h,44px)] w-[var(--kds-btn-h,44px)] flex-none items-center justify-center rounded-lg border border-gray-300 text-gray-700 active:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:active:bg-gray-700"

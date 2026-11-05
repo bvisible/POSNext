@@ -235,6 +235,8 @@ describe("the action row of the runner's panel", () => {
 		expect(part("ticket-header").contains(part("ticket-close"))).toBe(true)
 		expect(part("ticket-actions").contains(part("ticket-close"))).toBe(false)
 		expect(part("ticket-close").className).toContain("absolute")
+		// Room on the end side for it, important as the frame's `!px-…` would cancel a plain `pe-…` (the timer ran under the × on osiris, 05.11.2026)
+		expect(part("ticket-header").className).toContain("!pe-[calc(var(--kds-btn-h,44px)+20px)]")
 	})
 })
 

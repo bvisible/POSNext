@@ -25,7 +25,7 @@
 			:style="viewMode === 'station' ? { backgroundColor: (card.stationColor || '#22C55E') + '15' } : {}"
 			data-test="ticket-top">
 			<!-- The frame (padding, title, order number, timer, dish lines) is the one the kitchen ticket has: utils/ticketLayout -->
-			<div class="border-b border-gray-100 dark:border-gray-700" :class="[TICKET_FRAME.header, KITCHEN_FRAME.header, fullscreen ? 'relative pe-[calc(var(--kds-btn-h,44px)+20px)]' : '']" data-test="ticket-header">
+			<div class="border-b border-gray-100 dark:border-gray-700" :class="[TICKET_FRAME.header, KITCHEN_FRAME.header, fullscreen ? 'relative !pe-[calc(var(--kds-btn-h,44px)+20px)]' : '']" data-test="ticket-header">
 				<!-- //// Neoffice — the way out of the panel is a × in the top-right corner of the header, as the kitchen ticket's (NeoResto lot 1, product owner, 05.11.2026) -->
 				<button v-if="fullscreen" type="button" data-test="ticket-close"
 					class="absolute end-3 top-3 flex h-[var(--kds-btn-h,44px)] w-[var(--kds-btn-h,44px)] flex-none items-center justify-center rounded-lg border border-gray-300 text-gray-700 active:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:active:bg-gray-700"
