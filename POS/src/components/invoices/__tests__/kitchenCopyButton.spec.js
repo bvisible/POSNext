@@ -159,13 +159,13 @@ describe.each(Object.keys(CARDS))("the printer button of %s", (kind) => {
 		expect(wrapper.emitted("print") || []).toHaveLength(busy ? 0 : 1)
 	})
 
-	it("is the same button in the ticket opened full screen, with its state, between the main button and the ×", () => {
+	it("is the same button in the ticket opened full screen, with its state, between the main button and the end of the row (the × stands in the header's corner)", () => {
 		const wrapper = show(kind, { canPrint: true, fullscreen: true, printState: { phase: "printed", text: "Printed" } })
 
 		const names = [...part(wrapper, "ticket-actions").element.children].map((element) =>
 			element.getAttribute("data-test"),
 		)
-		expect(names).toEqual(["ticket-main", "ticket-print", "ticket-print-state", "ticket-close"])
+		expect(names).toEqual(["ticket-main", "ticket-print", "ticket-print-state"])
 		expect(print(wrapper).classes()).toContain("h-[var(--kds-btn-h,44px)]")
 	})
 })

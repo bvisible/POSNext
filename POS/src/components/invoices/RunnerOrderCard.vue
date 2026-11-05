@@ -25,7 +25,16 @@
 			:style="viewMode === 'station' ? { backgroundColor: (card.stationColor || '#22C55E') + '15' } : {}"
 			data-test="ticket-top">
 			<!-- The frame (padding, title, order number, timer, dish lines) is the one the kitchen ticket has: utils/ticketLayout -->
-			<div class="border-b border-gray-100 dark:border-gray-700" :class="[TICKET_FRAME.header, KITCHEN_FRAME.header]" data-test="ticket-header">
+			<div class="border-b border-gray-100 dark:border-gray-700" :class="[TICKET_FRAME.header, KITCHEN_FRAME.header, fullscreen ? 'relative pe-[calc(var(--kds-btn-h,44px)+20px)]' : '']" data-test="ticket-header">
+				<!-- //// Neoffice — the way out of the panel is a × in the top-right corner of the header, as the kitchen ticket's (NeoResto lot 1, product owner, 05.11.2026) -->
+				<button v-if="fullscreen" type="button" data-test="ticket-close"
+					class="absolute end-3 top-3 flex h-[var(--kds-btn-h,44px)] w-[var(--kds-btn-h,44px)] flex-none items-center justify-center rounded-lg border border-gray-300 text-gray-700 active:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:active:bg-gray-700"
+					:aria-label="__('Close')" :title="__('Close')"
+					@click="emit('close')">
+					<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6 6 18M6 6l12 12" />
+					</svg>
+				</button>
 				<div class="flex items-center justify-between gap-x-1.5">
 					<div class="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-1.5" data-test="ticket-ref">
 						<span v-if="roomChip" data-test="ticket-room"
@@ -80,15 +89,6 @@
 				</button>
 				<PrintCopyBubble v-if="canPrint" :state="printState" />
 
-				<!-- //// Neoffice — the way out of the panel, at the right of the buttons, 56 px square (task 38a-3, ruling 107): a tap outside the panel and Escape close it too (TicketFullScreen) -->
-				<button v-if="fullscreen" type="button" data-test="ticket-close"
-					class="ml-auto flex h-[var(--kds-btn-h,44px)] w-[var(--kds-btn-h,44px)] flex-none items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-700 active:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:active:bg-gray-700"
-					:aria-label="__('Close')" :title="__('Close')"
-					@click="emit('close')">
-					<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6 6 18M6 6l12 12" />
-					</svg>
-				</button>
 			</div>
 		</div>
 

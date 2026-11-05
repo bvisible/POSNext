@@ -224,13 +224,17 @@ describe("the action row of the runner's panel", () => {
 		expect(wrapper.emitted("delivered")).toBeUndefined()
 	})
 
-	it("has the print button beside « Deliver » when the screen can print, and the × at the far right", async () => {
+	it("has the print button beside « Deliver » when the screen can print, and the × in the corner of the header, away from the buttons", async () => {
 		await openIt(show({ canPrint: true }))
 
 		const names = [...part("ticket-actions").children].map((element) =>
 			element.getAttribute("data-test"),
 		)
-		expect(names).toEqual(["ticket-main", "ticket-print", "ticket-close"])
+		expect(names).toEqual(["ticket-main", "ticket-print"])
+		// Same place as on the kitchen's ticket: the top-right corner of the header
+		expect(part("ticket-header").contains(part("ticket-close"))).toBe(true)
+		expect(part("ticket-actions").contains(part("ticket-close"))).toBe(false)
+		expect(part("ticket-close").className).toContain("absolute")
 	})
 })
 

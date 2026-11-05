@@ -320,15 +320,20 @@ describe("the action row of the panel", () => {
 		expect(wrapper.exists()).toBe(true)
 	})
 
-	it("has the print button at the right of the main one when the screen can print, and the × at the far right", async () => {
+	it("has the print button at the right of the main one when the screen can print, and the × in the corner of the header, away from the buttons", async () => {
 		const wrapper = show(longOrder(24), { props: { canPrint: true } })
 		await openIt(wrapper)
 
 		const names = [...part("ticket-actions").children].map((element) =>
 			element.getAttribute("data-test"),
 		)
-		expect(names).toEqual(["ticket-main", "ticket-print", "ticket-close"])
-		expect(part("ticket-close").className).toContain("ml-auto")
+		expect(names).toEqual(["ticket-main", "ticket-print"])
+		// The × stands in the top-right corner of the header, never in the row of the buttons: a finger hits the printer or the × by mistake beside each other, and a × there reads as « delete the ticket »
+		expect(part("ticket-header").contains(part("ticket-close"))).toBe(true)
+		expect(part("ticket-actions").contains(part("ticket-close"))).toBe(false)
+		expect(part("ticket-close").className).toContain("absolute")
+		expect(part("ticket-close").className).toContain("end-3")
+		expect(part("ticket-close").className).toContain("top-3")
 	})
 })
 
@@ -717,8 +722,9 @@ describe("the focus", () => {
 		const controls = [...dialog().querySelectorAll("button:not([disabled])")]
 		const first = controls[0]
 		const last = controls[controls.length - 1]
-		expect(first).toBe(part("ticket-main"))
-		expect(last).toBe(part("ticket-close"))
+		// The × is the first control of the panel (it stands in the header, above the buttons), the printer or the main button the last
+		expect(first).toBe(part("ticket-close"))
+		expect(last).toBe(part("ticket-main"))
 
 		last.focus()
 		const tab = new KeyboardEvent("keydown", {
