@@ -7,8 +7,10 @@ calls the server, in two steps and never one:
 
 - `propose` WRITES NOTHING. For each thing said it answers what it understood: the article of the catalogue (the case, the
   accents, the plural and a typo or two are forgiven), the packaging a unit names (« crates » is the crate), or the several
-  articles it could be (the owner chooses), or nothing known - which goes on the list as a free line, written as said. Nora
-  reads the proposal back to the owner (« 9 articles, 2 to specify: shall I add them? »).
+  articles it could be (the owner chooses), or nothing known - which goes on the list as a free line, written as said. A
+  quantity said in a measure (« 3 kg ») becomes whole packs of what the packaging holds; when nothing says what it holds, the
+  line stays free, written as said, rather than a guessed number of packs. Nora reads the proposal back to the owner
+  (« 9 articles, 2 to specify: shall I add them? »).
 - `add` writes what the owner confirmed, to the list in progress (a list is made when there is none): the articles as the
   list's picker adds them, the free lines as the free-line button adds them.
 
@@ -17,6 +19,7 @@ proposal. Nothing here reads the sentence itself: the agent that listens turns i
 """
 
 import difflib
+import math
 import re
 import unicodedata
 
@@ -55,6 +58,28 @@ STOP_WORDS = {
 	"of",
 	"the",
 }
+# The measures a quantity is said in, as (what it measures, in grams or millilitres). A measure counts what is wanted, a packaging
+# counts packs: « 3 kg of carrots » is one « Bag of 5 kg », not three because the bag holds the word kg (15 kg on the list, 05.11).
+MEASURES = {
+	"kg": ("mass", 1000),
+	"kilo": ("mass", 1000),
+	"kilogramme": ("mass", 1000),
+	"kilogram": ("mass", 1000),
+	"g": ("mass", 1),
+	"gr": ("mass", 1),
+	"gramme": ("mass", 1),
+	"gram": ("mass", 1),
+	"l": ("volume", 1000),
+	"litre": ("volume", 1000),
+	"liter": ("volume", 1000),
+	"dl": ("volume", 100),
+	"cl": ("volume", 10),
+	"ml": ("volume", 1),
+}
+# How much a packaging's own name says it holds: « Sac de 10 kg », « Bidon de 5 L », « Bag of 1,5 l », « Caisse 24 x 33 cl »
+NAMED_CONTENT = re.compile(
+	r"(?:(\d+)\s*[x×*]\s*)?(\d+(?:[.,]\d+)?)\s*(" + "|".join(sorted(MEASURES, key=len, reverse=True)) + r")s?\b"
+)
 
 
 def _fold(text) -> str:
@@ -99,6 +124,50 @@ def _pack_of(packs: list[dict], unit: str | None) -> dict | None:
 	if named:
 		return named[0]
 	return next((p for p in packs if p.get("usual")), packs[0] if packs else None)
+
+
+def _measure(unit) -> tuple[str, float] | None:
+	"""What the unit said measures, and its size in grams or millilitres; None for a word that is not a measure (« crates »)."""
+	words = _fold(unit).split()
+	return MEASURES.get(_stem(words[0])) if len(words) == 1 else None
+
+
+def _pack_size(pack: dict, stock_uom, kind: str) -> tuple[float, bool] | None:
+	"""How much a packaging holds of `kind`, in grams or millilitres, and whether it is the measure itself (« Kg »): None when
+	nothing says it. The article's own unit first: a « Sac » of 25 in an article counted in Kg holds 25 kg, its name says nothing."""
+	own = _measure(pack.get("uom"))
+	if own:
+		return (own[1], True) if own[0] == kind else None
+	stock = _measure(stock_uom)
+	if stock and flt(pack.get("content")) > 0:
+		return (stock[1] * flt(pack["content"]), False) if stock[0] == kind else None
+	found = NAMED_CONTENT.search((pack.get("uom") or "").lower())
+	if found:
+		many, amount, unit = found.groups()
+		size = MEASURES[unit]
+		if size[0] == kind:
+			return (flt(many or 1) * flt(amount.replace(",", ".")) * size[1], False)
+	return None
+
+
+def _in_packs(row: dict, measure: tuple[str, float], qty: float) -> tuple[dict | None, float] | None:
+	"""A quantity said in a measure, as the article is bought: (its packaging, how many), whole packs, rounded up, as what is
+	bought is whole; exact in the measure itself. (None, how many) for an article that has no packaging and is counted in the
+	measure. None when nothing says how much a packaging holds: a number of packs would be a guess."""
+	kind, size = measure
+	wanted = qty * size
+	sized = [(pack, _pack_size(pack, row.get("stock_uom"), kind)) for pack in row.get("packs") or []]
+	sized = [(pack, found) for pack, found in sized if found]
+	if sized:
+		pack, (content, exact) = next(
+			(pair for pair in sized if pair[1][1]),
+			next((pair for pair in sized if pair[0].get("usual")), sized[0]),
+		)
+		return pack, wanted / content if exact else math.ceil(wanted / content - 1e-9)
+	stock = _measure(row.get("stock_uom"))
+	if not row.get("packs") and stock and stock[0] == kind:
+		return None, wanted / stock[1]
+	return None
 
 
 def propose(things: list[dict]) -> dict:
@@ -146,21 +215,28 @@ def propose(things: list[dict]) -> dict:
 				)
 			else:
 				row = close[0]
-				pack = _pack_of(row["packs"], unit)
-				line.update(
-					status=MATCHED,
-					item=row["item"],
-					item_name=row["item_name"],
-					pack={"supplier": pack["supplier"], "uom": pack["uom"], "price": pack["price"]}
-					if pack
-					else None,
-					line={
-						"item": row["item"],
-						"qty": qty,
-						"supplier": pack["supplier"] if pack else None,
-						"uom": pack["uom"] if pack else None,
-					},
-				)
+				measure = _measure(unit)
+				counted = _in_packs(row, measure, qty) if measure else (_pack_of(row["packs"], unit), qty)
+				if counted:
+					pack, count = counted
+					line.update(
+						status=MATCHED,
+						item=row["item"],
+						item_name=row["item_name"],
+						qty=count,
+						pack={"supplier": pack["supplier"], "uom": pack["uom"], "price": pack["price"]}
+						if pack
+						else None,
+						line={
+							"item": row["item"],
+							"qty": count,
+							"supplier": pack["supplier"] if pack else None,
+							"uom": pack["uom"] if pack else None,
+						},
+					)
+					if measure and pack:
+						line["pack"]["asked"] = f"{qty:g} {unit}"
+						line["unit"] = pack["uom"]
 		lines.append(line)
 	counts = {
 		status: sum(1 for line in lines if line["status"] == status)

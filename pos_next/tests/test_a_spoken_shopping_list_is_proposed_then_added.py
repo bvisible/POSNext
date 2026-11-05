@@ -52,7 +52,12 @@ class TestASpokenShoppingListIsProposedThenAdded(FrappeTestCase):
 			_supplier(name)
 		_bottle_uom()
 		cls.company = _company()
-		cls.group = frappe.db.get_value("Item Group", {"is_group": 0}, "name", order_by="lft")
+		# a family with no defaults of its own: a real site's may hold several for one company, which refuses a new article
+		cls.group = frappe.db.sql(
+			"""select name from `tabItem Group` family where is_group = 0 and not exists (
+				select 1 from `tabItem Default` d where d.parenttype = 'Item Group' and d.parent = family.name
+			) order by lft limit 1"""
+		)[0][0]
 		frappe.set_user(OWNER)
 		# distinctive words, so that nothing the site already holds is taken for them
 		cls.parsnip = supplies.create_supply_item("Panais", cls.group, BOTTLE_UOM)
@@ -144,6 +149,43 @@ class TestASpokenShoppingListIsProposedThenAdded(FrappeTestCase):
 	def test_a_unit_that_names_none_of_the_packagings_leaves_the_usual_one(self):
 		(line,) = self._propose({"text": "biere brune", "qty": 1, "unit": "sacs"})["lines"]
 		self.assertEqual(line["line"]["uom"], BOX)
+
+	def test_a_quantity_said_in_a_measure_is_not_a_number_of_packs(self):
+		# « 3 kg de carottes » went on the list as 3 bags of 5 kg: the word kg named the bag, and 3 counted bags
+		(line,) = self._propose({"text": "panais", "qty": 3, "unit": "kg"})["lines"]
+		self.assertEqual(line["line"], {"item": self.parsnip, "qty": 1, "supplier": MARKET, "uom": BAG})
+		self.assertEqual((line["qty"], line["unit"]), (1, BAG), "what is read back is what is bought")
+		self.assertEqual(line["pack"]["asked"], "3 kg", "and what was asked is read back with it")
+
+	def test_whole_packs_are_rounded_up_whatever_the_measure_is_called(self):
+		for qty, unit, packs in ((5, "kg", 1), (12, "kilos", 3), (500, "g", 1), (10, "Kilogrammes", 2)):
+			(line,) = self._propose({"text": "panais", "qty": qty, "unit": unit})["lines"]
+			self.assertEqual(line["line"]["qty"], packs, f"{qty} {unit}")
+
+	def test_a_word_of_a_packaging_still_counts_packs(self):
+		(line,) = self._propose({"text": "panais", "qty": 3, "unit": "bags"})["lines"]
+		self.assertEqual((line["line"]["qty"], line["line"]["uom"]), (3, BAG))
+		self.assertNotIn("asked", line["pack"])
+
+	def test_a_measure_nothing_converts_stays_as_said(self):
+		# Crates of 24 bottles hold no litres anyone knows: three litres is never three crates
+		(line,) = self._propose({"text": "biere brune", "qty": 3, "unit": "litres"})["lines"]
+		self.assertEqual(line["status"], "unknown")
+		self.assertEqual(
+			line["line"], {"free": True, "text": "biere brune", "qty": 3, "unit_text": "litres"}, "a free line, as said"
+		)
+
+	def test_the_measure_itself_is_kept_exact_and_the_articles_unit_says_what_a_sack_holds(self):
+		bag = {"uom": "Sac", "content": 25, "usual": 1}
+		kilo = {"uom": "Kg", "content": 1, "usual": 0}
+		kg = spoken_list.MEASURES["kg"]
+		self.assertEqual(spoken_list._in_packs({"stock_uom": "Kg", "packs": [bag]}, kg, 30), (bag, 2))
+		self.assertEqual(spoken_list._in_packs({"stock_uom": "Kg", "packs": [bag, kilo]}, kg, 2.5), (kilo, 2.5))
+		self.assertEqual(spoken_list._in_packs({"stock_uom": "Kg", "packs": []}, spoken_list.MEASURES["g"], 500), (None, 0.5))
+		self.assertEqual(spoken_list._in_packs({"stock_uom": "Nos", "packs": []}, kg, 3), None)
+		crate = {"uom": "Caisse 24 x 33 cl", "content": None}
+		self.assertEqual(spoken_list._in_packs({"packs": [crate]}, spoken_list.MEASURES["l"], 10), (crate, 2), "7,92 l a crate")
+		self.assertEqual(spoken_list._in_packs({"stock_uom": "Nos", "packs": [{"uom": "Sac", "content": 12}]}, kg, 3), None)
 
 	def test_an_article_two_could_be_is_left_to_the_owner(self):
 		(line,) = self._propose({"text": "topinambour", "qty": 2})["lines"]
