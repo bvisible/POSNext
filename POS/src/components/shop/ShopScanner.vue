@@ -127,8 +127,9 @@ onBeforeUnmount(() => {
 	place-items: center;
 	min-height: 300px;
 	overflow: hidden;
-	background: linear-gradient(160deg, #3a342c, #15140f);
-	border-radius: 18px;
+	/* A neutral dark behind the camera, as the rest of the page (05.11.2026): no warm sand */
+	background: linear-gradient(160deg, #383838, #171717);
+	border-radius: 16px;
 }
 .shop-scanner__video {
 	position: absolute;
@@ -161,7 +162,7 @@ onBeforeUnmount(() => {
 	text-align: center;
 	font-size: 14px;
 	line-height: 20px;
-	color: #f2efe8;
+	color: #f3f3f3;
 }
 .shop-scanner__typed {
 	display: flex;
