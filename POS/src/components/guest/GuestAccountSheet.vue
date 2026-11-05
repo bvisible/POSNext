@@ -78,7 +78,7 @@
 					autocomplete="email"
 					:placeholder="__('your@email.com')"
 					data-test="account-email"
-					class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+					class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-500"
 					@keyup.enter="sendCode"
 				/>
 				<button
@@ -101,7 +101,7 @@
 					autocomplete="one-time-code"
 					:placeholder="__('Code')"
 					data-test="account-code"
-					class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-center text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-gray-400"
+					class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-center text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-500"
 					@input="onCode($event.target.value)"
 					@keyup.enter="confirmCode"
 				/>
@@ -130,7 +130,7 @@
 					autocomplete="name"
 					:placeholder="__('Your name')"
 					data-test="account-name"
-					class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+					class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-500"
 				/>
 				<input
 					v-model="mobileNo"
@@ -138,7 +138,7 @@
 					autocomplete="tel"
 					:placeholder="__('Phone (optional)')"
 					data-test="account-phone"
-					class="w-full mt-2 px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+					class="w-full mt-2 px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-500"
 				/>
 				<button
 					class="w-full mt-3 py-3 bg-gray-900 dark:bg-[#f3f3f3] dark:text-[#171717] text-white font-semibold rounded-xl disabled:opacity-50"

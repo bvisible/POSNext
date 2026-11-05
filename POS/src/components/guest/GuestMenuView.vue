@@ -212,7 +212,7 @@
 											type="checkbox"
 											:checked="isOptionSelected(group.group_name, option.option_name)"
 											@change="toggleOption(group, option)"
-											class="w-4 h-4 text-gray-900 rounded"
+											class="w-4 h-4 text-gray-900 rounded focus:border-gray-500 focus:ring-gray-400"
 										/>
 										<input
 											v-else
@@ -220,7 +220,7 @@
 											:name="`group-${group.group_name}`"
 											:checked="isOptionSelected(group.group_name, option.option_name)"
 											@change="selectOption(group, option)"
-											class="w-4 h-4 text-gray-900"
+											class="w-4 h-4 text-gray-900 focus:border-gray-500 focus:ring-gray-400"
 										/>
 										<span class="text-sm text-gray-800">{{ option.option_name }}</span>
 									</div>

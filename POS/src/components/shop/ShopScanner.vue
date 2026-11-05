@@ -191,6 +191,12 @@ onBeforeUnmount(() => {
 	border: 1px solid var(--border);
 	border-radius: 14px;
 }
+/* Its own focus, in gray: the forms plugin would give it the till's blue-600, clay (05.11.2026) */
+.shop-scanner__input:focus {
+	border-color: var(--ink-dim);
+	outline: none;
+	box-shadow: 0 0 0 3px var(--rule);
+}
 .shop-scanner__refused {
 	margin: 0;
 	padding: 12px 14px;
