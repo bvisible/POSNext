@@ -23747,3 +23747,250 @@ msgstr "Sans serveur désigné"
 #: pos_next/pos_next/report/tips_by_server/tips_by_server.json:20
 msgid "Tips by Server"
 msgstr "Pourboires par serveur"
+
+#: POS/src/utils/coverCounts.js:155
+msgctxt "Kitchen ticket covers"
+msgid "1 guest"
+msgstr "1 pers."
+
+#: POS/src/components/restaurant/CoversDialog.vue:144
+#: pos_next/public/pos/assets/POSSale-CcVVWbIm.js:70
+msgid "1 seat"
+msgstr "1 place"
+
+#: POS/src/components/restaurant/TableHeaderBar.vue:66
+#: POS/src/components/restaurant/TableHeaderBar.vue:67
+#: POS/src/components/restaurant/TableNotePills.vue:62
+#: POS/src/components/restaurant/TableNotePills.vue:63
+#: POS/src/components/restaurant/phone/PhoneOrderScreen.vue:97
+#: POS/src/components/restaurant/phone/PhoneOrderScreen.vue:98
+msgid "Add a group to this table"
+msgstr "Ajouter un groupe à cette table"
+
+#: POS/src/components/sale/PaymentEntries.vue:14
+msgid "Already collected by the terminal"
+msgstr "Déjà encaissé par le terminal"
+
+#. Label of a Check field in DocType 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:149
+#: pos_next/till_settings/registry.py:355
+msgid "Ask how many people when opening a table"
+msgstr "Demander le nombre de personnes à l'ouverture d'une table"
+
+#: POS/src/components/restaurant/TableHeaderBar.vue:52
+#: POS/src/components/restaurant/TableHeaderBar.vue:53
+#: POS/src/components/restaurant/phone/PhoneOrderScreen.vue:68
+#: POS/src/components/restaurant/phone/PhoneOrderScreen.vue:69
+msgid "Change the number of people"
+msgstr "Modifier le nombre de personnes"
+
+#. Label of a Check field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:654
+#: pos_next/till_settings/registry.py:980
+msgid "Compact cart lines"
+msgstr "Lignes du panier compactes"
+
+#. Description of the 'Compact cart lines' (Check) field in DocType 'POS
+#. Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:651
+#: pos_next/till_settings/registry.py:982
+msgid "Each line of the cart is one row: the name, the quantity and the price, with the details under it, so that the whole order is seen at a glance. Off: the taller lines, the buttons under the name."
+msgstr "Activé : chaque ligne du panier tient sur une seule rangée : le nom, la quantité et le prix, avec les détails dessous, pour que toute la commande se voie d'un coup d'œil. Désactivé : les lignes plus hautes, avec les boutons sous le nom."
+
+#. Description of the 'Pictures in the cart' (Check) field in DocType 'POS
+#. Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:659
+#: pos_next/till_settings/registry.py:994
+msgid "Each line of the cart shows the picture of the item, or its colour. Off: the name only, so that more of the name fits on the line."
+msgstr "Activé : chaque ligne du panier affiche l'image de l'article, ou sa couleur. Désactivé : le nom seul, pour qu'une plus grande partie du nom tienne sur la ligne."
+
+#: POS/src/composables/useTableNotes.js:47
+#: pos_next/public/pos/assets/POSSale-CcVVWbIm.js:70
+msgid "Failed to open the group"
+msgstr "Impossible d'ouvrir le groupe"
+
+#: POS/src/composables/useTableNotes.js:141
+#: pos_next/public/pos/assets/POSSale-CcVVWbIm.js:70
+msgid "Failed to save the name of the group"
+msgstr "Impossible d'enregistrer le nom du groupe"
+
+#: POS/src/composables/useCovers.js:79
+#: pos_next/public/pos/assets/POSSale-CcVVWbIm.js:9
+msgid "Failed to save the number of people"
+msgstr "Impossible d'enregistrer le nombre de personnes"
+
+#: POS/src/components/restaurant/TableNotePills.vue:8
+msgid "Groups of this table"
+msgstr "Groupes de cette table"
+
+#: POS/src/components/restaurant/CoversDialog.vue:9
+#: POS/src/components/restaurant/CoversDialog.vue:17
+#: POS/src/components/restaurant/CoversDialog.vue:20
+msgid "How many people?"
+msgstr "Combien de personnes ?"
+
+#. Description of the 'Tile height' (Select) field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:642
+#: pos_next/till_settings/registry.py:967
+msgid "How tall the tiles of the restaurant's card are. « Compact »: short pictures, and a tile with no picture just high enough for its name, so that more tiles fit without scrolling. « Large »: square pictures."
+msgstr "Hauteur des tuiles de la carte du restaurant. « Compact » : images basses, et une tuile sans image juste assez haute pour son nom, afin que davantage de tuiles tiennent sans défilement. « Grand » : images carrées."
+
+#: POS/src/components/restaurant/MoveLinesDialog.vue:69
+#: pos_next/public/pos/assets/POSSale-CcVVWbIm.js:70
+#, python-brace-format
+msgid "Keep it on {0}"
+msgstr "La laisser sur {0}"
+
+#: POS/src/components/restaurant/MoveLinesDialog.vue:69
+#: pos_next/public/pos/assets/POSSale-CcVVWbIm.js:70
+#, python-brace-format
+msgid "Keep them on {0}"
+msgstr "Les laisser sur {0}"
+
+#: POS/src/components/restaurant/NoteNameDialog.vue:26
+msgid "Leave empty for no name"
+msgstr "Laisser vide pour ne pas donner de nom"
+
+#: POS/src/components/restaurant/MoveLinesDialog.vue:64
+#: pos_next/public/pos/assets/POSSale-CcVVWbIm.js:70
+#, python-brace-format
+msgid "Move the new line to {0}?"
+msgstr "Déplacer la nouvelle ligne vers {0} ?"
+
+#: POS/src/components/restaurant/MoveLinesDialog.vue:65
+#: pos_next/public/pos/assets/POSSale-CcVVWbIm.js:70
+#, python-brace-format
+msgid "Move the {0} new lines to {1}?"
+msgstr "Déplacer les {0} nouvelles lignes vers {1} ?"
+
+#: POS/src/components/restaurant/MoveLinesDialog.vue:67
+#: pos_next/public/pos/assets/POSSale-CcVVWbIm.js:70
+msgid "Move them"
+msgstr "Les déplacer"
+
+#: POS/src/components/restaurant/NoteNameDialog.vue:9
+#: POS/src/components/restaurant/NoteNameDialog.vue:25
+msgid "Name of the group"
+msgstr "Nom du groupe"
+
+#: POS/src/components/restaurant/NoteNameDialog.vue:74
+#: pos_next/public/pos/assets/POSSale-CcVVWbIm.js:70
+#, python-brace-format
+msgid "Name of the group {0}"
+msgstr "Nom du groupe {0}"
+
+#: POS/src/components/restaurant/TableNotePills.vue:47
+#: POS/src/components/restaurant/TableNotePills.vue:48
+msgid "Name this group"
+msgstr "Nommer ce groupe"
+
+#: POS/src/components/restaurant/CoversDialog.vue:42
+msgid "Number of people"
+msgstr "Nombre de personnes"
+
+#. Description of the 'Ask how many people when opening a table' (Check) field
+#. in DocType 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:146
+msgid "On: opening a table for the first time asks how many people are seated (the table's seats come first). Off: nothing is asked, and the number is set from the table's header whenever the waiter wants. Either way it can be changed later."
+msgstr "Activé : à la première ouverture d'une table, on demande combien de personnes sont installées (les places de la table sont proposées en premier). Désactivé : rien n'est demandé ; le nombre se règle depuis l'en-tête de la table, à tout moment. Dans les deux cas, il peut être modifié plus tard."
+
+#: pos_next/till_settings/registry.py:357
+msgid "On: the first time a table is opened, the till asks how many people are seated (the seats of the table come first). Off: nothing is asked, and the number is set from the table's header whenever the waiter wants. Either way it can be changed later, and the kitchen's screens and ticket show it."
+msgstr "Activé : à la première ouverture d'une table, la caisse demande combien de personnes sont installées (les places de la table sont proposées en premier). Désactivé : rien n'est demandé ; le nombre se règle depuis l'en-tête de la table, à tout moment. Dans les deux cas, il peut être modifié plus tard, et les écrans de cuisine et le ticket de cuisine l'affichent."
+
+#: pos_next/api/restaurant.py:413
+msgid "Only the open order of a table has a party to name"
+msgstr "Seule la commande ouverte d'une table a un groupe à nommer."
+
+#: pos_next/api/restaurant.py:364
+msgid "Only the open order of a table has people seated"
+msgstr "Seule la commande ouverte d'une table a des personnes installées."
+
+#: POS/src/components/sale/PaymentEntries.vue:5
+msgid "Payments entered"
+msgstr "Paiements enregistrés"
+
+#. Label of a Section Break field in DocType 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:142
+msgid "People at the Table"
+msgstr "Personnes à la table"
+
+#. Label of a Check field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:662
+#: pos_next/till_settings/registry.py:992
+msgid "Pictures in the cart"
+msgstr "Images dans le panier"
+
+#: POS/src/components/restaurant/TablesList.vue:19
+#: POS/src/components/restaurant/TablesList.vue:20
+msgid "Search a table or a group"
+msgstr "Rechercher une table ou un groupe"
+
+#: POS/src/composables/useTableNotes.js:68
+#: pos_next/public/pos/assets/POSSale-CcVVWbIm.js:70
+msgid "Send the cancellation or put the dish back before changing group"
+msgstr "Envoyez l'annulation, ou reprenez le plat, avant de changer de groupe."
+
+#: POS/src/components/restaurant/TableHeaderBar.vue:52
+#: POS/src/components/restaurant/TableHeaderBar.vue:53
+#: POS/src/components/restaurant/phone/PhoneOrderScreen.vue:68
+#: POS/src/components/restaurant/phone/PhoneOrderScreen.vue:69
+msgid "Set people"
+msgstr "Renseigner les personnes"
+
+#: POS/src/components/sale/PaymentEntries.vue:24
+#: POS/src/components/sale/PaymentEntries.vue:25
+msgid "Take back this payment"
+msgstr "Reprendre ce paiement"
+
+#: pos_next/restaurant/notes.py:85
+msgid "The name of a note must be a text"
+msgstr "Le nom d'un groupe doit être un texte."
+
+#: pos_next/api/restaurant.py:424
+msgid "The name of the party cannot be saved yet: this site has to be updated first"
+msgstr "Le nom du groupe ne peut pas encore être enregistré : ce site doit d'abord être mis à jour."
+
+#: pos_next/restaurant/notes.py:70
+#, python-brace-format
+msgid "The number of a note must be a whole number from 1 to {0}"
+msgstr "Le numéro d'un groupe doit être un nombre entier de 1 à {0}."
+
+#: pos_next/api/restaurant.py:375
+msgid "The number of people cannot be saved yet: this site has to be updated first"
+msgstr "Le nombre de personnes ne peut pas encore être enregistré : ce site doit d'abord être mis à jour."
+
+#: pos_next/restaurant/covers.py:81
+#, python-brace-format
+msgid "The number of people must be a whole number from 0 to {0}"
+msgstr "Le nombre de personnes doit être un nombre entier de 0 à {0}."
+
+#: pos_next/restaurant/notes.py:317
+#, python-brace-format
+msgid "This table already has an open note .{0}"
+msgstr "Cette table a déjà un groupe ouvert .{0}"
+
+#. Label of a Select field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:645
+#: pos_next/till_settings/registry.py:965
+msgid "Tile height"
+msgstr "Hauteur des tuiles"
+
+#: POS/src/components/pos/FloorPlanEditor.vue:485
+#: POS/src/components/restaurant/TableCard.vue:80
+#: pos_next/public/pos/assets/POSSale-CcVVWbIm.js:18
+#, python-brace-format
+msgid "{0} groups"
+msgstr "{0} groupes"
+
+#: POS/src/utils/coverCounts.js:156
+#, python-brace-format
+msgctxt "Kitchen ticket covers"
+msgid "{0} guests"
+msgstr "{0} pers."
+
+#: POS/src/components/restaurant/CoversDialog.vue:145
+#: pos_next/public/pos/assets/POSSale-CcVVWbIm.js:70
+#, python-brace-format
+msgid "{0} seats"
+msgstr "{0} places"
