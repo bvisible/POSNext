@@ -8,17 +8,27 @@
 	<!-- //// Options and Card editors in POS"; d96ad42b moves it onto dedicated whitelisted -->
 	<!-- //// APIs, c6c81bf1 adds quantity_value, 993392f1 and 3fb0d986 the item and item-group -->
 	<!-- //// selectors.) -->
+	<!-- //// Neoffice — compact cards, and « New Option Group » at the top (NeoResto lot 1, product owner, 05.11.2026: « c'est des cartes énormes, donc on peut faire plus petit, les faire un peu plus pratique »): the options of a group are chips on a few lines, not one line each; the cards fit three or four to a row; a group being edited takes the whole row. -->
 	<Transition name="fade">
 		<div v-if="show" class="fixed inset-0 bg-black bg-opacity-50 z-[300]" @click.self="handleClose">
 			<div class="fixed inset-0 flex items-center justify-center p-4">
 				<div class="w-full h-full max-w-[95vw] max-h-[95vh] bg-white rounded-lg shadow-2xl overflow-hidden flex flex-col">
 					<div class="flex items-center justify-between px-6 py-4 border-b bg-gradient-to-r from-teal-50 to-cyan-50">
 						<h2 class="text-xl font-bold text-gray-800">{{ __('Product Options') }}</h2>
-						<button @click="handleClose" class="text-gray-400 hover:text-gray-600">
-							<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-							</svg>
-						</button>
+						<div class="flex items-center gap-3">
+							<button v-if="!showNewForm" data-new-group @click="showNewForm = true"
+								class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">
+								<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+								</svg>
+								{{ __("New Option Group") }}
+							</button>
+							<button @click="handleClose" class="text-gray-400 hover:text-gray-600">
+								<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+								</svg>
+							</button>
+						</div>
 					</div>
 					<div class="flex-1 overflow-y-auto p-6">
 						<div class="space-y-4">
@@ -28,10 +38,19 @@
 				</div>
 
 				<!-- Option group cards -->
-				<div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
-					<div v-for="group in groups" :key="group.name"
-						class="border rounded-xl p-4 transition-all"
-						:class="editingGroup === group.name ? 'border-teal-400 shadow-md' : 'border-gray-200 hover:border-gray-300'">
+				<div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 min-[1700px]:grid-cols-4 gap-3 items-start">
+					<!-- New group: its name, then its options open for editing -->
+					<div v-if="showNewForm" data-new-group-form class="col-span-full border-2 border-dashed border-gray-300 rounded-xl p-3 space-y-3">
+						<input v-model="newGroupName" class="w-full px-3 py-2 border rounded-lg text-sm" :placeholder="__('Group name (e.g. Sauce, Cooking)')"
+							@keyup.enter="newGroupName && createGroup()" />
+						<div class="flex gap-2">
+							<Button variant="subtle" size="sm" @click="showNewForm = false; newGroupName = ''">{{ __("Cancel") }}</Button>
+							<Button variant="solid" size="sm" @click="createGroup" :loading="creating" :disabled="!newGroupName || creating">{{ __("Create") }}</Button>
+						</div>
+					</div>
+					<div v-for="group in groups" :key="group.name" data-option-group
+						class="border rounded-xl p-3 transition-all"
+						:class="editingGroup === group.name ? 'col-span-full border-teal-400 shadow-md' : 'border-gray-200 hover:border-gray-300'">
 
 						<!-- Group header -->
 						<div class="flex justify-between items-start mb-2">
@@ -59,25 +78,18 @@
 						</div>
 
 						<!-- Options list (view mode) -->
-						<div v-if="editingGroup !== group.name" class="space-y-1">
-							<div v-for="opt in group.options" :key="opt.option_name"
-								class="flex justify-between items-center px-2 py-1 rounded hover:bg-gray-50 text-sm">
-								<div class="flex items-center gap-2">
-									<span v-if="group.selection_type === 'Single'" class="w-3 h-3 rounded-full border-2 border-gray-300"></span>
-									<span v-else class="w-3 h-3 rounded border border-gray-300"></span>
-									<span>{{ opt.option_name }}</span>
-									<span v-if="opt.is_default" class="text-[9px] text-blue-500 font-bold">{{ __("default") }}</span>
-								</div>
-								<div class="flex items-center gap-2">
-									<span v-if="opt.quantity_value" class="text-xs font-medium text-indigo-600">
-										&times;{{ opt.quantity_value }}
-									</span>
-									<span v-if="opt.price_adjustment" class="text-xs font-medium"
-										:class="opt.price_adjustment > 0 ? 'text-green-600' : 'text-red-600'">
-										{{ opt.price_adjustment > 0 ? '+' : '' }}{{ opt.price_adjustment.toFixed(2) }}
-									</span>
-								</div>
-							</div>
+						<div v-if="editingGroup !== group.name" class="flex flex-wrap gap-1" data-option-chips>
+							<span v-for="opt in group.options" :key="opt.option_name" data-option-chip
+								class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-sm"
+								:class="opt.is_default ? 'border-teal-300 bg-teal-50 text-teal-800' : 'border-gray-200 bg-gray-50 text-gray-700'"
+								:title="opt.is_default ? __('default') : null">
+								<span>{{ opt.option_name }}</span>
+								<span v-if="opt.quantity_value" class="text-xs font-medium text-indigo-600">&times;{{ opt.quantity_value }}</span>
+								<span v-if="opt.price_adjustment" class="text-xs font-medium"
+									:class="opt.price_adjustment > 0 ? 'text-green-600' : 'text-red-600'">
+									{{ opt.price_adjustment > 0 ? '+' : '' }}{{ opt.price_adjustment.toFixed(2) }}
+								</span>
+							</span>
 						</div>
 
 						<!-- Edit mode -->
@@ -201,25 +213,6 @@
 							</span>
 						</div>
 					</div>
-
-					<!-- Add new group -->
-					<div class="border-2 border-dashed border-gray-300 rounded-xl p-4 hover:border-gray-400 transition-colors flex items-center justify-center min-h-[120px]">
-						<div v-if="!showNewForm" class="text-center">
-							<button @click="showNewForm = true" class="text-sm font-medium text-gray-500 hover:text-gray-700 flex items-center gap-2">
-								<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-								</svg>
-								{{ __("New Option Group") }}
-							</button>
-						</div>
-						<div v-else class="space-y-3 w-full">
-							<input v-model="newGroupName" class="w-full px-3 py-2 border rounded-lg text-sm" :placeholder="__('Group name (e.g. Sauce, Cooking)')" />
-							<div class="flex gap-2">
-								<Button variant="subtle" size="sm" @click="showNewForm = false; newGroupName = ''">{{ __("Cancel") }}</Button>
-								<Button variant="solid" size="sm" @click="createGroup" :disabled="!newGroupName">{{ __("Create") }}</Button>
-							</div>
-						</div>
-					</div>
 				</div>
 						</div>
 					</div>
@@ -248,11 +241,16 @@ function handleClose() {
 }
 
 const { showSuccess, showError } = useToast()
+
+// What the server said when it refused, else the till's own words
+const toldBy = (error, fallback) => error?.messages?.[0] || fallback
 const groups = ref([])
 const loading = ref(true)
 const saving = ref(false)
 const editingGroup = ref(null)
 const showNewForm = ref(false)
+// A group is being made: the form stays, with its button busy, until the list shows the new one (the list can take seconds on a busy server)
+const creating = ref(false)
 const newGroupName = ref("")
 
 const doctype = ref("Product Option Group")
@@ -354,23 +352,29 @@ async function saveGroup(group) {
 		editingGroup.value = null
 		loadGroups()
 	} catch (error) {
-		showError(__("Failed to save options"))
+		showError(toldBy(error, __("Failed to save options")))
 	} finally {
 		saving.value = false
 	}
 }
 
 async function createGroup() {
+	if (creating.value) return
+	creating.value = true
 	try {
-		await call("pos_next.api.restaurant.create_product_option_group", {
+		const created = await call("pos_next.api.restaurant.create_product_option_group", {
 			group_name: newGroupName.value,
 		})
 		showSuccess(__("Option group created"))
+		await loadGroups()
 		showNewForm.value = false
 		newGroupName.value = ""
-		loadGroups()
+		// Its options are opened, so that it is seen and can be set up at once
+		editingGroup.value = created?.name || null
 	} catch (error) {
-		showError(__("Failed to create option group"))
+		showError(toldBy(error, __("Failed to create option group")))
+	} finally {
+		creating.value = false
 	}
 }
 
@@ -382,7 +386,7 @@ async function deleteGroup(group) {
 		showSuccess(__("Option group deleted"))
 		loadGroups()
 	} catch (error) {
-		showError(__("Failed to delete option group"))
+		showError(toldBy(error, __("Failed to delete option group")))
 	}
 }
 
