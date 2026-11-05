@@ -113,6 +113,31 @@ describe("an option group's card", () => {
 	})
 })
 
+describe("deleting an option group", () => {
+	it("asks to be confirmed first: nothing is sent by the first press, « Cancel » takes it back", async () => {
+		await open()
+
+		await cardOf("Sauce").find("[data-delete-group]").trigger("click")
+		expect(call.mock.calls.some(([method]) => method.endsWith("delete_product_option_group"))).toBe(false)
+		expect(cardOf("Sauce").find("[data-confirm-delete]").text()).toBe("Confirm")
+
+		await cardOf("Sauce").find("[data-cancel-delete]").trigger("click")
+		expect(cardOf("Sauce").find("[data-delete-group]").exists()).toBe(true)
+		expect(call.mock.calls.some(([method]) => method.endsWith("delete_product_option_group"))).toBe(false)
+	})
+
+	it("deletes on the confirmation, and reads the list again", async () => {
+		await open()
+
+		await cardOf("Sauce").find("[data-delete-group]").trigger("click")
+		await cardOf("Sauce").find("[data-confirm-delete]").trigger("click")
+		await flushPromises()
+
+		expect(call).toHaveBeenCalledWith("pos_next.api.restaurant.delete_product_option_group", { name: "Sauce" })
+		expect(toast.showSuccess).toHaveBeenCalledWith("Option group deleted")
+	})
+})
+
 describe("a new option group", () => {
 	it("is asked for by a button at the top, in the title bar, and not by a tile at the end of the grid", async () => {
 		await open()
@@ -146,7 +171,8 @@ describe("a new option group", () => {
 			return groups
 		})
 
-		await cardOf("Sauce").findAll("button").find((b) => b.text() === "Delete").trigger("click")
+		await cardOf("Sauce").find("[data-delete-group]").trigger("click")
+		await cardOf("Sauce").find("[data-confirm-delete]").trigger("click")
 		await flushPromises()
 
 		expect(toast.showError).toHaveBeenCalledWith("Not allowed.")

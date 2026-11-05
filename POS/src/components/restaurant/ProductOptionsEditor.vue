@@ -71,7 +71,12 @@
 									class="text-xs px-2 py-1 rounded hover:bg-gray-100 text-gray-600">
 									{{ editingGroup === group.name ? __("Done") : __("Edit") }}
 								</button>
-								<button @click="deleteGroup(group)" class="text-xs px-2 py-1 rounded hover:bg-red-50 text-red-600">
+								<!-- //// Neoffice — « Delete » asks to be confirmed (Daniel, 05.11: a click must not delete an option group): the button turns into « Confirm » and « Cancel », and goes back by itself after a few seconds -->
+								<template v-if="confirmingDelete === group.name">
+									<button data-confirm-delete @click="deleteGroup(group)" class="text-xs px-2 py-1 rounded bg-red-600 text-white font-bold">{{ __("Confirm") }}</button>
+									<button data-cancel-delete @click="confirmingDelete = null" class="text-xs px-2 py-1 rounded hover:bg-gray-100 text-gray-600">{{ __("Cancel") }}</button>
+								</template>
+								<button v-else data-delete-group @click="askToDelete(group.name)" class="text-xs px-2 py-1 rounded hover:bg-red-50 text-red-600">
 									{{ __("Delete") }}
 								</button>
 							</div>
@@ -251,6 +256,14 @@ const editingGroup = ref(null)
 const showNewForm = ref(false)
 // A group is being made: the form stays, with its button busy, until the list shows the new one (the list can take seconds on a busy server)
 const creating = ref(false)
+// The group whose « Delete » was pressed and awaits its confirmation, and the timer that takes the question back
+const confirmingDelete = ref(null)
+let confirmTimer = null
+function askToDelete(name) {
+	confirmingDelete.value = name
+	clearTimeout(confirmTimer)
+	confirmTimer = setTimeout(() => (confirmingDelete.value = null), 6000)
+}
 const newGroupName = ref("")
 
 const doctype = ref("Product Option Group")
@@ -379,6 +392,8 @@ async function createGroup() {
 }
 
 async function deleteGroup(group) {
+	clearTimeout(confirmTimer)
+	confirmingDelete.value = null
 	try {
 		await call("pos_next.api.restaurant.delete_product_option_group", {
 			name: group.name,

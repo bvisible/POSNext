@@ -41,6 +41,12 @@ async function open() {
 	return wrapper
 }
 const cards = () => wrapper.findAll("[data-workflow]")
+// « Delete » asks to be confirmed: press it, then « Confirm »
+const deleteIt = async (title) => {
+	await cardOf(title).find("[data-delete-workflow]").trigger("click")
+	await cardOf(title).find("[data-confirm-delete]").trigger("click")
+	await flushPromises()
+}
 const cardOf = (title) => cards().find((card) => card.text().includes(title))
 
 beforeEach(() => {
@@ -81,11 +87,41 @@ describe("what uses a workflow", () => {
 		expect(cardOf("Free one").find("[data-delete-workflow]").exists()).toBe(true)
 	})
 
-	it("is deleted without a word of the server's, and the list is read again", async () => {
+	it("asks to be confirmed: « Delete » turns into « Confirm » and « Cancel », and nothing is sent before the confirmation", async () => {
 		await open()
 
 		await cardOf("Free one").find("[data-delete-workflow]").trigger("click")
-		await flushPromises()
+
+		expect(call.mock.calls.some(([method]) => method.endsWith("delete_preparation_workflow"))).toBe(false)
+		expect(cardOf("Free one").find("[data-confirm-delete]").text()).toBe("Confirm")
+		expect(cardOf("Free one").find("[data-cancel-delete]").text()).toBe("Cancel")
+		expect(cardOf("Free one").find("[data-delete-workflow]").exists()).toBe(false)
+
+		await cardOf("Free one").find("[data-cancel-delete]").trigger("click")
+		expect(cardOf("Free one").find("[data-delete-workflow]").exists()).toBe(true)
+		expect(call.mock.calls.some(([method]) => method.endsWith("delete_preparation_workflow"))).toBe(false)
+	})
+
+	it("takes its question back by itself after a few seconds", async () => {
+		vi.useFakeTimers()
+		try {
+			await open()
+			await cardOf("Free one").find("[data-delete-workflow]").trigger("click")
+			expect(cardOf("Free one").find("[data-confirm-delete]").exists()).toBe(true)
+
+			await vi.advanceTimersByTimeAsync(6100)
+
+			expect(cardOf("Free one").find("[data-confirm-delete]").exists()).toBe(false)
+			expect(cardOf("Free one").find("[data-delete-workflow]").exists()).toBe(true)
+		} finally {
+			vi.useRealTimers()
+		}
+	})
+
+	it("is deleted without a word of the server's, and the list is read again", async () => {
+		await open()
+
+		await deleteIt("Free one")
 
 		expect(call).toHaveBeenCalledWith("pos_next.api.restaurant.delete_preparation_workflow", { name: "Free" })
 		expect(toast.showSuccess).toHaveBeenCalledWith("Workflow deleted")
@@ -99,8 +135,7 @@ describe("what uses a workflow", () => {
 			return workflows
 		})
 
-		await cardOf("Free one").find("[data-delete-workflow]").trigger("click")
-		await flushPromises()
+		await deleteIt("Free one")
 
 		expect(toast.showError).toHaveBeenCalledWith("This workflow is used by Kitchen: give that station another workflow first.")
 	})
@@ -112,8 +147,7 @@ describe("what uses a workflow", () => {
 			return workflows
 		})
 
-		await cardOf("Free one").find("[data-delete-workflow]").trigger("click")
-		await flushPromises()
+		await deleteIt("Free one")
 
 		expect(toast.showError).toHaveBeenCalledWith("Failed to delete workflow")
 	})

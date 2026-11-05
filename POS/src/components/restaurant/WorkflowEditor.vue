@@ -71,9 +71,16 @@
 												class="text-xs px-2 py-1 rounded hover:bg-gray-100 text-gray-600">
 												{{ editingWorkflow === wf.name ? __("Done") : __("Edit") }}
 											</button>
-											<button v-if="canDelete(wf)" data-delete-workflow @click="deleteWorkflow(wf)" class="text-xs px-2 py-1 rounded hover:bg-red-50 text-red-600">
-												{{ __("Delete") }}
-											</button>
+											<!-- //// Neoffice — « Delete » asks to be confirmed (Daniel, 05.11: a click must not delete a workflow): the button turns into « Confirm » and « Cancel », and goes back by itself after a few seconds -->
+											<template v-if="canDelete(wf)">
+												<template v-if="confirmingDelete === wf.name">
+													<button data-confirm-delete @click="deleteWorkflow(wf)" class="text-xs px-2 py-1 rounded bg-red-600 text-white font-bold">{{ __("Confirm") }}</button>
+													<button data-cancel-delete @click="confirmingDelete = null" class="text-xs px-2 py-1 rounded hover:bg-gray-100 text-gray-600">{{ __("Cancel") }}</button>
+												</template>
+												<button v-else data-delete-workflow @click="askToDelete(wf.name)" class="text-xs px-2 py-1 rounded hover:bg-red-50 text-red-600">
+													{{ __("Delete") }}
+												</button>
+											</template>
 										</div>
 									</div>
 
@@ -182,6 +189,14 @@ const editingWorkflow = ref(null)
 const showNewForm = ref(false)
 // A workflow is being made: the form stays, with its button busy, until the list shows the new one (the list can take seconds on a busy server, and the form gone meant « nothing happened »)
 const creating = ref(false)
+// The workflow whose « Delete » was pressed and awaits its confirmation, and the timer that takes the question back
+const confirmingDelete = ref(null)
+let confirmTimer = null
+function askToDelete(name) {
+	confirmingDelete.value = name
+	clearTimeout(confirmTimer)
+	confirmTimer = setTimeout(() => (confirmingDelete.value = null), 6000)
+}
 const newWorkflowName = ref("")
 const wfItemSearch = ref("")
 const wfItemResults = ref([])
@@ -268,6 +283,8 @@ async function createWorkflow() {
 }
 
 async function deleteWorkflow(wf) {
+	clearTimeout(confirmTimer)
+	confirmingDelete.value = null
 	try {
 		await call("pos_next.api.restaurant.delete_preparation_workflow", {
 			name: wf.name,
