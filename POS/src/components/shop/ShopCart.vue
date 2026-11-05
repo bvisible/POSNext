@@ -208,8 +208,9 @@ defineExpose({ isDiscounted });
 	line-height: 16px;
 	color: var(--ink-muted);
 }
+/* An offer in green, as the restaurant's table page says it */
 .shop-line__offer {
-	color: var(--signal-text);
+	color: var(--offer-ink);
 	font-weight: 600;
 }
 .shop-line__check {
@@ -281,7 +282,7 @@ defineExpose({ isDiscounted });
 	font-variant-numeric: tabular-nums;
 }
 .shop-cart__row--offer span:last-child {
-	color: var(--signal-text);
+	color: var(--offer-ink);
 }
 .shop-cart__notice {
 	margin: 0;
@@ -314,10 +315,10 @@ defineExpose({ isDiscounted });
 }
 .shop-cart__band-amount {
 	margin: 0;
-	font-family: "Forum", serif;
-	font-size: 30px;
-	line-height: 34px;
-	color: var(--signal-text);
+	font-size: 26px;
+	font-weight: 700;
+	line-height: 32px;
+	color: var(--ink);
 	font-variant-numeric: tabular-nums;
 	white-space: nowrap;
 }

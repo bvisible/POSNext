@@ -80,7 +80,7 @@ export function keepSession(key, session) {
 }
 
 /**
- * The shop of `key` as the page opens it: {token, shopName, cart}. The tab's session is taken again while it is valid; a
+ * The shop of `key` as the page opens it: {token, shopName, shopLogo, cart}. The tab's session is taken again while it is valid; a
  * session the server no longer takes (the till closed, its lifetime passed) gives way to a new one. A refusal to open one
  * (the shop does not let customers scan, the shop is closed) rejects with the server's own words.
  */
@@ -89,16 +89,30 @@ export async function openShop(key) {
 	if (kept) {
 		try {
 			const cart = await callShop("get_shop_cart", { token: kept.token });
-			return { token: kept.token, shopName: kept.shopName || "", cart };
+			return {
+				token: kept.token,
+				shopName: kept.shopName || "",
+				shopLogo: kept.shopLogo || "",
+				cart,
+			};
 		} catch (error) {
 			if (error.kind !== "expired") throw error;
 			keepSession(key, null);
 		}
 	}
 	const session = await callShop("start_shop_session", { key });
-	keepSession(key, { token: session.token, shopName: session.shop_name });
+	keepSession(key, {
+		token: session.token,
+		shopName: session.shop_name,
+		shopLogo: session.shop_logo || "",
+	});
 	const cart = await callShop("get_shop_cart", { token: session.token });
-	return { token: session.token, shopName: session.shop_name || "", cart };
+	return {
+		token: session.token,
+		shopName: session.shop_name || "",
+		shopLogo: session.shop_logo || "",
+		cart,
+	};
 }
 
 export const scanItem = (token, barcode, qty = 1) =>

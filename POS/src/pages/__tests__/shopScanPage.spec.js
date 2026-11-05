@@ -90,6 +90,23 @@ describe("the shop's page", () => {
 		expect(text).toContain("Please ask a member of our team.");
 	});
 
+	it("shows the shop's own logo top left, and its name where it has none", async () => {
+		server.openShop.mockResolvedValue({
+			token: "T1",
+			shopName: "The shop",
+			shopLogo: "/files/logo.png",
+			cart: EMPTY,
+		});
+		const logo = (await page()).find(".shop-head__logo");
+		expect(logo.attributes("src")).toBe("/files/logo.png");
+		expect(logo.attributes("alt")).toBe("The shop");
+
+		server.openShop.mockResolvedValue({ token: "T1", shopName: "The shop", shopLogo: "", cart: EMPTY });
+		const named = await page();
+		expect(named.find(".shop-head__logo").exists()).toBe(false);
+		expect(named.find(".shop-head__name").text()).toBe("The shop");
+	});
+
 	it("shows the code at once for a cart that waits for the till", async () => {
 		server.openShop.mockResolvedValue({
 			token: "T1",

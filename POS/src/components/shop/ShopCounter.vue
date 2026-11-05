@@ -142,10 +142,9 @@ watchEffect(async () => {
 }
 .shop-counter__title {
 	margin: 0;
-	font-family: "Forum", serif;
-	font-size: 32px;
-	font-weight: 400;
-	line-height: 36px;
+	font-size: 22px;
+	font-weight: 700;
+	line-height: 28px;
 	color: var(--ink);
 }
 .shop-counter__card {

@@ -52,14 +52,26 @@ describe("the shop's page and the server", () => {
 	it("opens a session from the key of the QR code and keeps it for the tab", async () => {
 		serve({
 			start_shop_session: () =>
-				answer(200, { message: { token: "T1", shop_name: "The shop" } }),
+				answer(200, {
+					message: { token: "T1", shop_name: "The shop", shop_logo: "/files/logo.png" },
+				}),
 			get_shop_cart: () => answer(200, { message: CART }),
 		});
 
 		const shop = await openShop("KEY");
 
-		expect(shop).toEqual({ token: "T1", shopName: "The shop", cart: CART });
-		expect(keptSession("KEY")).toEqual({ token: "T1", shopName: "The shop" });
+		// The shop's own logo comes with its name: the page is the shop's, not Neoffice's (05.11.2026)
+		expect(shop).toEqual({
+			token: "T1",
+			shopName: "The shop",
+			shopLogo: "/files/logo.png",
+			cart: CART,
+		});
+		expect(keptSession("KEY")).toEqual({
+			token: "T1",
+			shopName: "The shop",
+			shopLogo: "/files/logo.png",
+		});
 		expect(calls.map((call) => call.method)).toEqual(["start_shop_session", "get_shop_cart"]);
 		expect(calls.every((call) => call.credentials === "omit")).toBe(true);
 	});

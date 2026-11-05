@@ -26,13 +26,29 @@ class TestAShopSessionOpensOnlyWhereAndWhenTheShopSells(ShopCase):
 	def test_a_shop_till_open_gives_a_session(self):
 		answer = self.as_guest(shop_scan.start_shop_session, self.key)
 
-		self.assertEqual(set(answer), {"token", "shop_name", "expires_at"})
+		self.assertEqual(set(answer), {"token", "shop_name", "shop_logo", "expires_at"})
 		self.assertTrue(answer["shop_name"])
 		token = frappe.get_doc("Guest Order Token", {"token": answer["token"]})
 		self.assertEqual(
 			(token.mode, token.pos_profile, token.pos_opening, token.owner),
 			("shop", self.fx.profile, self.opening, "Guest"),
 		)
+
+	def test_the_page_carries_the_logo_of_the_shop_as_its_company_keeps_it(self):
+		# The pages a shop shows its own customers carry the shop's brand, not Neoffice's (05.11.2026)
+		frappe.db.set_value("Company", self.fx.company, "company_logo", "/files/_test-shop-logo.png")
+
+		answer = self.as_guest(shop_scan.start_shop_session, self.key)
+
+		self.assertEqual(answer["shop_logo"], "/files/_test-shop-logo.png")
+
+	def test_a_shop_with_no_logo_gives_its_name_alone(self):
+		frappe.db.set_value("Company", self.fx.company, "company_logo", None)
+
+		answer = self.as_guest(shop_scan.start_shop_session, self.key)
+
+		self.assertEqual(answer["shop_logo"], "")
+		self.assertTrue(answer["shop_name"])
 
 	def test_an_unknown_key_a_shop_scan_off_and_a_restaurant_till_are_refused_alike(self):
 		self.assertEqual(self.refused("not-a-key"), frappe._(UNAVAILABLE))

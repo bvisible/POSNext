@@ -25,6 +25,10 @@ class TestTheTillPrintsTheShopsPoster(ShopCase):
 		self.assertTrue(poster["url"].endswith(f"/pos/shop/{key}"))
 		company_name = frappe.db.get_value("Company", self.fx.company, "company_name")
 		self.assertEqual(poster["shop_name"], company_name or self.fx.company)
+		# The shop's own logo, a full address: the poster is printed from a page of its own
+		frappe.db.set_value("Company", self.fx.company, "company_logo", "/files/_test-shop-logo.png")
+		logo = self.as_cashier(shop_scan.get_shop_poster, self.fx.profile)["shop_logo"]
+		self.assertTrue(logo.startswith("http") and logo.endswith("/files/_test-shop-logo.png"), logo)
 		# The same code every time: a poster printed again still opens the shop
 		self.assertEqual(self.as_cashier(shop_scan.get_shop_poster, self.fx.profile)["url"], poster["url"])
 

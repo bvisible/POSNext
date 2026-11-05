@@ -4,12 +4,9 @@
 	<!-- //// code), sees the till's prices and offers, and finishes: the cart then waits for the till, which takes it over by -->
 	<!-- //// the code shown here (pos_next.shop_scan). A shop that does not let customers scan, or a closed one, is said -->
 	<!-- //// politely. Paying on the phone, the sign-in and Nora come in later lots. -->
+	<!-- //// The page is the shop's, not Neoffice's (05.11.2026): neutral as the restaurant's table page, the shop's own -->
+	<!-- //// logo top left, as the company keeps it -->
 	<div class="shop-page">
-		<div class="shop-canvas" aria-hidden="true">
-			<div class="shop-canvas__grid"></div>
-			<div class="shop-canvas__glow"></div>
-		</div>
-
 		<main class="shop-scroll" :aria-busy="state === 'loading' || busy">
 			<p v-if="state === 'loading'" class="shop-status" role="status">
 				{{ __("Loading…") }}
@@ -22,7 +19,8 @@
 
 			<template v-else>
 				<header class="shop-head">
-					<p class="shop-head__name">{{ shopName }}</p>
+					<img v-if="shopLogo" class="shop-head__logo" :src="shopLogo" :alt="shopName" />
+					<p v-else class="shop-head__name">{{ shopName }}</p>
 					<button
 						v-if="state !== 'counter' && articles"
 						type="button"
@@ -156,6 +154,7 @@ const key = String(route.params.key || "");
 const state = ref("loading");
 const unavailable = ref("");
 const shopName = ref("");
+const shopLogo = ref("");
 const token = ref("");
 const cart = ref({ lines: [] });
 const busy = ref(false);
@@ -179,6 +178,7 @@ async function open() {
 		const shop = await openShop(key);
 		token.value = shop.token;
 		shopName.value = shop.shopName;
+		shopLogo.value = shop.shopLogo;
 		show(shop.cart);
 		if (state.value !== "counter") state.value = "home";
 	} catch (error) {
@@ -269,22 +269,23 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* The paper canvas of the Design System (mobile), as on the public menu: warm paper, a faint 32px grid, the signal glow
-   top right. Forum sets the titles, Karla the text; the signal is the accent and never a button (the buttons are ink). */
+/* A neutral page, as the restaurant's table page (GuestOrder): the shop offers it to its own customers, so it carries the
+   shop's logo and not Neoffice's design (05.11.2026; design system §7.6). frappe-ui's grays, green-700 on green-100 for an
+   offer, the actions in ink and no clay (every action is ink, design system 31.10). Inter, no paper, no grid, no Forum. */
 .shop-page {
-	--paper: #faf3ea;
-	--paper-bright: #fffdf8;
+	--paper: #f8f8f8;
 	--surface: #ffffff;
-	--surface-sunken: #f6f3ed;
-	--border: #dcd4c7;
-	--rule: #ece7de;
-	--ink: #141414;
-	--ink-muted: #524b41;
-	--ink-dim: #968c7c;
-	--grid: rgba(60, 45, 20, 0.11);
-	--signal: #f55d1a;
-	--signal-text: #aa3700;
-	--signal-soft: #ffeae2;
+	--surface-sunken: #f3f3f3;
+	--border: #e2e2e2;
+	--rule: #ededed;
+	--ink: #171717;
+	--ink-muted: #525252;
+	--ink-dim: #7c7c7c;
+	--signal: #7c7c7c;
+	--signal-text: #171717;
+	--signal-soft: #f3f3f3;
+	--offer-ink: #137949;
+	--offer-soft: #e4faeb;
 	--success-ink: #11663a;
 	--warning-ink: #92610c;
 	--warning-text: #92610c;
@@ -295,38 +296,11 @@ onMounted(async () => {
 	position: relative;
 	min-height: 100dvh;
 	color: var(--ink);
-	font-family: "Karla", "Inter", system-ui, sans-serif;
+	background: var(--paper);
+	font-family: "Inter", system-ui, sans-serif;
 	font-size: 15px;
 	line-height: 20px;
 	-webkit-text-size-adjust: 100%;
-}
-.shop-canvas {
-	position: fixed;
-	inset: 0;
-	z-index: 0;
-	overflow: hidden;
-	pointer-events: none;
-	background: linear-gradient(135deg, var(--paper) 0%, var(--paper-bright) 60%);
-}
-.shop-canvas__grid {
-	position: absolute;
-	inset: 0;
-	background-image: linear-gradient(to right, var(--grid) 1px, transparent 1px),
-		linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
-	background-size: 32px 32px;
-	mask-image: linear-gradient(to bottom, transparent 0, #000 220px);
-}
-.shop-canvas__glow {
-	position: absolute;
-	top: -18%;
-	right: -28%;
-	width: 116%;
-	height: 52%;
-	background: radial-gradient(
-		ellipse at 70% 0%,
-		rgba(245, 93, 26, 0.11) 0%,
-		rgba(245, 93, 26, 0) 70%
-	);
 }
 .shop-scroll {
 	position: relative;
@@ -355,11 +329,25 @@ onMounted(async () => {
 	border: 1px solid var(--border);
 	border-radius: 18px;
 }
+/* A white bar across the top, as the restaurant's: the shop's logo, and the cart */
 .shop-head {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	gap: 12px;
+	min-height: 60px;
+	margin: -20px -16px 0;
+	padding: 10px 16px;
+	background: var(--surface);
+	border-bottom: 1px solid var(--border);
+}
+/* The logo as the company keeps it: its own proportions, never cropped, tinted or framed */
+.shop-head__logo {
+	display: block;
+	height: 40px;
+	width: auto;
+	max-width: 60%;
+	object-fit: contain;
 }
 .shop-head__name {
 	margin: 0;
@@ -375,25 +363,23 @@ onMounted(async () => {
 	font: inherit;
 	font-size: 14px;
 	font-weight: 600;
-	color: #ffffff;
-	background: var(--ink);
+	color: var(--ink);
+	background: var(--surface-sunken);
 	border: 0;
 	border-radius: 999px;
 	cursor: pointer;
 }
 .shop-title {
 	margin: 0;
-	font-family: "Forum", serif;
-	font-size: 32px;
-	font-weight: 400;
-	line-height: 36px;
+	font-size: 22px;
+	font-weight: 700;
+	line-height: 28px;
 	color: var(--ink);
 }
 .shop-subtitle {
 	margin: 6px 0 0;
-	font-family: "Forum", serif;
-	font-size: 20px;
-	font-weight: 400;
+	font-size: 16px;
+	font-weight: 700;
 	color: var(--ink);
 }
 .shop-lede {
@@ -407,9 +393,10 @@ onMounted(async () => {
 	flex-direction: column;
 	gap: 12px;
 	padding: 16px;
-	background: linear-gradient(135deg, #fceedb, #f5ecd2);
-	border: 1px solid #eadfcb;
-	border-radius: 18px;
+	background: var(--surface);
+	border: 1px solid var(--rule);
+	border-radius: 16px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 .shop-hero__eyebrow {
 	margin: 0;
@@ -474,14 +461,15 @@ onMounted(async () => {
 </style>
 
 <style>
-/* The buttons of the shop's page and of its parts (ShopCart, ShopScanner): ink, or an ink outline; 44px and more */
+/* The buttons of the shop's page and of its parts (ShopCart, ShopScanner): the main one filled in ink, the others outlined
+   in gray, rounded as the restaurant's table page rounds them; 44px and more */
 .shop-page .shop-button {
 	min-height: 52px;
 	padding: 0 18px;
 	font: inherit;
 	font-size: 16px;
 	font-weight: 600;
-	border-radius: 14px;
+	border-radius: 12px;
 	cursor: pointer;
 }
 .shop-page .shop-button--small {
@@ -490,18 +478,21 @@ onMounted(async () => {
 }
 .shop-page .shop-button--ink {
 	color: #ffffff;
-	background: #141414;
+	background: #171717;
 	border: 0;
 }
+.shop-page .shop-button--ink:active {
+	background: #383838;
+}
 .shop-page .shop-button--line {
-	color: #141414;
+	color: #525252;
 	background: #ffffff;
-	border: 1px solid #141414;
+	border: 1px solid #e2e2e2;
 }
 .shop-page .shop-button:disabled {
-	color: #6f665a;
-	background: #ece7de;
-	border-color: #ece7de;
+	color: #999999;
+	background: #f3f3f3;
+	border-color: #f3f3f3;
 	cursor: default;
 }
 </style>

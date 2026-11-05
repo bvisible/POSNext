@@ -44,14 +44,25 @@ def shop_key(pos_profile: str) -> str:
 	return key
 
 
+def shop_of(pos_profile: str) -> dict:
+	"""The shop as its customers see it: the company of the till, its name and its logo as the company keeps it (a path of
+	the site, or nothing). The pages a shop shows its own customers carry the shop's brand, not Neoffice's (05.11.2026)."""
+	company = frappe.db.get_value("POS Profile", pos_profile, "company")
+	name, logo = frappe.db.get_value("Company", company, ["company_name", "company_logo"]) or (None, None)
+	return {"shop_name": name or company, "shop_logo": logo or ""}
+
+
 def poster_of(pos_profile: str) -> dict:
-	"""What the poster of the shop's QR code carries: the address the code opens, and the shop's name (lot 5)."""
+	"""What the poster of the shop's QR code carries: the address the code opens, the shop's name and its logo (lot 5).
+	The poster is printed from a page of its own, so the logo is a full address."""
 	from frappe.utils import get_url
 
-	company = frappe.db.get_value("POS Profile", pos_profile, "company")
+	shop = shop_of(pos_profile)
+	logo = shop["shop_logo"]
 	return {
 		"url": f"{get_url()}/pos/shop/{shop_key(pos_profile)}",
-		"shop_name": frappe.db.get_value("Company", company, "company_name") or company,
+		"shop_name": shop["shop_name"],
+		"shop_logo": get_url(logo) if logo and not logo.startswith(("http://", "https://")) else logo,
 	}
 
 
@@ -69,7 +80,7 @@ def settings_of(pos_profile: str):
 
 
 def start(key: str) -> dict:
-	"""Open a phone's session on the till whose QR code carries `key`: {"token", "shop_name", "expires_at"}."""
+	"""Open a phone's session on the till whose QR code carries `key`: {"token", "shop_name", "shop_logo", "expires_at"}."""
 	from pos_next.api.guest_ordering import _get_active_pos_opening
 
 	settings = (
@@ -97,10 +108,9 @@ def start(key: str) -> dict:
 	)
 	token_doc.flags.ignore_permissions = True
 	token_doc.insert()
-	company = frappe.db.get_value("POS Profile", settings.pos_profile, "company")
 	return {
 		"token": token_doc.token,
-		"shop_name": frappe.db.get_value("Company", company, "company_name") or company,
+		**shop_of(settings.pos_profile),
 		"expires_at": str(token_doc.expires_at),
 	}
 

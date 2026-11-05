@@ -474,7 +474,11 @@ async function printThePoster() {
 	printingPoster.value = true
 	try {
 		const poster = await call("pos_next.api.shop_scan.get_shop_poster", { pos_profile: props.posProfile })
-		await printShopPoster({ shopName: poster.shop_name, url: poster.url })
+		await printShopPoster({
+			shopName: poster.shop_name,
+			shopLogo: poster.shop_logo,
+			url: poster.url,
+		})
 	} catch (error) {
 		showError(error?.message || __("The poster could not be printed."))
 	} finally {

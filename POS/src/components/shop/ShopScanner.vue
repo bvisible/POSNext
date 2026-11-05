@@ -150,7 +150,7 @@ onBeforeUnmount(() => {
 	right: 14px;
 	top: 50%;
 	height: 2px;
-	background: var(--signal);
+	background: #ffffff;
 }
 .shop-scanner__caption {
 	position: absolute;

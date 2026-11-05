@@ -38,6 +38,23 @@ describe("the poster of the shop's QR code", () => {
 		expect(html).toContain(".poster__step .poster__number {")
 	})
 
+	it("carries the shop's own logo in place of its name, and none of Neoffice's design", async () => {
+		// The shop shows the poster to its own customers: its logo as the company keeps it, no Forum, no web font (05.11.2026)
+		const html = await shopPosterHtml({
+			shopName: "The shop",
+			shopLogo: "https://shop.example.test/files/logo.png",
+			url: URL,
+		})
+		const page = new DOMParser().parseFromString(html, "text/html")
+
+		const logo = page.querySelector(".poster__logo")
+		expect(logo.getAttribute("src")).toBe("https://shop.example.test/files/logo.png")
+		expect(logo.getAttribute("alt")).toBe("The shop")
+		expect(page.querySelector(".poster__name")).toBeNull()
+		expect(html).not.toContain("Forum")
+		expect(html).not.toContain("fonts.googleapis.com")
+	})
+
 	it("says the steps the phone's page says", () => {
 		expect(posterSteps().map(([title]) => title)).toEqual([
 			"Scan",
