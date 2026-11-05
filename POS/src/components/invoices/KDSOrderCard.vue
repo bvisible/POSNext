@@ -23,7 +23,7 @@
 	<!-- //// has an × beside its buttons, and lays its dishes out in columns side by side. -->
 	<!-- //// Neoffice — the card carries the name of its order (`data-order`: the screen finds the ticket of a table that ordered its next course by it, to scroll to it), and wears the signal's ring while that ticket is highlighted (NeoResto lot 1, Daniel, 01.11). The panel opened full screen is the same ticket drawn bigger and is not highlighted. -->
 	<div class="bg-white dark:bg-gray-800 flex flex-1 flex-col min-h-0"
-		:class="[borderColorClass, fullscreen ? ['rounded-2xl border-l-[6px] overflow-hidden shadow-xl', FULLSCREEN_FRAME.card] : 'rounded-xl shadow-sm border-l-4 max-h-[var(--ticket-max-h,none)]', ringed ? 'ring-4 ring-inset ring-[#F55D1A] kds-ticket-flash' : '']"
+		:class="[borderColorClass, fullscreen ? ['rounded-2xl border-l-[6px] overflow-hidden shadow-xl', FULLSCREEN_FRAME.card] : 'rounded-xl shadow-sm border-l-4 max-h-[var(--ticket-max-h,none)]', ringed ? (flashingForAddition ? 'ring-4 ring-inset ring-[#C1372C] kds-ticket-flash-added' : 'ring-4 ring-inset ring-[#F55D1A] kds-ticket-flash') : '']"
 		:style="fullscreen ? fullVariables : undefined"
 		:data-test="fullscreen ? 'ticket-panel' : 'ticket'" :data-state="status" :data-order="order.name" :data-highlighted="ringed ? 'true' : undefined">
 
@@ -88,9 +88,10 @@
 			</div>
 		</div>
 
-		<!-- //// Neoffice — what an ADDITION added, told on the ticket that flashes for it (Daniel, 05.11: « il faut faire un pop-up, parce qu'autrement, en cuisine, ils ne savent pas qu'on a rajouté cette information sur leur ticket »): one line under the header, in the signal's tint, never scrolling with the dishes -->
-		<div v-if="ringed && addedLines.length" class="flex-shrink-0 border-b-2 border-[#F55D1A] bg-[#FFEAE2] px-2 py-1.5 text-[length:var(--kds-fs-body,14px)] font-bold text-[#141414]" data-test="ticket-added" role="status">
-			{{ __("Added: {0}", [addedText]) }}
+		<!-- //// Neoffice — what an ADDITION added, told on the ticket that flashes for it (Daniel, 05.11: « il faut faire un pop-up, parce qu'autrement, en cuisine, ils ne savent pas qu'on a rajouté cette information sur leur ticket »): one line under the header, SOLID RED like the banner that takes a « Ready » back (Daniel, 05.11: « on a dit qu'on mettait en rouge »: an addition is a change to a ticket the cook already has, and it may be in preparation), never scrolling with the dishes -->
+		<div v-if="flashingForAddition" class="flex flex-shrink-0 items-center gap-2 border-b-2 border-[#8F241B] bg-[#C1372C] px-2 py-2 text-[length:calc(var(--kds-fs-body,14px)+3px)] font-extrabold leading-tight text-white" data-test="ticket-added" role="status">
+			<span class="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-white text-lg font-extrabold leading-none text-[#C1372C]" aria-hidden="true">+</span>
+			<span class="min-w-0 [overflow-wrap:anywhere]">{{ __("Added: {0}", [addedText]) }}</span>
 		</div>
 
 		<!-- Actions -->
@@ -98,7 +99,8 @@
 		<!-- //// dishes, and a long ticket pushed it out of sight. It takes the width, and the print button (task 44) stands at its right when the screen can -->
 		<!-- //// print (`canPrint`). The buttons are as high as the size chosen says (`--kds-btn-h`), never less than 44 px. -->
 		<!-- //// Neoffice — dark mode (task 46): the Button's own ink fill turns to bright paper in dark (frappe-ui's `surface-gray-7`) and these buttons forced `text-white` on it: white on near-white, a blank square. `dark:enabled:text-ink-white` gives the Button's own text colour back in dark while it is enabled (a loading button is greyed and keeps the white). Light mode is untouched. -->
-		<div class="relative flex flex-shrink-0 items-stretch border-b border-gray-100 dark:border-gray-700" :class="fullscreen ? FULLSCREEN_FRAME.actions : 'gap-1.5 px-2 pb-2 pt-0.5'" data-test="ticket-actions">
+		<!-- //// Neoffice — on a ticket that flashes, the row WRAPS and the main button takes a line of its own, the « Seen » button and the printer the next one: three buttons on one line of a narrow column cut « Start » to « Sta… » (Daniel, 05.11) -->
+		<div class="relative flex flex-shrink-0 items-stretch border-b border-gray-100 dark:border-gray-700" :class="[fullscreen ? FULLSCREEN_FRAME.actions : 'gap-1.5 px-2 pb-2 pt-0.5', ringed ? 'flex-wrap' : '']" data-test="ticket-actions">
 			<!-- //// Neoffice — ONE main button, whose action follows the ticket and its station (task 38a-1, ruling 112): Start on a ticket to start; on a ticket being -->
 			<!-- //// cooked, "Ready" when a runner carries the dishes on and "Deliver" when the cook does (one gesture, no "Ready" between); "Deliver" on a ticket that is -->
 			<!-- //// ready; from the list of what waits at the pass, a call-back to preparation. The first three are the ink button, the others its outline. -->
@@ -108,7 +110,7 @@
 				size="lg"
 				data-test="ticket-main"
 				class="min-w-0 flex-1 !h-[var(--kds-btn-h,44px)] !text-[length:var(--kds-fs-btn,14px)] font-bold text-white dark:enabled:text-ink-white"
-				:class="fullscreen ? 'max-w-[520px]' : ''"
+				:class="[fullscreen ? 'max-w-[520px]' : '', ringed ? 'basis-full' : '']"
 				@click="onMainPress"
 				:loading="loading"
 			>
@@ -125,7 +127,8 @@
 				class="min-w-0 flex-1 !h-[var(--kds-btn-h,44px)] !text-[length:var(--kds-fs-btn,14px)] font-bold border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 active:bg-gray-100 dark:active:bg-gray-700"
 				@click="emit('acknowledge', order.name)"
 			>
-				{{ kitchenActionLabel("to-do") }}
+				<!-- //// Neoffice — « Seen » on an addition: the ticket is not « to do », it is already at the kitchen and has been added to (Daniel, 05.11) -->
+				{{ flashingForAddition ? __("Seen") : kitchenActionLabel("to-do") }}
 			</Button>
 
 			<Button
@@ -134,7 +137,7 @@
 				size="lg"
 				data-test="ticket-main"
 				class="min-w-0 flex-1 !h-[var(--kds-btn-h,44px)] !text-[length:var(--kds-fs-btn,14px)] font-bold border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 active:bg-gray-100 dark:active:bg-gray-700"
-				:class="fullscreen ? 'max-w-[520px]' : ''"
+				:class="[fullscreen ? 'max-w-[520px]' : '', ringed ? 'basis-full' : '']"
 				@click="onMainPress"
 				:loading="loading"
 			>
@@ -571,6 +574,8 @@ const props = defineProps({
 const emit = defineEmits(["status-updated", "print", "close", "acknowledge"])
 //// Neoffice — the ring is the board card's: the panel opened full screen is not highlighted. It is drawn INSIDE the card (`ring-inset`): a lane clips what passes its edge, and the ring must never be cut
 const ringed = computed(() => props.highlighted && !props.fullscreen)
+//// Neoffice — the ticket flashes for an ADDITION (it was added to): it is told in red, with what was added (Daniel, 05.11)
+const flashingForAddition = computed(() => ringed.value && props.addedLines.length > 0)
 //// Neoffice — « 1× Tartare de saumon, 2× Soupe du jour » (the units and the dish, as the ticket writes them)
 const addedText = computed(() => props.addedLines.map((dish) => `${dish.qty}× ${dish.name}`).join(", "))
 //// Neoffice — a copy on its way is not asked for again (task 44)
@@ -1446,8 +1451,22 @@ async function doUpdateStatus(newStatus) {
 .kds-ticket-flash {
 	animation: kds-ticket-flash 1.1s ease-in-out infinite;
 }
+/* //// Neoffice — the same blink in RED for a ticket flashing because a dish was ADDED to it (the cook may be preparing it already) */
+@keyframes kds-ticket-flash-added {
+	0%,
+	100% {
+		box-shadow: inset 0 0 0 6px #c1372c;
+	}
+	50% {
+		box-shadow: inset 0 0 0 6px rgba(193, 55, 44, 0.12);
+	}
+}
+.kds-ticket-flash-added {
+	animation: kds-ticket-flash-added 0.9s ease-in-out infinite;
+}
 @media (prefers-reduced-motion: reduce) {
-	.kds-ticket-flash {
+	.kds-ticket-flash,
+	.kds-ticket-flash-added {
 		animation: none;
 	}
 }

@@ -142,7 +142,9 @@ describe("the ticket that flashes for an addition (Daniel, 05.11: « en cuisine,
 		const wrapper = show({ highlighted: true, addedLines: added })
 
 		expect(strip(wrapper).exists()).toBe(true)
-		expect(strip(wrapper).text()).toBe("Added: 1× Tartare de saumon, 2× Soupe du jour")
+		// A white disc with a « + » stands before the words
+		expect(strip(wrapper).text()).toBe("+Added: 1× Tartare de saumon, 2× Soupe du jour")
+		expect(strip(wrapper).findAll("span").at(-1).text()).toBe("Added: 1× Tartare de saumon, 2× Soupe du jour")
 		// Between the header and the buttons, outside the dishes that scroll
 		const html = wrapper.html()
 		expect(html.indexOf('data-test="ticket-header"')).toBeLessThan(html.indexOf('data-test="ticket-added"'))
@@ -157,11 +159,41 @@ describe("the ticket that flashes for an addition (Daniel, 05.11: « en cuisine,
 		expect(strip(show({ fullscreen: true, highlighted: true, addedLines: added })).exists()).toBe(false)
 	})
 
-	it("follows the signal: its edge and tint are the design system's signal tint and signal, the text ink", () => {
+	it("is SOLID RED with white text, like the banner that takes a « Ready » back: an addition is a change to a ticket the cook may be preparing already (Daniel, 05.11: « on a dit qu'on mettait en rouge »)", () => {
 		const classes = strip(show({ highlighted: true, addedLines: added })).classes()
 
-		expect(classes).toContain("border-[#F55D1A]")
-		expect(classes).toContain("bg-[#FFEAE2]")
-		expect(classes).toContain("text-[#141414]")
+		expect(classes).toContain("bg-[#C1372C]")
+		expect(classes).toContain("text-white")
+		expect(classes).toContain("font-extrabold")
+		expect(classes).not.toContain("bg-[#FFEAE2]")
+	})
+
+	it("blinks its ring in red too, where a next course blinks in the signal's orange", () => {
+		const addition = show({ highlighted: true, addedLines: added })
+		const nextCourse = show({ highlighted: true })
+
+		expect(card(addition).classes().join(" ")).toContain("ring-[#C1372C]")
+		expect(card(addition).classes().join(" ")).toContain("kds-ticket-flash-added")
+		expect(card(addition).classes().join(" ")).not.toContain("ring-[#F55D1A]")
+		expect(card(nextCourse).classes().join(" ")).toContain("ring-[#F55D1A]")
+		expect(card(nextCourse).classes().join(" ")).not.toContain("kds-ticket-flash-added")
+	})
+
+	it("offers « Seen » to take it up, where a next course offers « To do »", () => {
+		const addition = show({ highlighted: true, addedLines: added })
+		const nextCourse = show({ highlighted: true })
+
+		expect(addition.get('[data-test="ticket-todo"]').text()).toBe("Seen")
+		expect(nextCourse.get('[data-test="ticket-todo"]').text()).not.toBe("Seen")
+	})
+
+	it("wraps its buttons, the main one on a line of its own, so that « Start » is not cut in a narrow column", () => {
+		const flashing = show({ highlighted: true, addedLines: added })
+		const still = show()
+
+		expect(flashing.get('[data-test="ticket-actions"]').classes()).toContain("flex-wrap")
+		expect(flashing.get('[data-test="ticket-main"]').classes()).toContain("basis-full")
+		expect(still.get('[data-test="ticket-actions"]').classes()).not.toContain("flex-wrap")
+		expect(still.get('[data-test="ticket-main"]').classes()).not.toContain("basis-full")
 	})
 })
