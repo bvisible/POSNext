@@ -47,6 +47,8 @@ EXPECTED_SPEC = {
 	"title": "Resto",
 	"workspaces": ["Resto"],
 	"follows": "Retail",
+	# The point of sale's tabs are the restaurant's own: the menu of a site that runs NeoResto shows one door
+	"replaces": ["Retail"],
 	"gestures": ["invoice", "payment", "search"],
 	"active_by_default": 0,
 }
@@ -205,6 +207,19 @@ class TestTheDeclaration(FrappeTestCase):
 		# Whoever holds the point of sale holds NeoResto: the restaurant's cashier opens it from the menu
 		self.assertIn("Resto", access_model.with_declared({"Retail"}))
 		self.assertNotIn("Resto", access_model.with_declared({"Activities"}))
+
+	def test_the_menu_shows_one_door_while_the_site_runs_it(self):
+		# The point of sale leaves the menu of a site that runs NeoResto, and only of that one (Daniel, 04.11.2026).
+		# Its rights are untouched: the cashier and the manager hold the same pages (`follows`).
+		guard = theme_or_skip("neoffice_theme.workspace_guard", "spaces_replaced_by_business_apps")
+		frappe.local.neo_declared_business_apps = None
+		with patch.dict(frappe.conf, {"neoresto_active": 1}):
+			self.assertEqual(guard.spaces_replaced_by_business_apps(), {"Retail"})
+		with patch.dict(frappe.conf, {"neoresto_active": 0}):
+			self.assertEqual(guard.spaces_replaced_by_business_apps(), set())
+		with a_site_where_neoresto_is(ABSENT):
+			self.assertEqual(guard.spaces_replaced_by_business_apps(), set())
+		self.assertEqual(business_apps()[0]["follows"], "Retail")
 
 	def test_a_migrate_makes_the_menu_entry_and_the_roles_once_each(self):
 		# The roles are made by the migrate already (task 3): the menu entry does not make them a second time

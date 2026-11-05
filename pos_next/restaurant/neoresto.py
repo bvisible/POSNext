@@ -74,6 +74,11 @@ def business_apps():
 			"title": TITLE,
 			"workspaces": [WORKSPACE],
 			"follows": FOLLOWS,
+			# //// Neoffice — one door (NeoResto lot 1, product owner, 04.11.2026: « quand le module est activé, on n'affiche pas le
+			# //// point de vente de l'autre côté, on n'en a qu'un seul »): the tills, sessions, closings, reports and offers of the
+			# //// point of sale are tabs of this space, so the menu of a site that runs NeoResto leaves the point of sale out
+			# //// (the theme's workspace_guard.spaces_replaced_by_business_apps; the company or a reader can show it again).
+			"replaces": [FOLLOWS],
 			# Simple mode's "My space": what a restaurant's desk does most
 			"gestures": ["invoice", "payment", "search"],
 			"active_by_default": 0,
