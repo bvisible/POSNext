@@ -60,6 +60,7 @@
 						:room-name="roomNameOf(order)"
 						:use-runner="orderUsesRunner(order, stations, runnerEnabled)"
 						:highlighted="flashOrders.includes(order.name)"
+						:added-lines="addedLines[order.name] || []"
 						:can-print="!!copy?.canPrint(order)"
 						:print-state="copy?.stateOf(order)"
 						@print="copy?.print($event)"
@@ -131,6 +132,8 @@ const props = defineProps({
 	runnerEnabled: { type: Boolean, default: true },
 	//// Neoffice — the orders whose tickets FLASH: the tables that have ordered their next course and not been taken up yet (NeoResto lot 1, Daniel, 01.11); none, no ticket does
 	flashOrders: { type: Array, default: () => [] },
+	//// Neoffice — what the additions that make tickets flash added to them, `order name -> [{ name, qty }]` (Daniel, 05.11): each ticket tells it under its header
+	addedLines: { type: Object, default: () => ({}) },
 	//// Neoffice — what the screen does to read its orders again, called by a card once the server has answered a press
 	reload: { type: Function, default: () => {} },
 	//// Neoffice — the band of the tickets to do standing ALONE (the other is empty and left out, Daniel, 01.11): side by side it then takes the width and the columns of the band in preparation

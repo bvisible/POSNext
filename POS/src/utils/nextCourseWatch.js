@@ -9,6 +9,9 @@
 //// - the dishes counted are those of the stations the screen shows (the station chip, or all of them), and the courses named are their families (Starter, Main, Dessert).
 //// - a send of drinks alone is no next course (a beer ordered late), nor is a dish of no family where the restaurant has families; a restaurant that has none at all is told of every later send, without a course.
 //// - never twice for the same send (the key is the order and the time of the send), and a stale answer that arrives after a newer one changes nothing: what was seen of an order never goes back.
+//// - an ADDITION (Daniel, 05.11: « il faut faire un pop-up, parce qu'autrement, en cuisine, ils ne savent pas qu'on a rajouté cette information sur leur ticket »): a later send that brings MORE of a dish than the last reading
+////   held for that ticket (a starter forgotten, a guest who comes late) is told as an addition, with what was added, whatever its course, and a drink counts on a station's own screen (the bar). A next course
+////   released by the waiter brings no more dishes than the ticket held (they were there, held back), so it stays a next course.
 //// - where the kitchen prepares ahead (NeoResto lot 1, the service rhythm, Daniel, 01.11), the next course is not SENT, it is CALLED: its dishes are on the ticket from « Valider », marked ahead, and the room's call stamps
 ////   `kds_called_at` on them. A dish counts from its call (utils/courseCall.goAt, read by utils/courseTimer), so the notice goes off on the call, names the families of the dishes called, and stays quiet when a course merely
 ////   arrives ahead or when the kitchen starts or finishes one that is not called.
@@ -24,6 +27,37 @@ function later(first, second) {
 	if (Number.isNaN(first)) return second
 	if (Number.isNaN(second)) return first
 	return Math.max(first, second)
+}
+
+/** The quantity of each dish of a ticket, whatever the state of its lines (a held line is part of the order): `item_code -> units`. */
+function quantitiesOf(lines) {
+	const quantities = new Map()
+	for (const line of lines) {
+		const code = line?.item_code
+		if (!code) continue
+		quantities.set(code, (quantities.get(code) || 0) + (Number(line.qty) || 0))
+	}
+	return quantities
+}
+
+/**
+ * What a send brings MORE of than the ticket held at the last reading: the dishes of the latest send whose total quantity on the ticket went up, with the units added.
+ * Nothing for a ticket the last reading did not hold (nothing to compare with).
+ */
+function addedSince(before, now, send) {
+	if (!before) return []
+	const added = []
+	const told = new Set()
+	for (const line of send) {
+		const code = line?.item_code
+		if (!code || told.has(code)) continue
+		const units = (now.get(code) || 0) - (before.get(code) || 0)
+		if (units > 0) {
+			told.add(code)
+			added.push({ item_code: code, name: line.item_name || code, qty: units, family: familyOf(line) })
+		}
+	}
+	return added
 }
 
 /** The table a notice names: what the ticket shows, else the table's code. */
@@ -70,9 +104,11 @@ export function readNextCourses(orders, memory, { station = "" } = {}) {
 		const before = memory?.orders.get(order.name)
 		newestNow = later(newestNow, sentAt)
 
+		const quantities = quantitiesOf(lines)
 		known.set(order.name, {
 			left: left || Boolean(before?.left),
 			sentAt: before ? later(before.sentAt, sentAt) : sentAt,
+			quantities,
 		})
 		for (const key of memory?.alerted || []) if (key.startsWith(`${order.name}|`)) alerted.add(key)
 
@@ -96,9 +132,20 @@ export function readNextCourses(orders, memory, { station = "" } = {}) {
 		const table = tableOf(order)
 		const key = `${order.name}|${sentAt}`
 		const send = linesOfLatestSend(lines)
-		if (!table || alerted.has(key) || !isNextCourse(send, lines)) continue
+		//// Neoffice — an addition: more of a dish than the ticket held (Daniel, 05.11). A station's own screen is told of any addition, its drinks included (the bar); the screen of every station is not told of a drink
+		const added = addedSince(before?.quantities, quantities, send).filter((dish) => station || dish.family !== "Drink")
+		if (!table || alerted.has(key) || !(added.length || isNextCourse(send, lines))) continue
 		alerted.add(key)
-		alerts.push({ key, order: order.name, table, families: coursesOf(send), sentAt, count: send.length })
+		alerts.push({
+			key,
+			kind: added.length ? "addition" : "course",
+			order: order.name,
+			table,
+			families: coursesOf(send),
+			sentAt,
+			count: send.length,
+			added,
+		})
 	}
 
 	return { alerts, memory: { orders: known, alerted, newestSendAt: newestNow } }

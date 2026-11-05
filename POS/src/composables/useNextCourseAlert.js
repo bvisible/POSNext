@@ -7,6 +7,8 @@
 ////   button) or the ticket leaves the screen, however long that takes
 ////   (Daniel: « il faut la laisser clignoter jusqu'à ce qu'on ait validé »). There is no banner any more: the ticket is the alert. Every table that has ordered and not been taken up flashes, not only the newest.
 ////   The flash is the popup setting's: with it off only the sound remains.
+//// - an ADDITION (Daniel, 05.11: « il faut faire un pop-up, parce qu'autrement, en cuisine, ils ne savent pas qu'on a rajouté cette information sur leur ticket ») flashes the same way, with what was added told on the ticket
+////   (`added`), and it flashes whether or not the cook can start the dish now: a dish added behind the course before it must be KNOWN even if it cannot start yet.
 import { nextTick, ref, unref } from "vue"
 import { playAlertSound } from "@/utils/alertSoundPlayer"
 //// Neoffice — the dishes of an order's latest send: the ticket flashes while one of them is still to start (Daniel, 01.11)
@@ -42,6 +44,8 @@ export function useNextCourseAlert({ settings, accept = () => true, scrollTo = s
 	const flashing = ref([])
 	// order name -> the key of the send that was told
 	const watched = new Map()
+	// order name -> what was ADDED by the send that was told (additions only): `[{ name, qty }]`, told on the ticket while it flashes
+	const added = ref({})
 	let memory = null
 
 	/** The lines of an order the screen shows: the ones of its station. */
@@ -67,7 +71,11 @@ export function useNextCourseAlert({ settings, accept = () => true, scrollTo = s
 			const order = byName.get(name)
 			if (!stillToStart(order, station) || order?.call_seen === watched.get(name)) watched.delete(name)
 		}
-		const next = [...watched.keys()].filter((name) => canStart(byName.get(name), station))
+		//// Neoffice — an addition flashes even when its dish waits behind the course before it (Daniel, 05.11): the kitchen has to know that the ticket changed
+		const next = [...watched.keys()].filter((name) => name in added.value || canStart(byName.get(name), station))
+		const told = {}
+		for (const name of Object.keys(added.value)) if (watched.has(name)) told[name] = added.value[name]
+		if (Object.keys(told).length !== Object.keys(added.value).length) added.value = told
 		const dealtWith = next.length < flashing.value.length
 		if (next.length !== flashing.value.length || next.some((name, at) => name !== flashing.value[at])) flashing.value = next
 		// A ticket was dealt with (started, here or at another screen): the cook is brought to the next one that blinks
@@ -90,7 +98,17 @@ export function useNextCourseAlert({ settings, accept = () => true, scrollTo = s
 		if (told.length) {
 			if (chosen.nextCourseSound && chosen.nextCourseSound !== "none") playAlertSound(chosen.nextCourseSound, chosen.volume)
 			// The oldest call goes in first: the tickets that blink stand in the order they were called
-			if (chosen.popup) for (const alert of [...told].reverse()) watched.set(alert.order, alert.key)
+			if (chosen.popup) {
+				for (const alert of [...told].reverse()) {
+					watched.set(alert.order, alert.key)
+					//// Neoffice — what an addition added is told on its ticket; a next course says nothing of the kind
+					if (alert.kind === "addition") added.value = { ...added.value, [alert.order]: alert.added }
+					else if (alert.order in added.value) {
+						const { [alert.order]: _gone, ...rest } = added.value
+						added.value = rest
+					}
+				}
+			}
 		}
 		updateFlashing(orders, scope.station || "", { quiet: told.length > 0 })
 		// The cook is brought to the FIRST ticket that blinks (the oldest call), where the tickets that blink stand first in their band: not to the newest
@@ -107,6 +125,10 @@ export function useNextCourseAlert({ settings, accept = () => true, scrollTo = s
 		const key = watched.get(order)
 		watched.delete(order)
 		flashing.value = flashing.value.filter((name) => name !== order)
+		if (order in added.value) {
+			const { [order]: _gone, ...rest } = added.value
+			added.value = rest
+		}
 		// The tickets that blink are dealt with one after the other (Daniel, 01.11): the screen brings the next one into view, the oldest call first
 		if (flashing.value.length) scrollTo(flashing.value[0])
 		if (key !== undefined) onAcknowledge?.(order, key)
@@ -117,7 +139,8 @@ export function useNextCourseAlert({ settings, accept = () => true, scrollTo = s
 		memory = null
 		watched.clear()
 		flashing.value = []
+		added.value = {}
 	}
 
-	return { flashing, read, reset, acknowledge }
+	return { flashing, added, read, reset, acknowledge }
 }

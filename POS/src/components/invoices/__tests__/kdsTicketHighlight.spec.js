@@ -7,7 +7,7 @@ import { mount } from "@vue/test-utils"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 vi.hoisted(() => {
-	globalThis.__ = (text) => text
+	globalThis.__ = (text, args) => (args ? text.replace(/\{(\d+)\}/g, (_, at) => args[at]) : text)
 })
 vi.mock("frappe-ui", () => ({
 	createResource: vi.fn(),
@@ -128,5 +128,40 @@ describe("the ticket of a table that ordered its next course", () => {
 		const wrapper = show({ fullscreen: true, highlighted: true })
 
 		expect(wrapper.get('[data-test="ticket-panel"]').attributes("data-highlighted")).toBeUndefined()
+	})
+})
+
+describe("the ticket that flashes for an addition (Daniel, 05.11: « en cuisine, ils ne savent pas qu'on a rajouté cette information sur leur ticket »)", () => {
+	const added = [
+		{ name: "Tartare de saumon", qty: 1 },
+		{ name: "Soupe du jour", qty: 2 },
+	]
+	const strip = (wrapper) => wrapper.find('[data-test="ticket-added"]')
+
+	it("tells what was added, in one line under the header, while it flashes", () => {
+		const wrapper = show({ highlighted: true, addedLines: added })
+
+		expect(strip(wrapper).exists()).toBe(true)
+		expect(strip(wrapper).text()).toBe("Added: 1× Tartare de saumon, 2× Soupe du jour")
+		// Between the header and the buttons, outside the dishes that scroll
+		const html = wrapper.html()
+		expect(html.indexOf('data-test="ticket-header"')).toBeLessThan(html.indexOf('data-test="ticket-added"'))
+		expect(html.indexOf('data-test="ticket-added"')).toBeLessThan(html.indexOf('data-test="ticket-actions"'))
+		expect(strip(wrapper).attributes("role")).toBe("status")
+	})
+
+	it("says nothing when the ticket does not flash, when nothing was added, or in the full-screen view", () => {
+		expect(strip(show({ highlighted: false, addedLines: added })).exists()).toBe(false)
+		expect(strip(show({ highlighted: true, addedLines: [] })).exists()).toBe(false)
+		expect(strip(show({ highlighted: true })).exists()).toBe(false)
+		expect(strip(show({ fullscreen: true, highlighted: true, addedLines: added })).exists()).toBe(false)
+	})
+
+	it("follows the signal: its edge and tint are the design system's signal tint and signal, the text ink", () => {
+		const classes = strip(show({ highlighted: true, addedLines: added })).classes()
+
+		expect(classes).toContain("border-[#F55D1A]")
+		expect(classes).toContain("bg-[#FFEAE2]")
+		expect(classes).toContain("text-[#141414]")
 	})
 })

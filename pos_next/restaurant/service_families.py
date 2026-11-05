@@ -107,6 +107,40 @@ def is_uncalled(line) -> bool:
 	return is_ahead(line) and _has_left(line) and not line.get("kds_called_at")
 
 
+# //// Neoffice — what a save ADDS to an order the kitchen already has (NeoResto lot 1, Daniel, 05.11: « il faut faire un pop-up, parce qu'autrement, en cuisine, ils ne savent pas qu'on a rajouté cette information sur leur ticket,
+# //// et il faut imprimer le ticket avec l'ajout »)
+def added_dishes(before, after) -> dict:
+	"""The dishes a save ADDED to an order that had already left for the kitchen, as `{item_code: units}`.
+
+	`before` and `after` are the order's lines (`item_code`, `qty`, `kds_status`) as they were stored before the save and as they are after it. A dish
+	counts when the order holds MORE of it than before AND the kitchen holds more of it than before: a line held back by the waiter is more of the
+	order and nothing for the kitchen, and the waiter's order of the next course is more for the kitchen and nothing more on the order (the dishes
+	were there, held). An order that had nothing at the kitchen before is a first send, not an addition."""
+	if not any(_has_left(line) for line in before or []):
+		return {}
+
+	def totals(lines):
+		held, sent = {}, {}
+		for line in lines or []:
+			code = line.get("item_code")
+			if not code:
+				continue
+			units = float(line.get("qty") or 0)
+			held[code] = held.get(code, 0.0) + units
+			if _has_left(line):
+				sent[code] = sent.get(code, 0.0) + units
+		return held, sent
+
+	order_before, kitchen_before = totals(before)
+	order_after, kitchen_after = totals(after)
+	added = {}
+	for code, units in order_after.items():
+		more = min(units - order_before.get(code, 0.0), kitchen_after.get(code, 0.0) - kitchen_before.get(code, 0.0))
+		if more > 0:
+			added[code] = more
+	return added
+
+
 def go_time(line):
 	"""The time a line counts from: the room's call for a line sent ahead (nothing while it is not called), the time it left for any other."""
 	if not line:
@@ -359,7 +393,8 @@ def stored_lines(invoice_name, lock=False) -> list:
 	the room makes at that very moment must be seen, not lost (a call locks the same rows, `restaurant.call_next_course`)."""
 	if not invoice_name:
 		return []
-	fields = ["name", "item_code", "uom"]
+	# //// Neoffice — the quantity too: what a save ADDS to an order already sent is read from it (`added_dishes`)
+	fields = ["name", "item_code", "uom", "qty"]
 	fields += [
 		column
 		for column in ("kds_status", "kds_batch", "kds_sent_at", "kds_ahead", "kds_called_at", FIELD)

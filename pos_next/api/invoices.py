@@ -1908,7 +1908,20 @@ def update_invoice(data):
 				if sent_to_kitchen or any_sent_before:
 					from pos_next.api.kitchen_events import kitchen_send
 
-					kitchen_send(invoice_doc.name, next_batch)
+					# //// Neoffice — what this save ADDED to an order the kitchen already had (NeoResto lot 1, Daniel, 05.11): the printer's listener reads
+					# //// it from the request's flags to head the ticket « Addition »; nothing is stored, and a request that added nothing carries none
+					frappe.flags.kitchen_additions = service_families.added_dishes(
+						stored_lines,
+						frappe.get_all(
+							"Sales Invoice Item",
+							filters={"parent": invoice_doc.name, "parenttype": "Sales Invoice"},
+							fields=["item_code", "qty", "kds_status"],
+						),
+					)
+					try:
+						kitchen_send(invoice_doc.name, next_batch)
+					finally:
+						frappe.flags.kitchen_additions = None
 			except Exception as inner_e:
 				frappe.log_error("Failed to set item KDS status", str(inner_e))
 

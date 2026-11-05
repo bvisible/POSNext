@@ -364,3 +364,93 @@ describe("the call of a course sent ahead", () => {
 		expect(alerts[0].families).toEqual(["Main"])
 	})
 })
+
+describe("an addition to a ticket (Daniel, 05.11: « il faut faire un pop-up, parce qu'autrement, en cuisine, ils ne savent pas qu'on a rajouté cette information sur leur ticket »)", () => {
+	// A line as the kitchen's reading gives it: the dish, the units ordered, the family, the state and the time it left
+	const row = (code, name, qty, family, status, sentAt, extra = {}) => ({
+		item_code: code,
+		item_name: name,
+		qty,
+		service_family: family,
+		kds_status: status,
+		kds_sent_at: sentAt || "",
+		preparation_station: "KITCHEN",
+		...extra,
+	})
+	const SOUP = row("SOUP", "Soup", 1, "Starter", "Delivered", STARTERS)
+	const STEAK = row("STEAK", "Steak", 1, "Main", "Preparing", MAINS)
+
+	it("is told, with what it added, when a starter is ordered after the mains were sent", () => {
+		const before = order("A", [SOUP, STEAK])
+		const after = order("A", [SOUP, STEAK, row("TARTARE", "Tartare de saumon", 1, "Starter", "Pending", LATER)])
+
+		const { alerts } = reads([before], [after])
+
+		expect(alerts).toHaveLength(1)
+		expect(alerts[0]).toMatchObject({ kind: "addition", order: "A" })
+		expect(alerts[0].added).toEqual([{ item_code: "TARTARE", name: "Tartare de saumon", qty: 1, family: "Starter" }])
+	})
+
+	it("counts the units added to a dish the ticket already had", () => {
+		const before = order("A", [SOUP, STEAK])
+		const after = order("A", [SOUP, STEAK, row("STEAK", "Steak", 2, "Main", "Pending", LATER)])
+
+		const { alerts } = reads([before], [after])
+
+		expect(alerts[0]).toMatchObject({ kind: "addition" })
+		expect(alerts[0].added).toEqual([{ item_code: "STEAK", name: "Steak", qty: 2, family: "Main" }])
+	})
+
+	it("stays a NEXT COURSE when the waiter releases dishes the ticket already held back: no dish is added", () => {
+		const held = row("TART", "Tart", 1, "Dessert", "Waiting", "")
+		const before = order("A", [SOUP, STEAK, held])
+		const after = order("A", [SOUP, STEAK, { ...held, kds_status: "Pending", kds_sent_at: LATER }])
+
+		const { alerts } = reads([before], [after])
+
+		expect(alerts).toHaveLength(1)
+		expect(alerts[0]).toMatchObject({ kind: "course", families: ["Dessert"], added: [] })
+	})
+
+	it("tells an addition that only the order of the meal holds back: it is told, whether or not the cook can start it", () => {
+		// The main ordered late waits for a starter that is not done: the server sent it at once, the screen greys it
+		const before = order("A", [row("SOUP", "Soup", 1, "Starter", "Preparing", STARTERS), STEAK])
+		const after = order("A", [row("SOUP", "Soup", 1, "Starter", "Preparing", STARTERS), STEAK, row("FISH", "Fish", 1, "Main", "Pending", LATER)])
+
+		const { alerts } = reads([before], [after])
+
+		expect(alerts[0]).toMatchObject({ kind: "addition" })
+		expect(alerts[0].added.map((dish) => dish.name)).toEqual(["Fish"])
+	})
+
+	it("tells a drink added at the bar to the bar's own screen, and not to the screen of every station", () => {
+		const beer = (qty, status, sentAt) => row("BEER", "Beer", qty, "Drink", status, sentAt, { preparation_station: "BAR" })
+		const before = order("A", [row("COLA", "Cola", 1, "Drink", "Delivered", STARTERS, { preparation_station: "BAR" })])
+		const after = order("A", [before.items[0], beer(1, "Pending", LATER)])
+
+		const atTheBar = reads({ orders: [before], options: { station: "BAR" } }, { orders: [after], options: { station: "BAR" } })
+		const everywhere = reads([before], [after])
+
+		expect(atTheBar.alerts).toHaveLength(1)
+		expect(atTheBar.alerts[0]).toMatchObject({ kind: "addition" })
+		expect(atTheBar.alerts[0].added.map((dish) => dish.name)).toEqual(["Beer"])
+		// A drink ordered late is no next course and no news for the screen that shows every station
+		expect(everywhere.alerts).toHaveLength(0)
+	})
+
+	it("tells nothing of a dish held back at the waiter's side (it has not left for the kitchen)", () => {
+		const before = order("A", [SOUP, STEAK])
+		const after = order("A", [SOUP, STEAK, row("TART", "Tart", 1, "Dessert", "Waiting", "")])
+
+		expect(reads([before], [after]).alerts).toHaveLength(0)
+	})
+
+	it("is told once for its send, however often the screen reads it", () => {
+		const before = order("A", [SOUP, STEAK])
+		const after = order("A", [SOUP, STEAK, row("TARTARE", "Tartare", 1, "Starter", "Pending", LATER)])
+
+		const { alerts } = reads([before], [after], [after], [after])
+
+		expect(alerts).toHaveLength(0)
+	})
+})

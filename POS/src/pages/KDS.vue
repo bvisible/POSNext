@@ -140,6 +140,7 @@
 					:rooms="areas"
 					:runner-enabled="runnerOn"
 					:flash-orders="flashingOrders"
+					:added-lines="addedLines"
 					@acknowledge="acknowledgeNextCourse"
 					:alone="!bands.production.length"
 					:reload="loadOrders"
@@ -157,6 +158,7 @@
 					:rooms="areas"
 					:runner-enabled="runnerOn"
 					:flash-orders="flashingOrders"
+					:added-lines="addedLines"
 					@acknowledge="acknowledgeNextCourse"
 					:reload="loadOrders"
 				/>
@@ -299,7 +301,8 @@ const nextCourses = useNextCourseAlert({
 		call("pos_next.api.kitchen_events.acknowledge_kitchen_call", { invoice, call: key, station: selectedStation.value || undefined }).catch(() => {})
 	},
 })
-const { flashing: flashingOrders, acknowledge: acknowledgeNextCourse } = nextCourses
+//// Neoffice — what the additions that flash added to their tickets, told under each ticket's header (Daniel, 05.11)
+const { flashing: flashingOrders, added: addedLines, acknowledge: acknowledgeNextCourse } = nextCourses
 const nextCourseSoundOn = computed(() => alertSettings.value.nextCourseSound !== "none")
 
 //// Neoffice — was `sortedOrders`: one list, the delivered orders hidden unless asked for, oldest `creation` first. The split

@@ -24008,3 +24008,8 @@ msgstr "Le workflow par défaut ne peut pas être supprimé : définissez d'abor
 #, python-brace-format
 msgid "This workflow is used by {0}: give them another workflow first."
 msgstr "Ce workflow est utilisé par {0} : assignez-leur d'abord un autre workflow."
+
+#: POS/src/components/invoices/KDSOrderCard.vue:93
+#, python-brace-format
+msgid "Added: {0}"
+msgstr "Ajout : {0}"

@@ -435,3 +435,77 @@ describe("a call taken up on another screen of the kitchen", () => {
 		expect(alert.flashing.value).toEqual([])
 	})
 })
+
+describe("an addition to a ticket (Daniel, 05.11)", () => {
+	const row = (code, name, qty, family, status, sentAt) => ({
+		item_code: code,
+		item_name: name,
+		qty,
+		service_family: family,
+		kds_status: status,
+		kds_sent_at: sentAt,
+		preparation_station: "KITCHEN",
+	})
+	const SOUP = row("SOUP", "Soup", 1, "Starter", "Delivered", STARTERS)
+	const STEAK = row("STEAK", "Steak", 1, "Main", "Preparing", DESSERTS)
+	const ticket = (name, items) => ({ name, restaurant_table: `T-${name}`, table_display_name: `Table ${name}`, items })
+	const lateStarter = row("TARTARE", "Tartare de saumon", 1, "Starter", "Pending", LATER)
+
+	it("rings, flashes the ticket and tells what was added", () => {
+		start()
+		alert.read([ticket("A", [SOUP, STEAK])])
+
+		const told = alert.read([ticket("A", [SOUP, STEAK, lateStarter])])
+
+		expect(told[0]).toMatchObject({ kind: "addition", order: "A" })
+		expect(player.play).toHaveBeenCalledTimes(1)
+		expect(alert.flashing.value).toEqual(["A"])
+		expect(alert.added.value).toEqual({ A: [{ item_code: "TARTARE", name: "Tartare de saumon", qty: 1, family: "Starter" }] })
+	})
+
+	it("flashes although the cook cannot start the dish yet: the kitchen has to KNOW", () => {
+		// The screen holds every dish behind the course before it: a next course would not flash, an addition does
+		start({ options: { holds: () => true } })
+		alert.read([ticket("A", [SOUP, STEAK])])
+
+		alert.read([ticket("A", [SOUP, STEAK, lateStarter])])
+
+		expect(alert.flashing.value).toEqual(["A"])
+	})
+
+	it("still does not flash a next course whose dishes all wait behind the course before them", () => {
+		start({ options: { holds: () => true } })
+		const held = row("TART", "Tart", 1, "Dessert", "Waiting", "")
+		alert.read([ticket("A", [SOUP, STEAK, held])])
+
+		alert.read([ticket("A", [SOUP, STEAK, { ...held, kds_status: "Pending", kds_sent_at: LATER }])])
+
+		expect(alert.flashing.value).toEqual([])
+		expect(alert.added.value).toEqual({})
+	})
+
+	it("stops telling what was added once the cook has seen the ticket", () => {
+		start()
+		alert.read([ticket("A", [SOUP, STEAK])])
+		alert.read([ticket("A", [SOUP, STEAK, lateStarter])])
+
+		alert.acknowledge("A")
+
+		expect(alert.flashing.value).toEqual([])
+		expect(alert.added.value).toEqual({})
+	})
+
+	it("stops telling it once the ticket leaves the screen, and when the screen begins again", () => {
+		start()
+		alert.read([ticket("A", [SOUP, STEAK])])
+		alert.read([ticket("A", [SOUP, STEAK, lateStarter])])
+		alert.read([ticket("B", [SOUP])])
+		expect(alert.added.value).toEqual({})
+
+		start()
+		alert.read([ticket("A", [SOUP, STEAK])])
+		alert.read([ticket("A", [SOUP, STEAK, lateStarter])])
+		alert.reset()
+		expect(alert.added.value).toEqual({})
+	})
+})

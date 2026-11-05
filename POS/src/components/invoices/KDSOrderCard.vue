@@ -88,6 +88,11 @@
 			</div>
 		</div>
 
+		<!-- //// Neoffice — what an ADDITION added, told on the ticket that flashes for it (Daniel, 05.11: « il faut faire un pop-up, parce qu'autrement, en cuisine, ils ne savent pas qu'on a rajouté cette information sur leur ticket »): one line under the header, in the signal's tint, never scrolling with the dishes -->
+		<div v-if="ringed && addedLines.length" class="flex-shrink-0 border-b-2 border-[#F55D1A] bg-[#FFEAE2] px-2 py-1.5 text-[length:var(--kds-fs-body,14px)] font-bold text-[#141414]" data-test="ticket-added" role="status">
+			{{ __("Added: {0}", [addedText]) }}
+		</div>
+
 		<!-- Actions -->
 		<!-- //// Neoffice — the main button sits DIRECTLY UNDER the header and never scrolls (task 38a-1, ruling 107): it was at the foot of the card, below the -->
 		<!-- //// dishes, and a long ticket pushed it out of sight. It takes the width, and the print button (task 44) stands at its right when the screen can -->
@@ -556,11 +561,18 @@ const props = defineProps({
 		type: Boolean,
 		default: false,
 	},
+	//// Neoffice — what the send that makes this ticket flash ADDED to it, `[{ name, qty }]` (Daniel, 05.11): empty for a next course, which brings nothing the ticket did not hold
+	addedLines: {
+		type: Array,
+		default: () => [],
+	},
 })
 
 const emit = defineEmits(["status-updated", "print", "close", "acknowledge"])
 //// Neoffice — the ring is the board card's: the panel opened full screen is not highlighted. It is drawn INSIDE the card (`ring-inset`): a lane clips what passes its edge, and the ring must never be cut
 const ringed = computed(() => props.highlighted && !props.fullscreen)
+//// Neoffice — « 1× Tartare de saumon, 2× Soupe du jour » (the units and the dish, as the ticket writes them)
+const addedText = computed(() => props.addedLines.map((dish) => `${dish.qty}× ${dish.name}`).join(", "))
 //// Neoffice — a copy on its way is not asked for again (task 44)
 const printBusy = computed(() => BUSY_PHASES.includes(props.printState.phase))
 const { showError } = useToast()
