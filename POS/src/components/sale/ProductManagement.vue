@@ -836,10 +836,16 @@ const form = ref({
 });
 
 // Computed
+//// Neoffice — the group an item already sits in is always offered, even a group node (`is_group` = 1: « Services » holds 30 items on osiris): the list offers the leaf groups only, so the field of such an item read « Select Item Group », it was required, and saving meant picking another group, so moving the item by accident (NeoResto lot 1, 05.11.2026).
 const rawItemGroupOptions = computed(() => {
-	return itemGroups.value
+	const options = itemGroups.value
 		.filter((g) => !Number(g.is_group || 0))
 		.map((g) => ({ label: g.name, value: g.name }));
+	const current = form.value.item_group;
+	if (current && !options.some((option) => option.value === current)) {
+		options.unshift({ label: current, value: current });
+	}
+	return options;
 });
 
 const itemGroupOptions = computed(() => {
