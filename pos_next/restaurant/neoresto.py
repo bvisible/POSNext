@@ -583,6 +583,8 @@ PAGE_CARDS = (
 		"Settings",
 		(
 			("Restaurants", "DocType", "Restaurant"),
+			# //// Neoffice — the office's page of a till's settings, first of the tills' buttons (NeoResto lot 1, task 13b, 05.11.2026)
+			("Till settings", "Page", "till-settings"),
 			("Tills", "DocType", "POS Profile"),
 			("POS Settings", "DocType", "POS Settings"),
 			("Preparation Workflow", "DocType", "Preparation Workflow"),
@@ -594,6 +596,44 @@ PAGE_CARDS = (
 # What the first version of this page (03.11) wrote instead: a shortcut to each purchases screen. They would say the Purchases
 # card twice, as tiles of its first card: taken away.
 FIRST_VERSION_SHORTCUTS = (("Purchases", "neoresto-purchases"), ("Shopping list", "neoresto-shopping"))
+
+
+# //// Neoffice — the buttons added to a card that sites already hold (NeoResto lot 1, task 13b, 05.11.2026): a card is written once,
+# //// so a button put in PAGE_CARDS later reaches only the sites that write the card afterwards. Each of these — (card, label, link
+# //// type, target, the button it goes before) — is put once into a card that lacks it, then remembered under BUTTONS_KEY: a button an
+# //// administrator takes off is never put back, and a card the administrator took off is never written again for it.
+ADDED_BUTTONS = (("Settings", "Till settings", "Page", "till-settings", "Tills"),)
+BUTTONS_KEY = "neoresto_page_buttons_added"
+
+
+def _button_key(card, target):
+	return f"{card}|{target}"
+
+
+def _buttons_remembered():
+	try:
+		return set(json.loads(frappe.db.get_default(BUTTONS_KEY) or "[]"))
+	except ValueError:
+		return set()
+
+
+def _put_button(page, card, label, link_type, target, before):
+	"""Put the button into the card of the page, in front of the button `before` (the first of the card when there is none),
+	unless the card is not there or already holds a button to that target. The card's count follows."""
+	rows = page.links
+	start = next((i for i, row in enumerate(rows) if row.type == "Card Break" and row.label == card), None)
+	if start is None:
+		return
+	end = next((i for i in range(start + 1, len(rows)) if rows[i].type == "Card Break"), len(rows))
+	if any(row.link_to == target for row in rows[start + 1 : end]):
+		return
+	at = next((i for i in range(start + 1, end) if rows[i].label == before), start + 1)
+	row = page.append("links", {"type": "Link", "label": label, "link_type": link_type, "link_to": target})
+	rows.remove(row)
+	rows.insert(at, row)
+	for position, each in enumerate(rows, 1):
+		each.idx = position
+	rows[start].link_count = end - start
 
 
 def sync_page_cards():
@@ -632,7 +672,9 @@ def sync_page_cards():
 		if title not in present and (purchases or title != PURCHASES_CARD)
 	]
 	to_drop = [PURCHASES_CARD] if PURCHASES_CARD in present and not purchases else []
-	if not (to_write or to_drop or old_shortcuts):
+	remembered = _buttons_remembered()
+	to_add = [button for button in ADDED_BUTTONS if _button_key(button[0], button[3]) not in remembered]
+	if not (to_write or to_drop or old_shortcuts or to_add):
 		return
 
 	page = frappe.get_doc("Workspace", WORKSPACE)
@@ -664,9 +706,16 @@ def sync_page_cards():
 		blocks.append(
 			{"id": frappe.generate_hash(length=10), "type": "card", "data": {"card_name": title, "col": 4}}
 		)
+	for card, label, link_type, target, before in to_add:
+		# A card written just now carries its buttons already
+		if card not in to_write:
+			_put_button(page, card, label, link_type, target, before)
 	page.content = json.dumps(blocks)
 	with _never_exported():
 		page.save(ignore_permissions=True)
+	if to_add:
+		keys = remembered | {_button_key(button[0], button[3]) for button in to_add}
+		frappe.defaults.set_global_default(BUTTONS_KEY, json.dumps(sorted(keys)))
 
 
 def after_migrate():
