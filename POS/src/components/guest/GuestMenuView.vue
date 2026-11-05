@@ -117,7 +117,7 @@
 								<div class="text-[9px] sm:text-[10px] leading-tight flex items-center gap-1">
 									<span v-if="item.discount_percentage > 0" class="text-gray-400 line-through">{{ formatPrice(item.price || 0) }}</span>
 									<span class="font-semibold text-gray-900">{{ formatPrice(item.discounted_price || item.price || 0) }}</span>
-									<span v-if="item.discount_percentage > 0" class="text-[8px] font-bold text-green-700 bg-green-100 px-1 py-0.5 rounded">-{{ item.discount_percentage }}%</span>
+									<span v-if="item.discount_percentage > 0" class="text-[8px] font-bold text-green-700 dark:text-green-200 bg-green-100 px-1 py-0.5 rounded">-{{ item.discount_percentage }}%</span>
 								</div>
 							</div>
 						</div>
@@ -156,7 +156,7 @@
 						<div class="flex flex-col items-end flex-shrink-0">
 							<span v-if="item.discount_percentage > 0" class="text-[10px] text-gray-400 line-through">{{ formatPrice(item.price || 0) }}</span>
 							<div class="flex items-center gap-1">
-								<span v-if="item.discount_percentage > 0" class="text-[9px] font-bold text-green-700 bg-green-100 px-1 py-0.5 rounded">-{{ item.discount_percentage }}%</span>
+								<span v-if="item.discount_percentage > 0" class="text-[9px] font-bold text-green-700 dark:text-green-200 bg-green-100 px-1 py-0.5 rounded">-{{ item.discount_percentage }}%</span>
 								<span class="text-xs font-bold text-gray-900">{{ formatPrice(item.discounted_price || item.price || 0) }}</span>
 							</div>
 						</div>
@@ -181,7 +181,7 @@
 							<div class="flex items-center gap-2">
 								<span v-if="selectedItem.discount_percentage > 0" class="text-sm text-gray-400 line-through">{{ formatPrice(selectedItem.price || 0) }}</span>
 								<span class="text-base font-semibold text-gray-900">{{ formatPrice(selectedItem.discounted_price || selectedItem.price || 0) }}</span>
-								<span v-if="selectedItem.discount_percentage > 0" class="text-[10px] font-bold text-green-700 bg-green-100 px-1.5 py-0.5 rounded">-{{ selectedItem.discount_percentage }}%</span>
+								<span v-if="selectedItem.discount_percentage > 0" class="text-[10px] font-bold text-green-700 dark:text-green-200 bg-green-100 px-1.5 py-0.5 rounded">-{{ selectedItem.discount_percentage }}%</span>
 							</div>
 							<p v-if="selectedItem.description" class="text-sm text-gray-500 mt-0.5">{{ selectedItem.description }}</p>
 						</div>

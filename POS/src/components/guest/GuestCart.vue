@@ -14,7 +14,7 @@
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
 				</svg>
 			</div>
-			<p class="text-base font-medium text-green-700">{{ __('Order paid') }}</p>
+			<p class="text-base font-medium text-green-700 dark:text-green-200">{{ __('Order paid') }}</p>
 			<p class="text-sm text-gray-400 mt-1">{{ __('Thank you for your visit!') }}</p>
 		</div>
 

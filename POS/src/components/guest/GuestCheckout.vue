@@ -56,7 +56,7 @@
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
 						</svg>
 					</div>
-					<p class="text-lg font-bold text-green-700">{{ __('Payment complete') }}</p>
+					<p class="text-lg font-bold text-green-700 dark:text-green-200">{{ __('Payment complete') }}</p>
 					<p class="text-sm text-gray-500 mt-1 mb-5">{{ __('Thank you for your visit, we hope to see you again soon!') }}</p>
 
 					<!-- Receipt card -->
@@ -94,7 +94,7 @@
 							</div>
 							<div class="flex items-center justify-between pt-1">
 								<span class="text-sm font-bold text-gray-900">{{ __('Total') }}</span>
-								<span class="text-lg font-bold text-green-700">{{ formatPrice(guestStore.orderTotal) }}</span>
+								<span class="text-lg font-bold text-green-700 dark:text-green-200">{{ formatPrice(guestStore.orderTotal) }}</span>
 							</div>
 						</div>
 					</div>
@@ -116,8 +116,8 @@
 				<!-- Payment progress (when partially paid) -->
 				<div v-if="guestStore.paidAmount > 0" class="bg-green-50 border-b border-green-200 p-4">
 					<div class="flex justify-between items-center mb-2">
-						<span class="text-sm font-semibold text-green-800">{{ __('Already paid') }}</span>
-						<span class="text-sm font-bold text-green-700">{{ formatPrice(guestStore.paidAmount) }}</span>
+						<span class="text-sm font-semibold text-green-800 dark:text-green-200">{{ __('Already paid') }}</span>
+						<span class="text-sm font-bold text-green-700 dark:text-green-200">{{ formatPrice(guestStore.paidAmount) }}</span>
 					</div>
 					<div class="w-full bg-green-200 rounded-full h-2 mb-2">
 						<div class="bg-green-600 h-2 rounded-full transition-all" :style="{ width: Math.min(100, (guestStore.paidAmount / guestStore.orderTotal) * 100) + '%' }"></div>
@@ -137,7 +137,7 @@
 							class="flex items-center justify-between text-sm">
 							<div class="flex items-center gap-1.5">
 								<span class="text-gray-700">{{ oItem.qty }}× {{ oItem.item_name }}</span>
-								<span v-if="oItem.discount_percentage > 0 && !oItem.posa_is_offered" class="text-[10px] font-semibold text-green-700 bg-green-100 px-1.5 py-0.5 rounded">-{{ oItem.discount_percentage }}%</span>
+								<span v-if="oItem.discount_percentage > 0 && !oItem.posa_is_offered" class="text-[10px] font-semibold text-green-700 dark:text-green-200 bg-green-100 px-1.5 py-0.5 rounded">-{{ oItem.discount_percentage }}%</span>
 							</div>
 							<!-- An offered line (NeoResto lot 1, task 24) reads « Offert », read only, in the guest's language -->
 							<span v-if="oItem.posa_is_offered" class="font-semibold text-[#137949] dark:text-[#86E0A8]">{{ oItem.offered_label }}</span>
@@ -157,8 +157,8 @@
 					<div v-if="!guestStore.isTakeaway" class="bg-white border-b border-gray-200 p-4">
 						<h3 class="text-sm font-semibold text-gray-700 mb-2">{{ __('Tip') }}</h3>
 						<div v-if="guestStore.paidTipAmount > 0" class="mb-3 flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded-lg">
-							<span class="text-xs font-medium text-green-700">{{ __('Tip already paid') }}</span>
-							<span class="text-sm font-bold text-green-700">{{ formatPrice(guestStore.paidTipAmount) }}</span>
+							<span class="text-xs font-medium text-green-700 dark:text-green-200">{{ __('Tip already paid') }}</span>
+							<span class="text-sm font-bold text-green-700 dark:text-green-200">{{ formatPrice(guestStore.paidTipAmount) }}</span>
 						</div>
 						<div class="flex items-center gap-1.5 flex-wrap">
 							<button
@@ -192,8 +192,8 @@
 							</div>
 						</div>
 						<div v-if="tipAmount > 0" class="mt-2 flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded-lg">
-							<span class="text-xs font-medium text-green-700">{{ __('Tip') }}</span>
-							<span class="text-sm font-bold text-green-700">+ {{ formatPrice(tipAmount) }}</span>
+							<span class="text-xs font-medium text-green-700 dark:text-green-200">{{ __('Tip') }}</span>
+							<span class="text-sm font-bold text-green-700 dark:text-green-200">+ {{ formatPrice(tipAmount) }}</span>
 						</div>
 					</div>
 
@@ -233,7 +233,7 @@
 						<!-- Amount display -->
 						<div class="flex items-center justify-between p-3 rounded-xl" :class="basePayment < orderRemaining ? 'bg-gray-100 border border-gray-200' : 'bg-green-50 border border-green-200'">
 							<div>
-								<span class="text-sm font-bold" :class="basePayment < orderRemaining ? 'text-gray-900' : 'text-green-700'">
+								<span class="text-sm font-bold" :class="basePayment < orderRemaining ? 'text-gray-900' : 'text-green-700 dark:text-green-200'">
 									{{ formatPrice(payableAmount) }}
 								</span>
 								<span v-if="basePayment < orderRemaining" class="text-xs text-gray-500 ml-2">
