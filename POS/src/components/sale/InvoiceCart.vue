@@ -78,7 +78,8 @@
 -->
 <template>
 	<!-- //// Neoffice — [D] Neoffice theme tokens on the class below, not stock Tailwind (87f168fe). -->
-	<div class="flex flex-col h-full bg-white rounded-neo-lg overflow-hidden">
+	<!-- //// Neoffice — compact cart head, the cart carries its compact flag so that the head's style can follow it (NeoResto lot 1, product owner, 05.11.2026) -->
+	<div :class="cartCompact ? 'cart--compact' : ''" class="flex flex-col h-full bg-white rounded-neo-lg overflow-hidden">
 		<!-- //// Neoffice — divergence map for this file. Each marker below carries a tag. -->
 		<!-- //// [D] design tokens: upstream styles with stock Tailwind (rounded-lg/xl, -->
 		<!-- ////     shadow-sm/lg). The fork swaps them for the Neoffice theme scale -->
@@ -107,7 +108,8 @@
 		<!-- //// [GC] gift cards are Items priced at zero whose value is typed at the till -->
 		<!-- ////     (5dddc528). [CART] cart-line identity fixes (7e1376a3). -->
 		<!-- Header with Customer -->
-		<div class="px-2.5 py-2 border-b border-gray-200 bg-gray-50">
+		<!-- //// Neoffice — compact cart head, the customer row is one slim line (NeoResto lot 1, product owner, 05.11.2026) -->
+		<div data-cart-head class="px-2.5 py-2 border-b border-gray-200 bg-gray-50">
 			<!-- Inline Customer Search/Selection -->
 			<div ref="customerSearchContainer" class="relative">
 				<div v-if="customer && !changingCustomer">
@@ -117,8 +119,9 @@
 						<!-- //// min-w-0) so the full-info popover below can hang off it; upstream shows the name and -->
 						<!-- //// nothing else (53d0107c, 2026-07-09 "richer customer info"). -->
 						<!-- Customer Card (hover shows full-info popover) -->
+						<!-- //// Neoffice — compact cart head, the selected customer's card (NeoResto lot 1, product owner, 05.11.2026) -->
 						<div
-							class="group relative flex-1 flex items-center gap-1.5 bg-white border border-gray-200 rounded-neo-md p-1.5 shadow-neo min-w-0"
+							data-cart-customer class="group relative flex-1 flex items-center gap-1.5 bg-white border border-gray-200 rounded-neo-md p-1.5 shadow-neo min-w-0"
 						>
 							<!-- Customer Avatar & Info -->
 							<!-- //// Neoffice — [CU] the customer name itself is the switch control. Upstream -->
@@ -133,8 +136,9 @@
 								:title="__('Change customer')"
 								class="flex items-center gap-2 min-w-0 flex-1 px-1.5 py-1 cursor-pointer rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors"
 							>
+								<!-- //// Neoffice — compact cart head, the customer's avatar (NeoResto lot 1, product owner, 05.11.2026) -->
 								<div
-									class="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0"
+									data-cart-customer-avatar class="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0"
 								>
 									<!-- //// Neoffice — customerLabel (see the script): the name of a customer that comes back from the server as a string -->
 									<FeatherIcon
@@ -157,7 +161,8 @@
 										/>
 									</svg>
 								</div>
-								<div class="min-w-0 flex-1">
+								<!-- //// Neoffice — compact cart head, the name and its detail side by side (NeoResto lot 1, product owner, 05.11.2026) -->
+								<div class="min-w-0 flex-1" data-cart-customer-info>
 									<p
 										dir="auto"
 										class="text-xs font-semibold text-gray-900 truncate leading-tight"
@@ -282,7 +287,8 @@
 							</div>
 
 							<!-- Action Buttons -->
-							<div class="flex items-center gap-0.5 flex-shrink-0" @click.stop>
+							<!-- //// Neoffice — compact cart head, the edit and create customer buttons (NeoResto lot 1, product owner, 05.11.2026) -->
+							<div data-cart-customer-actions class="flex items-center gap-0.5 flex-shrink-0" @click.stop>
 								<button
 									type="button"
 									@click.stop="$emit('edit-customer', customer)"
@@ -684,10 +690,14 @@
 
 		<!-- Action Buttons Section -->
 		<!-- //// Neoffice — the header zone of the cart is tighter on a phone (kitchen test, 01.11): every pixel it takes is a pixel less for the lines. -->
-		<div v-if="items.length > 0" class="px-2 py-2 max-sm:py-1 border-b border-gray-200 bg-white">
-			<div class="flex items-center justify-between mb-1.5 max-sm:mb-0.5">
-				<h2 class="text-xs font-bold text-gray-900">{{ __("Cart Items") }}</h2>
-				<div class="flex items-center gap-1">
+		<!-- //// Neoffice — compact cart head, the zone of the cart's actions is one row (NeoResto lot 1, product owner, 05.11.2026) -->
+		<div v-if="items.length > 0" data-cart-top class="px-2 py-2 max-sm:py-1 border-b border-gray-200 bg-white">
+			<!-- //// Neoffice — compact cart head, its title bar hands its parts to the row (NeoResto lot 1, product owner, 05.11.2026) -->
+			<div data-cart-top-bar class="flex items-center justify-between mb-1.5 max-sm:mb-0.5">
+				<!-- //// Neoffice — compact cart head, the title says what the cart is, which the cart already shows: it makes way for the offers (NeoResto lot 1, product owner, 05.11.2026) -->
+				<h2 class="text-xs font-bold text-gray-900" data-cart-top-title>{{ __("Cart Items") }}</h2>
+				<!-- //// Neoffice — compact cart head, the clear, fold and sort buttons (NeoResto lot 1, product owner, 05.11.2026) -->
+				<div class="flex items-center gap-1" data-cart-top-actions>
 					<!-- Clear Cart Button -->
 					<!-- //// Neoffice — tighter on a phone, as the rest of the header zone -->
 					<button
@@ -877,8 +887,9 @@
 				</div>
 			</div>
 
+			<!-- //// Neoffice — compact cart head, the offers and the coupon share the row of the cart's actions (NeoResto lot 1, product owner, 05.11.2026) -->
 			<!-- Offers & Coupon Buttons -->
-			<div class="flex gap-2">
+			<div class="flex gap-2" data-cart-top-deals>
 				<!-- View All Offers Button -->
 				<!-- //// Neoffice — [D] Neoffice theme tokens on the class below, not stock Tailwind (87f168fe). -->
 				<button

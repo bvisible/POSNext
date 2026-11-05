@@ -147,6 +147,26 @@ describe("the cart of a restaurant till", () => {
 		expect(lineOf("TWO").find(".cart-line-single").exists()).toBe(false)
 	})
 
+	it("flags the cart as compact and marks the parts of its head, so that the customer is one slim line and the actions one row", () => {
+		cart.addItem(dish("SOUP"))
+		mountCart()
+
+		expect(wrapper.find(".cart--compact").exists()).toBe(true)
+		for (const mark of ["head", "top", "top-bar", "top-title", "top-actions", "top-deals"]) {
+			expect(wrapper.find(`[data-cart-${mark}]`).exists(), mark).toBe(true)
+		}
+		// the offers and the coupon stay buttons of the row, in their own group
+		expect(wrapper.find("[data-cart-top-deals]").findAll("button").length).toBeGreaterThanOrEqual(2)
+	})
+
+	it("leaves the head of the cart as it was when the till switched the compact lines off", () => {
+		tillSettings.value = { cart_compact_lines: 0 }
+		cart.addItem(dish("SOUP"))
+		mountCart()
+
+		expect(wrapper.find(".cart--compact").exists()).toBe(false)
+	})
+
 	it("draws a thumbnail only for a dish with a photo or a colour", () => {
 		cart.addItem(dish("PLAIN"))
 		cart.addItem(dish("PHOTO", { image: "/files/photo.jpg" }))

@@ -200,3 +200,74 @@
 		grid-row: 7;
 	}
 }
+
+/* //// Neoffice — the head of a restaurant till's cart (NeoResto lot 1, product owner, 05.11.2026: « le client prenait la moitié, maintenant il prend l'entier », « les deux gros boutons offre et coupon sont
+   //// grands », « une montagne de place »): the customer is one slim line (name and detail side by side), and the zone of the cart's actions is ONE row: the offers and the coupon on the left, clear, fold and
+   //// sort on the right (the title « Articles du panier » makes way: the cart says what it is). It wraps under 10 rem for the offers on a narrow cart. */
+.cart--compact [data-cart-head] {
+	padding-block: 0.25rem;
+}
+
+.cart--compact [data-cart-customer] {
+	padding: 0.125rem 0.25rem;
+}
+
+.cart--compact [data-cart-customer-avatar] {
+	width: 1.5rem;
+	height: 1.5rem;
+}
+
+.cart--compact [data-cart-customer-info] {
+	display: flex;
+	align-items: baseline;
+	gap: 0.5rem;
+}
+
+.cart--compact [data-cart-customer-info] > p {
+	min-width: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.cart--compact [data-cart-customer-actions] button {
+	width: 2rem;
+	height: 2rem;
+}
+
+.cart--compact [data-cart-top] {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.25rem 0.375rem;
+	padding-block: 0.25rem;
+}
+
+.cart--compact [data-cart-top-bar] {
+	display: contents;
+}
+
+.cart--compact [data-cart-top-title] {
+	display: none;
+}
+
+.cart--compact [data-cart-top-deals] {
+	order: 1;
+	flex: 1 1 10rem;
+	min-width: 0;
+	gap: 0.375rem;
+}
+
+.cart--compact [data-cart-top-actions] {
+	order: 2;
+	flex: none;
+}
+
+.cart--compact [data-cart-top-deals] button {
+	min-height: 2rem;
+	padding-block: 0.25rem;
+}
+
+.cart--compact [data-cart-top-actions] button {
+	padding-inline: 0.5rem;
+}
