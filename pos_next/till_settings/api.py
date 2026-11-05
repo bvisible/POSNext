@@ -19,6 +19,15 @@ A save names only what changed. It is refused whole when one value is unknown, s
 that type of till, not the user's to change, or out of what the screen offers; otherwise the POS Profile, the POS
 Settings and the Restaurant are saved through their documents (their own checks run), and when one of them fails
 nothing is kept.
+
+The office's page (`get_desk_settings`, `save_desk_settings`; NeoResto lot 1, task 13b, product owner, 30.10.2026:
+« une seule page que nous gérons, qui cache les deux fiches d'origine ») reads the SAME list, with what the till never
+shows: the office's own settings (the till's identity, its users, its payments, its accounts, its loyalty, the site's
+negative stock) and their three tabs. It draws only the settings of the list that live on a document: a setting of this
+computer or of the printer rows is the till screen's own business. Whoever opens it, and what each tab shows, is decided
+as for the till; the office's own settings are saved only by someone the ERP lets write the document they live on (a
+till manager's role is not enough for money and accounts). A field hidden on purpose is never served: the list leaves
+it out, and a test refuses a listed setting that its doctype hides.
 """
 
 import json
@@ -39,9 +48,15 @@ from pos_next.till_settings.registry import (
 	SECTION_DESK,
 	SECTION_RESTAURANT,
 	SECTION_TILL,
+	SETTING,
 )
 
 SAVEPOINT = "till_settings_save"
+# What the office's page reads and nobody changes: the setting that names the till itself (a till is renamed on its
+# POS Profile)
+DESK_LOCKED = ("pos_profile",)
+# The settings of the site that the office's own right on POS Settings is not enough to change
+STOCK_SETTINGS_KEYS = ("allow_negative_stock",)
 # The order a save writes in: when a later document fails, the earlier ones are undone
 WRITE_ORDER = (POS_PROFILE, POS_SETTINGS, RESTAURANT)
 # The fields of a row of opening hours, as the screen sends them
@@ -68,6 +83,28 @@ def get_till_settings(pos_profile):
 @frappe.whitelist(methods=["POST"])
 def save_till_settings(pos_profile, values):
 	"""Save what changed (`values`: {key of the list: value}) and answer the settings as `get_till_settings` does."""
+	return _save(pos_profile, values, desk=False)
+
+
+# //// Neoffice — the office's page (NeoResto lot 1, task 13b): the same list, the office's settings and tabs included.
+@frappe.whitelist()
+def get_desk_settings(pos_profile: str):
+	"""The settings of a till as the office's page shows them: `get_till_settings` plus the office's own (the till's
+	identity and users, payments, loyalty, accounts, the site's negative stock) in their tabs. Opened by the same people
+	as the till's screen; a setting is editable there only for whoever the ERP lets write its document."""
+	till, can = _open(pos_profile)
+	return _answer(till, can, desk=True)
+
+
+@frappe.whitelist(methods=["POST"])
+def save_desk_settings(pos_profile: str, values):
+	"""Save what changed on the office's page (`values`: {key of the list: value}), the office's settings included, and
+	answer as `get_desk_settings` does."""
+	return _save(pos_profile, values, desk=True)
+
+
+def _save(pos_profile, values, desk):
+	"""One save for both doors: the till's screen (`desk` False: what the till shows) and the office's page."""
 	from pos_next.restaurant import permissions
 
 	till, can = _open(pos_profile)
@@ -76,9 +113,9 @@ def save_till_settings(pos_profile, values):
 	if not isinstance(values, dict):
 		frappe.throw(_("The settings to save are not readable"))
 
-	settings = {key: _savable(key, till) for key in values}
+	settings = {key: _savable(key, till, desk) for key in values}
 	for setting in settings.values():
-		if not _editable(setting, can):
+		if not _editable(setting, can, desk):
 			frappe.throw(
 				_("{0} is not yours to change at this till").format(str(setting.label)),
 				frappe.PermissionError,
@@ -103,7 +140,10 @@ def save_till_settings(pos_profile, values):
 		raise
 	if any(setting.doctype == POS_PROFILE for setting in settings.values()):
 		_forget_what_the_item_endpoints_keep(pos_profile)
-	return _answer(_till(pos_profile), can)
+	if desk:
+		# The office's page can make the till a restaurant till (or the reverse): what its user may do is read again
+		can = _rights(frappe.get_cached_doc(POS_PROFILE, pos_profile), _restaurant_of(pos_profile))
+	return _answer(_till(pos_profile), can, desk)
 
 
 def rights_at(pos_profile):
@@ -213,24 +253,28 @@ def _rights(profile, restaurant):
 	return {"till": bool(till), "restaurant": restaurant_right}
 
 
-def _tab_is_open(tab, till, can):
+def _tab_is_open(tab, till, can, desk=False):
 	"""Whether the user sees a tab: the restaurant's on a restaurant till to its managers and the till's, the
-	till's to its managers; the office's never at the till."""
+	till's to its managers; the office's never at the till, and on the office's page to the till's managers."""
 	if tab.section == SECTION_RESTAURANT:
 		return till.restaurant_till and (can["till"] or can["restaurant"])
 	if tab.section == SECTION_TILL:
 		return can["till"]
-	return False
+	return bool(desk and tab.section == SECTION_DESK and can["till"])
 
 
-def _shown(till, can):
-	"""The settings of the list the screen shows this user at this till, in the order of the list."""
+def _shown(till, can, desk=False):
+	"""The settings of the list the screen shows this user at this till, in the order of the list. The office's page
+	(`desk`) adds the office's own settings, and draws only what lives on a document: a setting of this computer, or of
+	the printer rows, or a state or a button of the till's screen, has no place on it."""
 	tabs = {tab.key: tab for tab in registry.TABS}
 	shown = []
-	for setting in registry.till_settings():
+	for setting in registry.SETTINGS if desk else registry.till_settings():
+		if desk and (setting.store != DOCUMENT or setting.kind != SETTING):
+			continue
 		if not registry.shown_on(setting, till.restaurant_till):
 			continue
-		if not _tab_is_open(tabs[setting.tab], till, can):
+		if not _tab_is_open(tabs[setting.tab], till, can, desk):
 			continue
 		if setting.store == DOCUMENT and not frappe.get_meta(setting.doctype).has_field(setting.key):
 			# A field another app adds, where that app is not installed (or the site not migrated yet)
@@ -239,12 +283,34 @@ def _shown(till, can):
 	return shown
 
 
-def _editable(setting, can):
+def _desk_may_set(setting):
+	"""Whether the session user may set one of the office's own settings: the ERP's right on the document it lives on
+	(a till manager's role does not give the accounts and the payment methods), and, for the site's negative stock, on
+	Stock Settings and the rights its save needs. The till's identity is read, never set."""
+	if setting.key in DESK_LOCKED:
+		return False
+	if not frappe.has_permission(setting.doctype, "write"):
+		return False
+	if setting.key in STOCK_SETTINGS_KEYS:
+		# ERPNext's Stock Settings validation writes Property Setters (the barcode fields' visibility), which only a System
+		# Manager may create: for anybody else the save would fail half way, in ERPNext's code, with a bare "Not permitted".
+		# The page shows the setting read-only to them instead.
+		return bool(
+			frappe.has_permission("Stock Settings", "write")
+			and frappe.has_permission("Property Setter", "create")
+		)
+	return True
+
+
+def _editable(setting, can, desk=False):
 	"""Whether the user may change a setting: the restaurant's are its managers'; the till's are the till manager's,
 	and the few the list names one by one (its default room, its takeaway: `restaurant_manager_may_edit`, ruling 63)
 	the restaurant's managers' as well, at the till of their own restaurant (`_rights`). A setting of the till drawn in
 	a restaurant tab without that flag stays the till manager's. This computer's and the printer's are the screen's
-	own business (the printer app checks its rights)."""
+	own business (the printer app checks its rights). The office's own settings are the office's page's (`desk`), for
+	the till's managers who also hold the ERP's right on their document (`_desk_may_set`)."""
+	if setting.desk_only:
+		return bool(desk and can["till"] and _desk_may_set(setting))
 	if setting.doctype == RESTAURANT:
 		return can["restaurant"]
 	if setting.doctype in (POS_SETTINGS, POS_PROFILE):
@@ -259,24 +325,26 @@ def _site_facts():
 	return {registry.SITE_ALLOWS_NEGATIVE_STOCK: bool(_site_allows_negative_stock())}
 
 
-def _answer(till, can):
-	shown = _shown(till, can)
+def _answer(till, can, desk=False):
+	shown = _shown(till, can, desk)
 	tab_keys = {setting.tab for setting in shown}
 	group_keys = {setting.group for setting in shown}
 	facts = _site_facts()
 	definitions = []
 	for setting in shown:
 		definition = registry.serialize(setting)
-		definition["editable"] = _editable(setting, can)
+		definition["editable"] = _editable(setting, can, desk)
 		if setting.needs_site:
 			# The site does not allow what it is about: the screen shows it greyed, its help says why (ruling 82)
 			definition["greyed"] = not facts[setting.needs_site]
 		if setting.store == DOCUMENT:
 			definition["required"] = bool(frappe.get_meta(setting.doctype).get_field(setting.key).reqd)
 		if setting.widget == "table":
-			definition["columns"] = _columns(setting)
+			definition["columns"] = _columns(setting, rich=desk)
+		if desk:
+			_describe_for_the_office(setting, definition)
 		definitions.append(definition)
-	return {
+	answer = {
 		"pos_profile": till.pos_profile,
 		"restaurant_till": till.restaurant_till,
 		"restaurant": till.restaurant or "",
@@ -290,6 +358,48 @@ def _answer(till, can):
 		"values": {setting.key: _read(setting, till) for setting in shown if setting.store == DOCUMENT},
 		"choices": _choices(till, shown),
 		"status": _status(till),
+	}
+	if desk:
+		answer["company"] = till.profile.company
+		answer["left_out"] = _left_out_for_the_type(till)
+	return answer
+
+
+def _describe_for_the_office(setting, definition):
+	"""What the office's page needs to draw a setting with the desk's own controls: the doctype a link points at (a link
+	with no short list of its own: a company, an account...), and the columns of the opening hours, a table the list
+	draws by its own component at the till."""
+	if setting.widget == "link" and not setting.choices and not setting.search:
+		definition["link_doctype"] = frappe.get_meta(setting.doctype).get_field(setting.key).options
+	if setting.widget in ("select", "segmented") and not setting.options:
+		definition["options"] = [{"value": value, "label": _(value)} for value in _allowed_options(setting)]
+	if setting.key == "opening_hours":
+		definition["columns"] = _columns(setting, rich=True)
+
+
+def _left_out_for_the_type(till):
+	"""How many settings the page leaves out because of the TYPE of this till: the restaurant's on a shop till, the
+	shop's on a restaurant till. Said at the foot of the page, so that nobody looks for them in vain."""
+	from pos_next.restaurant.mode import neoresto_active
+
+	restaurant_only = shop_only = 0
+	for setting in registry.SETTINGS:
+		if (
+			setting.store != DOCUMENT
+			or setting.kind != SETTING
+			or registry.shown_on(setting, till.restaurant_till)
+		):
+			continue
+		if not frappe.get_meta(setting.doctype).has_field(setting.key):
+			continue
+		if setting.till == registry.RESTAURANT_TILL:
+			restaurant_only += 1
+		else:
+			shop_only += 1
+	return {
+		# A site that does not run NeoResto has no restaurant till to speak of
+		"restaurant": restaurant_only if neoresto_active() else 0,
+		"shop": shop_only,
 	}
 
 
@@ -309,14 +419,22 @@ def _table_fields(setting):
 	return [df.fieldname for df in frappe.get_meta(child).fields if df.fieldtype not in no_value_fields]
 
 
-def _columns(setting):
-	"""The value columns of a table setting, as the screen draws them: name, type and translated label."""
+def _columns(setting, rich=False):
+	"""The value columns of a table setting, as the screen draws them: name, type and translated label. The office's
+	page (`rich`) draws them with the desk's own controls and asks for what those need: the options (the doctype of a
+	link, the values of a select) and whether the column is required."""
 	child = frappe.get_meta(frappe.get_meta(setting.doctype).get_field(setting.key).options)
-	return [
-		{"fieldname": df.fieldname, "fieldtype": df.fieldtype, "label": _(df.label)}
-		for df in child.fields
-		if df.fieldtype not in no_value_fields
-	]
+	columns = []
+	for df in child.fields:
+		if df.fieldtype in no_value_fields:
+			continue
+		column = {"fieldname": df.fieldname, "fieldtype": df.fieldtype, "label": _(df.label)}
+		if rich:
+			column["options"] = df.options or ""
+			column["reqd"] = cint(df.reqd)
+			column["default"] = df.default or ""
+		columns.append(column)
+	return columns
 
 
 def _read(setting, till):
@@ -384,14 +502,17 @@ def _status(till):
 	}
 
 
-def _savable(key, till):
-	"""The setting of the list a save may write at this till; refuses whatever the till's screen does not show."""
+def _savable(key, till, desk=False):
+	"""The setting of the list a save may write at this till; refuses whatever the till's screen does not show (the
+	office's page, `desk`, also takes the office's own settings)."""
 	try:
 		setting = registry.get(key)
 	except KeyError:
 		frappe.throw(_("Unknown setting of the till: {0}").format(key))
-	if setting.desk_only:
+	if setting.desk_only and not desk:
 		frappe.throw(_("{0} is set at the office, not at the till").format(str(setting.label)))
+	if desk and setting.kind != SETTING:
+		frappe.throw(_("{0} is not a setting of this till").format(str(setting.label)))
 	if (
 		setting.store != DOCUMENT
 		or not registry.shown_on(setting, till.restaurant_till)
@@ -420,7 +541,7 @@ def _clean(setting, value, till, choices):
 	if widget == "time":
 		return _time_of_day(label, value)
 	if widget in ("select", "segmented"):
-		allowed = [option for option, _label in setting.options]
+		allowed = _allowed_options(setting)
 		if cstr(value) not in allowed:
 			frappe.throw(_("{0} cannot be {1}").format(label, cstr(value) or _("empty")))
 		return cstr(value)
@@ -446,6 +567,15 @@ def _clean(setting, value, till, choices):
 	if not isinstance(value, str | type(None)):
 		frappe.throw(_("{0} is a text").format(label))
 	return cstr(value)
+
+
+def _allowed_options(setting):
+	"""The values a select setting takes: the list's, which are the only ones the till offers; for one of the office's
+	own, with no values in the list, the doctype's."""
+	if setting.options or not setting.desk_only:
+		return [option for option, _label in setting.options]
+	stored = frappe.get_meta(setting.doctype).get_field(setting.key).options or ""
+	return [option for option in stored.split("\n") if option]
 
 
 def _number(label, value, whole):

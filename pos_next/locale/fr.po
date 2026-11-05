@@ -24026,3 +24026,80 @@ msgstr "L'heure à laquelle commence une nouvelle journée d'activité, pour la 
 #, python-brace-format
 msgid "{0} is a time of day, like 05:00"
 msgstr "{0} doit être une heure du jour, comme 05:00"
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:916
+msgid "Check this setting"
+msgstr "Vérifiez ce réglage"
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:323
+msgid "Choose a till to see its settings."
+msgstr "Choisissez une caisse pour voir ses réglages."
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:266
+msgid "Discard the changes"
+msgstr "Abandonner les modifications"
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:910
+msgid "Nothing to change"
+msgstr "Rien à modifier"
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:203
+msgid "Office"
+msgstr "Bureau"
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:272
+msgid "Open the POS Profile form"
+msgstr "Ouvrir la fiche Profil de caisse"
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:269
+msgid "Open the POS Settings form"
+msgstr "Ouvrir la fiche Paramètres POS"
+
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.js:58
+#: pos_next/public/js/pos_profile.js:15
+msgid "Open the till settings page"
+msgstr "Ouvrir la page des paramètres des caisses"
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:933
+msgid "Settings saved"
+msgstr "Paramètres enregistrés"
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:555
+msgid "The name of a till is changed on its POS Profile."
+msgstr "Le nom d'une caisse se modifie sur son profil de caisse."
+
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.js:54
+#: pos_next/public/js/pos_profile.js:11
+msgid "The settings of a till are set on one page: tabs, help behind a lightbulb and one Save. Use this form only for support."
+msgstr "Les paramètres d'une caisse se règlent sur une seule page : onglets, aide derrière une ampoule et un seul bouton Enregistrer. N'utilisez ce formulaire que pour le support."
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:559
+msgid "This changes the stock settings of the whole site: it is the administrator's."
+msgstr "Ce changement modifie les réglages de stock de tout le site : il relève de l'administrateur."
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:590
+msgid "What this computer keeps (printer, sounds, QZ Tray) is set on the till's own screen."
+msgstr "Ce que cet ordinateur conserve (imprimante, sons, QZ Tray) se règle sur l'écran propre à la caisse."
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:568
+msgid "You can read this setting. Changing it is the till manager's."
+msgstr "Vous pouvez consulter ce réglage. Sa modification revient au responsable de caisse."
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:564
+#, python-brace-format
+msgid "You can read this setting. Changing it needs the right to change {0} in the ERP."
+msgstr "Vous pouvez consulter ce réglage. Le modifier exige le droit de modifier {0} dans l'ERP."
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:331
+msgid "You have changes that are not saved. Leave them?"
+msgstr "Vous avez des modifications non enregistrées. Les abandonner ?"
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:576
+#, python-brace-format
+msgid "{0} settings of a restaurant till are not shown: this till is a shop till."
+msgstr "{0} réglages d'une caisse restaurant ne sont pas affichés : cette caisse est une caisse boutique."
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:583
+#, python-brace-format
+msgid "{0} settings of a shop till are not shown: this till is a restaurant till."
+msgstr "{0} réglages d'une caisse boutique ne sont pas affichés : cette caisse est une caisse restaurant."
