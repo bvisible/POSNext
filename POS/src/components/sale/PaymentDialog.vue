@@ -945,6 +945,9 @@
 							</div>
 						</div>
 
+						<!-- //// Neoffice — the payments typed so far, one slim row each: a cash one can be taken back before the ticket is closed (the amount is then to pay again, in cash or with a card or TWINT), one a terminal captured is locked (NeoResto lot 1, product owner, 05.11.2026) -->
+						<PaymentEntries :entries="paymentEntries" :format="formatCurrency" @remove="takeBackPayment" />
+
 						<!-- Payment Status - Two Equal Halves -->
 						<div class="border-t border-gray-200">
 							<div class="grid grid-cols-2 divide-x divide-gray-200">
@@ -2588,6 +2591,9 @@ import {
 } from "@/utils/terminalPaymentGuard";
 //// Neoffice — the method of the « exact » button (see the file's header).
 import { exactPaymentMethod } from "@/utils/exactPayment";
+//// Neoffice — the payments typed so far, with the cash ones taken back before the ticket is closed (NeoResto lot 1, product owner, 05.11.2026; utils/paymentEntries.js)
+import PaymentEntries from "@/components/sale/PaymentEntries.vue";
+import { lockedEntries, withoutEntry } from "@/utils/paymentEntries";
 import { offlineWorker } from "@/utils/offline/workerClient";
 import { logger } from "@/utils/logger";
 //// Neoffice — Button pulled in for the partial-payment confirmation dialog added
@@ -5017,7 +5023,14 @@ function addCreditAccountPayment() {
 }
 
 function clearAll() {
-	paymentEntries.value = [];
+	//// Neoffice — what a card or TWINT terminal captured stays: the customer has paid it, and the dialog must not forget it (NeoResto lot 1, 05.11.2026). Upstream emptied the whole list.
+	paymentEntries.value = lockedEntries(paymentEntries.value);
+	customAmount.value = "";
+}
+
+//// Neoffice — takes back ONE payment typed before the ticket is closed, a cash one (a terminal's is locked): the customer has not enough cash on them, the amount is paid again with another method (NeoResto lot 1, product owner, 05.11.2026)
+function takeBackPayment(index) {
+	paymentEntries.value = withoutEntry(paymentEntries.value, index);
 	customAmount.value = "";
 }
 
