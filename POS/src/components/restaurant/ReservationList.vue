@@ -342,6 +342,7 @@ function whenOf(res) {
 	flex-shrink: 0;
 }
 
+/* //// Neoffice — the three filters keep a width that fits what they hold and stand at the start, side by side (NeoResto lot 1, product owner, 05.11.2026: the screens stretched every field across the whole dialog): they were a third of a 1500 px dialog each */
 .filter-input {
 	padding: 6px 10px;
 	border: 1px solid var(--border-color, #dcd4c7);
@@ -349,7 +350,7 @@ function whenOf(res) {
 	font-size: 13px;
 	background: var(--control-bg, #fff);
 	color: var(--text-color, #1f2937);
-	flex: 1;
+	flex: 0 1 220px;
 	min-width: 0;
 }
 

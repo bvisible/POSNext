@@ -444,6 +444,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* //// Neoffice — the form keeps a readable width, centred, and its buttons stay in view (NeoResto lot 1, product owner, 05.11.2026: fields stretched across the whole dialog, a date field 1500 px wide, the buttons under a long form): the public booking page is narrower than this and is not changed by it */
 .reservation-form {
 	display: flex;
 	flex-direction: column;
@@ -451,6 +452,9 @@ onMounted(() => {
 	padding: 4px 0;
 	overflow-y: auto;
 	max-height: 100%;
+	width: 100%;
+	max-width: 1040px;
+	margin: 0 auto;
 }
 
 .form-title {
@@ -693,8 +697,11 @@ textarea.form-control {
 	display: flex;
 	justify-content: flex-end;
 	gap: 8px;
-	padding-top: 8px;
+	padding: 8px 0;
 	border-top: 1px solid var(--border-color, #e5e7eb);
+	position: sticky;
+	bottom: 0;
+	background: #fff;
 }
 
 .btn-cancel,
