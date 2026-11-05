@@ -159,7 +159,29 @@ def _ours(tab, **changes):
 
 def _borrowed(tabs, key):
 	"""The tab of a space of the theme that has this key, or None where the theme does not declare it."""
-	return next((tab for tab in tabs if tab["key"] == key), None)
+	tab = next((tab for tab in tabs if tab["key"] == key), None)
+	return _without_legacy(tab) if tab else None
+
+
+def _without_legacy(tab):
+	"""A tab as the restaurant takes it from another space: without the old till's doorways. The point of sale keeps a button to
+	ERPNext's own POS documents and its register report while a site still holds some (the theme flags those links `legacy`);
+	the restaurant has no such documents and never will - it has no client of the old till (product owner, 05.11.2026) - so none of
+	them is carried over."""
+	from neoffice_theme.workspace_spaces import retail
+
+	legacy_reports = set(getattr(retail, "LEGACY_REPORTS", ()))
+	tab = dict(tab)
+	if tab.get("links"):
+		tab["links"] = [link for link in tab["links"] if not link.get("legacy")]
+	if tab.get("groups"):
+		tab["groups"] = [
+			dict(group, reports=[name for name in group["reports"] if name not in legacy_reports])
+			if "reports" in group
+			else group
+			for group in tab["groups"]
+		]
+	return tab
 
 
 def overview_tab():

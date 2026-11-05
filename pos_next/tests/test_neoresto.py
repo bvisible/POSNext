@@ -256,6 +256,13 @@ class TestTheTabs(FrappeTestCase):
 		super().setUp()
 		frappe.set_user("Administrator")
 		self.addCleanup(setattr, frappe.local, "neo_declared_business_apps", None)
+		# The point of sale lists its legacy doorways only where the site holds the old POS documents: these tests are about the tabs
+		# the restaurant takes, so the site holds none (the legacy test below says the opposite)
+		retail = theme_or_skip("neoffice_theme.workspace_spaces.retail", "tabs")
+		if hasattr(retail, "_has_documents"):
+			patcher = patch.object(retail, "_has_documents", return_value=False)
+			patcher.start()
+			self.addCleanup(patcher.stop)
 		# The site runs NeoResto unless a test says otherwise
 		flag = a_site_where_neoresto_is(1)
 		flag.__enter__()
@@ -390,6 +397,24 @@ class TestTheTabs(FrappeTestCase):
 			for name in group["reports"]
 		]
 		self.assertNotIn(neoresto.TIPS_REPORT, listed)
+
+	def test_the_restaurant_takes_no_legacy_of_the_point_of_sale(self):
+		retail = theme_or_skip("neoffice_theme.workspace_spaces.retail", "legacy_links")
+		with patch.object(retail, "_has_documents", return_value=True):
+			theirs = retail.tabs()
+			ours = tabs()["Resto"]
+		# The point of sale keeps its doorways to the old documents while the site holds them...
+		legacy_links = [link for tab in theirs for link in tab.get("links") or [] if link.get("legacy")]
+		self.assertEqual({link["doctype"] for link in legacy_links}, set(retail.LEGACY_DOCTYPES))
+		listed = {name for tab in theirs for group in tab.get("groups") or [] for name in group["reports"]}
+		self.assertTrue(set(retail.LEGACY_REPORTS) <= listed)
+		# ...the restaurant never carries one, a restaurant has no client of the old till
+		self.assertEqual([link for tab in ours for link in tab.get("links") or [] if link.get("legacy")], [])
+		for tab in ours:
+			for group in tab.get("groups") or []:
+				self.assertFalse(set(retail.LEGACY_REPORTS) & set(group.get("reports") or []), tab["key"])
+		# The sales tab is the point of sale's invoices: its legacy button does not come along
+		self.assertEqual(next(tab for tab in ours if tab["key"] == "sales").get("links"), [])
 
 	def test_the_restaurants_report_is_a_standard_report_of_this_app(self):
 		with open(
