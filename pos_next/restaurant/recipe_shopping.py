@@ -408,6 +408,11 @@ def cost(said, portions=None, markup=None) -> dict:
 			frappe.throw(_("The coefficient is a number above 0 and up to {0}.").format(MOST_MARKUP))
 	else:
 		markup = None
+	return cost_of(cand, target, markup)
+
+
+def cost_of(cand: dict, target: float, markup: float | None = None) -> dict:
+	"""What `target` portions of a dish already found cost: the reading of `cost`, shared with the analysis of the card."""
 	rows, total, missing = [], 0.0, []
 	for row in _rows_of(cand, target):
 		entry = {

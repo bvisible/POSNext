@@ -7,6 +7,7 @@ import json
 
 import frappe
 
+from pos_next.restaurant import card_analysis as card_reading
 from pos_next.restaurant import recipe_library, recipe_plan, recipe_shopping, recipes, season
 
 
@@ -85,6 +86,12 @@ def apply_recipes(recipes_said):
 def plan_recipe_shopping(dishes):
 	"""What the dishes planned come to on the shopping list (a JSON list of {name, portions}); nothing is written."""
 	return recipe_shopping.plan(_json(dishes))
+
+
+@frappe.whitelist()
+def card_analysis(months=None, from_date=None, to_date=None):
+	"""The dishes sold, placed on what they sell and what they earn, family by family; nothing written (card_analysis.py)."""
+	return card_reading.card(months or None, from_date or None, to_date or None)
 
 
 @frappe.whitelist()

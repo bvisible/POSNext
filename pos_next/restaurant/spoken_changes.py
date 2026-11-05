@@ -14,7 +14,11 @@ As for adding, the work is in two steps and never one:
 - `apply` carries out the changes the owner confirmed, all or none.
 
 The speech recognition is wrong now and then, and a line taken off by mistake is a line the owner no longer sees: hence the proposal.
-Nothing here reads the sentence itself: the agent that listens turns it into `{action, text, qty, state}` changes.
+Nothing here reads the sentence itself: the agent that listens turns it into `{action, text, qty, unit, state}` changes.
+
+A new quantity is in the line's own unit unless a `unit` was said. A measure (« mets les carottes à 12 kilos ») comes to whole packs
+of what the line is bought in; another packaging, or a measure nothing converts, is left to the owner (`no_conversion`): a line of
+bags set to 12 would be 60 kg.
 """
 
 import frappe
@@ -101,6 +105,9 @@ def _change(raw) -> dict:
 		if qty <= 0:
 			frappe.throw(_("The new quantity of {0} must be more than zero.").format(change["text"]))
 		change["qty"] = qty
+		unit = str(raw.get("unit") or "").strip()
+		if unit:
+			change["unit"] = unit
 	if action == STATE:
 		state = str(raw.get("state") or "").strip().lower()
 		if state not in STATES:
@@ -131,24 +138,72 @@ def _closest(change: dict, lines: list) -> list[tuple[int, object]]:
 	]
 
 
+def _packs_of(line) -> dict:
+	"""A line as spoken_list._in_packs reads an article: the unit it is counted in and the packaging it is bought in."""
+	if not line.item:
+		return {"stock_uom": line.unit_text, "packs": []}
+	stock = frappe.db.get_value("Item", line.item, "stock_uom")
+	if not line.uom or line.uom == stock:
+		return {"stock_uom": stock, "packs": []}
+	content = frappe.db.get_value(
+		"UOM Conversion Detail", {"parenttype": "Item", "parent": line.item, "uom": line.uom}, "conversion_factor"
+	)
+	return {"stock_uom": stock, "packs": [{"uom": line.uom, "content": content}]}
+
+
+def _quantity_of(change: dict, line) -> float | None:
+	"""The quantity a line is to hold, in its own unit; None when what was said does not count what the line counts."""
+	unit = change.get("unit")
+	if not unit:
+		return change["qty"]
+	measure = spoken_list._measure(unit)
+	if measure:
+		counted = spoken_list._in_packs(_packs_of(line), measure, change["qty"])
+		return counted[1] if counted else None
+	own = _unit(line)
+	if own and not set(spoken_list._words(unit)) & set(spoken_list._words(own)):
+		return None
+	return change["qty"]
+
+
+def _target(change: dict, position: int, line) -> dict:
+	"""A line a change touches, as Nora reads it, with what a quantity said in a unit comes to on it (`new_qty`, None when unknown)."""
+	described = _described(position, line)
+	if change.get("unit"):
+		described["new_qty"] = _quantity_of(change, line)
+	return described
+
+
 def _edit(change: dict, line) -> dict:
 	"""What `apply` carries out for a line: the change, with the line's name (its place may have moved by the time of the yes)."""
 	# emptying the list is taking every line off
 	edit = {"row": line.name, "action": REMOVE if change["action"] == CLEAR else change["action"]}
 	if "qty" in change:
-		edit["qty"] = change["qty"]
+		edit["qty"] = _quantity_of(change, line)
 	if "state" in change:
 		edit["state"] = change["state"]
 	return edit
 
 
+def _settle(answer: dict, change: dict, found: list) -> None:
+	"""Fill the answer of a change that names its lines: matched, or `no_conversion` when one of them cannot count what was said."""
+	targets = [_target(change, position, line) for position, line in found]
+	if any(target.get("new_qty", 0) is None for target in targets):
+		answer.update(no_conversion=True, targets=targets)
+		return
+	answer.update(status=MATCHED, targets=targets, edits=[_edit(change, line) for _position, line in found])
+	if spoken_list._measure(change.get("unit")):
+		answer.update(qty=targets[0]["new_qty"], asked=f"{change['qty']:g} {change['unit']}")
+
+
 def propose(changes: list) -> dict:
 	"""What was understood of the changes said, and nothing written.
 
-	`changes` is [{action, text, qty, state, every}] (`text` names a line by its words, `qty` is the new quantity, `state` one of
-	STATES, `every` takes every line the words fit instead of asking which; `clear` has no text and means the whole list). Answers
-	{list, lines, counts, total}: for each change, in order, `status` (matched, ambiguous or unknown), the `targets` it will touch
-	when matched, the `candidates` when ambiguous."""
+	`changes` is [{action, text, qty, unit, state, every}] (`text` names a line by its words, `qty` is the new quantity, `unit` what
+	it was said in when it was, `state` one of STATES, `every` takes every line the words fit instead of asking which; `clear` has no
+	text and means the whole list). Answers {list, lines, counts, total}: for each change, in order, `status` (matched, ambiguous or
+	unknown), the `targets` it will touch when matched, the `candidates` when ambiguous, `no_conversion` when the line cannot count
+	what was said, `asked` when a measure was turned into packs."""
 	if not isinstance(changes, list) or not changes:
 		frappe.throw(_("Say what to change on the list."))
 	if len(changes) > MOST_CHANGES:
@@ -170,14 +225,10 @@ def propose(changes: list) -> dict:
 		else:
 			found = _closest(change, lines)
 			if len(found) == 1 or (found and change["every"]):
-				answer.update(
-					status=MATCHED,
-					targets=[_described(p, line) for p, line in found],
-					edits=[_edit(change, line) for _p, line in found],
-				)
+				_settle(answer, change, found)
 			elif found:
 				answer.update(
-					status=AMBIGUOUS, candidates=[_described(p, line) for p, line in found[:CANDIDATES]]
+					status=AMBIGUOUS, candidates=[_target(change, p, line) for p, line in found[:CANDIDATES]]
 				)
 		answered.append(answer)
 	counts = {

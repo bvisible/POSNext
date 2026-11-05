@@ -40,7 +40,12 @@ class TestASpokenChangeOfTheShoppingListIsProposedThenApplied(FrappeTestCase):
 			_supplier(name)
 		_bottle_uom()
 		cls.company = _company()
-		cls.group = frappe.db.get_value("Item Group", {"is_group": 0}, "name", order_by="lft")
+		# a family with no defaults of its own: a real site's may hold several for one company, which refuses a new article
+		cls.group = frappe.db.sql(
+			"""select name from `tabItem Group` family where is_group = 0 and not exists (
+				select 1 from `tabItem Default` d where d.parenttype = 'Item Group' and d.parent = family.name
+			) order by lft limit 1"""
+		)[0][0]
 		frappe.set_user(OWNER)
 		# distinctive words, so that nothing the site already holds is taken for them
 		cls.parsnip = supplies.create_supply_item("Panais de Zurich", cls.group, BOTTLE_UOM)
@@ -151,6 +156,47 @@ class TestASpokenChangeOfTheShoppingListIsProposedThenApplied(FrappeTestCase):
 		first, second = self._edits(proposal)
 		self.assertEqual((first["action"], first["qty"]), ("quantity", 5.5))
 		self.assertEqual((second["action"], second["state"]), ("state", "bought"))
+
+	# -- a new quantity said in a unit ------------------------------------------------------------------------------
+
+	def _quantity(self, text, qty, unit):
+		(line,) = self._propose({"action": "quantity", "text": text, "qty": qty, "unit": unit})["lines"]
+		return line
+
+	def test_a_new_quantity_in_a_measure_comes_to_whole_packs_of_the_line(self):
+		# « mets les panais à 12 kilos »: the line is in bags of 5 kg, and 12 would have meant 60 kg
+		line = self._quantity("panais", 12, "kilos")
+		self.assertEqual((line["status"], line["qty"], line["asked"]), ("matched", 3, "12 kilos"))
+		self.assertEqual(line["edits"][0]["qty"], 3)
+		self.assertEqual(line["targets"][0]["new_qty"], 3)
+
+	def test_a_word_of_the_lines_own_packaging_counts_packs(self):
+		line = self._quantity("panais", 4, "bags")
+		self.assertEqual((line["status"], line["edits"][0]["qty"]), ("matched", 4))
+		self.assertNotIn("asked", line)
+
+	def test_a_free_line_in_a_measure_is_kept_in_its_own_unit(self):
+		name = self.name
+		spoken_list.add([{"free": True, "text": "oignons nouveaux", "qty": 2, "unit_text": "kg"}], name)
+		line = self._quantity("oignons nouveaux", 500, "g")
+		self.assertEqual((line["status"], line["edits"][0]["qty"]), ("matched", 0.5))
+
+	def test_what_the_line_cannot_count_is_asked_about_and_never_guessed(self):
+		for text, qty, unit in (("biere", 3, "litres"), ("panais", 2, "crates"), ("torchons", 2, "kg")):
+			line = self._quantity(text, qty, unit)
+			self.assertEqual(line["status"], "unknown", unit)
+			self.assertTrue(line["no_conversion"], unit)
+			self.assertEqual(line["edits"], [], unit)
+
+	def test_the_candidates_of_a_quantity_in_a_unit_say_what_each_comes_to(self):
+		line = self._quantity("topinambour", 2, "kg")
+		self.assertEqual(line["status"], "ambiguous")
+		self.assertEqual([c["new_qty"] for c in line["candidates"]], [None, None], "nothing says what they hold")
+
+	def test_the_quantity_is_written_in_the_lines_unit(self):
+		proposal = self._propose({"action": "quantity", "text": "panais", "qty": 7, "unit": "kg"})
+		spoken_changes.apply(self._edits(proposal))
+		self.assertEqual(self._lines()[0].qty, 2)
 
 	def test_a_change_that_makes_no_sense_is_refused(self):
 		for bad in (

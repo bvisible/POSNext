@@ -60,7 +60,12 @@ class ShoppingCase(FrappeTestCase):
 			self.skipTest("The site has no Kg, Litre or Nos unit")
 		if not frappe.get_meta("Item").has_field("restaurant_recipe"):
 			self.skipTest("The site has no recipe field on its articles")
-		self.group = frappe.db.get_value("Item Group", {"is_group": 0}, "name", order_by="lft")
+		# a family with no defaults of its own: a real site's may hold several for one company, which refuses a new article
+		self.group = frappe.db.sql(
+			"""select name from `tabItem Group` family where is_group = 0 and not exists (
+				select 1 from `tabItem Default` d where d.parenttype = 'Item Group' and d.parent = family.name
+			) order by lft limit 1"""
+		)[0][0]
 		_supplier(WHOLESALER)
 		with as_role("client_admin"):
 			self.pasta = supplies.create_supply_item(PASTA, self.group, "Kg")
