@@ -23,6 +23,7 @@ nothing is kept.
 
 import json
 import math
+import re
 
 import frappe
 from frappe import _
@@ -346,7 +347,21 @@ def _read(setting, till):
 		return cint(value)
 	if setting.widget in ("float", "percent"):
 		return flt(value)
+	if setting.widget == "time":
+		return _hour(value)
 	return value if value is not None else ""
+
+
+# A time of day as the screen writes it: two digits, a colon, two digits (00:00 to 23:59)
+TIME_OF_DAY = re.compile(r"([01][0-9]|2[0-3]):[0-5][0-9]")
+
+
+def _time_of_day(label, value):
+	"""A time of day the way a Time field keeps it: the screen sends HH:MM, the document stores HH:MM:00."""
+	text = value.strip() if isinstance(value, str) else ""
+	if not TIME_OF_DAY.fullmatch(text):
+		frappe.throw(_("{0} is a time of day, like 05:00").format(label))
+	return f"{text}:00"
 
 
 def _hour(value):
@@ -402,6 +417,8 @@ def _clean(setting, value, till, choices):
 		number = _number(label, value, whole=False)
 		_within(setting, label, number)
 		return number
+	if widget == "time":
+		return _time_of_day(label, value)
 	if widget in ("select", "segmented"):
 		allowed = [option for option, _label in setting.options]
 		if cstr(value) not in allowed:

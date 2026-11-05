@@ -97,6 +97,11 @@ export function effectsOf(settings, changedKeys) {
 	return new Set(changedKeys.map((key) => byKey[key]?.applies).filter(Boolean))
 }
 
+// A time of day as the field writes it and the server takes it: HH:MM, 00:00 to 23:59 (an unfinished field is "")
+export function isTimeOfDay(value) {
+	return /^([01]\d|2[0-3]):[0-5]\d$/.test(String(value ?? ""))
+}
+
 // A number kept within the bounds of its setting (a value out of them is never saved)
 export function withinBounds(setting, value) {
 	const number = Number(value)

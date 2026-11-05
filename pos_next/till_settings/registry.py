@@ -59,6 +59,7 @@ WIDGETS = (
 	"float",
 	"percent",
 	"duration",
+	"time",
 	"select",
 	"segmented",
 	"link",
@@ -393,6 +394,23 @@ SETTINGS = (
 			("Never", _lt("Never")),
 			("Each shift", _lt("At each shift")),
 		),
+		applies=APPLIES_RESTAURANT,
+	),
+	# //// Neoffice — the hour a business day begins (NeoResto lot 1, Daniel, 05.11.2026): it only decides when the ticket numbers start again
+	# //// at 1 (`restaurant.tickets`), so it is shown beside that choice and greyed unless the numbers start again every business day.
+	Setting(
+		"business_day_start",
+		"service",
+		_lt("Business day starts at"),
+		_lt(
+			"The hour a new business day begins, for the numbering of the tickets: with « Every business day », the numbers"
+			" start again at 1 at this hour. A restaurant that closes after midnight keeps its night on one day (the default,"
+			" 05:00, suits it). The end-of-day report does not follow it: it follows each shift, from its opening to its closing."
+		),
+		"time",
+		doctype=RESTAURANT,
+		till=RESTAURANT_TILL,
+		depends_on=(equals("ticket_number_reset", "Business day"),),
 		applies=APPLIES_RESTAURANT,
 	),
 	Setting(
@@ -2048,10 +2066,6 @@ NOT_LISTED = {
 	},
 	RESTAURANT: {
 		"restaurant_name": _RESTAURANT_FORM,
-		"business_day_start": (
-			_RESTAURANT_FORM + " (a time of day, which the screen has no widget for yet; the default 05:00 suits"
-			" a restaurant that closes after midnight)"
-		),
 		"company": _RESTAURANT_FORM,
 		"enabled": _RESTAURANT_FORM,
 		"logo": _RESTAURANT_FORM,

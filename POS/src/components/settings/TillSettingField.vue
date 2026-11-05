@@ -88,6 +88,23 @@
 				</div>
 			</div>
 
+			<!-- A time of day -->
+			<div
+				v-else-if="setting.widget === 'time'"
+				class="flex h-9 w-32 items-center rounded-[10px] border bg-white px-3"
+				:class="timeInvalid ? 'border-pos-danger' : 'border-pos-line'"
+			>
+				<input
+					:id="inputId"
+					type="time"
+					class="h-full w-full min-w-0 border-0 bg-transparent p-0 text-[14px] text-pos-ink focus:outline-none focus:ring-0"
+					:value="modelValue ?? ''"
+					:disabled="closed"
+					:aria-invalid="timeInvalid ? 'true' : 'false'"
+					@input="emit('update:modelValue', $event.target.value)"
+				/>
+			</div>
+
 			<!-- A few options, in one line -->
 			<div
 				v-else-if="setting.widget === 'segmented'"
@@ -290,7 +307,7 @@
 import { computed, ref, watch } from "vue"
 import { call } from "frappe-ui"
 import HelpBulb from "./HelpBulb.vue"
-import { withinBounds } from "./tillSettingsForm"
+import { isTimeOfDay, withinBounds } from "./tillSettingsForm"
 
 const props = defineProps({
 	// The setting's entry in the list (pos_next.till_settings.registry.serialize, plus `editable`)
@@ -330,6 +347,9 @@ function onNumber(text) {
 	const number = props.setting.widget === "int" ? Number.parseInt(text, 10) : Number.parseFloat(text)
 	emit("update:modelValue", Number.isFinite(number) ? number : text)
 }
+
+// ---- a time of day: an unfinished one is shown in red and keeps Save waiting
+const timeInvalid = computed(() => props.setting.widget === "time" && !isTimeOfDay(props.modelValue))
 
 // ---- a length of time, kept in seconds
 const durationHours = computed(() => Math.floor((Number(props.modelValue) || 0) / 3600))

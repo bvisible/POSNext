@@ -448,6 +448,7 @@ import {
 	railSections,
 	untickExcluded,
 	withinBounds,
+	isTimeOfDay,
 } from "@/components/settings/tillSettingsForm"
 import { usePOSEvents } from "@/composables/usePOSEvents"
 import { useQzTray } from "@/composables/useQzTray"
@@ -654,11 +655,12 @@ const invalid = computed(() =>
 	(screen.value?.settings || []).some(
 		(setting) =>
 			setting.editable &&
-			["int", "float", "percent"].includes(setting.widget) &&
 			setting.key in draft &&
 			!greyed(setting) &&
-			!(setting.placeholder && !draft[setting.key]) &&
-			!withinBounds(setting, draft[setting.key])
+			((["int", "float", "percent"].includes(setting.widget) &&
+				!(setting.placeholder && !draft[setting.key]) &&
+				!withinBounds(setting, draft[setting.key])) ||
+				(setting.widget === "time" && !isTimeOfDay(draft[setting.key])))
 	)
 )
 const canSave = computed(() => Boolean(screen.value) && dirty.value && !invalid.value && !saving.value)

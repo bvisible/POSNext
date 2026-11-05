@@ -24013,3 +24013,16 @@ msgstr "Ce workflow est utilisé par {0} : assignez-leur d'abord un autre workfl
 #, python-brace-format
 msgid "Added: {0}"
 msgstr "Ajout : {0}"
+
+#: pos_next/till_settings/registry.py:404
+msgid "Business day starts at"
+msgstr "La journée d'activité commence à"
+
+#: pos_next/till_settings/registry.py:406
+msgid "The hour a new business day begins, for the numbering of the tickets: with « Every business day », the numbers start again at 1 at this hour. A restaurant that closes after midnight keeps its night on one day (the default, 05:00, suits it). The end-of-day report does not follow it: it follows each shift, from its opening to its closing."
+msgstr "L'heure à laquelle commence une nouvelle journée d'activité, pour la numérotation des tickets : avec « Chaque jour », les numéros repartent à 1 à cette heure. Un restaurant qui ferme après minuit garde sa nuit sur un même jour (la valeur par défaut, 05:00, lui convient). Le rapport de fin de journée ne suit pas ce réglage : il suit chaque service de la caisse, de son ouverture à sa clôture."
+
+#: pos_next/till_settings/api.py:363
+#, python-brace-format
+msgid "{0} is a time of day, like 05:00"
+msgstr "{0} doit être une heure du jour, comme 05:00"

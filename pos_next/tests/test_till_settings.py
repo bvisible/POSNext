@@ -67,6 +67,7 @@ WIDGET_FIELDTYPES = {
 	"float": {"Float", "Currency"},
 	"percent": {"Float", "Percent"},
 	"duration": {"Duration"},
+	"time": {"Time"},
 	"select": {"Select"},
 	"segmented": {"Select"},
 	"link": {"Link"},

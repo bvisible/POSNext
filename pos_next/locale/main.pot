@@ -26279,3 +26279,16 @@ msgstr ""
 #, python-brace-format
 msgid "Added: {0}"
 msgstr ""
+
+#: pos_next/till_settings/registry.py:404
+msgid "Business day starts at"
+msgstr ""
+
+#: pos_next/till_settings/registry.py:406
+msgid "The hour a new business day begins, for the numbering of the tickets: with « Every business day », the numbers start again at 1 at this hour. A restaurant that closes after midnight keeps its night on one day (the default, 05:00, suits it). The end-of-day report does not follow it: it follows each shift, from its opening to its closing."
+msgstr ""
+
+#: pos_next/till_settings/api.py:363
+#, python-brace-format
+msgid "{0} is a time of day, like 05:00"
+msgstr ""
