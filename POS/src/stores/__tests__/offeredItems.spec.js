@@ -74,6 +74,25 @@ vi.mock("@/composables/useAuthorization", () => ({
 	}),
 }))
 vi.mock("@/data/session", () => ({ sessionUser: () => "cashier@example.com" }))
+// The real cart pulls the offline layer in through the offers store and the network state. Left real, it starts a
+// worker, a Dexie database that does not exist in jsdom, a restart timer (4 s) and a network ping, and every one of
+// them logs after the file has finished: vitest then fails the whole run with "Closing rpc while onUserConsoleLog was
+// pending" although all the tests passed (CI frontend-tests, 2026-11-05). Doubles keep this file to the cart.
+vi.mock("@/utils/offline/offlineState", () => ({
+	offlineState: { isOffline: false, getConnectionQuality: () => "good", subscribe: vi.fn() },
+}))
+vi.mock("@/utils/offline/workerClient", () => ({
+	offlineWorker: new Proxy({}, { get: () => vi.fn(async () => null) }),
+}))
+vi.mock("@/utils/offline/db", () => ({
+	db: {},
+	getOneTimeRedemptions: vi.fn(async () => []),
+	setOneTimeRedemptions: vi.fn(async () => {}),
+	addOneTimeRedemptions: vi.fn(async () => {}),
+}))
+vi.mock("@/utils/logger", () => ({
+	logger: { create: () => new Proxy({}, { get: () => vi.fn() }) },
+}))
 
 const { usePOSCartStore } = await import("../posCart")
 const { useOfferedItemsStore } = await import("../offeredItems")
