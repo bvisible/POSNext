@@ -172,6 +172,9 @@ thanks, « Your pickup number », the sentence about showing it, « Your order s
 `it.po`, five of them under the context « Takeaway pickup email »; the French, German and Italian are Haiku's. The takeaway order's Sales Invoice now carries the
 `language` of the page it was made on (`submit_guest_order`), which is what the mail is written in.
 
+NeoResto lot 1, the report of the tips by server (product owner, 04.11.2026): its name and the row of a tip that names no server («Tips by Server», «No server») are appended to the
+end of `fr.po`; the French is Haiku's. `main.pot` is left as it was, the next run of the template rewrites it. A `.po` cannot carry a comment, so they are recorded here.
+
 ### Images
 
 `pos_next/public/icons/badges/*.svg` (23) and `pos_next/public/icons/badges/png/*.png` (23) — the

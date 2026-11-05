@@ -23737,3 +23737,13 @@ msgstr "Aucune recette ni aucun plat ne porte le nom «{0}»."
 #, python-brace-format
 msgid "«{0}»: say the number of portions (between 1 and {1})."
 msgstr "«{0}» : indiquez le nombre de portions (entre 1 et {1})."
+
+#: pos_next/pos_next/report/tips_by_server/tips_by_server.py:62
+#: pos_next/tests/test_the_tips_report_adds_up_by_server.py:124
+msgid "No server"
+msgstr "Sans serveur désigné"
+
+#. Name of a report
+#: pos_next/pos_next/report/tips_by_server/tips_by_server.json:20
+msgid "Tips by Server"
+msgstr "Pourboires par serveur"
