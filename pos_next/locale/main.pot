@@ -26467,3 +26467,159 @@ msgstr ""
 #: pos_next/pos_next/page/till_settings/till_settings.js:566
 msgid "is disabled: cannot open the till"
 msgstr ""
+
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.js:76
+msgid "A till gets its POSNext settings when its POS Profile is made, so there is nothing to add here: choose the till on the till settings page. A record is made by hand only for a profile that has none."
+msgstr ""
+
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.js:39
+msgid "A till has one record of POSNext settings, made with its profile. They are set on the till settings page."
+msgstr ""
+
+#: pos_next/public/js/pos_profile_list.js:15
+msgid "A till is made, set up, switched off and deleted on the till settings page. This list is ERPNext's own."
+msgstr ""
+
+#: pos_next/till_settings/registry.py:1629
+msgid "Active till"
+msgstr ""
+
+#: pos_next/public/js/pos_profile_list.js:26
+msgid "Add a POS Profile (ERPNext's form)"
+msgstr ""
+
+#: pos_next/public/js/pos_settings_list.js:20
+msgid "Add a POS Settings record"
+msgstr ""
+
+#: pos_next/till_settings/workspace.py:23
+msgid "Create a till, set it up, switch it off: the page below does it all."
+msgstr ""
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:384
+#, python-brace-format
+msgid "Delete the till {0}? Its settings go with it and this cannot be undone. A till that has sales cannot be deleted: switch it off instead."
+msgstr ""
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:275
+msgid "Delete this till"
+msgstr ""
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:377
+msgid "Deleting a till needs the right to delete a POS Profile in the accounting. You can switch the till off instead: open Getting started and untick Active till."
+msgstr ""
+
+#: pos_next/public/js/pos_settings_list.js:13
+msgid "Each till has one record of settings, made with its profile. They are all set on the till settings page."
+msgstr ""
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:719
+msgid "Give the cashier role"
+msgstr ""
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:432
+#, python-brace-format
+msgid "Give the role of a cashier to {0}? They will be able to open this till."
+msgstr ""
+
+#: pos_next/pos_next/doctype/menu_badge/menu_badge.py:26
+msgid "Icon must be a file name of the badge icons"
+msgstr ""
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:594
+msgid "Not Saved"
+msgstr ""
+
+#: pos_next/till_settings/api.py:589
+msgid "Only the till manager can delete a till"
+msgstr ""
+
+#: pos_next/till_settings/api.py:618
+msgid "Only the till manager can give a role of the till"
+msgstr ""
+
+#: pos_next/api/sales_invoice_hooks.py:318
+msgid "Sorry, this coupon code is no longer valid"
+msgstr ""
+
+#: pos_next/till_settings/registry.py:1630
+msgid "Switched off, the till can no longer be opened; its past sales remain."
+msgstr ""
+
+#: pos_next/restaurant/card_analysis.py:93
+#, python-brace-format
+msgid "The period is between 1 and {0} months."
+msgstr ""
+
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.py:47
+#, python-brace-format
+msgid "The till {0} already has its POS Settings: a till has one record, made with its profile. Set them on the till settings page."
+msgstr ""
+
+#: pos_next/till_settings/api.py:600
+#, python-brace-format
+msgid "The till {0} has sales, sessions or other records. Deleting it would lose them. Switch it off instead: it can no longer be opened, and its sales stay."
+msgstr ""
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:398
+#, python-brace-format
+msgid "The till {0} is deleted."
+msgstr ""
+
+#: pos_next/public/js/pos_profile.js:74
+#, python-brace-format
+msgid "The till {0} is made, with its POSNext settings. Set it up on the till settings page."
+msgstr ""
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:420
+msgid "There is no till yet."
+msgstr ""
+
+#: pos_next/api/gift_cards.py:703
+#, python-brace-format
+msgid "This gift card no longer holds {0}."
+msgstr ""
+
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.js:38
+msgid "This till already has its settings"
+msgstr ""
+
+#: pos_next/public/js/pos_profile.js:45
+msgid "To make a till, the simplest is New till on the till settings page: a name, a company, and the settings of another till if you want them. This form makes the same till, with ERPNext's long list of fields."
+msgstr ""
+
+#, python-brace-format
+msgid "Unpaid: {0}"
+msgstr ""
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:709
+msgid "is a website account: cannot open the till"
+msgstr ""
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:660
+msgid "switched off"
+msgstr ""
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:447
+#, python-brace-format
+msgid "{0} can now open this till."
+msgstr ""
+
+#, python-brace-format
+msgid "{0} expenses totaling {1}"
+msgstr ""
+
+#: pos_next/till_settings/api.py:627
+#, python-brace-format
+msgid "{0} is a website account: it cannot hold a role of the till"
+msgstr ""
+
+#: pos_next/till_settings/api.py:625
+#, python-brace-format
+msgid "{0} is disabled: switch the account on first"
+msgstr ""
+
+#: pos_next/till_settings/api.py:622
+#, python-brace-format
+msgid "{0} is not one of the users of this till"
+msgstr ""

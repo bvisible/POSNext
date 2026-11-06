@@ -24203,3 +24203,139 @@ msgstr "Ce dont cette caisse a besoin pour ouvrir"
 #, python-brace-format
 msgid "{0} has no till to start from, and lacks: {1}"
 msgstr "{0} n'a aucune caisse de départ, et il lui manque : {1}"
+
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.js:76
+msgid "A till gets its POSNext settings when its POS Profile is made, so there is nothing to add here: choose the till on the till settings page. A record is made by hand only for a profile that has none."
+msgstr "Une caisse reçoit ses paramètres POSNext à la création de son profil de caisse : rien à ajouter ici, choisissez la caisse sur la page des paramètres des caisses. Une fiche ne se crée à la main que pour un profil qui n'en a pas."
+
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.js:39
+msgid "A till has one record of POSNext settings, made with its profile. They are set on the till settings page."
+msgstr "Une caisse a une seule fiche de paramètres POSNext, créée avec son profil. Ces paramètres se modifient sur la page des paramètres des caisses."
+
+#: pos_next/public/js/pos_profile_list.js:15
+msgid "A till is made, set up, switched off and deleted on the till settings page. This list is ERPNext's own."
+msgstr "Une caisse se crée, se paramètre, s'éteint et se supprime sur la page des paramètres des caisses. Cette liste est celle d'ERPNext."
+
+#: pos_next/till_settings/registry.py:1629
+msgid "Active till"
+msgstr "Caisse active"
+
+#: pos_next/public/js/pos_profile_list.js:26
+msgid "Add a POS Profile (ERPNext's form)"
+msgstr "Ajouter un profil de caisse (formulaire d'ERPNext)"
+
+#: pos_next/public/js/pos_settings_list.js:20
+msgid "Add a POS Settings record"
+msgstr "Ajouter une fiche POS Settings"
+
+#: pos_next/till_settings/workspace.py:23
+msgid "Create a till, set it up, switch it off: the page below does it all."
+msgstr "Créez une caisse, paramétrez-la, éteignez-la si besoin : tout se fait sur la page des paramètres des caisses."
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:384
+#, python-brace-format
+msgid "Delete the till {0}? Its settings go with it and this cannot be undone. A till that has sales cannot be deleted: switch it off instead."
+msgstr "Supprimer la caisse {0} ? Ses paramètres partent avec elle, et cette action ne peut pas être annulée. Une caisse qui a des ventes ne peut pas être supprimée : éteignez-la à la place."
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:275
+msgid "Delete this till"
+msgstr "Supprimer cette caisse"
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:377
+msgid "Deleting a till needs the right to delete a POS Profile in the accounting. You can switch the till off instead: open Getting started and untick Active till."
+msgstr "Supprimer une caisse demande le droit de supprimer un profil de caisse dans la comptabilité. Vous pouvez l'éteindre à la place : ouvrez Mise en route et décochez Caisse active."
+
+#: pos_next/public/js/pos_settings_list.js:13
+msgid "Each till has one record of settings, made with its profile. They are all set on the till settings page."
+msgstr "Chaque caisse a une seule fiche de paramètres, créée avec son profil. Tous les paramètres se modifient sur la page des paramètres des caisses."
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:719
+msgid "Give the cashier role"
+msgstr "Donner le rôle Caissier"
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:432
+#, python-brace-format
+msgid "Give the role of a cashier to {0}? They will be able to open this till."
+msgstr "Donner le rôle Caissier à {0} ? Cette personne pourra ouvrir la caisse."
+
+#: pos_next/pos_next/doctype/menu_badge/menu_badge.py:26
+msgid "Icon must be a file name of the badge icons"
+msgstr "L'icône doit être le nom d'un fichier des icônes de badge"
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:709
+msgid "is a website account: cannot open the till"
+msgstr "est un compte du site web : impossible d'ouvrir la caisse"
+
+#: pos_next/till_settings/api.py:589
+msgid "Only the till manager can delete a till"
+msgstr "Seul le responsable de caisse peut supprimer une caisse"
+
+#: pos_next/till_settings/api.py:618
+msgid "Only the till manager can give a role of the till"
+msgstr "Seul le responsable de caisse peut attribuer un rôle de caisse"
+
+#: pos_next/till_settings/registry.py:1630
+msgid "Switched off, the till can no longer be opened; its past sales remain."
+msgstr "Éteinte, la caisse ne peut plus être ouverte ; ses ventes passées restent."
+
+#: pos_next/restaurant/card_analysis.py:93
+#, python-brace-format
+msgid "The period is between 1 and {0} months."
+msgstr "La période doit être comprise entre 1 et {0} mois."
+
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.py:47
+#, python-brace-format
+msgid "The till {0} already has its POS Settings: a till has one record, made with its profile. Set them on the till settings page."
+msgstr "La caisse {0} a déjà ses POS Settings : une caisse n'a qu'une fiche, créée avec son profil. Paramétrez-les sur la page des paramètres des caisses."
+
+#: pos_next/till_settings/api.py:600
+#, python-brace-format
+msgid "The till {0} has sales, sessions or other records. Deleting it would lose them. Switch it off instead: it can no longer be opened, and its sales stay."
+msgstr "La caisse {0} a des ventes, des sessions ou d'autres enregistrements, et la supprimer les ferait perdre. Éteignez-la plutôt : elle ne pourra plus être ouverte, et ses ventes resteront."
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:398
+#, python-brace-format
+msgid "The till {0} is deleted."
+msgstr "La caisse {0} est supprimée."
+
+#: pos_next/public/js/pos_profile.js:74
+#, python-brace-format
+msgid "The till {0} is made, with its POSNext settings. Set it up on the till settings page."
+msgstr "La caisse {0} est créée, avec ses paramètres POSNext. Paramétrez-la sur la page des paramètres des caisses."
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:420
+msgid "There is no till yet."
+msgstr "Aucune caisse pour l'instant."
+
+#: pos_next/api/gift_cards.py:703
+#, python-brace-format
+msgid "This gift card no longer holds {0}."
+msgstr "Cette carte cadeau ne détient plus {0}."
+
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.js:38
+msgid "This till already has its settings"
+msgstr "Cette caisse a déjà ses paramètres"
+
+#: pos_next/public/js/pos_profile.js:45
+msgid "To make a till, the simplest is New till on the till settings page: a name, a company, and the settings of another till if you want them. This form makes the same till, with ERPNext's long list of fields."
+msgstr "Pour créer une caisse, le plus simple est « Nouvelle caisse » sur la page des paramètres des caisses : un nom, une société, et les paramètres d'une autre caisse si vous le souhaitez. Ce formulaire crée la même caisse, avec la longue liste de champs d'ERPNext."
+
+#: pos_next/pos_next/page/till_settings/till_settings.js:447
+#, python-brace-format
+msgid "{0} can now open this till."
+msgstr "{0} peut désormais ouvrir cette caisse."
+
+#: pos_next/till_settings/api.py:627
+#, python-brace-format
+msgid "{0} is a website account: it cannot hold a role of the till"
+msgstr "{0} est un compte du site web : ce compte ne peut pas recevoir de rôle de caisse"
+
+#: pos_next/till_settings/api.py:625
+#, python-brace-format
+msgid "{0} is disabled: switch the account on first"
+msgstr "{0} est désactivé : activez d'abord le compte"
+
+#: pos_next/till_settings/api.py:622
+#, python-brace-format
+msgid "{0} is not one of the users of this till"
+msgstr "{0} ne fait pas partie des utilisateurs de cette caisse"
