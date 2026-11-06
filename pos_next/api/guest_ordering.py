@@ -1260,20 +1260,28 @@ def get_guest_receipt_pdf(token: str):
 
 
 def _resolve_wallee_provider(required=True):
-	"""Return the Wallee Payment Provider name (first enabled, latest modified).
+	"""Return the Wallee Payment Provider name (live before test, then by name).
 
 	After the wallee_integration → payments merger (ADR-005), Wallee flows go
 	through the unified ``payments`` driver layer. Mirrors the webshop's
-	``_resolve_wallee_provider_name`` ordering — ``modified desc``, NOT
-	``mode desc`` (which would alphabetically pick a *test* provider before a
-	*live* one). When ``required`` and none is found, raises.
+	``_resolve_wallee_provider_name``: the rule of ``payments.drivers.registry.pick_provider``.
+	When ``required`` and none is found, raises.
 	"""
-	name = frappe.db.get_value(
-		"Payment Provider",
-		{"driver_class": ["like", "payments.drivers.wallee.%"], "enabled": 1},
-		"name",
-		order_by="modified desc",
-	)
+	# //// Neoffice — maintenance#2296: the shop's rule, which no longer takes the provider saved last (a save of the
+	# //// test provider sent the next payments to it). A `payments` older than that rule keeps the old query.
+	try:
+		from payments.drivers.registry import pick_provider
+	except ImportError:
+		pick_provider = None
+	if pick_provider:
+		name = pick_provider("payments.drivers.wallee.%", "wallee_web")
+	else:
+		name = frappe.db.get_value(
+			"Payment Provider",
+			{"driver_class": ["like", "payments.drivers.wallee.%"], "enabled": 1},
+			"name",
+			order_by="modified desc",
+		)
 	if not name and required:
 		frappe.throw(_("No enabled Wallee Payment Provider configured on this instance."))
 	return name

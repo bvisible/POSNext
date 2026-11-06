@@ -54,6 +54,27 @@ def reads_gift_cards():
 	return is_till_manager() or bool(frappe.has_permission("Coupon Code", "read"))
 
 
+# //// Neoffice — added (no upstream equivalent). The coupons and referral codes are read with raw SQL and
+# //// `frappe.get_all`, which read no User Permission: a user kept to one company read the codes of every company
+# //// (maintenance#2296). The companies a User Permission keeps the caller to, or None when none does (nearly
+# //// every account): then nothing changes.
+_COMPANY_RULES_FOR = (None, "", "Coupon Code", "Pricing Rule", "Referral Code")
+
+
+def companies_kept_to():
+	from frappe.permissions import get_user_permissions
+
+	rows = get_user_permissions(frappe.session.user).get("Company") or []
+	return [row.doc for row in rows if row.get("applicable_for") in _COMPANY_RULES_FOR] or None
+
+
+def require_company(company):
+	"""Refuse a company a User Permission keeps the caller from (a code of no company is everyone's)."""
+	allowed = companies_kept_to()
+	if company and allowed is not None and company not in allowed:
+		frappe.throw(_("You don't have permission to view promotions"), frappe.PermissionError)
+
+
 @frappe.whitelist()
 # //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
 def get_promotions(pos_profile: str | None = None, company: str | None = None, include_disabled=False):
@@ -632,6 +653,9 @@ def get_coupons(company=None, include_disabled=False, coupon_type=None):
 	"""
 	check_promotion_permissions("read")
 	# //// Implement referral code management with validation and coupon generat… — f02a815
+	# //// Neoffice — the user's companies only (companies_kept_to, maintenance#2296)
+	require_company(company)
+	kept_to = companies_kept_to()
 
 	today = getdate(nowdate())
 
@@ -659,9 +683,18 @@ def get_coupons(company=None, include_disabled=False, coupon_type=None):
 			(pr.company = %(company)s OR pr.company IS NULL OR %(company)s IS NULL)
 			AND (%(include_disabled)s = 1 OR pr.disable = 0 OR pr.disable IS NULL)
 			AND (%(coupon_type)s IS NULL OR cc.coupon_type = %(coupon_type)s)
+			-- //// Neoffice — the companies of the user only (companies_kept_to, maintenance#2296)
+			AND (%(kept_to_none)s = 1 OR pr.company IS NULL OR pr.company IN %(kept_to)s)
 		ORDER BY cc.modified DESC
 	""",
-		{"company": company, "include_disabled": 1 if include_disabled else 0, "coupon_type": coupon_type},
+		{
+			"company": company,
+			"include_disabled": 1 if include_disabled else 0,
+			"coupon_type": coupon_type,
+			# //// Neoffice — see companies_kept_to
+			"kept_to_none": 0 if kept_to else 1,
+			"kept_to": tuple(kept_to or [""]),
+		},
 		as_dict=True,
 	)
 
@@ -725,6 +758,9 @@ def get_coupon_details(coupon_name: str | None):
 
 	if is_gift_card(coupon) and not reads_gift_cards():
 		frappe.throw(_("You don't have permission to view promotions"), frappe.PermissionError)
+	# //// Neoffice — the user's companies only (companies_kept_to, maintenance#2296)
+	if coupon.pricing_rule:
+		require_company(frappe.db.get_value("Pricing Rule", coupon.pricing_rule, "company"))
 	data = coupon.as_dict()
 
 	# //// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
@@ -1132,6 +1168,11 @@ def get_referral_codes(company: str | None = None, include_disabled=False):
 
 	if company:
 		filters["company"] = company
+	# //// Neoffice — the user's companies only (companies_kept_to, maintenance#2296)
+	require_company(company)
+	kept_to = companies_kept_to()
+	if kept_to and not company:
+		filters["company"] = ["in", kept_to]
 
 	if not include_disabled:
 		filters["disabled"] = 0
@@ -1166,12 +1207,19 @@ def get_referral_codes(company: str | None = None, include_disabled=False):
 # //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
 def get_referral_details(referral_name: str | None):
 	"""Get detailed information about a specific referral code."""
+	# //// Neoffice — the list of the referral codes asks a desk account (get_referral_codes), the code with its
+	# //// customers and the coupons it made asked none; and the user's companies only (maintenance#2296).
+	from pos_next.api.cash_entry import require_system_user
+
+	require_system_user()
 	check_promotion_permissions("read")
 
 	if not frappe.db.exists("Referral Code", referral_name):
 		frappe.throw(_("Referral Code {0} not found").format(referral_name))
 
 	referral = frappe.get_doc("Referral Code", referral_name)
+	# //// Neoffice — the user's companies only (companies_kept_to, maintenance#2296)
+	require_company(referral.get("company"))
 	data = referral.as_dict()
 
 	# //// Neoffice — the coupons a referral generates are ERPNext Coupon Code documents now, so the
