@@ -848,7 +848,12 @@ class TestWhatATillWrites(TillCase):
 				item["delivery_date"] = nowdate()
 		doc = frappe.get_doc(sale)
 		doc.flags.ignore_permissions = True
+		# A draft of the desk is no till's: left to itself, ERPNext gives a POS invoice with no profile the first one of
+		# its company, which on a site of one company is a till of this test, whose user then passed the gate.
+		doc.flags.ignore_pos_profile = True
 		doc.insert()
+		if frappe.get_meta(doctype).has_field("pos_profile"):
+			self.assertFalse(frappe.db.get_value(doctype, doc.name, "pos_profile"), "a draft of the desk names no till")
 		return doc.name
 
 	def test_a_sales_order_of_the_desk_is_not_the_tills(self):

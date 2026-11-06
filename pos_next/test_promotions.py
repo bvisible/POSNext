@@ -509,6 +509,10 @@ def _submit_invoice(ctx, payload, paid_amount):
 	with as_role(_till_cashier(ctx.pos_profile)):
 		draft = update_invoice(json.dumps(payload))
 		inv_name = draft["name"]
+		# //// Neoffice — a till never sends a rank for a sale outside a table's notes: the draft read back carries the
+		# //// columns' own 0 and empty name, which submit_invoice reads as the till's word (restaurant notes).
+		draft.pop("restaurant_note", None)
+		draft.pop("restaurant_note_name", None)
 
 		# //// Neoffice — submitted by the same cashier.
 		submit_invoice(

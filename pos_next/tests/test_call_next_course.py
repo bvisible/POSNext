@@ -19,6 +19,7 @@ import json
 from unittest.mock import patch
 
 import frappe
+from frappe.exceptions import FrappeTypeError
 
 from pos_next.api import restaurant as restaurant_api
 from pos_next.tests.test_service_families import ServiceCase
@@ -241,8 +242,13 @@ class TestWhatItRefuses(CallCase):
 					restaurant_api.call_next_course(name)
 
 	def test_a_value_that_is_no_name_is_refused_and_touches_nothing(self):
-		with self.assertRaises((frappe.DoesNotExistError, frappe.ValidationError, frappe.PermissionError)):
+		# The name is typed (maintenance#2296): in a test its annotation refuses a dict before the body runs, a
+		# FrappeTypeError. On live traffic the annotation only reports, and the body refuses it: both are asked.
+		refused = (frappe.DoesNotExistError, frappe.ValidationError, frappe.PermissionError)
+		with self.assertRaises((*refused, FrappeTypeError)):
 			restaurant_api.call_next_course({"name": self.order})
+		with self.assertRaises(refused):
+			restaurant_api.call_next_course.__wrapped__({"name": self.order})
 		self.assertEqual(self.names_called(), [])
 
 	def test_a_course_that_does_not_exist_is_refused(self):

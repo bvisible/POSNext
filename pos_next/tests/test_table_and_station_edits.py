@@ -20,6 +20,7 @@ from contextlib import contextmanager
 from unittest.mock import patch
 
 import frappe
+from frappe.exceptions import FrappeTypeError
 from frappe.tests.utils import FrappeTestCase
 
 from pos_next.api import restaurant as restaurant_api
@@ -313,11 +314,16 @@ class TestEditingATable(TheFloorAndItsUsers):
 
 	def test_a_record_is_named_by_its_name(self):
 		# A JSON body can carry a dict where a name is expected; frappe.get_doc would read it as filters, past the record's
-		# own check: refused, whoever asks
+		# own check: refused, whoever asks. The name is typed (maintenance#2296): in a test its annotation refuses it before
+		# the body runs (a FrappeTypeError; 7 is no text either); on live traffic the annotation only reports, and the body
+		# refuses it: both are asked.
 		with as_user(self.manager):
 			for name in ({"name": self.a_t1}, {"table_name": "T1"}, [self.a_t1], 7):
-				with self.subTest(name=name), self.assertRaises(frappe.PermissionError):
-					restaurant_api.update_table(name=name, table_name="Mine")
+				with self.subTest(name=name):
+					with self.assertRaises((frappe.PermissionError, FrappeTypeError)):
+						restaurant_api.update_table(name=name, table_name="Mine")
+					with self.assertRaises(frappe.PermissionError):
+						restaurant_api.update_table.__wrapped__(name=name, table_name="Mine")
 		self.assertEqual(self.table(self.a_t1, "table_name"), ("T1",))
 
 

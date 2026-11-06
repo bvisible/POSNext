@@ -109,12 +109,23 @@ class TestRequestGrantRateLimitScope(FrappeTestCase):
 		@frappe.whitelist() wraps the rate-limited function, so walk ``__wrapped__``
 		until the frame holding the decorator's own parameters comes into view.
 		"""
+		# //// Neoffice — request_grant is counted by pos_next.rate_limits.rate_limit_by_peer since maintenance#2296:
+		# //// Frappe's rate_limit with the same key, limit and window, on the address nginx accepted instead of the
+		# //// first entry of X-Forwarded-For, which a caller writes. That wrapper always keys on the address, as
+		# //// ip_based=True did: read it too, or this test called a stronger limit a lost one.
+		from pos_next.rate_limits import rate_limit_by_peer
+
+		peer_wrapper = rate_limit_by_peer(limit=1, seconds=1)(lambda: None).__code__
 		seen = fn
 		while seen is not None:
 			freevars = getattr(seen, "__code__", None) and seen.__code__.co_freevars or ()
 			if "ip_based" in freevars:
 				cells = seen.__closure__ or ()
 				return dict(zip(freevars, (c.cell_contents for c in cells), strict=False))
+			# //// Neoffice — the wrapper of rate_limit_by_peer: the same code object, its own key, limit and window.
+			if getattr(seen, "__code__", None) is not None and seen.__code__.co_code == peer_wrapper.co_code:
+				cells = dict(zip(freevars, (c.cell_contents for c in seen.__closure__ or ()), strict=False))
+				return {**cells, "ip_based": True}
 			seen = getattr(seen, "__wrapped__", None)
 
 		raise AssertionError("request_grant is not wrapped by frappe.rate_limiter.rate_limit")
