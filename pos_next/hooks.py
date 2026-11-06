@@ -102,7 +102,12 @@ doctype_js = {
 # //// Neoffice — gift cards are ERPNext Coupon Code documents here, so the "Create Gift Card"
 # //// entry point belongs on that list view in the desk; upstream shipped no desk surface for
 # //// its own POS Coupon (b14d3066 2026-01-13, restored by f0c960ff 2026-03-21).
-doctype_list_js = {"Coupon Code": "public/js/coupon_code_list.js"}
+doctype_list_js = {
+	"Coupon Code": "public/js/coupon_code_list.js",
+	# //// Neoffice — the lists of the tills and of their settings say where a till is made and set up (06.11.2026)
+	"POS Profile": "public/js/pos_profile_list.js",
+	"POS Settings": "public/js/pos_settings_list.js",
+}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
@@ -414,7 +419,12 @@ doc_events = {
 		# //// Neoffice — a new profile has its POSNext settings (POS Settings) from the moment it exists, not from the first time
 		# //// the till opens with it (NeoResto lot 1, task 13b, 05.11.2026).
 		"after_insert": "pos_next.pos_profile_settings.create_for_new_profile",
-		"on_update": "pos_next.realtime_events.emit_pos_profile_updated_event",
+		# //// Neoffice — the profile's on / off switch is the till's one switch: its POS Settings row follows it (06.11.2026).
+		"on_update": [
+			"pos_next.realtime_events.emit_pos_profile_updated_event",
+			"pos_next.pos_profile_settings.follow_the_profile",
+		],
+		"on_trash": "pos_next.pos_profile_settings.remove_with_the_profile",
 	},
 	"Sales Person": {
 		"validate": "pos_next.pos_next.utils.sales_person_commission.validate_sales_person_commission_tables"
@@ -634,4 +644,5 @@ boot_session = ["pos_next.restaurant.mode.extend_boot"]
 # //// applications of their own and builds its space of tabs from them, the way NeoAuto (the garage) declares itself. The
 # //// application shows only where the site's `neoresto_active` says 1. Upstream has neither hook.
 neoffice_business_apps = ["pos_next.restaurant.neoresto.business_apps"]
-neoffice_workspace_tabs = ["pos_next.restaurant.neoresto.tabs"]
+# //// Neoffice — the point of sale's space gets a Settings tab with the till settings page (06.11.2026)
+neoffice_workspace_tabs = ["pos_next.restaurant.neoresto.tabs", "pos_next.till_settings.workspace.tabs"]

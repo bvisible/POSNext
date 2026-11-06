@@ -26,6 +26,7 @@ from pos_next.till_settings import registry
 from pos_next.till_settings.api import (
 	get_desk_settings,
 	get_till_settings,
+	give_the_cashier_role,
 	save_desk_settings,
 	save_till_settings,
 )
@@ -219,7 +220,7 @@ class TestTheOfficePage(TillSettingsCase):
 
 		self.assertTrue(office_keys() <= set(settings))
 		# POS Settings: his role writes it
-		for key in ("enabled", "enable_loyalty_program", "enable_restaurant_mode"):
+		for key in ("enable_loyalty_program", "enable_restaurant_mode"):
 			with self.subTest(key=key):
 				self.assertTrue(settings[key]["editable"])
 		# POS Profile: the accountant's. The site's negative stock: the stock manager's
@@ -396,7 +397,7 @@ class TestTheOfficePage(TillSettingsCase):
 				with self.assertRaises(frappe.PermissionError):
 					get_desk_settings(self.shop_till)
 				with self.assertRaises(frappe.PermissionError):
-					save_desk_settings(self.shop_till, {"enabled": 0})
+					save_desk_settings(self.shop_till, {"disabled": 1})
 
 	def test_a_till_that_does_not_exist_is_not_found(self):
 		self.as_user(OFFICE)
@@ -416,7 +417,6 @@ class TestTheOfficePage(TillSettingsCase):
 			first,
 			{
 				"pos_profile",
-				"enabled",
 				"disabled",
 				"company",
 				"company_address",
@@ -472,3 +472,166 @@ class TestTheOfficePage(TillSettingsCase):
 		self.assertTrue(ready["warehouse"])
 		# A shop till has no restaurant to choose
 		self.assertNotIn("restaurant", ready)
+
+	# ------------------------------------------------------------------------------------------------ one switch for the till
+	def test_the_till_has_one_switch_and_it_reads_the_right_way_round(self):
+		"""Daniel, 06.11: « un switch activé et un switch désactivé, c'est un peu bizarre ». The profile's own `disabled`, asked as
+		"Active till"; the record's `enabled` is the profile's follower and is not offered."""
+		self.as_user(OFFICE)
+
+		answer = get_desk_settings(self.shop_till)
+
+		settings = by_key(answer)
+		self.assertNotIn(
+			"enabled", {key for key, setting in settings.items() if setting["doctype"] == "POS Settings"}
+		)
+		self.assertEqual(settings["disabled"]["label"], "Active till")
+		self.assertEqual(answer["values"]["disabled"], 1)
+		# A switched-off till reads as off
+		frappe.db.set_value("POS Profile", self.shop_till, "disabled", 1)
+		self.assertEqual(get_desk_settings(self.shop_till)["values"]["disabled"], 0)
+
+	def test_switching_the_till_off_and_on_moves_the_profile_and_its_settings_together(self):
+		self.as_user(OFFICE)
+
+		answer = save_desk_settings(self.shop_till, {"disabled": 0})
+
+		self.assertEqual(frappe.db.get_value("POS Profile", self.shop_till, "disabled"), 1)
+		self.assertEqual(self.stored_settings(self.shop_till, "enabled").enabled, 0)
+		self.assertEqual(answer["values"]["disabled"], 0)
+		answer = save_desk_settings(self.shop_till, {"disabled": 1})
+		self.assertEqual(frappe.db.get_value("POS Profile", self.shop_till, "disabled"), 0)
+		self.assertEqual(self.stored_settings(self.shop_till, "enabled").enabled, 1)
+		self.assertEqual(answer["values"]["disabled"], 1)
+
+	def test_a_profile_switched_off_by_its_own_form_takes_its_settings_with_it_and_a_plain_save_leaves_them(
+		self,
+	):
+		profile = frappe.get_doc("POS Profile", self.shop_till)
+		profile.disabled = 1
+		profile.save(ignore_permissions=True)
+		self.assertEqual(self.stored_settings(self.shop_till, "enabled").enabled, 0)
+		profile.reload()
+		profile.disabled = 0
+		profile.save(ignore_permissions=True)
+		self.assertEqual(self.stored_settings(self.shop_till, "enabled").enabled, 1)
+		# A save of the profile that does not move the switch never overwrites what was set on the record
+		frappe.db.set_value("POS Settings", {"pos_profile": self.shop_till}, "enabled", 0)
+		profile.reload()
+		profile.save(ignore_permissions=True)
+		self.assertEqual(self.stored_settings(self.shop_till, "enabled").enabled, 0)
+
+	def test_a_record_ignored_on_its_own_reads_as_off_and_switching_the_till_on_repairs_it(self):
+		frappe.db.set_value("POS Settings", {"pos_profile": self.shop_till}, "enabled", 0)
+		self.as_user(OFFICE)
+
+		self.assertEqual(get_desk_settings(self.shop_till)["values"]["disabled"], 0)
+		answer = save_desk_settings(self.shop_till, {"disabled": 1})
+
+		self.assertEqual(self.stored_settings(self.shop_till, "enabled").enabled, 1)
+		self.assertEqual(answer["values"]["disabled"], 1)
+
+	def test_an_inverted_switch_takes_an_on_or_an_off_and_nothing_else(self):
+		self.as_user(OFFICE)
+
+		with self.assertRaises(frappe.ValidationError):
+			save_desk_settings(self.shop_till, {"disabled": "maybe"})
+
+	# ------------------------------------------------------------------------------------------------ the bar of tills
+	def test_the_page_lists_the_tills_the_user_may_switch_to_and_says_which_are_off(self):
+		frappe.db.set_value("POS Profile", self.shop_till, "disabled", 1)
+		self.as_user(OFFICE)
+
+		tills = {till["name"]: till for till in get_desk_settings(self.restaurant_till)["tills"]}
+
+		self.assertEqual(tills[self.shop_till]["disabled"], 1)
+		self.assertEqual(tills[self.restaurant_till]["disabled"], 0)
+		self.assertTrue(tills[self.restaurant_till]["restaurant"])
+		self.assertFalse(tills[self.shop_till]["restaurant"])
+		# The ones in use come first
+		names = list(tills)
+		self.assertLess(names.index(self.restaurant_till), names.index(self.shop_till))
+
+	def test_a_restaurant_manager_is_offered_the_tills_of_his_restaurant_only(self):
+		self.as_user(RESTAURANT_MANAGER)
+
+		names = [till["name"] for till in get_desk_settings(self.restaurant_till)["tills"]]
+
+		self.assertIn(self.restaurant_till, names)
+		self.assertNotIn(self.shop_till, names)
+
+	# ------------------------------------------------------------------------------------------------ the cashier role
+	def _list_on_the_till(self, *users):
+		profile = frappe.get_doc("POS Profile", self.restaurant_till)
+		for user in users:
+			profile.append("applicable_for_users", {"user": user})
+		profile.save(ignore_permissions=True)
+
+	def _holds_the_cashier_role(self, user):
+		return bool(frappe.db.exists("Has Role", {"parent": user, "role": CASHIER_ROLE}))
+
+	def test_a_listed_person_who_lacks_the_role_is_given_it_and_the_till_can_then_be_opened(
+		self,
+	):  # role-check: ok site administrator
+		self._list_on_the_till(OTHER_TILL)
+		self.as_user(SYSTEM)
+
+		answer = give_the_cashier_role(self.restaurant_till, OTHER_TILL)
+
+		self.assertTrue(self._holds_the_cashier_role(OTHER_TILL))
+		person = {person["user"]: person for person in answer["people"]}[OTHER_TILL]
+		self.assertTrue(person["can_open"])
+		self.assertTrue(person["desk_account"])
+		self.assertIn("users", {check["key"] for check in answer["readiness"]})
+
+	def test_the_role_is_given_with_the_rights_of_whoever_clicks_so_a_clerk_who_cannot_write_users_is_refused(
+		self,
+	):
+		self._list_on_the_till(OTHER_TILL)
+		self.as_user(OFFICE)
+
+		with self.assertRaises(frappe.PermissionError):
+			give_the_cashier_role(self.restaurant_till, OTHER_TILL)
+
+		self.assertFalse(self._holds_the_cashier_role(OTHER_TILL))
+
+	def test_the_role_goes_only_to_a_person_the_till_lists_who_is_on_and_has_a_desk_account(
+		self,
+	):  # role-check: ok site administrator
+		website = "till-settings-website@yopmail.com"
+		_user(website, [], "Website User")
+		self._list_on_the_till(DISABLED, website)
+		self.as_user(SYSTEM)
+
+		# Not listed on this till, switched off, a website account
+		for user in (OFFICE, DISABLED, website):
+			with self.subTest(user=user):
+				with self.assertRaises(frappe.ValidationError):
+					give_the_cashier_role(self.restaurant_till, user)
+		self.assertFalse(self._holds_the_cashier_role(website))
+		person = {p["user"]: p for p in get_desk_settings(self.restaurant_till)["people"]}[website]
+		self.assertFalse(person["desk_account"])
+		self.assertFalse(person["can_open"])
+
+	def test_a_cashier_a_portal_account_and_a_visitor_cannot_give_the_role(self):
+		self._list_on_the_till(OTHER_TILL)
+		for user in (TILL, PORTAL, "Guest"):
+			with self.subTest(user=user):
+				self.as_user(user)
+				with self.assertRaises(frappe.PermissionError):
+					give_the_cashier_role(self.restaurant_till, OTHER_TILL)
+		self.assertFalse(self._holds_the_cashier_role(OTHER_TILL))
+
+	def test_a_restaurant_manager_cannot_give_the_role_it_is_the_till_manager_s(self):
+		self._list_on_the_till(OTHER_TILL)
+		self.as_user(RESTAURANT_MANAGER)
+
+		with self.assertRaises(frappe.PermissionError):
+			give_the_cashier_role(self.restaurant_till, OTHER_TILL)
+
+	# ------------------------------------------------------------------------------------------------ getting started on one column
+	def test_getting_started_stands_on_one_column_in_the_order_a_till_is_set_up(self):
+		groups = [group for group in registry.GROUPS.values() if group.tab == "setup"]
+
+		self.assertEqual([group.key for group in groups], ["till_identity", "till_users", "restaurant_till"])
+		self.assertEqual({group.column for group in groups}, {1})

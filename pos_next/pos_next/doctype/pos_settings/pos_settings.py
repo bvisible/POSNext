@@ -35,6 +35,19 @@ class POSSettings(Document):
 			from pos_next.api.cash_entry import require_till_manager
 
 			require_till_manager()
+		# //// Neoffice — a till has ONE record (pos_profile is unique): a second one is refused in words, not as a duplicate entry of the
+		# //// database (06.11.2026). The record made with the profile is the one the till settings page opens.
+		if (
+			self.is_new()
+			and self.pos_profile
+			and frappe.db.exists("POS Settings", {"pos_profile": self.pos_profile})
+		):
+			frappe.throw(
+				_(
+					"The till {0} already has its POS Settings: a till has one record, made with its profile. Set them on the till settings page."
+				).format(self.pos_profile),
+				frappe.DuplicateEntryError,
+			)
 		# //// Neoffice — unchanged here, the till says what the site says (see _site_allows_negative_stock).
 		if self.is_new() or not self.has_value_changed("allow_negative_stock"):
 			self.allow_negative_stock = _site_allows_negative_stock()

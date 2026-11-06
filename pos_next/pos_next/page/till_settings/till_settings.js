@@ -18,6 +18,8 @@
 	var COLUMN_TEMPLATES = {
 		hours: "minmax(0,1fr) 300px",
 		online: "minmax(0,1.2fr) minmax(0,1fr)",
+		// One column of a readable width: a person sets a till up from the top down
+		setup: "minmax(0,720px)",
 	};
 	var BULB =
 		'<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
@@ -56,6 +58,12 @@
 		".tsp-control .form-group{margin-bottom:0}" +
 		".tsp-control .control-label,.tsp-control .help-box{display:none!important}" +
 		".tsp-control .grid-footer,.tsp-control .grid-heading-row{font-size:12px}" +
+		".tsp-tills{display:flex;flex-wrap:wrap;gap:6px;align-items:center}" +
+		".tsp-till{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 14px;border-radius:999px;border:1px solid #DCD4C7;background:#fff;color:#141414;font-size:13px;font-weight:600;cursor:pointer}" +
+		".tsp-till:hover{background:#F6F3ED}" +
+		".tsp-till.on{background:#141414;border-color:#141414;color:#fff}" +
+		".tsp-till.off{opacity:.55}" +
+		".tsp-till small{font-size:11px;font-weight:600;opacity:.8}" +
 		".tsp-ready{display:flex;flex-wrap:wrap;gap:8px;align-items:center}" +
 		".tsp-chip{display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:0 12px;border-radius:999px;border:1px solid #DCD4C7;background:#fff;color:#141414;font-size:12.5px;font-weight:600;cursor:pointer}" +
 		".tsp-chip.ok{background:#E9F7EE;border-color:#BFE3CB;color:#11663A}" +
@@ -255,19 +263,6 @@
 		if (!document.getElementById(STYLE_ID)) {
 			$('<style id="' + STYLE_ID + '">' + CSS + "</style>").appendTo(document.head);
 		}
-		this.till_field = this.page.add_field({
-			fieldname: "pos_profile",
-			label: __("Till"),
-			fieldtype: "Link",
-			options: "POS Profile",
-			get_query: function () {
-				return { filters: { disabled: 0 } };
-			},
-			change: function () {
-				var chosen = self.till_field.get_value();
-				if (chosen && chosen !== self.profile) self.choose(chosen);
-			},
-		});
 		this.page.set_primary_action(__("Save"), function () {
 			self.save();
 		});
@@ -277,6 +272,9 @@
 		this.page.add_menu_item(__("Discard the changes"), function () {
 			self.load(self.profile);
 		});
+		this.page.add_menu_item(__("Delete this till"), function () {
+			self.delete_till();
+		});
 		this.page.add_menu_item(__("Open the POS Settings form"), function () {
 			self.open_form("POS Settings", { pos_profile: self.profile });
 		});
@@ -284,6 +282,17 @@
 			if (self.profile) frappe.set_route("Form", "POS Profile", self.profile);
 		});
 		this.$root = $('<div class="tsp"></div>').appendTo(this.page.main);
+		this.$root.on("click", "[data-new-till]", function () {
+			self.new_till();
+		});
+		this.$root.on("click", "[data-give-role]", function () {
+			self.give_role($(this).attr("data-give-role"));
+		});
+		// The tills side by side: one click switches (the unsaved changes are asked about first)
+		this.$root.on("click", "[data-till]", function () {
+			var chosen = $(this).attr("data-till");
+			if (chosen && chosen !== self.profile) self.choose(chosen);
+		});
 		this.$root.on("click", "[data-tab]", function () {
 			self.sync();
 			self.active_tab = $(this).attr("data-tab");
@@ -357,6 +366,92 @@
 		dialog.show();
 	};
 
+	// Delete the open till (asked first, and in words: its settings go with it). A till that has sales is refused by the server, which says to
+	// switch it off instead; the page then goes on to another till, or offers to make the first one
+	TillSettingsPage.prototype.delete_till = function () {
+		var self = this;
+		var profile = this.profile;
+		if (!profile || !this.screen) return;
+		if (!(this.screen.can && this.screen.can.delete)) {
+			frappe.msgprint(
+				__(
+					"Deleting a till needs the right to delete a POS Profile in the accounting. You can switch the till off instead: open Getting started and untick Active till."
+				)
+			);
+			return;
+		}
+		frappe.confirm(
+			__(
+				"Delete the till {0}? Its settings go with it and this cannot be undone. A till that has sales cannot be deleted: switch it off instead.",
+				[profile]
+			),
+			function () {
+				frappe
+					.call({
+						method: API + "delete_till",
+						args: { pos_profile: profile },
+						freeze: true,
+					})
+					.then(function (r) {
+						if (!r || !r.message) return;
+						frappe.show_alert({
+							message: __("The till {0} is deleted.", [profile]),
+							indicator: "green",
+						});
+						self.profile = "";
+						self.screen = null;
+						try {
+							window.localStorage.removeItem(LAST_TILL);
+						} catch (error) {
+							// A browser that keeps nothing
+						}
+						if (r.message.next) self.go(r.message.next);
+						else self.render_empty();
+					});
+			}
+		);
+	};
+
+	// No till at all: the first one is one click away
+	TillSettingsPage.prototype.render_empty = function () {
+		this.controls = {};
+		this.$root.html(
+			'<div class="tsp-empty"><p>' +
+				esc(__("There is no till yet.")) +
+				'</p><button type="button" class="btn btn-primary" data-new-till>' +
+				esc(__("New till")) +
+				"</button></div>"
+		);
+	};
+
+	// Give a listed person the role of a cashier (asked first: it changes who may open the till); the people and the chips are read again
+	// and the rest of the page stays as it is, unsaved changes included
+	TillSettingsPage.prototype.give_role = function (user) {
+		var self = this;
+		frappe.confirm(
+			__("Give the role of a cashier to {0}? They will be able to open this till.", [user]),
+			function () {
+				frappe
+					.call({
+						method: API + "give_the_cashier_role",
+						args: { pos_profile: self.profile, user: user },
+						freeze: true,
+					})
+					.then(function (r) {
+						if (!r || !r.message) return;
+						self.sync();
+						self.screen.people = r.message.people;
+						self.screen.readiness = r.message.readiness;
+						self.render();
+						frappe.show_alert({
+							message: __("{0} can now open this till.", [user]),
+							indicator: "green",
+						});
+					});
+			}
+		);
+	};
+
 	TillSettingsPage.prototype.open_form = function (doctype, filters) {
 		frappe.db.get_value(doctype, filters, "name").then(function (r) {
 			var name = r && r.message && r.message.name;
@@ -368,6 +463,13 @@
 	// The till to show: the one in the address, else the last one used, else the only one there is
 	TillSettingsPage.prototype.show = function () {
 		var self = this;
+		// Sent here by the original lists and forms to make a till (frappe.route_options.new_till)
+		if (frappe.route_options && frappe.route_options.new_till) {
+			delete frappe.route_options.new_till;
+			setTimeout(function () {
+				self.new_till();
+			}, 0);
+		}
 		var route = frappe.get_route();
 		var asked = (route && route[1] && decodeURIComponent(route[1])) || "";
 		if (asked) return asked === this.profile ? Promise.resolve() : this.choose(asked);
@@ -383,7 +485,9 @@
 			.get_list("POS Profile", { filters: { disabled: 0 }, fields: ["name"], limit: 2 })
 			.then(function (rows) {
 				if (rows && rows.length === 1) return self.choose(rows[0].name, true);
-				self.render_message(__("Choose a till to see its settings."));
+				if (rows && rows.length)
+					self.render_message(__("Choose a till to see its settings."));
+				else self.render_empty();
 			});
 	};
 
@@ -396,7 +500,9 @@
 					self.go(profile);
 				},
 				function () {
-					self.till_field.set_value(self.profile);
+					// Stay: the address goes back to the till that is open
+					if (frappe.get_route()[1] !== self.profile)
+						frappe.set_route("till-settings", self.profile);
 				}
 			);
 			return Promise.resolve();
@@ -405,14 +511,16 @@
 	};
 
 	TillSettingsPage.prototype.go = function (profile) {
-		// Set before the field is: its change event must find the till already chosen
 		this.profile = profile;
 		try {
 			window.localStorage.setItem(LAST_TILL, profile);
 		} catch (error) {
 			// A browser that keeps nothing: the till is asked again next time
 		}
-		this.till_field.set_value(profile);
+		// The address says which till is open (a link can be copied, the back button comes back to the one before)
+		var route = frappe.get_route();
+		if (!route || decodeURIComponent(route[1] || "") !== profile)
+			frappe.set_route("till-settings", profile);
 		return this.load(profile);
 	};
 
@@ -439,6 +547,9 @@
 
 	TillSettingsPage.prototype.take = function (answer) {
 		this.screen = answer;
+		// A person who may not make a till is not offered the button
+		if (this.page.btn_secondary)
+			this.page.btn_secondary.toggle(Boolean(answer.can && answer.can.create));
 		this.by_key = {};
 		(answer.settings || []).forEach(
 			function (setting) {
@@ -482,6 +593,7 @@
 			'<span class="tsp-dirty" style="display:none">' +
 			esc(__("Not Saved")) +
 			"</span></div>";
+		html += this.tills_html(screen);
 		html += this.readiness_html(screen);
 		html +=
 			'<div class="tsp-body"><nav class="tsp-rail" role="tablist" aria-label="' +
@@ -525,6 +637,35 @@
 		this.show_state();
 	};
 
+	// The tills the user may open, side by side: the open one inked, a switched-off one pale. Nothing when there is only one.
+	TillSettingsPage.prototype.tills_html = function (screen) {
+		var tills = screen.tills || [];
+		if (tills.length < 2) return "";
+		return (
+			'<div class="tsp-tills" role="tablist" aria-label="' +
+			esc(__("Tills")) +
+			'">' +
+			tills
+				.map(function (till) {
+					return (
+						'<button type="button" role="tab" class="tsp-till' +
+						(till.name === screen.pos_profile ? " on" : "") +
+						(till.disabled ? " off" : "") +
+						'" data-till="' +
+						esc(till.name) +
+						'" aria-selected="' +
+						(till.name === screen.pos_profile) +
+						'">' +
+						esc(till.name) +
+						(till.disabled ? " <small>" + esc(__("switched off")) + "</small>" : "") +
+						"</button>"
+					);
+				})
+				.join("") +
+			"</div>"
+		);
+	};
+
 	// What the till needs to open: one chip each, green when it is there, amber when not; a click opens the tab that sets it
 	TillSettingsPage.prototype.readiness_html = function (screen) {
 		var checks = screen.readiness || [];
@@ -555,16 +696,30 @@
 	TillSettingsPage.prototype.people_html = function () {
 		var people = (this.screen && this.screen.people) || [];
 		if (!people.length) return "";
+		var can_give = Boolean(this.screen.can && this.screen.can.till);
 		var lines = people.map(function (person) {
 			var who = "<b>" + esc(person.full_name) + "</b> · ";
 			if (person.can_open)
 				return (
 					'<div class="good">' + who + esc(person.roles.map(__).join(", ")) + "</div>"
 				);
-			var why = person.enabled
-				? __("has no role of the till: cannot open it (it needs the role POSNext Cashier)")
-				: __("is disabled: cannot open the till");
-			return '<div class="bad">' + who + esc(why) + "</div>";
+			var why = !person.enabled
+				? __("is disabled: cannot open the till")
+				: person.desk_account === false
+				? __("is a website account: cannot open the till")
+				: __(
+						"has no role of the till: cannot open it (it needs the role POSNext Cashier)"
+				  );
+			// A person who only lacks the role gets it from here (written with the clicker's own rights)
+			var give =
+				person.enabled && person.desk_account !== false && can_give
+					? ' <button type="button" class="tsp-give btn btn-xs btn-default" data-give-role="' +
+					  esc(person.user) +
+					  '">' +
+					  esc(__("Give the cashier role")) +
+					  "</button>"
+					: "";
+			return '<div class="bad">' + who + esc(why) + give + "</div>";
 		});
 		return '<div class="tsp-people">' + lines.join("") + "</div>";
 	};

@@ -35,10 +35,23 @@ frappe.ui.form.on("POS Profile", {
 	// //// Neoffice — the settings of a till are set on one page (NeoResto lot 1, task 13b; product owner, 30.10.2026): this form stays
 	// //// for support and says where the page is (see pos_settings.js).
 	refresh(frm) {
-		UNUSED_PROFILE_FIELDS.filter((fieldname) => frm.fields_dict[fieldname]).forEach((fieldname) =>
-			frm.set_df_property(fieldname, "hidden", 1)
+		UNUSED_PROFILE_FIELDS.filter((fieldname) => frm.fields_dict[fieldname]).forEach(
+			(fieldname) => frm.set_df_property(fieldname, "hidden", 1)
 		);
-		if (frm.is_new()) return;
+		if (frm.is_new()) {
+			// //// Neoffice — a till is made from the page (a name, a company, optionally the till it copies); this form makes ERPNext's
+			// //// profile and, as soon as it is saved, the till's POSNext settings with their defaults (06.11.2026).
+			frm.set_intro(
+				__(
+					"To make a till, the simplest is New till on the till settings page: a name, a company, and the settings of another till if you want them. This form makes the same till, with ERPNext's long list of fields."
+				),
+				"blue"
+			);
+			frm.add_custom_button(__("Open the till settings page"), () => {
+				frappe.set_route("till-settings");
+			});
+			return;
+		}
 		frm.set_intro(
 			__(
 				"The settings of a till are set on one page: tabs, help behind a lightbulb and one Save. Use this form only for support."
@@ -48,6 +61,30 @@ frappe.ui.form.on("POS Profile", {
 		frm.add_custom_button(__("Open the till settings page"), () => {
 			frappe.set_route("till-settings", frm.doc.name);
 		});
+	},
+	// //// Neoffice — the first save of a profile: its POSNext settings exist now, the page is where they are set (06.11.2026)
+	before_save(frm) {
+		frm.__neoffice_was_new = frm.is_new();
+	},
+	after_save(frm) {
+		if (!frm.__neoffice_was_new) return;
+		frm.__neoffice_was_new = false;
+		frappe.show_alert(
+			{
+				message: __(
+					"The till {0} is made, with its POSNext settings. Set it up on the till settings page.",
+					[frm.doc.name]
+				),
+				indicator: "green",
+			},
+			15,
+			{
+				[__("Open the till settings page")]: {
+					label: __("Open the till settings page"),
+					click: () => frappe.set_route("till-settings", frm.doc.name),
+				},
+			}
+		);
 	},
 	setup(frm) {
 		frm.set_query("account", "posa_allowed_expense_accounts", () => ({

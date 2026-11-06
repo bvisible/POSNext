@@ -140,6 +140,9 @@ class Setting:
 	search: str | None = None
 	# The app that adds the field to the doctype: where that app is not installed the setting is not shown
 	provided_by: str | None = None
+	# //// Neoffice — a check whose field says the opposite of what the screen asks (ERPNext's `disabled`, drawn as "in use"):
+	# //// the server hands the screen the reverse of the stored value and takes the reverse back, so the screen never knows
+	inverted: bool = False
 	# What an empty value means, shown in the empty field
 	placeholder: object = None
 	# Drawn under the setting it depends on; by default when it depends on one
@@ -264,9 +267,10 @@ _GROUPS = (
 	Group("shop_scan", "shop_scan", _lt("Customers scan their articles"), 1),
 	Group("shop_scan_payment", "shop_scan", _lt("Paying on the phone"), 2),
 	# The office only
+	# //// Neoffice — one column, in the order a person sets a till up (Daniel, 06.11.2026: three columns were "cramped")
 	Group("till_identity", "setup", _lt("This till"), 1),
-	Group("till_users", "setup", _lt("Users"), 2),
-	Group("restaurant_till", "setup", _lt("Restaurant till"), 3),
+	Group("till_users", "setup", _lt("Users"), 1),
+	Group("restaurant_till", "setup", _lt("Restaurant till"), 1),
 	Group("payment_methods", "payments", _lt("Payment methods"), 1),
 	Group("loyalty", "loyalty", _lt("Loyalty program"), 1),
 	Group("accounts", "accounting", _lt("Accounts"), 1),
@@ -1616,23 +1620,18 @@ SETTINGS = (
 		doctype=POS_SETTINGS,
 		desk_only=True,
 	),
-	Setting(
-		"enabled",
-		"till_identity",
-		_lt("Enabled"),
-		_lt("Switched off, the record is ignored and the till runs on the default settings."),
-		"check",
-		doctype=POS_SETTINGS,
-		desk_only=True,
-	),
+	# //// Neoffice — ONE switch for "is this till in use" (Daniel, 06.11.2026: "un switch activé et un switch désactivé, c'est
+	# //// un peu bizarre"): ERPNext's own `disabled` of the profile, shown the right way round. POS Settings.enabled (the
+	# //// POSNext record is used or ignored) is no longer a choice of anybody: it follows the profile (see NOT_LISTED).
 	Setting(
 		"disabled",
 		"till_identity",
-		_lt("Disabled"),
-		_lt("A disabled till can no longer be opened; its past sales remain."),
+		_lt("Active till"),
+		_lt("Switched off, the till can no longer be opened; its past sales remain."),
 		"check",
 		doctype=POS_PROFILE,
 		desk_only=True,
+		inverted=True,
 	),
 	Setting(
 		"company",
@@ -1996,6 +1995,10 @@ _RESTAURANT_FORM = "set on the restaurant's own form, not a setting of a till"
 _SET_BY_THE_SYSTEM = "set by the system the first time the shop's QR code is asked for: nobody types it"
 NOT_LISTED = {
 	POS_SETTINGS: {
+		"enabled": (
+			"follows the POS Profile's own switch ('Active till', its `disabled`): pos_profile_settings.follow_the_profile"
+			" keeps the two in step, so the page asks once"
+		),
 		"shop_scan_key": _SET_BY_THE_SYSTEM,
 		"allow_return": _INERT,
 		"default_card_view": _INERT,

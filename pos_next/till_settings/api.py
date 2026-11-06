@@ -291,6 +291,12 @@ def _save(pos_profile, values, desk):
 		raise
 	if any(setting.doctype == POS_PROFILE for setting in settings.values()):
 		_forget_what_the_item_endpoints_keep(pos_profile)
+	if "disabled" in clean:
+		# The till's one switch: its POSNext record says what its profile says (the profile's own hook does it when `disabled`
+		# moved; this also repairs a record switched off on its own while the profile was in use)
+		from pos_next.pos_profile_settings import keep_in_step
+
+		keep_in_step(pos_profile, clean["disabled"])
 	if desk:
 		# The office's page can make the till a restaurant till (or the reverse): what its user may do is read again
 		can = _rights(frappe.get_cached_doc(POS_PROFILE, pos_profile), _restaurant_of(pos_profile))
@@ -515,7 +521,28 @@ def _answer(till, can, desk=False):
 		answer["left_out"] = _left_out_for_the_type(till)
 		answer["people"] = _people_of_the_till(till)
 		answer["readiness"] = _readiness(till, answer["people"])
+		answer["tills"] = _tills_to_switch_to()
+		# What the page offers besides the settings: a new till, deleting this one (the ERP's own rights on a POS Profile; the page
+		# hides the button of what the user may not do, the server refuses it anyway)
+		answer["can"] = {
+			**can,
+			"create": bool(can["till"] and frappe.has_permission(POS_PROFILE, "create")),
+			"delete": bool(can["till"] and frappe.has_permission(POS_PROFILE, "delete", doc=till.profile)),
+		}
 	return answer
+
+
+def _tills_to_switch_to():
+	"""The tills the session user may open on the office's page, for the bar that switches from one to another: name, whether it
+	is switched off, whether it is a restaurant till. The ones in use first, then by name; asked as `_open` asks (the user's role and
+	User Permissions, no right on POS Profile itself)."""
+	tills = []
+	for row in frappe.get_all(POS_PROFILE, fields=["name", "disabled"], order_by="disabled asc, name asc"):
+		restaurant = _restaurant_of(row.name)
+		can = _rights(frappe.get_cached_doc(POS_PROFILE, row.name), restaurant)
+		if can["till"] or can["restaurant"]:
+			tills.append({"name": row.name, "disabled": cint(row.disabled), "restaurant": bool(restaurant)})
+	return tills
 
 
 def _people_of_the_till(till):
@@ -539,10 +566,69 @@ def _people_of_the_till(till):
 				"enabled": cint(user.enabled),
 				"default": cint(row.default),
 				"roles": roles,
+				# A website account holds no role of the desk: it cannot open the till, and a role cannot be given to it
+				"desk_account": user.user_type == "System User",
 				"can_open": bool(user.enabled and user.user_type == "System User" and roles),
 			}
 		)
 	return people
+
+
+# //// Neoffice — deleting a till from the office's page (Daniel, 06.11.2026: « création d'une caisse, suppression, modification »).
+DELETE_SAVEPOINT = "till_settings_delete"
+
+
+@frappe.whitelist(methods=["POST"])
+def delete_till(pos_profile: str):
+	"""Delete a till nobody used: its POS Profile, and its POSNext settings with it (`pos_profile_settings.remove_with_the_profile`). A till
+	that sales, sessions or other records mention is never deleted behind their back: it is refused whole, in words, and the page points at
+	the switch that closes a till without losing anything. Asked of a till manager of THIS till who also holds the ERP's right to delete a
+	profile. Answers the till the page goes on to."""
+	_till_, can = _open(pos_profile)
+	if not can["till"]:
+		frappe.throw(_("Only the till manager can delete a till"), frappe.PermissionError)
+	frappe.has_permission(POS_PROFILE, "delete", doc=pos_profile, throw=True)
+	frappe.db.savepoint(DELETE_SAVEPOINT)
+	try:
+		frappe.delete_doc(POS_PROFILE, pos_profile)
+	except frappe.LinkExistsError:
+		# The ERP's own message lists the records; the page says what to do instead
+		frappe.db.rollback(save_point=DELETE_SAVEPOINT)
+		frappe.clear_last_message()
+		frappe.throw(
+			_(
+				"The till {0} has sales, sessions or other records. Deleting it would lose them. Switch it off instead: it can no longer be opened, and its sales stay."
+			).format(pos_profile)
+		)
+	remaining = [till["name"] for till in _tills_to_switch_to()]
+	return {"deleted": pos_profile, "next": remaining[0] if remaining else ""}
+
+
+# //// Neoffice — "give the cashier role" from the people list (Daniel, 06.11.2026: a person listed on a till who cannot open it was
+# //// only told so). One role, the lowest of the till; written as the user who clicks, so the ERP's own right on User decides.
+@frappe.whitelist(methods=["POST"])
+def give_the_cashier_role(pos_profile: str, user: str):
+	"""Give the role of a cashier to one of the people the till lists, so that they can open it; answers the people and the readiness
+	of the till as `get_desk_settings` does. Asked of a till manager of THIS till who also holds the ERP's right to write that user: the
+	role is added through the User document, as the clicker (a customer's admin can, a cashier cannot)."""
+	from pos_next.restaurant.permissions import CASHIER_ROLE
+
+	till, can = _open(pos_profile)
+	if not can["till"]:
+		frappe.throw(_("Only the till manager can give a role of the till"), frappe.PermissionError)
+	if not isinstance(user, str) or user not in [
+		row.user for row in till.profile.get("applicable_for_users") or []
+	]:
+		frappe.throw(_("{0} is not one of the users of this till").format(cstr(user)))
+	details = frappe.db.get_value("User", user, ["enabled", "user_type"], as_dict=True)
+	if not details or not cint(details.enabled):
+		frappe.throw(_("{0} is disabled: switch the account on first").format(user))
+	if details.user_type != "System User":
+		frappe.throw(_("{0} is a website account: it cannot hold a role of the till").format(user))
+	frappe.has_permission("User", "write", doc=user, throw=True)
+	frappe.get_doc("User", user).add_roles(CASHIER_ROLE)
+	people = _people_of_the_till(_till(pos_profile))
+	return {"people": people, "readiness": _readiness(_till(pos_profile), people)}
 
 
 def _readiness(till, people):
@@ -661,6 +747,10 @@ def _read(setting, till):
 			for row in value or []
 		]
 	if setting.widget == "check":
+		if setting.inverted:
+			# "In use": the profile is not disabled and its POSNext record is not ignored (a record switched off on its own,
+			# as the old form allowed, reads as off here, and switching it on again repairs both: `_save`)
+			return 0 if cint(value) or not cint(till.settings.get("enabled", 1)) else 1
 		return cint(value)
 	if setting.widget in ("int", "duration"):
 		return cint(value)
@@ -730,7 +820,8 @@ def _clean(setting, value, till, choices):
 	if widget == "check":
 		if value not in (0, 1, True, False, "0", "1"):
 			frappe.throw(_("{0} is either on or off").format(label))
-		return cint(value)
+		# An inverted check is asked as "in use" and stored as ERPNext's "disabled"
+		return 1 - cint(value) if setting.inverted else cint(value)
 	if widget in ("int", "duration"):
 		number = _number(label, value, whole=True)
 		_within(setting, label, number)
