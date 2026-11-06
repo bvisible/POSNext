@@ -1474,6 +1474,9 @@ def confirm_guest_payment(token: str, amount=None, tip=0):
 	if not invoice_doc:
 		frappe.throw(_("No active order found for this session."))
 
+	# //// Neoffice — the provider is asked now where the payment the guest came back from stands (product owner, 06.11.2026: the page waited for a payment it could not see)
+	_ask_the_provider(invoice_doc.name)
+
 	# //// Neoffice — a web takeaway order is settled by what the payment provider confirmed, never by what the page says it paid (neoffice-maintenance#2132)
 	if token_doc.mode == "takeaway":
 		return _settle_takeaway_order(invoice_doc)
@@ -1518,6 +1521,34 @@ def confirm_guest_payment(token: str, amount=None, tip=0):
 		"grand_total": flt(invoice_doc.grand_total),
 		"submitted": submitted,
 	}
+
+
+# //// Neoffice — the provider's word, asked for when the guest comes back (product owner, 06.11.2026: « la page se rafraîchit avant que le paiement soit passé »). A Wallee payment page
+# //// intent moved to `succeeded` only by the scheduler's minute job (`poll_pending_transactions`), because the provider's webhook is refused on this site (400: no secret in Wallee Settings):
+# //// the page asked the database, not the provider, and so waited for the next tick, up to a minute after Wallee had settled (23 s, 64 s, 68 s measured). The webshop's own return page
+# //// asks the provider itself (`payments.www.wallee.success`); this is the same, once per call, the page asking again every three seconds.
+def _ask_the_provider(invoice_name):
+	"""Refresh from the provider the payments of an order that are still in flight, so that the answer of `confirm_guest_payment` is the provider's of this moment and
+	not the one of the last scheduler tick. One try per call, no waiting: the page asks again. Whatever goes wrong is logged and leaves the payment as it was."""
+	if not frappe.db.table_exists("Payment Intent"):
+		return
+	in_flight = frappe.get_all(
+		"Payment Intent",
+		filters={
+			"reference_doctype": "Sales Invoice",
+			"reference_name": invoice_name,
+			"status": ["in", ("requires_action", "processing")],
+			"channel": "wallee_web",
+		},
+		pluck="name",
+	)
+	for name in in_flight:
+		try:
+			from payments.www.wallee.success import _refresh_status
+
+			_refresh_status(frappe.get_doc("Payment Intent", name), max_retries=1)
+		except Exception:
+			frappe.log_error("Guest payment: asking the provider failed", f"intent={name}: {frappe.get_traceback()}")
 
 
 def _intents_of(invoice_name):
