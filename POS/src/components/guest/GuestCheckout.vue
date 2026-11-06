@@ -9,6 +9,33 @@
 	<!-- //// row instead of duplicating it, 823304dd applies pricing rules and fixes -->
 	<!-- //// paid_amount.) -->
 	<div class="flex flex-col h-full bg-gray-50 overflow-hidden">
+		<!-- //// Neoffice — the page says what it is doing while a payment is on its way (product owner, 06.11.2026: « la page se rafraîchit avant que le paiement soit passé et on croit
+		     //// que le paiement n'a pas passé »). Back from the payment page the guest met the order as unpaid, with the Pay button live, for the seconds the provider takes to settle
+		     //// (23 s measured on a real card payment, the provider's word being the only thing that books it: no webhook reaches the site), and nothing said why. A veil over the page,
+		     //// from the first paint of the return until the provider has answered, and a veil too between the tap on Pay and the provider's page. -->
+		<div
+			v-if="checkingPayment || paymentState === 'pending'"
+			data-test="payment-wait"
+			role="status"
+			aria-live="polite"
+			class="fixed inset-0 z-[60] flex items-center justify-center bg-gray-50/95 p-6"
+		>
+			<div class="w-full max-w-xs text-center">
+				<svg class="w-10 h-10 text-gray-900 animate-spin mx-auto mb-4" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+					<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+					<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+				</svg>
+				<h3 class="text-lg font-bold text-gray-900">
+					{{ checkingPayment ? __('Checking your payment...') : __('Opening the secure payment page...') }}
+				</h3>
+				<p class="text-sm text-gray-600 mt-2">
+					{{ checkingPayment
+						? __('This can take up to a minute. Please keep this page open and do not pay again.')
+						: __('Please wait and keep this page open.') }}
+				</p>
+			</div>
+		</div>
+
 		<!-- No Order Yet -->
 		<div v-if="orderItems.length === 0 && !guestStore.isLoading" class="flex-1 flex flex-col items-center justify-center p-8 text-gray-400">
 			<svg class="w-16 h-16 mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -270,6 +297,21 @@
 					</button>
 				</div>
 
+				<!-- //// Neoffice — a payment the provider has not settled after a minute is not a failed one: the guest is told so, and asks again without reloading (a reload without the
+				     //// return's address would have found nothing to check) -->
+				<div v-if="paymentUnconfirmed" data-test="payment-unconfirmed" class="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+					<p class="text-sm font-semibold text-amber-900">{{ __('Your payment is not confirmed yet.') }}</p>
+					<p class="text-xs text-amber-800 mt-1">
+						{{ __('If you have paid, nothing is lost: it is recorded as soon as your bank answers. Please do not pay again.') }}
+					</p>
+					<button
+						type="button"
+						data-test="payment-check-again"
+						class="mt-2 px-4 py-2 bg-gray-900 dark:bg-[#f3f3f3] dark:text-[#171717] text-white text-sm font-semibold rounded-lg active:bg-gray-800"
+						@click="checkPaymentAgain"
+					>{{ __('Check again') }}</button>
+				</div>
+
 				<!-- Error -->
 				<div v-if="guestStore.error" class="mb-3 p-2 bg-red-50 border border-red-200 rounded-lg">
 					<p class="text-xs text-red-600">{{ guestStore.error }}</p>
@@ -278,10 +320,10 @@
 				<!-- Pay button -->
 				<button
 					@click="handlePay"
-					:disabled="guestStore.isLoading || payableAmount === 0 || guestStore.mustSignIn || paymentState === 'pending'"
+					:disabled="guestStore.isLoading || payableAmount === 0 || guestStore.mustSignIn || paymentState === 'pending' || checkingPayment || paymentUnconfirmed"
 					class="w-full py-3.5 bg-gray-900 dark:bg-[#f3f3f3] dark:text-[#171717] text-white font-semibold rounded-xl active:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
 				>
-					<svg v-if="guestStore.isLoading" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+					<svg v-if="guestStore.isLoading || paymentState === 'pending'" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
 						<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
 						<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
 					</svg>
@@ -293,7 +335,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue"
+import { ref, computed, onMounted, onBeforeUnmount } from "vue"
 import { useGuestOrderStore } from "@/stores/guestOrder"
 
 const emit = defineEmits(["order-confirmed", "sign-in"])
@@ -305,6 +347,10 @@ const SPLIT_CHOSEN = "bg-gray-900 text-white border-gray-900 dark:bg-[#f3f3f3] d
 const SPLIT_OTHER = "bg-gray-100 text-gray-700 border-gray-200"
 
 const paymentState = ref(null)
+//// Neoffice — the guest comes back from the payment page on `?payment=success`: the page is checking the payment from its very first paint (the veil, `data-test="payment-wait"`),
+//// not from the moment the confirmation call is made, so that it never shows an unpaid order in between. `paymentUnconfirmed`: the provider has not settled it after a minute.
+const checkingPayment = ref(new URLSearchParams(window.location.search).get("payment") === "success")
+const paymentUnconfirmed = ref(false)
 const showPaymentDialog = ref(false)
 const lastPaymentAmount = ref(0)
 
@@ -444,30 +490,65 @@ function stopPaymentPolling() {
 	if (_pollInterval) { clearInterval(_pollInterval); _pollInterval = null }
 }
 
-// Check URL params on mount for payment callback
-onMounted(async () => {
-	const params = new URLSearchParams(window.location.search)
-	if (params.get("payment") === "success") {
-		lastPaymentAmount.value = Number.parseFloat(params.get("amount")) || 0
-		clearTip()
+// //// Neoffice — what the guest's return from the payment page comes to, asked once on arrival and again by « Check again » (product owner, 06.11.2026). The address keeps
+// //// `?payment=success` while the provider has not settled the payment (a reload asks again) and loses it once the answer is known, paid or refused.
+async function settleTheReturn(amount, tip) {
+	checkingPayment.value = true
+	paymentUnconfirmed.value = false
+	try {
 		// Confirm payment with backend (records the payment now that Wallee confirmed)
-		const confirmed = await guestStore.confirmPayment(lastPaymentAmount.value, Number.parseFloat(params.get("tip")) || 0)
+		const confirmed = await guestStore.confirmPayment(amount, tip)
+		// //// Neoffice — a payment the provider has not confirmed yet is not a success (the store says why), and no answer at all (the network) is no verdict either: the page says
+		// //// « not confirmed yet » and asks again on a tap, with nothing lost. A confirmed one hands the page the number to show at pickup (neoffice-maintenance#2132)
+		if (!confirmed || confirmed.status === "awaiting_payment") {
+			paymentUnconfirmed.value = true
+			return
+		}
 		window.history.replaceState({}, "", window.location.pathname)
-		// //// Neoffice — a takeaway payment the provider has not confirmed yet is not a success (the store says why); a confirmed one hands the page the number to show at pickup (neoffice-maintenance#2132)
-		if (confirmed?.status === "awaiting_payment") return
 		//// Neoffice — the provider did not settle the payment the guest came back from (failed or cancelled): it is not a success (neoffice-maintenance#1973)
-		if (confirmed?.status === "failed") {
+		if (confirmed.status === "failed") {
 			paymentState.value = "failed"
 			guestStore.error = __("Payment was cancelled or failed. Please try again.")
 			return
 		}
 		paymentState.value = "success"
 		showPaymentDialog.value = true
-		if (confirmed?.ticket) emit("order-confirmed", confirmed.ticket)
+		if (confirmed.ticket) emit("order-confirmed", confirmed.ticket)
+	} finally {
+		checkingPayment.value = false
+	}
+}
+
+async function checkPaymentAgain() {
+	guestStore.error = null
+	const params = new URLSearchParams(window.location.search)
+	await settleTheReturn(lastPaymentAmount.value, Number.parseFloat(params.get("tip")) || 0)
+}
+
+// //// Neoffice — the browser's back button from the payment page restores this page as it was left, veil and disabled Pay button included (the page is kept whole, not reloaded):
+// //// nothing is on its way any more, the guest chose to come back
+function onPageShow(event) {
+	if (!event.persisted) return
+	if (paymentState.value === "pending") paymentState.value = null
+	guestStore.isLoading = false
+}
+
+// Check URL params on mount for payment callback
+onMounted(async () => {
+	window.addEventListener("pageshow", onPageShow)
+	const params = new URLSearchParams(window.location.search)
+	if (params.get("payment") === "success") {
+		lastPaymentAmount.value = Number.parseFloat(params.get("amount")) || 0
+		clearTip()
+		await settleTheReturn(lastPaymentAmount.value, Number.parseFloat(params.get("tip")) || 0)
 	} else if (params.get("payment") === "failed") {
 		paymentState.value = "failed"
 		guestStore.error = __("Payment was cancelled or failed. Please try again.")
 		window.history.replaceState({}, "", window.location.pathname)
 	}
+})
+
+onBeforeUnmount(() => {
+	window.removeEventListener("pageshow", onPageShow)
 })
 </script>

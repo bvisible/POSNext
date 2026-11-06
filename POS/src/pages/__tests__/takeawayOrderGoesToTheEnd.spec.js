@@ -216,7 +216,8 @@ describe("the payment is waited for", () => {
 		const result = await done
 
 		expect(result.status).toBe("awaiting_payment")
-		expect(store.error).toBe("Your payment is not confirmed yet. Please reload this page in a moment.")
+		// Not an error: the checkout says « not confirmed yet » in a notice of its own, with a button that asks again (guestCheckoutSaysItIsCheckingThePayment.spec.js)
+		expect(store.error).toBeNull()
 		server.confirmations = [{ status: "success", ticket: "T-13" }]
 		expect((await store.confirmPayment(12, 0)).ticket).toBe("T-13")
 	})

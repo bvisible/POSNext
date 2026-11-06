@@ -21,9 +21,7 @@
 			:view="shownView"
 			:user-name="userName"
 			:time="clockText"
-			:runner="restaurantStore.runnerEnabled ? totalReadyCount : null"
 			@update:view="setView"
-			@open-runner="openRunnerTab"
 		/>
 		<!-- One line (NeoResto lot 1, Ruling 48), with the look of the line the runner and the kitchen screen share
 		     (RoomStationFilterLine, Ruling 44): the rooms on the left; on the right the stations and the Runner and
@@ -527,11 +525,12 @@
 			</div>
 
 			<!-- Stations on floor plan -->
+			<!-- //// Neoffice — a station drawn on the plan is a landmark on a phone, not a door to the kitchen's screen (product owner, 06.11.2026: no kitchen or runner access on the waiter's phone) -->
 			<div
 				v-for="station in filteredStations"
 				:key="'station-' + station.name"
 				class="absolute flex flex-col items-center justify-center select-none transition-shadow duration-150 rounded-lg"
-				:class="isEditMode ? 'cursor-grab active:cursor-grabbing border-2 border-dashed' : 'cursor-pointer hover:shadow-lg border-2'"
+				:class="isEditMode ? 'cursor-grab active:cursor-grabbing border-2 border-dashed' : isPhone ? 'border-2' : 'cursor-pointer hover:shadow-lg border-2'"
 				:style="{
 					left: (station.pos_x || 0) + 'px',
 					top: (station.pos_y || 0) + 'px',
@@ -543,7 +542,7 @@
 					'--station-on-dark': onDark(station.color || '#6B7280'),
 				}"
 				@pointerdown="isEditMode && !$event.target.closest('.edit-btn') ? handleDragStart($event, station) : null"
-				@click="!isEditMode ? openStationKDS(station) : null"
+				@click="!isEditMode && !isPhone ? openStationKDS(station) : null"
 			>
 				<!-- Station icon -->
 				<!-- //// Neoffice — dark mode (smoke-test fix): the station's name and icon are written in its own colour, which a dark canvas does not read (a blue station 2.1:1). The colour moves from the inline style to a variable the box carries, so that in dark it can be the same colour lightened (`onDark`, as on the runner's plan); in light it is the very colour it was. -->

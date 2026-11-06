@@ -1206,3 +1206,31 @@ msgstr "Ihre Bestellübersicht"
 msgctxt "Takeaway pickup email"
 msgid "Total paid"
 msgstr "Bezahlter Gesamtbetrag"
+
+#: POS/src/components/guest/GuestCheckout.vue:29
+msgid "Checking your payment..."
+msgstr "Ihre Zahlung wird geprüft..."
+
+#: POS/src/components/guest/GuestCheckout.vue:33
+msgid "This can take up to a minute. Please keep this page open and do not pay again."
+msgstr "Dies kann bis zu einer Minute dauern. Bitte lassen Sie diese Seite geöffnet und zahlen Sie nicht erneut."
+
+#: POS/src/components/guest/GuestCheckout.vue:29
+msgid "Opening the secure payment page..."
+msgstr "Die gesicherte Zahlungsseite wird geöffnet..."
+
+#: POS/src/components/guest/GuestCheckout.vue:34
+msgid "Please wait and keep this page open."
+msgstr "Bitte warten Sie und lassen Sie diese Seite geöffnet."
+
+#: POS/src/components/guest/GuestCheckout.vue:303
+msgid "Your payment is not confirmed yet."
+msgstr "Ihre Zahlung ist noch nicht bestätigt."
+
+#: POS/src/components/guest/GuestCheckout.vue:305
+msgid "If you have paid, nothing is lost: it is recorded as soon as your bank answers. Please do not pay again."
+msgstr "Falls Sie bezahlt haben, ist nichts verloren: Die Zahlung wird erfasst, sobald Ihre Bank geantwortet hat. Bitte zahlen Sie nicht noch einmal."
+
+#: POS/src/components/guest/GuestCheckout.vue:312
+msgid "Check again"
+msgstr "Erneut prüfen"

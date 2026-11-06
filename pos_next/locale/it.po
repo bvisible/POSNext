@@ -1191,3 +1191,31 @@ msgstr "Riepilogo della sua ordinazione"
 msgctxt "Takeaway pickup email"
 msgid "Total paid"
 msgstr "Totale pagato"
+
+#: POS/src/components/guest/GuestCheckout.vue:29
+msgid "Checking your payment..."
+msgstr "Verifica del suo pagamento..."
+
+#: POS/src/components/guest/GuestCheckout.vue:33
+msgid "This can take up to a minute. Please keep this page open and do not pay again."
+msgstr "L'operazione può richiedere fino a un minuto. Mantenga aperta questa pagina e non paghi di nuovo."
+
+#: POS/src/components/guest/GuestCheckout.vue:29
+msgid "Opening the secure payment page..."
+msgstr "Apertura della pagina di pagamento sicura..."
+
+#: POS/src/components/guest/GuestCheckout.vue:34
+msgid "Please wait and keep this page open."
+msgstr "Attenda e mantenga aperta questa pagina."
+
+#: POS/src/components/guest/GuestCheckout.vue:303
+msgid "Your payment is not confirmed yet."
+msgstr "Il suo pagamento non è ancora confermato."
+
+#: POS/src/components/guest/GuestCheckout.vue:305
+msgid "If you have paid, nothing is lost: it is recorded as soon as your bank answers. Please do not pay again."
+msgstr "Se ha pagato, non si perde nulla: il pagamento viene registrato non appena la sua banca risponde. Non paghi di nuovo."
+
+#: POS/src/components/guest/GuestCheckout.vue:312
+msgid "Check again"
+msgstr "Controlli di nuovo"

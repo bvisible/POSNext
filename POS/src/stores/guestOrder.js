@@ -360,8 +360,9 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 				result = await ask()
 			}
 			if (result?.status === "awaiting_payment") {
+				// //// Neoffice — not an error: the page says « Your payment is not confirmed yet » in a notice of its own, with a « Check again » button (GuestCheckout), which asks again
+				// //// from here (the guard below is lifted for it); « reload this page » asked a reload that no longer carried the return's address, so nothing was checked
 				_paymentConfirmed = false
-				error.value = __("Your payment is not confirmed yet. Please reload this page in a moment.")
 				return result
 			}
 			await refreshOrderStatus()

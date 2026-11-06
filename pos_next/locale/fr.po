@@ -24339,3 +24339,31 @@ msgstr "{0} est désactivé : activez d'abord le compte"
 #, python-brace-format
 msgid "{0} is not one of the users of this till"
 msgstr "{0} ne fait pas partie des utilisateurs de cette caisse"
+
+#: POS/src/components/guest/GuestCheckout.vue:29
+msgid "Checking your payment..."
+msgstr "Vérification de votre paiement..."
+
+#: POS/src/components/guest/GuestCheckout.vue:33
+msgid "This can take up to a minute. Please keep this page open and do not pay again."
+msgstr "Cela peut prendre jusqu'à une minute. Veuillez laisser cette page ouverte et ne payez pas une seconde fois."
+
+#: POS/src/components/guest/GuestCheckout.vue:29
+msgid "Opening the secure payment page..."
+msgstr "Ouverture de la page de paiement sécurisée..."
+
+#: POS/src/components/guest/GuestCheckout.vue:34
+msgid "Please wait and keep this page open."
+msgstr "Veuillez patienter et laisser cette page ouverte."
+
+#: POS/src/components/guest/GuestCheckout.vue:303
+msgid "Your payment is not confirmed yet."
+msgstr "Votre paiement n'est pas encore confirmé."
+
+#: POS/src/components/guest/GuestCheckout.vue:305
+msgid "If you have paid, nothing is lost: it is recorded as soon as your bank answers. Please do not pay again."
+msgstr "Si vous avez payé, rien n'est perdu : il sera enregistré dès que votre banque aura répondu. Veuillez ne pas payer une seconde fois."
+
+#: POS/src/components/guest/GuestCheckout.vue:312
+msgid "Check again"
+msgstr "Vérifier à nouveau"

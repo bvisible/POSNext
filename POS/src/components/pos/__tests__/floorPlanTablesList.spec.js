@@ -684,7 +684,20 @@ describe("a mouse on the plan (fix round 1)", () => {
 vi.mock("@/utils/openScreen", () => ({ openScreen: vi.fn() }))
 const { openScreen } = await import("@/utils/openScreen")
 
-describe("the runner on a phone (fix round 1, ruling 98)", () => {
+//// Neoffice — the waiter's phone has no door to the kitchen's or the runner's screen (product owner, 06.11.2026: « sur le côté serveur sur l'app mobile, il ne faut pas les boutons
+//// d'accès runner et cuisine, ça amène trop de problème »). The tablet's line keeps its station chips and its Runner pill.
+describe("no kitchen or runner access on a phone", () => {
+	const STATION = {
+		name: "ST-KITCHEN",
+		station_name: "Kitchen",
+		station_type: "Kitchen",
+		area: ROOM.name,
+		pos_x: 10,
+		pos_y: 10,
+		width: 120,
+		height: 60,
+		color: "#6B7280",
+	}
 	let open
 	beforeEach(() => {
 		open = vi.spyOn(window, "open").mockImplementation(() => null)
@@ -692,60 +705,44 @@ describe("the runner on a phone (fix round 1, ruling 98)", () => {
 	})
 	afterEach(() => open.mockRestore())
 	const runner = () => wrapper.find('[data-test="phone-runner"]')
+	const stationBox = () =>
+		wrapper
+			.findAll("div")
+			.find((el) => el.classes().includes("absolute") && el.text().trim() === "Kitchen")
 
-	it("is in the phone's top, with the count of what waits at the pass, over the list and over the plan", async () => {
+	it("has no Runner button in the phone's top, over the list or over the plan, even with dishes waiting at the pass", async () => {
 		await floorPlan()
-		expect(runner().text().replace(/\s+/g, " ")).toBe("Runner 1")
+		expect(server.runnerOrders.length).toBeGreaterThan(0)
+		expect(runner().exists()).toBe(false)
+		expect(wrapper.find('[data-test="phone-top-bar"]').text()).not.toContain("Runner")
 
 		await wrapper.find('[data-test="view-plan"]').trigger("click")
-		expect(runner().exists()).toBe(true)
-	})
-
-	// The count is the dishes waiting at the pass (the lines of every order), as the tablet's pill counts them: not the
-	// number of orders that hold them
-	const waiting = (orders) =>
-		orders.map(([name, lines]) => ({
-			name,
-			restaurant_table: T2.name,
-			items: Array.from({ length: lines }, (_, at) => ({
-				name: `${name}-l${at}`,
-				station_type: "Kitchen",
-			})),
-		}))
-
-	it("counts the dishes, not the orders: one order of two dishes reads 2", async () => {
-		server.runnerOrders = waiting([["SINV-2", 2]])
-		await floorPlan()
-
-		expect(runner().text().replace(/\s+/g, " ")).toBe("Runner 2")
-	})
-
-	it("counts the dishes, not the orders: two orders of one dish each read 2", async () => {
-		server.runnerOrders = waiting([
-			["SINV-2", 1],
-			["SINV-5", 1],
-		])
-		await floorPlan()
-
-		expect(runner().text().replace(/\s+/g, " ")).toBe("Runner 2")
-	})
-
-	it("opens the till's runner screen, for the till's restaurant, as the tablet's pill does", async () => {
-		await floorPlan()
-
-		await runner().trigger("click")
-
-		// On a phone it opens in THIS tab: a second tab left the waiter with no way back (kitchen test, 01.11)
-		expect(openScreen).toHaveBeenCalledWith("/pos/runner?restaurant=The%20Bistro", { samePage: true })
-	})
-
-	it("is not there where the restaurant has no runner, nor on a tablet (its line has the pill)", async () => {
-		await floorPlan({ store: { runnerEnabled: false } })
 		expect(runner().exists()).toBe(false)
-		wrapper.unmount()
+		expect(wrapper.find('[data-test="runner-pill"]').exists()).toBe(false)
+	})
 
-		await floorPlan({ width: 1180 })
-		expect(runner().exists()).toBe(false)
+	it("a station drawn on the phone's plan is a landmark: touching it opens nothing", async () => {
+		await floorPlan({ store: { floorStations: [STATION] } })
+		await wrapper.find('[data-test="view-plan"]').trigger("click")
+		await flushPromises()
+
+		const box = stationBox()
+		expect(box).toBeTruthy()
+		expect(box.classes()).not.toContain("cursor-pointer")
+		await box.trigger("click")
+
+		expect(openScreen).not.toHaveBeenCalled()
+		expect(open).not.toHaveBeenCalled()
+	})
+
+	it("on a tablet the station and the runner pill keep opening the kitchen's and the runner's screens", async () => {
+		await floorPlan({ width: 1180, store: { floorStations: [STATION] } })
+
+		await wrapper.find('[data-test="station-chip"]').trigger("click")
+		expect(openScreen).toHaveBeenCalledWith("/pos/kds?station=ST-KITCHEN&restaurant=The%20Bistro", { samePage: false })
+
+		await wrapper.find('[data-test="runner-pill"]').trigger("click")
+		expect(openScreen).toHaveBeenCalledWith("/pos/runner?restaurant=The%20Bistro", { samePage: false })
 	})
 })
 

@@ -347,7 +347,7 @@ describe("the colours of the list's badges and words (smoke-test fix)", () => {
 describe("the strip under the phone's top and its switch in dark mode (smoke-test fix)", () => {
 	it("the strip is the ground of the list and of the plan; the ink bar above it is dark in both modes and has no dark class", () => {
 		wrapper = mount(TablesPhoneTop, {
-			props: { view: "list", userName: "Lea Martin", time: "10:00", runner: 2 },
+			props: { view: "list", userName: "Lea Martin", time: "10:00" },
 			global: { mocks: { __: globalThis.__ } },
 		})
 
