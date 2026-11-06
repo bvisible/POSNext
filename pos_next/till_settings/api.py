@@ -944,11 +944,31 @@ def _write(doctype, till, changes):
 			doc.set(key, [{link: item} for item in value])
 		else:
 			doc.set(key, value)
+	if doctype == POS_PROFILE and "applicable_for_users" in changes:
+		_default_the_first_till_of_each_user(doc)
 	if doctype in (POS_PROFILE, POS_SETTINGS):
 		# Who saves was checked (`_open`, `_editable`): the till manager sets up his till, the restaurant's manager its
 		# keys of the restaurant's tabs, whatever their rights on the two documents
 		doc.flags.ignore_permissions = True
 	doc.save()
+
+
+# //// Neoffice — a person added to a till who has no default till yet gets this one as their default (06.11.2026): ERPNext's profile save
+# //// otherwise warns « this user has no default POS Profile, tick Default on row 1 », which nobody who is not an ERPNext expert understands.
+def _default_the_first_till_of_each_user(profile):
+	"""Tick `default` on the row of every listed person who is the default user of no other till in use; a person who already has a
+	default elsewhere (or whose row is already ticked) is left as they are."""
+	rows = profile.get("applicable_for_users") or []
+	for row in rows:
+		if row.default or not row.user:
+			continue
+		elsewhere = frappe.db.sql(
+			"""select 1 from `tabPOS Profile User` pfu join `tabPOS Profile` pf on pf.name = pfu.parent
+			where pfu.user = %s and pfu.`default` = 1 and pf.disabled = 0 and pf.name != %s limit 1""",
+			(row.user, profile.name),
+		)
+		if not elsewhere and not any(other.default and other.user == row.user for other in rows):
+			row.default = 1
 
 
 # ---------------------------------------------------------------------------------------------- choices

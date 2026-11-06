@@ -481,13 +481,22 @@
 			asked = "";
 		}
 		if (asked) return this.choose(asked, true);
+		return this.open_the_first();
+	};
+
+	// No till asked for, none remembered (or the remembered one is gone): the first in use, else the first there is; with none at all, the
+	// way to make one
+	TillSettingsPage.prototype.open_the_first = function () {
+		var self = this;
 		return frappe.db
-			.get_list("POS Profile", { filters: { disabled: 0 }, fields: ["name"], limit: 2 })
+			.get_list("POS Profile", {
+				fields: ["name"],
+				order_by: "disabled asc, name asc",
+				limit: 1,
+			})
 			.then(function (rows) {
-				if (rows && rows.length === 1) return self.choose(rows[0].name, true);
-				if (rows && rows.length)
-					self.render_message(__("Choose a till to see its settings."));
-				else self.render_empty();
+				if (rows && rows.length) return self.go(rows[0].name);
+				self.render_empty();
 			});
 	};
 
@@ -532,6 +541,7 @@
 		return frappe
 			.call({ method: API + "get_desk_settings", args: { pos_profile: profile } })
 			.then(function (r) {
+				self.forgot_a_till = false;
 				self.take(r.message);
 				var tabs = (self.screen.tabs || []).map(function (tab) {
 					return tab.key;
@@ -541,6 +551,17 @@
 			})
 			.catch(function () {
 				self.screen = null;
+				// A till that is gone (deleted from elsewhere) or no longer ours to open: forget it once and open another
+				if (!self.forgot_a_till) {
+					self.forgot_a_till = true;
+					try {
+						window.localStorage.removeItem(LAST_TILL);
+					} catch (error) {
+						// A browser that keeps nothing
+					}
+					self.profile = "";
+					return self.open_the_first();
+				}
 				self.render_message(__("Failed to load settings"));
 			});
 	};

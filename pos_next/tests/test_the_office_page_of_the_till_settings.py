@@ -537,6 +537,24 @@ class TestTheOfficePage(TillSettingsCase):
 		with self.assertRaises(frappe.ValidationError):
 			save_desk_settings(self.shop_till, {"disabled": "maybe"})
 
+	# ------------------------------------------------------------------------------------------------ the users of a till
+	def test_a_person_added_to_a_till_gets_it_as_their_default_when_they_have_none_and_only_then(self):
+		"""06.11: ERPNext's save warned « no default POS Profile, tick Default on row 1 »: the page ticks it for whoever has none."""
+		frappe.db.set_value("POS Profile User", {"parent": self.restaurant_till, "user": TILL}, "default", 1)
+		self.as_user(OFFICE)
+
+		save_desk_settings(
+			self.shop_till,
+			{"applicable_for_users": [{"user": OTHER_TILL, "default": 0}, {"user": TILL, "default": 0}]},
+		)
+
+		rows = {
+			row.user: row.default
+			for row in frappe.get_doc("POS Profile", self.shop_till).get("applicable_for_users")
+		}
+		# The person with no default till gets this one; the one who is the default of another till keeps it there
+		self.assertEqual(rows, {OTHER_TILL: 1, TILL: 0})
+
 	# ------------------------------------------------------------------------------------------------ the bar of tills
 	def test_the_page_lists_the_tills_the_user_may_switch_to_and_says_which_are_off(self):
 		frappe.db.set_value("POS Profile", self.shop_till, "disabled", 1)

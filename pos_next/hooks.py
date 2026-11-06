@@ -646,3 +646,5 @@ boot_session = ["pos_next.restaurant.mode.extend_boot"]
 neoffice_business_apps = ["pos_next.restaurant.neoresto.business_apps"]
 # //// Neoffice — the point of sale's space gets a Settings tab with the till settings page (06.11.2026)
 neoffice_workspace_tabs = ["pos_next.restaurant.neoresto.tabs", "pos_next.till_settings.workspace.tabs"]
+# //// Neoffice — the point of sale's Tills tab gets a « New till » gesture that opens the page's dialog (06.11.2026)
+neoffice_tab_additions = ["pos_next.till_settings.workspace.tab_additions"]

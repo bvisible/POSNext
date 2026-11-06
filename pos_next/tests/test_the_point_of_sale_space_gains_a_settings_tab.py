@@ -49,3 +49,18 @@ class TestThePointOfSaleSpaceGainsASettingsTab(FrappeTestCase):
 		self.assertEqual(group["items"][0]["route"], "/app/till-settings")
 		self.assertEqual(group["items"][0]["label"], "Till settings")
 		self.assertEqual(len(group["items"]), 3)
+
+	def test_the_tills_tab_opens_with_a_new_till_gesture_that_leads_to_the_page(self):
+		"""06.11: the tab of the tills is where a shop owner lands from the point of sale; making a till is one gesture away."""
+		from neoffice_theme import workspace_tabs
+
+		if not hasattr(workspace_tabs, "_call"):
+			self.skipTest("this theme does not draw a gesture before a tab's views yet")
+		(tab,) = [t for t in workspace_tabs._code_catalogue()["Retail"] if t["key"] == "tills"]
+
+		call = workspace_tabs._call(tab)
+
+		self.assertEqual(call["label"], "New till")
+		self.assertEqual(call["page"], "till-settings")
+		self.assertTrue(call["route"].startswith("/app/till-settings"))
+		self.assertIn("new_till=1", call["route"])
