@@ -187,7 +187,11 @@ class TestTheDeclaration(FrappeTestCase):
 	def test_the_app_declares_itself_in_its_hooks(self):
 		hooks = frappe.get_hooks(app_name="pos_next")
 		self.assertEqual(hooks["neoffice_business_apps"], ["pos_next.restaurant.neoresto.business_apps"])
-		self.assertEqual(hooks["neoffice_workspace_tabs"], ["pos_next.restaurant.neoresto.tabs"])
+		# The point of sale's own space gets its Settings tab through the same hook (06.11.2026)
+		self.assertEqual(
+			hooks["neoffice_workspace_tabs"],
+			["pos_next.restaurant.neoresto.tabs", "pos_next.till_settings.workspace.tabs"],
+		)
 		self.assertIs(frappe.get_attr("pos_next.restaurant.neoresto.business_apps"), business_apps)
 		self.assertIs(frappe.get_attr("pos_next.restaurant.neoresto.tabs"), tabs)
 

@@ -105,7 +105,11 @@ class TestANewPosProfileGetsItsPosSettings(FrappeTestCase):
 		new = self.a_copy_of_the_fixture().insert(ignore_permissions=True)
 		name = rows(new.name)[0].name
 		frappe.db.set_value("POS Settings", name, "return_validity_days", 11)
-		frappe.delete_doc("POS Profile", new.name, force=True, ignore_permissions=True)
+		# An earlier profile deleted before its row went with it (on_trash, 06.11.2026): its row is still there. A profile deleted
+		# now takes its row along (test_a_till_is_deleted_from_the_office_page), and the next one is made with the defaults.
+		with patch("pos_next.pos_profile_settings.remove_with_the_profile"):
+			frappe.delete_doc("POS Profile", new.name, force=True, ignore_permissions=True)
+		self.assertEqual([row.name for row in rows(new.name)], [name])
 
 		again = self.a_copy_of_the_fixture().insert(ignore_permissions=True)
 

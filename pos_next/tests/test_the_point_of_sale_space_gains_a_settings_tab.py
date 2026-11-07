@@ -4,11 +4,15 @@
 
 The theme's retail space listed the tills and nothing said where their settings are. The tab is added through the theme's
 `neoffice_workspace_tabs` hook, before the space's reports, and shows the page, then the two original lists kept for support.
+
+The tab is built of the theme's own pieces and read by the theme: a site without neoffice_theme (the fleet's CI site installs frappe,
+erpnext, payments and pos_next only) never calls the provider, and these tests skip there, as the other tests of the theme's hooks do.
 """
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
+from pos_next.tests.test_neoresto import theme_or_skip
 from pos_next.till_settings import workspace
 
 
@@ -18,6 +22,8 @@ class TestThePointOfSaleSpaceGainsASettingsTab(FrappeTestCase):
 		self.addCleanup(frappe.set_user, "Administrator")
 
 	def test_the_provider_gives_one_settings_tab_to_the_retail_space_with_the_page_first(self):
+		theme_or_skip("neoffice_theme.workspace_spaces.common", "settings")
+
 		given = workspace.tabs()
 
 		self.assertEqual(list(given), ["Retail"])
@@ -29,7 +35,7 @@ class TestThePointOfSaleSpaceGainsASettingsTab(FrappeTestCase):
 		self.assertEqual(group["items"][1:], ["POS Settings", "POS Profile"])
 
 	def test_the_space_of_the_theme_carries_it_before_its_reports(self):
-		from neoffice_theme import workspace_tabs
+		workspace_tabs = theme_or_skip("neoffice_theme.workspace_tabs", "_code_catalogue")
 
 		tabs = workspace_tabs._code_catalogue()["Retail"]
 
@@ -39,7 +45,7 @@ class TestThePointOfSaleSpaceGainsASettingsTab(FrappeTestCase):
 		self.assertLess(keys.index("promotions"), keys.index("settings"))
 
 	def test_the_reader_who_may_read_the_tills_opens_the_page_from_it(self):
-		from neoffice_theme import workspace_tabs
+		workspace_tabs = theme_or_skip("neoffice_theme.workspace_tabs", "_settings_panel")
 
 		(tab,) = [t for t in workspace_tabs._code_catalogue()["Retail"] if t["key"] == "settings"]
 
@@ -52,10 +58,7 @@ class TestThePointOfSaleSpaceGainsASettingsTab(FrappeTestCase):
 
 	def test_the_tills_tab_opens_with_a_new_till_gesture_that_leads_to_the_page(self):
 		"""06.11: the tab of the tills is where a shop owner lands from the point of sale; making a till is one gesture away."""
-		from neoffice_theme import workspace_tabs
-
-		if not hasattr(workspace_tabs, "_call"):
-			self.skipTest("this theme does not draw a gesture before a tab's views yet")
+		workspace_tabs = theme_or_skip("neoffice_theme.workspace_tabs", "_call")
 		(tab,) = [t for t in workspace_tabs._code_catalogue()["Retail"] if t["key"] == "tills"]
 
 		call = workspace_tabs._call(tab)

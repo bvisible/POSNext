@@ -7,7 +7,9 @@ minute after Wallee had settled (23 s, 64 s and 68 s measured on real card payme
 are still in flight from the provider, once per call (the page asks again every three seconds), as the webshop's return page does.
 
 The guest acts as `Guest`; the test administrator lays the table and stands for the provider: `payments.www.wallee.success._refresh_status`, which
-asks Wallee, is replaced by what Wallee would answer. The suite rolls back.
+asks Wallee, is replaced by what Wallee would answer. The intent's provider is a Payment Provider the test makes: the move to `succeeded` saves the
+intent, whose `provider` is a checked link, and the fleet's CI site has no provider at all (naming one of osiris's passed there and failed in CI).
+The suite rolls back.
 """
 
 from unittest.mock import patch
@@ -17,6 +19,25 @@ import frappe
 from pos_next.tests.test_a_guest_payment_is_booked_by_the_provider import PaymentCase
 
 REFRESH = "payments.www.wallee.success._refresh_status"
+PROVIDER = "posnext_guest_return_wallee"
+
+
+def a_wallee_provider():
+	"""The provider the intents of these tests name, made once (the suite rolls back): written straight, as the till's tests do."""
+	if not frappe.db.exists("Payment Provider", PROVIDER):
+		provider = frappe.new_doc("Payment Provider")
+		provider.update(
+			{
+				"name": PROVIDER,
+				"provider_name": PROVIDER,
+				"display_label": PROVIDER,
+				"enabled": 0,
+				"mode": "test",
+				"driver_class": "payments.drivers.wallee.web_driver.WalleeWebDriver",
+			}
+		)
+		provider.db_insert()
+	return PROVIDER
 
 
 class TestTheProviderIsAskedAtTheReturn(PaymentCase):
@@ -26,7 +47,7 @@ class TestTheProviderIsAskedAtTheReturn(PaymentCase):
 		frappe.db.set_value(
 			"Payment Intent",
 			intent.name,
-			{"channel": channel, "provider": "wallee_test", "provider_intent_id": "4242"},
+			{"channel": channel, "provider": a_wallee_provider(), "provider_intent_id": "4242"},
 		)
 		return intent
 
@@ -80,7 +101,9 @@ class TestTheProviderIsAskedAtTheReturn(PaymentCase):
 
 	def test_a_payment_of_another_order_is_not_asked_here(self):
 		other = self.the_provider(10, status="processing", invoice="_Test another order")
-		frappe.db.set_value("Payment Intent", other.name, {"channel": "wallee_web", "provider_intent_id": "4243"})
+		frappe.db.set_value(
+			"Payment Intent", other.name, {"channel": "wallee_web", "provider_intent_id": "4243"}
+		)
 
 		with patch(REFRESH) as asked:
 			self.confirm(10)
@@ -96,4 +119,6 @@ class TestTheProviderIsAskedAtTheReturn(PaymentCase):
 
 		self.assertEqual(answer["status"], "awaiting_payment")
 		self.assertEqual(self.the_order().paid_amount, 0)
-		self.assertEqual(frappe.db.count("Error Log", {"method": "Guest payment: asking the provider failed"}), before + 1)
+		self.assertEqual(
+			frappe.db.count("Error Log", {"method": "Guest payment: asking the provider failed"}), before + 1
+		)
