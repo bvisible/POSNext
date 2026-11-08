@@ -27049,3 +27049,198 @@ msgstr ""
 #: POS/src/components/pos/HeldTicketsList.vue:58
 msgid "Held ticket"
 msgstr ""
+
+#: POS/src/utils/closeService.js:73
+msgid "1 dish marked delivered"
+msgstr ""
+
+#: POS/src/utils/closeService.js:42
+msgid "1 dish of a table already paid is marked delivered"
+msgstr ""
+
+#: POS/src/utils/closeService.js:72
+msgid "1 empty table removed"
+msgstr ""
+
+#: POS/src/utils/closeService.js:53
+msgid "1 order is left to settle"
+msgstr ""
+
+#: POS/src/utils/closeService.js:60
+msgid "1 order never left for the kitchen: nothing was consumed"
+msgstr ""
+
+#: POS/src/utils/closeService.js:71
+msgid "1 order settled"
+msgstr ""
+
+#: POS/src/utils/closeService.js:74
+msgid "1 table freed"
+msgstr ""
+
+#: POS/src/utils/closeService.js:46
+msgid "1 table is freed"
+msgstr ""
+
+#: POS/src/utils/closeService.js:38
+msgid "1 table opened and left is removed"
+msgstr ""
+
+#: POS/src/components/pos/CloseServiceDialog.vue:196
+msgid "Cancel them"
+msgstr ""
+
+#: POS/src/components/pos/CloseServiceDialog.vue:156
+msgid "Close the service"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_service_closing/restaurant_service_closing.json:1
+msgid "Dishes marked delivered"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_service_closing/restaurant_service_closing.json:1
+msgid "Empty tables removed"
+msgstr ""
+
+#: POS/src/components/pos/CloseServiceDialog.vue:186
+msgid "Every order is settled: the service can close."
+msgstr ""
+
+#: POS/src/components/pos/CloseServiceDialog.vue:165
+msgid "If guests are still there, the restaurant is not closed."
+msgstr ""
+
+#: POS/src/components/pos/CloseServiceDialog.vue:162
+msgid "Is the room empty?"
+msgstr ""
+
+#: POS/src/utils/closeService.js:12
+msgid "Never sent to the kitchen"
+msgstr ""
+
+#: POS/src/components/pos/CloseServiceDialog.vue:172
+msgid "No, guests are still here"
+msgstr ""
+
+#: pos_next/restaurant/service_closing.py:203
+#, python-brace-format
+msgid "Orders are still open: {0}. Settle them before closing the service."
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_service_closing/restaurant_service_closing.json:1
+msgid "Orders settled"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_service_closing/restaurant_service_closing.json:1
+msgid "Restaurant Service Closing"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_service_closing/restaurant_service_closing.json:1
+msgid "Tables freed"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_service_closing/restaurant_service_closing.json:1
+msgid "Tables opened and left with nothing on them: removed without a question."
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_service_closing/restaurant_service_closing.json:1
+msgid "The business day the service belongs to: a service closed after midnight is still the day it was opened."
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_service_closing/restaurant_service_closing.json:1
+msgid "The dishes of tables already paid that were still at the kitchen: the kitchen is closed, they are marked delivered."
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_service_closing/restaurant_service_closing.json:1
+msgid "The orders settled one by one since the previous closing (paid late, on account, offered, a customer's loss, cancelled): each has its row in the settlement journal."
+msgstr ""
+
+#: pos_next/restaurant/service_closing.py:197
+msgid "The service closes when the room is empty: say that it is"
+msgstr ""
+
+#: POS/src/components/pos/CloseServiceDialog.vue:147
+msgid "The service could not be closed"
+msgstr ""
+
+#: POS/src/components/pos/CloseServiceDialog.vue:265
+msgid "The service is closed."
+msgstr ""
+
+#: POS/src/components/pos/CloseServiceDialog.vue:96
+msgid "The service stays open."
+msgstr ""
+
+#: pos_next/restaurant/service_closing.py:45
+msgid "This till has no restaurant"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_service_closing/restaurant_service_closing.json:1
+msgid "Total settled"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_service_closing/restaurant_service_closing.json:1
+msgid "What the closing did"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_service_closing/restaurant_service_closing.json:1
+msgid "What was settled by each way, the empty tables removed and the tables freed (JSON)."
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_service_closing/restaurant_service_closing.json:1
+msgid "Who answered that the room was empty."
+msgstr ""
+
+#: POS/src/components/pos/CloseServiceDialog.vue:175
+msgid "Yes, the room is empty"
+msgstr ""
+
+#: POS/src/utils/closeService.js:1
+#, python-brace-format
+msgid "{0} dishes marked delivered"
+msgstr ""
+
+#: POS/src/utils/closeService.js:1
+#, python-brace-format
+msgid "{0} dishes of tables already paid are marked delivered"
+msgstr ""
+
+#: POS/src/utils/closeService.js:1
+#, python-brace-format
+msgid "{0} empty tables removed"
+msgstr ""
+
+#: pos_next/restaurant/service_closing.py:1
+#, python-brace-format
+msgid "{0} has just been ordered on: the service cannot close yet"
+msgstr ""
+
+#: POS/src/utils/closeService.js:1
+#, python-brace-format
+msgid "{0} orders are left to settle"
+msgstr ""
+
+#: POS/src/utils/closeService.js:1
+#, python-brace-format
+msgid "{0} orders never left for the kitchen: nothing was consumed"
+msgstr ""
+
+#: POS/src/utils/closeService.js:1
+#, python-brace-format
+msgid "{0} orders settled"
+msgstr ""
+
+#: POS/src/utils/closeService.js:1
+#, python-brace-format
+msgid "{0} tables are freed"
+msgstr ""
+
+#: POS/src/utils/closeService.js:1
+#, python-brace-format
+msgid "{0} tables freed"
+msgstr ""
+
+#: POS/src/utils/closeService.js:1
+#, python-brace-format
+msgid "{0} tables opened and left are removed"
+msgstr ""
