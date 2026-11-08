@@ -186,7 +186,7 @@ describe("the header bar of an open table", () => {
 
 		expect(wrapper.emitted("back")).toHaveLength(1)
 		expect(wrapper.emitted("qr")).toBeUndefined()
-		expect(backButton().text()).toBe("Back")
+		expect(backButton().text()).toBe("Tables")
 	})
 
 	it("makes Back a button that is seen at a glance: solid ink with white words, an arrow, and a 44 px touch target (Daniel, 01.11)", () => {
@@ -201,7 +201,7 @@ describe("the header bar of an open table", () => {
 		expect(classes).toContain("font-semibold")
 		// an arrow says it goes back
 		expect(back.find("svg").exists()).toBe(true)
-		expect(back.attributes("aria-label")).toBe("Back")
+		expect(back.attributes("aria-label")).toBe("Tables")
 		expect(back.attributes("type")).toBe("button")
 	})
 
