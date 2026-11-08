@@ -45,6 +45,8 @@ RESTAURANT_ONLY_SETTINGS = (
 	"ask_covers_on_open",
 	# After how many minutes a served, quiet table is marked « Cash in? » on the floor plan, 45 by default, 0 for never (pos_next.restaurant.open_orders)
 	"remind_to_cash_in_minutes",
+	# After how many minutes a table waiting to be cleaned is marked « Guests left? » on the floor plan, 30 by default, 0 for never (pos_next.restaurant.guests_left)
+	"ask_if_guests_left_minutes",
 )
 
 

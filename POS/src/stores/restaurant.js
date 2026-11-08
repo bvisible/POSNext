@@ -96,6 +96,8 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		ask_covers_on_open: 1,
 		//// Neoffice — the minutes after which a served, quiet table is marked « Cash in? » on the floor plan, 45 unless the restaurant says otherwise, 0 for never (the product owner, 08.11.2026)
 		remind_to_cash_in_minutes: 45,
+		//// Neoffice — the minutes after which a table waiting to be cleaned is marked « Guests left? » on the floor plan, 30 unless the restaurant says otherwise, 0 for never (the product owner, 08.11.2026)
+		ask_if_guests_left_minutes: 30,
 		enable_takeaway: false,
 		takeaway_card: null,
 		enable_qr_ordering: false,

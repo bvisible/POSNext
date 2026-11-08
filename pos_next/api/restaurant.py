@@ -24,6 +24,7 @@ from pos_next.restaurant import (
 	devices,
 	direct_service,
 	figures,
+	guests_left,
 	item_units,
 	kitchen_alerts,
 	open_orders,
@@ -174,10 +175,13 @@ def get_tables(restaurant=None):
 			"Restaurant Table",
 			or_filters=of_the_restaurant,
 			# //// Neoffice — and whether the table is one of direct service (a bar, a counter): the till comes back to it after every ticket (the product owner, 08.11.2026)
-			fields=["name", "table_name", "area", "capacity", "status", "pos_x", "pos_y", "width", "height", "shape", *direct_service.fields()],
+			# //// Neoffice — and its last write, which says since when a table waits to be cleaned (« Guests left? », pos_next.restaurant.guests_left)
+			fields=["name", "table_name", "area", "capacity", "status", "pos_x", "pos_y", "width", "height", "shape", "modified", *direct_service.fields()],
 		),
 		restaurant,
 	)
+	# //// Neoffice — a table that waits to be cleaned for the restaurant's minutes is marked « Guests left? »: Cleaning comes by itself at the last delivery, guests gone or not (the product owner, 08.11.2026)
+	guests_left.stamp(tables, guests_left.reminder_minutes(restaurant))
 	area_labels = {area.name: area.area_name for area in areas}
 	area_codes = {area.name: area.area_code for area in areas}
 	for table in tables:
@@ -737,6 +741,21 @@ def mark_table_available(table_name: str | None):
 		frappe.throw(_("Table {0} is not in Paid or Cleaning status").format(label))
 
 	_put_table_back(table_name)
+
+	frappe.publish_realtime("table_update")
+	return {"status": "success"}
+
+
+@frappe.whitelist()
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def keep_table_for_guests(table_name: str | None):
+	"""The guests of a table to clean have not left: it stays in Cleaning and the « Guests left? » question starts its wait again (the product owner, 08.11.2026)."""
+	permissions.require_right("set_table_status")
+
+	if not frappe.db.exists("Restaurant Table", table_name):
+		frappe.throw(_("Table {0} not found").format(table_name))
+
+	guests_left.keep_seated(table_name)
 
 	frappe.publish_realtime("table_update")
 	return {"status": "success"}
@@ -3112,6 +3131,8 @@ def get_restaurant_settings(restaurant=None):
 		"ask_covers_on_open": covers_module.asks_on_open(settings),
 		# //// Neoffice — the minutes after which a served, quiet table is marked « Cash in? » on the floor plan, the restaurant's choice (the product owner, 08.11.2026); 45 unless it says otherwise, 0 for never
 		"remind_to_cash_in_minutes": open_orders.reminder_minutes(settings.name),
+		# //// Neoffice — the minutes after which a table waiting to be cleaned is marked « Guests left? », the restaurant's choice (the product owner, 08.11.2026); 30 unless it says otherwise, 0 for never
+		"ask_if_guests_left_minutes": guests_left.reminder_minutes(settings.name),
 		"enable_takeaway": bool(till.enable_takeaway),
 		"takeaway_card": till.takeaway_card or None,
 		"enable_tips": bool(settings.enable_tips),

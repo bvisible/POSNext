@@ -390,6 +390,24 @@ SETTINGS = (
 		max=600,
 		applies=APPLIES_RESTAURANT,
 	),
+	# //// Neoffice — the question « Guests left? » (NeoResto lot 1, the product owner, 08.11.2026): a table goes to cleaning by itself, guests gone or not; after how many minutes in cleaning
+	# //// it is marked on the floor plan. A field of the Restaurant, so the restaurant's own choice; 0 switches the question off.
+	Setting(
+		"ask_if_guests_left_minutes",
+		"service",
+		_lt("Ask if the guests have left after (minutes)"),
+		_lt(
+			"A table goes to cleaning by itself when its bill is paid with nothing left to serve, or when the last dish is delivered,"
+			" whether the guests have left or not. A table that has waited to be cleaned for this many minutes is marked"
+			" « Guests left? » on the floor plan. 0: never."
+		),
+		"int",
+		doctype=RESTAURANT,
+		till=RESTAURANT_TILL,
+		min=0,
+		max=600,
+		applies=APPLIES_RESTAURANT,
+	),
 	# //// Neoffice — the digits of the ticket number (NeoResto lot 1, task 38b), added to the list when this task's registry
 	# //// met the field; the server holds the same 1..9 range (Restaurant._check_ticket_number_digits).
 	Setting(

@@ -2107,6 +2107,10 @@
 								: __("Table ready for cleanup")
 						}}
 					</p>
+					<!-- //// Neoffice — a table that waited to be cleaned for the restaurant's minutes: are the guests gone? « Available » says yes, « Not left yet » asks again later (the product owner, 08.11.2026) -->
+					<p v-if="cleaningTable?.guests_left_ask" data-test="guests-left-question" class="text-sm text-amber-800 mt-1">
+						{{ __("Waiting to be cleaned for {0} min. Have the guests left?", [cleaningTable.cleaning_minutes]) }}
+					</p>
 					<!-- //// Neoffice — the dishes and drinks of the paid bill that are not served yet: the table stays seated until the last one is delivered (the product owner, 08.11.2026) -->
 					<p v-if="dishesStillToServe" data-test="paid-table-left" class="text-sm text-gray-500 mt-1">
 						{{ __("{0} still to serve", [dishesStillToServe]) }}
@@ -2186,6 +2190,16 @@
 						@click="orderAgainOnTheTable"
 					>
 						{{ __("Order again") }}
+					</Button>
+					<!-- //// Neoffice — the guests are still at the table: it stays to clean and the question comes back after the same minutes (the product owner, 08.11.2026) -->
+					<Button
+						v-if="cleaningTable?.guests_left_ask"
+						class="flex-1"
+						variant="subtle"
+						data-test="guests-not-left-yet"
+						@click="guestsNotLeftYet"
+					>
+						{{ __("Not left yet") }}
 					</Button>
 					<Button class="flex-1" variant="solid" @click="markTableAvailable">
 						{{ __("Available") }}
@@ -3889,6 +3903,21 @@ async function orderAgainOnTheTable() {
 	showCleaningDialog.value = false;
 	cleaningTable.value = null;
 	await openTable(table);
+}
+
+//// Neoffice — the guests of a table to clean have not left: it stays in Cleaning and the « Guests left? » question starts its wait again (the product owner, 08.11.2026)
+async function guestsNotLeftYet() {
+	if (!cleaningTable.value) return;
+	try {
+		await call("pos_next.api.restaurant.keep_table_for_guests", {
+			table_name: cleaningTable.value.name,
+		});
+		showCleaningDialog.value = false;
+		cleaningTable.value = null;
+		showSuccess(__("Noted: the question comes back later"));
+	} catch (e) {
+		showError(e.message || __("Failed to update table status"));
+	}
 }
 
 async function markTableAvailable() {

@@ -64,6 +64,8 @@ READ_BY_THE_TILL = {
 	"ask_covers_on_open",
 	# //// Neoffice — after how many minutes a served, quiet table is marked « Cash in? » (the product owner, 08.11.2026)
 	"remind_to_cash_in_minutes",
+	# //// Neoffice — after how many minutes a table waiting to be cleaned is marked « Guests left? » (the product owner, 08.11.2026)
+	"ask_if_guests_left_minutes",
 }
 # What only the server uses: the call answers any signed-in user, so none of it may leave
 ONLY_THE_SERVER_USES = (

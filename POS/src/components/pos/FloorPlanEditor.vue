@@ -510,6 +510,8 @@
 					'text-blue-600': table.status === 'Paid',
 					'text-emerald-600 dark:text-ds-sand-300': table.status === 'Cleaning',
 				}">{{ table.direct_service ? __("Direct service") : __(table.status) }}</span>
+				<!-- //// Neoffice — the table went to Cleaning by itself (bill paid with nothing to serve, or last dish delivered) and has waited for the restaurant's minutes: the guests may be at their digestif or gone (the product owner, 08.11.2026) -->
+				<span v-if="table.guests_left_ask && !isEditMode" data-test="table-guests-left" class="relative z-10 mt-0.5 bg-amber-100 text-amber-900 dark:bg-ds-warning/20 dark:text-ds-warning text-[9px] font-bold rounded-full px-1.5 py-0.5" :title="__('Waiting to be cleaned for {0} min', [table.cleaning_minutes])">{{ __("Guests left?") }}</span>
 
 				<!-- Resize handles (edit mode only) -->
 				<template v-if="isEditMode">

@@ -22,6 +22,7 @@
   "ask_covers_on_open",
   "section_cash_in",
   "remind_to_cash_in_minutes",
+  "ask_if_guests_left_minutes",
   "loss_mode_of_payment",
   "section_sold_out",
   "grey_out_sold_out",
@@ -162,6 +163,14 @@
    "fieldname": "remind_to_cash_in_minutes",
    "fieldtype": "Int",
    "label": "Remind to cash in after (minutes)",
+   "non_negative": 1
+  },
+  {
+   "default": "30",
+   "description": "A table goes to cleaning by itself when its bill is paid with nothing left to serve, or when the last dish is delivered, whether the guests have left or not. A table that has waited to be cleaned for this many minutes is marked « Guests left? » on the floor plan. 0: never.",
+   "fieldname": "ask_if_guests_left_minutes",
+   "fieldtype": "Int",
+   "label": "Ask if the guests have left after (minutes)",
    "non_negative": 1
   },
   {
@@ -419,7 +428,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-08 17:10:00.000000",
+ "modified": "2026-11-08 20:30:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "Restaurant",
