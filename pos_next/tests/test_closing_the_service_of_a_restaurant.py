@@ -126,6 +126,17 @@ class TestWhoMayCloseTheService(ClosingCase):
 
 		self.assertEqual(self.closings(), [])
 
+	def test_a_portal_customer_and_a_visitor_may_not(self):
+		# The three identities: a customer of the portal (a Website User) and a visitor reach nothing of the restaurant's closing
+		for persona in ("portal_customer", "Guest"):
+			with self.subTest(persona=persona), as_role(persona):
+				with self.assertRaises(frappe.PermissionError):
+					restaurant_api.get_service_closing(self.fx.profile, self.a)
+				with self.assertRaises(frappe.PermissionError):
+					restaurant_api.close_service(self.fx.profile, self.a, 1)
+
+		self.assertEqual(self.closings(), [])
+
 	def test_the_manager_of_the_floor_may(self):
 		answer = self.close()
 
