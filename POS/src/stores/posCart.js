@@ -401,6 +401,45 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		hasUnsentChanges.value = true;
 	}
 
+	//// Neoffice — one unit more of a dish whose line carries a special note or options (the « + » of the cart): the unit is a PLAIN one, on the plain line that waits when there is one
+	//// (addItem merges it) or on a line of its own, never on the noted line: « 1× steak saignant » plus a tap is « 1× saignant, 1× steak », not « 2× saignant » (the product owner,
+	//// 08.11.2026). It is billed at the dish's own price (the options' adjustment taken off), on the same terms as the line it comes from (a rate set by hand, a discount), and it checks the stock.
+	/**
+	 * @param {Object} row - The cart row of the line that carries the note
+	 * @returns {boolean} Whether a unit was added
+	 */
+	function addAPlainUnitOf(row) {
+		const line = invoiceItems.value.find((l) => l === row || toRaw(l) === toRaw(row));
+		if (!line) {
+			warnRowGone();
+			return false;
+		}
+		if (settingsStore.shouldEnforceStockValidation() && shouldValidateItemStock(line)) {
+			const totalQty = getCartStockQtyForItem(invoiceItems.value, line.item_code) + rowStockQty(line, 1);
+			const check = checkStockAvailability(line, totalQty);
+			if (!check.available) {
+				showWarning(check.error);
+				return false;
+			}
+		}
+		const own = Math.max(0, (Number(line.rate) || 0) - (Number(line._modifiers_applied) || 0));
+		addItemToInvoice(
+			{
+				...line,
+				rate: own,
+				price_list_rate: own,
+				posa_special_instructions: "",
+				posa_item_modifiers: "",
+				_modifiers_applied: 0,
+				kds_status: "",
+			},
+			1,
+			{ sameTermsOnly: true }
+		);
+		hasUnsentChanges.value = true;
+		return true;
+	}
+
 	/**
 	 * Update special instructions on an item (restaurant mode).
 	 */
@@ -3225,6 +3264,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		replaceAllItems,
 		removeItem,
 		updateItemQuantity,
+		//// Neoffice — one plain unit more of a dish whose line carries a note, see the function (the product owner, 08.11.2026)
+		addAPlainUnitOf,
 		clearCart,
 		setCustomer,
 		setDefaultCustomer: loadDefaultCustomer,

@@ -974,7 +974,9 @@
 							<!-- ////   order needs besides paying: fire the order (8aa35c29, c7f6932c), print -->
 							<!-- ////   the pre-payment ticket (71050faf, 2026-03-25) and edit modifiers -->
 							<!-- ////   (4df0caf1, 2026-03-21). -->
+							<!-- //// Neoffice — the « + » of a line that carries a special note adds a plain unit, never one more on that line (the product owner, 08.11.2026) -->
 							<InvoiceCart
+								@add-plain-unit="cartStore.addAPlainUnitOf"
 								ref="invoiceCartRef"
 								:items="cartStore.invoiceItems"
 								:customer="cartStore.customer"

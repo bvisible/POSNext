@@ -2545,6 +2545,8 @@ const emit = defineEmits([
 	//// Neoffice — the row of the line (cartRowOf) rides last on update-quantity, update-uom and edit-item, and replaces the
 	//// item code on remove-item: see setQuantityOf, removeRowOf, selectUom and handleUpdateItem.
 	"update-quantity", // (itemCode, newQty, uom?, row?) - Update item quantity
+	//// Neoffice — the « + » of a line that carries a special note or options: a plain unit more, never on that line (the product owner, 08.11.2026)
+	"add-plain-unit", // (row) - One unit more of the dish, with no note
 	"remove-item", // (itemCode | row, uom?) - Remove item from cart
 	"select-customer", // (customer) - Select/change customer
 	"edit-customer", // (customer) - Open edit customer dialog
@@ -3003,6 +3005,8 @@ const displayDiscountAmount = computed(() => {
 
 //// Neoffice — the provisional ticket's state, shown on the printer button of the action bar (ruling 97, task 28a).
 import { ticketState } from "@/utils/provisionalTicket";
+//// Neoffice — a line that carries a special note takes no unit more from the « + » (the product owner, 08.11.2026)
+import { carriesANote } from "@/utils/noteOnALine";
 
 const ticketStateClass = computed(
 	() =>
@@ -3525,6 +3529,12 @@ function removeRowOf(item) {
  */
 function incrementQuantity(item) {
 	if (item.is_resolved_barcode || isLockedFreeRow(item)) return;
+
+	//// Neoffice — a line with a special note or options takes no unit more: the unit goes on a plain line (the product owner, 08.11.2026: « si on met une note sur un article et que l'on en ajoute 1, il ne doit pas faire +1 sur l'article avec la note »)
+	if (carriesANote(item)) {
+		emit("add-plain-unit", cartRowOf(item));
+		return;
+	}
 
 	const step = getSmartStep(getDisplayQuantity(item));
 	const newPaidQty = Math.round((getDisplayQuantity(item) + step) * 10000) / 10000;
