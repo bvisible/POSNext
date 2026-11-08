@@ -23,6 +23,7 @@
   "enable_restaurant_mode",
   "restaurant",
   "default_restaurant_area",
+  "default_restaurant_table",
   "column_break_takeaway",
   "enable_takeaway",
   "takeaway_card",
@@ -263,6 +264,14 @@
    "label": "Default Restaurant Area",
    "options": "Restaurant Area",
    "depends_on": "enable_restaurant_mode"
+  },
+  {
+   "fieldname": "default_restaurant_table",
+   "fieldtype": "Link",
+   "label": "Default Restaurant Table",
+   "options": "Restaurant Table",
+   "depends_on": "enable_restaurant_mode",
+   "description": "A table of direct service (a bar, a counter) this till opens on, and comes back to after each ticket. Empty: the till opens on the floor, as a waiter's pad does."
   },
   {
    "fieldname": "column_break_takeaway",
@@ -969,7 +978,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-05 14:00:00.000000",
+ "modified": "2026-11-08 17:40:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "POS Settings",

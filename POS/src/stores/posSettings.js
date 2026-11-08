@@ -101,6 +101,8 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		//// where NeoResto runs and for a till that names its restaurant), so nothing here works it out again.
 		neoresto_active: false,
 		default_restaurant_area: "",
+		//// Neoffice — the table of direct service this till opens on and comes back to (NeoResto lot 1, 08.11.2026): empty on a waiter's pad.
+		default_restaurant_table: "",
 		// Security
 		enable_session_lock: 0,
 		session_lock_timeout: 5,
@@ -253,6 +255,8 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 	//// show the structured street + N° address fields on that form (8bffb770 2026-02-04,
 	//// 912ef092 2026-02-04, d7584e7b 2026-07-17 ADR-002).
 	const defaultRestaurantArea = computed(() => settings.value.default_restaurant_area || "");
+	//// Neoffice — the table of direct service this till opens on and comes back to (NeoResto lot 1, 08.11.2026).
+	const defaultRestaurantTable = computed(() => settings.value.default_restaurant_table || "");
 	//// Neoffice — the customer-facing display has no upstream equivalent, so neither do these
 	//// flags: turn the second screen on, and let the customer create their own account from it
 	//// (8bffb770 2026-02-04; 912ef092 2026-02-04 "improve UX for customer creation flow").
@@ -425,6 +429,8 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 			//// Neoffice — and whether the site runs NeoResto (NeoResto lot 1, task 4), told again to the next user.
 			neoresto_active: false,
 			default_restaurant_area: "",
+			//// Neoffice — the table of direct service this till opens on and comes back to (NeoResto lot 1, 08.11.2026): empty on a waiter's pad.
+			default_restaurant_table: "",
 			// Security
 			enable_session_lock: 0,
 			session_lock_timeout: 5,
@@ -603,6 +609,7 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		//// equivalent (8aa35c29 2026-03-20; 8bffb770 2026-02-04).
 		// Computed - Restaurant Settings
 		defaultRestaurantArea,
+		defaultRestaurantTable,
 
 		// Computed - Customer Display Settings
 		enableCustomerDisplay,

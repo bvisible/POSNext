@@ -2392,7 +2392,7 @@ import { customerOfTheOrder, keepTheNotesOfTheOrder, noteToReadAgain, useOpenTab
 //// Neoffice — a table paid while dishes are still to serve opens its payment, not a new order (the product owner, 08.11.2026)
 import { tableIsPaidAtService } from "@/utils/tableStatus";
 //// Neoffice — and a table of direct service (a bar, a counter) is opened again once its ticket is paid (the product owner, 08.11.2026)
-import { reopenDirectTable } from "@/utils/directService";
+import { defaultTableOf, reopenDirectTable } from "@/utils/directService";
 //// Neoffice — the Back of a waiter's phone does not leave the till (the product owner, 08.11.2026)
 import { useStayInTheApp } from "@/composables/useStayInTheApp";
 import { useWaiterLock } from "@/composables/useWaiterLock";
@@ -5973,10 +5973,33 @@ async function installTheApp() {
 //// Neoffice — a table of direct service (a bar, a counter): once the ticket is paid the till comes back to the same table with an empty ticket, to type the next one; on a phone it shows
 //// the menu of that table instead of the list of tables (the product owner, 08.11.2026). Whether it did.
 async function backToTheDirectTable(table) {
-	const opened = await reopenDirectTable(table, restaurantStore.tables, openTable);
+	//// Neoffice — a till set to open on a table of direct service (« Default table » of its settings) comes back to THAT table, whichever table the ticket was paid at: the bar's till
+	//// is set so, a waiter's pad is not (the product owner, 08.11.2026).
+	const opened = await reopenDirectTable(
+		table,
+		restaurantStore.tables,
+		openTable,
+		posSettingsStore.defaultRestaurantTable,
+	);
 	if (opened) backToTheTablesOnAPhone();
 	return opened;
 }
+
+//// Neoffice — a till set to open on a table of direct service lands on it once the floor is known, instead of on the floor plan: the next ticket is typed at once. Once, when the
+//// page opens: the waiter who goes back to the floor on purpose stays there. A cart already in progress is never replaced.
+let openedTheDefaultTable = false;
+watch(
+	() => restaurantStore.tables,
+	async (tables) => {
+		if (openedTheDefaultTable || !restaurantStore.isEnabled || !tables?.length) return;
+		const table = defaultTableOf(tables, posSettingsStore.defaultRestaurantTable);
+		if (!table) return;
+		openedTheDefaultTable = true;
+		if (cartStore.restaurantTable || cartStore.invoiceItems.length) return;
+		if (await openTable(table)) backToTheTablesOnAPhone();
+	},
+	{ immediate: true },
+);
 
 function backToTheTablesOnAPhone() {
 	const tab = tabAfterPayment({

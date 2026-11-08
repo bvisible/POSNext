@@ -68,6 +68,8 @@ POS_SETTINGS_FIELDS = [
 	# //// pos_next_bootstrap_settings.
 	"restaurant",
 	"default_restaurant_area",
+	# //// Neoffice — the table of direct service this till opens on and comes back to (NeoResto lot 1, 08.11.2026)
+	"default_restaurant_table",
 	# Cash Management
 	"closing_withdrawal_template",
 	# //// Neoffice — end-of-day report e-mail (neoffice-maintenance#1235)
@@ -159,6 +161,8 @@ DEFAULT_POS_SETTINGS = {
 	"restaurant": "",
 	"restaurant_name": "",
 	"default_restaurant_area": "",
+	# //// Neoffice — mirrors POS_SETTINGS_FIELDS: the table of direct service this till opens on (NeoResto lot 1, 08.11.2026)
+	"default_restaurant_table": "",
 	# Cash Management
 	"closing_withdrawal_template": "",
 	# //// Neoffice — end-of-day report e-mail (neoffice-maintenance#1235)

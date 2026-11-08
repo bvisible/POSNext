@@ -3,7 +3,7 @@
  * //// 08.11.2026). No other table is: after a table with guests is paid the till goes back to the floor, as it always did.
  */
 import { describe, expect, it, vi } from "vitest"
-import { isDirectService, reopenDirectTable } from "../directService"
+import { defaultTableOf, isDirectService, reopenDirectTable } from "../directService"
 
 const BAR = { name: "t-bar", table_name: "Bar", direct_service: 1, status: "Empty" }
 const T1 = { name: "t1", table_name: "T1", direct_service: 0, status: "Cleaning" }
@@ -54,5 +54,56 @@ describe("once a ticket is paid", () => {
 		const open = vi.fn(async () => false)
 
 		expect(await reopenDirectTable(BAR, [BAR], open)).toBe(false)
+	})
+})
+
+describe("the table a till is set to open on", () => {
+	const COUNTER = { name: "t-counter", table_name: "Counter", direct_service: 1, status: "Empty" }
+
+	it("is the table of direct service its setting names, as the floor holds it", () => {
+		expect(defaultTableOf([T1, BAR, COUNTER], "t-counter")).toBe(COUNTER)
+	})
+
+	it("is none for a till that names none, as a waiter's pad", () => {
+		for (const name of ["", undefined, null]) expect(defaultTableOf([BAR, COUNTER], name)).toBeNull()
+	})
+
+	it("is none when the floor does not know the table, or the table is no longer one of direct service", () => {
+		expect(defaultTableOf([BAR], "t-gone")).toBeNull()
+		expect(defaultTableOf([T1, BAR], "t1")).toBeNull()
+		expect(defaultTableOf(undefined, "t-bar")).toBeNull()
+	})
+
+	it("is where the till comes back to after a ticket, whichever table the ticket was paid at", async () => {
+		const open = vi.fn(async () => true)
+
+		expect(await reopenDirectTable(T1, [T1, COUNTER], open, "t-counter")).toBe(true)
+		expect(open).toHaveBeenCalledWith(COUNTER)
+	})
+
+	it("is preferred to the table of direct service the ticket was paid at", async () => {
+		const open = vi.fn(async () => true)
+
+		await reopenDirectTable(BAR, [BAR, COUNTER], open, "t-counter")
+
+		expect(open).toHaveBeenCalledTimes(1)
+		expect(open).toHaveBeenCalledWith(COUNTER)
+	})
+
+	it("changes nothing for a till with no default table: the table paid at, when it is of direct service, else the floor", async () => {
+		const open = vi.fn(async () => true)
+
+		expect(await reopenDirectTable(T1, [T1, COUNTER], open, "")).toBe(false)
+		expect(open).not.toHaveBeenCalled()
+		expect(await reopenDirectTable(BAR, [BAR, COUNTER], open, "")).toBe(true)
+		expect(open).toHaveBeenCalledWith(BAR)
+	})
+
+	it("falls back on the table paid at when the default table has gone", async () => {
+		const open = vi.fn(async () => true)
+
+		await reopenDirectTable(BAR, [BAR], open, "t-gone")
+
+		expect(open).toHaveBeenCalledWith(BAR)
 	})
 })

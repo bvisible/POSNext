@@ -141,11 +141,15 @@ class TestTheList(FrappeTestCase):
 				with self.subTest(setting=setting.key):
 					self.assertNotIn(setting.tab, RESTAURANT_TABS)
 
-	def test_the_restaurant_managers_set_three_settings_of_the_till_named_one_by_one(self):
+	def test_the_restaurant_managers_set_four_settings_of_the_till_named_one_by_one(self):
 		# Ruling 63 is granted by a flag on the setting, never by the tab it is drawn in: a setting of POS Settings or
 		# POS Profile moved into a restaurant tab stays the till manager's
 		flagged = {setting.key for setting in registry.SETTINGS if setting.restaurant_manager_may_edit}
-		self.assertEqual(flagged, {"default_restaurant_area", "enable_takeaway", "takeaway_card"})
+		# //// Neoffice — the fourth, « Default table » (08.11.2026), is of the same nature as the first: which table THIS till opens on, e.g. the bar's counter
+		self.assertEqual(
+			flagged,
+			{"default_restaurant_area", "default_restaurant_table", "enable_takeaway", "takeaway_card"},
+		)
 		for key in flagged:
 			with self.subTest(key=key):
 				setting = registry.get(key)
@@ -399,6 +403,32 @@ class TillSettingsCase(FrappeTestCase):
 			.insert(ignore_permissions=True)
 			.name
 		)
+		# //// Neoffice — the tables a till can be set to open on: one of direct service (a counter), one with guests (08.11.2026)
+		cls.counter = (
+			frappe.get_doc(
+				{
+					"doctype": "Restaurant Table",
+					"table_name": "_Test Till Settings Counter",
+					"area": cls.area,
+					"restaurant": cls.restaurant,
+					"direct_service": 1,
+				}
+			)
+			.insert(ignore_permissions=True)
+			.name
+		)
+		cls.guest_table = (
+			frappe.get_doc(
+				{
+					"doctype": "Restaurant Table",
+					"table_name": "_Test Till Settings Table",
+					"area": cls.area,
+					"restaurant": cls.restaurant,
+				}
+			)
+			.insert(ignore_permissions=True)
+			.name
+		)
 		parent = frappe.db.get_value("Warehouse", {"company": cls.fx.company, "is_group": 1}, "name")
 		cls.second_warehouse = (
 			frappe.get_doc(
@@ -534,7 +564,12 @@ class TestWhoOpensTheSettings(TillSettingsCase):
 		settings = by_key(answer)
 		self.assertTrue(settings["enable_runner"]["editable"])
 		# The settings of the till that sit in his tabs are his too (ruling 63): every setting he is shown he may change
-		for key in ("default_restaurant_area", "enable_takeaway", "takeaway_card"):
+		for key in (
+			"default_restaurant_area",
+			"default_restaurant_table",
+			"enable_takeaway",
+			"takeaway_card",
+		):
 			with self.subTest(key=key):
 				self.assertTrue(settings[key]["editable"])
 		self.assertEqual([key for key, setting in settings.items() if not setting["editable"]], [])
@@ -651,6 +686,24 @@ class TestOneSave(TillSettingsCase):
 		for key, value in saved.items():
 			with self.subTest(key=key):
 				self.assertEqual(values[key], value)
+
+	def test_the_default_table_of_a_till_is_one_of_direct_service_of_its_restaurant(self):
+		self.as_user(RESTAURANT_MANAGER)
+		choices = get_till_settings(self.restaurant_till)["choices"]["default_restaurant_table"]
+
+		self.assertEqual([choice["value"] for choice in choices], [self.counter])
+		save_till_settings(self.restaurant_till, {"default_restaurant_table": self.counter})
+		frappe.set_user("Administrator")
+		self.assertEqual(
+			self.stored_settings(self.restaurant_till, "default_restaurant_table").default_restaurant_table,
+			self.counter,
+		)
+
+	def test_a_table_with_guests_is_no_default_table(self):
+		self.as_user(RESTAURANT_MANAGER)
+
+		with self.assertRaises(frappe.ValidationError):
+			save_till_settings(self.restaurant_till, {"default_restaurant_table": self.guest_table})
 
 	def test_a_restaurant_manager_saves_his_restaurant_tabs_and_nothing_else_of_the_till(self):
 		card = _card(self.restaurant, "_Test Till Settings Takeaway Card")

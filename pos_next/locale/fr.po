@@ -24447,15 +24447,6 @@ msgstr "Il y a plus d'argent en caisse que prévu alors que des commandes sont o
 msgid "The open orders could not be read."
 msgstr "Les commandes ouvertes n'ont pas pu être lues."
 
-#: POS/src/utils/stillOpenAtClosing.js:26
-msgid "1 held ticket on this device will be erased when you sign out"
-msgstr "1 ticket en attente sur cet appareil sera effacé à la déconnexion"
-
-#: POS/src/utils/stillOpenAtClosing.js:1
-#, python-brace-format
-msgid "{0} held tickets on this device will be erased when you sign out"
-msgstr "{0} tickets en attente sur cet appareil seront effacés à la déconnexion"
-
 #: pos_next/api/restaurant.py:602
 msgid "Restaurant not found"
 msgstr "Restaurant introuvable"
@@ -24471,3 +24462,298 @@ msgstr "Rappeler d'encaisser après (minutes)"
 #: pos_next/pos_next/doctype/restaurant/restaurant.json:1
 msgid "A table where everything is served and nothing has moved for this many minutes is marked « Cash in? » on the floor plan, so that a forgotten table is seen while the guests are still there. 0: never."
 msgstr "Une table où tout est servi et où rien n'a bougé depuis ce nombre de minutes est marquée « À encaisser ? » sur le plan de salle, pour qu'une table oubliée soit vue pendant que les clients sont encore là. 0 : jamais."
+
+#: POS/src/utils/settleOrder.js:22
+msgid "Paid in cash"
+msgstr "Payée en espèces"
+
+#: POS/src/utils/settleOrder.js:23
+msgid "The guests paid in cash and nobody entered it"
+msgstr "Les clients ont payé en espèces, et personne ne l'a saisi"
+
+#: POS/src/utils/settleOrder.js:24
+msgid "Cash it"
+msgstr "Encaisser"
+
+#: POS/src/utils/settleOrder.js:27
+msgid "On a customer's tab"
+msgstr "Sur l'ardoise d'un client"
+
+#: POS/src/utils/settleOrder.js:28
+msgid "A known customer pays later"
+msgstr "Un client connu paie plus tard"
+
+#: POS/src/utils/settleOrder.js:29
+msgid "Put on the tab"
+msgstr "Mettre sur l'ardoise"
+
+#: POS/src/utils/settleOrder.js:34
+msgid "A gesture of the house: every line is offered"
+msgstr "Un geste de la maison : chaque ligne est offerte"
+
+#: POS/src/utils/settleOrder.js:35
+msgid "Offer it"
+msgstr "Offrir"
+
+#: POS/src/utils/settleOrder.js:38
+msgid "Customer loss"
+msgstr "Perte client"
+
+#: POS/src/utils/settleOrder.js:39
+msgid "Served, and the guests left without paying"
+msgstr "Servi, et les clients sont partis sans payer"
+
+#: POS/src/utils/settleOrder.js:40
+msgid "Write it off"
+msgstr "Passer en perte"
+
+#: POS/src/utils/settleOrder.js:44
+msgid "Nothing was served: forgotten, or gone before being served"
+msgstr "Rien n'a été servi : oublié, ou parti avant d'être servi"
+
+#: POS/src/utils/settleOrder.js:45
+msgid "Cancel the order"
+msgstr "Annuler la commande"
+
+#: POS/src/utils/settleOrder.js:1
+#, python-brace-format
+msgid "{0} cashed in cash"
+msgstr "{0} : encaissé en espèces"
+
+#: POS/src/utils/settleOrder.js:1
+#, python-brace-format
+msgid "{0} put on the customer's tab"
+msgstr "{0} : mis sur l'ardoise d'un client"
+
+#: POS/src/utils/settleOrder.js:1
+#, python-brace-format
+msgid "{0} offered"
+msgstr "{0} : offert"
+
+#: POS/src/utils/settleOrder.js:1
+#, python-brace-format
+msgid "{0} written off as a customer's loss"
+msgstr "{0} : passé en perte client"
+
+#: POS/src/utils/settleOrder.js:1
+#, python-brace-format
+msgid "{0} cancelled"
+msgstr "{0} : annulé"
+
+#: POS/src/components/pos/SettleOrderDialog.vue:159
+#, python-brace-format
+msgid "Settle {0}"
+msgstr "Régler {0}"
+
+#: POS/src/components/pos/SettleOrderDialog.vue:200
+msgid "Search a customer"
+msgstr "Rechercher un client"
+
+#: POS/src/components/pos/SettleOrderDialog.vue:224
+msgid "Say why: it is kept in the journal"
+msgstr "Indiquez le motif : il est conservé dans le journal"
+
+#: POS/src/components/pos/SettleOrderDialog.vue:230
+msgid "A complaint was filed"
+msgstr "Une plainte a été déposée"
+
+#: POS/src/components/pos/SettleOrderDialog.vue:234
+msgid "The order is deleted; the journal keeps what it held."
+msgstr "La commande est supprimée ; le journal conserve ce qu'elle contenait."
+
+#: POS/src/components/pos/SettleOrderDialog.vue:151
+msgid "The order could not be settled"
+msgstr "La commande n'a pas pu être réglée"
+
+#: POS/src/components/pos/SettleOrderDialog.vue:125
+msgid "Write off an order"
+msgstr "Passer une commande en perte"
+
+#: POS/src/components/pos/ClosingStillOpen.vue:18
+msgid "Settle"
+msgstr "Régler"
+
+#: POS/src/components/pos/ClosingStillOpen.vue:189
+msgid "Cash it from its table"
+msgstr "Encaisser depuis sa table"
+
+#: POS/src/components/pos/ClosingStillOpen.vue:196
+msgid "The orders you opened can stay open for a colleague, who cashes them in his own shift, or be settled now."
+msgstr "Les commandes que vous avez ouvertes peuvent rester ouvertes pour un collègue, qui les encaissera pendant son propre service, ou être réglées maintenant."
+
+#: POS/src/components/pos/ClosingStillOpen.vue:229
+msgid "Confirm: delete"
+msgstr "Confirmer : supprimer"
+
+#: POS/src/components/pos/ClosingStillOpen.vue:245
+msgid "See them"
+msgstr "Afficher"
+
+#: POS/src/components/pos/ClosingStillOpen.vue:245
+msgid "Hide them"
+msgstr "Masquer"
+
+#: POS/src/utils/stillOpenAtClosing.js:37
+msgid "1 held ticket on this device stays here for your next session"
+msgstr "1 ticket en attente sur cet appareil reste ici pour votre prochaine session"
+
+#: POS/src/utils/stillOpenAtClosing.js:1
+#, python-brace-format
+msgid "{0} held tickets on this device stay here for your next session"
+msgstr "{0} tickets en attente sur cet appareil restent ici pour votre prochaine session"
+
+#: POS/src/utils/stillOpenAtClosing.js:44
+msgid "1 draft of this till was never finished"
+msgstr "1 brouillon de cette caisse n'a jamais été terminé"
+
+#: POS/src/utils/stillOpenAtClosing.js:1
+#, python-brace-format
+msgid "{0} drafts of this till were never finished"
+msgstr "{0} brouillons de cette caisse n'ont jamais été terminés"
+
+#: POS/src/components/pos/HeldTicketsList.vue:100
+msgid "Select all"
+msgstr "Tout sélectionner"
+
+#: POS/src/components/pos/HeldTicketsList.vue:119
+msgid "The tickets left unchecked stay on this device."
+msgstr "Les tickets non cochés restent sur cet appareil."
+
+#: POS/src/components/pos/HeldTicketsList.vue:128
+msgid "Delete the selection"
+msgstr "Supprimer la sélection"
+
+#: POS/src/components/pos/HeldTicketsList.vue:128
+#, python-brace-format
+msgid "Confirm: delete {0}"
+msgstr "Confirmer : supprimer {0}"
+
+#: POS/src/components/pos/HeldTicketsList.vue:1
+#, python-brace-format
+msgid "{0} held tickets deleted"
+msgstr "{0} tickets en attente supprimés"
+
+#: pos_next/restaurant/settlement.py:143
+msgid "A dish was served: settle the order as a tab, an offer or a loss, not as a cancellation"
+msgstr "Un plat a été servi : réglez la commande en ardoise, en offre ou en perte, pas en annulation"
+
+#: pos_next/restaurant/settlement.py:137
+msgid "Money was already posted on this order: open it at its table and cash it from the till"
+msgstr "Un paiement a déjà été enregistré sur cette commande : ouvrez-la à sa table et encaissez-la depuis la caisse"
+
+#: pos_next/restaurant/settlement.py:124
+msgid "No mode of payment is set for a customer's loss: ask the manager to set it on the restaurant"
+msgstr "Aucun mode de paiement n'est défini pour la perte client : demandez au responsable de le définir sur le restaurant"
+
+#: pos_next/restaurant/settlement.py:114
+msgid "This till has no cash mode of payment"
+msgstr "Cette caisse n'a pas de mode de paiement en espèces"
+
+#: pos_next/restaurant/settlement.py:259
+msgid "Say why: a reason is required to offer, write off or cancel an order"
+msgstr "Indiquez le motif : il est obligatoire pour offrir, passer en perte ou annuler une commande"
+
+#: pos_next/restaurant/settlement.py:246
+#, python-brace-format
+msgid "Unknown way to settle an order: {0}"
+msgstr "Mode de règlement de commande inconnu : {0}"
+
+#: pos_next/till_settings/registry.py:459
+msgid "Default table"
+msgstr "Table par défaut"
+
+#: pos_next/till_settings/registry.py:461
+msgid "A table of direct service (a bar, a counter) this till opens on, and comes back to after each ticket, so that the next one is typed at once. Empty: the till opens on the floor, as a waiter's pad does."
+msgstr "Une table de service direct (un bar, un comptoir) sur laquelle cette caisse s'ouvre, et à laquelle elle revient après chaque ticket, pour que le suivant soit saisi tout de suite. Vide : la caisse s'ouvre sur la salle, comme le ferait un carnet de serveur."
+
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:1
+msgid "Default Restaurant Table"
+msgstr "Table de restaurant par défaut"
+
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:1
+msgid "A table of direct service (a bar, a counter) this till opens on, and comes back to after each ticket. Empty: the till opens on the floor, as a waiter's pad does."
+msgstr "Une table de service direct (un bar, un comptoir) sur laquelle la caisse s'ouvre, et à laquelle elle revient après chaque ticket. Vide : la caisse s'ouvre sur la salle, comme le ferait un carnet de serveur."
+
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:1
+msgid "Mode of payment for a customer's loss"
+msgstr "Mode de paiement pour la perte client"
+
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:1
+msgid "When the service closes, an order that was served and not paid because the guests left is written off with this mode of payment: the sale and its VAT stay right, and the loss shows apart. The mode is a holding account that the accountant clears to an expense at the month's end. Empty: the loss cannot be written off from the till."
+msgstr "Lorsque le service se termine, une commande servie et non payée parce que les clients sont partis est passée en perte avec ce mode de paiement : la vente et sa TVA restent justes, et la perte apparaît à part. Ce mode est un compte d'attente que la comptable transfère en charge à la fin du mois. Vide : la perte ne peut pas être enregistrée depuis la caisse."
+
+#: pos_next/pos_next/doctype/restaurant_settlement/restaurant_settlement.json:1
+msgid "Restaurant Settlement"
+msgstr "Règlement d'une commande ouverte"
+
+#: pos_next/pos_next/doctype/restaurant_settlement/restaurant_settlement.json:1
+msgid "The open order that was settled. It may no longer exist: a cancelled order is deleted and this journal keeps what it held."
+msgstr "La commande ouverte qui a été réglée. Elle peut ne plus exister : une commande annulée est supprimée, et ce journal conserve ce qu'elle contenait."
+
+#: pos_next/pos_next/doctype/restaurant_settlement/restaurant_settlement.json:1
+msgid "Issue"
+msgstr "Mode de règlement"
+
+#: pos_next/pos_next/doctype/restaurant_settlement/restaurant_settlement.json:1
+msgid "Cashed late"
+msgstr "Encaissée en retard"
+
+#: pos_next/pos_next/doctype/restaurant_settlement/restaurant_settlement.json:1
+msgid "On account"
+msgstr "Sur l'ardoise"
+
+#: pos_next/pos_next/doctype/restaurant_settlement/restaurant_settlement.json:1
+msgid "A dish was served"
+msgstr "Un plat a été servi"
+
+#: pos_next/pos_next/doctype/restaurant_settlement/restaurant_settlement.json:1
+msgid "Complaint filed"
+msgstr "Plainte déposée"
+
+#: pos_next/pos_next/doctype/restaurant_settlement/restaurant_settlement.json:1
+msgid "Who"
+msgstr "Qui"
+
+#: pos_next/pos_next/doctype/restaurant_settlement/restaurant_settlement.json:1
+msgid "Waiter"
+msgstr "Serveur"
+
+#: pos_next/pos_next/doctype/restaurant_settlement/restaurant_settlement.json:1
+msgid "Who opened the order."
+msgstr "Qui a ouvert la commande."
+
+#: pos_next/pos_next/doctype/restaurant_settlement/restaurant_settlement.json:1
+msgid "Settled by"
+msgstr "Réglé par"
+
+#: pos_next/pos_next/doctype/restaurant_settlement/restaurant_settlement.json:1
+msgid "Approved by"
+msgstr "Approuvé par"
+
+#: pos_next/pos_next/doctype/restaurant_settlement/restaurant_settlement.json:1
+msgid "The manager whose approval an authorization rule asked for."
+msgstr "Le responsable dont l'approbation a été demandée par une règle d'autorisation."
+
+#: pos_next/pos_next/doctype/restaurant_settlement/restaurant_settlement.json:1
+msgid "Service day"
+msgstr "Jour de service"
+
+#: pos_next/pos_next/doctype/restaurant_settlement/restaurant_settlement.json:1
+msgid "The business day the order was opened in, which is the day it belongs to even when it is settled after midnight."
+msgstr "Le jour d'exploitation où la commande a été ouverte : elle appartient à ce jour, même si elle est réglée après minuit."
+
+#: pos_next/pos_next/doctype/restaurant_settlement/restaurant_settlement.json:1
+msgid "Settled at"
+msgstr "Réglée à"
+
+#: pos_next/pos_next/doctype/restaurant_settlement/restaurant_settlement.json:1
+msgid "The submitted invoice that holds the sale. None for a cancelled order."
+msgstr "La facture soumise qui porte la vente. Vide pour une commande annulée."
+
+#: pos_next/pos_next/doctype/restaurant_settlement/restaurant_settlement.json:1
+msgid "What the order held"
+msgstr "Contenu de la commande"
+
+#: pos_next/pos_next/doctype/restaurant_settlement/restaurant_settlement.json:1
+msgid "A copy of its lines, total and times when it was settled (JSON): a cancelled order leaves nothing else behind."
+msgstr "Une copie de ses lignes, de son total et de ses heures de règlement (JSON) : une commande annulée ne laisse rien d'autre derrière elle."

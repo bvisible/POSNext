@@ -3793,6 +3793,71 @@ def cleanup_old_drafts(pos_profile: str | None = None, max_age_hours=48):
 	}
 
 
+# //// Neoffice — added functions (no upstream equivalent). The drafts a till leaves behind, shown instead of purged (NeoResto lot 1, the product owner, 08.11.2026:
+# //// « actuellement on a une suppression de tickets brouillon de manière discrète […] on devrait afficher toujours les brouillons ouverts […] s'il y a un brouillon, il
+# //// faut en faire quelque chose »). They are the ones `cleanup_old_drafts` used to delete an hour after the till saved them, with no age to wait for: the caller's own POS
+# //// drafts, saved at a till shift, none of them a draft kept on purpose (a table's order, a takeaway order, a printed draft). The closing of a shift lists them and the
+# //// cashier deletes the ones he does not want.
+def _loose_draft_filters(pos_profile=None):
+	filters = {
+		"docstatus": 0,
+		"is_pos": 1,
+		"owner": frappe.session.user,
+		"posa_pos_opening_shift": ["is", "set"],
+		**_kept_draft_exclusions(),
+	}
+	if pos_profile:
+		filters["pos_profile"] = pos_profile
+	return filters
+
+
+@frappe.whitelist()
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_loose_drafts(pos_profile: str | None = None):
+	"""The caller's own drafts the till left on the server (not a table's order, a takeaway order or a printed draft), newest first, with what the cashier needs to
+	decide: the customer, the total, the number of lines and when it was last saved. Nothing is changed by the call."""
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user(pos_profile)
+	rows = frappe.get_all(
+		"Sales Invoice",
+		filters=_loose_draft_filters(pos_profile),
+		fields=["name", "customer", "customer_name", "grand_total", "creation", "modified", "pos_profile"],
+		order_by="modified desc",
+		limit_page_length=100,
+	)
+	counts = {}
+	if rows:
+		counts = dict(
+			frappe.get_all(
+				"Sales Invoice Item",
+				filters={"parent": ["in", [row.name for row in rows]], "parenttype": "Sales Invoice"},
+				fields=["parent", "count(name) as line_count"],
+				group_by="parent",
+				as_list=True,
+			)
+		)
+	for row in rows:
+		row["lines"] = cint(counts.get(row.name))
+	return {"drafts": rows}
+
+
+@frappe.whitelist(methods=["POST"])
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def delete_loose_draft(invoice: str | None, pos_profile: str | None = None):
+	"""Delete one of the caller's own loose drafts (see `get_loose_drafts`), by his own hand: another draft, a table's order, a submitted invoice or a colleague's draft is
+	refused."""
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user(pos_profile)
+	if not isinstance(invoice, str) or not frappe.db.exists(
+		"Sales Invoice", {"name": invoice, **_loose_draft_filters(pos_profile)}
+	):
+		frappe.throw(_("Invoice {0} does not exist").format(invoice))
+	frappe.delete_doc("Sales Invoice", invoice, force=1, ignore_permissions=True)
+	return {"deleted": invoice}
+
+
 # ==========================================
 # Return Invoice Management
 # ==========================================

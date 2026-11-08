@@ -1,5 +1,5 @@
-import { clearAllDrafts } from "@/utils/draftManager";
 import { clearAllOfflineReceiptPayloads } from "@/utils/offline/offlineReceiptCache";
+//// Neoffice — upstream also imported clearAllDrafts here: signing out no longer erases the held tickets (see the end of cleanupUserSession; 08.11.2026).
 import { usePOSCartStore } from "@/stores/posCart";
 import { usePOSUIStore } from "@/stores/posUI";
 //// Neoffice — the bootstrap and the till's settings carry what the user may do (restaurant_can, NeoResto lot 1,
@@ -83,10 +83,6 @@ export async function cleanupUserSession() {
 		_receivedAt: 0,
 	};
 
-	// 4. Clear draft invoices from IndexedDB
-	try {
-		await clearAllDrafts();
-	} catch (error) {
-		console.error("Failed to clear draft invoices:", error);
-	}
+	//// Neoffice — upstream erased here, in silence, every ticket held on the device. A held ticket is something to do something with (the product owner, 08.11.2026): it stays, with its
+	//// owner (utils/draftOwner), and the closing of the shift and the sign-out dialogs list the ones the user holds so that he keeps or deletes them by his own hand.
 }

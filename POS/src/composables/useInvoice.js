@@ -240,10 +240,7 @@ export function useInvoice() {
 		auto: false,
 	});
 
-	const cleanupDraftsResource = createResource({
-		url: "pos_next.api.invoices.cleanup_old_drafts",
-		auto: false,
-	});
+	//// Neoffice — the `cleanupDraftsResource` that stood here is gone: the cart no longer purges the cashier's drafts in silence (see clearCart; NeoResto lot 1, 08.11.2026).
 
 	// ========================================================================
 	// COMPUTED TOTALS - IMPORTANT: Subtotal uses price_list_rate (original price)
@@ -1710,19 +1707,8 @@ export function useInvoice() {
 		// Set default customer from POS Profile if available
 		setDefaultCustomer();
 
-		// Cleanup old draft invoices (older than 1 hour) in background
-		// Skip if offline to avoid network errors
-		if (!isOffline()) {
-			try {
-				await cleanupDraftsResource.submit({
-					pos_profile: posProfile.value,
-					max_age_hours: 1,
-				});
-			} catch (error) {
-				// Silent fail - don't block cart clearing
-				console.warn("Failed to cleanup old drafts:", error);
-			}
-		}
+		//// Neoffice — upstream deleted here, in the background and in silence, the cashier's own drafts an hour old (cleanup_old_drafts). A draft is something to do something with (the
+		//// product owner, 08.11.2026): the till lists them at the closing of the shift (get_loose_drafts) and the cashier deletes the ones he does not want.
 	}
 
 	async function loadTaxRules(profileName, posSettings = null) {

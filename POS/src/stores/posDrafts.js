@@ -5,12 +5,13 @@
 //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import {
 	deleteDraft,
-	getDraftsCount,
 	saveDraft,
 	getAllDrafts,
 	updateDraft,
 } from "@/utils/draftManager";
 import { useToast } from "@/composables/useToast";
+//// Neoffice — a held ticket carries its owner and is shown to him alone: signing out no longer erases them (NeoResto lot 1, 08.11.2026).
+import { draftIsMine, withOwner } from "@/utils/draftOwner";
 import { useSerialNumberStore } from "@/stores/serialNumber";
 import { defineStore } from "pinia";
 import { ref } from "vue";
@@ -27,7 +28,8 @@ export const usePOSDraftsStore = defineStore("posDrafts", () => {
 	// Actions
 	async function updateDraftsCount() {
 		try {
-			draftsCount.value = await getDraftsCount();
+			//// Neoffice — the user's own held tickets: the device may hold a colleague's (08.11.2026)
+			draftsCount.value = (await getAllDrafts()).filter((draft) => draftIsMine(draft)).length;
 		} catch (error) {
 			console.error("Error getting drafts count:", error);
 		}
@@ -35,7 +37,8 @@ export const usePOSDraftsStore = defineStore("posDrafts", () => {
 
 	async function loadDrafts() {
 		try {
-			drafts.value = await getAllDrafts();
+			//// Neoffice — the user's own held tickets only (utils/draftOwner; 08.11.2026)
+			drafts.value = (await getAllDrafts()).filter((draft) => draftIsMine(draft));
 			draftsCount.value = drafts.value.length;
 		} catch (error) {
 			console.error("Error loading drafts:", error);
@@ -75,11 +78,13 @@ export const usePOSDraftsStore = defineStore("posDrafts", () => {
 				applied_coupon: appliedCoupon?.line_level ? appliedCoupon : null,
 			};
 
+			//// Neoffice — a held ticket is written with its owner (utils/draftOwner; 08.11.2026)
 			let savedDraft;
 			if (draftId) {
-				savedDraft = await updateDraft(draftId, draftData);
+				savedDraft = await updateDraft(draftId, withOwner(draftData));
 			} else {
-				savedDraft = await saveDraft(draftData);
+				//// Neoffice — with its owner as well (utils/draftOwner)
+				savedDraft = await saveDraft(withOwner(draftData));
 			}
 
 			await loadDrafts(); // Refresh drafts list and count

@@ -1,0 +1,232 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "format:RSET-{YY}-{#####}",
+ "creation": "2026-11-08 17:20:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "order",
+  "table_label",
+  "issue",
+  "column_break_one",
+  "total",
+  "consumed",
+  "reason",
+  "complaint_filed",
+  "section_who",
+  "waiter",
+  "settled_by",
+  "approved_by",
+  "column_break_two",
+  "restaurant",
+  "pos_profile",
+  "service_day",
+  "settled_at",
+  "section_result",
+  "invoice",
+  "customer",
+  "lines"
+ ],
+ "fields": [
+  {
+   "fieldname": "order",
+   "fieldtype": "Data",
+   "label": "Order",
+   "read_only": 1,
+   "in_list_view": 1,
+   "description": "The open order that was settled. It may no longer exist: a cancelled order is deleted and this journal keeps what it held."
+  },
+  {
+   "fieldname": "table_label",
+   "fieldtype": "Data",
+   "label": "Table",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "issue",
+   "fieldtype": "Select",
+   "label": "Issue",
+   "options": "\nCashed late\nOn account\nOffered\nCustomer loss\nCancelled",
+   "read_only": 1,
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "column_break_one",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total",
+   "fieldtype": "Currency",
+   "label": "Total",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "consumed",
+   "fieldtype": "Check",
+   "label": "A dish was served",
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "complaint_filed",
+   "fieldtype": "Check",
+   "label": "Complaint filed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_who",
+   "fieldtype": "Section Break",
+   "label": "Who"
+  },
+  {
+   "fieldname": "waiter",
+   "fieldtype": "Link",
+   "label": "Waiter",
+   "options": "User",
+   "read_only": 1,
+   "description": "Who opened the order."
+  },
+  {
+   "fieldname": "settled_by",
+   "fieldtype": "Link",
+   "label": "Settled by",
+   "options": "User",
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved by",
+   "options": "User",
+   "read_only": 1,
+   "description": "The manager whose approval an authorization rule asked for."
+  },
+  {
+   "fieldname": "column_break_two",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "restaurant",
+   "fieldtype": "Link",
+   "label": "Restaurant",
+   "options": "Restaurant",
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "pos_profile",
+   "fieldtype": "Link",
+   "label": "POS Profile",
+   "options": "POS Profile",
+   "read_only": 1
+  },
+  {
+   "fieldname": "service_day",
+   "fieldtype": "Date",
+   "label": "Service day",
+   "read_only": 1,
+   "in_standard_filter": 1,
+   "description": "The business day the order was opened in, which is the day it belongs to even when it is settled after midnight."
+  },
+  {
+   "fieldname": "settled_at",
+   "fieldtype": "Datetime",
+   "label": "Settled at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_result",
+   "fieldtype": "Section Break",
+   "label": "Result"
+  },
+  {
+   "fieldname": "invoice",
+   "fieldtype": "Link",
+   "label": "Invoice",
+   "options": "Sales Invoice",
+   "read_only": 1,
+   "description": "The submitted invoice that holds the sale. None for a cancelled order."
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "lines",
+   "fieldtype": "Long Text",
+   "label": "What the order held",
+   "read_only": 1,
+   "description": "A copy of its lines, total and times when it was settled (JSON): a cancelled order leaves nothing else behind."
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-11-08 17:20:00.000000",
+ "modified_by": "Administrator",
+ "module": "POS Next",
+ "name": "Restaurant Settlement",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "role": "System Manager",
+   "create": 1,
+   "write": 1,
+   "delete": 1,
+   "share": 1,
+   "email": 1
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "role": "Restaurant Manager"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "role": "Accounts Manager"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "role": "Accounts User"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "role": "Sales Manager"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "table_label",
+ "track_changes": 0
+}

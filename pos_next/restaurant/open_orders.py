@@ -48,7 +48,7 @@ def line_states(orders, tip_item=None) -> dict:
 	if not orders:
 		return {}
 	has_status = frappe.db.has_column("Sales Invoice Item", "kds_status")
-	fields = ["parent", "item_code", "modified", "preparation_station"]
+	fields = ["parent", "item_code", "modified", "preparation_station", "qty", "price_list_rate"]
 	if has_status:
 		fields.append("kds_status")
 	rows = frappe.get_all(
@@ -59,13 +59,23 @@ def line_states(orders, tip_item=None) -> dict:
 	)
 	paper = paper_only_stations()
 	states = {
-		order: {"lines": 0, "sent": 0, "delivered": 0, "consumed": False, "unserved": 0, "last_line": None}
+		order: {
+			"lines": 0,
+			"sent": 0,
+			"delivered": 0,
+			"consumed": False,
+			"unserved": 0,
+			"last_line": None,
+			"list_value": 0.0,
+		}
 		for order in orders
 	}
 	for row in rows:
+		state = states[row.parent]
+		# What offering the whole order is worth, at list price (the tip line included: it is offered with the rest): what a manager approves
+		state["list_value"] += flt(row.get("qty")) * flt(row.get("price_list_rate"))
 		if tip_item and row.item_code == tip_item:
 			continue
-		state = states[row.parent]
 		status = (row.get("kds_status") or "") if has_status else ""
 		on_paper = bool(row.preparation_station) and row.preparation_station in paper
 		state["lines"] += 1
@@ -116,12 +126,13 @@ def summary_of_table(orders, states, minutes) -> dict:
 	return {"served": served, "idle_minutes": idle, "to_cash_in": to_cash_in(minutes, served, idle)}
 
 
-def open_orders(orders, tip_item=None) -> list[dict]:
+def open_orders(orders, tip_item=None, user=None) -> list[dict]:
 	"""The open orders of a restaurant as the closing lists them, oldest first.
 
 	`orders` are open drafts (rows with `name`, `restaurant_table`, `is_takeaway`, `owner`, `creation`, `modified`, `grand_total`, `paid_amount`, `table_label`).
 	Each answer carries what the manager must know to settle it: the total, `holds_money` (money posted on a draft the closing does not read), `consumed` (a dish
-	was delivered: a debt, never to be deleted), `served`, and the minutes since it last moved.
+	was delivered: a debt, never to be deleted), `served`, the minutes since it last moved, and `mine` (opened by `user`: whoever opened an order may leave
+	it open for a colleague, who cashes it in his own shift, or settle it before closing his own).
 	"""
 	states = line_states([order.name for order in orders], tip_item)
 	answer = []
@@ -135,6 +146,7 @@ def open_orders(orders, tip_item=None) -> list[dict]:
 				"table": order.get("restaurant_table"),
 				"label": order.get("table_label") or order.get("restaurant_table") or "",
 				"owner": order.get("owner_name") or order.get("owner"),
+				"mine": bool(user) and order.get("owner") == user,
 				"opened_at": str(order.creation),
 				"idle_minutes": idle_minutes(moment),
 				"grand_total": flt(order.grand_total),
@@ -143,6 +155,7 @@ def open_orders(orders, tip_item=None) -> list[dict]:
 				"lines": state.get("lines", 0),
 				"delivered": state.get("delivered", 0),
 				"consumed": bool(state.get("consumed")),
+				"offer_value": flt(state.get("list_value"), 2),
 				"served": bool(state.get("served")),
 			}
 		)

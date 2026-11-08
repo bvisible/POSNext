@@ -22,6 +22,7 @@
   "ask_covers_on_open",
   "section_cash_in",
   "remind_to_cash_in_minutes",
+  "loss_mode_of_payment",
   "section_sold_out",
   "grey_out_sold_out",
   "section_tickets",
@@ -162,6 +163,13 @@
    "fieldtype": "Int",
    "label": "Remind to cash in after (minutes)",
    "non_negative": 1
+  },
+  {
+   "description": "When the service closes, an order that was served and not paid because the guests left is written off with this mode of payment: the sale and its VAT stay right, and the loss shows apart. The mode is a holding account that the accountant clears to an expense at the month's end. Empty: the loss cannot be written off from the till.",
+   "fieldname": "loss_mode_of_payment",
+   "fieldtype": "Link",
+   "label": "Mode of payment for a customer's loss",
+   "options": "Mode of Payment"
   },
   {
    "fieldname": "section_sold_out",
@@ -411,7 +419,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-08 16:00:00.000000",
+ "modified": "2026-11-08 17:10:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "Restaurant",

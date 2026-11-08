@@ -648,7 +648,37 @@ def get_open_orders(pos_profile: str | None = None, restaurant: str | None = Non
 			)
 		else:
 			row["table_label"] = _("Takeaway")
-	return {"orders": open_orders.open_orders(rows, covers_module.tip_item_of(restaurant))}
+	answers = open_orders.open_orders(rows, covers_module.tip_item_of(restaurant), user=frappe.session.user)
+	# //// Neoffice — what the caller may do with each order when the service closes (settlement.settle), read once for the whole list
+	from pos_next.restaurant import settlement
+
+	pos_profile = pos_profile or scope.current_profile()
+	caps = settlement.capabilities(pos_profile, restaurant)
+	for answer in answers:
+		answer["issues"] = settlement.issues_for(
+			{"paid_amount": answer["paid_amount"]}, {"consumed": answer["consumed"]}, pos_profile, restaurant, caps
+		)
+	return {"orders": answers}
+
+
+@frappe.whitelist(methods=["POST"])
+# //// Neoffice — added function (no upstream equivalent). Settle an open order when the service closes (the product owner, 08.11.2026): cashed late, on a
+# //// customer's tab, offered, written off as a customer's loss, or cancelled. See pos_next.restaurant.settlement. A name is a text: a list from a JSON body
+# //// would be read as a filter (maintenance#2296).
+def settle_open_order(
+	invoice: str | None,
+	issue: str | None,
+	reason: str | None = None,
+	customer: str | None = None,
+	complaint_filed: int | str | None = 0,
+	authorization_token: str | None = None,
+):
+	"""Settle one open order of the restaurant with one of five issues; answers the issue, the submitted invoice and the journal row."""
+	from pos_next.api.cash_entry import require_document_till
+	from pos_next.restaurant import settlement
+
+	require_document_till("Sales Invoice", invoice)
+	return settlement.settle(invoice, issue, reason, customer, complaint_filed, authorization_token)
 
 
 @frappe.whitelist()

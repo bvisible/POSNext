@@ -8,8 +8,10 @@ import { beforeAll, describe, expect, it } from "vitest"
 import {
 	badgesOfOrder,
 	cashHint,
+	heldTicketTotal,
 	heldTicketsNotice,
 	heldTicketsOf,
+	looseDraftsLine,
 	openOrdersLine,
 	quietFor,
 	summaryOfOpenOrders,
@@ -61,11 +63,57 @@ describe("the tickets held on this device", () => {
 		expect(heldTicketsOf("x", "Caisse")).toEqual([])
 	})
 
-	it("tells how many sign-out will erase, in the singular and the plural, and nothing for none", () => {
+	it("tells how many wait on the device for the user's next session, in the singular and the plural, and nothing for none", () => {
 		expect(heldTicketsNotice(0)).toBe("")
-		expect(heldTicketsNotice(1)).toBe("1 held ticket on this device will be erased when you sign out")
-		expect(heldTicketsNotice(3)).toBe("3 held tickets on this device will be erased when you sign out")
+		expect(heldTicketsNotice(1)).toBe("1 held ticket on this device stays here for your next session")
+		expect(heldTicketsNotice(3)).toBe("3 held tickets on this device stay here for your next session")
 		expect(heldTicketsNotice("x")).toBe("")
+	})
+
+	it("shows a ticket to its owner alone, and a ticket with no owner to everybody", () => {
+		const drafts = [
+			cart({ draft_id: 1, owner: "waiter@yopmail.com" }),
+			cart({ draft_id: 2, owner: "colleague@yopmail.com" }),
+			cart({ draft_id: 3 }),
+		]
+
+		expect(heldTicketsOf(drafts, "Caisse", "waiter@yopmail.com").map((ticket) => ticket.id)).toEqual([1, 3])
+		expect(heldTicketsOf(drafts, "Caisse", "colleague@yopmail.com").map((ticket) => ticket.id)).toEqual([2, 3])
+		expect(heldTicketsOf(drafts, "Caisse", "").map((ticket) => ticket.id)).toEqual([1, 2, 3])
+	})
+
+	it("keeps the stored ticket itself, to delete it", () => {
+		const draft = cart({ draft_id: 7 })
+
+		expect(heldTicketsOf([draft], "Caisse")[0].draft).toBe(draft)
+	})
+
+	it("is worth the net amount of its lines, older tickets being counted by quantity times rate", () => {
+		expect(heldTicketTotal({ items: [{ amount: 12.5 }, { amount: 7.5 }] })).toBe(20)
+		expect(heldTicketTotal({ items: [{ quantity: 2, rate: 4 }, { qty: 3, rate: 1 }] })).toBe(11)
+		expect(heldTicketTotal({ items: [{ rate: 5 }] })).toBe(5)
+		expect(heldTicketTotal({})).toBe(0)
+	})
+
+	it("names the customer, whether the ticket holds him as a record or as a name", () => {
+		const [a, b, c] = heldTicketsOf(
+			[
+				cart({ draft_id: 1, customer: { customer_name: "Madame Test", name: "CUST-1" } }),
+				cart({ draft_id: 2, customer: "Walk-in" }),
+				cart({ draft_id: 3, customer: undefined }),
+			],
+			"Caisse",
+		)
+
+		expect([a.customer, b.customer, c.customer]).toEqual(["Madame Test", "Walk-in", ""])
+	})
+})
+
+describe("the drafts the till left on the server", () => {
+	it("are counted in the singular and the plural, and not at all for none", () => {
+		expect(looseDraftsLine(0)).toBe("")
+		expect(looseDraftsLine(1)).toBe("1 draft of this till was never finished")
+		expect(looseDraftsLine(4)).toBe("4 drafts of this till were never finished")
 	})
 })
 

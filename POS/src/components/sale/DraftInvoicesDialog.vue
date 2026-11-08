@@ -230,7 +230,9 @@ import {
 	formatCurrency as formatCurrencyUtil,
 	roundCurrency,
 } from "@/utils/currency";
-import { clearAllDrafts, deleteDraft, getAllDrafts } from "@/utils/draftManager";
+import { deleteDraft, getAllDrafts } from "@/utils/draftManager";
+//// Neoffice — the user's own held tickets only (08.11.2026).
+import { draftIsMine } from "@/utils/draftOwner";
 import { printInvoiceCustom } from "@/utils/printInvoice";
 import { useToast } from "@/composables/useToast";
 import { usePOSShiftStore } from "@/stores/posShift";
@@ -295,7 +297,8 @@ onMounted(() => {
 
 async function loadDrafts() {
 	try {
-		drafts.value = await getAllDrafts();
+		//// Neoffice — the held tickets of the device are kept across sign-outs now, each with its owner: this list shows the user's own (utils/draftOwner; 08.11.2026).
+		drafts.value = (await getAllDrafts()).filter((draft) => draftIsMine(draft));
 	} catch (error) {
 		console.error("Error loading drafts:", error);
 		showError(__("Failed to load draft invoices"));
@@ -363,8 +366,10 @@ async function confirmDeleteDraft() {
 
 async function confirmClearAll() {
 	try {
-		await clearAllDrafts();
-		drafts.value
+		//// Neoffice — « clear all » clears the user's own held tickets, not a colleague's kept on the same device (utils/draftOwner; 08.11.2026).
+		const mine = [...drafts.value];
+		for (const d of mine) await deleteDraft(d.draft_id);
+		mine
 			.filter((d) => d.draft_id !== cartStore.currentDraftId)
 			.forEach((d) => draftsStore.returnDraftSerials(d));
 		await loadDrafts();

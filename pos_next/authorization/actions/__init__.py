@@ -8,4 +8,13 @@
 # //// offers, an action of ours loaded with upstream's.
 # //// Neoffice — `card_hours` is ours: the « Open a card outside its hours » action of the restaurant till's « ⋯ »
 # //// (pos_next.api.restaurant.open_card_outside_hours) registers here, where the registry loads the shipped actions.
-from pos_next.authorization.actions import card_hours, cash_movement, offered_item, pos_expense, sales_invoice
+# //// Neoffice — `write_off_order` is ours: « Write off an order » (pos_next.restaurant.settlement), the opt-in PIN for an order that was
+# //// served and is written off as a customer's loss when the service closes (NeoResto lot 1, 08.11.2026).
+from pos_next.authorization.actions import (
+	card_hours,
+	cash_movement,
+	offered_item,
+	pos_expense,
+	sales_invoice,
+	write_off_order,
+)

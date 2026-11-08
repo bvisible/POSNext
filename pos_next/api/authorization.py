@@ -40,6 +40,12 @@ from pos_next.authorization.actions.card_hours import (
 	resolve_open_card_context,
 )
 
+# //// Neoffice — the « Write off an order » action of the restaurant's closing (ours); see request_grant.
+from pos_next.authorization.actions.write_off_order import (
+	ACTION_WRITE_OFF_ORDER,
+	resolve_write_off_context,
+)
+
 
 def _parse_context(context) -> dict:
 	"""Normalise the context a client sends alongside an authorization request."""
@@ -156,6 +162,10 @@ def request_grant(action: str, approver: str, pin: str, context=None) -> dict:
 	# //// and to the till of the caller's open shift, read here and not taken from the client.
 	elif action == ACTION_OPEN_CARD_OUTSIDE_HOURS:
 		context.update(resolve_open_card_context(context.get("restaurant_card"), context))
+	# //// Neoffice — writing off an order when the service closes (ours, pos_next.restaurant.settlement) binds the grant to the
+	# //// order, to its total and to the till of the caller's open shift, read here and not taken from the client.
+	elif action == ACTION_WRITE_OFF_ORDER:
+		context.update(resolve_write_off_context(context.get("invoice"), context))
 	pos_profile = context.get("pos_profile")
 
 	rule = policy.resolve_rule(action, pos_profile)

@@ -888,6 +888,7 @@
 						v-if="!showSuccessReport"
 						:active="open"
 						:cash-is-over="shouldShowSummary && getTotalDifference > 0"
+						@settled="loadClosingData"
 					/>
 
 					<!-- //// ▲▲▲ Neoffice — end of the sections added to the closing report. -->

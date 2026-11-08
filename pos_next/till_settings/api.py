@@ -1057,6 +1057,22 @@ def _restaurant_areas(till, current):
 	return _named(rows, "area_name")
 
 
+def _direct_service_tables(till, current):
+	"""The tables of direct service of the till's restaurant (a bar, a counter): what a till can be set to open on."""
+	from pos_next.restaurant import scope
+
+	if not till.restaurant:
+		return []
+	rows = frappe.get_all(
+		"Restaurant Table",
+		filters={"direct_service": 1},
+		or_filters=scope.restaurant_or_filters(till.restaurant),
+		fields=["name", "table_name"],
+		order_by="table_name asc",
+	)
+	return _with_current(_named(rows, "table_name"), "Restaurant Table", current, "table_name")
+
+
 def _restaurant_cards(till, current, selectable_only=True, as_values=False):
 	"""The cards of the till's restaurant: the active ones that are not the permanent card (what a menu, a takeaway
 	lane or an opening slot can be set to), or every card of the restaurant."""
@@ -1138,6 +1154,7 @@ CHOICES = {
 	"print_formats": _print_formats,
 	"letter_heads": _letter_heads,
 	"restaurant_areas": _restaurant_areas,
+	"direct_service_tables": _direct_service_tables,
 	"restaurant_cards": _restaurant_card_choices,
 	"languages": _languages,
 	"item_groups": _item_groups,

@@ -451,6 +451,23 @@ SETTINGS = (
 		applies=APPLIES_RESTAURANT,
 		restaurant_manager_may_edit=True,
 	),
+	# //// Neoffice — the table of direct service a till opens on (NeoResto lot 1, the product owner, 08.11.2026: « dès qu'on tape, ça revient sur le comptoir […] dans quelle
+	# //// caisse tu choisis cette option, parce que le pad d'un serveur n'aura pas ça »): a setting of THIS till, so the bar's till has it and a waiter's pad does not.
+	Setting(
+		"default_restaurant_table",
+		"room",
+		_lt("Default table"),
+		_lt(
+			"A table of direct service (a bar, a counter) this till opens on, and comes back to after each ticket, so that the next one is typed at once."
+			" Empty: the till opens on the floor, as a waiter's pad does."
+		),
+		"link",
+		doctype=POS_SETTINGS,
+		till=RESTAURANT_TILL,
+		choices="direct_service_tables",
+		applies=APPLIES_RESTAURANT,
+		restaurant_manager_may_edit=True,
+	),
 	Setting(
 		"enable_takeaway",
 		"takeaway",
@@ -2103,6 +2120,9 @@ NOT_LISTED = {
 		),
 		# Task 10's field: where a site already has it, it is classified like the restaurant's other own fields
 		"takeaway_tax_category": _RESTAURANT_FORM + " (the VAT of the takeaway sales, set at the office)",
+		# //// Neoffice — the mode of payment a customer's loss is written off with (08.11.2026): an accounting choice, made with the accountant at the office
+		"loss_mode_of_payment": _RESTAURANT_FORM
+		+ " (the holding account the accountant clears at the month's end: an accounting choice, made at the office)",
 	},
 }
 
