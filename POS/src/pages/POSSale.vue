@@ -2181,7 +2181,8 @@
 				</div>
 			</template>
 			<template #actions>
-				<div class="flex gap-2 w-full">
+				<!-- //// Neoffice — the answers of a table to clean or paid are up to three (order again, not left yet, available): the small dialog wraps them onto a second line instead of cutting the last one off (the product owner, 08.11.2026) -->
+				<div class="flex flex-wrap gap-2 w-full">
 					<!-- //// Neoffice — order again on a paid table, whatever is left to serve: a paid table is not a table where the guests have left (a digestif, another bottle: the product owner, 08.11.2026) -->
 					<Button
 						class="flex-1"
@@ -2194,7 +2195,7 @@
 					<!-- //// Neoffice — the guests are still at the table: it stays to clean and the question comes back after the same minutes (the product owner, 08.11.2026) -->
 					<Button
 						v-if="cleaningTable?.guests_left_ask"
-						class="flex-1"
+						class="flex-1 whitespace-nowrap"
 						variant="subtle"
 						data-test="guests-not-left-yet"
 						@click="guestsNotLeftYet"
