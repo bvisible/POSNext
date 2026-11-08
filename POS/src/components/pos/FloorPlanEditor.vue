@@ -653,6 +653,9 @@
 		<!-- //// Neoffice — « Open a smartphone » of the « ⋯ » menu (kitchen test, 01.11): gives the till's address as a QR code and a link, so that a waiter's phone opens it without typing it -->
 		<OpenPhoneDialog v-if="canSetUpTheRestaurant && phoneDialogOpen" v-model="phoneDialogOpen" />
 
+		<!-- //// Neoffice — « Close the service » of the « ⋯ » menu (the product owner, 08.11.2026): the restaurant's closing, not a till's shift -->
+		<CloseServiceDialog v-if="canManageFloor && closeServiceOpen" v-model="closeServiceOpen" />
+
 		<!-- A phone's plan ends with the mockup's line: what a tap does, and a long press (task 26) -->
 		<p
 			v-if="isPhone && shownView === 'plan' && !isEditMode"
@@ -1070,6 +1073,8 @@ import { tableNotesInfo } from "@/utils/tableNotes"
 //// Neoffice — and the table paid while dishes are still to serve is told apart from one to clean (08.11.2026)
 import { tableIsPaidAtService, tableNeedsCleaning } from "@/utils/tableStatus"
 import { Button, Dialog } from "frappe-ui"
+//// Neoffice — « Close the service » of the « ⋯ » menu: the restaurant's closing, with its question « is the room empty? » (the product owner, 08.11.2026)
+import CloseServiceDialog from "@/components/pos/CloseServiceDialog.vue"
 import FloorPlanWalls from "@/components/pos/FloorPlanWalls.vue"
 import OpenTabletDialog from "@/components/restaurant/OpenTabletDialog.vue"
 import OpenPhoneDialog from "@/components/restaurant/OpenPhoneDialog.vue"
@@ -1129,6 +1134,8 @@ const canSetTableStatus = computed(() => Boolean(restaurantStore.can?.set_table_
 const canSetUpTheRestaurant = computed(() => Boolean(restaurantStore.can?.manage_settings))
 const tabletDialogOpen = ref(false)
 const phoneDialogOpen = ref(false)
+//// Neoffice — closing the service is the floor's manager's, as the layout is: the server refuses anyone else, the menu does not offer it (the product owner, 08.11.2026)
+const closeServiceOpen = ref(false)
 
 // ─── The tables as the plan or as their list (NeoResto lot 1, task 26) ──────
 // Product owner, 31.10.2026: « on the phone, show the list of the tables by default rather than the plan »,
@@ -1241,6 +1248,8 @@ const ICON_CHECK = "M5 13l4 4L19 7"
 const ICON_TABLET = "M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
 // A phone, for « Open a smartphone »
 const ICON_PHONE = "M12 18h.01M8 21h8a1 1 0 001-1V4a1 1 0 00-1-1H8a1 1 0 00-1 1v16a1 1 0 001 1z"
+//// Neoffice — a moon, for « Close the service » (the day is over)
+const ICON_MOON = "M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"
 
 // ─── The « ⋯ » menu, at the very end of the line ─────────────────────────────
 // Product owner, 30.10.2026: the Edit button was too easy to hit on the line, so it went to a quiet « ⋯ » that opens a
@@ -1266,6 +1275,17 @@ const menuItems = computed(() =>
 			// the room on the screen (Ruling 60): over the list there is none, so it is the plan's only (task 26)
 			visible: canSetTableStatus.value && shownView.value === "plan",
 			run: freeCleaningTables,
+		},
+		//// Neoffice — the restaurant's closing (the product owner, 08.11.2026: « quand on clôture le restaurant, toutes les tables sont fermées »): one question, then the orders left are settled
+		{
+			key: "close-the-service",
+			label: __("Close the service"),
+			icon: ICON_MOON,
+			// The floor's manager closes it (the server checks it again): a waiter closes his own till, never the restaurant's
+			visible: canManageFloor.value,
+			run: () => {
+				closeServiceOpen.value = true
+			},
 		},
 		//// Neoffice — another card, the one the opening hours keep off the till (Daniel, 02.11: no such entry in this menu): built by the card picker, seen by every cashier where a card is hidden
 		openAnotherCardMenuItem(),

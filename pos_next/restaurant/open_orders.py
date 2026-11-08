@@ -126,6 +126,31 @@ def summary_of_table(orders, states, minutes) -> dict:
 	return {"served": served, "idle_minutes": idle, "to_cash_in": to_cash_in(minutes, served, idle)}
 
 
+# //// Neoffice — the stages an open order is in when the SERVICE closes (NeoResto lot 1, the product owner, 08.11.2026; the study of the open tables, note 57, § 3): what the service
+# //// does with it follows from the stage alone. The first two need no question, the third is cancelled in one gesture, the fourth is a debt to settle, the last is cashed at its table.
+HOLDS_MONEY = "holds_money"
+EMPTY = "empty"
+NEVER_SENT = "never_sent"
+SENT_STAGE = "sent"
+
+
+def stage_of(holds_money, lines, sent, grand_total) -> str:
+	"""Where an open order stands for the closing of the service.
+
+	- `holds_money`: money was posted on it (a guest paid part of it from a phone); the service cannot cancel or settle it, it is cashed at its table;
+	- `empty`: a table opened and left, no line and nothing to pay (study R8): it goes without a question;
+	- `never_sent`: it has lines, none has left for the kitchen or the bar (R2): nothing was consumed, so it is cancelled by default;
+	- `sent`: something left for the kitchen (R4 and R5): a dish served is a debt to settle, none served is cancelled with a reason.
+	"""
+	if holds_money:
+		return HOLDS_MONEY
+	if not lines and not flt(grand_total):
+		return EMPTY
+	if not sent:
+		return NEVER_SENT
+	return SENT_STAGE
+
+
 def open_orders(orders, tip_item=None, user=None) -> list[dict]:
 	"""The open orders of a restaurant as the closing lists them, oldest first.
 
@@ -153,10 +178,14 @@ def open_orders(orders, tip_item=None, user=None) -> list[dict]:
 				"paid_amount": flt(order.paid_amount),
 				"holds_money": flt(order.paid_amount) > 0,
 				"lines": state.get("lines", 0),
+				"sent": state.get("sent", 0),
 				"delivered": state.get("delivered", 0),
 				"consumed": bool(state.get("consumed")),
 				"offer_value": flt(state.get("list_value"), 2),
 				"served": bool(state.get("served")),
+				"stage": stage_of(
+					flt(order.paid_amount) > 0, state.get("lines", 0), state.get("sent", 0), order.grand_total
+				),
 			}
 		)
 	answer.sort(key=lambda row: row["opened_at"])

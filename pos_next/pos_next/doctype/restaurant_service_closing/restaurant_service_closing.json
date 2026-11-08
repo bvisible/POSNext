@@ -1,0 +1,184 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "format:RSVC-{YY}-{#####}",
+ "creation": "2026-11-08 21:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "service_day",
+  "closed_at",
+  "closed_by",
+  "column_break_one",
+  "restaurant",
+  "pos_profile",
+  "section_done",
+  "orders_settled",
+  "settled_total",
+  "empty_orders_removed",
+  "column_break_two",
+  "tables_freed",
+  "dishes_delivered",
+  "section_details",
+  "details"
+ ],
+ "fields": [
+  {
+   "fieldname": "service_day",
+   "fieldtype": "Date",
+   "label": "Service day",
+   "read_only": 1,
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "The business day the service belongs to: a service closed after midnight is still the day it was opened."
+  },
+  {
+   "fieldname": "closed_at",
+   "fieldtype": "Datetime",
+   "label": "Closed at",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "closed_by",
+   "fieldtype": "Link",
+   "label": "Closed by",
+   "options": "User",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "Who answered that the room was empty."
+  },
+  {
+   "fieldname": "column_break_one",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "restaurant",
+   "fieldtype": "Link",
+   "label": "Restaurant",
+   "options": "Restaurant",
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "pos_profile",
+   "fieldtype": "Link",
+   "label": "POS Profile",
+   "options": "POS Profile",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_done",
+   "fieldtype": "Section Break",
+   "label": "What the closing did"
+  },
+  {
+   "fieldname": "orders_settled",
+   "fieldtype": "Int",
+   "label": "Orders settled",
+   "read_only": 1,
+   "in_list_view": 1,
+   "description": "The orders settled one by one since the previous closing (paid late, on account, offered, a customer's loss, cancelled): each has its row in the settlement journal."
+  },
+  {
+   "fieldname": "settled_total",
+   "fieldtype": "Currency",
+   "label": "Total settled",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "empty_orders_removed",
+   "fieldtype": "Int",
+   "label": "Empty tables removed",
+   "read_only": 1,
+   "description": "Tables opened and left with nothing on them: removed without a question."
+  },
+  {
+   "fieldname": "column_break_two",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tables_freed",
+   "fieldtype": "Int",
+   "label": "Tables freed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "dishes_delivered",
+   "fieldtype": "Int",
+   "label": "Dishes marked delivered",
+   "read_only": 1,
+   "description": "The dishes of tables already paid that were still at the kitchen: the kitchen is closed, they are marked delivered."
+  },
+  {
+   "fieldname": "section_details",
+   "fieldtype": "Section Break",
+   "label": "Details"
+  },
+  {
+   "fieldname": "details",
+   "fieldtype": "Long Text",
+   "label": "Details",
+   "read_only": 1,
+   "description": "What was settled by each way, the empty tables removed and the tables freed (JSON)."
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-11-08 21:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "POS Next",
+ "name": "Restaurant Service Closing",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "role": "System Manager",
+   "create": 1,
+   "write": 1,
+   "delete": 1,
+   "share": 1,
+   "email": 1
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "role": "Restaurant Manager"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "role": "Accounts Manager"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "role": "Accounts User"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "role": "Sales Manager"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "service_day",
+ "track_changes": 0
+}

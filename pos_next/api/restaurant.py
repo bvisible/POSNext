@@ -682,6 +682,35 @@ def settle_open_order(
 
 
 @frappe.whitelist()
+# //// Neoffice — added function (no upstream equivalent). What closing the service of the restaurant would meet (the product owner, 08.11.2026: « quand on clôture le restaurant,
+# //// toutes les tables sont fermées »): the open orders with their stage, and what the closing would do by itself. Reads, changes nothing. A name is a text: a list from a JSON
+# //// body would be read as a filter (maintenance#2296).
+def get_service_closing(pos_profile: str | None = None, restaurant: str | None = None):
+	"""The open orders the service meets when it closes, each with its stage, and what the closing does by itself (empty tables removed, tables freed, dishes delivered)."""
+	from pos_next.api.cash_entry import require_till_user
+	from pos_next.restaurant import service_closing
+
+	# Closing the restaurant is the floor's manager's, at a till of the restaurant (`service_closing.require_closer` asks it again)
+	require_till_user(pos_profile)
+	permissions.require_right("manage_floor")
+	return service_closing.survey(pos_profile, restaurant)
+
+
+@frappe.whitelist(methods=["POST"])
+# //// Neoffice — added function (no upstream equivalent). Close the service of the restaurant (the product owner, 08.11.2026): « is the room empty? », then nothing left open. See
+# //// pos_next.restaurant.service_closing. POST only, a write that commits. A name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def close_service(pos_profile: str | None = None, restaurant: str | None = None, room_empty: int | str | None = 0):
+	"""Close the service of the restaurant: refused unless the room is empty and every order but the empty tables has been settled."""
+	from pos_next.api.cash_entry import require_till_user
+	from pos_next.restaurant import service_closing
+
+	# Closing the restaurant is the floor's manager's, at a till of the restaurant (`service_closing.require_closer` asks it again)
+	require_till_user(pos_profile)
+	permissions.require_right("manage_floor")
+	return service_closing.close(pos_profile, restaurant, room_empty)
+
+
+@frappe.whitelist()
 # //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
 def mark_table_available(table_name: str | None):
 	"""Mark a Cleaning table as Empty and expire its guest tokens."""

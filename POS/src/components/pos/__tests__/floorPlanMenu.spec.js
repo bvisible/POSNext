@@ -85,6 +85,14 @@ vi.mock("@/components/restaurant/OpenPhoneDialog.vue", () => ({
 	},
 }))
 
+// « Close the service » has its own spec too (closeServiceDialog.spec.js): here, only that the menu opens it, for the manager of the floor
+vi.mock("@/components/pos/CloseServiceDialog.vue", () => ({
+	default: {
+		props: ["modelValue"],
+		template: "<div data-test='close-service-dialog-stub' />",
+	},
+}))
+
 const { default: FloorPlanEditor } = await import("../FloorPlanEditor.vue")
 
 const ROOM = { name: "r0o1m2h3a4", area_name: "Room 1" }
@@ -252,6 +260,7 @@ describe("the « ⋯ » menu of the floor plan's line", () => {
 			expect(more().attributes("aria-expanded")).toBe("true")
 			expect(items().map((item) => item.text())).toEqual([
 				"Edit the floor plan",
+				"Close the service",
 			])
 			// Hung from the button, above the canvas, and not cut by the line
 			expect(more().element.parentElement.contains(menu().element)).toBe(true)
@@ -381,6 +390,7 @@ describe("the « ⋯ » menu of the floor plan's line", () => {
 
 			expect(wrapper.vm.menuItems.map((item) => item.key)).toEqual([
 				"edit-floor-plan",
+				"close-the-service",
 			])
 			for (const item of wrapper.vm.menuItems) {
 				expect(item.label).toEqual(expect.any(String))
@@ -396,7 +406,7 @@ describe("the « ⋯ » menu of the floor plan's line", () => {
 			await floorPlan({ manage_floor: true })
 			await more().trigger("click")
 
-			expect(labels()).toEqual(["Edit the floor plan"])
+			expect(labels()).toEqual(["Edit the floor plan", "Close the service"])
 		})
 
 		it("shows « Free the tables being cleaned » to a cashier, who may set the status of a table and not lay out the floor", async () => {
@@ -420,10 +430,12 @@ describe("the « ⋯ » menu of the floor plan's line", () => {
 			expect(labels()).toEqual([
 				"Edit the floor plan",
 				"Free the tables being cleaned",
+				"Close the service",
 			])
 			expect(wrapper.vm.menuItems.map((item) => item.key)).toEqual([
 				"edit-floor-plan",
 				"free-cleaning-tables",
+				"close-the-service",
 			])
 		})
 
@@ -482,6 +494,7 @@ describe("the « ⋯ » menu of the floor plan's line", () => {
 			expect(wrapper.vm.menuItems.map((item) => item.key)).toEqual([
 				"edit-floor-plan",
 				"free-cleaning-tables",
+				"close-the-service",
 				"open-a-tablet",
 				"open-a-smartphone",
 			])
@@ -493,6 +506,39 @@ describe("the « ⋯ » menu of the floor plan's line", () => {
 
 			expect(tabletItem().exists()).toBe(false)
 			expect(dialog().exists()).toBe(false)
+		})
+	})
+
+	//// Neoffice — « Close the service » (the product owner, 08.11.2026: « quand on clôture le restaurant, toutes les tables sont fermées »): the restaurant's closing is the floor's manager's, not a waiter's.
+	describe("« Close the service »", () => {
+		const closeItem = () => wrapper.find('[data-test="menu-close-the-service"]')
+		const dialog = () => wrapper.find('[data-test="close-service-dialog-stub"]')
+
+		it("is an item for whoever may lay out the floor", async () => {
+			await floorPlan({ manage_floor: true })
+			await more().trigger("click")
+
+			expect(closeItem().text()).toBe("Close the service")
+		})
+
+		it("is not an item for a cashier, who sets the status of a table and does not manage the floor", async () => {
+			await floorPlan({ manage_floor: false, set_table_status: true })
+			await more().trigger("click")
+
+			expect(closeItem().exists()).toBe(false)
+			expect(wrapper.vm.menuItems.map((item) => item.key)).toEqual(["free-cleaning-tables"])
+		})
+
+		it("closes the menu and opens the closing when it is pressed", async () => {
+			await floorPlan({ manage_floor: true })
+			await more().trigger("click")
+			expect(dialog().exists()).toBe(false)
+
+			await closeItem().trigger("click")
+			await flushPromises()
+
+			expect(menu().exists()).toBe(false)
+			expect(dialog().exists()).toBe(true)
 		})
 	})
 
@@ -530,6 +576,7 @@ describe("the « ⋯ » menu of the floor plan's line", () => {
 			expect(wrapper.vm.menuItems.map((item) => item.key)).toEqual([
 				"edit-floor-plan",
 				"free-cleaning-tables",
+				"close-the-service",
 				"open-another-card",
 				"open-a-tablet",
 				"open-a-smartphone",
@@ -538,15 +585,19 @@ describe("the « ⋯ » menu of the floor plan's line", () => {
 
 		it("appears when the hours hide a card after the plan was drawn, and goes when the card is opened", async () => {
 			await floorPlan({ manage_floor: true }, { isEnabled: true, pickableCards: [] })
-			expect(wrapper.vm.menuItems.map((item) => item.key)).toEqual(["edit-floor-plan"])
+			expect(wrapper.vm.menuItems.map((item) => item.key)).toEqual(["edit-floor-plan", "close-the-service"])
 
 			live.store.pickableCards = [CARD]
 			await flushPromises()
-			expect(wrapper.vm.menuItems.map((item) => item.key)).toEqual(["edit-floor-plan", "open-another-card"])
+			expect(wrapper.vm.menuItems.map((item) => item.key)).toEqual([
+				"edit-floor-plan",
+				"close-the-service",
+				"open-another-card",
+			])
 
 			live.store.pickableCards = []
 			await flushPromises()
-			expect(wrapper.vm.menuItems.map((item) => item.key)).toEqual(["edit-floor-plan"])
+			expect(wrapper.vm.menuItems.map((item) => item.key)).toEqual(["edit-floor-plan", "close-the-service"])
 		})
 
 		it("closes the menu and opens the list of the cards when it is pressed", async () => {
