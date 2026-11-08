@@ -284,6 +284,8 @@ function entryOf(table, readyLinesOfTable, clock) {
 			}[status] || "free"
 		//// Neoffice — a table of direct service (a bar, a counter) says so instead of « Empty »: it is never seated (the product owner, 08.11.2026)
 		badge = { text: table.direct_service ? __("Direct service") : stateWord(status), tone: QUIET_TONES[status] || "free" }
+		//// Neoffice — a table whose bill is settled while dishes are still to serve stays Occupied, and the list says « Paid » as the plan's tile does, not « Occupied » (the product owner, 08.11.2026)
+		if (status === "Occupied" && order?.paid) badge = { text: __("Paid"), tone: "paid" }
 	}
 
 	return {

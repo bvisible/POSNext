@@ -2135,7 +2135,7 @@
 								<span
 									v-if="showsKitchenState(item, restaurantStore.isPaperOnly) && kitchenStateOfLine(item.kds_status)"
 									data-test="paid-line-state"
-									class="ms-1.5 rounded-full px-2 py-0.5 text-xs font-semibold"
+									class="ms-1.5 rounded-full px-2 py-0.5 text-xs font-semibold whitespace-nowrap"
 									:class="KITCHEN_TONES[kitchenStateOfLine(item.kds_status).tone]"
 									>{{ kitchenStateOfLine(item.kds_status).label }}</span
 								></span
