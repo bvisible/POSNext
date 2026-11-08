@@ -209,9 +209,13 @@ TAB_BY_KEY = {tab.key: tab for tab in TABS}
 
 _GROUPS = (
 	# Restaurant
+	# //// Neoffice — the restaurant tab in three balanced columns (NeoResto lot 1, product owner, 08.11.2026: « tout est dans la même colonne »): the nine settings of « Service » stood in
+	# //// one group, so the first column held thirteen rows and the other two three or four. They are three groups of their own (the service, the tables, the tickets), two groups a column.
 	Group("service", "restaurant", _lt("Service"), 1, "restaurant"),
 	Group("room", "restaurant", _lt("Room"), 1),
+	Group("tables", "restaurant", _lt("Tables"), 2, "restaurant"),
 	Group("takeaway", "restaurant", _lt("Takeaway at the till"), 2),
+	Group("tickets", "restaurant", _lt("Ticket numbers"), 3, "restaurant"),
 	Group("tips", "restaurant", _lt("Tips"), 3, "restaurant"),
 	# Hours and cards
 	Group("opening_hours", "hours", _lt("Opening hours"), 1, "restaurant"),
@@ -229,7 +233,8 @@ _GROUPS = (
 	# //// Neoffice — how long the till keeps its staff signed in (pos_next.api.session, NeoResto lot 1, product owner,
 	# //// 01.11.2026): added to the list when this task's registry met the setting, which the old settings page had got meanwhile.
 	Group("staff_session", "general", _lt("Staff session"), 1),
-	Group("default_customer", "general", _lt("Customer"), 2),
+	# //// Neoffice — the customer moved to the third column, beside the customer display: the second held thirteen rows (the customer, the kitchen alerts, the floor alerts) against eight and four (the product owner, 08.11.2026)
+	Group("default_customer", "general", _lt("Customer"), 3),
 	# //// Neoffice — the popup and the sounds of the kitchen and runner screens (NeoResto lot 1, Daniel, 01.11: « le son doit être dans les réglages de la caisse »)
 	Group("kitchen_alerts", "general", _lt("Kitchen alerts"), 2),
 	# //// Neoffice — the notice and the sound of the till itself when a guest orders or pays from the QR code of a table (NeoResto lot 1, Daniel, 01.11: « regarde comment la
@@ -237,8 +242,11 @@ _GROUPS = (
 	Group("floor_alerts", "general", _lt("Floor alerts"), 2),
 	Group("customer_display", "general", _lt("Customer display"), 3),
 	# Sale screen
+	# //// Neoffice — the sale screen's ten settings of « Items » were one group against two in the second column: the tiles, the pictures and the items are three groups of their own
 	Group("items", "sale_screen", _lt("Items"), 1),
-	Group("items_offered", "sale_screen", _lt("Items offered"), 2),
+	Group("items_offered", "sale_screen", _lt("Items offered"), 1),
+	Group("tiles", "sale_screen", _lt("Tiles"), 2),
+	Group("pictures", "sale_screen", _lt("Pictures"), 3),
 	# Prices and discounts
 	Group("prices", "prices", _lt("Prices"), 1),
 	Group("discounts", "prices", _lt("Discounts"), 2),
@@ -361,7 +369,7 @@ SETTINGS = (
 	# //// so the restaurant's own choice; on unless the restaurant switches it off. The number is kept on the table's order whatever this says (pos_next.restaurant.covers).
 	Setting(
 		"ask_covers_on_open",
-		"service",
+		"tables",
 		_lt("Ask how many people when opening a table"),
 		_lt(
 			"On: the first time a table is opened, the till asks how many people are seated (the seats of the table come first)."
@@ -377,7 +385,7 @@ SETTINGS = (
 	# //// and nothing has moved is marked « Cash in? » on the floor plan. A field of the Restaurant, so the restaurant's own choice; 0 switches the reminder off.
 	Setting(
 		"remind_to_cash_in_minutes",
-		"service",
+		"tables",
 		_lt("Remind to cash in after (minutes)"),
 		_lt(
 			"A table where everything is served and nothing has moved for this many minutes is marked « Cash in? » on the floor plan,"
@@ -394,7 +402,7 @@ SETTINGS = (
 	# //// it is marked on the floor plan. A field of the Restaurant, so the restaurant's own choice; 0 switches the question off.
 	Setting(
 		"ask_if_guests_left_minutes",
-		"service",
+		"tables",
 		_lt("Ask if the guests have left after (minutes)"),
 		_lt(
 			"A table goes to cleaning by itself when its bill is paid with nothing left to serve, or when the last dish is delivered,"
@@ -412,7 +420,7 @@ SETTINGS = (
 	# //// met the field; the server holds the same 1..9 range (Restaurant._check_ticket_number_digits).
 	Setting(
 		"ticket_number_digits",
-		"service",
+		"tickets",
 		_lt("Digits of the ticket number"),
 		_lt("How many digits a ticket number is written with (0007 has four)."),
 		"int",
@@ -424,7 +432,7 @@ SETTINGS = (
 	),
 	Setting(
 		"ticket_number_reset",
-		"service",
+		"tickets",
 		_lt("Ticket numbers start again"),
 		_lt(
 			"When the numbers of the tickets start again at 1: every business day, never, or at each shift of"
@@ -444,7 +452,7 @@ SETTINGS = (
 	# //// at 1 (`restaurant.tickets`), so it is shown beside that choice and greyed unless the numbers start again every business day.
 	Setting(
 		"business_day_start",
-		"service",
+		"tickets",
 		_lt("Business day starts at"),
 		_lt(
 			"The hour a new business day begins, for the numbering of the tickets: with « Every business day », the numbers"
@@ -1026,7 +1034,7 @@ SETTINGS = (
 	# ---------------------------------------------------------------- Sale screen
 	Setting(
 		"tiles_per_row",
-		"items",
+		"tiles",
 		_lt("Tiles per row"),
 		_lt(
 			"How many items each row of the grid shows. « Automatic »: as many as the width of the screen"
@@ -1040,7 +1048,7 @@ SETTINGS = (
 	# //// Neoffice — how tall the restaurant card's tiles are (NeoResto lot 1, product owner, 05.11.2026): a till with many dishes and drinks wants more tiles in the height of the screen
 	Setting(
 		"tile_height",
-		"items",
+		"tiles",
 		_lt("Tile height"),
 		_lt(
 			"How tall the tiles of the restaurant's card are. « Compact »: short pictures, and a tile with no picture"
@@ -1067,7 +1075,7 @@ SETTINGS = (
 	),
 	Setting(
 		"cart_pictures",
-		"items",
+		"pictures",
 		_lt("Pictures in the cart"),
 		_lt(
 			"Each line of the cart shows the picture of the item, or its colour. Off: the name only, so that more of the"
@@ -1081,7 +1089,7 @@ SETTINGS = (
 	# (NeoResto lot 1, task 27; design § G: « no pictures by default, a setting with or without »)
 	Setting(
 		"phone_card_pictures",
-		"items",
+		"pictures",
 		_lt("Pictures on a phone"),
 		_lt(
 			"On a phone, each button of the restaurant's card shows the item's picture above its name. Off: the name"
@@ -1095,7 +1103,7 @@ SETTINGS = (
 	# and « des couleurs par famille, pour retrouver vite un produit »)
 	Setting(
 		"till_card_pictures",
-		"items",
+		"pictures",
 		_lt("Pictures on the till"),
 		_lt(
 			"On the till, each tile of the restaurant's card shows the item's picture. Off: the name on the tile's"
@@ -1107,7 +1115,7 @@ SETTINGS = (
 	),
 	Setting(
 		"tile_colors",
-		"items",
+		"tiles",
 		_lt("Colours of the tiles"),
 		_lt(
 			"Each tile of the restaurant's card takes the colour of its item, else of its item group (the Service Colour"

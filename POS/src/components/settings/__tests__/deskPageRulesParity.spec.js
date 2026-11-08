@@ -141,6 +141,16 @@ describe("the office page decides what the till's screen decides", () => {
 		expect(desk.columnsOf(null, "general")).toEqual(till.columnsOf(null, "general"));
 	});
 
+	it("lets the groups of a tab flow into balanced columns unless the tab has widths of its own", () => {
+		// The office page draws a flowing tab as one run of groups for the browser to balance, and keeps the cells of the others (the product owner, 08.11.2026)
+		for (const tab of ["restaurant", "general", "sale_screen", "sales", "nothing"]) {
+			expect(desk.flowsAsOne(tab), tab).toBe(true);
+		}
+		for (const tab of ["hours", "online", "setup"]) {
+			expect(desk.flowsAsOne(tab), tab).toBe(false);
+		}
+	});
+
 	it("sends what changed since the page was read, and what the user may change", () => {
 		const read = {
 			tips: 0,

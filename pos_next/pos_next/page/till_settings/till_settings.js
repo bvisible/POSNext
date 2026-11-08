@@ -71,6 +71,10 @@
 		".tsp-people{margin-top:8px;display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#3A342C}" +
 		".tsp-people .bad{color:#8A5A00}" +
 		".tsp-people .good{color:#11663A}" +
+		// //// Neoffice — a tab with no widths of its own lets its groups flow into as many columns as the room allows, the browser balancing them, and never splits a group (the product owner, 08.11.2026:
+		// //// « tout est dans la même colonne »): the columns of the registry were grid cells, and the third one wrapped under the first when only two fitted, a first column of thirteen rows against two of three.
+		".tsp-panel.tsp-flow{display:block;column-width:270px;column-gap:24px}" +
+		".tsp-flow .tsp-group{break-inside:avoid;page-break-inside:avoid}" +
 		".tsp-note{padding:8px 12px;border-radius:10px;background:#F6F3ED;color:#3A342C;font-size:13px;line-height:1.45}" +
 		".tsp-empty{padding:48px 16px;text-align:center;color:#6F665A}" +
 		"@media (max-width:991px){.tsp-body{flex-direction:column}.tsp-rail{flex:none;width:100%;flex-direction:row;flex-wrap:wrap;position:static}" +
@@ -121,6 +125,11 @@
 	}
 
 	// The groups of a tab in their columns, each with its settings in the order of the list
+	// Whether a tab lets its groups flow into balanced columns: all but the tabs with widths of their own (the hours beside their cards, the online ordering, the one readable column of the set-up)
+	function flowsAsOne(tabKey) {
+		return !COLUMN_TEMPLATES[tabKey];
+	}
+
 	function columnsOf(screen, tabKey) {
 		if (!screen) return [];
 		var columns = {};
@@ -647,8 +656,11 @@
 			"grid-template-columns",
 			COLUMN_TEMPLATES[this.active_tab] || "repeat(auto-fit,minmax(270px,1fr))"
 		);
+		// //// Neoffice — a tab without widths of its own flows its groups in column order (the registry's columns say the reading order), the browser balancing the columns; a tab with widths keeps its cells
+		var flows = flowsAsOne(this.active_tab);
+		$panel.toggleClass("tsp-flow", flows);
 		columns.forEach(function (groups) {
-			var $column = $('<div class="tsp-column" style="min-width:0"></div>').appendTo($panel);
+			var $column = flows ? $panel : $('<div class="tsp-column" style="min-width:0"></div>').appendTo($panel);
 			groups.forEach(function (group) {
 				self.render_group($column, group);
 			});
@@ -1225,6 +1237,7 @@
 		conditionsHold: conditionsHold,
 		untickExcluded: untickExcluded,
 		columnsOf: columnsOf,
+		flowsAsOne: flowsAsOne,
 		changedValues: changedValues,
 		isTimeOfDay: isTimeOfDay,
 		withinBounds: withinBounds,

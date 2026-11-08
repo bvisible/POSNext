@@ -148,11 +148,11 @@ class TestTheFieldAndTheSetting(CoversCase):
 			"the former single has no such field: the patch that moved it into a restaurant has nothing to copy",
 		)
 
-	def test_it_is_listed_in_the_restaurant_tab_group_service_for_a_restaurant_till(self):
+	def test_it_is_listed_in_the_restaurant_tab_group_tables_for_a_restaurant_till(self):
 		setting = registry.get("ask_covers_on_open")
 
 		self.assertEqual(setting.doctype, registry.RESTAURANT)
-		self.assertEqual(setting.group, "service")
+		self.assertEqual(setting.group, "tables")
 		self.assertEqual(setting.tab, "restaurant")
 		self.assertEqual(setting.till, registry.RESTAURANT_TILL)
 		self.assertEqual(setting.widget, "check")

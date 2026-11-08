@@ -29,7 +29,8 @@ class TestTheBusinessDayStartSetting(TillSettingsCase):
 		self.assertEqual(frappe.get_meta("Restaurant").get_field("business_day_start").fieldtype, "Time")
 		self.assertEqual(setting.widget, "time")
 		self.assertEqual(setting.doctype, registry.RESTAURANT)
-		self.assertEqual(setting.group, "service")
+		# The group of the ticket numbers (the restaurant tab's third column), beside the reset it belongs to
+		self.assertEqual(setting.group, "tickets")
 		self.assertEqual(setting.tab, "restaurant")
 		self.assertEqual(setting.till, registry.RESTAURANT_TILL)
 		self.assertEqual(setting.applies, registry.APPLIES_RESTAURANT)
