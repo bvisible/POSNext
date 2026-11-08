@@ -25022,3 +25022,11 @@ msgstr "En attente de nettoyage depuis {0} min"
 #, python-brace-format
 msgid "Waiting to be cleaned for {0} min. Have the guests left?"
 msgstr "En attente de nettoyage depuis {0} min. Les convives sont-ils partis ?"
+
+#: pos_next/till_settings/registry.py:218
+msgid "Ticket numbers"
+msgstr "Numérotation des tickets"
+
+#: pos_next/till_settings/registry.py:248
+msgid "Tiles"
+msgstr "Tuiles"

@@ -27285,3 +27285,11 @@ msgstr ""
 #, python-brace-format
 msgid "Waiting to be cleaned for {0} min. Have the guests left?"
 msgstr ""
+
+#: pos_next/till_settings/registry.py:218
+msgid "Ticket numbers"
+msgstr ""
+
+#: pos_next/till_settings/registry.py:248
+msgid "Tiles"
+msgstr ""
