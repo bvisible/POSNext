@@ -1657,6 +1657,8 @@
 				:dismissable="!session.logout.loading"
 			>
 				<template #body-content>
+					<!-- //// Neoffice — signing out erases the tickets held on this device: say how many (NeoResto lot 1, 08.11.2026). -->
+					<div class="px-4 pt-4 empty:hidden"><HeldTicketsNotice /></div>
 					<!-- WITH SHIFT OPEN -->
 					<div v-if="shiftStore.hasOpenShift" class="px-4 py-5">
 						<div class="text-center mb-6">
@@ -2232,6 +2234,8 @@ import ManagementSlider from "@/components/pos/ManagementSlider.vue";
 import CashInOutDialog from "@/components/pos/CashInOutDialog.vue";
 //// Neoffice — the till's CloudPRNT printer and cash drawer (maintenance#1935).
 import CashDrawerDialog from "@/components/pos/CashDrawerDialog.vue";
+//// Neoffice — the sign-out dialog's notice of the held tickets it will erase (NeoResto lot 1, 08.11.2026).
+import HeldTicketsNotice from "@/components/pos/HeldTicketsNotice.vue";
 import { useCloudPrntStore } from "@/stores/cloudPrnt";
 import WorkflowEditor from "@/components/restaurant/WorkflowEditor.vue";
 import ProductOptionsEditor from "@/components/restaurant/ProductOptionsEditor.vue";

@@ -592,7 +592,7 @@
 						</div>
 					</div>
 
-					<!-- //// Neoffice ▼▼▼ — three sections with no upstream equivalent. -->
+					<!-- //// Neoffice ▼▼▼ — sections with no upstream equivalent (the first three; the last two follow below). -->
 					<!-- //// · Sales by Payment Method — the cashier needs the split per method before counting -->
 					<!-- ////   the drawer; upstream shows only a grand total. -->
 					<!-- //// · External Payments — money taken at this till on an invoice created in the back -->
@@ -880,6 +880,15 @@
 							</li>
 						</ul>
 					</div>
+
+					<!-- //// Neoffice — « Still open » (NeoResto lot 1, 08.11.2026): the orders still open on tables and the tickets held on this -->
+					<!-- //// device, which this closing does not count or which signing out erases. Informs, blocks nothing. The cash hint is -->
+					<!-- //// given only where the difference is shown (not in the blind count). -->
+					<ClosingStillOpen
+						v-if="!showSuccessReport"
+						:active="open"
+						:cash-is-over="shouldShowSummary && getTotalDifference > 0"
+					/>
 
 					<!-- //// ▲▲▲ Neoffice — end of the sections added to the closing report. -->
 					<!-- POS Expenses Summary -->
@@ -1690,6 +1699,8 @@ import EodPrintDialog from "./EodPrintDialog.vue";
 import { offeredClosingLine } from "@/utils/offeredRows";
 //// Neoffice — the session's cash drawer openings (maintenance#1935).
 import CashDrawerSummary from "./pos/CashDrawerSummary.vue";
+//// Neoffice — the orders and held tickets still open when the shift closes (NeoResto lot 1, 08.11.2026).
+import ClosingStillOpen from "./pos/ClosingStillOpen.vue";
 //// Neoffice — the drawer movements the server refused on this device (NeoResto lot 1, task 15).
 import { getRefusedCashMovements, sessionUserId } from "../utils/offline/cashMovements";
 

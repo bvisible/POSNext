@@ -94,6 +94,8 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		grey_out_sold_out: true,
 		//// Neoffice — the till asks how many people are seated the first time a table is opened, unless the restaurant switched this off (NeoResto lot 1, covers). On by default, and when the server does not say.
 		ask_covers_on_open: 1,
+		//// Neoffice — the minutes after which a served, quiet table is marked « Cash in? » on the floor plan, 45 unless the restaurant says otherwise, 0 for never (the product owner, 08.11.2026)
+		remind_to_cash_in_minutes: 45,
 		enable_takeaway: false,
 		takeaway_card: null,
 		enable_qr_ordering: false,

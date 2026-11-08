@@ -43,6 +43,8 @@ RESTAURANT_ONLY_SETTINGS = (
 	"grey_out_sold_out",
 	# Whether the till asks how many people are seated when a table is first opened, on by default (pos_next.restaurant.covers)
 	"ask_covers_on_open",
+	# After how many minutes a served, quiet table is marked « Cash in? » on the floor plan, 45 by default, 0 for never (pos_next.restaurant.open_orders)
+	"remind_to_cash_in_minutes",
 )
 
 

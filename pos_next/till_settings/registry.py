@@ -373,6 +373,23 @@ SETTINGS = (
 		till=RESTAURANT_TILL,
 		applies=APPLIES_RESTAURANT,
 	),
+	# //// Neoffice — the forgotten tables (NeoResto lot 1, the product owner, 08.11.2026: « le serveur a oublié de fermer la table »): after how many minutes a table where everything is served
+	# //// and nothing has moved is marked « Cash in? » on the floor plan. A field of the Restaurant, so the restaurant's own choice; 0 switches the reminder off.
+	Setting(
+		"remind_to_cash_in_minutes",
+		"service",
+		_lt("Remind to cash in after (minutes)"),
+		_lt(
+			"A table where everything is served and nothing has moved for this many minutes is marked « Cash in? » on the floor plan,"
+			" so that a forgotten table is seen while the guests are still there. 0: never."
+		),
+		"int",
+		doctype=RESTAURANT,
+		till=RESTAURANT_TILL,
+		min=0,
+		max=600,
+		applies=APPLIES_RESTAURANT,
+	),
 	# //// Neoffice — the digits of the ticket number (NeoResto lot 1, task 38b), added to the list when this task's registry
 	# //// met the field; the server holds the same 1..9 range (Restaurant._check_ticket_number_digits).
 	Setting(

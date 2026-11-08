@@ -486,6 +486,8 @@
 						<span class="text-[9px] font-semibold bg-red-100 text-red-700 dark:text-ds-danger-soft px-1 rounded">{{ table.order_summary.item_count }}</span>
 						<!-- //// Neoffice — the bill of this table is settled and its dishes are not all served: the tile says so instead of looking like a table with an open order (the product owner, 08.11.2026) -->
 						<span v-if="table.order_summary.paid" data-test="table-paid" class="text-[9px] font-bold text-blue-600">{{ __("Paid") }}</span>
+						<!-- //// Neoffice — everything on the table is served and nothing has moved for the restaurant's minutes: the waiter is asked, while the guests are still there (the product owner, 08.11.2026) -->
+						<span v-if="table.order_summary.to_cash_in" data-test="table-to-cash-in" class="relative z-10 bg-amber-100 text-amber-900 dark:bg-ds-warning/20 dark:text-ds-warning text-[9px] font-bold rounded-full px-1.5 py-0.5" :title="__('Everything is served, nothing has moved for {0} min', [table.order_summary.idle_minutes])">{{ __("Cash in?") }}</span>
 						<!-- //// Neoffice — the number of dishes WAITING at a table GROWS AND SHRINKS (product owner, 05.11.2026: « un 2 qui s'agrandit, qui rétrécit […] de telle manière qu'on voit vraiment quelque chose qu'il faut faire sur cette table »): `animate-pulse` only faded it, to half its opacity -->
 						<span v-if="table.waiting_items_count > 0" data-test="table-waiting" class="floor-waiting-pulse relative z-10 bg-orange-500 text-white dark:text-ds-ink text-[9px] font-bold rounded-full px-1.5 py-0.5" :title="__('Waiting')">{{ table.waiting_items_count }}</span>
 						<span class="text-[9px] text-gray-500 dark:[&&]:!text-ds-sand-300">{{ formatTime(table.order_summary.opened_at) }}</span>

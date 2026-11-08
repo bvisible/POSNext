@@ -24389,3 +24389,85 @@ msgstr "Service direct"
 #: POS/src/components/pos/FloorPlanEditor.vue:750
 msgid "A bar or a counter: the ticket is typed and paid in one go, and the till comes back to this table for the next one."
 msgstr "Pour un bar ou un comptoir : le ticket est saisi et encaissé en une seule fois, puis la caisse revient sur cette table pour la suivante."
+
+#: POS/src/utils/tablesOfTheService.js:269
+#: POS/src/components/pos/FloorPlanEditor.vue:490
+msgid "Cash in?"
+msgstr "À encaisser ?"
+
+#: POS/src/components/pos/FloorPlanEditor.vue:490
+#, python-brace-format
+msgid "Everything is served, nothing has moved for {0} min"
+msgstr "Tout est servi, rien n'a bougé depuis {0} min"
+
+#: POS/src/components/pos/ClosingStillOpen.vue:1
+msgid "Still open"
+msgstr "Encore ouvert"
+
+#: POS/src/utils/stillOpenAtClosing.js:78
+msgid "1 order is still open: it is not in the figures of this closing"
+msgstr "1 commande est encore ouverte : elle ne figure pas dans les chiffres de cette clôture"
+
+#: POS/src/utils/stillOpenAtClosing.js:1
+#, python-brace-format
+msgid "{0} orders are still open: they are not in the figures of this closing"
+msgstr "{0} commandes sont encore ouvertes : elles ne figurent pas dans les chiffres de cette clôture"
+
+#: POS/src/utils/stillOpenAtClosing.js:30
+#, python-brace-format
+msgid "Quiet for {0} min"
+msgstr "Sans mouvement depuis {0} min"
+
+#: POS/src/utils/stillOpenAtClosing.js:30
+#, python-brace-format
+msgid "Quiet for {0} h {1}"
+msgstr "Sans mouvement depuis {0} h {1}"
+
+#: POS/src/utils/stillOpenAtClosing.js:45
+msgid "Money posted"
+msgstr "Paiement enregistré"
+
+#: POS/src/utils/stillOpenAtClosing.js:48
+msgid "All served"
+msgstr "Tout servi"
+
+#: POS/src/utils/stillOpenAtClosing.js:50
+msgid "Partly served"
+msgstr "Partiellement servi"
+
+#: POS/src/utils/stillOpenAtClosing.js:52
+msgid "Nothing served"
+msgstr "Rien de servi"
+
+#: POS/src/utils/stillOpenAtClosing.js:82
+msgid "The cash is over while orders are open: one of them may have been paid in cash and not cashed in."
+msgstr "Il y a plus d'argent en caisse que prévu alors que des commandes sont ouvertes : l'une d'elles a peut-être été payée en espèces sans être encaissée."
+
+#: POS/src/components/pos/ClosingStillOpen.vue:134
+msgid "The open orders could not be read."
+msgstr "Les commandes ouvertes n'ont pas pu être lues."
+
+#: POS/src/utils/stillOpenAtClosing.js:26
+msgid "1 held ticket on this device will be erased when you sign out"
+msgstr "1 ticket en attente sur cet appareil sera effacé à la déconnexion"
+
+#: POS/src/utils/stillOpenAtClosing.js:1
+#, python-brace-format
+msgid "{0} held tickets on this device will be erased when you sign out"
+msgstr "{0} tickets en attente sur cet appareil seront effacés à la déconnexion"
+
+#: pos_next/api/restaurant.py:602
+msgid "Restaurant not found"
+msgstr "Restaurant introuvable"
+
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:1
+msgid "Forgotten Tables"
+msgstr "Tables oubliées"
+
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:1
+msgid "Remind to cash in after (minutes)"
+msgstr "Rappeler d'encaisser après (minutes)"
+
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:1
+msgid "A table where everything is served and nothing has moved for this many minutes is marked « Cash in? » on the floor plan, so that a forgotten table is seen while the guests are still there. 0: never."
+msgstr "Une table où tout est servi et où rien n'a bougé depuis ce nombre de minutes est marquée « À encaisser ? » sur le plan de salle, pour qu'une table oubliée soit vue pendant que les clients sont encore là. 0 : jamais."

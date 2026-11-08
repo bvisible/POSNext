@@ -237,6 +237,8 @@
 		>
 			<template #body-content>
 				<div class="space-y-4">
+					<!-- //// Neoffice — signing out erases the tickets held on this device: say how many (NeoResto lot 1, 08.11.2026). -->
+					<HeldTicketsNotice />
 					<div v-if="hasOpenShift" class="rounded-md bg-yellow-50 p-4">
 						<div class="flex">
 							<div class="flex-shrink-0">
@@ -328,6 +330,8 @@ import ShiftOpeningDialog from "../components/ShiftOpeningDialog.vue";
 import { useShift } from "../composables/useShift";
 import { session } from "../data/session";
 import TranslatedHTML from "../components/common/TranslatedHTML.vue";
+//// Neoffice — the sign-out dialog's notice of the held tickets it will erase (NeoResto lot 1, 08.11.2026).
+import HeldTicketsNotice from "../components/pos/HeldTicketsNotice.vue";
 
 const router = useRouter();
 

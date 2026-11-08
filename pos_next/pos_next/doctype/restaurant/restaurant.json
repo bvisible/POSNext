@@ -20,6 +20,8 @@
   "service_rhythm",
   "section_covers",
   "ask_covers_on_open",
+  "section_cash_in",
+  "remind_to_cash_in_minutes",
   "section_sold_out",
   "grey_out_sold_out",
   "section_tickets",
@@ -147,6 +149,19 @@
    "fieldname": "ask_covers_on_open",
    "fieldtype": "Check",
    "label": "Ask how many people when opening a table"
+  },
+  {
+   "fieldname": "section_cash_in",
+   "fieldtype": "Section Break",
+   "label": "Forgotten Tables"
+  },
+  {
+   "default": "45",
+   "description": "A table where everything is served and nothing has moved for this many minutes is marked « Cash in? » on the floor plan, so that a forgotten table is seen while the guests are still there. 0: never.",
+   "fieldname": "remind_to_cash_in_minutes",
+   "fieldtype": "Int",
+   "label": "Remind to cash in after (minutes)",
+   "non_negative": 1
   },
   {
    "fieldname": "section_sold_out",
@@ -396,7 +411,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-05 12:00:00.000000",
+ "modified": "2026-11-08 16:00:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "Restaurant",

@@ -26673,3 +26673,85 @@ msgstr ""
 #: POS/src/components/pos/FloorPlanEditor.vue:750
 msgid "A bar or a counter: the ticket is typed and paid in one go, and the till comes back to this table for the next one."
 msgstr ""
+
+#: POS/src/utils/tablesOfTheService.js:269
+#: POS/src/components/pos/FloorPlanEditor.vue:490
+msgid "Cash in?"
+msgstr ""
+
+#: POS/src/components/pos/FloorPlanEditor.vue:490
+#, python-brace-format
+msgid "Everything is served, nothing has moved for {0} min"
+msgstr ""
+
+#: POS/src/components/pos/ClosingStillOpen.vue:1
+msgid "Still open"
+msgstr ""
+
+#: POS/src/utils/stillOpenAtClosing.js:78
+msgid "1 order is still open: it is not in the figures of this closing"
+msgstr ""
+
+#: POS/src/utils/stillOpenAtClosing.js:1
+#, python-brace-format
+msgid "{0} orders are still open: they are not in the figures of this closing"
+msgstr ""
+
+#: POS/src/utils/stillOpenAtClosing.js:30
+#, python-brace-format
+msgid "Quiet for {0} min"
+msgstr ""
+
+#: POS/src/utils/stillOpenAtClosing.js:30
+#, python-brace-format
+msgid "Quiet for {0} h {1}"
+msgstr ""
+
+#: POS/src/utils/stillOpenAtClosing.js:45
+msgid "Money posted"
+msgstr ""
+
+#: POS/src/utils/stillOpenAtClosing.js:48
+msgid "All served"
+msgstr ""
+
+#: POS/src/utils/stillOpenAtClosing.js:50
+msgid "Partly served"
+msgstr ""
+
+#: POS/src/utils/stillOpenAtClosing.js:52
+msgid "Nothing served"
+msgstr ""
+
+#: POS/src/utils/stillOpenAtClosing.js:82
+msgid "The cash is over while orders are open: one of them may have been paid in cash and not cashed in."
+msgstr ""
+
+#: POS/src/components/pos/ClosingStillOpen.vue:134
+msgid "The open orders could not be read."
+msgstr ""
+
+#: POS/src/utils/stillOpenAtClosing.js:26
+msgid "1 held ticket on this device will be erased when you sign out"
+msgstr ""
+
+#: POS/src/utils/stillOpenAtClosing.js:1
+#, python-brace-format
+msgid "{0} held tickets on this device will be erased when you sign out"
+msgstr ""
+
+#: pos_next/api/restaurant.py:602
+msgid "Restaurant not found"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:1
+msgid "Forgotten Tables"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:1
+msgid "Remind to cash in after (minutes)"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:1
+msgid "A table where everything is served and nothing has moved for this many minutes is marked « Cash in? » on the floor plan, so that a forgotten table is seen while the guests are still there. 0: never."
+msgstr ""

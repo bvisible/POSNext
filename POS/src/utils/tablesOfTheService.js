@@ -238,7 +238,8 @@ export function tablesOfTheService({
 }
 
 // The tiers of the tables with something going on, in the order the list shows them
-const BUSY_TIERS = ["ready", "qr", "occupied", "paid"]
+//// Neoffice — « tocash »: a served table nobody has touched for a while comes after the ones with something to do and before the others (the product owner, 08.11.2026)
+const BUSY_TIERS = ["ready", "qr", "tocash", "occupied", "paid"]
 
 // The most urgent first; within a tier, the table seated longest first (one whose time is not known after the others)
 function urgency(a, b) {
@@ -264,6 +265,10 @@ function entryOf(table, readyLinesOfTable, clock) {
 	} else if (status === "Occupied" && qrCount > 0) {
 		tier = "qr"
 		badge = qrBadge(qrCount)
+	} else if (status === "Occupied" && order?.to_cash_in) {
+		//// Neoffice — everything on the table is served and nothing has moved for the restaurant's minutes: « Cash in? », while the guests are still there (the product owner, 08.11.2026)
+		tier = "tocash"
+		badge = { text: __("Cash in?"), tone: "tocash" }
 	} else {
 		tier =
 			{
@@ -300,6 +305,7 @@ function entryOf(table, readyLinesOfTable, clock) {
 		qr:
 			tier === "ready" ||
 			tier === "qr" ||
+			tier === "tocash" ||
 			tier === "occupied" ||
 			tier === "free",
 	}

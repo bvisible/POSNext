@@ -26,6 +26,7 @@ from pos_next.restaurant import (
 	figures,
 	item_units,
 	kitchen_alerts,
+	open_orders,
 	paid_orders,
 	permissions,
 	room_code,
@@ -210,7 +211,7 @@ def get_tables(restaurant=None):
 			filters={"docstatus": 0, "restaurant_table": ["in", occupied_names]},
 			# The total of the open order: the list of tables says it under each table (NeoResto lot 1, task 26)
 			# //// Neoffice — and the rank and the name of its note: a table may hold several open orders (NeoResto lot 1, notes)
-			fields=["name", "restaurant_table", "owner", "creation", "kds_status", "grand_total", *notes_module.order_fields()],
+			fields=["name", "restaurant_table", "owner", "creation", "modified", "kds_status", "grand_total", *notes_module.order_fields()],
 			order_by="modified desc"
 		)
 		# The ticket number of each order (NeoResto lot 1, task 38b): what the floor plan and the list of tables read aloud
@@ -225,6 +226,10 @@ def get_tables(restaurant=None):
 		by_table = {}
 		for order in orders:
 			by_table.setdefault(order.restaurant_table, []).append(order)
+		# //// Neoffice — what the kitchen's states say of each table, read once for all the open orders: all served, and since when nothing moved, for the
+		# //// « cash in? » reminder (the product owner, 08.11.2026; pos_next.restaurant.open_orders)
+		cash_in_minutes = open_orders.reminder_minutes(restaurant)
+		line_states = open_orders.line_states([order.name for order in orders], covers_module.tip_item_of(restaurant))
 		for tbl, table_orders in by_table.items():
 			by_rank = sorted(table_orders, key=lambda order: notes_module.effective_rank(order.get(notes_module.FIELD)))
 			first_opened = min(table_orders, key=lambda order: order.creation)
@@ -247,6 +252,8 @@ def get_tables(restaurant=None):
 				"note_names": [
 					order.get(notes_module.NAME_FIELD) for order in by_rank if order.get(notes_module.NAME_FIELD)
 				],
+				# //// Neoffice — `served`, `idle_minutes` and `to_cash_in`: everything on the table is served, for how long nothing has moved, and whether the table is marked « cash in? »
+				**open_orders.summary_of_table(table_orders, line_states, cash_in_minutes),
 			}
 			if tell_totals:
 				order_map[tbl]["grand_total"] = sum(flt(order.grand_total) for order in table_orders)
@@ -576,6 +583,72 @@ def _tiles_of_paid_tables(tables, restaurant, tell_totals):
 		if tell_totals:
 			tiles[table]["grand_total"] = sum(flt(order.grand_total) for order in table_orders)
 	return tiles
+
+
+@frappe.whitelist()
+# //// Neoffice — added function (no upstream equivalent). The open orders of the restaurant, for the closing of a shift (the product owner, 08.11.2026: « quand on clôture le
+# //// restaurant, toutes les tables doivent être fermées »). A name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
+def get_open_orders(pos_profile: str | None = None, restaurant: str | None = None):
+	"""The restaurant's open orders (table drafts and takeaway orders), oldest first, each with what it holds and since when it has not moved.
+
+	The closing of a shift shows them: a table left open at closing is a guest still there, a table the waiter forgot, or a guest gone without paying. Each answer
+	carries its total, the money already posted on it (`holds_money`), whether a dish was delivered (`consumed`: a debt to settle, never one to delete), whether
+	everything is `served`, and the minutes since it last moved. Nothing is changed by the call.
+	"""
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user(pos_profile)
+	if not isinstance(restaurant, str | None):
+		frappe.throw(_("Restaurant not found"))
+	restaurant = restaurant or scope.current_restaurant(pos_profile)
+	permissions.require_not_kept_out(restaurant)
+
+	takeaway = ["is_takeaway"] if frappe.db.has_column("Sales Invoice", "is_takeaway") else []
+	rows = frappe.get_all(
+		"Sales Invoice",
+		filters={"docstatus": 0},
+		or_filters=[["restaurant_table", "is", "set"], *([["is_takeaway", "=", 1]] if takeaway else [])],
+		fields=[
+			"name",
+			"restaurant_table",
+			"owner",
+			"creation",
+			"modified",
+			"grand_total",
+			"paid_amount",
+			"pos_profile",
+			*takeaway,
+			*notes_module.order_fields(),
+		],
+		limit_page_length=0,
+	)
+	rows = scope.keep_orders_of(rows, restaurant)
+	table_names = {row.restaurant_table for row in rows if row.restaurant_table}
+	labels = {}
+	if table_names:
+		labels = dict(
+			frappe.get_all("Restaurant Table", filters={"name": ["in", list(table_names)]}, fields=["name", "table_name"], as_list=True)
+		)
+	owners = {}
+	for user in {row.owner for row in rows}:
+		owners[user] = frappe.db.get_value("User", user, "full_name") or user
+	count_by_table = {}
+	for row in rows:
+		if row.restaurant_table:
+			count_by_table[row.restaurant_table] = count_by_table.get(row.restaurant_table, 0) + 1
+	for row in rows:
+		table = row.restaurant_table
+		row["owner_name"] = owners.get(row.owner)
+		if table:
+			row["table_label"] = notes_module.table_label(
+				labels.get(table) or table,
+				row.get(notes_module.FIELD),
+				row.get(notes_module.NAME_FIELD),
+				count_by_table.get(table),
+			)
+		else:
+			row["table_label"] = _("Takeaway")
+	return {"orders": open_orders.open_orders(rows, covers_module.tip_item_of(restaurant))}
 
 
 @frappe.whitelist()
@@ -2969,6 +3042,8 @@ def get_restaurant_settings(restaurant=None):
 		"grey_out_sold_out": settings.get("grey_out_sold_out") in (None, 1, True, "1"),
 		# //// Neoffice — whether the till asks how many people are seated the first time a table is opened, the restaurant's choice (NeoResto lot 1, covers); on unless it switched it off
 		"ask_covers_on_open": covers_module.asks_on_open(settings),
+		# //// Neoffice — the minutes after which a served, quiet table is marked « Cash in? » on the floor plan, the restaurant's choice (the product owner, 08.11.2026); 45 unless it says otherwise, 0 for never
+		"remind_to_cash_in_minutes": open_orders.reminder_minutes(settings.name),
 		"enable_takeaway": bool(till.enable_takeaway),
 		"takeaway_card": till.takeaway_card or None,
 		"enable_tips": bool(settings.enable_tips),

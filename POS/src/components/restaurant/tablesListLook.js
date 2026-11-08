@@ -20,6 +20,8 @@ export const BADGE_CLASSES = {
 	quiet: "text-[#6F665A] dark:text-ds-sand-300",
 	neutral: `${PILL} bg-[#F6F3ED] text-[#524B41] font-semibold dark:bg-[rgba(255,251,245,0.10)] dark:text-ds-paper`,
 	paid: `${PILL} bg-[#E9F7EE] text-[#11663A] font-semibold dark:bg-ds-success/20 dark:text-ds-success-soft`,
+	//// Neoffice — « Cash in? »: a served, quiet table, an amber pill that asks without shouting (the product owner, 08.11.2026)
+	tocash: `${PILL} bg-[#FDF1D6] text-[#7A4B00] font-bold dark:bg-ds-warning/20 dark:text-ds-warning`,
 	free: "text-[#11663A] dark:text-ds-success",
 	cleaning: "text-[#6F665A] dark:text-ds-sand-300",
 	reserved: "text-[#92610C] dark:text-ds-warning",
