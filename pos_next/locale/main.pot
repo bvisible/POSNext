@@ -27244,3 +27244,44 @@ msgstr ""
 #, python-brace-format
 msgid "{0} tables opened and left are removed"
 msgstr ""
+
+#. Description of the 'Ask if the guests have left after (minutes)' (Int) field
+#. in DocType 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json
+#: pos_next/till_settings/registry.py:400
+msgid "A table goes to cleaning by itself when its bill is paid with nothing left to serve, or when the last dish is delivered, whether the guests have left or not. A table that has waited to be cleaned for this many minutes is marked « Guests left? » on the floor plan. 0: never."
+msgstr ""
+
+#. Label of a Int field in DocType 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:173
+#: pos_next/till_settings/registry.py:398
+msgid "Ask if the guests have left after (minutes)"
+msgstr ""
+
+#: POS/src/components/pos/FloorPlanEditor.vue:514
+#: POS/src/utils/tablesOfTheService.js:276
+msgid "Guests left?"
+msgstr ""
+
+#: POS/src/pages/POSSale.vue:2202
+msgid "Not left yet"
+msgstr ""
+
+#: POS/src/pages/POSSale.vue:3917
+msgid "Noted: the question comes back later"
+msgstr ""
+
+#: pos_next/restaurant/guests_left.py:58
+#, python-brace-format
+msgid "Table {0} is not waiting to be cleaned"
+msgstr ""
+
+#: POS/src/components/pos/FloorPlanEditor.vue:514
+#, python-brace-format
+msgid "Waiting to be cleaned for {0} min"
+msgstr ""
+
+#: POS/src/pages/POSSale.vue:2112
+#, python-brace-format
+msgid "Waiting to be cleaned for {0} min. Have the guests left?"
+msgstr ""
