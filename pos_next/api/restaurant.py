@@ -507,8 +507,17 @@ def get_table_payment_summary(table_name: str):
 	items = frappe.get_all(
 		"Sales Invoice Item",
 		filters={"parent": inv.name},
-		# //// Neoffice — the item code, to tell the tip's line from the dishes (below)
-		fields=["item_code", "item_name", "qty", "amount"],
+		# //// Neoffice — the item code, to tell the tip's line from the dishes (below); and where the kitchen stands on the line, so that the table of a bill paid before the plates are out
+		# //// shows what is still to come and what is on the table (the product owner, 08.11.2026: « on doit voir la table, ce qui est en cours »)
+		fields=[
+			"item_code",
+			"item_name",
+			"qty",
+			"amount",
+			*(["kds_status"] if frappe.db.has_column("Sales Invoice Item", "kds_status") else []),
+			# the station, to leave out the state of a line of a station that works on paper alone (nobody marks it on a screen)
+			*(["preparation_station"] if frappe.db.has_column("Sales Invoice Item", "preparation_station") else []),
+		],
 	)
 	tips = frappe.get_all(
 		"Restaurant Tip",

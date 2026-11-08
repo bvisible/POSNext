@@ -2125,7 +2125,17 @@
 							:key="idx"
 							class="flex justify-between text-sm"
 						>
-							<span class="text-gray-700">{{ item.qty }}× {{ item.item_name }}</span>
+							<span class="text-gray-700"
+								>{{ item.qty }}× {{ item.item_name }}
+								<!-- //// Neoffice — where the kitchen stands on the line: a bill paid before the plates are out leaves the table seated, and the waiter reads what is still to come (the product owner, 08.11.2026) -->
+								<span
+									v-if="showsKitchenState(item, restaurantStore.isPaperOnly) && kitchenStateOfLine(item.kds_status)"
+									data-test="paid-line-state"
+									class="ms-1.5 rounded-full px-2 py-0.5 text-xs font-semibold"
+									:class="KITCHEN_TONES[kitchenStateOfLine(item.kds_status).tone]"
+									>{{ kitchenStateOfLine(item.kds_status).label }}</span
+								></span
+							>
 							<span class="text-gray-500">{{
 								formatCleaningPrice(item.amount)
 							}}</span>
@@ -2168,9 +2178,8 @@
 			</template>
 			<template #actions>
 				<div class="flex gap-2 w-full">
-					<!-- //// Neoffice — a paid table with dishes to serve: order again on it before freeing it (the product owner, 08.11.2026) -->
+					<!-- //// Neoffice — order again on a paid table, whatever is left to serve: a paid table is not a table where the guests have left (a digestif, another bottle: the product owner, 08.11.2026) -->
 					<Button
-						v-if="dishesStillToServe"
 						class="flex-1"
 						variant="subtle"
 						data-test="paid-table-order-again"
@@ -2277,6 +2286,9 @@ import ItemsSelector from "@/components/sale/ItemsSelector.vue";
 import FloorPlanEditor from "@/components/pos/FloorPlanEditor.vue";
 //// Neoffice — the notices of a guest's order or payment, and what « View table » does (Daniel, 01.11).
 import FloorNotices from "@/components/restaurant/FloorNotices.vue";
+//// Neoffice — where the kitchen stands on each line of a paid table (the dialog of a table paid before the plates are out)
+import { showsKitchenState } from "@/utils/lineKitchenState";
+import { KITCHEN_TONES, kitchenStateOfLine } from "@/utils/paidTableLineState";
 import { useFloorNoticesStore } from "@/stores/floorNotices";
 import { useSeeFloorNotice } from "@/composables/useSeeFloorNotice";
 //// Neoffice — the row of card buttons, and the dialog the floor plan's « ⋯ » menu opens to fetch another card (NeoResto lot 1, task 25).
@@ -3831,6 +3843,8 @@ function formatCleaningPrice(amount) {
 }
 
 async function handleCleaningTableClicked(table) {
+	//// Neoffice — the waiter has the paid table in front of him: its « the guest paid » notice has said what it had to (it stayed after the table was opened, marked to clean, even freed; 08.11.2026)
+	floorNotices.dismissPaymentsOf(table.name);
 	//// Neoffice — a table paid while dishes are still to serve (Occupied, told paid by the floor) shows the dialog of a paid table, with what is left to serve (the product owner, 08.11.2026)
 	cleaningTable.value = tableIsPaidAtService(table)
 		? { ...table, status: "Paid", stillToServe: table.order_summary.item_count || 0 }

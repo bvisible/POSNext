@@ -60,3 +60,21 @@ class TestAPaidTableSaysWhatWasCollected(Tablets):
 
 		self.assertEqual(summary["tip_total"], 5)
 		self.assertEqual(summary["collected_amount"], 93)
+
+	def test_each_line_says_where_the_kitchen_stands_on_it(self):
+		"""The table of a bill paid before the plates are out shows what is still to come and what is on the table (08.11.2026)."""
+		rows = frappe.get_all("Sales Invoice Item", filters={"parent": self.order}, pluck="name")
+		states = ["Ready", "Delivered", "Pending", "Preparing"][: len(rows)]
+		for row, state in zip(rows, states, strict=False):
+			frappe.db.set_value("Sales Invoice Item", row, "kds_status", state)
+
+		items = self.summary()["items"]
+
+		self.assertTrue(items)
+		self.assertCountEqual([item["kds_status"] for item in items], states)
+
+	def test_each_line_names_its_station_so_that_a_station_on_paper_alone_shows_no_state(self):
+		items = self.summary()["items"]
+
+		self.assertTrue(items)
+		self.assertTrue(all("preparation_station" in item for item in items))

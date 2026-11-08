@@ -61,6 +61,14 @@ class PaymentCase(GuestAccountCase):
 	def tips(self):
 		return frappe.get_all("Restaurant Tip", filters={"sales_invoice": self.invoice}, pluck="amount")
 
+	def dishes(self, status):
+		"""The kitchen's state of every line of the order (the guest's order goes to the kitchen as it is placed)."""
+		for row in frappe.get_all("Sales Invoice Item", filters={"parent": self.invoice}, pluck="name"):
+			frappe.db.set_value("Sales Invoice Item", row, "kds_status", status, update_modified=False)
+
+	def table_status(self):
+		return frappe.db.get_value("Restaurant Table", self.table_a, "status")
+
 
 class TestThePagesWordIsNotAPayment(PaymentCase):
 	def test_a_return_with_no_payment_at_the_provider_books_nothing(self):
@@ -105,14 +113,16 @@ class TestThePagesWordIsNotAPayment(PaymentCase):
 
 
 class TestASettledPayment(PaymentCase):
-	def test_the_whole_order_settled_is_submitted_and_its_table_paid(self):
+	def test_the_whole_order_settled_is_submitted_and_its_table_follows_the_rule_of_every_payment(self):
+		# Everything is out: the bill settled leaves a table to clean, as the same bill paid at the till does (08.11.2026: « Paid » was written whatever the kitchen held)
+		self.dishes("Delivered")
 		self.the_provider(10)
 
 		answer = self.confirm(0.05)
 
 		self.assertTrue(answer["submitted"])
 		self.assertEqual((self.the_order().docstatus, self.the_order().paid_amount), (1, 10))
-		self.assertEqual(frappe.db.get_value("Restaurant Table", self.table_a, "status"), "Paid")
+		self.assertEqual(frappe.db.get_value("Restaurant Table", self.table_a, "status"), "Cleaning")
 
 	def test_two_payments_of_a_shared_bill_submit_it_at_the_second(self):
 		self.the_provider(6)
@@ -153,6 +163,65 @@ class TestASettledPayment(PaymentCase):
 		self.assertEqual(order.paid_amount, 6)
 		self.assertEqual(self.tips(), [1])
 		self.assertEqual(frappe.db.count("Sales Invoice Payment", {"parent": self.invoice, "amount": [">", 0]}), 1)
+
+
+class TestWhatThePaidTableBecomes(PaymentCase):
+	"""« Une table payée n'est pas une table où les gens sont partis » (product owner, 08.11.2026): a guest who pays from the QR page before the plates are out is still at the table."""
+
+	def test_a_table_paid_while_a_dish_is_at_the_kitchen_stays_seated(self):
+		self.dishes("Pending")
+		self.the_provider(10)
+
+		answer = self.confirm(10)
+
+		self.assertTrue(answer["submitted"])
+		self.assertEqual(self.table_status(), "Occupied")
+
+	def test_a_dish_ready_at_the_pass_keeps_it_seated_too(self):
+		self.dishes("Ready")
+		self.the_provider(10)
+
+		self.confirm(10)
+
+		self.assertEqual(self.table_status(), "Occupied")
+
+	def test_the_last_delivery_of_a_table_paid_by_its_guest_sends_it_to_cleaning(self):
+		from pos_next.restaurant import paid_orders
+
+		self.dishes("Pending")
+		self.the_provider(10)
+		self.confirm(10)
+		self.assertEqual(self.table_status(), "Occupied")
+
+		self.dishes("Delivered")
+		released = paid_orders.release_when_served(self.invoice)
+
+		self.assertTrue(released)
+		self.assertEqual(self.table_status(), "Cleaning")
+
+	def test_a_bill_paid_in_part_leaves_the_order_open_and_the_table_seated(self):
+		self.dishes("Delivered")
+		self.the_provider(4)
+
+		answer = self.confirm(4)
+
+		self.assertFalse(answer["submitted"])
+		self.assertEqual(self.the_order().docstatus, 0)
+		self.assertNotEqual(self.table_status(), "Cleaning")
+
+	def test_the_summary_of_the_floor_says_a_table_is_paid_with_the_dishes_left_to_serve(self):
+		from pos_next.api import restaurant as restaurant_api
+
+		self.dishes("Pending")
+		self.the_provider(10)
+		self.confirm(10)
+
+		tiles = {row["name"]: row for row in restaurant_api.get_tables(restaurant=self.a)["tables"]}
+		summary = tiles[self.table_a]["order_summary"]
+
+		self.assertEqual(tiles[self.table_a]["status"], "Occupied")
+		self.assertTrue(summary["paid"])
+		self.assertGreaterEqual(summary["item_count"], 1)
 
 
 class TestWhatThePageMayAskToPay(PaymentCase):

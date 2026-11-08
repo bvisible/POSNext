@@ -8,7 +8,7 @@ import { defineStore } from "pinia"
 import { computed, ref } from "vue"
 import { playAlertSound } from "@/utils/alertSoundPlayer"
 import { readFloorAlerts } from "@/utils/floorAlerts"
-import { KIND_PENDING, noticeOf, putNotice, settleNotices } from "@/utils/floorNotices"
+import { KIND_PAYMENT, KIND_PENDING, noticeOf, putNotice, settleNotices } from "@/utils/floorNotices"
 import { usePOSSettingsStore } from "./posSettings"
 
 export const useFloorNoticesStore = defineStore("floorNotices", () => {
@@ -35,6 +35,14 @@ export const useFloorNoticesStore = defineStore("floorNotices", () => {
 	function dismissAll() {
 		for (const key of [...timers.keys()]) forget(key)
 		notices.value = []
+	}
+
+	/**
+	 * The waiter has the paid table in front of him (he tapped it): its « the guest paid » notice has said what it had to. An order the waiter still has to validate is another matter and stays
+	 * (the product owner, 08.11.2026: the notice stayed after the table was opened, marked to clean, even freed).
+	 */
+	function dismissPaymentsOf(table) {
+		for (const notice of notices.value.filter((candidate) => candidate.table === table && candidate.kind === KIND_PAYMENT)) dismiss(notice.key)
 	}
 
 	/**
@@ -76,5 +84,5 @@ export const useFloorNoticesStore = defineStore("floorNotices", () => {
 		dismissAll()
 	}
 
-	return { notices, soundOn, tell, dismiss, dismissAll, settle, clear }
+	return { notices, soundOn, tell, dismiss, dismissAll, dismissPaymentsOf, settle, clear }
 })

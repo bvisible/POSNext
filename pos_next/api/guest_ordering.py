@@ -1499,9 +1499,20 @@ def confirm_guest_payment(token: str, amount=None, tip=0):
 	if flt(invoice_doc.grand_total) > 0 and _still_owed(invoice_doc, tip_item) <= 0:
 		_submit_the_paid_order(invoice_doc, tip_item)
 		submitted = True
-		# Table → Paid (guest payment — cashier sees it and decides next step)
+		# //// Neoffice — the table is what the bill leaves it, by the one rule every payment follows (paid_orders.status_after_payment; the product owner, 08.11.2026: « une table payée n'est pas
+		# //// une table où les gens sont partis »). It wrote « Paid » whatever the kitchen still held, so a table paid from the QR page while its plates were not out read « Payée » and offered
+		# //// « Disponible / Nettoyage » only, when the same bill paid at the till keeps the table Occupied until the last dish is delivered (where the waiter may order again on it).
 		if token_doc.table and frappe.db.exists("Restaurant Table", token_doc.table):
-			frappe.db.set_value("Restaurant Table", token_doc.table, "status", "Paid")
+			from pos_next.restaurant import direct_service, paid_orders
+
+			# A table of direct service (a bar, a counter) keeps its status: nobody is seated there
+			if not direct_service.is_direct(token_doc.table):
+				frappe.db.set_value(
+					"Restaurant Table",
+					token_doc.table,
+					"status",
+					paid_orders.status_after_payment(token_doc.table, invoice_doc.name),
+				)
 		frappe.db.commit()
 		frappe.publish_realtime("table_update")
 

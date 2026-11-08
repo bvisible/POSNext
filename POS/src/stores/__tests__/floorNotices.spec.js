@@ -293,3 +293,33 @@ describe("a guest pays", () => {
 		expect(player.play).toHaveBeenCalledTimes(1)
 	})
 })
+
+describe("the waiter has the paid table in front of him", () => {
+	const pays = (table) => store.tell("payment", { restaurant: "The Bistro", table, invoice: `ACC-${table}`, paid_amount: 30, grand_total: 30, submitted: true })
+
+	it("takes the « the guest paid » notice of that table away", () => {
+		pays("t-2")
+
+		store.dismissPaymentsOf("t-2")
+
+		expect(store.notices).toEqual([])
+	})
+
+	it("leaves the notice of another table, and an order of that table that is still to validate", () => {
+		pays("t-2")
+		pays("t-5")
+		store.tell("order", pending({ table: "t-7" }))
+
+		store.dismissPaymentsOf("t-2")
+
+		expect(store.notices.map((notice) => `${notice.table}:${notice.kind}`).sort()).toEqual(["t-5:payment", "t-7:pending"])
+	})
+
+	it("does nothing for a table that has no notice", () => {
+		pays("t-5")
+
+		store.dismissPaymentsOf("t-9")
+
+		expect(store.notices).toHaveLength(1)
+	})
+})
