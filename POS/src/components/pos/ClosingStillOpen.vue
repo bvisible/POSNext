@@ -91,7 +91,7 @@ const visible = computed(() => orders.value.length > 0 || held.value.length > 0 
 
 		<p v-if="summary.count" class="text-xs md:text-sm text-amber-800 mt-0.5" data-test="still-open-line">
 			{{ openOrdersLine(summary.count) }}
-			<span class="font-semibold">{{ formatCurrency(summary.total) }}</span>
+			<span class="font-semibold">· {{ formatCurrency(summary.total) }}</span>
 		</p>
 
 		<ul v-if="summary.count" class="mt-2 max-h-48 overflow-y-auto space-y-1.5" data-test="still-open-orders">
