@@ -2303,7 +2303,7 @@ import FloorPlanEditor from "@/components/pos/FloorPlanEditor.vue";
 import FloorNotices from "@/components/restaurant/FloorNotices.vue";
 //// Neoffice — where the kitchen stands on each line of a paid table (the dialog of a table paid before the plates are out)
 import { showsKitchenState } from "@/utils/lineKitchenState";
-import { KITCHEN_TONES, kitchenStateOfLine } from "@/utils/paidTableLineState";
+import { KITCHEN_TONES, kitchenStateOfLine, stillToServeCount } from "@/utils/paidTableLineState";
 import { useFloorNoticesStore } from "@/stores/floorNotices";
 import { useSeeFloorNotice } from "@/composables/useSeeFloorNotice";
 //// Neoffice — the row of card buttons, and the dialog the floor plan's « ⋯ » menu opens to fetch another card (NeoResto lot 1, task 25).
@@ -3896,7 +3896,12 @@ async function confirmTableCleaning() {
 }
 
 //// Neoffice — the dialog of a table paid while dishes are still to serve: it says how many are left, and the waiter orders again on the table or frees it (the product owner, 08.11.2026)
-const dishesStillToServe = computed(() => cleaningTable.value?.stillToServe || 0);
+//// Neoffice — read from the summary the dialog has just fetched, not from the floor's last read: a dish delivered since would still be told as to serve (the product owner, 08.11.2026)
+const dishesStillToServe = computed(() => {
+	const fromTheFloor = cleaningTable.value?.stillToServe;
+	if (fromTheFloor === undefined || fromTheFloor === null) return 0;
+	return stillToServeCount(tablePaymentSummary.value?.items, fromTheFloor, restaurantStore.isPaperOnly);
+});
 
 async function orderAgainOnTheTable() {
 	const table = cleaningTable.value;
