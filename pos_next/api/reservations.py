@@ -28,7 +28,7 @@ from pos_next.pos_next.doctype.restaurant_reservation.restaurant_reservation imp
 	awaits_its_guest,
 	hold_has_expired,
 )
-from pos_next.restaurant import permissions, scope
+from pos_next.restaurant import direct_service, permissions, scope
 from pos_next.restaurant.mode import require_neoresto
 from pos_next.restaurant.settings import get_restaurant_settings, restaurant_of
 import hashlib
@@ -404,6 +404,8 @@ def get_available_tables(
 	tables = scope.stamp(
 		frappe.get_all(
 			"Restaurant Table",
+			# //// Neoffice — a table of direct service (a bar, a counter) is not a table to book (the product owner, 08.11.2026)
+			filters=direct_service.not_direct(),
 			or_filters=scope.restaurant_or_filters(restaurant),
 			fields=["name", "table_name", "area", "capacity", "status"],
 			order_by="area asc, table_name asc",

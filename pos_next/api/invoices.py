@@ -1303,6 +1303,7 @@ def update_invoice(data):
 	# //// Neoffice — the notes of a table (NeoResto lot 1, notes): a table may hold several open orders, one per party (.0, .1, .2). The till may send the order's rank
 	# //// (`restaurant_note`, a whole number from 1 to 99) and its party's name (`restaurant_note_name`, absent = leave alone, empty or null = clear). Checked here, before the try, like the
 	# //// covers: a rank nobody can open is refused and not logged as an "Update Invoice Error". Both are written after the save below, never through the document.
+	from pos_next.restaurant import direct_service
 	from pos_next.restaurant import notes as notes_module
 
 	note_asked = notes_module.clean_rank(data.get(notes_module.FIELD)) if isinstance(data, dict) else None
@@ -1994,7 +1995,8 @@ def update_invoice(data):
 				frappe.log_error("Failed to set item KDS status", str(inner_e))
 
 		# Mark table as Occupied when a restaurant invoice is created/updated
-		if data.get("restaurant_table"):
+		# //// Neoffice — except a table of direct service (a bar, a counter), which is never seated (the product owner, 08.11.2026)
+		if data.get("restaurant_table") and not direct_service.is_direct(data["restaurant_table"]):
 			frappe.db.set_value("Restaurant Table", data["restaurant_table"], "status", "Occupied")
 
 		if data.get("restaurant_table") or data.get("kds_status") or has_kds_field:
@@ -2417,6 +2419,7 @@ def submit_invoice(invoice=None, data=None):
 	invoice = _strip_server_managed_fields(invoice)
 	# //// Neoffice — the note a payment is of (NeoResto lot 1, notes): the payload's rank finds the draft of the note again when the till lost its id (below), and is checked before
 	# //// anything is written. A payment never rewrites the rank or the party's name of an order that exists (see the pop below), as it never rewrites the covers.
+	from pos_next.restaurant import direct_service, paid_orders
 	from pos_next.restaurant import notes as notes_module
 
 	note_asked = notes_module.clean_rank(invoice.get(notes_module.FIELD))
@@ -2799,8 +2802,12 @@ def submit_invoice(invoice=None, data=None):
 		restaurant_table = frappe.db.get_value("Sales Invoice", invoice_doc.name, "restaurant_table")
 		if restaurant_table and frappe.db.exists("Restaurant Table", restaurant_table):
 			# //// Neoffice — paying one note of a table leaves it Occupied while another note of it is open; the last one paid sends it to Cleaning (NeoResto lot 1, notes)
-			still_open = notes_module.another_note_is_open(restaurant_table, invoice_doc.name)
-			frappe.db.set_value("Restaurant Table", restaurant_table, "status", "Occupied" if still_open else "Cleaning")
+			# //// Neoffice — and a bill settled while dishes or drinks are still to serve keeps the table Occupied too: it goes to Cleaning when the last one is delivered (the product owner, 08.11.2026)
+			# //// A table of direct service (a bar, a counter) keeps its status: nobody is seated there, nothing to clean
+			if not direct_service.is_direct(restaurant_table):
+				frappe.db.set_value(
+					"Restaurant Table", restaurant_table, "status", paid_orders.status_after_payment(restaurant_table, invoice_doc.name)
+				)
 			frappe.publish_realtime("table_update")
 
 		# Handle wallet transaction reversal for returns

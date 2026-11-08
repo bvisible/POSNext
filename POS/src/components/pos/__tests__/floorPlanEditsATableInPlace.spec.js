@@ -134,7 +134,22 @@ describe("Edit table edits the table that was opened", () => {
 			table_name: "T1",
 			capacity: 4,
 			shape: "Square",
+			// A table of direct service (a bar, a counter) is the editor's checkbox; a table of the floor is not one
+			direct_service: false,
 		})
+	})
+
+	it("opens on a table of direct service as one, and sends the check as 1 when it is ticked", async () => {
+		const editor = await editorOpenOn({ ...TABLE, direct_service: 1 })
+		expect(editor.editTable.direct_service).toBe(true)
+
+		await editor.handleEditTable()
+		expect(callsTo("pos_next.api.restaurant.update_table")[0][1]).toMatchObject({ direct_service: 1 })
+
+		call.mockClear()
+		editor.editTable.direct_service = false
+		await editor.handleEditTable()
+		expect(callsTo("pos_next.api.restaurant.update_table")[0][1]).toMatchObject({ direct_service: 0 })
 	})
 
 	it("saves the label, the seats and the shape on the table's own name, and makes no other table", async () => {
@@ -148,7 +163,7 @@ describe("Edit table edits the table that was opened", () => {
 		expect(callsTo("pos_next.api.restaurant.update_table")).toEqual([
 			[
 				"pos_next.api.restaurant.update_table",
-				{ name: TABLE.name, table_name: "T1 bis", capacity: 6, shape: "Round" },
+				{ name: TABLE.name, table_name: "T1 bis", capacity: 6, shape: "Round", direct_service: 0 },
 			],
 		])
 		expect(callsTo("pos_next.api.restaurant.create_table")).toEqual([])

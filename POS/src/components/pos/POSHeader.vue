@@ -28,10 +28,13 @@
 				<img
 					:src="neofficeLogo"
 					alt="Neoffice"
-					class="h-8 w-full object-contain cursor-pointer hover:opacity-80 active:scale-95 transition-all"
-					:title="__('Back to Neoffice')"
-					@click="showExitDialog = true"
+					data-test="header-logo"
+					:class="mayLeave ? 'cursor-pointer hover:opacity-80 active:scale-95 transition-all' : 'pointer-events-none'"
+					class="h-8 w-full object-contain"
+					:title="mayLeave ? __('Back to Neoffice') : undefined"
+					@click="mayLeave && (showExitDialog = true)"
 				/>
+				<!-- //// Neoffice — on the phone of a waiter the logo is a picture, not the way out to the back office (the product owner, 08.11.2026) -->
 			</div>
 
 			<!-- //// Neoffice — added: a "Leave POS?" confirmation before returning to the back-office. -->
@@ -591,6 +594,8 @@ const appVersion = version;
 const neofficeLogo = "/assets/neoffice_theme/images/neoffice_logo.svg";
 
 function navigateToBackOffice() {
+	//// Neoffice — never from the phone of a waiter (the product owner, 08.11.2026)
+	if (!props.mayLeave) return;
 	window.location.href = "/app/retail";
 }
 
@@ -646,6 +651,11 @@ function handleBlur(event) {
 }
 
 const props = defineProps({
+	//// Neoffice — false on the phone of a waiter, which has no way out to the back office: the logo is a picture there (the product owner, 08.11.2026). POSSale tells it, the header stays presentational.
+	mayLeave: {
+		type: Boolean,
+		default: true,
+	},
 	currentTime: {
 		type: String,
 		required: true,

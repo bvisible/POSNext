@@ -14,7 +14,8 @@
   "pos_y",
   "width",
   "height",
-  "shape"
+  "shape",
+  "direct_service"
  ],
  "fields": [
   {
@@ -85,11 +86,17 @@
    "fieldtype": "Select",
    "label": "Shape",
    "options": "Square\nRound"
+  },
+  {
+   "default": "0",
+   "fieldname": "direct_service",
+   "fieldtype": "Check",
+   "label": "Direct Service"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-29 23:00:00.000000",
+ "modified": "2026-11-08 15:00:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "Restaurant Table",

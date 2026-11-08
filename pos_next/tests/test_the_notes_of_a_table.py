@@ -215,13 +215,15 @@ class NotesCase(CoversCase):
 		with self.waiter():
 			return {row["name"]: row for row in restaurant_api.get_tables(restaurant=self.a)["tables"]}
 
-	def pay(self, order, note=None, table=None, **changes):
-		"""The payment of the order as the till sends it (submit_invoice): the payload of a payment, with the note it is of when one is named."""
+	def pay(self, order, note=None, table=None, status="Pending", **changes):
+		"""The payment of the order as the till sends it (submit_invoice): the payload of a payment, with the note it is of when one is named.
+
+		`status` is the kitchen state of the line it pays: a dish still at the kitchen (the default) keeps the table seated, a delivered one does not."""
 		payload = _sale(
 			self.fx,
 			name=order,
 			restaurant_table=table or self.table_a,
-			items=[self.line(self.soup, "Pending")],
+			items=[self.line(self.soup, status)],
 			payments=[{"mode_of_payment": self.fx.mode, "amount": 10}],
 			**changes,
 		)
@@ -848,9 +850,10 @@ class TestPayingANote(NotesCase):
 
 	def test_paying_the_last_note_frees_the_table(self):
 		first, second = self.two_notes()
-		self.pay(first, note=1)
+		# Everything is served: a dish still at the kitchen would keep the table (test_a_paid_table_stays_while_dishes_are_to_serve)
+		self.pay(first, note=1, status="Delivered")
 
-		self.pay(second, note=2)
+		self.pay(second, note=2, status="Delivered")
 
 		self.assertEqual(frappe.db.get_value("Sales Invoice", second, "docstatus"), 1)
 		self.assertEqual(self.status_of_table(), "Cleaning")
@@ -859,7 +862,7 @@ class TestPayingANote(NotesCase):
 		order = self.save()
 		self.assertEqual(self.status_of_table(), "Occupied")
 
-		self.pay(order)
+		self.pay(order, status="Delivered")
 
 		self.assertEqual(self.status_of_table(), "Cleaning")
 

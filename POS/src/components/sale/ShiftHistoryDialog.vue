@@ -175,7 +175,9 @@
 											</td>
 											<td class="px-5 py-4 text-end">
 												<div class="flex items-center justify-end gap-2">
+													<!-- //// Neoffice — the desk's own documents open in another window: not from the phone of a waiter (the product owner, 08.11.2026) -->
 													<button
+														v-if="mayLeave"
 														type="button"
 														class="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-gray-200 bg-white text-xs font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors"
 														:title="__('View Opening Shift')"
@@ -184,8 +186,9 @@
 														<FeatherIcon name="external-link" class="w-3.5 h-3.5" />
 														{{ __("Opening") }}
 													</button>
+													<!-- //// Neoffice — and the closing one: not from the phone of a waiter (the product owner, 08.11.2026) -->
 													<button
-														v-if="shift.closing_shift_name"
+														v-if="mayLeave && shift.closing_shift_name"
 														type="button"
 														class="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-gray-200 bg-white text-xs font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors"
 														:title="__('View Closing Shift')"
@@ -299,6 +302,8 @@ const { showError } = useToast()
 
 const props = defineProps({
 	modelValue: Boolean,
+	//// Neoffice — false on the phone of a waiter, which opens no document of the desk from here (the product owner, 08.11.2026)
+	mayLeave: { type: Boolean, default: true },
 	currency: {
 		type: String,
 		default: DEFAULT_CURRENCY,
@@ -458,6 +463,8 @@ function exportToCSV() {
 // FIX #17: replaced the old viewShift() that always opened the closing shift
 // (if it existed) with openShiftDoc() that lets the user pick explicitly.
 function openShiftDoc(shift, type) {
+	//// Neoffice — the phone of a waiter has no way out to the desk (the product owner, 08.11.2026)
+	if (!props.mayLeave) return
 	if (type === 'closing' && shift.closing_shift_name) {
 		window.open(`/app/pos-closing-shift/${shift.closing_shift_name}`, '_blank')
 	} else {

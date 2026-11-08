@@ -22,6 +22,7 @@ from frappe.utils import cint, flt
 from pos_next.restaurant import (
 	call_seen,
 	devices,
+	direct_service,
 	figures,
 	item_units,
 	kitchen_alerts,
@@ -114,14 +115,19 @@ def _expire_code(name):
 
 def on_invoice_update(doc, method):
 	"""Update table status based on invoice status."""
-	if doc.get("restaurant_table"):
+	# //// Neoffice — a table of direct service (a bar, a counter) is never seated nor cleaned: its status stays as it is (the product owner, 08.11.2026)
+	if doc.get("restaurant_table") and not direct_service.is_direct(doc.restaurant_table):
 		# //// Neoffice — a table holds several notes (NeoResto lot 1, notes): paying or cancelling one leaves the table Occupied while another note of it is open,
 		# //// and only the last one to leave frees it. A table with one note (every table, until a second note is opened) behaves exactly as before.
 		another_note_is_open = doc.docstatus != 0 and notes_module.another_note_is_open(doc.restaurant_table, doc.get("name"))
 		if doc.docstatus == 0 or another_note_is_open:
 			frappe.db.set_value("Restaurant Table", doc.restaurant_table, "status", "Occupied")
 		elif doc.docstatus == 1:
-			frappe.db.set_value("Restaurant Table", doc.restaurant_table, "status", "Cleaning")
+			# //// Neoffice — and a bill settled while dishes or drinks are still to serve leaves the table Occupied (the product owner, 08.11.2026: paying emptied a table whose plates had not been delivered);
+			# //// it goes to Cleaning when the last one is delivered (paid_orders.release_when_served)
+			frappe.db.set_value(
+				"Restaurant Table", doc.restaurant_table, "status", paid_orders.status_after_payment(doc.restaurant_table, doc.get("name"))
+			)
 		elif doc.docstatus == 2:
 			frappe.db.set_value("Restaurant Table", doc.restaurant_table, "status", "Empty")
 			# The party of the invoice is gone with it, and so is the QR code that served it: not the code of the party now
@@ -166,7 +172,8 @@ def get_tables(restaurant=None):
 		frappe.get_all(
 			"Restaurant Table",
 			or_filters=of_the_restaurant,
-			fields=["name", "table_name", "area", "capacity", "status", "pos_x", "pos_y", "width", "height", "shape"],
+			# //// Neoffice — and whether the table is one of direct service (a bar, a counter): the till comes back to it after every ticket (the product owner, 08.11.2026)
+			fields=["name", "table_name", "area", "capacity", "status", "pos_x", "pos_y", "width", "height", "shape", *direct_service.fields()],
 		),
 		restaurant,
 	)
@@ -243,6 +250,11 @@ def get_tables(restaurant=None):
 			}
 			if tell_totals:
 				order_map[tbl]["grand_total"] = sum(flt(order.grand_total) for order in table_orders)
+
+	# //// Neoffice — a table paid with dishes still to serve is Occupied with no open draft: its tile says what is left to serve and it is no orphan (the product owner, 08.11.2026)
+	waiting_to_be_served = [name for name in occupied_names if name not in order_map]
+	if waiting_to_be_served:
+		order_map.update(_tiles_of_paid_tables(waiting_to_be_served, restaurant, tell_totals))
 
 	# Auto-fix orphaned "Occupied" tables with no active draft
 	orphaned = [t.name for t in tables if t.status == "Occupied" and t.name not in order_map]
@@ -523,6 +535,49 @@ def get_table_payment_summary(table_name: str):
 	}
 
 
+# //// Neoffice — added function (no upstream equivalent). The tile of a table whose bill is paid and whose dishes are not all delivered (the product owner, 08.11.2026).
+def _tiles_of_paid_tables(tables, restaurant, tell_totals):
+	"""`{table: summary}` for Occupied tables with no open draft that still have paid dishes to serve, in the shape of an open order's summary.
+
+	`item_count` is the number of lines still to serve, and `paid` tells the till the bill is settled: the tile says so and a tap opens the table's
+	payment instead of a new order. Nothing when no table has a dish left.
+	"""
+	left = paid_orders.lines_to_serve_by_order(tables)
+	if not left:
+		return {}
+	orders = frappe.get_all(
+		"Sales Invoice",
+		filters={"name": ["in", list(left)]},
+		fields=["name", "restaurant_table", "owner", "creation", "kds_status", "grand_total", *notes_module.order_fields()],
+		order_by="creation asc",
+	)
+	tickets.stamp(orders, restaurant)
+	covers_module.stamp(orders)
+	by_table = {}
+	for order in orders:
+		by_table.setdefault(order.restaurant_table, []).append(order)
+	tiles = {}
+	for table, table_orders in by_table.items():
+		first = table_orders[0]
+		full_name = frappe.db.get_value("User", first.owner, "full_name") or first.owner
+		seated = [order.covers for order in table_orders if order.covers]
+		tiles[table] = {
+			"item_count": sum(left.get(order.name, 0) for order in table_orders),
+			"opened_at": str(first.creation),
+			"opened_by": "".join([part[0].upper() for part in full_name.split() if part][:2]),
+			"kds_status": notes_module.kds_status_of_table(order.kds_status for order in table_orders),
+			"ticket_no": first.ticket_no,
+			"ticket_digits": first.ticket_digits,
+			"covers": sum(seated) or None,
+			"notes_count": 0,
+			"note_names": [],
+			"paid": True,
+		}
+		if tell_totals:
+			tiles[table]["grand_total"] = sum(flt(order.grand_total) for order in table_orders)
+	return tiles
+
+
 @frappe.whitelist()
 # //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
 def mark_table_available(table_name: str | None):
@@ -533,7 +588,9 @@ def mark_table_available(table_name: str | None):
 		frappe.throw(_("Table {0} not found").format(table_name))
 
 	current_status = frappe.db.get_value("Restaurant Table", table_name, "status")
-	if current_status not in ("Cleaning", "Paid"):
+	# //// Neoffice — a paid table kept Occupied for dishes still to serve may be freed by hand (the party left before the last plate): it holds no open note
+	kept_for_dishes = current_status == "Occupied" and not notes_module.another_note_is_open(table_name)
+	if current_status not in ("Cleaning", "Paid") and not kept_for_dishes:
 		# The table is named to the waiter by its label, never by its name
 		label = frappe.db.get_value("Restaurant Table", table_name, "table_name") or table_name
 		frappe.throw(_("Table {0} is not in Paid or Cleaning status").format(label))
@@ -757,6 +814,14 @@ def _order_status_of(dish_statuses, uncalled=None):
 	return "Ready" if all(status == "Ready" for status in live) else "Preparing"
 
 
+# //// Neoffice — added function (no upstream equivalent). A delivery must never fail because the table could not be released: it is logged.
+def _release_the_table_when_served(invoice_name):
+	try:
+		paid_orders.release_when_served(invoice_name)
+	except Exception:
+		frappe.log_error("Releasing a served table failed", f"order={invoice_name}: {frappe.get_traceback()}")
+
+
 def _follow_the_dishes(invoice_name):
 	"""Give the order the status ALL its dishes give it, whichever way a dish just moved (forward, or back by an undo).
 
@@ -775,6 +840,8 @@ def _follow_the_dishes(invoice_name):
 	)
 	if frappe.db.get_value("Sales Invoice", invoice_name, "kds_status") != status:
 		frappe.db.set_value("Sales Invoice", invoice_name, "kds_status", status, update_modified=False)
+	# //// Neoffice — the last dish of a paid table delivered: the table goes to Cleaning (it was kept Occupied for it)
+	_release_the_table_when_served(invoice_name)
 
 
 # A quantity of a dish counts to this many decimals: a line can be 1.5 kg
@@ -945,6 +1012,8 @@ def update_kds_status(invoice_name: str | None, status, station=None):
 		if has_dish_status:
 			_advance_dishes(invoice_name, status)
 
+	# //// Neoffice — the whole order delivered from the pass: a paid table kept for it goes to Cleaning (see _follow_the_dishes)
+	_release_the_table_when_served(invoice_name)
 	frappe.db.commit()
 	frappe.publish_realtime("kds_update")
 	frappe.publish_realtime("table_update")
@@ -1732,6 +1801,16 @@ def save_floor_plan_bg(area: str | None, file_url=None):
 	frappe.db.commit()
 	return {"status": "success"}
 
+# //// Neoffice — added functions (no upstream equivalent). The Check of direct service, written by the floor plan's editor (the product owner, 08.11.2026).
+def _direct_service_column():
+	return direct_service.has_column()
+
+
+def _as_a_check(value):
+	"""The 0 or 1 a payload means: 1, true, "1" and "true" are yes, anything else is no."""
+	return 1 if value in (1, True, "1", "true", "True") else 0
+
+
 def _seats(capacity):
 	"""The seats of a table as a whole number of at least 1; anything else is refused.
 
@@ -1751,7 +1830,7 @@ def _seats(capacity):
 
 
 @frappe.whitelist()
-def create_table(table_name, area, capacity=4, shape="Square", pos_x=0, pos_y=0):
+def create_table(table_name, area, capacity=4, shape="Square", pos_x=0, pos_y=0, direct_service=None):
 	"""Create a new restaurant table, in the restaurant of its room."""
 	permissions.require("Restaurant Table", "create")
 
@@ -1767,13 +1846,16 @@ def create_table(table_name, area, capacity=4, shape="Square", pos_x=0, pos_y=0)
 		"height": 100,
 		"status": "Empty"
 	})
+	# //// Neoffice — a table of direct service (a bar, a counter), where the ticket is typed and paid in one go (the product owner, 08.11.2026)
+	if direct_service not in (None, "") and _direct_service_column():
+		doc.direct_service = _as_a_check(direct_service)
 	doc.insert()
 	return doc.as_dict()
 
 
 @frappe.whitelist()
 # //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
-def update_table(name: str | None, table_name=None, capacity=None, shape=None):
+def update_table(name: str | None, table_name=None, capacity=None, shape=None, direct_service=None):
 	"""Edit a restaurant table in place: its label, its seats or its shape. What is not passed stays as it is.
 
 	The table is the same record afterwards (the orders, the reservations and the guest tokens link to it by name), and
@@ -1794,6 +1876,9 @@ def update_table(name: str | None, table_name=None, capacity=None, shape=None):
 		doc.capacity = _seats(capacity)
 	if shape:
 		doc.shape = shape
+	# //// Neoffice — whether the table is one of direct service (a bar, a counter): nothing sent is no change (the product owner, 08.11.2026)
+	if direct_service not in (None, "") and _direct_service_column():
+		doc.direct_service = _as_a_check(direct_service)
 	doc.save()
 	return {
 		"name": doc.name,
@@ -1810,6 +1895,8 @@ def update_table(name: str | None, table_name=None, capacity=None, shape=None):
 		"width": doc.width,
 		"height": doc.height,
 		"shape": doc.shape,
+		# //// Neoffice — see above: the floor plan reads it back as it reads the other fields of the table
+		"direct_service": 1 if doc.get("direct_service") else 0,
 	}
 
 

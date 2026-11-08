@@ -257,8 +257,9 @@
 										</h3>
 									</div>
 									<div class="flex items-center gap-2">
+										<!-- //// Neoffice — the desk's item form opens in another window: not from the phone of a waiter (the product owner, 08.11.2026) -->
 										<Button
-											v-if="form.item_code"
+											v-if="form.item_code && mayLeave"
 											@click="viewOnDesk"
 											variant="outline"
 										>
@@ -767,6 +768,8 @@ const DEFAULT_IMAGE_SETTINGS = {
 };
 
 const props = defineProps({
+	//// Neoffice — false on the phone of a waiter, which opens no document of the desk from here (the product owner, 08.11.2026)
+	mayLeave: { type: Boolean, default: true },
 	modelValue: Boolean,
 	posProfile: {
 		type: String,
@@ -1018,7 +1021,8 @@ function clearImage() {
 }
 
 function viewOnDesk() {
-	if (!form.value.item_code) return;
+	//// Neoffice — the phone of a waiter has no way out to the desk (the product owner, 08.11.2026)
+	if (!form.value.item_code || !props.mayLeave) return;
 	const encodedItem = encodeURIComponent(form.value.item_code);
 	window.open(`/app/item/${encodedItem}`, "_blank", "noopener,noreferrer");
 }

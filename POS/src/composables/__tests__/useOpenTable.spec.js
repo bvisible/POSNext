@@ -151,6 +151,15 @@ describe("opening a table and the people seated at it", () => {
 		expect(cart.restaurantCovers).toBeNull()
 	})
 
+	it("does not ask at a table of direct service (a bar, a counter): nobody is seated there", async () => {
+		answer.value = EMPTY
+
+		const opened = await useOpenTable().openTable({ ...TABLE, direct_service: 1 })
+
+		expect(opened).toBe(true)
+		expect(cart.coversAsk).toBeNull()
+	})
+
 	it("asks for a table whose answer carries no order name, even without the flag", async () => {
 		answer.value = {}
 

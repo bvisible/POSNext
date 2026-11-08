@@ -103,6 +103,7 @@
 			<!-- //// Neoffice — the till's CloudPRNT printer (its state on the printer button) and its cash -->
 			<!-- //// drawer button reach the header through cloudPrntStore (maintenance#1935). The chip that asks for a touch to enable the floor alerts' sound is drawn by the header while the till has such a sound (Daniel, 01.11). -->
 			<POSHeader
+				:may-leave="waiterLock.mayLeave.value"
 				:current-time="shiftStore.currentTime"
 				:shift-duration="shiftStore.shiftDuration"
 				:has-open-shift="shiftStore.hasOpenShift"
@@ -1351,7 +1352,9 @@
 			/>
 
 			<!-- Shift History Dialog -->
+			<!-- //// Neoffice — the phone of a waiter opens no document of the desk from here (the product owner, 08.11.2026) -->
 			<ShiftHistoryDialog
+				:may-leave="waiterLock.mayLeave.value"
 				v-model="showShiftHistoryDialog"
 				:pos-profile="shiftStore.profileName"
 				:currency="shiftStore.profileCurrency"
@@ -1408,7 +1411,9 @@
 			/>
 
 			<!-- Product Management -->
+			<!-- //// Neoffice — the phone of a waiter opens no document of the desk from here (the product owner, 08.11.2026) -->
 			<ProductManagement
+				:may-leave="waiterLock.mayLeave.value"
 				v-model="showProductManagement"
 				:pos-profile="shiftStore.profileName"
 				:company="shiftStore.profileCompany"
@@ -2098,6 +2103,10 @@
 								: __("Table ready for cleanup")
 						}}
 					</p>
+					<!-- //// Neoffice — the dishes and drinks of the paid bill that are not served yet: the table stays seated until the last one is delivered (the product owner, 08.11.2026) -->
+					<p v-if="dishesStillToServe" data-test="paid-table-left" class="text-sm text-gray-500 mt-1">
+						{{ __("{0} still to serve", [dishesStillToServe]) }}
+					</p>
 				</div>
 
 				<!-- Payment summary -->
@@ -2155,11 +2164,22 @@
 			</template>
 			<template #actions>
 				<div class="flex gap-2 w-full">
+					<!-- //// Neoffice — a paid table with dishes to serve: order again on it before freeing it (the product owner, 08.11.2026) -->
+					<Button
+						v-if="dishesStillToServe"
+						class="flex-1"
+						variant="subtle"
+						data-test="paid-table-order-again"
+						@click="orderAgainOnTheTable"
+					>
+						{{ __("Order again") }}
+					</Button>
 					<Button class="flex-1" variant="solid" @click="markTableAvailable">
 						{{ __("Available") }}
 					</Button>
+					<!-- //// Neoffice — "Cleaning" is not offered while dishes are still to serve: the table goes to Cleaning by itself when the last one is delivered (the product owner, 08.11.2026) -->
 					<Button
-						v-if="cleaningTable?.status === 'Paid'"
+						v-if="cleaningTable?.status === 'Paid' && !dishesStillToServe"
 						class="flex-1"
 						variant="solid"
 						theme="green"
@@ -2363,6 +2383,13 @@ import { Button, Dialog, FeatherIcon, createResource } from "frappe-ui";
 import { DialogTitle } from "reka-ui";
 //// Neoffice — a table's customer by his name, as the opening of a table gives it (neoffice-maintenance#2163); and the group (.1, .2) an order of the table is, kept in the cart as an opening keeps it (NeoResto lot 1, notes)
 import { customerOfTheOrder, keepTheNotesOfTheOrder, noteToReadAgain, useOpenTable } from "@/composables/useOpenTable";
+//// Neoffice — a table paid while dishes are still to serve opens its payment, not a new order (the product owner, 08.11.2026)
+import { tableIsPaidAtService } from "@/utils/tableStatus";
+//// Neoffice — and a table of direct service (a bar, a counter) is opened again once its ticket is paid (the product owner, 08.11.2026)
+import { reopenDirectTable } from "@/utils/directService";
+//// Neoffice — the Back of a waiter's phone does not leave the till (the product owner, 08.11.2026)
+import { useStayInTheApp } from "@/composables/useStayInTheApp";
+import { useWaiterLock } from "@/composables/useWaiterLock";
 //// Neoffice — « Back » asks before it drops a dish taken off after it had left for the kitchen (NeoResto lot 1, product owner, 03.11.2026).
 import LeaveTableDialog from "@/components/restaurant/LeaveTableDialog.vue";
 import { useLeaveTable } from "@/composables/useLeaveTable";
@@ -3798,7 +3825,10 @@ function formatCleaningPrice(amount) {
 }
 
 async function handleCleaningTableClicked(table) {
-	cleaningTable.value = table;
+	//// Neoffice — a table paid while dishes are still to serve (Occupied, told paid by the floor) shows the dialog of a paid table, with what is left to serve (the product owner, 08.11.2026)
+	cleaningTable.value = tableIsPaidAtService(table)
+		? { ...table, status: "Paid", stillToServe: table.order_summary.item_count || 0 }
+		: table;
 	tablePaymentSummary.value = null;
 	showCleaningDialog.value = true;
 	// Load payment details
@@ -3828,6 +3858,17 @@ async function confirmTableCleaning() {
 	} catch (e) {
 		showError(e.message || __("Failed to update table status"));
 	}
+}
+
+//// Neoffice — the dialog of a table paid while dishes are still to serve: it says how many are left, and the waiter orders again on the table or frees it (the product owner, 08.11.2026)
+const dishesStillToServe = computed(() => cleaningTable.value?.stillToServe || 0);
+
+async function orderAgainOnTheTable() {
+	const table = cleaningTable.value;
+	if (!table) return;
+	showCleaningDialog.value = false;
+	cleaningTable.value = null;
+	await openTable(table);
 }
 
 async function markTableAvailable() {
@@ -3960,6 +4001,9 @@ const notes = useTableNotes();
 
 //// Neoffice — « Back » from a table, on the tablet's header and on the phone's screen alike: with a dish taken off after it had left for the kitchen it asks first (see composables/useLeaveTable), else it clears the cart as it always did.
 const { openTable } = useOpenTable();
+//// Neoffice — and nothing of this page takes the phone of a waiter out of the app: the Back stays on the page (the product owner, 08.11.2026)
+const waiterLock = useWaiterLock();
+useStayInTheApp(() => waiterLock.locked.value);
 const leaveTable = useLeaveTable({
 	cartStore,
 	send: sendCancellationToKitchen,
@@ -4618,6 +4662,8 @@ async function handlePaymentCompleted(paymentData) {
 
 		// Capture restaurant table before clearCart resets it
 		const restaurantTableName = cartStore.restaurantTable?.name || null;
+		//// Neoffice — the table itself too: a table of direct service (a bar, a counter) is opened again once the ticket is paid (the product owner, 08.11.2026)
+		const paidTable = cartStore.restaurantTable || null;
 		//// Neoffice — was console.log, which prints in production too and dumped the whole
 		//// restaurant table object into the console of a shop-floor till on every payment.
 		//// log.* is the app's own namespaced logger and is silent outside dev.
@@ -4762,7 +4808,7 @@ async function handlePaymentCompleted(paymentData) {
 			// Reset cart hash after successful payment
 			previousCartHash = "";
 			//// Neoffice — the sale is booked offline: a restaurant's phone goes back to the tables (kitchen test, 01.11)
-			backToTheTablesOnAPhone();
+			if (!(await backToTheDirectTable(paidTable))) backToTheTablesOnAPhone();
 
 			// Delete draft after successful save
 			if (draftIdToDelete) {
@@ -4999,7 +5045,7 @@ async function handlePaymentCompleted(paymentData) {
 			}
 			//// Neoffice — drop the processing overlay on the success path (2584aa58, 2026-03-24).
 			isProcessingPayment.value = false;
-			backToTheTablesOnAPhone();
+			if (!(await backToTheDirectTable(paidTable))) backToTheTablesOnAPhone();
 		}
 	} catch (error) {
 		//// Neoffice — and on the failure path too: without this the till stays frozen behind the
@@ -5918,6 +5964,14 @@ async function installTheApp() {
 
 //// Neoffice — once a sale is paid a restaurant's phone goes back to the tables: it stayed on the empty cart tab, and the waiter was stuck on the right-hand
 //// screen of the till (kitchen test, 01.11). The items tab shows the floor plan while no table is open (utils/afterPayment).
+//// Neoffice — a table of direct service (a bar, a counter): once the ticket is paid the till comes back to the same table with an empty ticket, to type the next one; on a phone it shows
+//// the menu of that table instead of the list of tables (the product owner, 08.11.2026). Whether it did.
+async function backToTheDirectTable(table) {
+	const opened = await reopenDirectTable(table, restaurantStore.tables, openTable);
+	if (opened) backToTheTablesOnAPhone();
+	return opened;
+}
+
 function backToTheTablesOnAPhone() {
 	const tab = tabAfterPayment({
 		restaurant: restaurantStore.isEnabled,

@@ -26651,3 +26651,25 @@ msgstr ""
 #: POS/src/components/guest/GuestCheckout.vue:312
 msgid "Check again"
 msgstr ""
+
+#: POS/src/pages/POSSale.vue:2106
+#, python-brace-format
+msgid "{0} still to serve"
+msgstr ""
+
+#: POS/src/pages/POSSale.vue:2173
+msgid "Order again"
+msgstr ""
+
+#: POS/src/components/pos/FloorPlanEditor.vue:510
+#: POS/src/utils/tablesOfTheService.js:276
+msgid "Direct service"
+msgstr ""
+
+#: pos_next/pos_next/doctype/restaurant_table/restaurant_table.json:1
+msgid "Direct Service"
+msgstr ""
+
+#: POS/src/components/pos/FloorPlanEditor.vue:750
+msgid "A bar or a counter: the ticket is typed and paid in one go, and the till comes back to this table for the next one."
+msgstr ""

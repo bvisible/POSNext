@@ -484,6 +484,8 @@
 				<template v-if="table.order_summary && !isEditMode">
 					<div class="flex items-center gap-1 mt-0.5">
 						<span class="text-[9px] font-semibold bg-red-100 text-red-700 dark:text-ds-danger-soft px-1 rounded">{{ table.order_summary.item_count }}</span>
+						<!-- //// Neoffice — the bill of this table is settled and its dishes are not all served: the tile says so instead of looking like a table with an open order (the product owner, 08.11.2026) -->
+						<span v-if="table.order_summary.paid" data-test="table-paid" class="text-[9px] font-bold text-blue-600">{{ __("Paid") }}</span>
 						<!-- //// Neoffice — the number of dishes WAITING at a table GROWS AND SHRINKS (product owner, 05.11.2026: « un 2 qui s'agrandit, qui rétrécit […] de telle manière qu'on voit vraiment quelque chose qu'il faut faire sur cette table »): `animate-pulse` only faded it, to half its opacity -->
 						<span v-if="table.waiting_items_count > 0" data-test="table-waiting" class="floor-waiting-pulse relative z-10 bg-orange-500 text-white dark:text-ds-ink text-[9px] font-bold rounded-full px-1.5 py-0.5" :title="__('Waiting')">{{ table.waiting_items_count }}</span>
 						<span class="text-[9px] text-gray-500 dark:[&&]:!text-ds-sand-300">{{ formatTime(table.order_summary.opened_at) }}</span>
@@ -505,7 +507,7 @@
 					'text-yellow-600 dark:text-ds-warning': table.status === 'Reserved',
 					'text-blue-600': table.status === 'Paid',
 					'text-emerald-600 dark:text-ds-sand-300': table.status === 'Cleaning',
-				}">{{ __(table.status) }}</span>
+				}">{{ table.direct_service ? __("Direct service") : __(table.status) }}</span>
 
 				<!-- Resize handles (edit mode only) -->
 				<template v-if="isEditMode">
@@ -738,6 +740,14 @@
 								:class="editTable.shape === 'Round' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600'"
 							>{{ __("Round") }}</button>
 						</div>
+					</div>
+					<!-- //// Neoffice — a table of direct service: a bar, a counter, a window where the ticket is typed and paid in one go (the product owner, 08.11.2026) -->
+					<div>
+						<label class="flex items-center gap-2 cursor-pointer">
+							<input v-model="editTable.direct_service" type="checkbox" data-test="edit-table-direct" class="rounded border-gray-300" />
+							<span class="text-sm font-medium text-gray-700">{{ __("Direct service") }}</span>
+						</label>
+						<p class="text-xs text-gray-500 mt-1">{{ __("A bar or a counter: the ticket is typed and paid in one go, and the till comes back to this table for the next one.") }}</p>
 					</div>
 				</div>
 				<!-- Delete -->
@@ -1055,7 +1065,8 @@ import { initSocket } from "@/socket"
 import { useOpenTable } from "@/composables/useOpenTable"
 //// Neoffice — how many groups (.1, .2) a table seats, from its order summary (NeoResto lot 1, notes)
 import { tableNotesInfo } from "@/utils/tableNotes"
-import { tableNeedsCleaning } from "@/utils/tableStatus"
+//// Neoffice — and the table paid while dishes are still to serve is told apart from one to clean (08.11.2026)
+import { tableIsPaidAtService, tableNeedsCleaning } from "@/utils/tableStatus"
 import { Button, Dialog } from "frappe-ui"
 import FloorPlanWalls from "@/components/pos/FloorPlanWalls.vue"
 import OpenTabletDialog from "@/components/restaurant/OpenTabletDialog.vue"
@@ -1475,6 +1486,7 @@ const editTable = ref({
 	table_name: "",
 	capacity: 4,
 	shape: "Square",
+	direct_service: false,
 })
 const showAddAreaDialog = ref(false)
 const showRenameAreaDialog = ref(false)
@@ -2112,7 +2124,8 @@ function startNewTakeaway() {
 
 async function selectTable(table) {
 	// Paid/Cleaning tables get special handling — no draft loading
-	if (tableNeedsCleaning(table)) {
+	//// Neoffice — and so does a table paid while dishes are still to serve: a tap shows what was paid and what is left, it does not open a new order under the plates (the product owner, 08.11.2026)
+	if (tableNeedsCleaning(table) || tableIsPaidAtService(table)) {
 		emit("cleaning-table-clicked", table)
 		return
 	}
@@ -2449,6 +2462,8 @@ function openEditTableDialog(table) {
 		table_name: table.table_name,
 		capacity: table.capacity || 4,
 		shape: table.shape || "Square",
+		//// Neoffice — a table of direct service (a bar, a counter), see the editor's checkbox (the product owner, 08.11.2026)
+		direct_service: Boolean(table.direct_service),
 	}
 	showEditTableDialog.value = true
 }
@@ -2462,6 +2477,8 @@ async function handleEditTable() {
 			table_name: editTable.value.table_name,
 			capacity: editTable.value.capacity,
 			shape: editTable.value.shape,
+			//// Neoffice — the Check travels as 0 or 1 (the product owner, 08.11.2026)
+			direct_service: editTable.value.direct_service ? 1 : 0,
 		})
 		showEditTableDialog.value = false
 		await restaurantStore.fetchFromNetwork()

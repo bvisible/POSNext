@@ -137,7 +137,8 @@ export function useOpenTable() {
 			cartStore.rememberSentLines()
 			//// Neoffice — a table with no order yet asks how many people are seated (when the restaurant asks it and nobody said): the answer to the caller is the same, and the waiter can dismiss the question (NeoResto lot 1, covers).
 			//// Asking is a courtesy: a failure of the question never turns an opened table into a failed one.
-			if (res?.is_new || !res?.name) {
+			//// Neoffice — nobody is seated at a table of direct service (a bar, a counter): the question is not asked there (the product owner, 08.11.2026)
+			if ((res?.is_new || !res?.name) && !table.direct_service) {
 				try {
 					covers.askOnOpen()
 				} catch (e) {

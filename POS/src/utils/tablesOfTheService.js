@@ -272,7 +272,8 @@ function entryOf(table, readyLinesOfTable, clock) {
 				Cleaning: "cleaning",
 				Reserved: "reserved",
 			}[status] || "free"
-		badge = { text: stateWord(status), tone: QUIET_TONES[status] || "free" }
+		//// Neoffice — a table of direct service (a bar, a counter) says so instead of « Empty »: it is never seated (the product owner, 08.11.2026)
+		badge = { text: table.direct_service ? __("Direct service") : stateWord(status), tone: QUIET_TONES[status] || "free" }
 	}
 
 	return {
