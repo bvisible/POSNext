@@ -27041,3 +27041,11 @@ msgstr ""
 #: pos_next/pos_next/doctype/restaurant_settlement/restaurant_settlement.json:1
 msgid "A copy of its lines, total and times when it was settled (JSON): a cancelled order leaves nothing else behind."
 msgstr ""
+
+#: POS/src/utils/stillOpenAtClosing.js:6
+msgid "1 line"
+msgstr ""
+
+#: POS/src/components/pos/HeldTicketsList.vue:58
+msgid "Held ticket"
+msgstr ""

@@ -22,6 +22,7 @@ import {
 	cashHint,
 	heldTicketsNotice,
 	heldTicketsOf,
+	linesText,
 	looseDraftsLine,
 	openOrdersLine,
 	quietFor,
@@ -210,8 +211,8 @@ const visible = computed(
 					data-test="loose-draft"
 				>
 					<span class="min-w-0 truncate">
-						<span class="font-semibold text-gray-900">{{ draft.customer_name || draft.customer || __("Walk-in") }}</span>
-						<span class="text-xs text-gray-600"> · {{ __("{0} lines", [draft.lines]) }}</span>
+						<span class="font-semibold text-gray-900">{{ draft.customer_name || draft.customer || __("Draft") }}</span>
+						<span class="text-xs text-gray-600"> · {{ linesText(draft.lines) }}</span>
 					</span>
 					<span class="flex flex-shrink-0 items-center gap-2">
 						<span class="font-semibold text-gray-900">{{ formatCurrency(draft.grand_total) }}</span>

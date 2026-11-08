@@ -3,6 +3,12 @@
 //// used to erase in silence and keeps now. The closing lists them all, so that nothing disappears or hangs unseen and the user keeps or deletes each by his own hand. Pure helpers: the
 //// components ask the server and the device, these say what it means.
 
+// « 1 line » / « 3 lines »: the count of lines of a ticket or a draft
+export function linesText(count) {
+	const total = Math.max(0, Math.floor(Number(count) || 0))
+	return total === 1 ? __("1 line") : __("{0} lines", [total])
+}
+
 // What a held ticket is worth: the net amount of its lines after offers and coupons (older tickets lack it, then quantity times rate)
 export function heldTicketTotal(draft) {
 	return (draft?.items || []).reduce((sum, item) => {

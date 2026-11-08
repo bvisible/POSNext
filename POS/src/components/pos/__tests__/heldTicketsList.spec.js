@@ -76,7 +76,7 @@ beforeEach(() => {
 })
 
 describe("the list", () => {
-	it("shows each ticket with its lines and its total, named by its table or its customer or Walk-in", async () => {
+	it("shows each ticket with its lines and its total, named by its table or its customer or just as a held ticket", async () => {
 		const wrapper = await show([
 			ticket("A", { table: "T4" }),
 			ticket("B", { customer: "Madame Test" }),
@@ -88,7 +88,13 @@ describe("the list", () => {
 		expect(rows[0].text()).toContain("2 lines")
 		expect(rows[0].text()).toContain("CHF 12.5")
 		expect(rows[1].text()).toContain("Madame Test")
-		expect(rows[2].text()).toContain("Walk-in")
+		expect(rows[2].text()).toContain("Held ticket")
+	})
+
+	it("says 1 line, not 1 lines", async () => {
+		const wrapper = await show([ticket("A", { lines: 1 })])
+
+		expect(wrapper.get('[data-test="held-ticket"]').text()).toContain("1 line ·")
 	})
 
 	it("shows nothing for no ticket", async () => {

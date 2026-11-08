@@ -287,6 +287,17 @@ describe("the drafts the till left on the server", () => {
 		expect(rows[1].text()).toContain("Madame Test")
 	})
 
+	it("names a draft with no customer a draft, and counts one line in the singular", async () => {
+		world.loose = [draft({ name: "FA-3", customer: "", customer_name: "", lines: 1 })]
+
+		const wrapper = await show()
+
+		const row = wrapper.get('[data-test="loose-draft"]').text()
+		expect(row).toContain("Draft")
+		expect(row).toContain("1 line")
+		expect(row).not.toContain("1 lines")
+	})
+
 	it("make the block appear on their own, at a till with no restaurant", async () => {
 		world.enabled = false
 		world.loose = [draft()]

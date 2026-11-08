@@ -24757,3 +24757,11 @@ msgstr "Contenu de la commande"
 #: pos_next/pos_next/doctype/restaurant_settlement/restaurant_settlement.json:1
 msgid "A copy of its lines, total and times when it was settled (JSON): a cancelled order leaves nothing else behind."
 msgstr "Une copie de ses lignes, de son total et de ses heures de règlement (JSON) : une commande annulée ne laisse rien d'autre derrière elle."
+
+#: POS/src/utils/stillOpenAtClosing.js:6
+msgid "1 line"
+msgstr "1 ligne"
+
+#: POS/src/components/pos/HeldTicketsList.vue:58
+msgid "Held ticket"
+msgstr "Ticket en attente"

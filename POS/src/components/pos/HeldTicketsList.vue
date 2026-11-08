@@ -8,6 +8,7 @@ import { usePOSCartStore } from "../../stores/posCart"
 import { usePOSDraftsStore } from "../../stores/posDrafts"
 import { deleteDraft } from "../../utils/draftManager"
 import { logger } from "../../utils/logger"
+import { linesText } from "../../utils/stillOpenAtClosing"
 
 const log = logger.create("HeldTicketsList")
 
@@ -53,7 +54,8 @@ function toggleAll() {
 
 function label(ticket) {
 	if (ticket.table) return props.tableLabel(ticket.table)
-	return ticket.customer || __("Walk-in")
+	// A ticket with no table and no customer is just a held ticket (the bare « Walk-in » reads as a guest with no reservation in a restaurant)
+	return ticket.customer || __("Held ticket")
 }
 
 function when(since) {
@@ -110,7 +112,7 @@ async function deleteChosen() {
 				/>
 				<span class="min-w-0 flex-1 truncate">
 					<span class="font-semibold text-gray-900">{{ label(ticket) }}</span>
-					<span class="text-xs text-gray-600"> · {{ __("{0} lines", [ticket.lines]) }} · {{ when(ticket.since) }}</span>
+					<span class="text-xs text-gray-600"> · {{ linesText(ticket.lines) }} · {{ when(ticket.since) }}</span>
 				</span>
 				<span class="flex-shrink-0 font-semibold text-gray-900">{{ formatMoney(ticket.total) }}</span>
 			</li>

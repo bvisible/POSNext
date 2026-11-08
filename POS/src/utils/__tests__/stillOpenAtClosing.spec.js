@@ -9,6 +9,7 @@ import {
 	badgesOfOrder,
 	cashHint,
 	heldTicketTotal,
+	linesText,
 	heldTicketsNotice,
 	heldTicketsOf,
 	looseDraftsLine,
@@ -106,6 +107,15 @@ describe("the tickets held on this device", () => {
 		)
 
 		expect([a.customer, b.customer, c.customer]).toEqual(["Madame Test", "Walk-in", ""])
+	})
+})
+
+describe("the lines of a ticket", () => {
+	it("are counted in the singular and the plural", () => {
+		expect(linesText(1)).toBe("1 line")
+		expect(linesText(2)).toBe("2 lines")
+		expect(linesText(0)).toBe("0 lines")
+		expect(linesText(undefined)).toBe("0 lines")
 	})
 })
 
