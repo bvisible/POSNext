@@ -123,10 +123,10 @@ def apply_closing(filters):
 
 @frappe.whitelist()
 def export_cash_report_pdf(filters):
-	"""The register of a period, or of one closing, as a cash report on A4 paper in landscape (shown in the browser).
+	"""The register of a period, or of one closing, as a cash report on A4 paper (shown in the browser).
 
-	Grouped by payment method unless the filters group otherwise; the same entries the screen lists, so the
-	sheet and the screen never disagree. Needs the right to read the report, and, for a closing, the closing."""
+	Grouped as the register's « Group by » filter says, a flat list without one; the same entries the screen lists, so
+	the sheet and the screen never disagree. Needs the right to read the report, and, for a closing, the closing."""
 	from pos_next.pos_next.report.neopos_register import cash_report
 
 	if not frappe.get_cached_doc("Report", REPORT).is_permitted():
@@ -137,14 +137,15 @@ def export_cash_report_pdf(filters):
 	closing = apply_closing(filters)
 	validate_filters(filters)
 
-	field = cash_report.group_field(get_group_by_field(filters.get("group_by")))
-	by_method = get_entries(filters, "mode_of_payment")
-	entries = by_method if field == "mode_of_payment" else get_entries(filters, field)
+	# The sheet is grouped as the register's « Group by » says, and a flat list when it says nothing. A register that is not
+	# grouped has no paid amount on a sale, which any grouping field brings: the one asked for, else one the sheet ignores.
+	field = get_group_by_field(filters.get("group_by"))
+	entries = get_entries(filters, field or "transaction_type")
 	company = frappe.get_cached_doc("Company", filters.company)
 	currency = company.default_currency or ""
 
 	pdf = cash_report.render_pdf(
-		cash_report.build_html(entries, by_method, field, closing=closing, currency=currency),
+		cash_report.build_html(entries, field, closing=closing, currency=currency),
 		company.company_name or company.name,
 		_("Cash report"),
 		cash_report.subtitle_of(filters, closing, currency),

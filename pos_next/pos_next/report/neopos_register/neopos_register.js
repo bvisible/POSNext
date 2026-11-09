@@ -98,7 +98,7 @@ frappe.query_reports["Neopos Register"] = {
 		},
 	],
 	onload: function (report) {
-		// The cash report: this register on one A4 sheet in landscape, for the period or the closing the filters name
+		// The cash report: this register on one A4 sheet, for the period or the closing the filters name
 		report.page.add_inner_button(__("Cash report (PDF)"), function () {
 			const filters = report.get_filter_values(true);
 			window.open(

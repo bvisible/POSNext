@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""The cash report: the register of a period or of one closing, printed on A4 paper in landscape.
+"""The cash report: the register of a period or of one closing, printed on A4 paper.
 
 The register is the till journal (sales, invoices collected at the counter, the drawer's cash in and out). Two things were missing:
 a sheet a bookkeeper can file (date, document, customer, till, cashier, total, and how it was paid, grouped by payment method, with
@@ -35,11 +35,11 @@ MANAGER = "cashreport-manager@yopmail.com"
 OUTSIDER = "cashreport-outsider@yopmail.com"
 
 
-def entry(reference, mode, paid, total=None, **more):
+def entry(reference, mode, paid, total=None, day="2026-11-02", **more):
 	"""A line of the register as `neopos_register.get_entries` gives it."""
 	return frappe._dict(
 		{
-			"posting_date": "2026-11-02",
+			"posting_date": day,
 			"sales_invoice": reference,
 			"customer": "Walk-in",
 			"pos_profile": "Till 1",
@@ -96,7 +96,7 @@ class TestTheLayout(FrappeTestCase):
 
 	def build(self, entries=None, field="mode_of_payment", **more):
 		entries = self.entries if entries is None else entries
-		return cash_report.build_html(entries, entries, field, currency="CHF", **more)
+		return cash_report.build_html(entries, field, currency="CHF", **more)
 
 	def test_the_groups_come_the_most_collected_first(self):
 		detail = detail_of(self.build())
@@ -141,7 +141,7 @@ class TestTheLayout(FrappeTestCase):
 			entry("INV-1", "Cash", 10, owner="a@yopmail.com"),
 			entry("INV-2", "Card", 20, owner="a@yopmail.com"),
 		]
-		html = cash_report.build_html(entries, entries, "owner", currency="CHF")
+		html = cash_report.build_html(entries, "owner", currency="CHF")
 
 		headers = headers_of(detail_of(html))
 
@@ -157,9 +157,47 @@ class TestTheLayout(FrappeTestCase):
 		summary = html.split(_("Detail"), 1)[0]
 
 		self.assertIn(cash_report.money(155), summary)
-		self.assertIn(_("By payment method"), summary)
+		self.assertIn(_("By {0}").format(_("Payment Method").lower()), summary)
 		# Cash is 100 of 155: 64.5 %
 		self.assertIn("64.5", summary)
+
+	def test_the_summary_follows_the_grouping_whatever_it_is(self):
+		entries = [
+			entry("INV-1", "Cash", 10, owner="a@yopmail.com"),
+			entry("INV-2", "Card", 20, owner="a@yopmail.com"),
+			entry("INV-3", "Cash", 40, owner="b@yopmail.com"),
+		]
+
+		summary = cash_report.build_html(entries, "owner", currency="CHF").split(_("Detail"), 1)[0]
+
+		self.assertIn(_("By {0}").format(_("Cashier").lower()), summary)
+		self.assertNotIn(_("By {0}").format(_("Payment Method").lower()), summary)
+		# One row per cashier and the total, the most collected first
+		cashiers = rows(summary, "cr-sub")
+		self.assertEqual(cashiers[0][2], cash_report.money(70))
+		self.assertLess(summary.index("b@yopmail.com"), summary.index("a@yopmail.com"))
+
+	def test_a_sheet_with_no_grouping_is_one_flat_list_with_every_column(self):
+		entries = [
+			entry("INV-2", "Cash", 20, day="2026-11-03"),
+			entry("INV-1", "Cash", 80, day="2026-11-02"),
+			entry("INV-4", "Twint", 25, day="2026-11-04"),
+		]
+
+		html = self.build(entries, field="")
+
+		detail = detail_of(html)
+		# No group heading, no subtotal, no recap table: the KPIs, then the list and its total
+		self.assertEqual(rows(html, "cr-group"), [])
+		self.assertEqual(rows(html, "cr-sub"), [])
+		self.assertNotIn("cr-track", html)
+		self.assertEqual(len(headers_of(detail)), 8)
+		self.assertIn(_("Payment Method"), headers_of(detail))
+		# One chronological list
+		self.assertLess(detail.index("INV-1"), detail.index("INV-2"))
+		self.assertLess(detail.index("INV-2"), detail.index("INV-4"))
+		self.assertEqual(rows(html, "cr-grand")[0][-2:], [cash_report.money(125), cash_report.money(125)])
+		self.assertIn(cash_report.money(125), html.split(_("Detail"), 1)[0])
 
 	def test_a_return_and_the_drawers_movements_carry_their_tag(self):
 		entries = [
@@ -252,12 +290,12 @@ class TestTheLayout(FrappeTestCase):
 		):
 			self.assertIn(part, subtitle)
 
-	def test_the_sheet_is_A4_in_landscape_with_its_page_number(self):
+	def test_the_sheet_is_A4_upright_with_its_page_number(self):
 		with patch("frappe.utils.pdf.get_pdf", return_value=b"%PDF") as pdf:
 			cash_report.render_pdf("<p>body</p>", "A Company", _("Cash report"), "a subtitle")
 
 		html, options = pdf.call_args.args
-		self.assertEqual((options["orientation"], options["page-size"]), ("Landscape", "A4"))
+		self.assertEqual((options["orientation"], options["page-size"]), ("Portrait", "A4"))
 		self.assertIn("[page]", options["footer-right"])
 		for part in ("A Company", _("Cash report"), "a subtitle", "<p>body</p>"):
 			self.assertIn(part, html)
@@ -418,7 +456,7 @@ class TestTheRegisterOfAClosing(TakeawayTill, FrappeTestCase):
 		html, options = pdf.call_args.args
 		self.assertIn(counted, html)
 		self.assertIn(CLOSING, html)
-		self.assertEqual(options["orientation"], "Landscape")
+		self.assertEqual(options["orientation"], "Portrait")
 		self.assertEqual(frappe.local.response.type, "pdf")
 		self.assertEqual(frappe.local.response.filecontent, b"%PDF-sheet")
 		self.assertTrue(frappe.local.response.filename.endswith(".pdf"))
@@ -446,7 +484,27 @@ class TestTheRegisterOfAClosing(TakeawayTill, FrappeTestCase):
 
 		pdf = self.export(MANAGER, company=self.fx.company, from_date=today(), to_date=today())
 
-		self.assertIn(cash_report.money(total), pdf.call_args.args[0])
+		# Without a grouping the sale is one line of a flat list: its total is on its row and in the total line
+		self.assertGreaterEqual(pdf.call_args.args[0].count(cash_report.money(total)), 2)
+
+	def test_the_sheet_is_grouped_as_the_register_is(self):
+		invoice = self.submitted()
+		period = {"company": self.fx.company, "from_date": today(), "to_date": today()}
+		cashier = frappe.utils.get_fullname(TILL) or TILL
+
+		flat = self.export(MANAGER, **period).call_args.args[0]
+		by_method = self.export(MANAGER, group_by="Payment Method", **period).call_args.args[0]
+		by_cashier = self.export(MANAGER, group_by="Cashier", **period).call_args.args[0]
+
+		# Nothing chosen, nothing forced: the list is flat, with the payment method as a column
+		self.assertNotIn('class="cr-group"', flat)
+		self.assertIn(invoice, flat)
+		# Payment Method: its sheet; Cashier: the cashier's own, with the method as a column
+		self.assertIn('class="cr-group"', by_method)
+		self.assertIn(_("By {0}").format(_("Payment Method").lower()), by_method)
+		self.assertIn(f"{_('Subtotal')} {self.fx.mode}", by_method)
+		self.assertIn(_("By {0}").format(_("Cashier").lower()), by_cashier)
+		self.assertIn(f"{_('Subtotal')} {cashier}", by_cashier)
 
 
 if __name__ == "__main__":

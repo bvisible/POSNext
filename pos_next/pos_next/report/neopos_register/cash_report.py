@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent). The printed cash report: what a till journal says,
-# //// laid out for an A4 sheet in landscape, in the accounting profile of the Oslo documents (the font, the dense
+# //// laid out for an A4 sheet, in the accounting profile of the Oslo documents (the font, the dense
 # //// table and the header of erpnextswiss.report_pdf_utils, which the VAT report prints with too). It is made of the
 # //// register's own entries (neopos_register.get_entries), so the sheet and the screen never disagree, for a period
 # //// or for one closing.
@@ -9,8 +9,9 @@
 """The cash report: the register of a period or of one closing, printed.
 
 The register has ten columns and groups on screen; a bookkeeper wants one line per operation with the date, the
-document, the customer, the till, the cashier, the total and how it was paid, grouped by payment method, with the
-figures that matter first: what was collected, by which method, and (for a closing) what the cash drawer says.
+document, the customer, the till, the cashier, the total and how it was paid, grouped the way the register is
+grouped (a flat list when it is not), with the figures that matter first: what was collected, what each group collected, and
+(for a closing) what the cash drawer says.
 
 `build_html` is a pure function of the entries it is given (no query, no file), so the layout is tested without a
 database; `render_pdf` only puts the accounting profile around it and asks Frappe for the PDF. The tables use no
@@ -24,21 +25,33 @@ from frappe.utils import flt, fmt_money, formatdate, get_fullname
 # The columns of the detail, in the order they print: (field, label, width in %, numeric). The column a sheet is
 # grouped by is left out (its value is the heading of the group).
 COLUMNS = (
-	("posting_date", "Posting Date", 8, False),
-	("sales_invoice", "Reference", 15, False),
-	("customer", "Customer", 21, False),
+	("posting_date", "Posting Date", 10, False),
+	("sales_invoice", "Reference", 16, False),
+	("customer", "Customer", 18, False),
 	("pos_profile", "POS Profile", 13, False),
-	("owner", "Cashier", 15, False),
-	("mode_of_payment", "Payment Method", 12, False),
-	("grand_total", "Grand Total", 8, True),
-	("paid_amount", "Paid Amount", 8, True),
+	("owner", "Cashier", 14, False),
+	("mode_of_payment", "Payment Method", 15, False),
+	("grand_total", "Grand Total", 11, True),
+	("paid_amount", "Paid Amount", 11, True),
 )
 
 # Between the two dates of a period
 RANGE = " \u2013 "
 
-# What the sheet may be grouped by (the register's own group-by fields).
-GROUP_FIELDS = ("mode_of_payment", "pos_profile", "owner", "customer", "transaction_type")
+# The sheet is upright: seven columns (eight when it is not grouped by method) fit the 194 mm of an A4 line (product owner,
+# 09.11.2026: « plutôt en portrait au lieu de paysage si ça passe »). Landscape is the accounting profile's default, and the
+# value to change if a sheet ever needs more columns.
+ORIENTATION = "Portrait"
+
+# The register's own group-by fields and what each is called. The sheet is grouped as the register's « Group by » says, and
+# is a flat list when it says nothing (product owner, 09.11.2026: what is chosen under the table decides the rendering).
+FIELD_LABELS = {
+	"mode_of_payment": "Payment Method",
+	"owner": "Cashier",
+	"pos_profile": "POS Profile",
+	"customer": "Customer",
+	"transaction_type": "Transaction Type",
+}
 
 # The accounting profile's own stylesheet is erpnextswiss's; where that app is not installed (the CI of this app), a
 # plain one with the same rules keeps the sheet readable.
@@ -86,11 +99,6 @@ def money(value):
 
 def _esc(value):
 	return frappe.utils.escape_html(str(value if value is not None else ""))
-
-
-def group_field(group_by_field):
-	"""The field a sheet groups by: the payment method unless the register groups by another of its own fields."""
-	return group_by_field if group_by_field in GROUP_FIELDS else "mode_of_payment"
 
 
 def operations(entries):
@@ -156,14 +164,15 @@ def _kpi(label, value, note="", negative=False):
 	)
 
 
-def summary_block(entries, currency, closing=None):
-	"""The figures that come first: the KPIs, then what each payment method collected, with its share."""
-	by_method = summarize(entries, "mode_of_payment")
-	collected = sum(group["paid"] for group in by_method)
+def summary_block(entries, field, currency, closing=None):
+	"""The figures that come first: the KPIs, then, when the sheet is grouped, what each group collected with its share."""
+	collected = sum(flt(entry.get("paid_amount")) for entry in entries)
 	returns = [entry for entry in entries if entry.get("is_return")]
+	groups = summarize(entries, field) if field else []
+	note = _("{0} payment methods").format(len(groups)) if field == "mode_of_payment" else ""
 	kpis = [
 		_kpi(_("Collected"), f"{money(collected)} {currency}", negative=collected < 0),
-		_kpi(_("Operations"), str(operations(entries)), _("{0} payment methods").format(len(by_method))),
+		_kpi(_("Operations"), str(operations(entries)), note),
 	]
 	if returns:
 		kpis.append(
@@ -185,19 +194,23 @@ def summary_block(entries, currency, closing=None):
 			)
 		)
 	html = '<table class="cr-kpis"><tr>' + "".join(kpis) + "</tr></table>"
+	if not field:
+		return html
 
-	html += f'<div class="cr-section">{_esc(_("By payment method"))}</div>'
+	label = _(FIELD_LABELS[field])
+	html += f'<div class="cr-section">{_esc(_("By {0}").format(label.lower()))}</div>'
 	html += (
 		'<table><colgroup><col style="width:34%"><col style="width:12%"><col style="width:16%">'
 		'<col style="width:8%"><col style="width:30%"></colgroup>'
-		f'<thead><tr><th>{_esc(_("Payment Method"))}</th><th class="text-right">{_esc(_("Operations"))}</th>'
+		f'<thead><tr><th>{_esc(label)}</th><th class="text-right">{_esc(_("Operations"))}</th>'
 		f'<th class="text-right">{_esc(_("Paid Amount"))}</th><th class="text-right">%</th><th></th></tr></thead><tbody>'
 	)
-	for group in by_method:
+	for group in groups:
 		share = (group["paid"] / collected * 100) if collected else 0
 		bar = max(0, min(100, share))
 		html += (
-			f'<tr><td>{_esc(group["key"])}</td><td class="text-right">{operations(group["entries"])}</td>'
+			f'<tr><td>{_esc(_label_of(field, group["key"]))}</td>'
+			f'<td class="text-right">{operations(group["entries"])}</td>'
 			f'<td class="text-right">{money(group["paid"])}</td><td class="text-right">{round(share, 1)}</td>'
 			f'<td><div class="cr-track"><div class="cr-bar" style="width:{bar}%"></div></div></td></tr>'
 		)
@@ -246,7 +259,8 @@ def reconciliation_block(closing, currency):
 
 
 def detail_block(entries, field):
-	"""One line per operation, grouped by `field`, a subtotal under each group, the grand total at the end."""
+	"""One line per operation, grouped by `field` with a subtotal under each group (a flat list when there is no `field`),
+	the grand total at the end."""
 	columns = [column for column in COLUMNS if column[0] != field]
 	count = len(columns)
 	html = f'<div class="cr-section">{_esc(_("Detail"))}</div>'
@@ -263,13 +277,15 @@ def detail_block(entries, field):
 	# On a sheet grouped by method the documents' totals are not added: a document paid with two methods would count twice.
 	adds_totals = field != "mode_of_payment"
 	money_columns = [i for i, column in enumerate(columns) if column[3]]
-	for group in summarize(entries, field):
+	groups = summarize(entries, field) if field else [{"key": "", "entries": entries, "paid": 0, "total": 0}]
+	for group in groups:
 		label = _label_of(field, group["key"])
-		html += (
-			f'<tr class="cr-group"><td colspan="{count}">{_esc(label)}'
-			f' <span class="cr-note" style="font-weight:normal">— {operations(group["entries"])} '
-			f'{_esc(_("Operations"))}</span></td></tr>'
-		)
+		if field:
+			html += (
+				f'<tr class="cr-group"><td colspan="{count}">{_esc(label)}'
+				f' <span class="cr-note" style="font-weight:normal">— {operations(group["entries"])} '
+				f'{_esc(_("Operations"))}</span></td></tr>'
+			)
 		for entry in sorted(
 			group["entries"], key=lambda e: (str(e.get("posting_date")), str(e.get("sales_invoice")))
 		):
@@ -280,6 +296,8 @@ def detail_block(entries, field):
 				)
 				html += f'<td class="{css}">{_cell(entry, column[0])}</td>'
 			html += "</tr>"
+		if not field:
+			continue
 		html += f'<tr class="cr-sub"><td colspan="{count - len(money_columns)}">{_esc(_("Subtotal"))} {_esc(label)}</td>'
 		for i in money_columns:
 			shown = columns[i][0] == "paid_amount" or adds_totals
@@ -298,10 +316,10 @@ def detail_block(entries, field):
 	return html
 
 
-def build_html(entries, summary_entries, field, closing=None, currency=""):
+def build_html(entries, field, closing=None, currency=""):
 	"""The body of the sheet: figures first, the drawer's control for a closing, then the detail."""
 	return (
-		summary_block(summary_entries, currency, closing)
+		summary_block(entries, field, currency, closing)
 		+ (reconciliation_block(closing, currency) if closing is not None else "")
 		+ detail_block(entries, field)
 	)
@@ -356,7 +374,7 @@ def stylesheet():
 
 
 def render_pdf(body_html, company, title, subtitle):
-	"""The sheet as PDF bytes: A4 in landscape, the page number in the footer."""
+	"""The sheet as PDF bytes: A4 upright, the page number in the footer."""
 	from frappe.utils.pdf import get_pdf
 
 	header = (
@@ -376,7 +394,7 @@ def render_pdf(body_html, company, title, subtitle):
 	return get_pdf(
 		html,
 		{
-			"orientation": "Landscape",
+			"orientation": ORIENTATION,
 			"page-size": "A4",
 			"encoding": "UTF-8",
 			"no-outline": None,
