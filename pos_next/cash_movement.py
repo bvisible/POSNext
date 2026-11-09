@@ -470,6 +470,14 @@ def _movement_rows(where, values, lock=False):
 	# still to run) has no movement to read, and a closing made meanwhile must not fail on it.
 	if not frappe.db.has_column("Journal Entry", "posa_cash_movement_account"):
 		return []
+	# //// Neoffice — the movement says which offline id booked it, so that the till can tell a queued row the server already
+	# //// holds from one it does not (neoffice-maintenance#2072). The column ships with the same fixture as the account link
+	# //// read above; a site that has the one and not yet the other reads an empty id.
+	offline_id_column = (
+		"je.posa_cash_movement_offline_id"
+		if frappe.db.has_column("Journal Entry", "posa_cash_movement_offline_id")
+		else "null"
+	)
 	rows = frappe.db.sql(
 		f"""
 		select
@@ -477,6 +485,7 @@ def _movement_rows(where, values, lock=False):
 			je.posa_cash_movement_shift as shift, je.posa_cash_movement_closing as closing,
 			je.posa_cash_entry_template as template,
 			je.posa_cash_movement_note as note, je.posa_cash_movement_no_vat as no_vat,
+			{offline_id_column} as offline_id,
 			je.user_remark, jea.debit_in_account_currency - jea.credit_in_account_currency as delta
 		from `tabJournal Entry` je
 		join `tabJournal Entry Account` jea
@@ -528,6 +537,8 @@ def _as_movement(row):
 		docstatus=row.docstatus,
 		shift=row.shift,
 		closing=row.closing,
+		# //// Neoffice — the offline id that booked it, '' when it came from the desk (neoffice-maintenance#2072).
+		offline_id=row.offline_id or "",
 	)
 
 

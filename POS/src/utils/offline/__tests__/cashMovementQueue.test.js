@@ -78,6 +78,7 @@ const {
 	setAsideRefusedCashMovement,
 	resendRefusedCashMovement,
 	syncOfflineCashMovements,
+	withoutBookedRows,
 } = await import("@/utils/offline/cashMovements");
 
 const SHIFT = "POS-OPEN-1";
@@ -482,5 +483,53 @@ describe("an expired session, a deadlock, « send again », the device's clock",
 		expect(creates()[0][1]).not.toHaveProperty("moved_at");
 		const queued = await recordCashMovement({ movement: movement(), offline: true });
 		expect(rows.get(queued.id).data.moved_at).toBeGreaterThan(0);
+	});
+});
+
+describe("a movement whose answer was lost (neoffice-maintenance#2072)", () => {
+	const row = (offline_id, extra = {}) => ({ offline_id, data: { direction: "out", amount: 30 }, ...extra });
+
+	it("is dropped from the queue's rows once the server's list carries its offline id", () => {
+		const queued = [row("pos_cash_a"), row("pos_cash_b")];
+		const booked = [{ name: "ACC-JV-1", offline_id: "pos_cash_a", amount: 30, direction: "out" }];
+		expect(withoutBookedRows(queued, booked).map((r) => r.offline_id)).toEqual(["pos_cash_b"]);
+	});
+
+	it("keeps every row the server's list does not hold, and a row without an offline id", () => {
+		const queued = [row("pos_cash_a"), row(undefined)];
+		expect(withoutBookedRows(queued, [])).toEqual(queued);
+		expect(withoutBookedRows(queued, undefined)).toEqual(queued);
+		// A movement made at the desk has no offline id: it never hides a row
+		expect(withoutBookedRows(queued, [{ name: "ACC-JV-2", offline_id: "" }])).toEqual(queued);
+	});
+
+	it("keeps a row whose entry is known and whose receipt is waiting: the dialog says so", () => {
+		const waitingReceipt = row("pos_cash_a", { server_journal_entry: "ACC-JV-1" });
+		const booked = [{ name: "ACC-JV-1", offline_id: "pos_cash_a" }];
+		expect(withoutBookedRows([waitingReceipt], booked)).toEqual([waitingReceipt]);
+	});
+
+	it("is not counted twice in the drawer's totals (red before: 30 + 30)", () => {
+		const queued = [row("pos_cash_a")];
+		const booked = [{ name: "ACC-JV-1", offline_id: "pos_cash_a", amount: 30, direction: "out" }];
+		const serverOut = booked.reduce((sum, m) => sum + m.amount, 0);
+		expect(serverOut + pendingCashTotals(withoutBookedRows(queued, booked)).out).toBe(30);
+		expect(serverOut + pendingCashTotals(queued).out).toBe(60);
+	});
+
+	it("does not count it against the cash-out cap a second time", async () => {
+		// 100 allowed, 60 already out on the server (booked under pos_cash_lost), the same movement still queued
+		await saveOfflineCashMovement(movement({ amount: 60, offline_id: "pos_cash_lost" }), null, {
+			out_limit: 100,
+			out_total: 0,
+		});
+		const limits = {
+			out_limit: 100,
+			out_total: 60,
+			movements: [{ name: "ACC-JV-9", offline_id: "pos_cash_lost", amount: 60, direction: "out" }],
+		};
+		await expect(saveOfflineCashMovement(movement({ amount: 40 }), null, limits)).resolves.toMatchObject({
+			offline_id: expect.stringMatching(/^pos_cash_/),
+		});
 	});
 });

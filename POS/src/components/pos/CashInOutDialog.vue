@@ -298,13 +298,13 @@
 					</div>
 
 					<div
-						v-if="!movements.length && !pending.length && !refused.length"
+						v-if="!movements.length && !waiting.length && !refused.length"
 						class="py-8 text-center text-sm text-gray-400"
 					>
 						{{ __("No cash entries for this shift yet.") }}
 					</div>
 
-					<div v-else-if="movements.length || pending.length" class="space-y-2">
+					<div v-else-if="movements.length || waiting.length" class="space-y-2">
 						<div class="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm">
 							<div v-if="totalIn > 0" class="font-medium text-green-700">{{ __("In") }}: +{{ formatAmount(totalIn) }}</div>
 							<div v-if="totalOut > 0" class="font-medium text-red-700">{{ __("Out") }}: -{{ formatAmount(totalOut) }}</div>
@@ -313,7 +313,7 @@
 
 						<!-- Waiting in this device's queue -->
 						<div
-							v-for="row in pending"
+							v-for="row in waiting"
 							:key="`pending-${row.id}`"
 							class="flex items-center gap-3 rounded-lg border border-dashed border-amber-300 bg-amber-50 p-3"
 						>
@@ -456,6 +456,7 @@ import {
 	sessionUserId,
 	setAsideRefusedCashMovement,
 	syncOfflineCashMovements,
+	withoutBookedRows,
 } from "@/utils/offline/cashMovements";
 
 const VOID_ACTION = "Void Cash Movement";
@@ -512,7 +513,10 @@ let confirmEntry = null;
 const templates = computed(() => data.value?.templates || []);
 const unusable = computed(() => data.value?.unusable || []);
 const movements = computed(() => data.value?.movements || []);
-const queuedTotals = computed(() => pendingCashTotals(pending.value));
+// The queue's rows that the server's list does not already show: after a lost answer (a 504) a movement is queued under the
+// offline id the server booked it with, and it would be listed and counted twice until the next sync (neoffice-maintenance#2072).
+const waiting = computed(() => withoutBookedRows(pending.value, movements.value));
+const queuedTotals = computed(() => pendingCashTotals(waiting.value));
 
 const totalIn = computed(
 	() =>
@@ -672,6 +676,7 @@ async function submitEntry() {
 				out_limit: data.value?.out_limit,
 				out_total: data.value?.out_total,
 				max_file_size: data.value?.max_file_size,
+				movements: data.value?.movements,
 			},
 			offline: isOffline.value,
 		});

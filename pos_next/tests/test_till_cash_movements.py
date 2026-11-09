@@ -1088,6 +1088,16 @@ class TestTillCashMovements(CashMovementFixture):
 		)
 		self.assertEqual(len(cash_movement.shift_movements(self.shift)), 1)
 
+	def test_the_dialog_tells_which_offline_id_booked_a_movement(self):
+		# When the answer to a queued movement is lost, the till queues it again under the same offline id: it can only tell
+		# the queued row from the movement the server booked if the server's list carries that id (neoffice-maintenance#2072).
+		self._record(self.supplier, 30, offline_id="pos_cash_test-lost")
+		self._record(self.pay_in, 20)
+		with _as(CASHIER):
+			data = cash_entry.get_cash_movement_dialog_data(self.shift)
+		offline_ids = {row["amount"]: row["offline_id"] for row in data["movements"]}
+		self.assertEqual(offline_ids, {30: "pos_cash_test-lost", 20: ""})
+
 	def test_a_refused_offline_movement_is_set_aside_with_a_trace_on_its_shift(self):
 		# The tablet was offline; meanwhile the shift was closed elsewhere. The queue's movement is refused, and
 		# the till sets it aside with a reason: the money that moved stays traceable on its shift.

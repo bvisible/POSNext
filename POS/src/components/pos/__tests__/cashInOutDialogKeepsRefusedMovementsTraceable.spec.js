@@ -73,6 +73,8 @@ vi.mock("@/utils/offline/cashMovements", () => ({
 		queue.resendRefusedCashMovement(...args),
 	syncOfflineCashMovements: (...args) =>
 		queue.syncOfflineCashMovements(...args),
+	// The queue's rows the server's list does not hold (neoffice-maintenance#2072): nothing is booked here
+	withoutBookedRows: (rows) => rows,
 }))
 
 const { default: CashInOutDialog } = await import("../CashInOutDialog.vue")

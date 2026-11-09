@@ -312,6 +312,9 @@ def _movement_payload(row, opening=None):
 		"no_vat": cint(row.no_vat),
 		"owner": row.owner,
 		"creation": str(row.creation),
+		# //// Neoffice — the offline id that booked it: the dialog drops a queued row the server's list already shows,
+		# //// so a movement whose answer was lost is not counted twice until the next sync (neoffice-maintenance#2072).
+		"offline_id": row.offline_id or "",
 	}
 	if opening is not None:
 		payload["can_cancel"] = _shift_is_open(opening) and (

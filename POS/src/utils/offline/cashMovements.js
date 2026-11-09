@@ -284,6 +284,21 @@ export const pendingCashTotals = (rows) =>
 	);
 
 /**
+ * The queue's rows that the server's list does not already show. After a lost answer (a 504) a movement is queued
+ * under the same `offline_id` although the server booked it: the dialog then holds it twice, once in the server's
+ * list and once in the queue, and counts it twice until the next sync resends it. A row whose `offline_id` the
+ * server's movements carry is dropped. A row that already has its `server_journal_entry` stays: only its receipt
+ * is waiting, the dialog says so, and its amount is not counted from the queue anyway.
+ * @param {Array} rows - the queue's waiting rows
+ * @param {Array} movements - the server's movements of the shift (each may carry the `offline_id` that booked it)
+ * @returns {Array}
+ */
+export const withoutBookedRows = (rows, movements) => {
+	const booked = new Set((movements || []).map((movement) => movement?.offline_id).filter(Boolean));
+	return (rows || []).filter((row) => row.server_journal_entry || !row.offline_id || !booked.has(row.offline_id));
+};
+
+/**
  * Put a movement (and its receipt) in the queue. A movement the server already booked comes with its
  * `server_journal_entry`: only its receipt waits, and the cap is not checked again. The row keeps its cashier
  * (`user`, the signed-in one by default) and when the money moved (`moved_at`, now by default), which the
@@ -300,7 +315,11 @@ export const saveOfflineCashMovement = async (movement, attachment = null, limit
 		throw new Error("The shift, the till and the operation are required");
 	}
 	if (!movement.server_journal_entry && movement.direction === "out") {
-		const pending = await getPendingCashMovements(movement.pos_opening_shift);
+		// The rows the server's list (`limits.movements`, when the dialog gives it) already holds are in `out_total`: not counted twice.
+		const pending = withoutBookedRows(
+			await getPendingCashMovements(movement.pos_opening_shift),
+			limits.movements,
+		);
 		const remaining = getCashOutRemaining({
 			outLimit: limits.out_limit,
 			outTotal: limits.out_total,
