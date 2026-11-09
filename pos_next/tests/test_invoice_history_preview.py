@@ -16,6 +16,7 @@ from unittest.mock import patch
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
+from frappe.utils.nestedset import get_root_of
 
 from pos_next.api import invoices
 from pos_next.tests.test_till_writes_need_the_till import (
@@ -275,6 +276,16 @@ class TestInvoiceHistoryPreview(FrappeTestCase):
 	def test_the_till_of_the_fixture_belongs_to_no_restaurant_so_it_has_no_tip_item(self):
 		self.assertFalse(invoices._tip_item_of(self.fx.profile))
 
+	def _own_item_group(self):
+		"""A leaf Item Group of the suite's own, under the real root of the tree: the first leaf group of a real site can
+		carry two Item Default rows for one company (the clone of an instance does), which ERPNext refuses."""
+		group = "_Test History Group"
+		if not frappe.db.exists("Item Group", group):
+			frappe.get_doc(
+				{"doctype": "Item Group", "item_group_name": group, "parent_item_group": get_root_of("Item Group")}
+			).insert(ignore_permissions=True)
+		return group
+
 	def test_an_internal_item_is_not_a_dish_of_the_preview(self):
 		if not frappe.db.has_column("Item", "is_internal_item"):
 			self.skipTest("The site has no Item.is_internal_item (a Custom Field of neoffice_theme)")
@@ -284,7 +295,7 @@ class TestInvoiceHistoryPreview(FrappeTestCase):
 				"doctype": "Item",
 				"item_code": INTERNAL_ITEM,
 				"item_name": INTERNAL_ITEM,
-				"item_group": frappe.db.get_value("Item Group", {"is_group": 0}, "name", order_by="lft"),
+				"item_group": self._own_item_group(),
 				"stock_uom": self.stock_uom,
 				"is_stock_item": 0,
 				"is_sales_item": 1,
@@ -362,13 +373,11 @@ class TestInvoiceHistoryPreview(FrappeTestCase):
 		self._order([("Soup", 1)])
 		self._assert_refused("Guest")
 
-	def test_a_website_user_assigned_to_the_till_gets_the_rows_without_their_lines(self):
-		# The row's header (customer, total, payments) goes out as upstream sends it to whoever the till lists;
-		# the lines go only to who may read the invoice, which a portal account may not.
-		name = self._order([("Soup", 1), ("Bread", 2)])
-		row = self._history(user=PORTAL_ASSIGNED)[name]
-		self.assertTrue(row.grand_total)
-		self.assertEqual((row.items_preview, row.items_count, row["items"]), ([], 0, []))
+	def test_a_website_user_assigned_to_the_till_is_refused_too(self):
+		# Since neoffice-maintenance#2082 the history answers to the till's accounts only (a system user of the till):
+		# a portal account, even one the profile lists, is refused. It used to get the rows without their lines.
+		self._order([("Soup", 1), ("Bread", 2)])
+		self._assert_refused(PORTAL_ASSIGNED)
 
 	def test_a_user_who_may_not_read_invoices_gets_the_rows_without_their_lines(self):
 		name = self._order([("Soup", 1), ("Bread", 2)])

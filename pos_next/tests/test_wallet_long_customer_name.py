@@ -98,9 +98,19 @@ class TestTheHookNeverFailsTheCustomer(unittest.TestCase):
 
 class TestACustomerWithALongName(FrappeTestCase):
 	def test_the_customer_is_created_and_has_its_wallet(self):
-		from pos_next.tests.test_till_writes_need_the_till import _till_fixture
+		from pos_next.tests.test_till_writes_need_the_till import (
+			CASHIER_ROLE,
+			OTHER_TILL,
+			TILL,
+			_till_fixture,
+			_user,
+		)
 
 		frappe.set_user("Administrator")
+		# The till of the fixture names this account: another suite makes it in its own set-up, so a site where this
+		# suite runs alone (a fresh CI site) did not have it ("Could not find Row #1: User").
+		_user(TILL, [CASHIER_ROLE], "System User")
+		_user(OTHER_TILL, ["Blogger"], "System User")
 		no_commit = patch.object(frappe.local.db, "commit")
 		no_commit.start()
 		self.addCleanup(no_commit.stop)
