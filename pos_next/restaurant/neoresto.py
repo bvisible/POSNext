@@ -149,6 +149,25 @@ def restaurant_reports():
 	return {"label": _("Restaurant"), "reports": [TIPS_REPORT]}
 
 
+def workspace_more():
+	"""What NeoResto declares about the rest of its space, to the theme's `neoffice_workspace_more` hook: the Reports card of its
+	overview, as the point of sale's overview has its own (product owner, 09.11.2026: « toute cette partie rapport, il n'y a pas du
+	tout dans le menu NeoResto »). The reports tab was there, the last of the tab bar; the overview, which a restaurateur opens
+	first, listed the settings only. The card holds the reports of that tab, in its order, so a report added to the tab reaches the card.
+	The theme drops the ones a reader may not open."""
+	if not active():
+		return {}
+	from neoffice_theme.workspace_spaces import retail
+
+	tab = _borrowed(retail.tabs(), "reports")
+	if not tab:
+		return {}
+	names = []
+	for group in [*(tab.get("groups") or []), restaurant_reports()]:
+		names += [name for name in group.get("reports") or [] if name not in names]
+	return {SPACE: {"side": {"reports": names}}}
+
+
 def _ours(tab, **changes):
 	"""A tab as NeoResto shows it: given with its page (the access model's bundle), whatever space declared it. The
 	tab is copied, never changed: the theme's own is as it was."""

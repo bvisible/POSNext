@@ -648,3 +648,6 @@ neoffice_business_apps = ["pos_next.restaurant.neoresto.business_apps"]
 neoffice_workspace_tabs = ["pos_next.restaurant.neoresto.tabs", "pos_next.till_settings.workspace.tabs"]
 # //// Neoffice — the point of sale's Tills tab gets a « New till » gesture that opens the page's dialog (06.11.2026)
 neoffice_tab_additions = ["pos_next.till_settings.workspace.tab_additions"]
+# //// Neoffice — the Reports card of NeoResto's overview (09.11.2026): a hook of neoffice_theme, not an extension point of POS Next.
+# //// The space had a reports tab and its overview listed the settings only. Upstream has no such hook.
+neoffice_workspace_more = ["pos_next.restaurant.neoresto.workspace_more"]
