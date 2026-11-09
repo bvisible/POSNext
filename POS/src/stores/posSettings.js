@@ -76,7 +76,8 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		allow_negative_stock: 0,
 		//// Neoffice — tips at a shop till: whether the change can become one, and whether it does by itself
 		enable_till_tips: 0,
-		till_tips_auto_detect: 0,
+		//// Neoffice — on, as in a restaurant (the server's default says the same)
+		till_tips_auto_detect: 1,
 		// Sales Persons
 		enable_sales_persons: "Disabled",
 		//// Neoffice — a product asks for its person only if the till follows the sales of products by person too (NeoSalon, lot G1)

@@ -599,7 +599,7 @@
    "label": "Enable tip management"
   },
   {
-   "default": "0",
+   "default": "1",
    "depends_on": "enable_till_tips",
    "description": "The overpayment is entered as the tip straight away; the cashier can correct or cancel it before validating. Off, the cashier turns the change into a tip with a button.",
    "fieldname": "till_tips_auto_detect",
@@ -1034,7 +1034,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-09 20:50:00.000000",
+ "modified": "2026-11-09 22:30:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "POS Settings",

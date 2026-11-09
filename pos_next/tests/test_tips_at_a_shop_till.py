@@ -251,7 +251,17 @@ class TestTipsAtAShopTill(TillSettingsCase):
 		for key in (KEY, "till_tips_auto_detect"):
 			with self.subTest(key=key):
 				self.assertIn(key, POS_SETTINGS_FIELDS)
-				self.assertEqual(DEFAULT_POS_SETTINGS[key], 0)
+		self.assertEqual(DEFAULT_POS_SETTINGS[KEY], 0)
+
+	def test_the_overpayment_becomes_the_tip_by_default_as_in_a_restaurant(self):
+		"""Tips are off until a till turns them on; once on, the overpayment is the tip and the cashier can decline it (product owner, 09.11.2026)."""
+		from pos_next.api.constants import DEFAULT_POS_SETTINGS
+
+		field = frappe.get_meta("POS Settings").get_field("till_tips_auto_detect")
+
+		self.assertEqual(str(field.default), "1")
+		self.assertEqual(DEFAULT_POS_SETTINGS["till_tips_auto_detect"], 1)
+		self.assertEqual(frappe.get_meta("POS Settings").get_field(KEY).default, "0")
 
 	# ------------------------------------------------------------------------------------------------ whose settings
 	def test_an_invoice_reads_the_tip_settings_of_its_till(self):

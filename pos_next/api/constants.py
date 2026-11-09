@@ -131,7 +131,8 @@ DEFAULT_POS_SETTINGS = {
 	"use_exact_amount": 0,
 	# //// Neoffice — see POS_SETTINGS_FIELDS
 	"enable_till_tips": 0,
-	"till_tips_auto_detect": 0,
+	# //// Neoffice — on, as in a restaurant: the overpayment is the tip, the cashier can decline it (NeoCoiffeur, product owner, 09.11.2026)
+	"till_tips_auto_detect": 1,
 	"decimal_precision": "2",
 	"allow_negative_stock": 0,
 	"enable_sales_persons": "Disabled",
