@@ -25030,3 +25030,15 @@ msgstr "Numérotation des tickets"
 #: pos_next/till_settings/registry.py:248
 msgid "Tiles"
 msgstr "Tuiles"
+
+#: POS/src/components/sale/ReturnInvoiceDialog.vue:602
+#: POS/src/components/sale/ReturnInvoiceDialog.vue:736
+#, python-brace-format
+msgid "+{0} tax per unit"
+msgstr "+{0} taxe par unité"
+
+#: POS/src/components/sale/ReturnInvoiceDialog.vue:593
+#: POS/src/components/sale/ReturnInvoiceDialog.vue:727
+#, python-brace-format
+msgid "incl. {0} tax per unit"
+msgstr "incl. {0} taxe par unité"

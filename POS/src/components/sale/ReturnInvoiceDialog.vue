@@ -583,13 +583,14 @@
 											class="inline-flex items-center px-1 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700"
 											>−{{ formatCurrency(item.discount_per_unit) }}</span
 										>
+										<!-- //// Neoffice — tax_per_unit is the VAT of ONE unit (like discount_per_unit and the `@ price/uom` beside it), but the pill read as the VAT of the whole line under the line total: a line of 2 units showed "incl. 1.09 tax" next to the total whose VAT is 2.17 (neoffice-maintenance#2085). The label now says "per unit". Remove if upstream words or computes the pill differently. -->
 										<span
 											v-if="
 												item.tax_per_unit > 0 && item.tax_included_in_rate
 											"
 											class="inline-flex items-center px-1 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700"
 											>{{
-												__("incl. {0} tax", [
+												__("incl. {0} tax per unit", [
 													formatCurrency(item.tax_per_unit),
 												])
 											}}</span
@@ -597,7 +598,11 @@
 										<span
 											v-else-if="item.tax_per_unit > 0"
 											class="inline-flex items-center px-1 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700"
-											>+{{ formatCurrency(item.tax_per_unit) }}</span
+											>{{
+												__("+{0} tax per unit", [
+													formatCurrency(item.tax_per_unit),
+												])
+											}}</span
 										>
 									</p>
 								</div>
@@ -711,6 +716,7 @@
 													formatCurrency(item.discount_per_unit)
 												}}</span
 											>
+											<!-- //// Neoffice — same as the desktop block above: tax_per_unit is the VAT of one unit (neoffice-maintenance#2085). -->
 											<span
 												v-if="
 													item.tax_per_unit > 0 &&
@@ -718,7 +724,7 @@
 												"
 												class="inline-flex items-center px-1 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700"
 												>{{
-													__("incl. {0} tax", [
+													__("incl. {0} tax per unit", [
 														formatCurrency(item.tax_per_unit),
 													])
 												}}</span
@@ -726,7 +732,11 @@
 											<span
 												v-else-if="item.tax_per_unit > 0"
 												class="inline-flex items-center px-1 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700"
-												>+{{ formatCurrency(item.tax_per_unit) }}</span
+												>{{
+													__("+{0} tax per unit", [
+														formatCurrency(item.tax_per_unit),
+													])
+												}}</span
 											>
 										</p>
 									</div>
