@@ -25105,3 +25105,96 @@ msgstr "La caisse demande qui a réalisé la vente et ne permet pas de clôturer
 #: pos_next/till_settings/registry.py:1332
 msgid "Who made the sale"
 msgstr "Qui a réalisé la vente"
+
+#. Description of the 'Common pot' (Check) field in DocType 'Restaurant Tip'
+#: pos_next/pos_next/doctype/restaurant_tip/restaurant_tip.json:85
+msgid "A tip that is nobody's, shared out by the salon (a shop till set to a common pot)"
+msgstr "Un pourboire qui n'est à personne, réparti par le salon (caisse de boutique réglée sur la cagnotte commune)"
+
+#. Description of the 'Sales Person' (Link) field in DocType 'Restaurant Tip'
+#: pos_next/pos_next/doctype/restaurant_tip/restaurant_tip.json:68
+msgid "At a shop till: the person the tip is for, from the sale's sales team (the user who rang it up is in Server)"
+msgstr "Sur une caisse de boutique : la personne à qui revient le pourboire, parmi les vendeurs de la vente (l'utilisateur qui l'a encaissée figure sous Serveur)"
+
+#. Option for the 'The tip goes to' (Select) field in DocType 'POS Settings'
+#. Label of a Check field in DocType 'Restaurant Tip'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:616
+#: pos_next/pos_next/doctype/restaurant_tip/restaurant_tip.json:88
+#: pos_next/pos_next/report/tips_by_server/tips_by_server.py:81
+#: pos_next/till_settings/registry.py:1361
+msgid "Common pot"
+msgstr "Cagnotte commune"
+
+#. Description of the 'Tip item' (Link) field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:620
+msgid "Made when tips are switched on"
+msgstr "Créé à l'activation des pourboires"
+
+#. Description of the 'Tip account' (Link) field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:629
+msgid "Made when tips are switched on: the transit account (2211) the tips are booked on, not turnover"
+msgstr "Créé à l'activation des pourboires : le compte de transit (2211) sur lequel les pourboires sont comptabilisés, et non le chiffre d'affaires"
+
+#. Option for the 'The tip goes to' (Select) field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:616
+msgid "Person who served"
+msgstr "Personne qui a servi"
+
+#. Description of the 'The tip goes to' (Select) field in DocType 'POS
+#. Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:612
+msgid "Person who served: the tip is shared between the people of the sale, each for their part of it. Common pot: one tip that is nobody's, shared out by the salon."
+msgstr "Personne qui a servi : le pourboire est partagé entre les personnes de la vente, chacune pour sa part. Cagnotte commune : un seul pourboire qui n'est à personne, réparti par le salon."
+
+#. Description of the 'The overpayment becomes the tip' (Check) field in
+#. DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:604
+msgid "The overpayment is entered as the tip straight away; the cashier can correct or cancel it before validating. Off, the cashier turns the change into a tip with a button."
+msgstr "Le trop-perçu est saisi directement comme pourboire ; le caissier peut le corriger ou l'annuler avant de valider. Désactivé, le caissier transforme la monnaie en pourboire à l'aide d'un bouton."
+
+#: pos_next/till_settings/registry.py:1340
+msgid "The overpayment is entered as the tip straight away; the cashier can correct or cancel it before validating. Off, the change shows a button that turns it into a tip. Shop till only."
+msgstr "Le trop-perçu est saisi directement comme pourboire ; le caissier peut le corriger ou l'annuler avant de valider. Désactivé, la monnaie affiche un bouton qui la transforme en pourboire. Caisse de boutique uniquement."
+
+#: pos_next/till_settings/registry.py:1360
+msgid "The person who served"
+msgstr "La personne qui a servi"
+
+#: pos_next/till_settings/registry.py:1353
+msgid "The person who served: the tip is shared between the people of the sale, each for their part of it (the user who rang it up when no one is named). Common pot: one tip that is nobody's, shared out by the salon."
+msgstr "La personne qui a servi : le pourboire est partagé entre les personnes de la vente, chacune pour sa part (l'utilisateur qui l'a encaissé lorsqu'aucune personne n'est désignée). Cagnotte commune : un seul pourboire qui n'est à personne, réparti par le salon."
+
+#. Description of the 'POS Profile' (Link) field in DocType 'Restaurant Tip'
+#: pos_next/pos_next/doctype/restaurant_tip/restaurant_tip.json:91
+msgid "The shop till that took it; a restaurant's tips name their restaurant instead"
+msgstr "La caisse de boutique qui l'a encaissé ; les pourboires d'un restaurant indiquent à la place leur restaurant"
+
+#. Label of a Select field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:615
+#: pos_next/till_settings/registry.py:1351
+msgid "The tip goes to"
+msgstr "Le pourboire revient à"
+
+#. Label of a Link field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:632
+msgid "Tip account"
+msgstr "Compte pourboires"
+
+#. Label of a Link field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:623
+msgid "Tip item"
+msgstr "Article pourboire"
+
+#. Description of the 'Enable tip management' (Check) field in DocType 'POS
+#. Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:596
+msgid "Tips at a shop till: when a customer pays more than the total, the difference can become a tip, kept apart from the turnover on a transit account and given to the person who served (a restaurant till has its restaurant's own settings)."
+msgstr "Pourboires en caisse de boutique : lorsqu'un client paie plus que le total, la différence peut devenir un pourboire, tenu à l'écart du chiffre d'affaires sur un compte de transit et remis à la personne qui a servi (une caisse de restaurant a ses propres réglages)."
+
+#: pos_next/till_tips.py:176
+msgid "Tips cannot be switched on: the tip account could not be made for the company of this till."
+msgstr "Impossible d'activer les pourboires : le compte pourboires n'a pas pu être créé pour la société de cette caisse."
+
+#: pos_next/till_settings/registry.py:1328
+msgid "When the customer pays more than the total, the difference can become a tip, kept apart from the turnover and given to the person who served. Shop till only."
+msgstr "Lorsque le client paie plus que le total, la différence peut devenir un pourboire, tenu à l'écart du chiffre d'affaires et remis à la personne qui a servi. Caisse de boutique uniquement."
