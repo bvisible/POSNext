@@ -14,6 +14,8 @@ The suite pins:
   employee's company, which the till then lists; a name another sales person has taken gets the employee's id;
 - that an employee with no account, or whose account holds no role of the till, gets none, and that one who is given the role later, or
   linked to such an account later, gets it then;
+- that an account that loses its role of the till has the Sales Person of its employee disabled and never deleted, and enabled again when
+  the role comes back, while one that only changes from one role of the till to the other keeps it;
 - that an employee who leaves has the Sales Person disabled and never deleted, and that one who comes back has it enabled again;
 - that a Sales Person an administrator disabled or deleted stays so while the employee's status does not change;
 - that turning the setting on makes the missing ones for the employees who have an account of the till, and does nothing the second time;
@@ -229,6 +231,56 @@ class TestTheSalesPersonsOfASalonAreMadeFromItsEmployees(FrappeTestCase):
 		user = frappe.get_doc("User", _email("TestSSAnna"))
 		user.append("roles", {"role": "Blogger"})
 		user.save(ignore_permissions=True)
+
+		self.assertIsNone(self.its_sales_person(employee.name))
+
+	# The role of the till changes after the fact
+
+	def test_an_account_that_loses_every_role_of_the_till_has_its_sales_person_disabled_and_not_deleted(self):
+		self.a_till_asks()
+		employee = self.an_employee()
+		self.assertEqual(self.its_sales_person(employee.name).enabled, 1)
+
+		user = frappe.get_doc("User", _email("TestSSAnna"))
+		user.remove_roles(CASHIER_ROLE)
+
+		person = self.its_sales_person(employee.name)
+		self.assertTrue(person)
+		self.assertEqual(person.enabled, 0)
+
+	def test_an_account_that_gets_the_role_back_has_its_sales_person_enabled_again_and_makes_no_second(self):
+		self.a_till_asks()
+		employee = self.an_employee()
+		user = frappe.get_doc("User", _email("TestSSAnna"))
+		user.remove_roles(CASHIER_ROLE)
+		self.assertEqual(self.its_sales_person(employee.name).enabled, 0)
+
+		user = frappe.get_doc("User", _email("TestSSAnna"))
+		user.add_roles(CASHIER_ROLE)
+
+		self.assertEqual(frappe.db.count("Sales Person", {"employee": employee.name}), 1)
+		self.assertEqual(self.its_sales_person(employee.name).enabled, 1)
+
+	def test_an_account_that_changes_from_one_role_of_the_till_to_the_other_keeps_its_sales_person(self):
+		self.a_till_asks()
+		employee = self.an_employee()
+
+		user = frappe.get_doc("User", _email("TestSSAnna"))
+		user.add_roles(MANAGER_ROLE)
+		user = frappe.get_doc("User", _email("TestSSAnna"))
+		user.remove_roles(CASHIER_ROLE)
+
+		self.assertEqual(self.its_sales_person(employee.name).enabled, 1)
+
+	def test_an_account_that_loses_the_role_changes_nothing_while_no_till_asks(self):
+		employee = self.an_employee()
+		self.a_till_asks()
+		frappe.db.set_value(
+			"POS Settings", {"pos_profile": self.fx.profile}, "enable_sales_persons", "Disabled"
+		)
+
+		user = frappe.get_doc("User", _email("TestSSAnna"))
+		user.remove_roles(CASHIER_ROLE)
 
 		self.assertIsNone(self.its_sales_person(employee.name))
 

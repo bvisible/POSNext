@@ -21,6 +21,8 @@ made here: her Sales Person is made by hand, or when her account gets the role.
   booked keep their person and their commission; an employee who comes back Active has it enabled again;
 - an administrator who disables or deletes the Sales Person of an Active employee is obeyed: nothing is remade until the status of
   the employee, or the role of the account, changes;
+- an account that loses its last role of the till has the Sales Person of its employee disabled, never deleted, and enabled again if the
+  role comes back;
 - turning the option on for a till makes the missing ones for the employees who already have an account of the till, and so does a
   migration of a site where it is already on (the patch of the same name).
 """
@@ -142,17 +144,25 @@ def employee_saved(doc, method=None) -> None:
 
 
 def user_saved(doc, method=None) -> None:
-	"""`User.on_update`: an account given a role of the till makes the sales person of its Active employee."""
+	"""`User.on_update`: an account that is given a role of the till makes (or re-enables) the sales person of its employee; one that loses
+	its last role of the till has it disabled, never deleted."""
 	if not option_is_on():
 		return
-	if not any(row.role in TILL_ROLES for row in doc.get("roles") or []):
-		return
+	has_now = any(row.role in TILL_ROLES for row in doc.get("roles") or [])
 	before = doc.get_doc_before_save()
-	if before and any(row.role in TILL_ROLES for row in before.get("roles") or []):
-		return  # the role was already there: what an administrator did with the sales person since is respected
-	for employee in frappe.get_all("Employee", filters={"user_id": doc.name, "status": ACTIVE}, pluck="name"):
-		if not sales_person_of(employee):
-			make_the_sales_person_of(employee)
+	had_before = bool(before) and any(row.role in TILL_ROLES for row in before.get("roles") or [])
+	if has_now == had_before:
+		return  # nothing changed for the till: what an administrator did with the sales person since is respected
+	for employee in frappe.get_all("Employee", filters={"user_id": doc.name}, fields=["name", "status"]):
+		person = sales_person_of(employee.name)
+		if not has_now:
+			if person:
+				_enable(person, False)
+		elif employee.status == ACTIVE:
+			if person:
+				_enable(person, True)
+			else:
+				make_the_sales_person_of(employee.name)
 
 
 def till_settings_saved(doc, method=None) -> None:
