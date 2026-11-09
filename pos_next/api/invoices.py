@@ -464,6 +464,29 @@ def get_payment_account(mode_of_payment, company):
 	)
 
 
+# //// Neoffice — no upstream equivalent. The rate ERPNext computes for a line under a Pricing Rule once the payment puts its
+# //// pricing_rules back (neoffice-maintenance#2081). update_invoice clears pricing_rules on the draft and keeps the rate the
+# //// till sent, so the draft read 949.00 for a 999.00 item under a fixed 50.00 offer, while the payment (calculate_item_values:
+# //// rate = price_list_rate x (1 - discount_percentage / 100) with the percentage rounded to the Percent field's two decimals,
+# //// 50.00 / 999.00 = 5.005005 % -> 5.01 %) invoices 948.95. The draft now carries the figure the payment computes, which is the
+# //// one the till's screen already shows (invoiceTaxes.js).
+def _settle_offer_line_like_the_payment(item):
+	"""Give an offer line the rate, percentage and discount that the payment will compute for it.
+
+	Only a line under a pricing rule with a percentage between 0 and 100 and a price list rate. A line whose rate was set by hand,
+	an offered line (100 %), a rate rule or a line under a fixed amount alone (no percentage) is left as the till sent it.
+	"""
+	list_rate = flt(item.get("price_list_rate"))
+	percentage = flt(item.get("discount_percentage"))
+	if not (list_rate > 0 and 0 < percentage < 100):
+		return
+	percentage = flt(percentage, item.precision("discount_percentage"))
+	rate = flt(list_rate * (1 - percentage / 100), item.precision("rate"))
+	item.discount_percentage = percentage
+	item.rate = rate
+	item.discount_amount = flt(list_rate - rate, item.precision("discount_amount"))
+
+
 # //// Neoffice — no upstream equivalent. ERPNext lists `pricing_rules` in force_item_fields, so
 # //// set_missing_item_details() overwrites it from get_item_details(); under
 # //// ignore_pricing_rule=1 that comes back empty and calculate_item_values() then drops the
@@ -1635,6 +1658,10 @@ def update_invoice(data):
 					applied_rule_names_seen.update(
 						r.strip() for r in str(item.pricing_rules).split(",") if r.strip()
 					)
+				# //// Neoffice — the draft keeps the figure the payment will compute for this line, not the rate the till sent
+				# //// (a cent or a few away on a fixed-amount offer, 949.00 against 948.95), see the function (neoffice-maintenance#2081).
+				if not is_manual_edit:
+					_settle_offer_line_like_the_payment(item)
 				item.pricing_rules = ""
 
 		if doctype == "Sales Invoice":

@@ -43,8 +43,11 @@ from pos_next.api.invoices import apply_offers, submit_invoice, update_invoice
 ITEM_A = "_PNXT_TEST_ITEM_A"  # Standard Selling: 50
 ITEM_B = "_PNXT_TEST_ITEM_B"  # Standard Selling: 80
 ITEM_C = "_PNXT_TEST_ITEM_C"  # Standard Selling: 20
+# //// Neoffice — a price that no round percentage divides: 50.00 off it is 5.005005 %, which the payment rounds to 5.01 %
+# //// (neoffice-maintenance#2081).
+ITEM_D = "_PNXT_TEST_ITEM_D"  # Standard Selling: 999
 
-ITEM_PRICES = {ITEM_A: 50.0, ITEM_B: 80.0, ITEM_C: 20.0}
+ITEM_PRICES = {ITEM_A: 50.0, ITEM_B: 80.0, ITEM_C: 20.0, ITEM_D: 999.0}
 
 CUSTOMER = "_PNXT_TEST_CUSTOMER"
 
@@ -595,6 +598,37 @@ class TestPromotions(FrappeTestCase):
 		self.assertAlmostEqual(flt(final.outstanding_amount), 0, places=2)
 		self.assertAlmostEqual(flt(final.items[0].rate), 40, places=2)
 		self.assertAlmostEqual(flt(final.items[0].discount_amount), 10, places=2)
+
+	def test_the_draft_of_a_fixed_discount_line_is_the_figure_the_payment_computes(self):
+		"""50.00 off a 999.00 item: the draft read 949.00 while the payment invoices 948.95 (neoffice-maintenance#2081)."""
+		import json
+
+		rule = _make_rule(
+			"_PNXT_TEST_DraftFixedAmt",
+			apply_on="Item Code",
+			items=[{"item_code": ITEM_D}],
+			rate_or_discount="Discount Amount",
+			price_or_product_discount="Price",
+			discount_amount=50,
+		)
+		payload = _cart_payload(self.ctx, [_line(self.ctx, ITEM_D, qty=1)])
+		_apply_offers_and_stamp(payload, [rule])
+		payload["payments"] = [{"mode_of_payment": self.ctx.mode_of_payment, "amount": 948.95}]
+
+		with as_role(_till_cashier(self.ctx.pos_profile)):
+			draft = update_invoice(json.dumps(payload))
+			draft_total = flt(draft["grand_total"])
+			draft_rate = flt(draft["items"][0]["rate"])
+			draft.pop("restaurant_note_name", None)
+			submit_invoice(
+				invoice=json.dumps(draft, default=str),
+				data=json.dumps({"change_amount": 0, "write_off_amount": 0}),
+			)
+
+		final = frappe.get_doc("Sales Invoice", draft["name"])
+		self.assertAlmostEqual(flt(final.grand_total), 948.95, places=2)
+		self.assertAlmostEqual(draft_total, flt(final.grand_total), places=2)
+		self.assertAlmostEqual(draft_rate, flt(final.items[0].rate), places=2)
 
 	def test_rate_override(self):
 		"""Rate-type rule overrides the price (item sold at 30 instead of 50)."""
