@@ -330,6 +330,14 @@ class TestTillEndpointsSweep(FrappeTestCase):
 			("apply_gift_card", lambda: gift_cards.apply_gift_card(NONE, 10)),
 			("get_gift_cards_from_invoice", lambda: gift_cards.get_gift_cards_from_invoice(fx.invoice)),
 			("get_offers", lambda: offers.get_offers(PROFILE)),
+			# The reads of the offers and of the wallet payments (neoffice-maintenance#1971): the till's, nobody else's
+			("validate_coupon", lambda: offers.validate_coupon(NONE)),
+			(
+				"apply_offers",
+				lambda: invoices.apply_offers(json.dumps({"pos_profile": PROFILE, "items": []})),
+			),
+			("apply_offers without a till", lambda: invoices.apply_offers(json.dumps({"items": []}))),
+			("get_wallet_payment_flags", lambda: pos_profile.get_wallet_payment_flags(json.dumps(["Cash"]))),
 			(
 				"get_customer_one_time_redemptions",
 				lambda: offers.get_customer_one_time_redemptions(fx.customer),

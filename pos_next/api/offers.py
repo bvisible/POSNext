@@ -706,6 +706,12 @@ def validate_coupon(coupon_code: str, customer: str = None, company: str = None)
 	Works with ERPNext Coupon Code directly.
 	For gift cards (pos_next_gift_card=1), also checks balance and supports splitting.
 	"""
+	# //// Neoffice — the till's reads answer to their caller (neoffice-maintenance#1971): a desk account that works at a till, like the other
+	# //// reads of the till. The payment calls this as the cashier (submit_invoice), and the guest's payment as the system.
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user()
+
 	# //// Neoffice — no "Please choose a customer" refusal here, unlike upstream v2.0.0 (PR #333):
 	# //// a gift card is a bearer card and stays valid without a customer, and a named promotional
 	# //// coupon is refused further down when the customer does not match (test_coupon_validation).

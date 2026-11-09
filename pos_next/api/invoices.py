@@ -5021,6 +5021,20 @@ def apply_offers(invoice_data: str | dict, selected_offers=None):
 	                When provided, results are filtered to only include these rules.
 	                ERPNext handles all conflict resolution based on priority.
 	"""
+	# //// Neoffice — the till's reads answer to their caller (neoffice-maintenance#1971). Before the try below, whose handler turns every
+	# //// exception into "Error applying offers": a refusal in it would be swallowed. The till is named by the payload when it names one;
+	# //// otherwise a desk account that works at some till. The guest's and the shop's pricing call this as the system.
+	till = invoice_data
+	if isinstance(till, str):
+		try:
+			till = json.loads(till or "{}")
+		except ValueError:
+			till = {}
+	till = till.get("pos_profile") if isinstance(till, dict) else None
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user(till if isinstance(till, str) else None)
+
 	try:
 		if isinstance(invoice_data, str):
 			invoice_data = json.loads(invoice_data or "{}")

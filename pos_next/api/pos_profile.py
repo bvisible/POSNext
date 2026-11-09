@@ -412,6 +412,12 @@ def get_wallet_payment_flags(methods):
 	"""
 	import json
 
+	# //// Neoffice — the till's reads answer to their caller (neoffice-maintenance#1971): upstream's function answered any signed-in account.
+	# //// A desk account that works at a till, like the other reads of the till.
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user()
+
 	if not methods:
 		return {}
 
