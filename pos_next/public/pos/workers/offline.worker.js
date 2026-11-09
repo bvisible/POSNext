@@ -1309,6 +1309,12 @@ async function getCachedPaymentMethods(posProfile) {
 async function cacheSalesPersons(salesPersons) {
 	try {
 		const db = await initDB();
+		//// Neoffice — the list REPLACES the rows of the till(s) it names: a person who has left the salon (disabled on the server) stayed in the offline picker for ever
+		//// (NeoSalon, lot G1, product owner, 09.11.2026). A list that names no till (older callers) only adds, as before.
+		const profiles = [...new Set(salesPersons.map((person) => person.pos_profile).filter(Boolean))];
+		for (const profile of profiles) {
+			await db.table("sales_persons").where("pos_profile").equals(profile).delete();
+		}
 		await db.table("sales_persons").bulkPut(salesPersons);
 
 		await db.table("settings").put({
