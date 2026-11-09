@@ -21,6 +21,8 @@ from pos_next.tests.test_till_writes_need_the_till import CASHIER_ROLE, OTHER_TI
 
 LUC = "_Test SP Luc"
 SONIA = "_Test SP Sonia"
+LUC_FIRST_NAME = "TestSPLuc"
+SONIA_FIRST_NAME = "TestSPSonia"
 
 
 def an_employee(first_name, company, user_id=None):
@@ -61,17 +63,30 @@ def a_sales_person(person_name, employee, company):
 	return person.name
 
 
+def _forget_the_people_of_the_suite():
+	"""The suite's own sales persons, employees and the user permission Frappe made for the cashier: gone before and after each test."""
+	for doctype, filters in (
+		("Sales Person", {"sales_person_name": ["in", [LUC, SONIA]]}),
+		("Employee", {"first_name": ["in", [LUC_FIRST_NAME, SONIA_FIRST_NAME]]}),
+	):
+		for name in frappe.get_all(doctype, filters=filters, pluck="name"):
+			frappe.delete_doc(doctype, name, ignore_permissions=True, force=True)
+	frappe.db.delete("User Permission", {"user": TILL, "allow": "Employee"})
+
+
 class TestTheTillOffersEverySalesPersonAndMarksTheCashiersOwn(FrappeTestCase):
 	def setUp(self):
 		super().setUp()
+		_forget_the_people_of_the_suite()
+		self.addCleanup(_forget_the_people_of_the_suite)
 		_user(TILL, [CASHIER_ROLE, "Sales User"], "System User")
 		_user(OTHER_TILL, ["Blogger"], "System User")  # the fixture's second till names it
 		self.fx = _till_fixture()
 		frappe.db.set_value(
 			"POS Settings", {"pos_profile": self.fx.profile}, "enable_sales_persons", "Single"
 		)
-		self.luc_employee = an_employee("TestSPLuc", self.fx.company, user_id=TILL)
-		self.sonia_employee = an_employee("TestSPSonia", self.fx.company)
+		self.luc_employee = an_employee(LUC_FIRST_NAME, self.fx.company, user_id=TILL)
+		self.sonia_employee = an_employee(SONIA_FIRST_NAME, self.fx.company)
 		self.luc = a_sales_person(LUC, self.luc_employee, self.fx.company)
 		self.sonia = a_sales_person(SONIA, self.sonia_employee, self.fx.company)
 		frappe.clear_cache(user=TILL)
