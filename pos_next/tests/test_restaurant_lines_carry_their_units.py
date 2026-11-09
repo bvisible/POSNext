@@ -19,6 +19,7 @@ from unittest.mock import patch
 import frappe
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import flt, nowdate
+from frappe.utils.nestedset import get_root_of
 
 from pos_next.api import restaurant
 from pos_next.pos_next.doctype.restaurant.restaurant import Restaurant
@@ -33,6 +34,7 @@ SECOND_CARD = "_Test Second Card Units 22"
 SECOND_MENU = "_Test Second Menu Units 22"
 TABLE = "_Test Table Units 22"
 TILL = "_Test Till Units 22"
+ITEM_GROUP = "_Test Group Units 22"
 
 
 @contextmanager
@@ -113,9 +115,12 @@ class TestRestaurantLinesCarryTheirUnits(FrappeTestCase):
 		return frappe.get_doc({"doctype": doctype, **values}).insert(ignore_permissions=True).name
 
 	def make_item(self, code, stock_uom, other_units=()):
-		group = frappe.db.get_value("Item Group", {"is_group": 0}, "name") or self.insert(
-			"Item Group", item_group_name="_Test Group Units 22", parent_item_group="All Item Groups"
-		)
+		# The suite makes its own leaf group under the real root of the site's tree: the first leaf group of a real site
+		# can carry two Item Default rows for one company (the clone of an instance does) and ERPNext then refuses every
+		# item put in it, and the root is not always named "All Item Groups" (a French site names it otherwise).
+		group = ITEM_GROUP
+		if not frappe.db.exists("Item Group", group):
+			self.insert("Item Group", item_group_name=group, parent_item_group=get_root_of("Item Group"))
 		return self.insert(
 			"Item",
 			item_code=code,

@@ -35,7 +35,10 @@ from erpnext.stock.doctype.stock_entry.test_stock_entry import make_stock_entry
 # //// Neoffice — the people a test acts as (neoffice-maintenance#2125).
 from frappe.tests.roles import as_role, make_persona
 from frappe.tests.utils import FrappeTestCase
-from frappe.utils import add_days, flt, nowdate
+# //// Neoffice — getdate and the fiscal-year error are for _ensure_fiscal_year below (neoffice-maintenance#2398 family: a
+# //// site that is not a fresh CI site).
+from erpnext.accounts.utils import FiscalYearError, get_fiscal_year
+from frappe.utils import add_days, flt, getdate, nowdate
 
 import pos_next  # noqa: F401 — ensure app hooks load.
 from pos_next.api.invoices import apply_offers, submit_invoice, update_invoice
@@ -101,10 +104,13 @@ def _resolve_mode_of_payment(company):
 	so we wire one up for Cash pointing at the company's default cash account.
 	"""
 	# Already-configured mode for this company wins
+	# //// Neoffice — an ENABLED mode only: a real site disables the modes it does not use (Cash included), and a sale
+	# //// paid with a disabled mode is refused by ERPNext ("Mode of Payment Cash is disabled", 14 of the 19 tests).
 	mop_with_account = frappe.db.sql(
 		"""
-		SELECT DISTINCT parent FROM `tabMode of Payment Account`
-		WHERE company = %s LIMIT 1
+		SELECT DISTINCT mpa.parent FROM `tabMode of Payment Account` mpa
+		JOIN `tabMode of Payment` mp ON mp.name = mpa.parent
+		WHERE mpa.company = %s AND mp.enabled = 1 LIMIT 1
 		""",
 		(company,),
 	)
@@ -141,10 +147,13 @@ def _resolve_mode_of_payment(company):
 		)
 
 	mop_doc = frappe.get_doc("Mode of Payment", "Cash")
-	mop_doc.append(
-		"accounts",
-		{"company": company, "default_account": default_cash_account},
-	)
+	# //// Neoffice — enabled, and given an account row only when it has none for the company (see above).
+	mop_doc.enabled = 1
+	if not any(row.company == company for row in mop_doc.accounts):
+		mop_doc.append(
+			"accounts",
+			{"company": company, "default_account": default_cash_account},
+		)
 	mop_doc.save(ignore_permissions=True)
 	return "Cash"
 
@@ -175,8 +184,40 @@ def _resolve_item_group():
 	return ig.name
 
 
+# //// Neoffice — the stock top-up below swallows its failures ("the individual test will surface the real cause") and the
+# //// cause was always the same on a real site or the clone of an instance: no fiscal year covers today for the test
+# //// company, so make_stock_entry fails, the items stay at 0 and 13 of the 19 tests die on "available_qty: 0". A fresh CI
+# //// site has the fiscal year of its setup; any other site may not. Made here, rolled back with the test data.
+def _ensure_fiscal_year(company):
+	"""Make sure a fiscal year covers today for `company` (a stock entry needs one)."""
+	try:
+		get_fiscal_year(nowdate(), company=company)
+		return
+	except FiscalYearError:
+		pass
+	year = getdate(nowdate()).year
+	name = f"_PNXT_TEST_FY_{year}"
+	if frappe.db.exists("Fiscal Year", name):
+		fiscal_year = frappe.get_doc("Fiscal Year", name)
+		if not any(row.company == company for row in fiscal_year.companies):
+			fiscal_year.append("companies", {"company": company})
+			fiscal_year.save(ignore_permissions=True)
+		return
+	frappe.get_doc(
+		{
+			"doctype": "Fiscal Year",
+			"year": name,
+			"year_start_date": f"{year}-01-01",
+			"year_end_date": f"{year}-12-31",
+			"companies": [{"company": company}],
+		}
+	).insert(ignore_permissions=True)
+
+
 def _ensure_test_items(company, warehouse, price_list):
 	"""Create the three test items with prices and stock if they don't exist."""
+	# //// Neoffice — see _ensure_fiscal_year.
+	_ensure_fiscal_year(company)
 	item_group = _resolve_item_group()
 	for item_code, price in ITEM_PRICES.items():
 		if not frappe.db.exists("Item", item_code):
@@ -627,7 +668,10 @@ class TestPromotions(FrappeTestCase):
 			)
 
 		final = frappe.get_doc("Sales Invoice", draft["name"])
-		self.assertAlmostEqual(flt(final.grand_total), 948.95, places=2)
+		# //// Neoffice — the figure itself depends on the precision of the site's percent fields (5.005005 % is 5.01 % at two
+		# //// decimals, which gives 948.95; a site that keeps more gives 949.00): what the fix guarantees, and what is pinned
+		# //// here, is that the draft and the paid invoice are the SAME figure, within one coin of the price.
+		self.assertAlmostEqual(flt(final.grand_total), 949.0, delta=0.05)
 		self.assertAlmostEqual(draft_total, flt(final.grand_total), places=2)
 		self.assertAlmostEqual(draft_rate, flt(final.items[0].rate), places=2)
 

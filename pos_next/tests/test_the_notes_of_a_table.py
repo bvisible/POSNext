@@ -39,6 +39,8 @@ from pos_next.restaurant import covers, devices, notes, open_orders, service_fam
 from pos_next.tests.test_the_covers_of_a_table import CoversCase
 from pos_next.tests.test_till_writes_need_the_till import CASHIER_ROLE, TILL, _sale, _user
 
+# What the payer hands over for a line of 10: more than the total of a site with a sales tax, however high it is
+TENDERED = 20
 OUTSIDER = "notes-outsider@yopmail.com"
 PORTAL = "notes-portal@yopmail.com"
 # What nobody can open as a note: zero, negative, too many, not a number, not a whole number
@@ -243,7 +245,10 @@ class NotesCase(CoversCase):
 			name=order,
 			restaurant_table=table or self.table_a,
 			items=[self.line(self.soup, status)],
-			payments=[{"mode_of_payment": self.fx.mode, "amount": 10}],
+			# The cash tendered covers the total whatever the site adds to the 10 of the line: a site with a default sales tax
+			# (every real one, and the clone of an instance) owes more than 10, and the till refuses a short sale on a
+			# profile without credit sales. The change is given back.
+			payments=[{"mode_of_payment": self.fx.mode, "amount": TENDERED}],
 			**changes,
 		)
 		if note is not None:
@@ -916,7 +921,9 @@ class TestPayingANote(NotesCase):
 
 	def test_a_payment_that_names_a_rank_nobody_can_open_is_refused_and_pays_nothing(self):
 		first, second = self.two_notes()
-		for sent in NOT_A_RANK:
+		# Not 0: the payment reads a rank of 0 as no rank (the default every draft read back carries, neoffice-maintenance#2329),
+		# and pays the note it finds (see test_the_payment_reads_zero_as_no_rank_because_a_draft_read_back_carries_it).
+		for sent in (value for value in NOT_A_RANK if isinstance(value, bool) or value != 0):
 			with self.subTest(sent=sent), self.assertRaises(frappe.ValidationError):
 				self.pay(second, note=sent)
 			self.assertCountEqual(self.open_drafts(), [first, second])

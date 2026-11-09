@@ -41,5 +41,9 @@ class TestAuditLog(FrappeTestCase):
 	def test_rule_is_system_manager_only(self):
 		"""If a cashier could edit rules, they could switch off their own gate."""
 		meta = frappe.get_meta("POS Authorization Rule")
-		roles = {perm.role for perm in meta.permissions}
+		# //// Neoffice — the roles that can CHANGE a rule, not every role that has a permission row: the fleet's permission
+		# //// sync adds a read-only row for the Admin role on every instance, and a reader cannot switch a gate off.
+		roles = {
+			perm.role for perm in meta.permissions if perm.get("write") or perm.get("create") or perm.get("delete")
+		}
 		self.assertEqual(roles, {"System Manager"})
