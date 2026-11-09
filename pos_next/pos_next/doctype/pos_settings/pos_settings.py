@@ -51,6 +51,11 @@ class POSSettings(Document):
 		# //// Neoffice — unchanged here, the till says what the site says (see _site_allows_negative_stock).
 		if self.is_new() or not self.has_value_changed("allow_negative_stock"):
 			self.allow_negative_stock = _site_allows_negative_stock()
+		# //// Neoffice — tips at a shop till (NeoCoiffeur study, product owner, 09.11.2026): switching them on makes the tip
+		# //// account and the tip item of the till's company, the way a restaurant does when it is saved (pos_next.till_tips).
+		from pos_next import till_tips
+
+		till_tips.provision(self)
 		# Guard against None values and validate discount percentage
 		# //// Neoffice — upstream passed these validation and notification texts to frappe.throw /
 		# //// frappe.msgprint as bare strings, which Frappe does not translate: they stayed English whatever

@@ -69,6 +69,11 @@
   "allow_return",
   "allow_partial_payment",
   "use_exact_amount",
+  "enable_till_tips",
+  "till_tips_auto_detect",
+  "till_tip_goes_to",
+  "till_tip_item",
+  "till_tip_account",
   "enable_sales_persons",
   "track_product_sales_by_person",
   "section_break_display",
@@ -587,6 +592,48 @@
    "label": "Use Exact Amount for Non-Cash"
   },
   {
+   "default": "0",
+   "description": "Tips at a shop till: when a customer pays more than the total, the difference can become a tip, kept apart from the turnover on a transit account and given to the person who served (a restaurant till has its restaurant's own settings).",
+   "fieldname": "enable_till_tips",
+   "fieldtype": "Check",
+   "label": "Enable tip management"
+  },
+  {
+   "default": "0",
+   "depends_on": "enable_till_tips",
+   "description": "The overpayment is entered as the tip straight away; the cashier can correct or cancel it before validating. Off, the cashier turns the change into a tip with a button.",
+   "fieldname": "till_tips_auto_detect",
+   "fieldtype": "Check",
+   "label": "The overpayment becomes the tip"
+  },
+  {
+   "default": "Person who served",
+   "depends_on": "enable_till_tips",
+   "description": "Person who served: the tip is shared between the people of the sale, each for their part of it. Common pot: one tip that is nobody's, shared out by the salon.",
+   "fieldname": "till_tip_goes_to",
+   "fieldtype": "Select",
+   "label": "The tip goes to",
+   "options": "Person who served\nCommon pot"
+  },
+  {
+   "depends_on": "enable_till_tips",
+   "description": "Made when tips are switched on",
+   "fieldname": "till_tip_item",
+   "fieldtype": "Link",
+   "label": "Tip item",
+   "options": "Item",
+   "read_only": 1
+  },
+  {
+   "depends_on": "enable_till_tips",
+   "description": "Made when tips are switched on: the transit account (2211) the tips are booked on, not turnover",
+   "fieldname": "till_tip_account",
+   "fieldtype": "Link",
+   "label": "Tip account",
+   "options": "Account",
+   "read_only": 1
+  },
+  {
    "default": "Disabled",
    "description": "Disabled: No sales person selection. Single: Select one sales person (100%). Multiple: Select multiple with allocation percentages.",
    "fieldname": "enable_sales_persons",
@@ -987,7 +1034,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-09 20:20:59.000000",
+ "modified": "2026-11-09 20:50:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "POS Settings",

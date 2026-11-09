@@ -28,6 +28,9 @@ POS_SETTINGS_FIELDS = [
 	"allow_return",
 	"allow_partial_payment",
 	"use_exact_amount",
+	# //// Neoffice — tips at a shop till (pos_next.till_tips): whether the change can become one, and how
+	"enable_till_tips",
+	"till_tips_auto_detect",
 	"decimal_precision",
 	"allow_negative_stock",
 	"enable_sales_persons",
@@ -126,6 +129,9 @@ DEFAULT_POS_SETTINGS = {
 	"allow_write_off_change": 0,  # Derived from POS Profile
 	"allow_partial_payment": 0,
 	"use_exact_amount": 0,
+	# //// Neoffice — see POS_SETTINGS_FIELDS
+	"enable_till_tips": 0,
+	"till_tips_auto_detect": 0,
 	"decimal_precision": "2",
 	"allow_negative_stock": 0,
 	"enable_sales_persons": "Disabled",

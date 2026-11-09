@@ -16,6 +16,10 @@ class RestaurantTip(Document):
 		# //// not a restaurant till, as for any record that names none).
 		if self.restaurant:
 			return
+		# A tip taken at a SHOP till (it names its till) belongs to no restaurant, whatever restaurants the site has: it would
+		# otherwise be counted in the default restaurant's tips (tips at a shop till, NeoCoiffeur study, 09.11.2026).
+		if self.pos_profile and not self.restaurant_table:
+			return
 		if self.restaurant_table:
 			self.restaurant = scope.restaurant_of_record("Restaurant Table", self.restaurant_table)
 			return

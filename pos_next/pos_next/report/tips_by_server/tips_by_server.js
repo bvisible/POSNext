@@ -22,6 +22,12 @@ frappe.query_reports["Tips by Server"] = {
 			options: "Restaurant",
 		},
 		{
+			fieldname: "pos_profile",
+			label: __("POS Profile"),
+			fieldtype: "Link",
+			options: "POS Profile",
+		},
+		{
 			fieldname: "status",
 			label: __("Status"),
 			fieldtype: "Select",

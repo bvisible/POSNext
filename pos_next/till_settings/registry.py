@@ -259,6 +259,8 @@ _GROUPS = (
 	# //// The group is the question the salon's cashier reads (« Qui a réalisé la prestation ? », canvas « Caisse 3 »), not upstream's « Sales persons ».
 	Group("sales_persons", "sales", _lt("Who did the work?"), 2),
 	Group("gift_cards", "sales", _lt("Gift cards"), 3),
+	# //// Neoffice — tips at a shop till (NeoCoiffeur study, product owner, 09.11.2026), the restaurant's mechanism opened to the shops
+	Group("till_tips", "sales", _lt("Tips"), 3),
 	# Stock
 	Group("warehouse", "stock", _lt("Warehouse"), 1),
 	Group("stock_sync", "stock", _lt("Stock sync"), 2, "device"),
@@ -1315,6 +1317,51 @@ SETTINGS = (
 		doctype=POS_SETTINGS,
 		min=0,
 	),
+	# //// Neoffice — tips at a shop till (NeoCoiffeur study, product owner, 09.11.2026: « les pourboires, comme dans le restaurant […]
+	# //// attribués à la personne qui a servi »). The restaurant's mechanism, opened to the shops: the overpayment becomes a line booked on
+	# //// the transit account, and a record says whose it is (pos_next.till_tips). A shop till only: a restaurant till has its restaurant's.
+	Setting(
+		"enable_till_tips",
+		"till_tips",
+		_lt("Enable tip management"),
+		_lt(
+			"When the customer pays more than the total, the difference can become a tip, kept apart from the turnover"
+			" and given to the person who served. Shop till only."
+		),
+		"check",
+		doctype=POS_SETTINGS,
+		till=SHOP,
+	),
+	Setting(
+		"till_tips_auto_detect",
+		"till_tips",
+		_lt("The overpayment becomes the tip"),
+		_lt(
+			"The overpayment is entered as the tip straight away; the cashier can correct or cancel it before validating."
+			" Off, the change shows a button that turns it into a tip. Shop till only."
+		),
+		"check",
+		doctype=POS_SETTINGS,
+		till=SHOP,
+		depends_on=(on("enable_till_tips"),),
+	),
+	Setting(
+		"till_tip_goes_to",
+		"till_tips",
+		_lt("The tip goes to"),
+		_lt(
+			"The person who served: the tip is shared between the people of the sale, each for their part of it (the user"
+			" who rang it up when no one is named). Common pot: one tip that is nobody's, shared out by the salon."
+		),
+		"segmented",
+		doctype=POS_SETTINGS,
+		till=SHOP,
+		options=(
+			("Person who served", _lt("The person who served", context="Tips")),
+			("Common pot", _lt("Common pot", context="Tips")),
+		),
+		depends_on=(on("enable_till_tips"),),
+	),
 	Setting(
 		"allow_sales_order",
 		"sales_orders",
@@ -2103,6 +2150,7 @@ _OLD_TILL = "an option of ERPNext's own till page, which this till does not use"
 _RESTAURANT_FORM = "set on the restaurant's own form, not a setting of a till"
 # //// Neoffice — the key of the shop's QR code is set by the system the first time it is asked for (scanning in the shop)
 _SET_BY_THE_SYSTEM = "set by the system the first time the shop's QR code is asked for: nobody types it"
+_MADE_WITH_THE_TIPS = "made by the system when tips are switched on (pos_next.till_tips.provision): the tip item and its transit account"
 NOT_LISTED = {
 	POS_SETTINGS: {
 		"enabled": (
@@ -2110,6 +2158,9 @@ NOT_LISTED = {
 			" keeps the two in step, so the page asks once"
 		),
 		"shop_scan_key": _SET_BY_THE_SYSTEM,
+		# //// Neoffice — made when tips are switched on (pos_next.till_tips.provision), nobody types them
+		"till_tip_item": _MADE_WITH_THE_TIPS,
+		"till_tip_account": _MADE_WITH_THE_TIPS,
 		"allow_return": _INERT,
 		"default_card_view": _INERT,
 		"show_customer_balance": _INERT,

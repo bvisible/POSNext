@@ -11,6 +11,10 @@
   "restaurant_table",
   "column_break_1",
   "server",
+  "sales_person",
+  "employee",
+  "common_pot",
+  "pos_profile",
   "amount",
   "payment_method",
   "payment_intent",
@@ -59,6 +63,37 @@
    "label": "Server",
    "options": "User",
    "in_list_view": 1
+  },
+  {
+   "description": "At a shop till: the person the tip is for, from the sale's sales team (the user who rang it up is in Server)",
+   "fieldname": "sales_person",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Sales Person",
+   "options": "Sales Person"
+  },
+  {
+   "fetch_from": "sales_person.employee",
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Employee",
+   "options": "Employee",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "A tip that is nobody's, shared out by the salon (a shop till set to a common pot)",
+   "fieldname": "common_pot",
+   "fieldtype": "Check",
+   "label": "Common pot"
+  },
+  {
+   "description": "The shop till that took it; a restaurant's tips name their restaurant instead",
+   "fieldname": "pos_profile",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "POS Profile",
+   "options": "POS Profile"
   },
   {
    "fieldname": "amount",
@@ -114,7 +149,7 @@
  ],
  "index_web_link_preview": 0,
  "links": [],
- "modified": "2026-11-04 07:12:16.000000",
+ "modified": "2026-11-09 20:20:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "Restaurant Tip",

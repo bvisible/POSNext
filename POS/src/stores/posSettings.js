@@ -74,6 +74,9 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		// Miscellaneous
 		input_qty: 0,
 		allow_negative_stock: 0,
+		//// Neoffice — tips at a shop till: whether the change can become one, and whether it does by itself
+		enable_till_tips: 0,
+		till_tips_auto_detect: 0,
 		// Sales Persons
 		enable_sales_persons: "Disabled",
 		//// Neoffice — defaults for settings upstream does not have: the customer-facing second screen
@@ -234,6 +237,11 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 	// Computed - Miscellaneous
 	const inputQty = computed(() => Boolean(settings.value.input_qty));
 	const allowNegativeStock = computed(() => Boolean(settings.value.allow_negative_stock));
+
+	//// Neoffice — tips at a shop till (NeoCoiffeur study, 09.11.2026): the restaurant store says it for a restaurant till, these two
+	//// say it for a shop till (the till payment dialog asks both, see PaymentDialog.vue).
+	const tillTipsEnabled = computed(() => Boolean(Number(settings.value.enable_till_tips)));
+	const tillTipsAutoDetect = computed(() => Boolean(Number(settings.value.till_tips_auto_detect)));
 
 	// Computed - Sales Persons
 	//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
@@ -411,6 +419,9 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 			allow_change_posting_date: 0,
 			input_qty: 0,
 			allow_negative_stock: 0,
+			//// Neoffice — tips at a shop till (see the defaults above)
+			enable_till_tips: 0,
+			till_tips_auto_detect: 0,
 			enable_sales_persons: "Disabled",
 			//// Neoffice — resetSettings has to zero OUR fields too, otherwise a logout left the previous
 			//// terminal's customer-display and restaurant configuration in place for the next cashier
@@ -598,6 +609,10 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		// Computed - Miscellaneous
 		inputQty,
 		allowNegativeStock,
+
+		//// Neoffice — tips at a shop till (see the computeds above)
+		tillTipsEnabled,
+		tillTipsAutoDetect,
 
 		// Computed - Sales Persons
 		enableSalesPersons,

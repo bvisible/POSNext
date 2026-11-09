@@ -1079,7 +1079,8 @@
 										<!-- //// Neoffice — feat: add tip/pourboire management for restaurant module (a750c5e3, 2026-03-23). -->
 										{{ formatCurrency(changeAmount - tipAmount) }}
 									</div>
-									<div v-if="restaurantStore?.tipsEnabled" class="mt-1">
+									<!-- //// Neoffice — the button is offered wherever the till takes tips, a shop till as well (see tipsAvailable) -->
+									<div v-if="tipsAvailable" class="mt-1">
 										<button
 											@click="tipAmount = changeAmount"
 											class="text-[10px] text-amber-600 hover:text-amber-800 underline"
@@ -2591,6 +2592,8 @@ import {
 } from "@/utils/terminalPaymentGuard";
 //// Neoffice — the sales person a sale starts with (09.11.2026).
 import { mySalesPerson } from "@/utils/mySalesPerson";
+//// Neoffice — which tip settings the dialog follows, a restaurant till's or a shop till's (tips at a shop till, 09.11.2026)
+import { tipRules } from "@/utils/tillTips";
 //// Neoffice — the method of the « exact » button (see the file's header).
 import { exactPaymentMethod } from "@/utils/exactPayment";
 //// Neoffice — the payments typed so far, with the cash ones taken back before the ticket is closed (NeoResto lot 1, product owner, 05.11.2026; utils/paymentEntries.js)
@@ -2705,8 +2708,23 @@ function onSplitAmountEdit(event) {
 
 // Tip state
 const tipAmount = ref(0);
+//// Neoffice — tips at a shop till (NeoCoiffeur study, product owner, 09.11.2026: « les pourboires, comme dans le restaurant »).
+//// A restaurant till keeps its restaurant's tip settings; a shop till reads its own (POS Settings). The server reads the same
+//// two places for the same till (pos_next.api.invoices._tip_settings_of), so the screen never offers a tip the server would drop.
+const tipRulesOfTheTill = computed(() =>
+	tipRules({
+		restaurantMode: restaurantStore.isEnabled,
+		restaurantTips: restaurantStore.tipsEnabled,
+		restaurantAutoDetect: restaurantStore.autoDetectTip,
+		tillTips: settingsStore.tillTipsEnabled,
+		tillAutoDetect: settingsStore.tillTipsAutoDetect,
+	})
+);
+const tipsAvailable = computed(() => tipRulesOfTheTill.value.available);
+const tipsAutoDetect = computed(() => tipRulesOfTheTill.value.autoDetect);
 const showTipDetection = computed(() => {
-	return restaurantStore.tipsEnabled && restaurantStore.autoDetectTip && tipAmount.value > 0;
+	//// Neoffice — the tip settings the till follows, a restaurant's or a shop till's (see tipsAvailable above)
+	return tipsAvailable.value && tipsAutoDetect.value && tipAmount.value > 0;
 });
 
 const { showWarning, showError, showSuccess, showInfo } = useToast();
@@ -3679,7 +3697,8 @@ const changeAmount = computed(() => {
 watch(
 	() => changeAmount.value,
 	(newChange) => {
-		if (restaurantStore.tipsEnabled && restaurantStore.autoDetectTip && newChange > 0) {
+		//// Neoffice — the tip settings the till follows, a restaurant's or a shop till's (see tipsAvailable)
+		if (tipsAvailable.value && tipsAutoDetect.value && newChange > 0) {
 			tipAmount.value = newChange;
 		} else {
 			tipAmount.value = 0;

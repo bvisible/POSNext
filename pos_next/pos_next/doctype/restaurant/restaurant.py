@@ -45,127 +45,20 @@ class Restaurant(Document):
 		if not 1 <= cint(self.ticket_number_digits) <= 9:
 			frappe.throw(_("The ticket number must have between 1 and 9 digits"))
 
+	# //// Neoffice — the account and the item are made by pos_next.till_tips, which a shop till's tips use as well: one
+	# //// function each, so that a restaurant and a shop book a tip the same way (NeoCoiffeur study, 09.11.2026).
 	def _ensure_tip_account(self):
 		"""Create the tip transit account (2211) in the restaurant's company if it doesn't exist."""
 		if self.tip_account:
 			return
+		from pos_next import till_tips
 
-		company = self.company
-		if not company:
-			return
-
-		# Check if account 2211 already exists
-		existing = frappe.db.get_value("Account", {"account_number": "2211", "company": company}, "name")
-		if existing:
-			self.tip_account = existing
-			return
-
-		# Find parent account (2210 or 220)
-		parent = frappe.db.get_value("Account", {"account_number": "2210", "company": company}, "name")
-		if not parent:
-			parent = frappe.db.get_value("Account", {"account_number": "220", "company": company}, "name")
-		if not parent:
-			frappe.msgprint(_("Could not find parent account 2210 or 220. Please set the tip account manually."))
-			return
-
-		# Ensure parent is a group
-		if not frappe.db.get_value("Account", parent, "is_group"):
-			frappe.db.set_value("Account", parent, "is_group", 1)
-
-		account = frappe.get_doc(
-			{
-				"doctype": "Account",
-				"account_name": _("Tip Transit Account"),
-				"account_number": "2211",
-				"parent_account": parent,
-				"company": company,
-				"account_type": "Income Account",
-				"is_group": 0,
-			}
-		)
-		account.insert(ignore_permissions=True)
-		self.tip_account = account.name
-		frappe.msgprint(_("Created tip transit account: {0}").format(account.name))
+		self.tip_account = till_tips.ensure_tip_account(self.company) or self.tip_account
 
 	def _ensure_tip_item(self):
 		"""Create the TIP service item if it doesn't exist."""
 		if self.tip_item:
 			return
+		from pos_next import till_tips
 
-		# Check if TIP item already exists
-		if frappe.db.exists("Item", "TIP"):
-			self.tip_item = "TIP"
-			# Ensure 0% tax template is assigned even on existing item
-			item = frappe.get_doc("Item", "TIP")
-			if not item.taxes:
-				self._assign_zero_tax_template(item)
-			return
-
-		# Ensure "Services" item group exists
-		if not frappe.db.exists("Item Group", "Services"):
-			frappe.get_doc(
-				{
-					"doctype": "Item Group",
-					"item_group_name": "Services",
-					"parent_item_group": "All Item Groups",
-				}
-			).insert(ignore_permissions=True)
-
-		# Create TIP item (marked as internal — hidden from user lists/searches)
-		item = frappe.get_doc(
-			{
-				"doctype": "Item",
-				"item_code": "TIP",
-				"item_name": _("Tip"),
-				"item_group": "Services",
-				"is_stock_item": 0,
-				"standard_rate": 0,
-				"is_internal_item": 1,
-				"description": _("Gratuity", context="Restaurant tip line"),
-			}
-		)
-
-		# Set default income account to the tip transit account
-		if self.tip_account:
-			item.append(
-				"item_defaults",
-				{
-					"company": self.company,
-					"income_account": self.tip_account,
-				},
-			)
-
-		item.insert(ignore_permissions=True)
-		self.tip_item = "TIP"
-
-		# Auto-assign a 0% tax template (any Item Tax Template whose rates are all 0) if one exists
-		self._assign_zero_tax_template(item)
-
-		frappe.msgprint(_("Created tip item: TIP"))
-
-	def _assign_zero_tax_template(self, item):
-		"""Assign a 0% tax template to the TIP item if available."""
-		# Find an Item Tax Template where all tax rates are 0
-		zero_tax_templates = frappe.db.sql(
-			"""
-			SELECT DISTINCT parent
-			FROM `tabItem Tax Template Detail`
-			WHERE tax_rate = 0
-			AND parent IN (
-				SELECT name FROM `tabItem Tax Template`
-				WHERE name NOT IN (
-					SELECT DISTINCT parent
-					FROM `tabItem Tax Template Detail`
-					WHERE tax_rate != 0
-				)
-			)
-		""",
-			pluck=True,
-		)
-
-		if not zero_tax_templates:
-			return
-
-		template_name = zero_tax_templates[0]
-		item.append("taxes", {"item_tax_template": template_name})
-		item.save(ignore_permissions=True)
+		self.tip_item = till_tips.ensure_tip_item(self.company, self.tip_account)

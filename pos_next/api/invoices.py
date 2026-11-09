@@ -3350,6 +3350,19 @@ def _restaurant_settings_of(invoice_doc):
 	return get_restaurant_settings_for_profile(invoice_doc.get("pos_profile"))
 
 
+# //// Neoffice — added (no upstream equivalent): the tip settings of an invoice's till (tips at a shop till, NeoCoiffeur
+# //// study, product owner, 09.11.2026). A restaurant till has its restaurant's, exactly as before; a shop till has its own
+# //// POS Settings'. Both come in the same shape (`enable_tips`, `tip_item`, `tip_account`), so the tip line is the same.
+def _tip_settings_of(invoice_doc):
+	"""The tip settings of the till an invoice was rung up at (empty when it takes no tips)."""
+	restaurant = _restaurant_settings_of(invoice_doc)
+	if restaurant:
+		return restaurant
+	from pos_next import till_tips
+
+	return till_tips.tip_settings_of_till(invoice_doc.get("pos_profile"))
+
+
 # //// preserve and cumulate TIP items across POS update/submit cycles — 3574de5 + 3f9ee06 (+2 more)
 def _extract_tip_items(invoice_doc):
 	"""Extract and return TIP items from an invoice before it gets overwritten.
@@ -3357,8 +3370,8 @@ def _extract_tip_items(invoice_doc):
 	Used to preserve guest-paid tips when the POS rebuilds the items array.
 	Returns a list of dicts suitable for invoice_doc.append("items", ...).
 	"""
-	# //// Neoffice — the tip item is the one of the invoice's restaurant (NeoResto lot 1, task 1).
-	tip_item_code = _restaurant_settings_of(invoice_doc).get("tip_item")
+	# //// Neoffice — the tip item is the one of the invoice's restaurant (NeoResto lot 1, task 1), or of its shop till.
+	tip_item_code = _tip_settings_of(invoice_doc).get("tip_item")
 
 	if not tip_item_code:
 		return []
@@ -3389,8 +3402,8 @@ def _add_tip_to_invoice(invoice_doc, tip_amount, data, record_amount=None):
 	    record_amount: Amount for the Restaurant Tip record (POS tip only, excludes prior guest tips).
 	                   If None, uses tip_amount. Pass 0 to skip creating a record.
 	"""
-	# //// Neoffice — the tip settings are the ones of the invoice's restaurant (NeoResto lot 1, task 1).
-	settings = _restaurant_settings_of(invoice_doc)
+	# //// Neoffice — the tip settings are the ones of the invoice's restaurant (NeoResto lot 1, task 1), or of its shop till.
+	settings = _tip_settings_of(invoice_doc)
 	if not settings.get("enable_tips") or not settings.get("tip_item"):
 		return
 
@@ -3428,22 +3441,26 @@ def _add_tip_to_invoice(invoice_doc, tip_amount, data, record_amount=None):
 				max_payment = max(invoice_doc.payments, key=lambda p: flt(p.amount))
 				payment_method = max_payment.mode_of_payment or "Cash"
 
-			tip_record = frappe.get_doc(
-				{
-					"doctype": "Restaurant Tip",
-					# //// Neoffice — the tip belongs to the restaurant whose settings priced it (NeoResto lot 1, task 2)
-					"restaurant": settings.get("name"),
-					"tip_date": frappe.utils.today(),
-					"sales_invoice": invoice_doc.name,
-					"restaurant_table": data.get("restaurant_table")
-					or getattr(invoice_doc, "restaurant_table", None),
-					"server": frappe.session.user,
-					"amount": tip_for_record,
-					"payment_method": payment_method,
-					"status": "Collected",
-				}
-			)
-			tip_record.insert(ignore_permissions=True)
+			# //// Neoffice — one record per person the tip is for: a restaurant's is the user who rang it up (as always); at a
+			# //// shop till it is the people of the sale, each for their part, or a common pot (pos_next.till_tips.shares_of).
+			from pos_next import till_tips
+
+			for share in till_tips.shares_of(invoice_doc, tip_for_record, settings):
+				tip_record = frappe.get_doc(
+					{
+						"doctype": "Restaurant Tip",
+						# //// Neoffice — the tip belongs to the restaurant whose settings priced it (NeoResto lot 1, task 2)
+						"restaurant": settings.get("name"),
+						"tip_date": frappe.utils.today(),
+						"sales_invoice": invoice_doc.name,
+						"restaurant_table": data.get("restaurant_table")
+						or getattr(invoice_doc, "restaurant_table", None),
+						"payment_method": payment_method,
+						"status": "Collected",
+						**share,
+					}
+				)
+				tip_record.insert(ignore_permissions=True)
 		except Exception as e:
 			frappe.log_error("Tip tracking record creation failed", str(e))
 
