@@ -73,12 +73,13 @@ def get_data(filters):
 	names = _names_of({row["server"] for row in rows.values() if row["server"]})
 	people = _sales_person_names_of({row["sales_person"] for row in rows.values() if row["sales_person"]})
 	for row in rows.values():
+		common_pot = row.pop("common_pot")  # not a column: every key of a line is one
 		# The person a tip is for, else the user who rang it up, else the common pot
 		row["server_name"] = (
 			people.get(row["sales_person"])
 			or names.get(row["server"])
 			or row["server"]
-			or (_("Common pot") if row["common_pot"] else _("No server"))
+			or (_("Common pot") if common_pot else _("No server"))
 		)
 		row["total"] = row["collected"] + row["distributed"]
 	return sorted(
