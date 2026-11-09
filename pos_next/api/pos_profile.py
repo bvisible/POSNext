@@ -506,9 +506,17 @@ def get_sales_persons(pos_profile: str | None = None):
 	mine = set(
 		frappe.get_all("Employee", filters={"user_id": frappe.session.user, "status": "Active"}, pluck="name")
 	)
-	# //// Neoffice — the flag is added to every row (see above)
+	# //// Neoffice — what a colleague earns is not for a cashier to read: the picker showed « 10 % comm. » beside each name, and in a
+	# //// salon a hairdresser would read the pay terms of the others (product owner, 09.11.2026: « oui, le cacher »). The rate is
+	# //// kept for the till managers; the till never needs it (the server resolves every rate itself when the invoice is saved).
+	from pos_next.api.cash_entry import is_till_manager
+
+	may_read_the_rates = is_till_manager()
+	# //// Neoffice — the flag is added to every row (see above), and the rate withheld from whoever may not read it
 	for row in sales_persons:
 		row["is_mine"] = 1 if row.get("employee") and row["employee"] in mine else 0
+		if not may_read_the_rates:
+			row["commission_rate"] = None
 
 	return sales_persons
 

@@ -13,10 +13,12 @@ cashier, that each row says whether it is the cashier's (`is_mine`), that a user
 flag which lifts the user-permission filter is put back after the call.
 """
 
+from unittest.mock import patch
+
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from pos_next.api import pos_profile
+from pos_next.api import invoices, pos_profile
 from pos_next.tests.test_till_writes_need_the_till import CASHIER_ROLE, OTHER_TILL, TILL, _till_fixture, _user
 
 LUC = "_Test SP Luc"
@@ -44,7 +46,7 @@ def an_employee(first_name, company, user_id=None):
 	)
 
 
-def a_sales_person(person_name, employee, company):
+def a_sales_person(person_name, employee, company, commission_rate=0):
 	root = frappe.get_all(
 		"Sales Person", filters={"is_group": 1, "parent_sales_person": ["is", "not set"]}, pluck="name"
 	)[0]
@@ -56,6 +58,7 @@ def a_sales_person(person_name, employee, company):
 			"is_group": 0,
 			"enabled": 1,
 			"employee": employee,
+			"commission_rate": commission_rate,
 		}
 	).insert(ignore_permissions=True)
 	if frappe.db.has_column("Sales Person", "company"):
@@ -87,8 +90,8 @@ class TestTheTillOffersEverySalesPersonAndMarksTheCashiersOwn(FrappeTestCase):
 		)
 		self.luc_employee = an_employee(LUC_FIRST_NAME, self.fx.company, user_id=TILL)
 		self.sonia_employee = an_employee(SONIA_FIRST_NAME, self.fx.company)
-		self.luc = a_sales_person(LUC, self.luc_employee, self.fx.company)
-		self.sonia = a_sales_person(SONIA, self.sonia_employee, self.fx.company)
+		self.luc = a_sales_person(LUC, self.luc_employee, self.fx.company, commission_rate=10)
+		self.sonia = a_sales_person(SONIA, self.sonia_employee, self.fx.company, commission_rate=15)
 		frappe.clear_cache(user=TILL)
 		self.addCleanup(frappe.set_user, "Administrator")
 
@@ -147,3 +150,45 @@ class TestTheTillOffersEverySalesPersonAndMarksTheCashiersOwn(FrappeTestCase):
 		)
 
 		self.assertEqual(self.offered(), {})
+
+	def test_a_cashier_does_not_read_what_the_others_earn(self):
+		offered = self.offered()
+
+		self.assertEqual({row["commission_rate"] for row in offered.values()}, {None})
+
+	def test_a_till_manager_reads_the_rates(self):
+		with patch("pos_next.api.cash_entry.is_till_manager", return_value=True):
+			offered = self.offered()
+
+		self.assertEqual(float(offered[self.luc]["commission_rate"]), 10)
+		self.assertEqual(float(offered[self.sonia]["commission_rate"]), 15)
+
+	def test_the_commission_of_a_sale_does_not_depend_on_the_rate_the_till_sends(self):
+		"""The picker no longer carries the rate: the invoice must be priced from the master, whatever the till sends."""
+		frappe.db.set_value(
+			"POS Settings", {"pos_profile": self.fx.profile}, "enable_sales_persons", "Single"
+		)
+		frappe.set_user(TILL)
+		sale = frappe.get_doc(
+			{
+				"doctype": "Sales Invoice",
+				"company": self.fx.company,
+				"customer": self.fx.customer,
+				"currency": self.fx.currency,
+				"selling_price_list": self.fx.price_list,
+				"posting_date": frappe.utils.nowdate(),
+				"pos_profile": self.fx.profile,
+				"items": [{"item_code": self.fx.item, "qty": 1, "rate": 100}],
+			}
+		)
+
+		for sent in (None, 99):
+			with self.subTest(sent=sent):
+				invoices._apply_pos_sales_team(
+					sale,
+					[{"sales_person": self.luc, "allocated_percentage": 100, "commission_rate": sent}],
+					self.fx.profile,
+				)
+				row = sale.sales_team[0]
+				self.assertEqual(row.sales_person, self.luc)
+				self.assertEqual(float(row.commission_rate), 10)
