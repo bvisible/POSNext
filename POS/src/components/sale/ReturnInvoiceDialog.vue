@@ -595,6 +595,7 @@
 												])
 											}}</span
 										>
+										<!-- //// Neoffice — see block marker above: pill now says "per unit" -->
 										<span
 											v-else-if="item.tax_per_unit > 0"
 											class="inline-flex items-center px-1 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700"
@@ -729,6 +730,7 @@
 													])
 												}}</span
 											>
+											<!-- //// Neoffice — see block marker above: pill now says "per unit" -->
 											<span
 												v-else-if="item.tax_per_unit > 0"
 												class="inline-flex items-center px-1 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700"
