@@ -25085,3 +25085,23 @@ msgstr "Général"
 #, python-brace-format
 msgid "{0} payment methods"
 msgstr "{0} méthodes de paiement"
+
+#: pos_next/till_settings/registry.py:1343
+msgid "One person"
+msgstr "Une personne"
+
+#: pos_next/till_settings/registry.py:259
+msgid "Sales persons"
+msgstr "Vendeurs"
+
+#: pos_next/till_settings/registry.py:1344
+msgid "Several people"
+msgstr "Plusieurs personnes"
+
+#: pos_next/till_settings/registry.py:1334
+msgid "The till asks who did the work and does not close a sale without it. The person of the signed-in account is chosen first and can be changed. « One person » gives the whole sale to one person, « Several people » shares it between them; a person can also be set on each line. Shop till only."
+msgstr "La caisse demande qui a réalisé la vente et ne permet pas de clôturer une vente sans cette information. La personne du compte connecté est proposée en premier, et vous pouvez la modifier. « Une personne » attribue toute la vente à une seule personne ; « Plusieurs personnes » la répartit entre elles. Une personne peut aussi être indiquée sur chaque ligne. Caisse du magasin uniquement."
+
+#: pos_next/till_settings/registry.py:1332
+msgid "Who made the sale"
+msgstr "Qui a réalisé la vente"
