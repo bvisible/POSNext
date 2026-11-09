@@ -118,7 +118,7 @@ class TillCase(FrappeTestCase):
 		_user(DESK, ["Blogger"], "System User")
 		_user(OTHER_CASHIER, [CASHIER_ROLE], "System User")
 		_user(DISPLAY, ["Blogger"], "System User")
-		_user(MANAGER, ["Nexus POS Manager"], "System User")
+		_user(MANAGER, ["POSNext Manager"], "System User")
 		_user(ACCOUNTANT, ["Accounts User"], "System User")
 		_user(SALES_MANAGER, ["Sales Manager"], "System User")
 		_user(KEPT, [CASHIER_ROLE], "System User")

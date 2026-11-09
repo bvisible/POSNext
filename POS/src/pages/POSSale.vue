@@ -3042,7 +3042,7 @@ const canRecordPosExpense = computed(
 	() => canAccessShiftActions.value && shiftStore.allowPosExpense,
 );
 
-/** Desk link only for users with the Nexus POS Manager role (from bootstrap API). */
+/** Desk link only for users with the POSNext Manager role (from bootstrap API). */
 const canSwitchToDesk = computed(() => Boolean(bootstrapStore.data?.can_switch_to_desk));
 
 // Resize state

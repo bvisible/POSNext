@@ -174,7 +174,7 @@ class TestTheListOfTablesReadsTheFloor(TwoRestaurants, FrappeTestCase):
 
 	def test_who_reads_the_floor_but_not_the_invoices_is_not_told_the_total(self):
 		self.till_order(self.table_a, lines=2, rate=12.5)
-		for email, role in ((MANAGER, "Restaurant Manager"), (TILL_MANAGER, "Nexus POS Manager")):
+		for email, role in ((MANAGER, "Restaurant Manager"), (TILL_MANAGER, "POSNext Manager")):
 			# A role missing from the site fails the test. _user() drops a role that does not exist, so the
 			# account would hold no role and the "cannot read the invoices" check would pass for nothing
 			self.assertTrue(

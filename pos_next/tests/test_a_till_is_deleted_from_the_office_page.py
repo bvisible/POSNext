@@ -22,7 +22,7 @@ class TestATillIsDeletedFromTheOfficePage(TillSettingsCase):
 	@classmethod
 	def setUpClass(cls):
 		super().setUpClass()
-		_user(CREATOR, ["Nexus POS Manager", "Accounts Manager"], "System User")
+		_user(CREATOR, ["POSNext Manager", "Accounts Manager"], "System User")
 		frappe.clear_cache(user=CREATOR)
 
 	def a_new_till(self):

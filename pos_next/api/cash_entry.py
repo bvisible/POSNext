@@ -99,7 +99,7 @@ def require_system_user():
 # //// they are assigned to: the fork's till manager, the customer's own administrator (Admin; System
 # //// Manager is held by our Administrator alone, so an admin capability is never gated on it alone)
 # //// and System Manager. The one list of them: a new manager role is added here.
-TILL_MANAGER_ROLES = ("Nexus POS Manager", "Admin", "System Manager")
+TILL_MANAGER_ROLES = ("POSNext Manager", "Admin", "System Manager")
 
 
 # //// Neoffice — added function (no upstream equivalent). A desk account holding one of

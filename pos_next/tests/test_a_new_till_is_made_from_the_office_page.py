@@ -29,7 +29,7 @@ class TestANewTillIsMadeFromTheOfficePage(TillSettingsCase):
 	@classmethod
 	def setUpClass(cls):
 		super().setUpClass()
-		_user(CREATOR, ["Nexus POS Manager", "Accounts Manager"], "System User")
+		_user(CREATOR, ["POSNext Manager", "Accounts Manager"], "System User")
 		frappe.clear_cache(user=CREATOR)
 
 	def test_a_till_copied_takes_its_profile_and_its_settings_but_no_user(self):

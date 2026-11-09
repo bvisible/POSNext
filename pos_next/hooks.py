@@ -228,7 +228,7 @@ if not _has_native_coupon_code_field():
 fixtures = [
 	# //// add custom POS print format with discount display — eca6f13 + f0c960f (+5 more)
 	{"dt": "Print Format", "filters": [["name", "in", ["Neopos Receipt"]]]},
-	{"dt": "Role", "filters": [["role_name", "in", ["POSNext Cashier", "Nexus POS Manager"]]]},
+	{"dt": "Role", "filters": [["role_name", "in", ["POSNext Cashier", "POSNext Manager"]]]},
 	# //// Neoffice — no Custom DocPerm fixture. Frappe imports every file of fixtures/ at each
 	# //// migrate whatever these filters say, and a Custom DocPerm fixture either freezes a doctype
 	# //// on the author's snapshot or lands next to a site's own rules as duplicates. The cashier's
@@ -581,7 +581,7 @@ ignore_links_on_delete = ["Restaurant Device", "Restaurant Device Pairing"]
 # Authentication and authorization
 # --------------------------------
 
-# Restrict Nexus POS Manager Journal Entry desk/report access to POS expenses only.
+# Restrict POSNext Manager Journal Entry desk/report access to POS expenses only.
 # Broader accounting roles are left unrestricted (see get_journal_entry_permission_query_conditions).
 permission_query_conditions = {
 	"Journal Entry": "pos_next.api.expenses.get_journal_entry_permission_query_conditions",

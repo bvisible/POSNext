@@ -1186,9 +1186,9 @@ _JE_BROADER_ROLES = frozenset(
 
 
 def get_journal_entry_permission_query_conditions(user=None):
-	"""Limit Nexus POS Manager JE lists to POS expenses (posa_is_pos_expense = 1).
+	"""Limit POSNext Manager JE lists to POS expenses (posa_is_pos_expense = 1).
 
-	The Custom DocPerm fixture grants Nexus POS Manager read/report/print/export
+	The Custom DocPerm fixture grants POSNext Manager read/report/print/export
 	on Journal Entry so the POS Expense Report can run. Without this filter that
 	grant would expose the full general ledger.
 	"""
@@ -1199,7 +1199,8 @@ def get_journal_entry_permission_query_conditions(user=None):
 		return None
 
 	roles = set(frappe.get_roles(user))
-	if "Nexus POS Manager" not in roles:
+	# //// Neoffice — the till manager role is POSNext Manager here, named otherwise upstream (NEOFFICE_FORK_MARKERS.md, « Role names »)
+	if "POSNext Manager" not in roles:
 		return None
 
 	if roles & _JE_BROADER_ROLES:

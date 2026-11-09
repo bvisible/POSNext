@@ -85,7 +85,7 @@ class TestTheTipsReportAddsUpByServer(FrappeTestCase):
 		self.assertEqual((declared["name"], declared["ref_doctype"]), (REPORT, "Restaurant Tip"))
 		self.assertEqual((declared["report_type"], declared["is_standard"]), ("Script Report", "Yes"))
 		roles = {row["role"] for row in declared["roles"]}
-		self.assertTrue({"Restaurant Manager", "Nexus POS Manager"} <= roles, roles)
+		self.assertTrue({"Restaurant Manager", "POSNext Manager"} <= roles, roles)
 
 	def test_a_server_has_one_line_per_way_of_paying_with_what_is_to_distribute_and_what_was_handed_out(self):
 		self.tip(5, way="Cash")

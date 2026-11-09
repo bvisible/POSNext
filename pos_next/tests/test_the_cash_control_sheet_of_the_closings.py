@@ -175,7 +175,7 @@ class TestTheWebMethods(FrappeTestCase):
 		super().setUpClass()
 		# The POS manager reads the report and the closings; Accounts Manager reads the report only; the cashier reads closings
 		# only. The closings are read by the roles of the sites' own permission rows (POS roles, not the sales manager's).
-		_user(MANAGER, ["Nexus POS Manager"], "System User")
+		_user(MANAGER, ["POSNext Manager"], "System User")
 		_user(ACCOUNTS, ["Accounts Manager"], "System User")
 		_user(CASHIER, ["POSNext Cashier"], "System User")
 

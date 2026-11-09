@@ -4,7 +4,7 @@
 <!-- //// its help behind the lightbulb, a setting that depends on another shown greyed while that one is off, and one -->
 <!-- //// « Save » for the whole screen. The list, its tabs, help texts and rules are served by pos_next.till_settings -->
 <!-- //// (registry.py is the list); what lives on this computer (stock sync, the QZ Tray printer) and on the cloudprnt -->
-<!-- //// printer rows is saved by the same button. Only the till manager opens it (Admin, Nexus POS Manager); the -->
+<!-- //// printer rows is saved by the same button. Only the till manager opens it (Admin, POSNext Manager); the -->
 <!-- //// restaurant's manager opens the restaurant's tabs of a restaurant till. Upstream's POSSettings.vue, which wrote -->
 <!-- //// each field by hand, now only opens this screen. -->
 <template>
@@ -580,7 +580,7 @@ const subtitle = computed(() => {
 	return name ? `${screen.value.pos_profile} · ${name}` : screen.value.pos_profile
 })
 const roleHelp = __(
-	"These settings are for the managers: the till manager (roles Admin or Nexus POS Manager) sets every tab, the restaurant manager the tabs of the restaurant."
+	"These settings are for the managers: the till manager (roles Admin or POSNext Manager) sets every tab, the restaurant manager the tabs of the restaurant."
 )
 const cardChoices = computed(() =>
 	(screen.value?.choices?.opening_hours || screen.value?.choices?.restaurant_cards || []).map((choice) => ({

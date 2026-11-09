@@ -6,7 +6,7 @@
 A ``POS Authorization Rule`` carries a child table of approvers. Each row names either a
 Role (anyone holding it) or a specific User, and may carry a ``condition`` expression.
 Rows are **OR-ed**: a user is eligible if any row admits them. So one rule can read
-"any Nexus POS Manager, plus ahmed@example.com, plus Store Supervisor but only under
+"any POSNext Manager, plus ahmed@example.com, plus Store Supervisor but only under
 50,000".
 
 Conditions follow the same shape as ``Notification Recipient``: ``frappe.safe_eval``,

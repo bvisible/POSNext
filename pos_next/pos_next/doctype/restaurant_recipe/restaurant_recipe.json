@@ -272,7 +272,7 @@
    "write": 1
   },
   {
-   "role": "Nexus POS Manager",
+   "role": "POSNext Manager",
    "read": 1,
    "export": 1,
    "create": 1,

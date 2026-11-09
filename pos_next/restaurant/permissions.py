@@ -11,7 +11,7 @@ given) and his roles grant the right on the doctype concerned, as the doctype's 
 then saves as that user, so that Frappe checks the same rules once more on the document itself.
 
 Who holds which right is written in the doctypes' JSON: the restaurant's managers (`Restaurant Manager`, the
-customer's `Admin`, the till manager `Nexus POS Manager`) read, write, create and delete everything; a cashier
+customer's `Admin`, the till manager `POSNext Manager`) read, write, create and delete everything; a cashier
 (`POSNext Cashier`) reads it all, takes reservations, records tips and sets the status of a table; the kitchen
 (`Restaurant Kitchen`) reads the preparation stations and workflows. That role has no desk access: an account that
 holds it alone is a portal account, which every endpoint refuses. A kitchen's or a runner's tablet has an account of its
@@ -32,7 +32,7 @@ MANAGER_ROLES = ("Restaurant Manager", "Admin", "System Manager")
 MANAGER_ROLE = "Restaurant Manager"
 KITCHEN_ROLE = "Restaurant Kitchen"
 # The till manager role upstream ships (cash_entry.TILL_MANAGER_ROLES) manages the restaurant as well
-TILL_MANAGER_ROLE = "Nexus POS Manager"
+TILL_MANAGER_ROLE = "POSNext Manager"
 # The desk access of the roles this app defines: a kitchen device account has no business on the desk
 ROLES = {MANAGER_ROLE: 1, KITCHEN_ROLE: 0}
 

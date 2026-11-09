@@ -7,7 +7,8 @@ describe("isAuthorizationError", () => {
 		const error = {
 			_server_messages: JSON.stringify([
 				JSON.stringify({
-					message: "Sales Invoice Return requires authorization by: Nexus POS Manager",
+					//// Neoffice — the till manager role is POSNext Manager here, named otherwise upstream (NEOFFICE_FORK_MARKERS.md, « Role names »)
+					message: "Sales Invoice Return requires authorization by: POSNext Manager",
 					title: "Authorization Required",
 					indicator: "red",
 					raise_exception: 1,
@@ -70,7 +71,8 @@ describe("isRateLimitError", () => {
 		const gateRefusal = {
 			_server_messages: JSON.stringify([
 				JSON.stringify({
-					message: "Sales Invoice Return requires authorization by: Nexus POS Manager",
+					//// Neoffice — the till manager role is POSNext Manager here, named otherwise upstream (NEOFFICE_FORK_MARKERS.md, « Role names »)
+					message: "Sales Invoice Return requires authorization by: POSNext Manager",
 					title: "Authorization Required",
 				}),
 			]),

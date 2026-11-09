@@ -701,13 +701,15 @@ class TestPOSExpenses(unittest.TestCase):
 
 	@patch("pos_next.api.expenses.frappe.get_roles")
 	def test_je_permission_query_restricts_nexus_pos_manager(self, mock_get_roles):
-		mock_get_roles.return_value = ["Nexus POS Manager", "Nexus POS User"]
+		# //// Neoffice — the till manager role is POSNext Manager here, named otherwise upstream (NEOFFICE_FORK_MARKERS.md, « Role names »)
+		mock_get_roles.return_value = ["POSNext Manager", "Nexus POS User"]
 		condition = expenses.get_journal_entry_permission_query_conditions("manager@example.com")
 		self.assertEqual(condition, "`tabJournal Entry`.`posa_is_pos_expense` = 1")
 
 	@patch("pos_next.api.expenses.frappe.get_roles")
 	def test_je_permission_query_skips_accounts_manager(self, mock_get_roles):
-		mock_get_roles.return_value = ["Nexus POS Manager", "Accounts Manager"]
+		# //// Neoffice — the till manager role is POSNext Manager here, named otherwise upstream (NEOFFICE_FORK_MARKERS.md, « Role names »)
+		mock_get_roles.return_value = ["POSNext Manager", "Accounts Manager"]
 		self.assertIsNone(expenses.get_journal_entry_permission_query_conditions("accounts@example.com"))
 
 	def test_je_permission_query_skips_administrator(self):

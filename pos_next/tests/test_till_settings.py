@@ -384,7 +384,7 @@ class TillSettingsCase(FrappeTestCase):
 		cls.addClassCleanup(lambda: [frappe.clear_cache(doctype=doctype) for doctype in cls.changed_rules])
 		_user(TILL, [CASHIER_ROLE], "System User")
 		_user(OTHER_TILL, ["Blogger"], "System User")
-		_user(TILL_MANAGER, ["Nexus POS Manager"], "System User")
+		_user(TILL_MANAGER, ["POSNext Manager"], "System User")
 		_user(RESTAURANT_MANAGER, ["Restaurant Manager"], "System User")
 		_user(PORTAL, ["Customer"], "Website User")
 		# What Frappe keeps of these users in Redis (their User Permissions above all) is their rows' of this run only
@@ -1161,7 +1161,7 @@ class TestEachTillItsOwnManagers(TillSettingsCase):
 
 		self.assertEqual(told(RESTAURANT_MANAGER, self.restaurant_till), (False, True))
 		self.assertEqual(told(RESTAURANT_MANAGER, self.shop_till), (False, False))
-		# The till manager (who writes every restaurant, Nexus POS Manager) kept to the first till: its own settings
+		# The till manager (who writes every restaurant, POSNext Manager) kept to the first till: its own settings
 		# there only; the other restaurant's till shows him its restaurant's tabs, as its manager
 		self.assertEqual(told(TILL_MANAGER, self.restaurant_till), (True, True))
 		self.assertEqual(told(TILL_MANAGER, self.shop_till), (False, True))

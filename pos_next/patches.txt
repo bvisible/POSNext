@@ -6,6 +6,10 @@
 # //// beside the old ones (a1da8cc0, 2026-03-23). This entry took the place of upstream's
 # //// documentation-link comment.
 pos_next.patches.rename_modifier_to_product_option
+# //// Neoffice — the till manager role is POSNext Manager here, Nexus POS Manager upstream (product owner, 09.11.2026): the role and
+# //// everything that points at it follow, before the doctype sync writes the permission rows of the new name (the files themselves are
+# //// renamed by scripts/rename_the_till_manager_role.py, run again after every merge of upstream).
+pos_next.patches.rename_the_till_manager_role
 
 [post_model_sync]
 # Patches added in this section will be executed after doctypes are migrated

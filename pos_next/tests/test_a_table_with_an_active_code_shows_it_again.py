@@ -46,11 +46,11 @@ PORTAL = "qr-scope-portal@yopmail.com"
 # The role that lets a cashier make a Guest Order Token: the doctype's rule names it, the cashier role does not
 CODE_ROLE = "POS User"
 # The roles that read a Restaurant Table (restaurant_table.json)
-TABLE_READERS = {"POSNext Cashier", "Restaurant Manager", "Admin", "Nexus POS Manager", "Sales Manager", "System Manager"}
+TABLE_READERS = {"POSNext Cashier", "Restaurant Manager", "Admin", "POSNext Manager", "Sales Manager", "System Manager"}
 # The accounts that tell the floor read's rule from the gates a press used to have. Each is a desk account, none is Administrator
 POS_USER_ONLY = "qr-scope-pos-user@yopmail.com"  # POS User and no role that reads a restaurant
 CASHIER_ROLE_ONLY = "qr-scope-cashier-role@yopmail.com"  # the cashier role and no POS User: the create right refused it
-TILL_MANAGER = "qr-scope-till-manager@yopmail.com"  # Nexus POS Manager, on no POS Profile
+TILL_MANAGER = "qr-scope-till-manager@yopmail.com"  # POSNext Manager, on no POS Profile
 ADMIN = "qr-scope-admin@yopmail.com"  # the customer's Admin role, on no POS Profile
 SYSTEM_MANAGER = "qr-scope-system-manager@yopmail.com"  # System Manager without being Administrator
 RESTAURANT_MANAGER = "qr-scope-restaurant-manager@yopmail.com"
@@ -359,7 +359,7 @@ class TestWhoMayPressTheQrButton(TheQrButton, Tills, FrappeTestCase):
 			(PORTAL, [CASHIER_ROLE, CODE_ROLE, *sorted(TABLE_READERS)], "Website User"),
 			(POS_USER_ONLY, [CODE_ROLE], "System User"),
 			(CASHIER_ROLE_ONLY, [CASHIER_ROLE], "System User"),
-			(TILL_MANAGER, ["Nexus POS Manager"], "System User"),
+			(TILL_MANAGER, ["POSNext Manager"], "System User"),
 			(ADMIN, ["Admin"], "System User"),
 			(SYSTEM_MANAGER, ["System Manager"], "System User"),
 			(RESTAURANT_MANAGER, ["Restaurant Manager"], "System User"),
@@ -649,7 +649,7 @@ class TestWhoMayPressTheQrButton(TheQrButton, Tills, FrappeTestCase):
 			("a cashier assigned to the till", CASHIER_A, True),
 			("a cashier of the other restaurant, with no User Permission, naming this restaurant's till", CASHIER_B, True),
 			("the cashier role and no POS User", CASHIER_ROLE_ONLY, True),
-			("Nexus POS Manager, on no till", TILL_MANAGER, True),
+			("POSNext Manager, on no till", TILL_MANAGER, True),
 			("Admin, on no till", ADMIN, True),
 			("System Manager without being Administrator", SYSTEM_MANAGER, True),
 			("an unconfined Restaurant Manager, on no till", RESTAURANT_MANAGER, True),

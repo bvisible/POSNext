@@ -20,9 +20,9 @@
   "home_page": null,
   "is_custom": 0,
   "modified": "2026-03-30 18:17:23.060381",
-  "name": "Nexus POS Manager",
+  "name": "POSNext Manager",
   "restrict_to_domain": null,
-  "role_name": "Nexus POS Manager",
+  "role_name": "POSNext Manager",
   "two_factor_auth": 0
  }
 ]

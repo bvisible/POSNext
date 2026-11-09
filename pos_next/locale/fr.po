@@ -14375,8 +14375,8 @@ msgstr "Nouveau produit"
 #: pos_next/pos_next/doctype/pos_opening_shift/pos_opening_shift.json
 #: pos_next/pos_next/doctype/pos_settings/pos_settings.json
 #: pos_next/pos_next/doctype/referral_code/referral_code.json
-msgid "Nexus POS Manager"
-msgstr "Responsable Nexus POS"
+msgid "POSNext Manager"
+msgstr "Responsable POSNext"
 
 #: POS/src/components/payments/CardPresentDialog.vue:408
 msgid "No active terminal configured for this Mode of Payment on this POS Profile. Add one in POS Profile → Active Payment Methods & Terminals."
@@ -19193,8 +19193,8 @@ msgid "Till manager"
 msgstr "Responsable de caisse"
 
 #: POS/src/components/settings/TillSettingsScreen.vue:506
-msgid "These settings are for the managers: the till manager (roles Admin or Nexus POS Manager) sets every tab, the restaurant manager the tabs of the restaurant."
-msgstr "Ces paramètres sont réservés aux responsables : le responsable de caisse (rôles Admin ou Nexus POS Manager) règle tous les onglets, le responsable de salle seulement ceux du restaurant."
+msgid "These settings are for the managers: the till manager (roles Admin or POSNext Manager) sets every tab, the restaurant manager the tabs of the restaurant."
+msgstr "Ces paramètres sont réservés aux responsables : le responsable de caisse (rôles Admin ou Responsable POSNext) règle tous les onglets, le responsable de salle seulement ceux du restaurant."
 
 #: POS/src/components/settings/TillSettingsScreen.vue:534
 msgid "Whole restaurant"

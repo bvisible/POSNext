@@ -56,7 +56,7 @@ class TestTheOfficePage(TillSettingsCase):
 	@classmethod
 	def setUpClass(cls):
 		super().setUpClass()
-		_user(OFFICE, ["Nexus POS Manager", "Accounts Manager", "Stock Manager"], "System User")
+		_user(OFFICE, ["POSNext Manager", "Accounts Manager", "Stock Manager"], "System User")
 		_user(DISABLED, [CASHIER_ROLE], "System User")
 		frappe.db.set_value("User", DISABLED, "enabled", 0)
 		for user in (OFFICE, DISABLED):

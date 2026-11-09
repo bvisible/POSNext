@@ -11561,7 +11561,7 @@ msgstr ""
 #: pos_next/pos_next/doctype/restaurant_table/restaurant_table.json:160
 #: pos_next/pos_next/doctype/restaurant_tip/restaurant_tip.json:176
 #: pos_next/pos_next_auth_gate/doctype/pos_authorization_log/pos_authorization_log.json:108
-msgid "Nexus POS Manager"
+msgid "POSNext Manager"
 msgstr ""
 
 #: POS/src/pages/POSSale.vue:1609
@@ -21322,7 +21322,7 @@ msgstr ""
 
 #: POS/src/components/settings/TillSettingsScreen.vue:577
 #: pos_next/public/pos/assets/POSSale-B5jq-EAh.js:72
-msgid "These settings are for the managers: the till manager (roles Admin or Nexus POS Manager) sets every tab, the restaurant manager the tabs of the restaurant."
+msgid "These settings are for the managers: the till manager (roles Admin or POSNext Manager) sets every tab, the restaurant manager the tabs of the restaurant."
 msgstr ""
 
 #: pos_next/api/restaurant.py:2619

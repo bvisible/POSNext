@@ -56,7 +56,7 @@
   {"create": 1, "delete": 1, "read": 1, "report": 1, "role": "Sales Manager", "share": 1, "write": 1},
   {"create": 1, "delete": 1, "read": 1, "report": 1, "role": "Restaurant Manager", "share": 1, "write": 1},
   {"create": 1, "delete": 1, "read": 1, "report": 1, "role": "Admin", "share": 1, "write": 1},
-  {"create": 1, "delete": 1, "read": 1, "report": 1, "role": "Nexus POS Manager", "share": 1, "write": 1},
+  {"create": 1, "delete": 1, "read": 1, "report": 1, "role": "POSNext Manager", "share": 1, "write": 1},
   {"read": 1, "role": "POSNext Cashier"}
  ],
  "sort_field": "modified",
