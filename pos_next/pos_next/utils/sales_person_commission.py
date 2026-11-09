@@ -482,6 +482,17 @@ def validate_sales_person_coverage(
 	uncovered = [
 		item for item in items if _line_needs_sales_person_coverage(item) and not _line_sales_person(item)
 	]
+	# //// Neoffice — a product asks for its person only if the till follows the sales of products by person too (NeoSalon, T5, product
+	# //// owner, 09.11.2026). The site says what a line is through the hook pos_next_item_kind; a line it does not name stays a service,
+	# //// so without that hook nothing is removed here and the rule is upstream's. Remove if upstream makes the requirement a setting.
+	from pos_next.sales_person_lines import asks_for_a_person, products_are_tracked
+
+	products_tracked = products_are_tracked(profile)
+	uncovered = [
+		item
+		for item in uncovered
+		if asks_for_a_person(_line_item_code(item), products_tracked=products_tracked)
+	]
 	if uncovered and not has_invoice_team:
 		frappe.throw(
 			_(

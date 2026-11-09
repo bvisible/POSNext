@@ -70,6 +70,7 @@
   "allow_partial_payment",
   "use_exact_amount",
   "enable_sales_persons",
+  "track_product_sales_by_person",
   "section_break_display",
   "default_card_view",
   "display_item_code",
@@ -594,6 +595,14 @@
    "options": "Disabled\nSingle\nMultiple"
   },
   {
+   "default": "0",
+   "depends_on": "eval:doc.enable_sales_persons && doc.enable_sales_persons != 'Disabled'",
+   "description": "Off: only services ask who did the work. On: a product sold asks who sold it, and counts in that person's statistics. Which items are products is told by the site (hook pos_next_item_kind); without it every line is a service.",
+   "fieldname": "track_product_sales_by_person",
+   "fieldtype": "Check",
+   "label": "Track product sales by person too"
+  },
+  {
    "collapsible": 1,
    "fieldname": "section_break_display",
    "fieldtype": "Section Break",
@@ -978,7 +987,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-08 17:40:00.000000",
+ "modified": "2026-11-09 20:20:59.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "POS Settings",

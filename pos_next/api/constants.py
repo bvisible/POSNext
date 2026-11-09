@@ -31,6 +31,8 @@ POS_SETTINGS_FIELDS = [
 	"decimal_precision",
 	"allow_negative_stock",
 	"enable_sales_persons",
+	# //// Neoffice — a product asks for its person only if this is on (NeoSalon, pos_next.sales_person_lines)
+	"track_product_sales_by_person",
 	"silent_print",
 	"allow_print_draft_invoices",
 	"allow_sales_order",
@@ -127,6 +129,8 @@ DEFAULT_POS_SETTINGS = {
 	"decimal_precision": "2",
 	"allow_negative_stock": 0,
 	"enable_sales_persons": "Disabled",
+	# //// Neoffice — see POS_SETTINGS_FIELDS
+	"track_product_sales_by_person": 0,
 	"silent_print": 0,
 	"allow_print_draft_invoices": 0,
 	"allow_sales_order": 0,

@@ -255,8 +255,9 @@ _GROUPS = (
 	Group("payment", "sales", _lt("Payment"), 1),
 	Group("returns", "sales", _lt("Returns"), 2),
 	Group("sales_orders", "sales", _lt("Sales orders"), 2),
-	# //// Neoffice — who made the sale (NeoCoiffeur study, product owner, 09.11.2026): the option upstream ships and the fork had switched off
-	Group("sales_persons", "sales", _lt("Sales persons"), 2),
+	# //// Neoffice — who made the sale (NeoCoiffeur study, product owner, 09.11.2026): the option upstream ships and the fork had switched off.
+	# //// The group is the question the salon's cashier reads (« Qui a réalisé la prestation ? », canvas « Caisse 3 »), not upstream's « Sales persons ».
+	Group("sales_persons", "sales", _lt("Who did the work?"), 2),
 	Group("gift_cards", "sales", _lt("Gift cards"), 3),
 	# Stock
 	Group("warehouse", "stock", _lt("Warehouse"), 1),
@@ -1331,18 +1332,36 @@ SETTINGS = (
 		"sales_persons",
 		_lt("Who made the sale"),
 		_lt(
-			"The till asks who did the work and does not close a sale without it. The person of the signed-in"
-			" account is chosen first and can be changed. « One person » gives the whole sale to one person,"
-			" « Several people » shares it between them; a person can also be set on each line. Shop till only."
+			"Each service names the person who did it, and the till does not close a sale without it. The person of the"
+			" signed-in account is chosen first and can be changed; a person chosen at payment covers the lines that have"
+			" none. Offline, nothing is required. « One person per sale » gives the whole sale to one person, « Several"
+			" people » shares it between them; a person can also be set on each line. Shop till only."
 		),
 		"segmented",
 		doctype=POS_SETTINGS,
 		till=SHOP,
 		options=(
 			("Disabled", _lt("Off", context="Sales persons")),
-			("Single", _lt("One person", context="Sales persons")),
+			("Single", _lt("One person per sale", context="Sales persons")),
 			("Multiple", _lt("Several people", context="Sales persons")),
 		),
+	),
+	# //// Neoffice — services always name their person; a product only when the till follows the products by person too (NeoSalon, T5,
+	# //// product owner, 09.11.2026: « on ne sait pas si le salon fait de la vente additionnelle »). Off by default. Which items are products
+	# //// is told by the site (hook pos_next_item_kind, pos_next.sales_person_lines). It has no effect while the setting above is off, and
+	# //// is drawn under it (a condition on « not Disabled » is not one the screen can express).
+	Setting(
+		"track_product_sales_by_person",
+		"sales_persons",
+		_lt("Follow the sales of products by person too"),
+		_lt(
+			"Off: only services ask for the person. On: a product sold asks who sold it and counts in that person's"
+			" statistics. It does nothing while the choice above is off."
+		),
+		"check",
+		doctype=POS_SETTINGS,
+		till=SHOP,
+		indent=True,
 	),
 	Setting(
 		"enable_gift_cards",

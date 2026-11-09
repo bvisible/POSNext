@@ -60,3 +60,5 @@ pos_next.patches.neorestau.keep_the_screen_lock_of_the_tills_that_lock
 # //// Neoffice — NeoResto: the notice of a guest's order stays on the till until somebody has seen it (the default of `floor_popup_seconds` moves from 30 seconds to 0, Daniel, 02.11.2026); the tills that
 # //// kept the old default take the new one. It runs after the doctype sync, which is what makes the column on a site that has none yet.
 pos_next.patches.neoresto.floor_notices_stay_until_seen
+# //// Neoffice — NeoSalon: the Sales Person of each Active employee, where a till already asks for a sales person (lot G1.2, product owner, 09.11.2026). Nothing happens where no till does; it runs after the doctype sync.
+pos_next.patches.neosalon.make_the_sales_persons_of_the_employees

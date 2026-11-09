@@ -85,13 +85,15 @@ class TestTheTillOffersEverySalesPersonAndMarksTheCashiersOwn(FrappeTestCase):
 		_user(TILL, [CASHIER_ROLE, "Sales User"], "System User")
 		_user(OTHER_TILL, ["Blogger"], "System User")  # the fixture's second till names it
 		self.fx = _till_fixture()
-		frappe.db.set_value(
-			"POS Settings", {"pos_profile": self.fx.profile}, "enable_sales_persons", "Single"
-		)
+		# //// Neoffice — the people first, the setting after: while a till asks for a sales person, saving an employee makes the sales person
+		# //// (pos_next.sales_staff), and the suite makes its own.
 		self.luc_employee = an_employee(LUC_FIRST_NAME, self.fx.company, user_id=TILL)
 		self.sonia_employee = an_employee(SONIA_FIRST_NAME, self.fx.company)
 		self.luc = a_sales_person(LUC, self.luc_employee, self.fx.company, commission_rate=10)
 		self.sonia = a_sales_person(SONIA, self.sonia_employee, self.fx.company, commission_rate=15)
+		frappe.db.set_value(
+			"POS Settings", {"pos_profile": self.fx.profile}, "enable_sales_persons", "Single"
+		)
 		frappe.clear_cache(user=TILL)
 		self.addCleanup(frappe.set_user, "Administrator")
 

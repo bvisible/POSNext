@@ -429,6 +429,10 @@ doc_events = {
 	"Sales Person": {
 		"validate": "pos_next.pos_next.utils.sales_person_commission.validate_sales_person_commission_tables"
 	},
+	# //// Neoffice — added entries (no upstream equivalent): the sales persons of a salon are its employees (NeoSalon, step 1, lot G1.2, product owner,
+	# //// 09.11.2026). Both act only on a site where a till asks for a sales person; see pos_next/sales_staff.py.
+	"Employee": {"on_update": "pos_next.sales_staff.employee_saved"},
+	"POS Settings": {"on_update": "pos_next.sales_staff.till_settings_saved"},
 	"Mode of Payment": {
 		"after_insert": "pos_next.api.wallet.clear_wallet_payment_modes_cache",
 		"on_update": "pos_next.api.wallet.clear_wallet_payment_modes_cache",
