@@ -4946,9 +4946,16 @@ async function handlePaymentCompleted(paymentData) {
 						if (cartStore.currentDraftId) {
 							invoiceData.name = cartStore.currentDraftId;
 						}
-						await call("pos_next.api.invoices.update_invoice", {
+						//// Neoffice — the draft the kitchen was told about is kept, as the "Validate" button keeps it: the payment settles THAT draft.
+						//// A takeaway ticket has no table to find it by, and the answer was thrown away, so the payment saved a second draft and left
+						//// this one as a ghost ticket in the kitchen and on the takeaway counter (neoffice-maintenance#1972).
+						const sent = await call("pos_next.api.invoices.update_invoice", {
 							data: JSON.stringify(invoiceData),
 						});
+						//// Neoffice — kept only when the cart has no draft yet (neoffice-maintenance#1972).
+						if (sent?.name && !cartStore.currentDraftId) {
+							cartStore.$patch({ currentDraftId: sent.name });
+						}
 						//// Neoffice — was console.log; the app's logger is silent outside dev.
 						log.debug("Payment: auto-sent unsent items to kitchen");
 					} catch (err) {

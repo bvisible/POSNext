@@ -806,6 +806,15 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			.filter(Boolean);
 		const wasOffline = offlineState.isOffline;
 
+		//// Neoffice — a takeaway ticket has no table to find its draft by: the payment settles the draft the kitchen was told about
+		//// (currentDraftId, kept when paying sent the unsent lines), as a phone's cart is sold as the draft it already is
+		//// (shopCartInvoice). Without its name the payment saved a SECOND draft and submitted that one, leaving the first as a ghost
+		//// ticket on the takeaway counter and in the kitchen (neoffice-maintenance#1972). Only a restaurant takeaway ticket: there
+		//// currentDraftId is a server invoice name (a retail ticket's is a local draft id), and a table finds its draft by the table.
+		if (isTakeaway.value && !restaurantTable.value?.name && currentDraftId.value && !shopCartInvoice.value) {
+			shopCartInvoice.value = currentDraftId.value;
+		}
+
 		//// Neoffice — upstream submits with (doctype, deliveryDate, writeOff) only. Loyalty points
 		//// redeemed at payment time and the restaurant tip are decided inside the payment dialog,
 		//// so they must travel the whole chain down to submit_invoice or they are silently dropped
