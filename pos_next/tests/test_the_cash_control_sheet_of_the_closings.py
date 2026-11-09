@@ -18,6 +18,7 @@ from unittest.mock import patch
 import frappe
 from frappe import _
 from frappe.tests.utils import FrappeTestCase
+from frappe.utils import formatdate
 
 from pos_next.pos_next.report.neopos_register import cash_report, neopos_register
 from pos_next.pos_next.report.payments_and_cash_control_report import closings_sheet
@@ -149,9 +150,10 @@ class TestTheLayout(FrappeTestCase):
 
 		subtitle = closings_sheet.subtitle_of(filters, [], "CHF")
 
+		# the dates read in the format of the site (a CI site writes mm-dd-yyyy, a Swiss one dd-mm-yyyy)
 		for part in (
-			"10-10-2026",
-			"09-11-2026",
+			formatdate("2026-10-10"),
+			formatdate("2026-11-09"),
 			"Till 1",
 			_("Amounts in {0}").format("CHF"),
 			_("Printed on"),
@@ -165,8 +167,8 @@ class TestTheLayout(FrappeTestCase):
 			"CHF",
 		)
 
-		self.assertIn("01-11-2026", subtitle)
-		self.assertIn("05-11-2026", subtitle)
+		self.assertIn(formatdate("2026-11-01"), subtitle)
+		self.assertIn(formatdate("2026-11-05"), subtitle)
 
 
 class TestTheWebMethods(FrappeTestCase):

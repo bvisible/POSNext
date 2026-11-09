@@ -427,6 +427,10 @@ class TestGetSalesPersons(unittest.TestCase):
 			patch.object(frappe, "session", SimpleNamespace(user="cashier@example.com")),
 			patch.object(frappe, "get_list", return_value=rows) as get_list,
 			patch.object(spc, "get_sales_person_commission_maps", side_effect=AssertionError),
+			# //// Neoffice — `get_all` is `get_list` underneath: patched alone, the lookup of the cashier's own Employee
+			# //// answered the sales-person rows and `set()` of dicts failed. Nobody here is an employee nor a till manager.
+			patch.object(frappe, "get_all", return_value=[]),
+			patch("pos_next.api.cash_entry.is_till_manager", return_value=False),
 		):
 			# Bypass the whitelist type-validation wrapper (needs a request context)
 			result = inspect.unwrap(pos_profile_api.get_sales_persons)("POS-1")
@@ -464,6 +468,9 @@ class TestGetSalesPersons(unittest.TestCase):
 			patch.object(frappe, "session", SimpleNamespace(user="cashier@example.com")),
 			patch.object(spc, "sales_persons_enabled", return_value=True),
 			patch.object(frappe, "get_list", return_value=rows) as get_list,
+			# //// Neoffice — same as above: the cashier's own Employee lookup and the till-manager check are stood in for.
+			patch.object(frappe, "get_all", return_value=[]),
+			patch("pos_next.api.cash_entry.is_till_manager", return_value=False),
 		):
 			result = inspect.unwrap(pos_profile_api.get_sales_persons)("POS-1")
 

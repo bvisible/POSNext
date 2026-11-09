@@ -21,7 +21,7 @@ from unittest.mock import patch
 import frappe
 from frappe import _
 from frappe.tests.utils import FrappeTestCase
-from frappe.utils import flt, today
+from frappe.utils import flt, formatdate, today
 from frappe.utils.data import get_number_format_info
 
 from pos_next.api import invoices
@@ -271,7 +271,8 @@ class TestTheLayout(FrappeTestCase):
 
 		subtitle = cash_report.subtitle_of(filters)
 
-		for part in ("01-10-2026", "31-10-2026", "Till 1", "Cash", _("Printed on")):
+		# the dates read in the format of the site (a CI site writes mm-dd-yyyy, a Swiss one dd-mm-yyyy)
+		for part in (formatdate("2026-10-01"), formatdate("2026-10-31"), "Till 1", "Cash", _("Printed on")):
 			self.assertIn(part, subtitle)
 
 	def test_a_whole_figure_keeps_its_two_decimals(self):
@@ -297,7 +298,7 @@ class TestTheLayout(FrappeTestCase):
 			CLOSING,
 			"Till 1",
 			"a-cashier@yopmail.com",
-			"02-11-2026",
+			formatdate("2026-11-02"),
 			_("Amounts in {0}").format("CHF"),
 		):
 			self.assertIn(part, subtitle)
