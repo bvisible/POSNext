@@ -1,7 +1,7 @@
 //// Neoffice — added file (no upstream equivalent). Filter bar of the Neopos Register report we
-//// added: date range, company, POS Profile, cashier, customer, payment method, transaction type
-//// and group-by. The report itself is ours (0a45914d, 2026-04-12 "add Neopos Register report";
-//// Transaction Type filter b7fc0516, same day).
+//// added: date range, company, closing, POS Profile, cashier, customer, payment method, transaction type
+//// and group-by, and the button of its cash report on A4 paper. The report itself is ours (0a45914d,
+//// 2026-04-12 "add Neopos Register report"; Transaction Type filter b7fc0516, same day).
 // Copyright (c) 2026, BrainWise and contributors
 // For license information, please see license.txt
 
@@ -30,6 +30,28 @@ frappe.query_reports["Neopos Register"] = {
 			default: frappe.datetime.get_today(),
 			reqd: 1,
 			width: "60px",
+		},
+		{
+			// One closing: the register narrows itself to what that closing counted (neopos_register.apply_closing),
+			// and the dates and the company take the closing's own.
+			fieldname: "pos_closing_shift",
+			label: __("POS Closing Shift"),
+			fieldtype: "Link",
+			options: "POS Closing Shift",
+			on_change: function () {
+				const name = frappe.query_report.get_filter_value("pos_closing_shift");
+				if (!name) return;
+				frappe.db
+					.get_value("POS Closing Shift", name, ["company", "period_start_date", "period_end_date"])
+					.then(({ message }) => {
+						if (!message) return;
+						frappe.query_report.set_filter_value({
+							company: message.company,
+							from_date: (message.period_start_date || "").slice(0, 10),
+							to_date: (message.period_end_date || "").slice(0, 10),
+						});
+					});
+			},
 		},
 		{
 			fieldname: "pos_profile",
@@ -75,6 +97,17 @@ frappe.query_reports["Neopos Register"] = {
 			fieldtype: "Check",
 		},
 	],
+	onload: function (report) {
+		// The cash report: this register on one A4 sheet in landscape, for the period or the closing the filters name
+		report.page.add_inner_button(__("Cash report (PDF)"), function () {
+			const filters = report.get_filter_values(true);
+			window.open(
+				"/api/method/pos_next.pos_next.report.neopos_register.neopos_register.export_cash_report_pdf?filters=" +
+					encodeURIComponent(JSON.stringify(filters)),
+				"_blank"
+			);
+		});
+	},
 	formatter: function (value, row, column, data, default_formatter) {
 		value = default_formatter(value, row, column, data);
 		if (data && data.bold) {

@@ -24,6 +24,15 @@ def conditions(alias, filters):
 	return found
 
 
+def company_conditions(alias, filters):
+	"""Only the company's condition, for a table with a company but no till (a Payment Entry, a Journal Entry)."""
+	permitted = get_permitted_documents("Company")
+	if not permitted:
+		return []
+	filters["permitted_company"] = tuple(permitted)
+	return [f"{alias}.company IN %(permitted_company)s"]
+
+
 def permitted_warehouses():
 	return get_permitted_documents("Warehouse")
 

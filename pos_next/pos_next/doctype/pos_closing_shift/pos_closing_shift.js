@@ -41,6 +41,21 @@ frappe.ui.form.on("POS Closing Shift", {
 			},
 			__("Print")
 		);
+
+		//// Neoffice — the cash report of this closing on A4 paper in landscape: the register narrowed to what the closing
+		//// counted (neopos_register.apply_closing) with the drawer's cash control. Upstream prints only the 80 mm EOD ticket,
+		//// and its Payments and Cash Control report lists the closings without a sheet to print.
+		frm.add_custom_button(
+			__("Cash report (PDF)"),
+			() => {
+				window.open(
+					"/api/method/pos_next.pos_next.report.neopos_register.neopos_register.export_cash_report_pdf?filters=" +
+						encodeURIComponent(JSON.stringify({ pos_closing_shift: frm.docname })),
+					"_blank"
+				);
+			},
+			__("Print")
+		);
 	},
 
 	pos_opening_shift(frm) {

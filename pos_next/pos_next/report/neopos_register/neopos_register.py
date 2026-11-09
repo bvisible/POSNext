@@ -11,35 +11,25 @@
 
 import frappe
 from frappe import _
-from frappe.utils import flt
+from frappe.utils import flt, getdate
+
+# //// Neoffice — the register reads with raw SQL, which reads no User Permission: see user_permission_scope (maintenance#2296).
+from pos_next.pos_next.report import user_permission_scope
+
+REPORT = "Neopos Register"
+# What an IN clause is given for a closing that holds nothing of a kind: a name no document has.
+NO_DOCUMENT = ("",)
 
 
 def execute(filters=None):
 	if not filters:
 		return [], []
 
+	apply_closing(filters)
 	validate_filters(filters)
 
 	group_by_field = get_group_by_field(filters.get("group_by"))
-	txn_type = filters.get("transaction_type", "")
-
-	all_entries = []
-
-	# 1. POS Sales (Sales Invoices with is_pos=1)
-	if not txn_type or txn_type == "POS Sales":
-		all_entries.extend(get_pos_entries(filters, group_by_field))
-
-	# 2. Invoice Collections (Payment Entries from POS)
-	if not txn_type or txn_type == "Invoice Collection":
-		all_entries.extend(get_invoice_collections(filters, group_by_field))
-
-	# 3. Cash In/Out (Journal Entries from POS)
-	if not txn_type or txn_type == "Cash In/Out":
-		all_entries.extend(get_cash_in_out(filters, group_by_field))
-
-	# Concat mode of payments for entries that don't have it yet
-	if group_by_field != "mode_of_payment":
-		concat_mode_of_payments(all_entries)
+	all_entries = get_entries(filters, group_by_field)
 
 	columns = get_columns(filters)
 
@@ -67,6 +57,102 @@ def execute(filters=None):
 		columns.insert(0, columns.pop(column_index))
 
 	return columns, grouped_data
+
+
+def get_entries(filters, group_by_field):
+	"""Every entry of the register for the filters, ungrouped: POS sales, invoices collected at the counter and the
+	till's cash in and out. The screen groups them (`execute`), the printed cash report groups them its own way."""
+	txn_type = filters.get("transaction_type", "")
+
+	all_entries = []
+
+	# 1. POS Sales (Sales Invoices with is_pos=1)
+	if not txn_type or txn_type == "POS Sales":
+		all_entries.extend(get_pos_entries(filters, group_by_field))
+
+	# 2. Invoice Collections (Payment Entries from POS)
+	if not txn_type or txn_type == "Invoice Collection":
+		all_entries.extend(get_invoice_collections(filters, group_by_field))
+
+	# 3. Cash In/Out (Journal Entries from POS)
+	if not txn_type or txn_type == "Cash In/Out":
+		all_entries.extend(get_cash_in_out(filters, group_by_field))
+
+	# Concat mode of payments for entries that don't have it yet
+	if group_by_field != "mode_of_payment":
+		concat_mode_of_payments(all_entries)
+
+	return all_entries
+
+
+def apply_closing(filters):
+	"""Narrow the register to what ONE closing counted, when the filters name a closing (`pos_closing_shift`).
+
+	The closing lists the invoices it counted, the payments it collected and the shift the till's cash movements are
+	booked on: those are the only documents of the register, whatever the dates say. The dates (and the company)
+	become the closing's own, so a sheet of a closing says its period, and a night shift that ends the next day
+	loses nothing. The cashier and the till the user also asked for still narrow it further."""
+	name = filters.get("pos_closing_shift")
+	if not name:
+		return None
+	closing = frappe.get_doc("POS Closing Shift", name)
+	# The right on the closing itself: a user kept to some tills or companies reads no other one's
+	closing.check_permission("read")
+	days = [
+		getdate(day)
+		for day in (
+			[closing.period_start_date, closing.period_end_date, closing.posting_date]
+			+ [row.posting_date for row in closing.pos_transactions or []]
+			+ [row.posting_date for row in closing.pos_payments or []]
+		)
+		if day
+	]
+	filters["company"] = closing.company
+	if days:
+		filters["from_date"] = min(days)
+		filters["to_date"] = max(days)
+	filters["closing_sales_invoices"] = (
+		tuple(row.sales_invoice for row in closing.pos_transactions or [] if row.sales_invoice) or NO_DOCUMENT
+	)
+	filters["closing_payment_entries"] = (
+		tuple(row.payment_entry for row in closing.pos_payments or [] if row.payment_entry) or NO_DOCUMENT
+	)
+	filters["closing_opening_shift"] = closing.pos_opening_shift or ""
+	return closing
+
+
+@frappe.whitelist()
+def export_cash_report_pdf(filters):
+	"""The register of a period, or of one closing, as a cash report on A4 paper in landscape (shown in the browser).
+
+	Grouped by payment method unless the filters group otherwise; the same entries the screen lists, so the
+	sheet and the screen never disagree. Needs the right to read the report, and, for a closing, the closing."""
+	from pos_next.pos_next.report.neopos_register import cash_report
+
+	if not frappe.get_cached_doc("Report", REPORT).is_permitted():
+		frappe.throw(_("You are not permitted to access this resource."), frappe.PermissionError)
+	frappe.has_permission("Sales Invoice", "read", throw=True)
+
+	filters = frappe._dict(frappe.parse_json(filters) or {})
+	closing = apply_closing(filters)
+	validate_filters(filters)
+
+	field = cash_report.group_field(get_group_by_field(filters.get("group_by")))
+	by_method = get_entries(filters, "mode_of_payment")
+	entries = by_method if field == "mode_of_payment" else get_entries(filters, field)
+	company = frappe.get_cached_doc("Company", filters.company)
+	currency = company.default_currency or ""
+
+	pdf = cash_report.render_pdf(
+		cash_report.build_html(entries, by_method, field, closing=closing, currency=currency),
+		company.company_name or company.name,
+		_("Cash report"),
+		cash_report.subtitle_of(filters, closing, currency),
+	)
+	slug = frappe.scrub(closing.name if closing else f"{filters.from_date}_{filters.to_date}")
+	frappe.local.response.filename = f"cash_report_{slug}.pdf"
+	frappe.local.response.filecontent = pdf
+	frappe.local.response.type = "pdf"
 
 
 # ============================================================
@@ -156,6 +242,11 @@ def get_invoice_collections(filters, group_by_field):
 	if filters.get("mode_of_payment"):
 		conditions.append("pe.mode_of_payment = %(mode_of_payment)s")
 
+	if filters.get("pos_closing_shift"):
+		conditions.append("pe.name IN %(closing_payment_entries)s")
+
+	conditions += user_permission_scope.company_conditions("pe", filters)
+
 	if filters.get("pos_profile"):
 		conditions.append("""
 			EXISTS(
@@ -237,6 +328,12 @@ def get_cash_in_out(filters, group_by_field):
 
 	if filters.get("pos_profile"):
 		conditions.append("pos.pos_profile = %(pos_profile)s")
+
+	if filters.get("pos_closing_shift"):
+		# The movements booked on the shift the closing closed
+		conditions.append("je.posa_cash_movement_shift = %(closing_opening_shift)s")
+
+	conditions += user_permission_scope.company_conditions("je", filters)
 
 	where = " AND ".join(conditions)
 
@@ -355,6 +452,7 @@ def add_subtotal_row(data, group_invoices, group_by_field, group_by_value):
 
 
 def validate_filters(filters):
+	# A closing brings its own company and dates (apply_closing)
 	if not filters.get("company"):
 		frappe.throw(_("{0} is mandatory").format(_("Company")))
 
@@ -396,6 +494,13 @@ def get_conditions(filters):
 				WHERE _sip.parent = si.name
 				AND IFNULL(_sip.mode_of_payment, '') = %(mode_of_payment)s
 			)"""
+
+	if filters.get("pos_closing_shift"):
+		conditions += " AND si.name IN %(closing_sales_invoices)s"
+
+	# //// (user_permission_scope, maintenance#2296): a user kept to some companies or tills reads no other one's.
+	for condition in user_permission_scope.conditions("si", filters):
+		conditions += f" AND {condition}"
 
 	return conditions
 
