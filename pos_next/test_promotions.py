@@ -599,6 +599,7 @@ class TestPromotions(FrappeTestCase):
 		self.assertAlmostEqual(flt(final.items[0].rate), 40, places=2)
 		self.assertAlmostEqual(flt(final.items[0].discount_amount), 10, places=2)
 
+	# //// Neoffice — new test: draft and payment totals must match for a fixed-amount offer line (3a3a71c "fix(invoices): the draft of a line under an offer holds the figure the payment computes")
 	def test_the_draft_of_a_fixed_discount_line_is_the_figure_the_payment_computes(self):
 		"""50.00 off a 999.00 item: the draft read 949.00 while the payment invoices 948.95 (neoffice-maintenance#2081)."""
 		import json
