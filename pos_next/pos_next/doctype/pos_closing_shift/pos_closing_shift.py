@@ -10,6 +10,8 @@ from erpnext.accounts.doctype.pos_invoice_merge_log.pos_invoice_merge_log import
 )
 from frappe import _
 from frappe.model.document import Document
+
+# //// Neoffice — added cint for rounded-total based not-collected calc (eafe8516 "fix(closing): a fully paid rounded sale no longer shows 0.01 \"not collected\"")
 from frappe.utils import cint, flt
 
 
