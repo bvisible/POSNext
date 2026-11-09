@@ -25198,3 +25198,64 @@ msgstr "Impossible d'activer les pourboires : le compte pourboires n'a pas pu ê
 #: pos_next/till_settings/registry.py:1328
 msgid "When the customer pays more than the total, the difference can become a tip, kept apart from the turnover and given to the person who served. Shop till only."
 msgstr "Lorsque le client paie plus que le total, la différence peut devenir un pourboire, tenu à l'écart du chiffre d'affaires et remis à la personne qui a servi. Caisse de boutique uniquement."
+
+#: pos_next/till_settings/registry.py
+msgid "Who did the work?"
+msgstr "Qui a réalisé la prestation ?"
+
+#: POS/src/utils/salesPersonLines.js
+msgctxt "Sales persons"
+msgid "Who did the work?"
+msgstr "Qui a réalisé la prestation ?"
+
+#: POS/src/utils/salesPersonLines.js
+msgctxt "Sales persons"
+msgid "Who sold it?"
+msgstr "Qui a vendu ?"
+
+#: pos_next/till_settings/registry.py
+msgid "Follow the sales of products by person too"
+msgstr "Suivre aussi les ventes de produits par personne"
+
+#: pos_next/till_settings/registry.py
+msgid "Off: only services ask for the person. On: a product sold asks who sold it and counts in that person's statistics. It does nothing while the choice above is off."
+msgstr "Désactivé : seules les prestations demandent la personne. Activé : un produit vendu demande qui l'a vendu et compte dans les statistiques de cette personne. Sans effet tant que le choix ci-dessus est désactivé."
+
+#: pos_next/till_settings/registry.py
+msgctxt "Sales persons"
+msgid "One person per sale"
+msgstr "Une personne par vente"
+
+#: pos_next/till_settings/registry.py
+msgid "Each service names the person who did it, and the till does not close a sale without it. The person of the signed-in account is chosen first and can be changed; a person chosen at payment covers the lines that have none. Offline, nothing is required. « One person per sale » gives the whole sale to one person, « Several people » shares it between them; a person can also be set on each line. Shop till only."
+msgstr "Chaque prestation désigne la personne qui l'a réalisée, et la caisse ne clôt pas une vente sans elle. La personne du compte connecté est choisie en premier et peut être modifiée ; une personne choisie au paiement couvre les lignes qui n'en ont pas. Hors ligne, rien n'est exigé. « Une personne par vente » attribue toute la vente à une seule personne, « Plusieurs personnes » la répartit entre elles ; une personne peut aussi être définie sur chaque ligne. Caisse du magasin uniquement."
+
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Track product sales by person too"
+msgstr "Suivre aussi les ventes de produits par personne"
+
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Off: only services ask who did the work. On: a product sold asks who sold it, and counts in that person's statistics. Which items are products is told by the site (hook pos_next_item_kind); without it every line is a service."
+msgstr "Désactivé : seules les prestations demandent qui les a réalisées. Activé : un produit vendu demande qui l'a vendu, et compte dans les statistiques de cette personne. Le site indique quels articles sont des produits (hook pos_next_item_kind) ; sans lui, chaque ligne est une prestation."
+
+#: POS/src/components/sale/WhoServesBar.vue
+msgid "Preselected"
+msgstr "Présélectionnée"
+
+#: POS/src/components/sale/WhoServesBar.vue
+msgid "Choose the person…"
+msgstr "Choisir la personne…"
+
+#: POS/src/components/sale/WhoServesBar.vue
+msgctxt "Sales persons"
+msgid "You"
+msgstr "Vous"
+
+#: POS/src/components/sale/WhoServesBar.vue
+msgctxt "Sales persons"
+msgid "Nobody"
+msgstr "Aucune personne"
+
+#: POS/src/components/sale/InvoiceCart.vue
+msgid "Product: no person asked"
+msgstr "Produit : aucune personne demandée"
