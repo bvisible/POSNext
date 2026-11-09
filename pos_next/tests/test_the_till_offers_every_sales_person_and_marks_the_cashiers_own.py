@@ -17,7 +17,7 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 
 from pos_next.api import pos_profile
-from pos_next.tests.test_till_writes_need_the_till import CASHIER_ROLE, TILL, _till_fixture, _user
+from pos_next.tests.test_till_writes_need_the_till import CASHIER_ROLE, OTHER_TILL, TILL, _till_fixture, _user
 
 LUC = "_Test SP Luc"
 SONIA = "_Test SP Sonia"
@@ -65,6 +65,7 @@ class TestTheTillOffersEverySalesPersonAndMarksTheCashiersOwn(FrappeTestCase):
 	def setUp(self):
 		super().setUp()
 		_user(TILL, [CASHIER_ROLE, "Sales User"], "System User")
+		_user(OTHER_TILL, ["Blogger"], "System User")  # the fixture's second till names it
 		self.fx = _till_fixture()
 		frappe.db.set_value(
 			"POS Settings", {"pos_profile": self.fx.profile}, "enable_sales_persons", "Single"
