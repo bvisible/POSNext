@@ -506,6 +506,7 @@ def get_sales_persons(pos_profile: str | None = None):
 	mine = set(
 		frappe.get_all("Employee", filters={"user_id": frappe.session.user, "status": "Active"}, pluck="name")
 	)
+	# //// Neoffice — the flag is added to every row (see above)
 	for row in sales_persons:
 		row["is_mine"] = 1 if row.get("employee") and row["employee"] in mine else 0
 

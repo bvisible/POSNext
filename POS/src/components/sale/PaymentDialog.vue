@@ -3397,6 +3397,7 @@ const salesPersonsResource = createResource({
 			}));
 			offlineWorker.cacheSalesPersons(personsWithProfile).catch(() => {});
 		}
+		//// Neoffice — the list has arrived: choose the cashier's own sales person if the dialog is already open on none
 		selectMySalesPerson();
 	},
 	onError(error) {
@@ -4023,6 +4024,7 @@ watch(show, async (newVal) => {
 		}
 		selectedSalesPersons.value = [];
 		salesPersonSearch.value = "";
+		//// Neoffice — every sale starts on the cashier's own sales person, not on an empty field
 		selectMySalesPerson();
 		//// Neoffice — drop the terminal-captured payments from the previous sale: a locked
 		//// entry the cashier cannot edit must never be inherited by the next one (bd9e2f30,
