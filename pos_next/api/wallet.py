@@ -377,7 +377,10 @@ def create_wallet_on_customer_insert(doc, method=None):
 	try:
 		get_or_create_wallet(doc.name, company, pos_settings=pos_settings)
 	except Exception:
-		frappe.log_error(frappe.get_traceback(), f"Wallet auto-create failed for {doc.name}")
+		# //// Neoffice — the title first, short and fixed (140 characters at most), the customer's name and the traceback in the message:
+		# //// the name of a customer is up to 140 characters, and as a title it made the Error Log refuse the row (CharacterLengthExceededError),
+		# //// a second exception that escaped this hook and failed the creation of the customer itself (neoffice-maintenance#1072).
+		frappe.log_error("Wallet auto-create failed", f"{doc.name}\n{frappe.get_traceback()}")
 
 
 # //// Neoffice — a wallet is auto-created for every customer and its reqd + unique link back to
@@ -458,8 +461,9 @@ def get_or_create_wallet(customer, company, pos_settings=None, force_create=Fals
 		wallet_account = frappe.get_cached_value("Company", company, "default_receivable_account")
 
 	if not wallet_account:
+		# //// Neoffice — title first, then the message (neoffice-maintenance#1072): the arguments were swapped, so the customer's name ended up in the title.
 		frappe.log_error(
-			f"Cannot create wallet for {customer}: No wallet account configured", "Wallet Creation Error"
+			"Wallet Creation Error", f"Cannot create wallet for {customer}: No wallet account configured"
 		)
 		return None
 
@@ -479,7 +483,11 @@ def get_or_create_wallet(customer, company, pos_settings=None, force_create=Fals
 		return wallet_doc
 
 	except Exception as e:
-		frappe.log_error(f"Failed to create wallet for {customer}: {e!s}", "Wallet Creation Error")
+		# //// Neoffice — title first, then the message (neoffice-maintenance#1072): the long text was the title and raised CharacterLengthExceededError from inside this handler.
+		frappe.log_error(
+			"Wallet Creation Error",
+			f"Failed to create wallet for {customer}: {e!s}\n{frappe.get_traceback()}",
+		)
 		return None
 
 

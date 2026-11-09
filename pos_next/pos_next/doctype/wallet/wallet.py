@@ -1,14 +1,31 @@
 # Copyright (c) 2024, BrainWise and contributors
 # For license information, please see license.txt
 
+import hashlib
+
 import frappe
 from erpnext.accounts.utils import get_balance_on
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt
 
+# The longest name a document can have: the `name` column holds 140 characters
+MAX_NAME_LENGTH = 140
+
 
 class Wallet(Document):
+	# //// Neoffice — the name of a wallet is "<customer>-WALLET" (wallet.json: format:{customer}-WALLET), and a customer's name is up to 140
+	# //// characters, so a long one gave a wallet name over the 140 of the `name` column and the insert failed (neoffice-maintenance#1072). A name
+	# //// that fits is exactly what the format gives (this method sets it before the format is read); a longer one is cut and kept unique by
+	# //// a hash of the customer's name. Nothing looks a wallet up by this name (they are found by customer and company). Remove if upstream
+	# //// names its wallets in a way that always fits.
+	def autoname(self):
+		name = f"{self.customer}-WALLET"
+		if len(name) > MAX_NAME_LENGTH:
+			digest = hashlib.sha256(self.customer.encode()).hexdigest()[:10]
+			name = f"{self.customer[: MAX_NAME_LENGTH - len(digest) - len('--WALLET')]}-{digest}-WALLET"
+		self.name = name
+
 	def validate(self):
 		self.validate_account_type()
 		self.validate_duplicate_wallet()
