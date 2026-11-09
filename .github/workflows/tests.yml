@@ -29,8 +29,9 @@ jobs:
       skip_build: true   # SPA commit-the-build: assets committed, never built on instances
       node_version: "20"  # root package.json pulls playwright (>=20); bench yarn-installs it even with --skip-assets
       test_args: ${{ inputs.test_args || '' }}
-      # The whole suite runs about 25 minutes on a quick runner and passed 41 on a slow one: the shared ceiling of 45 cut
-      # it with no verdict (2026-11-04, the nightly and a run on demand)
-      tests_timeout_minutes: 90
+      # The shared ceiling of 45 cut the suite with no verdict (2026-11-04). It has grown since: 3 002 tests in 80 minutes
+      # (06.11), 3 039 in 79 (08.11), and the ceiling of 90 cut it in turn on a slower runner, the job ending at 90 minutes
+      # sharp with the tests still running (09.11, ubuntu-26.04)
+      tests_timeout_minutes: 150
     # inherit: CI_REPORT_SECRET (deps are public bvisible forks: no read token needed)
     secrets: inherit
