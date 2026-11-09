@@ -255,6 +255,8 @@ _GROUPS = (
 	Group("payment", "sales", _lt("Payment"), 1),
 	Group("returns", "sales", _lt("Returns"), 2),
 	Group("sales_orders", "sales", _lt("Sales orders"), 2),
+	# //// Neoffice — who made the sale (NeoCoiffeur study, product owner, 09.11.2026): the option upstream ships and the fork had switched off
+	Group("sales_persons", "sales", _lt("Sales persons"), 2),
 	Group("gift_cards", "sales", _lt("Gift cards"), 3),
 	# Stock
 	Group("warehouse", "stock", _lt("Warehouse"), 1),
@@ -841,7 +843,9 @@ SETTINGS = (
 		"enable_session_lock",
 		"session_lock",
 		_lt("Lock the till"),
-		_lt("Each person unlocks it with their personal till code, or with their password if they have none."),
+		_lt(
+			"Each person unlocks it with their personal till code, or with their password if they have none."
+		),
 		"check",
 		doctype=POS_SETTINGS,
 	),
@@ -875,7 +879,9 @@ SETTINGS = (
 		"keep_signed_in_days",
 		"staff_session",
 		_lt("Keep staff signed in (days)"),
-		_lt("0 = the site's session length. The session stays open while the device is used within this time."),
+		_lt(
+			"0 = the site's session length. The session stays open while the device is used within this time."
+		),
 		"int",
 		doctype=POS_SETTINGS,
 		min=0,
@@ -930,7 +936,9 @@ SETTINGS = (
 		"kitchen_next_course_popup",
 		"kitchen_alerts",
 		_lt("Flash the ticket when the next course is ordered"),
-		_lt("The ticket of a table whose next course is ordered flashes on the kitchen screen until the kitchen starts it or leaves it to do"),
+		_lt(
+			"The ticket of a table whose next course is ordered flashes on the kitchen screen until the kitchen starts it or leaves it to do"
+		),
 		"check",
 		doctype=POS_SETTINGS,
 		till=RESTAURANT_TILL,
@@ -1315,6 +1323,27 @@ SETTINGS = (
 		doctype=POS_SETTINGS,
 		till=SHOP,
 	),
+	# //// Neoffice — the till asks who did the work (NeoCoiffeur study, product owner, 09.11.2026: « exiger qui a fait la réalisation »;
+	# //// « si j'ouvre le compte avec un compte employé, j'aurai la personne présélectionnée »). The option is upstream's, tried on osiris
+	# //// the same day; a shop till only (a restaurant's order carries its waiter).
+	Setting(
+		"enable_sales_persons",
+		"sales_persons",
+		_lt("Who made the sale"),
+		_lt(
+			"The till asks who did the work and does not close a sale without it. The person of the signed-in"
+			" account is chosen first and can be changed. « One person » gives the whole sale to one person,"
+			" « Several people » shares it between them; a person can also be set on each line. Shop till only."
+		),
+		"segmented",
+		doctype=POS_SETTINGS,
+		till=SHOP,
+		options=(
+			("Disabled", _lt("Off", context="Sales persons")),
+			("Single", _lt("One person", context="Sales persons")),
+			("Multiple", _lt("Several people", context="Sales persons")),
+		),
+	),
 	Setting(
 		"enable_gift_cards",
 		"gift_cards",
@@ -1620,7 +1649,9 @@ SETTINGS = (
 		"posa_cash_movement_out_limit",
 		"cash_movements",
 		_lt("Cash out limit per shift"),
-		_lt("The most the cash movements of this till may take out of the drawer during one shift. Empty: no limit."),
+		_lt(
+			"The most the cash movements of this till may take out of the drawer during one shift. Empty: no limit."
+		),
 		"float",
 		doctype=POS_PROFILE,
 		min=0,
@@ -2082,9 +2113,6 @@ NOT_LISTED = {
 		"allow_delete_offline_invoice": _INERT,
 		"allow_change_posting_date": _INERT,
 		"input_qty": _INERT,
-		"enable_sales_persons": (
-			"switched off on purpose by the merge of 28.10.2026, until a till's use is decided"
-		),
 		"cart_lifo": "switched off on purpose by the merge of 28.10.2026: the newest line always comes first",
 		# //// Neoffice — the banner is gone (Daniel, 01.11), so are its seconds: the ticket flashes until the kitchen starts it. The field stays in the doctype, hidden, for the rows already stored.
 		"kitchen_popup_seconds": "no longer used: the banner of the kitchen screen is gone, the ticket flashes until the kitchen starts it",
