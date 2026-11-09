@@ -1553,7 +1553,7 @@
 									<!-- //// Neoffice — a product the till does not follow by person says it asks for nobody, instead of looking forgotten (NeoSalon, lot G1, canvas « Caisse 1 »). -->
 									<span
 										v-else-if="settingsStore.enableSalesPersons && !settingsStore.trackProductSalesByPerson && kindOfLine(item) === 'product'"
-										class="text-gray-500 truncate max-w-[12rem]"
+										class="text-gray-500"
 										data-test="line-no-person-asked"
 									>
 										{{ __("Product: no person asked") }}
