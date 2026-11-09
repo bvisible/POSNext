@@ -1,5 +1,9 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""The closing's "Money taken" counts what a return refunded, not the return's invoice total."""
+"""The closing's "Money taken" counts what a return refunded, not the return's invoice total.
+
+It also counts as "not collected" only what a sale really still owes: a sale of a till that rounds cash
+owes its rounded total, so a fully paid rounded sale leaves nothing outstanding (neoffice-maintenance#2083).
+"""
 
 import unittest
 
@@ -8,7 +12,9 @@ import frappe
 from pos_next.pos_next.doctype.pos_closing_shift.pos_closing_shift import _process_invoice
 
 
-def _invoice(name, grand_total, paid_amount, is_return=0, payments=None):
+def _invoice(
+	name, grand_total, paid_amount, is_return=0, payments=None, rounded_total=0, disable_rounded_total=0
+):
 	return frappe._dict(
 		{
 			"name": name,
@@ -18,6 +24,9 @@ def _invoice(name, grand_total, paid_amount, is_return=0, payments=None):
 			"conversion_rate": 1,
 			"grand_total": grand_total,
 			"base_grand_total": grand_total,
+			"rounded_total": rounded_total,
+			"base_rounded_total": rounded_total,
+			"disable_rounded_total": disable_rounded_total,
 			"net_total": grand_total,
 			"base_net_total": grand_total,
 			"paid_amount": paid_amount,
@@ -83,3 +92,46 @@ class TestClosingCountsRefunds(unittest.TestCase):
 		for invoice in (sale, refund):
 			_process_invoice(invoice, "sales_invoice", "CHF", "Cash", [], [], summary)
 		self.assertAlmostEqual(summary["collected_total"], 0)
+
+	def test_a_fully_paid_rounded_sale_leaves_nothing_outstanding(self):
+		# CHF 0.05 rounding: the customer owes and pays 17.45 for a 17.46 grand_total.
+		summary = _summary()
+		sale = _invoice(
+			"INV-SALE",
+			grand_total=17.46,
+			paid_amount=17.45,
+			rounded_total=17.45,
+			payments=[frappe._dict({"mode_of_payment": "Cash", "amount": 17.45, "base_amount": 17.45})],
+		)
+		txn = _process_invoice(sale, "sales_invoice", "CHF", "Cash", [], [], summary)
+		self.assertEqual(txn["outstanding_amount"], 0)
+		self.assertEqual(summary["outstanding_total"], 0)
+		# The invoiced side keeps the accrual figure that ties to the GL.
+		self.assertAlmostEqual(txn["grand_total"], 17.46)
+
+	def test_a_real_shortfall_is_still_counted_when_the_till_does_not_round(self):
+		summary = _summary()
+		sale = _invoice(
+			"INV-SALE",
+			grand_total=17.46,
+			paid_amount=17.00,
+			disable_rounded_total=1,
+			payments=[frappe._dict({"mode_of_payment": "Cash", "amount": 17.00, "base_amount": 17.00})],
+		)
+		txn = _process_invoice(sale, "sales_invoice", "CHF", "Cash", [], [], summary)
+		self.assertAlmostEqual(txn["outstanding_amount"], 0.46)
+		self.assertAlmostEqual(summary["outstanding_total"], 0.46)
+
+	def test_an_unpaid_credit_sale_owes_its_rounded_total(self):
+		summary = _summary()
+		sale = _invoice("INV-SALE", grand_total=17.46, paid_amount=0, rounded_total=17.45)
+		txn = _process_invoice(sale, "sales_invoice", "CHF", "Cash", [], [], summary)
+		self.assertAlmostEqual(txn["outstanding_amount"], 17.45)
+		self.assertAlmostEqual(summary["outstanding_total"], 17.45)
+
+	def test_a_sale_without_rounding_owes_its_grand_total(self):
+		# rounded_total empty (0): the grand total is the figure owed, as before.
+		summary = _summary()
+		sale = _invoice("INV-SALE", grand_total=17.46, paid_amount=10.00)
+		txn = _process_invoice(sale, "sales_invoice", "CHF", "Cash", [], [], summary)
+		self.assertAlmostEqual(txn["outstanding_amount"], 7.46)

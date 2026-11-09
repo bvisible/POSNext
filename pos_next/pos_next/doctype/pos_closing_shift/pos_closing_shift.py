@@ -10,7 +10,7 @@ from erpnext.accounts.doctype.pos_invoice_merge_log.pos_invoice_merge_log import
 )
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import flt
+from frappe.utils import cint, flt
 
 
 def get_base_value(doc, fieldname, base_fieldname=None, conversion_rate=None):
@@ -652,7 +652,18 @@ def _process_invoice(
 	# //// customer's balance, so the closing's "Money taken" disagreed with the cash line of the same
 	# //// screen (osiris, 2026-10-04: -0.08 against 40.23). Remove if upstream counts refunds the same way.
 	collected = base_paid
-	outstanding = 0 if is_return else (base_grand_total - base_paid)
+	# //// Neoffice — what a sale owes is its ROUNDED total when the till rounds cash (CHF 0.05): the
+	# //// customer owes and pays 17.45 for a 17.46 grand_total, so `grand_total - paid` left a phantom
+	# //// 0.01 "not collected" on every rounded sale although the invoice's outstanding_amount is 0
+	# //// (neoffice-maintenance#2083). grand_total / net_total / taxes stay untouched (they tie to the
+	# //// GL). Remove if upstream computes the figure from the rounded total too.
+	base_owed = base_grand_total
+	if not cint(invoice.get("disable_rounded_total")):
+		base_owed = (
+			get_base_value(invoice, "rounded_total", "base_rounded_total", conversion_rate)
+			or base_grand_total
+		)
+	outstanding = 0 if is_return else flt(base_owed - base_paid, 2)
 
 	# Build transaction record
 	transaction = frappe._dict(
