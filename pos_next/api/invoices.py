@@ -3559,10 +3559,11 @@ def get_invoices(pos_profile: str, search=None, limit: int = 20, offset=0, from_
 	limit = cint(limit) or 100
 	start = cint(start) or 0
 
-	# Permission check
-	has_access = frappe.db.exists("POS Profile User", {"parent": pos_profile, "user": frappe.session.user})
-	if not has_access and not frappe.has_permission("Sales Invoice", "read"):
-		frappe.throw(_("You don't have access to this POS Profile"))
+	# //// Neoffice — the one rule of the till's reads, as its neighbours have it (neoffice-maintenance#2082): a desk account, then the
+	# //// till's own user table or a role that reads sales invoices, and the User Permissions. This function kept the inline check.
+	from pos_next.api.cash_entry import require_till_access
+
+	require_till_access(pos_profile)
 
 	# Clamp page size securely: minimum 1, maximum 100
 	limit = max(1, min(cint(limit) or 20, 100))

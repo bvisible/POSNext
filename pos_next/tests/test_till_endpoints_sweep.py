@@ -347,6 +347,8 @@ class TestTillEndpointsSweep(FrappeTestCase):
 			("sign_message", _past_the_gate(lambda: qz.sign_message("tillsweep"), frappe.ValidationError)),
 			("get_suggested_opening_balance", lambda: shifts.get_suggested_opening_balance(PROFILE)),
 			("cleanup_old_drafts", lambda: invoices.cleanup_old_drafts(PROFILE)),
+			# The invoice history of the till (neoffice-maintenance#2082)
+			("get_invoices", lambda: invoices.get_invoices(PROFILE)),
 			("validate_cart_items", lambda: invoices.validate_cart_items("[]", PROFILE)),
 			("validate_return_items", lambda: invoices.validate_return_items(fx.invoice, "[]")),
 			("get_returnable_invoices", lambda: invoices.get_returnable_invoices(5, PROFILE)),
