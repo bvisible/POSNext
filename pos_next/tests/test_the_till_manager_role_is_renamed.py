@@ -12,7 +12,6 @@ must do, on roles of its own (the real role of the site is never touched):
 """
 
 import json
-import os
 
 import frappe
 from frappe.permissions import add_permission
@@ -66,14 +65,20 @@ class TestTheTillManagerRoleIsRenamed(FrappeTestCase):
 		add_permission(DOCTYPE, OLD, 0)
 
 	def roles_of(self, user):
+		"""The roles of an account: a new account also gets the roles the other apps of the site give every user."""
 		return frappe.get_all("Has Role", filters={"parent": user, "parenttype": "User"}, pluck="role")
+
+	def assert_holds_only_the_new_one(self, user):
+		roles = self.roles_of(user)
+		self.assertEqual(roles.count(NEW), 1)
+		self.assertNotIn(OLD, roles)
 
 	def test_the_role_takes_its_new_name_with_everything_that_points_at_it(self):
 		patch.rename(OLD, NEW)
 
 		self.assertFalse(frappe.db.exists("Role", OLD))
 		self.assertTrue(frappe.db.exists("Role", NEW))
-		self.assertEqual(self.roles_of(USER), [NEW])
+		self.assert_holds_only_the_new_one(USER)
 		self.assertTrue(frappe.db.exists("Custom DocPerm", {"parent": DOCTYPE, "role": NEW}))
 		self.assertFalse(frappe.db.exists("Custom DocPerm", {"role": OLD}))
 
@@ -89,14 +94,14 @@ class TestTheTillManagerRoleIsRenamed(FrappeTestCase):
 		patch.rename(OLD, NEW)
 
 		self.assertFalse(frappe.db.exists("Role", OLD))
-		self.assertEqual(self.roles_of(USER), [NEW])
-		self.assertEqual(self.roles_of(OTHER), [NEW])
+		self.assert_holds_only_the_new_one(USER)
+		self.assert_holds_only_the_new_one(OTHER)
 
 	def test_run_again_it_does_nothing(self):
 		patch.rename(OLD, NEW)
 		patch.rename(OLD, NEW)
 
-		self.assertEqual(self.roles_of(USER), [NEW])
+		self.assert_holds_only_the_new_one(USER)
 		self.assertTrue(frappe.db.exists("Role", NEW))
 
 	def test_a_site_that_never_had_the_old_role_is_left_alone(self):
@@ -109,10 +114,9 @@ class TestTheTillManagerRoleIsRenamed(FrappeTestCase):
 		self.assertFalse(frappe.db.exists("Role", NEW))
 
 	def test_the_files_of_the_app_say_the_new_name(self):
-		app = os.path.dirname(os.path.dirname(__file__))
-		with open(os.path.join(app, "fixtures", "role.json")) as fixture:
+		with open(frappe.get_app_path("pos_next", "fixtures", "role.json")) as fixture:
 			names = {row["name"] for row in json.load(fixture)}
-		with open(os.path.join(app, "hooks.py")) as hooks:
+		with open(frappe.get_app_path("pos_next", "hooks.py")) as hooks:
 			hooks_text = hooks.read()
 		from pos_next.api.cash_entry import TILL_MANAGER_ROLES
 
