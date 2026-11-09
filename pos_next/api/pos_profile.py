@@ -457,6 +457,16 @@ def get_sales_persons(pos_profile: str | None = None):
 	if not has_access:
 		frappe.throw(_("You don't have access to this POS Profile"))
 
+	# //// Neoffice — the till preloads the sales persons at every load, whether or not the profile uses them, and the
+	# //// list below is permission-checked: a cashier role without read on Sales Person got a 403 on each load and a
+	# //// "PermissionError" in the console (neoffice-maintenance#2087). A profile that does not use sales persons has
+	# //// nothing to list. A profile that does still needs read on Sales Person for its till role (unchanged, no
+	# //// ignore_permissions here). Remove if upstream stops preloading the list for a profile that disables sales persons.
+	from pos_next.pos_next.utils.sales_person_commission import sales_persons_enabled
+
+	if not sales_persons_enabled(pos_profile):
+		return []
+
 	filters = {
 		"enabled": 1,
 		"is_group": 0,  # Only get individual sales persons, not group nodes

@@ -436,6 +436,39 @@ class TestGetSalesPersons(unittest.TestCase):
 		for key in ("item_commissions", "item_group_commissions", "brand_commissions"):
 			self.assertNotIn(key, result[0])
 
+	def test_a_profile_without_sales_persons_lists_nothing_and_asks_no_permission(self):
+		# The till preloads the list at every load: a cashier role without read on Sales Person must not be
+		# refused (403) for a profile that does not use sales persons (neoffice-maintenance#2087).
+		db = MagicMock()
+		db.exists.return_value = True
+		db.get_value.return_value = "Disabled"
+		db.has_column.return_value = False
+		with (
+			patch.object(frappe, "db", db),
+			patch.object(frappe, "session", SimpleNamespace(user="cashier@example.com")),
+			patch.object(frappe, "get_list", side_effect=frappe.PermissionError) as get_list,
+		):
+			result = inspect.unwrap(pos_profile_api.get_sales_persons)("POS-1")
+
+		self.assertEqual(result, [])
+		get_list.assert_not_called()
+
+	def test_a_profile_that_uses_sales_persons_still_lists_them(self):
+		rows = [frappe._dict(name="SP-A", sales_person_name="A", commission_rate=2, employee=None)]
+		db = MagicMock()
+		db.exists.return_value = True
+		db.has_column.return_value = False
+		with (
+			patch.object(frappe, "db", db),
+			patch.object(frappe, "session", SimpleNamespace(user="cashier@example.com")),
+			patch.object(spc, "sales_persons_enabled", return_value=True),
+			patch.object(frappe, "get_list", return_value=rows) as get_list,
+		):
+			result = inspect.unwrap(pos_profile_api.get_sales_persons)("POS-1")
+
+		get_list.assert_called_once()
+		self.assertEqual(result, rows)
+
 
 # ---------------------------------------------------------------------------
 # Return quantity checks (per-row)
