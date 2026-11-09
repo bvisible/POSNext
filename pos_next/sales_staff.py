@@ -9,20 +9,27 @@ the cashier can name are there from the first day.
 It acts only on a site where a till asks for a sales person (`POS Settings.enable_sales_persons` is not « Disabled » on an enabled
 till): anywhere else an employee is an employee, and no Sales Person appears for the staff of a company that does not sell with them.
 
-- an employee who is saved Active without a Sales Person gets one, under the root of the sales team, in the employee's company
-  (the till lists the Sales Persons of its own company), named as the employee, and told apart by the employee's id when the name is
-  taken;
+Only the employees who have an ACCOUNT OF THE TILL become sales persons (product owner, 09.11.2026: « comptes de caisse seuls »): an
+Employee whose User holds the role « POSNext Cashier » or « POSNext Manager ». Every desk user of Neoffice is an employee, so the
+reception and the accountant would otherwise be offered as people who did the work. A hairdresser who has no account of the till is not
+made here: her Sales Person is made by hand, or when her account gets the role.
+
+- an employee who is saved Active with an account of the till and without a Sales Person gets one, under the root of the sales team, in
+  the employee's company (the till lists the Sales Persons of its own company), named as the employee, and told apart by the employee's
+  id when the name is taken; so does an employee whose User is given the role later, or whose Employee is linked to such a User later;
 - an employee who is no longer Active (Left, Inactive, Suspended) has the Sales Person disabled, never deleted: the sales already
   booked keep their person and their commission; an employee who comes back Active has it enabled again;
 - an administrator who disables or deletes the Sales Person of an Active employee is obeyed: nothing is remade until the status of
-  the employee changes;
-- turning the option on for a till makes the missing ones for the employees who already exist, and so does a migration of a site
-  where it is already on (the patch of the same name).
+  the employee, or the role of the account, changes;
+- turning the option on for a till makes the missing ones for the employees who already have an account of the till, and so does a
+  migration of a site where it is already on (the patch of the same name).
 """
 
 import frappe
 
 ACTIVE = "Active"
+# The accounts of the till: a cashier, and a till manager (cash_entry.TILL_MANAGER_ROLES also holds Admin and System Manager, who are not persons of the salon)
+TILL_ROLES = ("POSNext Cashier", "POSNext Manager")
 
 
 def option_is_on() -> bool:
@@ -36,6 +43,18 @@ def option_is_on() -> bool:
 
 def sales_person_of(employee: str) -> str | None:
 	return frappe.db.get_value("Sales Person", {"employee": employee}, "name")
+
+
+def has_a_till_role(user: str | None) -> bool:
+	"""Whether the account holds a role of the till."""
+	return bool(user) and bool(
+		frappe.db.exists("Has Role", {"parent": user, "parenttype": "User", "role": ["in", TILL_ROLES]})
+	)
+
+
+def has_a_till_account(employee: str) -> bool:
+	"""Whether the employee is linked to an account of the till."""
+	return has_a_till_role(frappe.db.get_value("Employee", employee, "user_id"))
 
 
 def _root_of_the_team() -> str | None:
@@ -83,11 +102,16 @@ def make_the_sales_person_of(employee: str) -> str | None:
 
 
 def make_the_missing_sales_persons() -> list[str]:
-	"""A Sales Person for every Active employee who has none; the names made."""
+	"""A Sales Person for every Active employee who has an account of the till and none; the names made."""
+	holders = set(
+		frappe.get_all("Has Role", filters={"parenttype": "User", "role": ["in", TILL_ROLES]}, pluck="parent")
+	)
 	made = []
-	for employee in frappe.get_all("Employee", filters={"status": ACTIVE}, pluck="name"):
-		if not sales_person_of(employee):
-			name = make_the_sales_person_of(employee)
+	for employee in frappe.get_all(
+		"Employee", filters={"status": ACTIVE, "user_id": ["is", "set"]}, fields=["name", "user_id"]
+	):
+		if employee.user_id in holders and not sales_person_of(employee.name):
+			name = make_the_sales_person_of(employee.name)
 			if name:
 				made.append(name)
 	return made
@@ -104,15 +128,31 @@ def employee_saved(doc, method=None) -> None:
 		return
 	before = doc.get_doc_before_save()
 	status_changed = before is None or before.status != doc.status
+	# An Employee linked to an account of the till later is a new person of the till as much as one who is saved Active
+	linked_now = before is None or before.user_id != doc.user_id
 	person = sales_person_of(doc.name)
 	if doc.status == ACTIVE:
 		if not person:
-			if status_changed:
+			if (status_changed or linked_now) and has_a_till_role(doc.user_id):
 				make_the_sales_person_of(doc.name)
 		elif status_changed:
 			_enable(person, True)
 	elif person:
 		_enable(person, False)
+
+
+def user_saved(doc, method=None) -> None:
+	"""`User.on_update`: an account given a role of the till makes the sales person of its Active employee."""
+	if not option_is_on():
+		return
+	if not any(row.role in TILL_ROLES for row in doc.get("roles") or []):
+		return
+	before = doc.get_doc_before_save()
+	if before and any(row.role in TILL_ROLES for row in before.get("roles") or []):
+		return  # the role was already there: what an administrator did with the sales person since is respected
+	for employee in frappe.get_all("Employee", filters={"user_id": doc.name, "status": ACTIVE}, pluck="name"):
+		if not sales_person_of(employee):
+			make_the_sales_person_of(employee)
 
 
 def till_settings_saved(doc, method=None) -> None:

@@ -463,6 +463,8 @@ doc_events = {
 		"before_validate": "pos_next.restaurant.devices.guard_device_account_before_validate",
 		"validate": "pos_next.restaurant.devices.guard_device_account",
 		"before_rename": "pos_next.restaurant.devices.guard_device_rename",
+		# //// Neoffice — an account given a role of the till makes the sales person of its employee, where a till asks for one (NeoSalon, lot G1.2, product owner, 09.11.2026).
+		"on_update": "pos_next.sales_staff.user_saved",
 	},
 	"OAuth Bearer Token": {
 		"validate": "pos_next.restaurant.devices.guard_oauth_token",
