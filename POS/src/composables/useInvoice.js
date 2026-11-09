@@ -319,7 +319,11 @@ export function useInvoice() {
 	//// those terms. An item with a rate set by hand always does: a second dish typed at another price was merged into the line
 	//// of the first and billed at its price (NeoResto lot 1, task 22, fix round 2).
 	function addItem(item, quantity = 1, options = {}) {
-		const carriesPriceTerms = Boolean(options.sameTermsOnly) || item.is_rate_manually_edited === 1;
+		//// Neoffice — a stored row at the list price brings its discount too (storedRowTerms): its rate is net of it, and the line
+		//// derives its rate from the list price and the percentage, so without the percentage the line came back at the list price
+		//// and billed more than the queued sale (neoffice-maintenance#2074).
+		const carriesPriceTerms =
+			Boolean(options.sameTermsOnly) || item.is_rate_manually_edited === 1 || item.carries_price_terms === true;
 		const itemUom = item.uom || item.stock_uom;
 		//// Neoffice — upstream addItem merges a new line into an existing one with the same item_code
 		//// + UOM. In restaurant mode the same dish ordered twice with different modifiers or a

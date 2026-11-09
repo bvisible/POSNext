@@ -58,13 +58,35 @@ export function carriedPriceTerms(source) {
 
 /**
  * A row of a stored (queued) invoice as the cart takes it back. The rate of such a row is already net of the discount, and
- * the row carries the percentage as well, so a line that takes both bills the discount twice: a hand-set 8.00 given 10 % off
- * was queued at 7.20 and came back at 6.48. The discount stays in the rate and not in the percentage; every other term of
- * the row (the rate set by hand and its original) is kept. The row it is given is not changed.
+ * the row carries the percentage as well, so a line that takes both can bill the discount twice or lose it:
+ * - a row whose rate was set by hand (a hand-set 8.00 given 10 % off was queued at 7.20) keeps that rate, as the cart keeps
+ *   the rate of such a line, and loses the percentage: with both it came back at 6.48;
+ * - a row at the list price is billed by the cart from its list price and its percentage, so the percentage is what carries
+ *   the discount: without it the line came back at the list price, more than the queued sale (a 9.00 row of a 10.00 list
+ *   price came back at 10.00). The percentage is the row's own, or derived from its list price and its net rate when the
+ *   row was discounted by an amount; the amount is left out, the percentage bills it. The row says so with
+ *   `carries_price_terms`, which makes the cart take the terms of the row (as it does for a rate set by hand) and merge it only
+ *   into a line that bills the same way (a row without a discount says so too);
+ * - an offered row (100 % off) and a free row keep to the first rule: the cart gives them their own terms.
+ * Every other term of the row is kept. The row it is given is not changed.
  *
  * @param {Object} row - A row of a stored invoice
- * @returns {Object} The row, without a discount percentage
+ * @returns {Object} The row, as the cart takes it
  */
 export function storedRowTerms(row) {
-	return { ...row, discount_percentage: 0 }
+	if (row?.is_rate_manually_edited === 1 || row?.posa_is_offered || row?.is_free_item) {
+		return { ...row, discount_percentage: 0 }
+	}
+	const list = Number(row?.price_list_rate) || 0
+	const net = Number(row?.rate) || 0
+	const asked = Number(row?.discount_percentage) || 0
+	const derived = list > 0 && net >= 0 && net < list ? ((list - net) / list) * 100 : 0
+	// Every other row says that the cart takes its terms, a row without a discount too: rows merge only when they bill the same way,
+	// or a plain row would join a discounted line and be billed with its discount.
+	return {
+		...row,
+		discount_percentage: Math.min(100, asked > 0 ? asked : derived),
+		discount_amount: 0,
+		carries_price_terms: true,
+	}
 }

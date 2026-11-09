@@ -83,6 +83,42 @@ describe("storedRowTerms", () => {
 		expect(storedRowTerms(row).discount_percentage).toBe(0)
 	})
 
+	it("keeps the discount of a row at the list price, whose rate is net of it, and says the cart must take it (#2074)", () => {
+		const row = { rate: 9, price_list_rate: 10, discount_percentage: 10, discount_amount: 1, is_rate_manually_edited: 0 }
+		const line = storedRowTerms(row)
+
+		expect(line.discount_percentage).toBe(10)
+		expect(line.discount_amount).toBe(0)
+		expect(line.carries_price_terms).toBe(true)
+		expect(line.rate).toBe(9)
+		expect(line.price_list_rate).toBe(10)
+		expect(row.discount_percentage).toBe(10)
+		expect(row.discount_amount).toBe(1)
+		expect(row.carries_price_terms).toBeUndefined()
+	})
+
+	it("derives the percentage of a row discounted by an amount from its list price and its net rate", () => {
+		const line = storedRowTerms({ rate: 8, price_list_rate: 10, discount_percentage: 0, discount_amount: 2 })
+
+		expect(line.discount_percentage).toBeCloseTo(20, 6)
+		expect(line.carries_price_terms).toBe(true)
+	})
+
+	it("bills a row without a discount as it always did, and says its terms too so that it never joins a discounted line", () => {
+		const row = { rate: 10, price_list_rate: 10, discount_percentage: 0, discount_amount: 0 }
+
+		expect(storedRowTerms(row)).toEqual({ ...row, carries_price_terms: true })
+		expect(storedRowTerms({ rate: 10, discount_percentage: 0 }).discount_percentage).toBe(0)
+	})
+
+	it("leaves an offered row and a free row to the cart's own terms", () => {
+		const offered = { rate: 0, price_list_rate: 10, discount_percentage: 100, posa_is_offered: 1 }
+		const free = { rate: 0, price_list_rate: 0, discount_percentage: 0, is_free_item: 1 }
+
+		expect(storedRowTerms(offered)).toEqual({ ...offered, discount_percentage: 0 })
+		expect(storedRowTerms(free)).toEqual(free)
+	})
+
 	it("keeps the rest of the row, the rate set by hand included, and does not change the row it is given", () => {
 		const row = { ...byHand, rate: 7.2, discount_percentage: 10, qty: 2 }
 		const line = storedRowTerms(row)
