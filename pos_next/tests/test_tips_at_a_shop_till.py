@@ -332,12 +332,17 @@ class TestTipsAtAShopTill(TillSettingsCase):
 		self.assertEqual(amounts, [3.33, 3.33, 3.34])
 
 	def test_percentages_that_do_not_make_a_hundred_still_share_the_whole_tip(self):
+		"""ERPNext refuses such a sales team on a document, so it never comes from a sale: the split holds all the same."""
 		self.tips_on()
-		invoice = self.a_sale([(self.luc, 50), (self.sonia, 25)])
+		team = [
+			frappe._dict(sales_person=self.luc, allocated_percentage=50),
+			frappe._dict(sales_person=self.sonia, allocated_percentage=25),
+		]
+		invoice = frappe._dict(pos_profile=self.shop_till, sales_team=team)
 
-		invoices._add_tip_to_invoice(invoice, 6, {}, record_amount=6)
+		shares = till_tips.shares_of(invoice, 6, till_tips.tip_settings_of_till(self.shop_till))
 
-		self.assertEqual([t.amount for t in self.tips_of(invoice)], [4, 2])
+		self.assertEqual([share["amount"] for share in shares], [4, 2])
 
 	def test_only_the_tip_of_the_till_is_shared_not_a_guests_tip_already_on_the_invoice(self):
 		self.tips_on()
