@@ -64,6 +64,7 @@ describe("the logo in the header of the till", () => {
 	it("keeps the picture fitted in its box on the phone of a waiter too", () => {
 		header({ mayLeave: false })
 
-		expect(logo().classes()).toEqual(expect.arrayContaining(["h-8", "w-full", "object-contain"]))
+		//// Neoffice — the picture is the square O2 mark now (h-8 w-8), no longer the wordmark (w-full): neoffice-maintenance#2086
+		expect(logo().classes()).toEqual(expect.arrayContaining(["h-8", "w-8", "object-contain"]))
 	})
 })

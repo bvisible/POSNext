@@ -404,6 +404,13 @@ button.active\:scale-95:active,
 [data-theme='dark'] { --neo-bg: #14161b; }
 [data-theme='dark'] .neo-glass,
 .dark .neo-glass { background: rgba(28, 31, 38, 0.82) !important; }
+/* //// Neoffice — the header draws the O2 mark in one image per colour mode (POSHeader.vue,
+   //// neoffice-maintenance#2086): the light one by default, the dark one under the cockpit's data-theme. */
+.neo-logo-dark { display: none; }
+[data-theme='dark'] .neo-logo-dark,
+.dark .neo-logo-dark { display: block; }
+[data-theme='dark'] .neo-logo-light,
+.dark .neo-logo-light { display: none; }
 [data-theme='dark'] .bg-white,
 .dark .bg-white { background-color: #1c1f26 !important; }
 [data-theme='dark'] .bg-gray-50,

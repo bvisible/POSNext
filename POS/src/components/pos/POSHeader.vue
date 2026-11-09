@@ -25,12 +25,22 @@
 			<!-- //// design with Neoffice theme and improve customer display") -->
 			<div class="w-16 flex-shrink-0 flex items-center justify-center px-2">
 				<!-- //// Neoffice — the logo keeps its proportions (NeoResto lot 1, smoke-test fix): `h-8 w-auto` in a column of 48 px made the browser shrink the box to 48 x 32 for a 300 x 71 picture, and a picture drawn into a box of another shape is stretched (a logo without a `viewBox` is; one with it is merely letter-boxed). The box keeps the 48 x 32 hit area of the exit button, and the picture is fitted inside it (`object-contain`), never stretched. -->
+				<!-- //// Neoffice — the compact O2 mark of the design system, not the wordmark (neoffice-maintenance#2086): the wordmark (331 x 78, two-tone hairlines) is about 11 px tall in this 48 x 32 box, so "neo" (ink) vanished on the dark glass and "ffice" (white) on the white bar. The design system says to use the square mark wherever the wordmark does not fit. One image per colour mode (`neo-logo-light` / `neo-logo-dark`, swapped in index.css by the cockpit's data-theme); both are the exit button. Remove if the box ever grows to fit the wordmark. -->
 				<img
-					:src="neofficeLogo"
+					:src="neofficeMarkLight"
 					alt="Neoffice"
 					data-test="header-logo"
 					:class="mayLeave ? 'cursor-pointer hover:opacity-80 active:scale-95 transition-all' : 'pointer-events-none'"
-					class="h-8 w-full object-contain"
+					class="neo-logo-light h-8 w-8 object-contain"
+					:title="mayLeave ? __('Back to Neoffice') : undefined"
+					@click="mayLeave && (showExitDialog = true)"
+				/>
+				<img
+					:src="neofficeMarkDark"
+					alt="Neoffice"
+					data-test="header-logo-dark"
+					:class="mayLeave ? 'cursor-pointer hover:opacity-80 active:scale-95 transition-all' : 'pointer-events-none'"
+					class="neo-logo-dark h-8 w-8 object-contain"
 					:title="mayLeave ? __('Back to Neoffice') : undefined"
 					@click="mayLeave && (showExitDialog = true)"
 				/>
@@ -591,7 +601,9 @@ const appVersion = version;
 //// mirror the wrong cart. (87f168fe, 2026-03-20 "align POS design with Neoffice theme
 //// and improve customer display"; 9a807f74, 2026-06-01 "customer display follows the
 //// launching POS's exact shift")
-const neofficeLogo = "/assets/neoffice_theme/images/neoffice_logo.svg";
+//// Neoffice — the compact O2 mark of the design system in its two colour modes (neoffice-maintenance#2086); the wordmark this constant held is unreadable at the size of the header's box.
+const neofficeMarkLight = "/assets/pos_next/images/neoffice-mark.svg";
+const neofficeMarkDark = "/assets/pos_next/images/neoffice-mark-dark.svg";
 
 function navigateToBackOffice() {
 	//// Neoffice — never from the phone of a waiter (the product owner, 08.11.2026)
