@@ -2422,7 +2422,11 @@ def submit_invoice(invoice=None, data=None):
 	from pos_next.restaurant import direct_service, paid_orders
 	from pos_next.restaurant import notes as notes_module
 
-	note_asked = notes_module.clean_rank(invoice.get(notes_module.FIELD))
+	# //// Neoffice — 0 is "no note" here, at the payment only: `restaurant_note` is an Int, so a draft read back (as_dict, the answer
+	# //// of update_invoice) carries 0 when no note is set, and the server refused the default its own draft carries, so that every
+	# //// caller sending the draft back instead of the cart saw its payment refused (neoffice-maintenance#2329). update_invoice keeps
+	# //// clean_rank, where the key means "set the rank".
+	note_asked = notes_module.rank_asked(invoice.get(notes_module.FIELD))
 
 	# //// Neoffice — the POS posts the coupon CODE, but `coupon_code` is a Link that
 	# //// holds the document NAME. `update_invoice` (the draft step) already resolved

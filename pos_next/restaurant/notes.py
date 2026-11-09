@@ -73,6 +73,18 @@ def clean_rank(value) -> int | None:
 	return number
 
 
+def rank_asked(value) -> int | None:
+	"""`clean_rank` for a payload that may carry the document's own default: the number 0, which a row with no note holds.
+
+	`restaurant_note` is an Int column, so a draft read back (`as_dict`, the answer of `update_invoice`) carries 0 when no note is set, and
+	`submit_invoice` receives it back as the till's word. At the payment 0 means no rank, like None and the empty text; everything else is
+	read as `clean_rank` reads it, so that "0" (a text), -1, 100, True and 2.5 are still refused.
+	"""
+	if isinstance(value, (int, float)) and not isinstance(value, bool) and value == 0:
+		return None
+	return clean_rank(value)
+
+
 def clean_name(value) -> str | None:
 	"""The name of a party as it is kept: its tags removed, its white space collapsed, its control characters dropped, at most 60 characters.
 

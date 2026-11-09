@@ -90,6 +90,25 @@ class TestTheRulesOfNotes(FrappeTestCase):
 			with self.subTest(value=value):
 				self.assertIsNone(notes.clean_rank(value))
 
+	def test_the_payment_reads_zero_as_no_rank_because_a_draft_read_back_carries_it(self):
+		# restaurant_note is an Int: a draft with no note is read back as 0, and submit_invoice receives it (neoffice-maintenance#2329).
+		for value in (0, 0.0, None, "", "   "):
+			with self.subTest(value=value):
+				self.assertIsNone(notes.rank_asked(value))
+
+	def test_the_payment_reads_a_real_rank_as_clean_rank_does(self):
+		for value in (1, 3, 99, "2", 3.0):
+			with self.subTest(value=value):
+				self.assertEqual(notes.rank_asked(value), notes.clean_rank(value))
+
+	def test_the_payment_still_refuses_what_is_no_rank(self):
+		# Only the number 0 is lenient: the text "0", a negative, too many, a boolean, a fraction, a list stay refused, as does clean_rank itself.
+		for value in ("0", False, *(v for v in NOT_A_RANK if v != 0), "100", {"note": 1}):
+			with self.subTest(value=value), self.assertRaises(frappe.ValidationError):
+				notes.rank_asked(value)
+		with self.assertRaises(frappe.ValidationError):
+			notes.clean_rank(0)
+
 	def test_what_is_no_whole_number_from_one_to_ninety_nine_is_refused(self):
 		for value in (*NOT_A_RANK, "0", "100", "1e1", "٣", {"note": 1}, 10**30, float("nan")):
 			with self.subTest(value=value), self.assertRaises(frappe.ValidationError):
