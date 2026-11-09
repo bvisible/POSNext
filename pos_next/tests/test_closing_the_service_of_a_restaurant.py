@@ -21,7 +21,7 @@ from frappe.tests.roles import as_role
 from frappe.utils import flt
 
 from pos_next.api import restaurant as restaurant_api
-from pos_next.restaurant import open_orders, service_closing
+from pos_next.restaurant import open_orders, service_closing, tickets
 from pos_next.tests.test_settling_the_open_orders_of_a_closing_service import SettleCase
 from pos_next.tests.test_till_writes_need_the_till import TILL
 
@@ -316,7 +316,10 @@ class TestWhatTheClosingDoes(ClosingCase):
 		self.assertEqual(entry.closed_by, TILL)
 		self.assertEqual(entry.pos_profile, self.fx.profile)
 		self.assertEqual(entry.empty_orders_removed, 1)
-		self.assertEqual(entry.service_day, frappe.utils.getdate())
+		# The business day of the closing, which starts at the restaurant's hour: before it, the closing belongs to the day before
+		# (the CI's site keeps New York's time, where 08:20 UTC is 03:20: nightly Tests of 09.11.2026)
+		day_start = tickets.ticket_settings(self.a).day_start
+		self.assertEqual(entry.service_day, tickets.business_day_of(entry.closed_at, day_start))
 		details = json.loads(entry.details)
 		self.assertEqual(len(details["empty_orders_removed"]), 1)
 		self.assertEqual(details["empty_orders_removed"][0]["table"], "T1")

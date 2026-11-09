@@ -29,7 +29,7 @@ from pos_next.api import authorization, shifts
 from pos_next.api import restaurant as restaurant_api
 from pos_next.authorization import pin as pin_store
 from pos_next.authorization.actions.write_off_order import ACTION_WRITE_OFF_ORDER
-from pos_next.restaurant import settlement
+from pos_next.restaurant import settlement, tickets
 from pos_next.tests.test_open_orders_and_the_cash_in_reminder import OpenOrdersCase
 from pos_next.tests.test_till_writes_need_the_till import TILL, _user
 
@@ -228,6 +228,7 @@ class TestCashedLate(SettleCase):
 
 	def test_the_journal_says_what_happened_and_who_did_it(self):
 		order = self.clean_order(served=True)
+		taken = frappe.db.get_value("Sales Invoice", order, "creation")
 
 		answer = self.settle(order, "cashed")
 
@@ -238,7 +239,10 @@ class TestCashedLate(SettleCase):
 		self.assertEqual(entry.restaurant, self.a)
 		self.assertEqual(entry.settled_by, TILL)
 		self.assertEqual(entry.waiter, TILL)
-		self.assertEqual(entry.service_day, frappe.utils.getdate())
+		# The business day the order was taken in, which starts at the restaurant's hour (before it, the day before: the CI's site
+		# keeps New York's time, where 08:20 UTC is 03:20, nightly Tests of 09.11.2026)
+		day_start = tickets.ticket_settings(self.a).day_start
+		self.assertEqual(entry.service_day, tickets.business_day_of(taken, day_start))
 
 	def test_a_colleague_settles_the_order_the_waiter_left_and_the_money_is_his(self):
 		order = self.clean_order(served=True)

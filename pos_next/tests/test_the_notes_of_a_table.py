@@ -35,7 +35,7 @@ from frappe.utils import cint, flt
 from pos_next import hooks
 from pos_next.api import guest_ordering, invoices
 from pos_next.api import restaurant as restaurant_api
-from pos_next.restaurant import covers, devices, notes, service_families
+from pos_next.restaurant import covers, devices, notes, open_orders, service_families
 from pos_next.tests.test_the_covers_of_a_table import CoversCase
 from pos_next.tests.test_till_writes_need_the_till import CASHIER_ROLE, TILL, _sale, _user
 
@@ -668,8 +668,10 @@ class TestTheFloorSumsTheNotes(NotesCase):
 
 		tile = self.floor()[self.table_a]["order_summary"]
 
+		# What the floor says of the whole table besides the notes (all served, quiet since, « Cash in? »), whatever it adds later
+		of_the_table = set(open_orders.summary_of_table([], {}, 0))
 		self.assertTrue(TILE_BEFORE_THE_NOTES <= set(tile))
-		self.assertEqual(set(tile) - TILE_BEFORE_THE_NOTES, {"notes_count", "note_names"})
+		self.assertEqual(set(tile) - TILE_BEFORE_THE_NOTES - of_the_table, {"notes_count", "note_names"})
 		self.assertEqual((tile["item_count"], tile["covers"], tile["notes_count"], tile["note_names"]), (2, 3, 1, []))
 		self.assertEqual(flt(tile["grand_total"]), flt(frappe.db.get_value("Sales Invoice", order, "grand_total")))
 		self.assertEqual(tile["opened_at"], str(frappe.db.get_value("Sales Invoice", order, "creation")))

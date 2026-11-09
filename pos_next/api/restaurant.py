@@ -2040,7 +2040,7 @@ def update_table(name: str | None, table_name=None, capacity=None, shape=None, d
 	if direct_service not in (None, "") and _direct_service_column():
 		doc.direct_service = _as_a_check(direct_service)
 	doc.save()
-	return {
+	answer = {
 		"name": doc.name,
 		"table_name": doc.table_name,
 		"area": doc.area,
@@ -2057,7 +2057,12 @@ def update_table(name: str | None, table_name=None, capacity=None, shape=None, d
 		"shape": doc.shape,
 		# //// Neoffice — see above: the floor plan reads it back as it reads the other fields of the table
 		"direct_service": 1 if doc.get("direct_service") else 0,
+		"modified": doc.modified,
 	}
+	# //// Neoffice — and since when it waits to be cleaned, « Guests left? » included, stamped as get_tables stamps it: the till puts this
+	# //// answer in place of the table, which lost its pastille after an edit (the nightly Tests of 09.11.2026, neoffice-maintenance#1266)
+	guests_left.stamp([answer], guests_left.reminder_minutes(doc.restaurant))
+	return answer
 
 
 @frappe.whitelist()
