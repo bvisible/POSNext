@@ -84,6 +84,20 @@ describe("opening a table", () => {
 		])
 	})
 
+	//// Neoffice — a non-stock dish stays one when the table is opened again (neoffice-maintenance#2080): a "+" on its line made a stock item of the unit
+	it("keeps whether each item is a stock item, so that a unit added to a line is not made a stock item", async () => {
+		answer.value = structuredClone(ORDER)
+		answer.value.items[0].is_stock_item = 1
+		answer.value.items[1].is_stock_item = 0
+
+		await useOpenTable().openTable(TABLE)
+
+		expect(cart.invoiceItems.map((line) => [line.item_code, line.is_stock_item])).toEqual([
+			["wine", 1],
+			["soup", 0],
+		])
+	})
+
 	it("takes the draft, the kitchen status, what the guest paid, and says nothing is unsent", async () => {
 		await useOpenTable().openTable(TABLE)
 

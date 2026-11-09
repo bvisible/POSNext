@@ -1778,6 +1778,10 @@ export function useInvoice() {
 				//// unit at all (NeoResto lot 1, task 22).
 				...unitsOf(item),
 				image: item.image || "",
+				//// Neoffice — a non-stock item stays one when the order is read back (get_table_order sends the flag): a "+" on the line made the
+				//// unit a stock item (addItemToInvoice defaults it to 1) and the stock validation refused a service or a non-stock dish
+				//// (neoffice-maintenance#2080). A stock item, or a server that sends no flag, keeps the line as it was.
+				...(item.is_stock_item === 0 || item.is_stock_item === false ? { is_stock_item: 0 } : {}),
 				kds_status: item.kds_status || "Pending",
 				posa_item_modifiers: item.posa_item_modifiers || "",
 				posa_special_instructions: item.posa_special_instructions || "",

@@ -114,6 +114,8 @@ export function useOpenTable() {
 								//// Neoffice — whether the line left ahead of its course and when the room called it (the service rhythm, NeoResto lot 1): the next course to call is named from them
 								kds_ahead: item.kds_ahead || 0,
 								kds_called_at: item.kds_called_at || null,
+								//// Neoffice — whether the item is a stock item, as open_table reads it: a "+" made the unit a stock item whatever the item was (neoffice-maintenance#2080)
+								is_stock_item: item.is_stock_item,
 							},
 							item.qty || 1,
 						)

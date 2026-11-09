@@ -1444,13 +1444,18 @@ def get_table_order(table_name: str, note=None):
 		item_units.stamp(item, units.get(item.item_code))
 
 	# Enrich items with image from Item master
+	# //// Neoffice — and whether each item is a stock item, read with the image (no read added): a "+" on a line read back used to make
+	# //// a stock item of a service or a non-stock dish, which the stock validation then refused (neoffice-maintenance#2080).
 	item_codes = list({i.item_code for i in order["items"] if i.get("item_code")})
 	if item_codes:
-		images = {r.name: r.image for r in frappe.get_all(
-			"Item", filters={"name": ["in", item_codes]}, fields=["name", "image"]
-		)}
+		item_rows = frappe.get_all(
+			"Item", filters={"name": ["in", item_codes]}, fields=["name", "image", "is_stock_item"]
+		)
+		images = {r.name: r.image for r in item_rows}
+		stock_flags = {r.name: cint(r.is_stock_item) for r in item_rows}
 		for item in order["items"]:
 			item["image"] = images.get(item.item_code) or ""
+			item["is_stock_item"] = stock_flags.get(item.item_code, 1)
 
 	return order
 
@@ -2300,14 +2305,20 @@ def open_table(table_name: str, pos_profile, customer=None, note=None):
 			item_units.stamp(item, units.get(item.item_code))
 
 		# Enrich with images, all the items of the order in one read (it was one read per line)
+		# //// Neoffice — and whether each item is a stock item, read with the image (neoffice-maintenance#2080): the till's "+" and its stock validation need it.
 		images = {}
+		stock_flags = {}
 		if order_items:
 			item_rows = frappe.get_all(
-				"Item", filters={"name": ["in", [item.item_code for item in order_items]]}, fields=["name", "image"]
+				"Item",
+				filters={"name": ["in", [item.item_code for item in order_items]]},
+				fields=["name", "image", "is_stock_item"],
 			)
 			images = {row.name: row.image for row in item_rows}
+			stock_flags = {row.name: cint(row.is_stock_item) for row in item_rows}
 		for item in order_items:
 			item["image"] = images.get(item.item_code) or ""
+			item["is_stock_item"] = stock_flags.get(item.item_code, 1)
 
 		return {
 			"name": order.name,

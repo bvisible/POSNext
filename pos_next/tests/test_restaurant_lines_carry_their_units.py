@@ -347,6 +347,33 @@ class TestRestaurantLinesCarryTheirUnits(FrappeTestCase):
 			[(CASE_OF_SIX, 6)],
 		)
 
+	def test_the_lines_of_a_table_say_whether_their_item_is_a_stock_item(self):
+		# A "+" on a line read back makes its unit from the line: without the flag it became a stock item, refused by the
+		# stock validation for a service or a non-stock dish (neoffice-maintenance#2080).
+		frappe.db.set_value("Item", self.water, "is_stock_item", 1)
+		table = self.a_table()
+		self.a_draft_order_on_the_table(table)
+
+		lines = {line["item_code"]: line for line in restaurant.get_table_order(table)["items"]}
+
+		self.assertEqual((lines[self.wine]["is_stock_item"], lines[self.water]["is_stock_item"]), (0, 1))
+
+	def test_a_table_opened_from_the_floor_plan_says_it_too(self):
+		frappe.db.set_value("Item", self.water, "is_stock_item", 1)
+		table = self.a_table()
+		self.a_draft_order_on_the_table(table)
+
+		with (
+			patch("pos_next.api.cash_entry.require_till_access"),
+			patch.object(
+				restaurant.restaurant_config, "get_restaurant_settings_for_profile", return_value={}
+			),
+		):
+			opened = restaurant.open_table(table, TILL)
+
+		lines = {line["item_code"]: line for line in opened["items"]}
+		self.assertEqual((lines[self.wine]["is_stock_item"], lines[self.water]["is_stock_item"]), (0, 1))
+
 	def test_a_table_opened_from_the_floor_plan_reads_its_items_together(self):
 		table = self.a_table()
 		self.a_draft_order_on_the_table(table)
