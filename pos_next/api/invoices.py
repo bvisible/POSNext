@@ -487,6 +487,30 @@ def _settle_offer_line_like_the_payment(item):
 	item.discount_amount = flt(list_rate - rate, item.precision("discount_amount"))
 
 
+# //// Neoffice — no upstream equivalent. The draft of a line discounted by hand holds the rate the till shows (neoffice-maintenance#2076). « Valider » sends the cart line as it is: `rate`
+# //// is the LIST price (the cart keeps the discount apart, in `discount_percentage` and `amount`), where the payment sends the discounted rate. With no pricing rule ERPNext keeps the
+# //// rate it is given and calculates nothing from the percentage, so a table's draft read 9.50 for a line the till showed at 8.55: the tile's total, the closing's settlement, the
+# //// kitchen ticket's price and, once the table was opened again (the cart is rebuilt from the rate alone), the cashier's own total all lost the discount. A line that comes at its
+# //// list rate with a percentage between 0 and 100 gets the rate the till computes: the list price less the percentage, as the cart works it out. A line already discounted (the
+# //// payment's shape, or a table read back: rate below the list price) is left as it came, so a discount is never taken twice; an offered line (100 %) is ERPNext's already.
+def _price_a_hand_discounted_line_like_the_till(item):
+	"""Give a line sent at its list price with a discount percentage the discounted rate and discount amount the till shows.
+
+	Only a line whose rate is its list price (to the rate's decimals) and whose list price and percentage are those of a discount (0 < percentage < 100). The percentage is used as
+	sent, never rounded: a fixed amount comes as the percentage it makes (1.00 of 4.20 is 23.8095 %) and is a cent away from the till's figure once rounded to two decimals.
+	"""
+	list_rate = flt(item.get("price_list_rate"))
+	percentage = flt(item.get("discount_percentage"))
+	if not (list_rate > 0 and 0 < percentage < 100):
+		return
+	precision = item.precision("rate")
+	if flt(item.get("rate"), precision) != flt(list_rate, precision):
+		return
+	rate = flt(list_rate * (1 - percentage / 100), precision)
+	item.rate = rate
+	item.discount_amount = flt(list_rate - rate, item.precision("discount_amount"))
+
+
 # //// Neoffice — no upstream equivalent. ERPNext lists `pricing_rules` in force_item_fields, so
 # //// set_missing_item_details() overwrites it from get_item_details(); under
 # //// ignore_pricing_rule=1 that comes back empty and calculate_item_values() then drops the
@@ -1663,6 +1687,9 @@ def update_invoice(data):
 				if not is_manual_edit:
 					_settle_offer_line_like_the_payment(item)
 				item.pricing_rules = ""
+			# //// Neoffice — a line discounted by hand and sent at its list price is saved at the rate the till shows (neoffice-maintenance#2076), see the function.
+			elif not is_manual_edit:
+				_price_a_hand_discounted_line_like_the_till(item)
 
 		if doctype == "Sales Invoice":
 			one_time_applied = (
