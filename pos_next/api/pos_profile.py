@@ -482,13 +482,32 @@ def get_sales_persons(pos_profile: str | None = None):
 	if frappe.db.has_column("Sales Person", "company") and company:
 		filters["company"] = company
 
-	sales_persons = frappe.get_list(
-		"Sales Person",
-		filters=filters,
-		fields=["name", "sales_person_name", "commission_rate", "employee"],
-		order_by="sales_person_name",
-		limit_page_length=0,
+	# //// Neoffice — a till lists the sales persons of its company, not the ones the cashier is linked to. Frappe puts a User
+	# //// Permission on the Employee of every user it creates one for (« create user permission », on by default), and a
+	# //// Sales Person is linked to an Employee: the list then held the cashier's own card alone, so a hairdresser could never
+	# //// name the colleague who did the work. The flag below lifts that filter for this one query; the role check on Sales
+	# //// Person (read) and the access to the POS Profile (above) stay. Remove if upstream stops filtering this list by user.
+	previous = frappe.flags.get("ignore_user_permissions_for_doctype")
+	frappe.flags.ignore_user_permissions_for_doctype = "Sales Person"
+	try:
+		sales_persons = frappe.get_list(
+			"Sales Person",
+			filters=filters,
+			fields=["name", "sales_person_name", "commission_rate", "employee"],
+			order_by="sales_person_name",
+			limit_page_length=0,
+		)
+	finally:
+		frappe.flags.ignore_user_permissions_for_doctype = previous
+
+	# //// Neoffice — which one is the cashier (the Sales Person whose Employee is this user), so that the till offers him first
+	# //// instead of an empty field: « if I open the till with an employee account, the person is already chosen » (product owner,
+	# //// 09.11.2026). `is_mine` is added to each row, nothing else changes in the answer.
+	mine = set(
+		frappe.get_all("Employee", filters={"user_id": frappe.session.user, "status": "Active"}, pluck="name")
 	)
+	for row in sales_persons:
+		row["is_mine"] = 1 if row.get("employee") and row["employee"] in mine else 0
 
 	return sales_persons
 

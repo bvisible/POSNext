@@ -2589,6 +2589,8 @@ import {
 	isTerminalPaymentActive,
 	terminalDialogKind,
 } from "@/utils/terminalPaymentGuard";
+//// Neoffice — the sales person a sale starts with (09.11.2026).
+import { mySalesPerson } from "@/utils/mySalesPerson";
 //// Neoffice — the method of the « exact » button (see the file's header).
 import { exactPaymentMethod } from "@/utils/exactPayment";
 //// Neoffice — the payments typed so far, with the cash ones taken back before the ticket is closed (NeoResto lot 1, product owner, 05.11.2026; utils/paymentEntries.js)
@@ -3387,12 +3389,15 @@ const salesPersonsResource = createResource({
 		loadingSalesPersons.value = false;
 		// Cache for offline use
 		if (persons.length > 0 && props.posProfile) {
-			const personsWithProfile = persons.map((p) => ({
+			//// Neoffice — `is_mine` says who the cashier is: it belongs to the user who loaded the list, and the cache is read by
+			//// whoever opens this till next, so it is not kept (NeoCoiffeur study, 09.11.2026).
+			const personsWithProfile = persons.map(({ is_mine: _mine, ...p }) => ({
 				...p,
 				pos_profile: props.posProfile,
 			}));
 			offlineWorker.cacheSalesPersons(personsWithProfile).catch(() => {});
 		}
+		selectMySalesPerson();
 	},
 	onError(error) {
 		log.error("[PaymentDialog] Error loading sales persons:", error);
@@ -3497,6 +3502,18 @@ function removeSalesPerson(personName) {
 function clearSalesPersons() {
 	selectedSalesPersons.value = [];
 	salesPersonSearch.value = "";
+}
+
+//// Neoffice — the sales person of the sale is the cashier's own when he has one (« if I open the till with an employee account,
+//// the person is already chosen: Luc is Luc, but I can put Sonia », product owner, 09.11.2026). The server marks the row whose
+//// Employee is the signed-in user (`is_mine`); the rule is in utils/mySalesPerson.js. The cross on the chosen person still clears it.
+function selectMySalesPerson() {
+	const mine = mySalesPerson({
+		enabled: settingsStore.enableSalesPersons,
+		selected: selectedSalesPersons.value,
+		persons: salesPersons.value,
+	});
+	if (mine) addSalesPerson(mine);
 }
 
 // Force re-fetch sales persons — from server when online, from cache when offline
@@ -4006,6 +4023,7 @@ watch(show, async (newVal) => {
 		}
 		selectedSalesPersons.value = [];
 		salesPersonSearch.value = "";
+		selectMySalesPerson();
 		//// Neoffice — drop the terminal-captured payments from the previous sale: a locked
 		//// entry the cashier cannot edit must never be inherited by the next one (bd9e2f30,
 		//// 2026-05-14 "replace Wallee terminal integration with unified Stripe Terminal driver").
