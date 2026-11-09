@@ -232,6 +232,11 @@ class TestTheLayout(FrappeTestCase):
 			with self.subTest(value=value):
 				self.assertEqual(len(cash_report.money(value).split(decimal)[-1]), 2)
 
+	def test_the_subtitle_names_the_kind_of_operation_the_sheet_is_narrowed_to(self):
+		filters = frappe._dict(from_date="2026-10-01", to_date="2026-10-31", transaction_type="Cash In/Out")
+
+		self.assertIn(f"{_('Transaction Type')}: {_('Cash In/Out')}", cash_report.subtitle_of(filters))
+
 	def test_the_subtitle_of_a_closing_names_its_till_its_cashier_and_the_currency(self):
 		closing = Closing(name=CLOSING, pos_profile="Till 1", user="a-cashier@yopmail.com")
 		filters = frappe._dict(from_date="2026-11-02", to_date="2026-11-02")

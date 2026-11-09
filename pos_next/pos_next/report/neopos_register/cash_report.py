@@ -331,7 +331,14 @@ def subtitle_of(filters, closing=None, currency=""):
 	if filters.get("mode_of_payment"):
 		parts.append(f"{_('Payment Method')}: {filters['mode_of_payment']}")
 	if filters.get("transaction_type"):
-		parts.append(f"{_('Transaction Type')}: {_(filters['transaction_type'])}")
+		# The register's own option labels, each spelled out so that the catalogue sees them
+		kinds = {
+			"POS Sales": _("POS Sales"),
+			"Invoice Collection": _("Invoice Collection"),
+			"Cash In/Out": _("Cash In/Out"),
+		}
+		kind = kinds.get(filters["transaction_type"], filters["transaction_type"])
+		parts.append(f"{_('Transaction Type')}: {kind}")
 	if currency:
 		parts.append(_("Amounts in {0}").format(currency))
 	parts.append(f"{_('Printed on')} {formatdate(frappe.utils.today())}")
