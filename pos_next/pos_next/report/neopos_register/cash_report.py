@@ -158,7 +158,8 @@ def _cell(entry, field):
 	return _esc(value)
 
 
-def _kpi(label, value, note="", negative=False):
+def kpi_card(label, value, note="", negative=False):
+	"""One figure of the row of cards at the top of a sheet (also the cash control sheet of the closings)."""
 	css = " cr-negative" if negative else ""
 	return (
 		'<td class="cr-kpi">'
@@ -176,12 +177,12 @@ def summary_block(entries, field, currency, closing=None):
 	groups = summarize(entries, field) if field else []
 	note = _("{0} payment methods").format(len(groups)) if field == "mode_of_payment" else ""
 	kpis = [
-		_kpi(_("Collected"), f"{money(collected)} {currency}", negative=collected < 0),
-		_kpi(_("Operations"), str(operations(entries)), note),
+		kpi_card(_("Collected"), f"{money(collected)} {currency}", negative=collected < 0),
+		kpi_card(_("Operations"), str(operations(entries)), note),
 	]
 	if returns:
 		kpis.append(
-			_kpi(
+			kpi_card(
 				_("Returns"),
 				f"{money(sum(flt(r.get('paid_amount')) for r in returns))} {currency}",
 				_("{0} documents").format(operations(returns)),
@@ -191,7 +192,7 @@ def summary_block(entries, field, currency, closing=None):
 	if closing is not None:
 		difference = sum(flt(row.difference) for row in closing.payment_reconciliation or [])
 		kpis.append(
-			_kpi(
+			kpi_card(
 				_("Cash difference"),
 				f"{money(difference)} {currency}",
 				_("Balanced") if not round(difference, 2) else _("To check"),
@@ -408,3 +409,10 @@ def render_pdf(body_html, company, title, subtitle):
 			"footer-spacing": "2",
 		},
 	)
+
+
+def respond(pdf, file_name):
+	"""Answer the request with the sheet, to be shown in the browser."""
+	frappe.local.response.filename = file_name
+	frappe.local.response.filecontent = pdf
+	frappe.local.response.type = "pdf"

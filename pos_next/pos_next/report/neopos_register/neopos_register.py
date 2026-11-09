@@ -121,19 +121,14 @@ def apply_closing(filters):
 	return closing
 
 
-@frappe.whitelist()
-def export_cash_report_pdf(filters):
-	"""The register of a period, or of one closing, as a cash report on A4 paper (shown in the browser).
+def render_sheet(filters):
+	"""The cash report for the filters, as (the PDF's bytes, its file name): the register of a period or of one closing.
 
 	Grouped as the register's « Group by » filter says, a flat list without one; the same entries the screen lists, so
-	the sheet and the screen never disagree. Needs the right to read the report, and, for a closing, the closing."""
+	the sheet and the screen never disagree. The caller has asked for the rights: the report's own for a period, the closing's
+	for one closing (a closing is read with the rights of the report that lists it, whichever it is)."""
 	from pos_next.pos_next.report.neopos_register import cash_report
 
-	if not frappe.get_cached_doc("Report", REPORT).is_permitted():
-		frappe.throw(_("You are not permitted to access this resource."), frappe.PermissionError)
-	frappe.has_permission("Sales Invoice", "read", throw=True)
-
-	filters = frappe._dict(frappe.parse_json(filters) or {})
 	closing = apply_closing(filters)
 	validate_filters(filters)
 
@@ -151,9 +146,21 @@ def export_cash_report_pdf(filters):
 		cash_report.subtitle_of(filters, closing, currency),
 	)
 	slug = frappe.scrub(closing.name if closing else f"{filters.from_date}_{filters.to_date}")
-	frappe.local.response.filename = f"cash_report_{slug}.pdf"
-	frappe.local.response.filecontent = pdf
-	frappe.local.response.type = "pdf"
+	return pdf, f"cash_report_{slug}.pdf"
+
+
+@frappe.whitelist()
+def export_cash_report_pdf(filters):
+	"""The register of a period, or of one closing, as a cash report on A4 paper (shown in the browser).
+
+	Needs the right to read the report, and, for a closing, the closing."""
+	from pos_next.pos_next.report.neopos_register import cash_report
+
+	if not frappe.get_cached_doc("Report", REPORT).is_permitted():
+		frappe.throw(_("You are not permitted to access this resource."), frappe.PermissionError)
+	frappe.has_permission("Sales Invoice", "read", throw=True)
+
+	cash_report.respond(*render_sheet(frappe._dict(frappe.parse_json(filters) or {})))
 
 
 # ============================================================
