@@ -126,7 +126,7 @@ class TestTheLayout(FrappeTestCase):
 		self.assertEqual(
 			headers,
 			[
-				_("Posting Date"),
+				_("Date"),
 				_("Reference"),
 				_("Customer"),
 				_("POS Profile"),
@@ -214,6 +214,18 @@ class TestTheLayout(FrappeTestCase):
 		self.assertNotIn(f'<span class="cr-tag">{_("POS Sale")}</span>', html)
 		self.assertIn('class="cr-negative"', html)
 		self.assertIn(_("Returns"), html)
+
+	def test_a_long_tag_goes_under_the_number_and_a_short_one_stays_beside_it(self):
+		entries = [
+			entry("INV-1", "Cash", -5, is_return=1),
+			entry("JV-1", "Cash", 100, transaction_type="Cash In/Out of the drawer"),
+		]
+
+		html = self.build(entries)
+
+		# « Return » is short; the drawer's movement is a long word and would be cut at the end of its cell
+		self.assertIn(f'INV-1<span class="cr-tag">{_("Return")}</span>', html)
+		self.assertIn('JV-1<br><span class="cr-tag">Cash In/Out of the drawer</span>', html)
 
 	def test_a_closing_adds_the_cash_control_of_its_drawer(self):
 		closing = frappe._dict(

@@ -25,7 +25,7 @@ from frappe.utils import flt, fmt_money, formatdate, get_fullname
 # The columns of the detail, in the order they print: (field, label, width in %, numeric). The column a sheet is
 # grouped by is left out (its value is the heading of the group).
 COLUMNS = (
-	("posting_date", "Posting Date", 10, False),
+	("posting_date", "Date", 10, False),
 	("sales_invoice", "Reference", 16, False),
 	("customer", "Customer", 18, False),
 	("pos_profile", "POS Profile", 13, False),
@@ -81,6 +81,7 @@ SHEET_CSS = """<style>
 .cr-group td{background:#e9e9e9 !important;font-weight:bold;border-top:1px solid #8a8a8a;padding-top:3px !important}
 .cr-sub td{font-weight:bold;border-top:1px solid #1a1a1a;background:#fff !important}
 .cr-grand td{font-weight:bold;font-size:10px;border-top:2px solid #1a1a1a;background:#fff !important}
+th{white-space:normal !important;vertical-align:bottom}
 .cr-tag{font-size:6.5px;color:#555;border:1px solid #b5b5b5;padding:0 3px;margin-left:4px;white-space:nowrap}
 .cr-empty{color:#6b6b6b;padding:10px 0}
 .cr-spacer td{border:0 !important;padding:3px !important;background:#fff !important}
@@ -146,7 +147,11 @@ def _cell(entry, field):
 			tag = _("Return")
 		elif entry.get("transaction_type") and entry["transaction_type"] != _("POS Sale"):
 			tag = entry["transaction_type"]
-		return _esc(value) + (f'<span class="cr-tag">{_esc(tag)}</span>' if tag else "")
+		if not tag:
+			return _esc(value)
+		# A short tag sits after the number; a long one (« Entrée de caisse ») goes under it, never cut
+		below = "<br>" if len(tag) > 8 else ""
+		return f'{_esc(value)}{below}<span class="cr-tag">{_esc(tag)}</span>'
 	if field in ("grand_total", "paid_amount"):
 		negative = ' class="cr-negative"' if flt(value) < 0 else ""
 		return f"<span{negative}>{money(value)}</span>"
