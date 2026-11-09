@@ -2723,8 +2723,10 @@ const tipRulesOfTheTill = computed(() =>
 const tipsAvailable = computed(() => tipRulesOfTheTill.value.available);
 const tipsAutoDetect = computed(() => tipRulesOfTheTill.value.autoDetect);
 const showTipDetection = computed(() => {
-	//// Neoffice — the tip settings the till follows, a restaurant's or a shop till's (see tipsAvailable above)
-	return tipsAvailable.value && tipsAutoDetect.value && tipAmount.value > 0;
+	//// Neoffice — the tip settings the till follows, a restaurant's or a shop till's (see tipsAvailable above). The tip is shown
+	//// as soon as there is one, taken by itself OR turned from the change by the button: with the detection off (a shop till's
+	//// default) the cashier otherwise saw a change of 0.00 and nothing that said the tip was kept, nor a way to take it back.
+	return tipsAvailable.value && tipAmount.value > 0;
 });
 
 const { showWarning, showError, showSuccess, showInfo } = useToast();
