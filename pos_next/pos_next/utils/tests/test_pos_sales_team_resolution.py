@@ -436,6 +436,7 @@ class TestGetSalesPersons(unittest.TestCase):
 		for key in ("item_commissions", "item_group_commissions", "brand_commissions"):
 			self.assertNotIn(key, result[0])
 
+	# //// Neoffice — added test (f4442e77 "fix(sales-persons): a profile that does not use sales persons lists none, so no 403 at every till load"): covers get_sales_persons returning [] without calling get_list for a disabled profile
 	def test_a_profile_without_sales_persons_lists_nothing_and_asks_no_permission(self):
 		# The till preloads the list at every load: a cashier role without read on Sales Person must not be
 		# refused (403) for a profile that does not use sales persons (neoffice-maintenance#2087).
