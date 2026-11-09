@@ -1,6 +1,7 @@
 # Copyright (c) 2024, BrainWise and contributors
 # For license information, please see license.txt
 
+# //// Neoffice — hashlib for Wallet.autoname below: a long customer name is cut and made unique by a short hash (neoffice-maintenance#1072).
 import hashlib
 
 import frappe
@@ -9,7 +10,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt
 
-# The longest name a document can have: the `name` column holds 140 characters
+# //// Neoffice — the longest name a document can have (the `name` column holds 140 characters), for Wallet.autoname below (neoffice-maintenance#1072).
 MAX_NAME_LENGTH = 140
 
 
