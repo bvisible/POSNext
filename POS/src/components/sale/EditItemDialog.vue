@@ -319,7 +319,8 @@
 												<label
 													class="block text-sm font-medium text-gray-700 mb-2 text-start"
 												>
-													{{ __("Sales Person") }}
+													<!-- //// Neoffice — the question in the words of what the line is (NeoSalon, lot G1) -->
+													{{ whoLabel(kindOfLine(item)) }}
 													<span class="ms-1 text-xs text-gray-400 font-normal"
 														>({{ __("Optional") }})</span
 													>
@@ -717,6 +718,8 @@ import SelectInput from "@/components/common/SelectInput.vue";
 import { usePOSCartStore } from "@/stores/posCart";
 import { canChangeFamily, hasServiceFamilies, serviceLabel } from "@/utils/serviceFamilies";
 import ServiceFamilyChoice from "./ServiceFamilyChoice.vue";
+//// Neoffice — the question about the person in the words of what the line is (NeoSalon, lot G1, product owner, 09.11.2026).
+import { kindOfLine, whoLabel } from "@/utils/salesPersonLines";
 //// Neoffice — « Offert » (NeoResto lot 1, task 24): the bounds of the quantity offered and its value.
 import { OFFER_CONTEXT, clampOfferQuantity, listPrice, offerBounds } from "@/utils/offeredRows";
 

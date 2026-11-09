@@ -62,18 +62,30 @@ def asks_for_a_person(item_code: str | None, *, products_tracked: bool) -> bool:
 	return item_kind(item_code) != PRODUCT
 
 
-@frappe.whitelist()
-def item_kinds(pos_profile: str, item_codes) -> dict:
-	"""What the till needs to word and to ask for the person of each line of its cart: `{item_code: kind}`.
+def the_site_tells_the_kinds() -> bool:
+	"""Whether the site has a hook that tells services from products (else the till keeps its ordinary words)."""
+	return bool(frappe.get_hooks(HOOK))
 
-	The kind is "service", "product", or "" when no hook of the site has an answer (the till then keeps its ordinary wording).
-	Only a user of the till asks, like for every read of the till.
+
+@frappe.whitelist()
+def item_kinds(pos_profile: str, item_codes=None) -> dict:
+	"""What the till needs to word and to ask for the person of each line of its cart.
+
+	`{"told": whether the site tells services from products at all, "kinds": {item_code: kind}}`. The kind is "service", "product", or ""
+	when no hook of the site has an answer for that item. Only a user of the till asks, like for every read of the till.
 	"""
 	from pos_next.api.cash_entry import require_till_access
 
 	require_till_access(pos_profile)
+	if item_codes is None:
+		item_codes = []
 	if isinstance(item_codes, str):
 		item_codes = json.loads(item_codes)
 	if not isinstance(item_codes, list) or not all(isinstance(code, str) for code in item_codes):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
-	return {code: item_kind(code) or "" for code in dict.fromkeys(item_codes[:MOST_ITEMS_ASKED_AT_ONCE])}
+	return {
+		"told": the_site_tells_the_kinds(),
+		"kinds": {
+			code: item_kind(code) or "" for code in dict.fromkeys(item_codes[:MOST_ITEMS_ASKED_AT_ONCE])
+		},
+	}

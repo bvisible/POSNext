@@ -10,6 +10,10 @@ import { usePOSSettingsStore } from "@/stores/posSettings";
 import { useFloorNoticesStore } from "@/stores/floorNotices";
 //// Neoffice — the next sign-in is a session of its own: the till asks again to keep its staff signed in (utils/keepSignedIn.js).
 import { forgetKeepSignedIn } from "@/utils/keepSignedIn";
+//// Neoffice — the person who serves, the colleagues listed and the kind of the items belong to the user who leaves (NeoSalon, lot G1).
+import { useWhoServesStore } from "@/stores/whoServes";
+import { forgetItemKinds } from "@/utils/itemKinds";
+import { clearSalesPersonsSessionCache } from "@/utils/salesPersonsList";
 import { useSessionLock } from "@/composables/useSessionLock";
 import { shiftState } from "@/composables/useShift";
 
@@ -67,6 +71,10 @@ export async function cleanupUserSession() {
 	useFloorNoticesStore().clear();
 	//// Neoffice — and the next sign-in asks to keep its staff signed in again (NeoResto lot 1, 01.11.2026).
 	forgetKeepSignedIn();
+	//// Neoffice — « Who did the work? » is the leaving user's: the person chosen, the list of colleagues loaded with his own marked, the kinds asked (NeoSalon, lot G1, 09.11.2026).
+	useWhoServesStore().reset();
+	clearSalesPersonsSessionCache();
+	forgetItemKinds();
 
 	// 3. Reset composable singletons
 	const { clearLock, stopActivityTracking } = useSessionLock();

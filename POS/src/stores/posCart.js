@@ -18,6 +18,9 @@ import { getPrecision } from "@/utils/currency";
 import { promoApi } from "@/utils/promoApi";
 import { usePOSOffersStore } from "@/stores/posOffers";
 import { usePOSSettingsStore } from "@/stores/posSettings";
+//// Neoffice — the person a new line is given, and the kind of what it sells (NeoSalon, lot G1; stores/whoServes.js, utils/itemKinds.js)
+import { useWhoServesStore } from "@/stores/whoServes";
+import { kindOf, loadItemKinds, PRODUCT } from "@/utils/itemKinds";
 import { usePOSShiftStore } from "@/stores/posShift";
 import { parseError } from "@/utils/errorHandler";
 import {
@@ -332,6 +335,22 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	const isEmpty = computed(() => invoiceItems.value.length === 0);
 	const hasCustomer = computed(() => !!customer.value);
 
+	//// Neoffice — a product asks for no person while the till does not follow the products by person (NeoSalon, lot G1): the site says what an item is, once per item and per
+	//// screen. The line added meanwhile was given the person who serves; when the answer is « product », the person given (not one the cashier chose) is taken off again.
+	function askTheKindOf(item) {
+		if (!settingsStore.enableSalesPersons || !posProfile.value || !item?.item_code) return;
+		if (kindOf(item.item_code) !== undefined) return;
+		loadItemKinds(posProfile.value, [item.item_code]).then(() => {
+			if (kindOf(item.item_code) !== PRODUCT || settingsStore.trackProductSalesByPerson) return;
+			for (const line of invoiceItems.value) {
+				if (line.item_code !== item.item_code || !line.sales_person_posed) continue;
+				line.sales_person = null;
+				line.sales_person_name = null;
+				line.sales_person_posed = false;
+			}
+		});
+	}
+
 	// Actions
 	function addItem(item, qty = 1, _autoAdd = false, currentProfile = null) {
 		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
@@ -360,7 +379,13 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			const family = familyOfGroup(item.item_group);
 			if (family) item = { ...item, service_family: family };
 		}
+		//// Neoffice — a line is given the person who serves (« Who did the work? » above the cart) unless it already has one: the cart then holds who did what, and two lines
+		//// of the same article done by two people stay two lines (NeoSalon, lot G1, product owner, 09.11.2026). Nothing when the option is off, which is the case of every till today.
+		const serving = useWhoServesStore().personForNewLine(item);
+		if (serving) item = { ...item, ...serving };
 		addItemToInvoice(item, qty);
+		//// Neoffice — and ask once what the item is, for the person it asks for (NeoSalon, lot G1)
+		askTheKindOf(item);
 		//// Neoffice — restaurant editing of a cart line, none of which upstream has. hasUnsentChanges
 		//// tracks what has not yet been fired to the kitchen (8aa35c29, 2026-03-20), and the two
 		//// functions below write the free-text instruction and the structured modifier JSON,
@@ -634,6 +659,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		//// 2026-04-05 "restore default customer after completing a sale").
 		await clearInvoiceCart({ returnSerials });
 		offerHeaderDiscount.value = 0;
+		//// Neoffice — the next sale starts with the account's own person again (« Who did the work? », NeoSalon, lot G1)
+		useWhoServesStore().newSale();
 
 		offersStore.clearOneTimeContext();
 		appliedOffers.value = [];
@@ -2644,6 +2671,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			if (updates.original_rate !== undefined)
 				cartItem.original_rate = updates.original_rate;
 			if (updates.sales_person !== undefined) {
+				//// Neoffice — a person the cashier chose for the line is no longer the one given to it (askTheKindOf above takes off only the second)
+				cartItem.sales_person_posed = false;
 				cartItem.sales_person = updates.sales_person || null;
 				cartItem.sales_person_name = updates.sales_person
 					? updates.sales_person_name || updates.sales_person

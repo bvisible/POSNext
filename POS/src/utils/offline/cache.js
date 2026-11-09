@@ -433,13 +433,17 @@ export async function cacheSalesPersonsFromServer(posProfile) {
 		});
 		const salesPersons = result?.message || result || [];
 
+		//// Neoffice — `is_mine` says who the cashier is: it belongs to the user who loaded the list, and the cache is read by whoever opens this till next, so it is not kept
+		//// (the payment dialog does the same). And the list REPLACES the till's rows: a person who has left the salon (disabled) stayed in the offline picker for ever (NeoSalon, lot G1).
 		// Add pos_profile to each person for indexing
-		const personsWithProfile = salesPersons.map((person) => ({
+		const personsWithProfile = salesPersons.map(({ is_mine: _mine, ...person }) => ({
 			...person,
 			pos_profile: posProfile,
 		}));
 
 		// Store in IndexedDB
+		//// Neoffice — the list replaces the till's rows (see above)
+		await db.sales_persons.where("pos_profile").equals(posProfile).delete();
 		await db.sales_persons.bulkPut(personsWithProfile);
 
 		// Update last sync timestamp

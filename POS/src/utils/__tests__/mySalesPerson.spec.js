@@ -38,6 +38,18 @@ describe("mySalesPerson", () => {
 		expect(mySalesPerson({ enabled: true, selected: undefined, persons: [] })).toBeNull();
 	});
 
+	it("chooses the person picked above the cart before the cashier's own", () => {
+		expect(
+			mySalesPerson({ enabled: true, selected: [], persons: [sonia, luc], preferred: "Sonia" })
+		).toBe(sonia);
+	});
+
+	it("falls back on the cashier's own when the person picked is not in the list", () => {
+		expect(
+			mySalesPerson({ enabled: true, selected: [], persons: [sonia, luc], preferred: "Gone" })
+		).toBe(luc);
+	});
+
 	it("does not read the cashier from a cached row without the flag", () => {
 		// the offline cache drops `is_mine`: whoever opens the till next is not the one who loaded the list
 		const cached = { name: "Luc", sales_person_name: "Luc" };

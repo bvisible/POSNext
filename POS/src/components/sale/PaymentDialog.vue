@@ -170,7 +170,8 @@
 											d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
 										/>
 									</svg>
-									{{ __("Sales Person") }}
+									<!-- //// Neoffice — the question in the words of what was done (NeoSalon, lot G1) -->
+									{{ salesPersonLabel }}
 									<span class="text-red-500">*</span>
 									<!-- Refresh: re-fetch sales persons from server -->
 									<button
@@ -2592,6 +2593,10 @@ import {
 } from "@/utils/terminalPaymentGuard";
 //// Neoffice — the sales person a sale starts with (09.11.2026).
 import { mySalesPerson } from "@/utils/mySalesPerson";
+//// Neoffice — which lines ask for a person, and in which words; the person who serves (NeoSalon, lot G1, product owner, 09.11.2026).
+import { useWhoServesStore } from "@/stores/whoServes";
+import { loadItemKinds } from "@/utils/itemKinds";
+import { kindOfLines, lineAsksForAPerson, whoLabel } from "@/utils/salesPersonLines";
 //// Neoffice — which tip settings the dialog follows, a restaurant till's or a shop till's (tips at a shop till, 09.11.2026)
 import { tipRules } from "@/utils/tillTips";
 //// Neoffice — the method of the « exact » button (see the file's header).
@@ -3455,10 +3460,21 @@ const totalSalesAllocation = computed(() => {
 
 // Computed: Validation - sales person is required when enabled and online,
 // unless every cart line already has an item-level sales person.
+//// Neoffice — only the lines that ask for a person count, as the server counts them: a free line and a line worth nothing ask for none, a service always asks, a product only when
+//// the till follows the sales of products by person too (NeoSalon, lot G1, product owner, 09.11.2026). Upstream counted every line that is not a gift, so a till could block
+//// a sale the server would have let through.
+const linesThatAskForAPerson = computed(() =>
+	(props.items || []).filter((item) =>
+		lineAsksForAPerson(item, { productsTracked: settingsStore.trackProductSalesByPerson })
+	)
+);
+//// Neoffice — every line that ASKS for a person has one (the lines above), not every line that is not a gift
 const allItemsHaveSalesPerson = computed(() => {
-	const cartItems = (props.items || []).filter((item) => !item?.is_free_item);
+	const cartItems = linesThatAskForAPerson.value;
 	return cartItems.length > 0 && cartItems.every((item) => item?.sales_person);
 });
+//// Neoffice — the question in the words of what was done (« Who did the work? » of a service, « Who sold it? » of a product) where the site tells the kinds.
+const salesPersonLabel = computed(() => whoLabel(kindOfLines(props.items)));
 
 const isSalesPersonValid = computed(() => {
 	// If sales persons feature is disabled, always valid
@@ -3468,6 +3484,10 @@ const isSalesPersonValid = computed(() => {
 	// Skip validation when offline — sales persons can't be fetched,
 	// don't block the sale. Team data is omitted from offline invoices.
 	if (props.isOffline) {
+		return true;
+	}
+	//// Neoffice — no line asks for a person (a product alone, the till not following the products): nobody is required
+	if (linesThatAskForAPerson.value.length === 0) {
 		return true;
 	}
 	// All lines covered by item-level SP → invoice-level SP not required
@@ -3533,9 +3553,25 @@ function selectMySalesPerson() {
 		enabled: settingsStore.enableSalesPersons,
 		selected: selectedSalesPersons.value,
 		persons: salesPersons.value,
+		//// Neoffice — the person chosen in « Who did the work? » above the cart comes first (NeoSalon, lot G1): Luc's till serving Sonia's customer starts the payment with Sonia
+		preferred: useWhoServesStore().person?.sales_person,
 	});
 	if (mine) addSalesPerson(mine);
 }
+
+//// Neoffice — what the lines of the sale are, asked once per item (the cart asked for the ones it added; a sale read back from a draft has not asked yet).
+watch(
+	() => [props.posProfile, settingsStore.enableSalesPersons, (props.items || []).map((item) => item.item_code).join(",")],
+	() => {
+		if (settingsStore.enableSalesPersons && props.posProfile) {
+			loadItemKinds(
+				props.posProfile,
+				(props.items || []).map((item) => item.item_code)
+			);
+		}
+	},
+	{ immediate: true }
+);
 
 // Force re-fetch sales persons — from server when online, from cache when offline
 async function refreshSalesPersons() {

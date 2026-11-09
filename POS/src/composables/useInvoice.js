@@ -347,6 +347,9 @@ export function useInvoice() {
 						!isOfferedRow(i) &&
 						i.item_code === item.item_code &&
 						i.uom === itemUom &&
+						//// Neoffice — and only into a line that names the same person: two « Cut » done by two hairdressers are two lines, each with its own commission, not one that
+						//// takes the person of the first (NeoSalon, lot G1, product owner, 09.11.2026). Without a person on either (the option off) nothing changes.
+						(i.sales_person || null) === (item.sales_person || null) &&
 						!i.posa_item_modifiers &&
 						!i.posa_special_instructions &&
 						//// Neoffice — a line that has left for the kitchen never absorbs a new unit: a second round of the same
@@ -463,6 +466,8 @@ export function useInvoice() {
 				// Optional item-level Sales Person (commission attribution)
 				sales_person: item.sales_person || null,
 				sales_person_name: item.sales_person_name || null,
+				//// Neoffice — the person was given by the head of the cart, not chosen for this line (see askTheKindOf in the cart store)
+				...(item.sales_person_posed ? { sales_person_posed: true } : {}),
 				//// Neoffice — the item's VAT maps for this till as the server sends them (pos_next.api.items): for the
 				//// till's own tax category, and for a takeaway order (null where the till has no takeaway rule). An item
 				//// read from the offline cache may carry another till's: only this till's are taken (vatMapsFor).

@@ -79,6 +79,8 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		till_tips_auto_detect: 0,
 		// Sales Persons
 		enable_sales_persons: "Disabled",
+		//// Neoffice — a product asks for its person only if the till follows the sales of products by person too (NeoSalon, lot G1)
+		track_product_sales_by_person: 0,
 		//// Neoffice — defaults for settings upstream does not have: the customer-facing second screen
 		//// (turn it on, let the customer create their own account on it, show the address fields on
 		//// that form), and restaurant mode with its default dining area. They must exist in this seed
@@ -245,8 +247,14 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 
 	// Computed - Sales Persons
 	//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
-	const enableSalesPersons = computed(() => settings.value.enable_sales_persons !== "Disabled");
-	const salesPersonsMode = computed(() => settings.value.enable_sales_persons || "Disabled");
+	//// Neoffice — the option is ON only when it says so: a settings answer that carries no value (null, empty, an older server) read as ON here, since « not Disabled » is true of
+	//// anything, and the till then asked for a sales person nobody had switched on (NeoSalon, lot G1, product owner, 09.11.2026).
+	const enableSalesPersons = computed(() => ["Single", "Multiple"].includes(settings.value.enable_sales_persons));
+	const salesPersonsMode = computed(() => (enableSalesPersons.value ? settings.value.enable_sales_persons : "Disabled"));
+	//// Neoffice — whether a product asks for its person too (NeoSalon, lot G1): off, only the services do.
+	const trackProductSalesByPerson = computed(
+		() => enableSalesPersons.value && Boolean(Number(settings.value.track_product_sales_by_person))
+	);
 	//// Neoffice — Biome re-wrap of upstream's sales-person computeds, immediately followed by
 	//// our restaurant block: upstream POSNext is a retail POS with no table service, so
 	//// the restaurant computeds have no upstream equivalent (458d81a9 / 8aa35c29, 2026-03-20).
@@ -423,6 +431,8 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 			enable_till_tips: 0,
 			till_tips_auto_detect: 0,
 			enable_sales_persons: "Disabled",
+			//// Neoffice — and the tick of the products by person (NeoSalon, lot G1)
+			track_product_sales_by_person: 0,
 			//// Neoffice — resetSettings has to zero OUR fields too, otherwise a logout left the previous
 			//// terminal's customer-display and restaurant configuration in place for the next cashier
 			//// (8bffb770 2026-02-04 customer display; 8aa35c29 2026-03-20 restaurant mode).
@@ -617,6 +627,8 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		// Computed - Sales Persons
 		enableSalesPersons,
 		salesPersonsMode,
+		//// Neoffice — whether a product asks for its person too (NeoSalon, lot G1)
+		trackProductSalesByPerson,
 		isSingleSalesPerson,
 		isMultipleSalesPersons,
 

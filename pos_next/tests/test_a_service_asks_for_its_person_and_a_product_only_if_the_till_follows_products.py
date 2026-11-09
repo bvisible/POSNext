@@ -79,7 +79,9 @@ class TestAServiceAsksForItsPersonAndAProductOnlyIfTheTillFollowsProducts(Frappe
 			"POS Settings", {"pos_profile": self.fx.profile}, "enable_sales_persons", "Single"
 		)
 		self.service = self.fx.item
-		self.product = an_item(SHAMPOO, a_group(SHELF, the_root()), self.fx.company)
+		# The item and its group stay in the database between the tests of a class (only the class is rolled back): made once
+		shelf = frappe.db.exists("Item Group", SHELF) or a_group(SHELF, the_root())
+		self.product = frappe.db.exists("Item", SHAMPOO) or an_item(SHAMPOO, shelf, self.fx.company)
 		self.the_site_says({self.service: "service", self.product: "product"})
 
 	def the_site_says(self, answers):
@@ -224,16 +226,24 @@ class TestAServiceAsksForItsPersonAndAProductOnlyIfTheTillFollowsProducts(Frappe
 		self.the_site_says({self.service: "service", self.product: "product"})
 		frappe.set_user(TILL)
 
-		kinds = item_kinds(self.fx.profile, json.dumps([self.service, self.product, "_Test SB Nobody"]))
+		answer = item_kinds(self.fx.profile, json.dumps([self.service, self.product, "_Test SB Nobody"]))
 
-		self.assertEqual(kinds, {self.service: "service", self.product: "product", "_Test SB Nobody": ""})
+		self.assertEqual(
+			answer["kinds"], {self.service: "service", self.product: "product", "_Test SB Nobody": ""}
+		)
+		self.assertTrue(answer["told"])
 
 	def test_a_site_without_the_hook_tells_the_till_nothing_about_the_kind(self):
 		frappe.set_user(TILL)
 		with patch("frappe.get_hooks", return_value=[]):
-			kinds = item_kinds(self.fx.profile, [self.product])
+			answer = item_kinds(self.fx.profile, [self.product])
 
-		self.assertEqual(kinds, {self.product: ""})
+		self.assertEqual(answer, {"told": False, "kinds": {self.product: ""}})
+
+	def test_the_first_ask_of_a_screen_needs_no_item_to_know_whether_the_site_tells_the_kinds(self):
+		frappe.set_user(TILL)
+
+		self.assertEqual(item_kinds(self.fx.profile), {"told": True, "kinds": {}})
 
 	def test_the_till_reads_the_setting_with_the_others(self):
 		self.follow_products(True)

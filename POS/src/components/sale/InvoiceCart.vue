@@ -979,6 +979,9 @@
 			</div>
 		</div>
 
+		<!-- //// Neoffice — « Who did the work? »: the person every line added from now on is given, the cashier's own already chosen (NeoSalon, lot G1, product owner, 09.11.2026). Nothing is drawn while the option is off. -->
+		<WhoServesBar v-if="settingsStore.enableSalesPersons" :pos-profile="posProfile" :items="items" />
+
 		<!-- Cart Items -->
 		<div class="flex-1 overflow-y-auto p-0.5 sm:p-1.5 bg-gray-50">
 			<div
@@ -1546,6 +1549,14 @@
 										:title="item.sales_person_name || item.sales_person"
 									>
 										{{ item.sales_person_name || item.sales_person }}
+									</span>
+									<!-- //// Neoffice — a product the till does not follow by person says it asks for nobody, instead of looking forgotten (NeoSalon, lot G1, canvas « Caisse 1 »). -->
+									<span
+										v-else-if="settingsStore.enableSalesPersons && !settingsStore.trackProductSalesByPerson && kindOfLine(item) === 'product'"
+										class="text-gray-500 truncate max-w-[12rem]"
+										data-test="line-no-person-asked"
+									>
+										{{ __("Product: no person asked") }}
 									</span>
 								</div>
 
@@ -2387,6 +2398,9 @@ const log = logger.create("InvoiceCart");
 import { createResource } from "frappe-ui";
 import { computed, onBeforeUnmount, onMounted, ref, watch, nextTick } from "vue";
 import EditItemDialog from "./EditItemDialog.vue";
+//// Neoffice — « Who did the work? » above the cart, and the kind of a line (NeoSalon, lot G1, product owner, 09.11.2026).
+import WhoServesBar from "./WhoServesBar.vue";
+import { kindOfLine } from "@/utils/salesPersonLines";
 //// Neoffice — the course chip of a line and the words of « Commander la suite » (service families, NeoResto lot 1).
 import ServiceFamilyChip from "./ServiceFamilyChip.vue";
 import {

@@ -66,12 +66,11 @@ class TestTheSalesPersonsOfASalonAreMadeFromItsEmployees(FrappeTestCase):
 		return frappe.get_doc(values).insert(ignore_permissions=True)
 
 	def its_sales_person(self, employee):
-		return frappe.db.get_value(
-			"Sales Person",
-			{"employee": employee},
-			["name", "enabled", "parent_sales_person", "is_group", "company"],
-			as_dict=True,
-		)
+		fields = ["name", "enabled", "parent_sales_person", "is_group"]
+		# A site carries the company of a Sales Person only when something added the column (the till filters on it then)
+		if frappe.db.has_column("Sales Person", "company"):
+			fields.append("company")
+		return frappe.db.get_value("Sales Person", {"employee": employee}, fields, as_dict=True)
 
 	# Where no till asks, nothing is made
 
@@ -100,7 +99,8 @@ class TestTheSalesPersonsOfASalonAreMadeFromItsEmployees(FrappeTestCase):
 		self.assertEqual(person.name, employee.employee_name)
 		self.assertEqual((person.enabled, person.is_group), (1, 0))
 		self.assertEqual(person.parent_sales_person, sales_staff._root_of_the_team())
-		self.assertEqual(person.company, self.fx.company)
+		if frappe.db.has_column("Sales Person", "company"):
+			self.assertEqual(person.company, self.fx.company)
 
 	def test_the_till_lists_the_sales_person_made_and_marks_it_as_the_cashiers_own(self):
 		from pos_next.api import pos_profile
@@ -113,15 +113,24 @@ class TestTheSalesPersonsOfASalonAreMadeFromItsEmployees(FrappeTestCase):
 
 		self.assertEqual(offered[self.its_sales_person(employee.name).name]["is_mine"], 1)
 
-	def test_two_employees_of_the_same_name_each_have_one_with_a_name_of_its_own(self):
+	def test_a_name_another_sales_person_has_taken_is_told_apart_by_the_employees_id(self):
 		self.a_till_asks()
+		root = sales_staff._root_of_the_team()
+		frappe.get_doc(
+			{
+				"doctype": "Sales Person",
+				"sales_person_name": "TestSSBea",
+				"parent_sales_person": root,
+				"is_group": 0,
+			}
+		).insert(ignore_permissions=True)
 
-		first = self.an_employee("TestSSBea")
-		second = self.an_employee("TestSSBea")
-		names = {self.its_sales_person(first.name).name, self.its_sales_person(second.name).name}
+		employee = self.an_employee("TestSSBea")
+		person = self.its_sales_person(employee.name)
 
-		self.assertEqual(len(names), 2)
-		self.assertIn(second.name, self.its_sales_person(second.name).name)
+		self.assertNotEqual(person.name, "TestSSBea")
+		self.assertIn(employee.name, person.name)
+		self.assertEqual(frappe.db.get_value("Sales Person", "TestSSBea", "employee"), None)
 
 	def test_saving_the_employee_again_makes_no_second_one(self):
 		self.a_till_asks()
