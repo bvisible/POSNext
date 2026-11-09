@@ -25042,3 +25042,46 @@ msgstr "+{0} taxe par unité"
 #, python-brace-format
 msgid "incl. {0} tax per unit"
 msgstr "incl. {0} taxe par unité"
+
+#: pos_next/pos_next/report/neopos_register/cash_report.py:343
+#: pos_next/tests/test_the_cash_report_of_a_period_or_a_closing.py:251
+#, python-brace-format
+msgid "Amounts in {0}"
+msgstr "Montants en {0}"
+
+#: pos_next/pos_next/report/neopos_register/cash_report.py:189
+#: pos_next/tests/test_the_cash_report_of_a_period_or_a_closing.py:160
+msgid "By payment method"
+msgstr "Par méthode de paiement"
+
+#: pos_next/pos_next/report/neopos_register/cash_report.py:216
+#: pos_next/tests/test_the_cash_report_of_a_period_or_a_closing.py:203
+#: pos_next/tests/test_the_cash_report_of_a_period_or_a_closing.py:205
+#: pos_next/tests/test_the_cash_report_of_a_period_or_a_closing.py:209
+msgid "Cash control"
+msgstr "Contrôle de caisse"
+
+#: pos_next/pos_next/report/neopos_register/cash_report.py:181
+#: pos_next/tests/test_the_cash_report_of_a_period_or_a_closing.py:204
+msgid "Cash difference"
+msgstr "Écart de caisse"
+
+#: pos_next/pos_next/report/neopos_register/neopos_register.py:149
+#: pos_next/tests/test_the_cash_report_of_a_period_or_a_closing.py:257
+#: pos_next/tests/test_the_cash_report_of_a_period_or_a_closing.py:262
+msgid "Cash report"
+msgstr "Rapport de caisse"
+
+#: pos_next/pos_next/doctype/pos_closing_shift/pos_closing_shift.js:49
+#: pos_next/pos_next/report/neopos_register/neopos_register.js:102
+msgid "Cash report (PDF)"
+msgstr "Rapport de caisse (PDF)"
+
+#: POS/src/components/restaurant/CardEditor.vue:310
+msgid "Global"
+msgstr "Général"
+
+#: pos_next/pos_next/report/neopos_register/cash_report.py:166
+#, python-brace-format
+msgid "{0} payment methods"
+msgstr "{0} méthodes de paiement"
