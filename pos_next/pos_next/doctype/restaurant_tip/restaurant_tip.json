@@ -76,6 +76,7 @@
    "fetch_from": "sales_person.employee",
    "fieldname": "employee",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "label": "Employee",
    "options": "Employee",
    "read_only": 1
@@ -149,7 +150,7 @@
  ],
  "index_web_link_preview": 0,
  "links": [],
- "modified": "2026-11-09 20:20:00.000000",
+ "modified": "2026-11-10 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "Restaurant Tip",

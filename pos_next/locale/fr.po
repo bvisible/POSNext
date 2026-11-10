@@ -25259,3 +25259,26 @@ msgstr "Aucune personne"
 #: POS/src/components/sale/InvoiceCart.vue
 msgid "Product: no person asked"
 msgstr "Produit : aucune personne demandée"
+
+#. Option for the 'Who sees the tips' (Select) field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:626
+#: pos_next/till_settings/registry.py:1380
+msgid "Each their own share"
+msgstr "Chacun sa part"
+
+#: pos_next/till_settings/registry.py:1379
+msgid "Everyone sees all"
+msgstr "Tout le monde voit tout"
+
+#. Description of the 'Who sees the tips' (Select) field in DocType 'POS
+#. Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:622
+#: pos_next/till_settings/registry.py:1372
+msgid "Everyone: the staff of the till see every tip. Each their own share: a member of the staff sees only the tips that are his (the sales he rang up, his share of a sale made by several people). The managers and the accountants always see everything."
+msgstr "Tout le monde : le personnel de la caisse voit chaque pourboire. Chacun sa part : un membre du personnel ne voit que les pourboires qui lui reviennent, soit les ventes qu’il a encaissées et sa part d’une vente réalisée à plusieurs. Les responsables et les comptables voient toujours tout."
+
+#. Label of a Select field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:625
+#: pos_next/till_settings/registry.py:1370
+msgid "Who sees the tips"
+msgstr "Qui voit les pourboires"
