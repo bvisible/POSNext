@@ -86,10 +86,11 @@ class TestTheTipLineMsgidHasItsOwnContext(FrappeTestCase):
 				if message == MSGID:
 					self.assertEqual(context, CONTEXT, f"{name}: the POT would get a {MSGID} under {context!r}")
 					homes.add(name)
-		# The tip lines of the Restaurant, the invoice and the guest payment (the former single's controller
-		# carries the same line until it is retired, and is held to the same rule above)
+		# The tip lines of the invoice and the guest payment, and the tip item of the restaurant's settings and of the shop
+		# till (the former single's controller, which carried the same line, no longer does)
 		expected = {
-			"pos_next/doctype/restaurant/restaurant.py",
+			"pos_next/doctype/restaurant_settings/restaurant_settings.py",
+			"till_tips.py",
 			"api/invoices.py",
 			"api/guest_ordering.py",
 		}
