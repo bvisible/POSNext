@@ -2530,6 +2530,8 @@ def submit_invoice(invoice=None, data=None):
 		# //// carries, or in the data of an online payment). It is no field of the invoice: it is read and removed here, and used once the sale is submitted (below).
 		appointment = invoice.pop("appointment", None) or data.get("appointment")
 		appointment = appointment if doctype == "Sales Invoice" else None
+		# The day the appointment is on (the agenda's day it was taken from): the right to close it is read in that day's view
+		appointment_date = invoice.pop("appointment_date", None) or data.get("appointment_date")
 		# //// Neoffice — restaurant mode: on a split payment the till can lose the draft id it
 		# //// held, and submitting then created a SECOND invoice for the same table. The open
 		# //// draft is found again from restaurant_table before anything is created (b65018d9,
@@ -2858,7 +2860,9 @@ def submit_invoice(invoice=None, data=None):
 		if appointment:
 			from pos_next.api import appointments as appointments_module
 
-			appointments_module.after_a_sale(appointment, invoice_doc.name, pos_profile, bool(offline_id))
+			appointments_module.after_a_sale(
+				appointment, invoice_doc.name, pos_profile, bool(offline_id), appointment_date
+			)
 		# //// release restaurant table to Empty in backend submit_invoice (not only… — 58e39d8 + df6270e
 
 		# //// Neoffice — restaurant mode: the table is released by the SERVER once the invoice is

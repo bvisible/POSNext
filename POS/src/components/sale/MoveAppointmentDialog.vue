@@ -11,20 +11,21 @@
 					</div>
 				</div>
 
-				<div class="grid gap-3 sm:grid-cols-[1.2fr_1fr_.8fr]">
-					<label class="flex flex-col gap-1 text-sm font-semibold text-gray-800 dark:text-gray-100">
+				<!-- The person on a row of her own, the day and the hour side by side: three fields in a row overflowed the dialog (a date and a time input never shrink below their own width) -->
+				<div class="grid grid-cols-2 gap-3">
+					<label class="col-span-2 flex min-w-0 flex-col gap-1 text-sm font-semibold text-gray-800 dark:text-gray-100">
 						{{ __("With") }}
-						<select v-model="person" data-test="move-person" class="min-h-[44px] rounded-lg border border-gray-300 bg-white px-3 text-[15px] font-normal dark:border-gray-600 dark:bg-gray-800">
+						<select v-model="person" data-test="move-person" class="min-h-[44px] w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-[15px] font-normal dark:border-gray-600 dark:bg-gray-800">
 							<option v-for="option in movable" :key="option.sales_person" :value="option.sales_person">{{ option.sales_person_name }}</option>
 						</select>
 					</label>
-					<label class="flex flex-col gap-1 text-sm font-semibold text-gray-800 dark:text-gray-100">
+					<label class="flex min-w-0 flex-col gap-1 text-sm font-semibold text-gray-800 dark:text-gray-100">
 						{{ __("Day") }}
-						<input v-model="day" type="date" data-test="move-day" class="min-h-[44px] rounded-lg border border-gray-300 bg-white px-3 text-[15px] font-normal dark:border-gray-600 dark:bg-gray-800" />
+						<input v-model="day" type="date" data-test="move-day" class="min-h-[44px] w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-[15px] font-normal dark:border-gray-600 dark:bg-gray-800" />
 					</label>
-					<label class="flex flex-col gap-1 text-sm font-semibold text-gray-800 dark:text-gray-100">
+					<label class="flex min-w-0 flex-col gap-1 text-sm font-semibold text-gray-800 dark:text-gray-100">
 						{{ __("Time") }}
-						<input v-model="time" type="time" step="300" data-test="move-time" class="min-h-[44px] rounded-lg border border-gray-300 bg-white px-3 text-[15px] font-normal dark:border-gray-600 dark:bg-gray-800" />
+						<input v-model="time" type="time" step="300" data-test="move-time" class="min-h-[44px] w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-[15px] font-normal dark:border-gray-600 dark:bg-gray-800" />
 					</label>
 				</div>
 

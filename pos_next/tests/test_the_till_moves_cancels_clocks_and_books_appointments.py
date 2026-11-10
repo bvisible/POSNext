@@ -121,7 +121,12 @@ class TestTheTillMovesCancelsClocksAndBooksAppointments(FrappeTestCase):
 
 	def site_has(self, **hooks):
 		"""The hooks the site declares: `move=["move"]`, `time_action=["refuses"]`..."""
-		table = {hook: [f"{ME}.{path}" for path in hooks.get(name, [])] for name, hook in GESTURES.items()}
+		# The planning lane's day view and the others the suite does not name are empty: the lanes of the work site do not answer for the suite (a site with
+		# no day view has no one to hide an appointment from; the right to a colleague's appointment is the subject of its own suite)
+		table = {getattr(appointments, name): [] for name in dir(appointments) if name.endswith("_HOOK")}
+		table.update(
+			{hook: [f"{ME}.{path}" for path in hooks.get(name, [])] for name, hook in GESTURES.items()}
+		)
 		real = frappe.get_hooks
 
 		def get_hooks(hook=None, *args, **kwargs):

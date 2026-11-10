@@ -40,7 +40,8 @@
 					<span class="text-gray-600 dark:text-gray-300">{{ clockText }}</span>
 					<b class="text-xl tabular-nums text-gray-900 dark:text-gray-100" data-test="sheet-active-time">{{ activeTimeOf(appointment.clock.active_seconds) }}</b>
 				</div>
-				<div v-if="appointment.clock.state === 'paused'" class="text-xs text-gray-500">{{ __("In pause: the time runs on the other appointment.") }}</div>
+				<!-- Only when another appointment of the same person took the time (the clock says which): a pause pressed on this one has nothing to explain -->
+				<div v-if="appointment.clock.state === 'paused' && appointment.clock.paused_by" class="text-xs text-gray-500" data-test="sheet-paused-by">{{ __("In pause: the time runs on the other appointment.") }}</div>
 			</div>
 
 			<div class="flex flex-col gap-1.5 border-t border-gray-100 px-4 py-3 text-[15px] dark:border-gray-800">

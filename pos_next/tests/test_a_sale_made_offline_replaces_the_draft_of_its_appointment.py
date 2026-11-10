@@ -81,11 +81,20 @@ class TestASaleMadeOfflineReplacesTheDraftOfItsAppointment(FrappeTestCase):
 		self.warehouse = frappe.db.get_value("POS Profile", self.fx.profile, "warehouse")
 
 	def site_has(self, **hooks):
+		# Every other hook of the salon is empty (the planning lane's day view too: a site with none has no one to hide an appointment from, and the right to
+		# a colleague's is the subject of its own suite): the real site's lanes are not under test here
 		table = {
-			appointments.SOLD_HOOK: [f"{ME}.{path}" for path in hooks.get("sold", [])],
-			appointments.TIME_STATE_HOOK: [f"{ME}.{path}" for path in hooks.get("clocks", [])],
-			appointments.TIME_ACTION_HOOK: [f"{ME}.{path}" for path in hooks.get("time_action", [])],
+			getattr(appointments, name): []
+			for name in dir(appointments)
+			if name.endswith("_HOOK") and isinstance(getattr(appointments, name), str)
 		}
+		table.update(
+			{
+				appointments.SOLD_HOOK: [f"{ME}.{path}" for path in hooks.get("sold", [])],
+				appointments.TIME_STATE_HOOK: [f"{ME}.{path}" for path in hooks.get("clocks", [])],
+				appointments.TIME_ACTION_HOOK: [f"{ME}.{path}" for path in hooks.get("time_action", [])],
+			}
+		)
 		real = frappe.get_hooks
 
 		def get_hooks(hook=None, *args, **kwargs):

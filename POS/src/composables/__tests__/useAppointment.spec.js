@@ -5,6 +5,7 @@
 // @vitest-environment jsdom
 import { createPinia, setActivePinia } from "pinia"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { useAppointmentsStore } from "@/stores/appointments"
 
 const toast = vi.hoisted(() => {
 	globalThis.__ = (s, args) =>
@@ -166,6 +167,7 @@ describe("the till works an appointment", () => {
 	let cart
 	beforeEach(() => {
 		setActivePinia(createPinia())
+		useAppointmentsStore().day = "2026-11-10"
 		forgetItemKinds()
 		call.mockReset()
 		network.isOffline = false
@@ -202,8 +204,21 @@ describe("the till works an appointment", () => {
 		})
 		expect(asked("take_appointment")[0][1]).toEqual({
 			pos_profile: "Till A",
+			date: "2026-11-10",
 			booking: "BKG-1",
 		})
+	})
+
+	it("names the appointment as the agenda did when its draft is on the walk-in customer", async () => {
+		call.mockImplementation(async (method, args) => {
+			if (method.endsWith("take_appointment")) return { message: { ...draft, customer: "Passage", customer_name: "Passage" } }
+			if (method.endsWith("get_item_details")) return { message: { price_list_rate: DAY[args.item_code] } }
+			return { message: {} }
+		})
+
+		await useAppointment().takeAppointment(row)
+
+		expect(cart.appointment.customer_name).toBe("Mme Dupont")
 	})
 
 	it("prices each line with the till's price list for this customer", async () => {
@@ -330,6 +345,7 @@ describe("the till works an appointment", () => {
 describe("the gestures of the salon", () => {
 	beforeEach(() => {
 		setActivePinia(createPinia())
+		useAppointmentsStore().day = "2026-11-10"
 		call.mockReset()
 		network.isOffline = false
 	})
@@ -429,6 +445,7 @@ describe("the gestures of the salon", () => {
 		expect(done.clock.state).toBe("running")
 		expect(asked("clock_appointment")[0][1]).toEqual({
 			pos_profile: "Till A",
+			date: "2026-11-10",
 			booking: "BKG-1",
 			action: "start",
 			sales_person: "Luc",

@@ -7,6 +7,7 @@
 //// replaces the draft when it is synchronised.
 import { customerOfTheOrder } from "@/composables/useOpenTable"
 import { useToast } from "@/composables/useToast"
+import { useAppointmentsStore } from "@/stores/appointments"
 import { usePOSCartStore } from "@/stores/posCart"
 import { usePOSShiftStore } from "@/stores/posShift"
 import { call } from "@/utils/apiWrapper"
@@ -58,11 +59,15 @@ export function useAppointment() {
 
 	const profile = () => usePOSShiftStore().profileName
 
-	/** Ask the site, and say what it refuses in its own words; null when it did. */
+	/**
+	 * Ask the site, and say what it refuses in its own words; null when it did. A gesture on an appointment tells the site the day of the agenda it
+	 * was touched on: the cashier's right to the appointment is read in the day view of that day.
+	 */
 	async function ask(method, args, { quiet = false } = {}) {
+		const day = args.booking ? { date: useAppointmentsStore().date } : {}
 		try {
 			return answerOf(
-				await call(`${API}.${method}`, { pos_profile: profile(), ...args }),
+				await call(`${API}.${method}`, { pos_profile: profile(), ...day, ...args }),
 			)
 		} catch (error) {
 			if (!quiet) showError(parseError(error).message)
@@ -148,7 +153,8 @@ export function useAppointment() {
 			appointment: {
 				booking: draft.booking,
 				invoice: draft.invoice,
-				customer_name: draft.customer_name || appointment.customer_name || null,
+				// The name the agenda showed first: a booking made at the counter may be on the walk-in customer, whose name says nothing
+				customer_name: appointment.customer_name || draft.customer_name || null,
 				starts_at: draft.starts_at || appointment.starts_at || null,
 				ends_at: draft.ends_at || appointment.ends_at || null,
 				paid_amount: Number(draft.paid_amount) || 0,
@@ -158,7 +164,7 @@ export function useAppointment() {
 		if (draft.customer) await cartStore.setCustomer(customerOfTheOrder(draft))
 		showSuccess(
 			__("Appointment of {0} taken over.", [
-				draft.customer_name || draft.booking,
+				appointment.customer_name || draft.customer_name || draft.booking,
 			]),
 		)
 		return true

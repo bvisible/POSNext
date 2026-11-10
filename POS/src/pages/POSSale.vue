@@ -490,10 +490,11 @@
 							role="tab"
 						>
 							<div class="flex items-center justify-center gap-1.5">
-								<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<!-- //// Neoffice — the label stays on one line and the icon gives way on a narrow phone: « Rendez-vous » and its count broke over two lines in a third of 375 px -->
+								<svg class="w-5 h-5 hidden min-[400px]:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v14a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z" />
 								</svg>
-								<span>{{ __("Appointments") }}</span>
+								<span class="whitespace-nowrap">{{ __("Appointments") }}</span>
 								<span
 									v-if="appointmentsStore.toCollectCount > 0"
 									class="bg-blue-600 text-white text-[10px] font-bold rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center shadow-sm"
@@ -4912,6 +4913,7 @@ async function handlePaymentCompleted(paymentData) {
 				edited_from: editingOfflineContext?.originalOfflineId || null,
 				//// Neoffice — the appointment of a salon this sale collects: when the queue replays it, the server tells the reservation, which replaces the appointment's draft (NeoSalon, lot G4)
 				appointment: cartStore.appointment?.booking || null,
+				appointment_date: cartStore.appointment?.starts_at?.slice(0, 10) || null,
 			};
 
 			// Save to the offline queue first so we can use the worker's

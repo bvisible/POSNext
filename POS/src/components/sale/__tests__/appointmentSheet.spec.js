@@ -103,11 +103,18 @@ describe("the sheet of an appointment", () => {
 		expect(gestures.clock).toHaveBeenCalledWith("BKG-1", "pause")
 	})
 
-	it("offers to resume the time of an appointment in pause and says whose time is running instead", () => {
-		const wrapper = mountIt({ state: "started", clock: { state: "paused", active_seconds: 600 } })
+	it("offers to resume the time of an appointment in pause and says whose time is running instead when another appointment took it", () => {
+		const wrapper = mountIt({ state: "started", clock: { state: "paused", active_seconds: 600, paused_by: "BKG-2" } })
 
 		expect(wrapper.get("[data-test='sheet-start']").text()).toBe("Resume the time")
-		expect(wrapper.text()).toContain("In pause")
+		expect(wrapper.get("[data-test='sheet-paused-by']").text()).toContain("In pause")
+	})
+
+	it("explains nothing about a pause the cashier pressed herself", () => {
+		const wrapper = mountIt({ state: "started", clock: { state: "paused", active_seconds: 600, paused_by: null } })
+
+		expect(wrapper.get("[data-test='sheet-start']").text()).toBe("Resume the time")
+		expect(wrapper.find("[data-test='sheet-paused-by']").exists()).toBe(false)
 	})
 
 	it("offers to collect an appointment whose work is finished, and emits the appointment when it is pressed", async () => {

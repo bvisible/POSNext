@@ -4695,6 +4695,10 @@ msgstr "Forcer l'enregistrement"
 msgid "Free"
 msgstr "Gratuit"
 
+#: POS/src/components/sale/SalonAgenda.vue:129
+msgid "Free hour"
+msgstr "Libre"
+
 #: POS/src/components/sale/PromotionManagement.vue:549
 #: POS/src/components/sale/PromotionManagement.vue:798
 msgid "Free Item"

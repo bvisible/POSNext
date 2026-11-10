@@ -263,6 +263,15 @@ describe("the agenda of the salon", () => {
 			expect(wrapper.findAll("[data-test^='row-']")).toHaveLength(4)
 		})
 
+		it("calls a free hour free, and not a button that books, where the site cannot book", () => {
+			store.capabilities = { ...store.capabilities, book: false }
+			const wrapper = mountIt()
+
+			const free = wrapper.get("[data-test='free-630']")
+			expect(free.text()).toBe("Free hour")
+			expect(free.attributes("disabled")).toBeDefined()
+		})
+
 		it("opens the sheet of the row touched and books from a free hour", async () => {
 			const wrapper = mountIt()
 

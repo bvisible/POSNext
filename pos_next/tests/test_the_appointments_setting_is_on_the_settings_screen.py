@@ -22,12 +22,15 @@ KEY = "enable_appointments"
 
 
 def a_site(with_a_reservation_app: bool):
-	"""The hooks of a site that has a reservation app (the one of the list), or has none: whatever the site under test declares."""
+	"""The hooks of a site that has a reservation app (the one of the list), or has none (neither the list nor the planning lane's day view): whatever
+	the site under test declares, the work site's own lanes included."""
 	real = frappe.get_hooks
 
 	def get_hooks(hook=None, *args, **kwargs):
 		if hook == appointments.LIST_HOOK:
 			return ["x.y.appointments_of_the_day"] if with_a_reservation_app else []
+		if hook == appointments.DAY_HOOK:
+			return []
 		return real(hook, *args, **kwargs)
 
 	return patch("frappe.get_hooks", side_effect=get_hooks)

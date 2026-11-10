@@ -476,8 +476,45 @@ def _names(value) -> list[str] | None:
 	return value
 
 
-def _gate(pos_profile: str, booking: str | None = None) -> str | None:
-	"""The door of every gesture: a cashier of this till, on a till in salon mode; the booking, when one is asked, cleaned."""
+def _may_work(pos_profile: str, booking: str, date=None, person: str | None = None) -> bool:
+	"""Whether the signed-in cashier may work this booking: it is on the planning lane's day view of that day as an appointment she may read (never
+	as a colleague's « busy » row) and either she sees the whole salon or it is one of her own; and, for a gesture that names the person timed, that
+	person is one of hers too. The agenda hides a colleague's appointment from a cashier who may not read it; this is the same rule at the door of
+	the gestures, because a hidden button is not a permission (found on the work site: a coiffeuse took, and started the time of, a colleague's)."""
+	if not frappe.get_hooks(DAY_HOOK):
+		# A site with no day view has no one to hide an appointment from: the whole list is the cashier's
+		return True
+	view = _first_answer(DAY_HOOK, pos_profile, str(getdate(date or nowdate())))
+	if view is None:
+		# A planning lane that cannot say who holds what shows nothing, and lets nothing be worked
+		return False
+	if not isinstance(view, dict):
+		frappe.throw(_("The appointments could not be read."))
+	own = view.get("visibility") == "own"
+	mine = _my_sales_people() if own else set()
+	if own and person is not None and person not in mine:
+		return False
+	held = [
+		a
+		for s in (view.get("people") or [])[:MOST_PEOPLE]
+		if isinstance(s, dict)
+		for a in (s.get("appointments") or [])
+	]
+	held += view.get("unassigned") or []
+	for appointment in held:
+		if (
+			not isinstance(appointment, dict)
+			or cint(appointment.get("busy"))
+			or _text(appointment.get("booking")) != booking
+		):
+			continue
+		return not own or _text(appointment.get("sales_person")) in mine
+	return False
+
+
+def _gate(pos_profile: str, booking: str | None = None, date=None, person: str | None = None) -> str | None:
+	"""The door of every gesture: a cashier of this till, on a till in salon mode; the booking, when one is asked, cleaned, and one the cashier may
+	not work refused (as a visitor is: `Not permitted`, before any lane hears of it)."""
 	from pos_next.api.cash_entry import require_till_access
 
 	require_till_access(pos_profile)
@@ -487,6 +524,8 @@ def _gate(pos_profile: str, booking: str | None = None) -> str | None:
 		booking = booking.strip()
 	if not appointments_enabled(pos_profile):
 		frappe.throw(_("This till does not take appointments."))
+	if booking is not None and not _may_work(pos_profile, booking, date, person):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
 	return booking
 
 
@@ -544,17 +583,26 @@ def _clocks_of(bookings: list[str], pos_profile: str) -> dict:
 	return answer if isinstance(answer, dict) else {}
 
 
-def after_a_sale(booking, invoice: str, pos_profile, offline: bool) -> None:
+def after_a_sale(booking, invoice: str, pos_profile, offline: bool, date=None) -> None:
 	"""Tell the site that the sale of an appointment is booked.
 
 	A sale replayed from a till that was offline REPLACES the appointment's draft (`pos_next_appointment_sold`: the reservation deletes the draft,
 	points at the sale and does what a validation does). The time of the appointment is closed with the sale: one nobody started is closed as
 	« unmeasured » by the time lane (so that its margin is known to be unknown), one still running or in pause is finished. Never raises: the sale
-	is submitted, and a site that fails to hear of it must not turn it into an error.
+	is submitted, and a site that fails to hear of it must not turn it into an error. An appointment the cashier may not work (a colleague's, for a cashier
+	who may only read her own; `date` is its day, today by default) is left alone, and said in the error log.
 	"""
 	if not isinstance(booking, str) or not booking.strip():
 		return
 	booking = booking.strip()
+	try:
+		allowed = _may_work(pos_profile, booking, date)
+	except Exception:
+		frappe.log_error("The appointments hook failed", frappe.get_traceback())
+		return
+	if not allowed:
+		frappe.log_error("A sale named an appointment its cashier may not work", f"{booking} on {invoice}")
+		return
 	try:
 		if offline:
 			_first_answer(SOLD_HOOK, booking, invoice, pos_profile)
@@ -684,10 +732,11 @@ def get_appointments(pos_profile: str, date: str | None = None, providers=None) 
 
 
 @frappe.whitelist(methods=["POST"])
-def take_appointment(booking: str, pos_profile: str) -> dict:
+def take_appointment(booking: str, pos_profile: str, date: str | None = None) -> dict:
 	"""The draft of one appointment, made or found, for the till to load into its cart: the draft of the contract, with its lines, each
-	with its sales person and its options, the customer, and what the customer has already paid. The till then pays THIS draft."""
-	booking = _gate(pos_profile, booking)
+	with its sales person and its options, the customer, and what the customer has already paid. The till then pays THIS draft. `date` is the day
+	of the agenda the appointment was touched on (today by default): the day view of that day is where the cashier's right to it is read."""
+	booking = _gate(pos_profile, booking, date)
 	answer = _first_answer(DRAFT_HOOK, booking, pos_profile)
 	if answer is None:
 		frappe.throw(_("This till does not take appointments."))
@@ -696,10 +745,10 @@ def take_appointment(booking: str, pos_profile: str) -> dict:
 
 @frappe.whitelist()
 def check_appointment_move(
-	booking: str, pos_profile: str, starts_at: str, sales_person: str | None = None
+	booking: str, pos_profile: str, starts_at: str, sales_person: str | None = None, date: str | None = None
 ) -> dict:
 	"""Whether an appointment could go to this hour (and to this person): `{"ok", "why"}`. Not a promise: the move asks the engine again, under its lock."""
-	booking = _gate(pos_profile, booking)
+	booking = _gate(pos_profile, booking, date)
 	answer = _first_answer(
 		CHECK_MOVE_HOOK,
 		pos_profile,
@@ -714,11 +763,16 @@ def check_appointment_move(
 
 @frappe.whitelist(methods=["POST"])
 def move_appointment(
-	booking: str, pos_profile: str, starts_at: str, sales_person: str | None = None, notify=1
+	booking: str,
+	pos_profile: str,
+	starts_at: str,
+	sales_person: str | None = None,
+	notify=1,
+	date: str | None = None,
 ) -> dict:
 	"""Move an appointment to another hour, and to another person when one is named. The planning lane warns the customer when `notify`, checks the
 	slot under its own lock and refuses in its own words; it answers `{"booking", "from", "to", "provider_changed", "notified"}`."""
-	booking = _gate(pos_profile, booking)
+	booking = _gate(pos_profile, booking, date)
 	answer = _first_answer(
 		MOVE_HOOK,
 		pos_profile,
@@ -740,10 +794,12 @@ def move_appointment(
 
 
 @frappe.whitelist(methods=["POST"])
-def cancel_appointment(booking: str, pos_profile: str, reason: str = "cancelled", notify=1) -> dict:
+def cancel_appointment(
+	booking: str, pos_profile: str, reason: str = "cancelled", notify=1, date: str | None = None
+) -> dict:
 	"""Cancel an appointment (the customer cancels) or mark it absent (she did not come). The reservation gives back what was paid online and answers
 	`{"state", "refunded", "to_refund"}`: what it refunded, and what is still to be given back when the refund did not go through."""
-	booking = _gate(pos_profile, booking)
+	booking = _gate(pos_profile, booking, date)
 	if reason not in CANCEL_REASONS:
 		frappe.throw(_("This reason is not known."))
 	answer = _first_answer(CANCEL_HOOK, booking, pos_profile, reason, bool(cint(notify)))
@@ -759,16 +815,18 @@ def cancel_appointment(booking: str, pos_profile: str, reason: str = "cancelled"
 
 
 @frappe.whitelist(methods=["POST"])
-def clock_appointment(booking: str, pos_profile: str, action: str, sales_person: str | None = None) -> dict:
+def clock_appointment(
+	booking: str, pos_profile: str, action: str, sales_person: str | None = None, date: str | None = None
+) -> dict:
 	"""Start, pause or finish the time of an appointment (a person has one running at a time: starting another puts hers in pause by itself).
 	The till never sends an hour: the server reads its clock. `sales_person` only when the person timed is not the appointment's own one
 	(the front desk that starts it for a colleague). Answers the state of the clock afterwards."""
-	booking = _gate(pos_profile, booking)
+	_gate(pos_profile)
+	person = _a_person(sales_person)
+	booking = _gate(pos_profile, booking, date, person)
 	if action not in CLOCK_ACTIONS:
 		frappe.throw(_("This action is not known."))
-	answer = _first_answer(
-		TIME_ACTION_HOOK, booking, action, pos_profile, _employee_of(_a_person(sales_person))
-	)
+	answer = _first_answer(TIME_ACTION_HOOK, booking, action, pos_profile, _employee_of(person))
 	if not isinstance(answer, dict):
 		frappe.throw(_("This till does not take appointments."))
 	return {"booking": booking, "clock": _clock(answer)}

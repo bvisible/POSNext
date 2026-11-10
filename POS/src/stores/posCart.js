@@ -862,7 +862,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			Boolean(options.isCreditSale),
 			options.receivableAccount || null,
 			//// Neoffice — the appointment of a salon this sale collects (NeoSalon, step 2, lot G4)
-			appointment.value?.booking || null
+			appointment.value?.booking || null,
+			appointment.value?.starts_at?.slice(0, 10) || null
 		);
 		// Reset write-off amount and loyalty after successful submission
 		if (result) {

@@ -126,7 +126,7 @@
 				<ul class="flex flex-col">
 					<li v-for="item in phoneRows" :key="item.key" class="flex gap-3 border-b border-gray-100 px-4 py-3 dark:border-gray-800">
 						<div class="w-12 flex-none text-[15px] font-bold tabular-nums text-gray-900 dark:text-gray-100">{{ item.free ? clockOf(item.free.from) : hourOf(item.row.starts_at) }}<span class="block text-xs font-normal text-gray-500">{{ item.free ? lengthOf(item.free.to - item.free.from) : lengthOf(minutesLongOf(item.row)) }}</span></div>
-						<button v-if="item.free" type="button" class="flex-1 rounded-lg border-[1.5px] border-dashed border-gray-300 px-3 py-2.5 text-start text-sm text-gray-500 dark:border-gray-600" :disabled="!store.capabilities.book" :data-test="`free-${item.free.from}`" @click="emit('new-appointment', { person: phonePerson, from: item.free.from })">+ {{ __("Book an appointment") }}</button>
+						<button v-if="item.free" type="button" class="flex-1 rounded-lg border-[1.5px] border-dashed border-gray-300 px-3 py-2.5 text-start text-sm text-gray-500 dark:border-gray-600" :disabled="!store.capabilities.book" :data-test="`free-${item.free.from}`" @click="emit('new-appointment', { person: phonePerson, from: item.free.from })"><!-- //// Neoffice — a site that cannot book shows the hour as free, not as a button that does nothing -->{{ store.capabilities.book ? `+ ${__("Book an appointment")}` : __("Free hour") }}</button>
 						<button v-else type="button" class="flex min-w-0 flex-1 flex-col gap-0.5 rounded-lg border px-3 py-2 text-start" :class="blockClass(item.row)" :disabled="item.row.busy" :data-test="`row-${item.row.key}`" @click="!item.row.busy && select(item.row)">
 							<b class="truncate text-[15px] text-gray-900 dark:text-gray-100">{{ item.row.busy ? __("Busy") : item.row.customer_name || __("Walk-in") }}</b>
 							<span class="truncate text-sm text-gray-700 dark:text-gray-200">{{ item.row.busy ? __("A colleague's appointment") : titleOf(item.row) }}</span>
@@ -209,7 +209,9 @@ const nowOffset = computed(() => {
 })
 const dayTitle = computed(() => {
 	const when = new Date(`${store.date}T12:00:00`)
-	return Number.isNaN(when.getTime()) ? store.date : when.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })
+	if (Number.isNaN(when.getTime())) return store.date
+	// A phone has no room for « mardi 10 novembre » beside the day arrows: the short form there
+	return when.toLocaleDateString(undefined, uiStore.isDesktop ? { weekday: "long", day: "numeric", month: "long" } : { weekday: "short", day: "numeric", month: "short" })
 })
 const keptAt = computed(() => (store.cachedAt ? new Date(store.cachedAt).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }) : ""))
 // The cashier's own column is where « New » starts; the first column otherwise
