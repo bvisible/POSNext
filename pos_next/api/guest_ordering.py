@@ -1954,7 +1954,8 @@ def guest_link(token):
 
 
 @frappe.whitelist()
-def create_table_token(table, pos_profile):
+# //// Neoffice — `str`: names, read as filters below (neoffice-maintenance#2484, the check of web methods); the body refuses anything else too
+def create_table_token(table: str, pos_profile: str):
 	"""
 	Return the Guest Order Token of a restaurant table: the one it already has, else a new one.
 	Called by the server POS when the QR button of a table is pressed.
