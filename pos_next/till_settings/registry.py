@@ -85,6 +85,9 @@ APPLIES_SETTINGS = "settings"
 # The facts of the site a setting can need (Setting.needs_site): where the fact does not hold, the screen shows the
 # setting greyed, and its help says why (api._site_facts reads them)
 SITE_ALLOWS_NEGATIVE_STOCK = "allows_negative_stock"
+# //// Neoffice — the site has a reservation app that answers for the till (a hook of pos_next.api.appointments): the setting that takes its
+# //// appointments means nothing without it (NeoSalon, step 2, lot G4).
+SITE_HAS_APPOINTMENTS = "has_appointments"
 
 
 # Compared by identity: a lazy text refuses == (frappe.types.lazytranslatedstring)
@@ -253,6 +256,8 @@ _GROUPS = (
 	Group("scale_barcodes", "prices", _lt("Scale barcodes"), 3),
 	# Sales
 	Group("payment", "sales", _lt("Payment"), 1),
+	# //// Neoffice — the till shows the day's appointments and collects them (NeoSalon, step 2, lot G4, product owner, 10.11.2026)
+	Group("appointments", "sales", _lt("Appointments"), 1),
 	Group("returns", "sales", _lt("Returns"), 2),
 	Group("sales_orders", "sales", _lt("Sales orders"), 2),
 	# //// Neoffice — who made the sale (NeoCoiffeur study, product owner, 09.11.2026): the option upstream ships and the fork had switched off.
@@ -1380,6 +1385,22 @@ SETTINGS = (
 			("Each their own share", _lt("Each their own share", context="Tips")),
 		),
 		depends_on=(on("enable_till_tips"),),
+	),
+	# //// Neoffice — the till shows the day's appointments of the salon's reservation app, and a tap takes one over: its draft invoice is loaded into the
+	# //// cart, each line with the person who did it, and paid (NeoSalon, step 2, lot G4, product owner, 10.11.2026). Off by default; a shop till only;
+	# //// greyed where the site has no reservation app (SITE_HAS_APPOINTMENTS).
+	Setting(
+		"enable_appointments",
+		"appointments",
+		_lt("Collect appointments"),
+		_lt(
+			"The till shows the day's appointments and takes one over: its invoice, prepared by the reservation, is loaded into the cart"
+			" with the person of each line, and paid. Shop till only. Greyed while the site takes no appointments."
+		),
+		"check",
+		doctype=POS_SETTINGS,
+		till=SHOP,
+		needs_site=SITE_HAS_APPOINTMENTS,
 	),
 	Setting(
 		"allow_sales_order",

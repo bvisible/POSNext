@@ -2526,6 +2526,25 @@ def submit_invoice(invoice=None, data=None):
 
 	try:
 		invoice_name = invoice.get("name")
+		# //// Neoffice — an appointment sold at a till that was offline (NeoSalon, lot G4, decision of 10.11.2026: « il faut encaisser tout connement »): the sale carries the
+		# //// number of the appointment, and when it is replayed it REPLACES the draft the reservation prepared for that appointment, so that no second invoice is ever
+		# //// open. The key is read and removed first (it is no field of the invoice), and only a replayed sale (offline_id) looks for the draft; an online payment
+		# //// already names its draft. Without a draft (cancelled since, already paid) the sale is an ordinary invoice and the reservation is told so (below).
+		appointment = invoice.pop("appointment", None)
+		appointment = appointment if offline_id and doctype == "Sales Invoice" else None
+		appointment_replaced = False
+		if appointment:
+			from pos_next.api import appointments as appointments_module
+
+			appointment_draft = (
+				None
+				if invoice_name and frappe.db.exists(doctype, invoice_name)
+				else appointments_module.draft_of_the_appointment(appointment, pos_profile)
+			)
+			if appointment_draft:
+				invoice_name = appointment_draft
+				invoice["name"] = appointment_draft
+				appointment_replaced = True
 		# //// Neoffice — restaurant mode: on a split payment the till can lose the draft id it
 		# //// held, and submitting then created a SECOND invoice for the same table. The open
 		# //// draft is found again from restaurant_table before anything is created (b65018d9,
@@ -2849,6 +2868,10 @@ def submit_invoice(invoice=None, data=None):
 		)
 
 		invoice_submitted = True
+		# //// Neoffice — the sale of an appointment made offline is submitted: the reservation is told (it re-links, passes the appointment to paid, warns the
+		# //// manager when the draft had gone). It never fails the sale, which is booked (NeoSalon, lot G4).
+		if appointment:
+			appointments_module.after_an_offline_sale(appointment, invoice_doc.name, pos_profile, appointment_replaced)
 		# //// release restaurant table to Empty in backend submit_invoice (not only… — 58e39d8 + df6270e
 
 		# //// Neoffice — restaurant mode: the table is released by the SERVER once the invoice is

@@ -624,6 +624,20 @@ on_login = ["pos_next.restaurant.devices.guard_device_login"]
 # Extension points consumed by POS Next, implemented by optional apps
 pos_next_loyalty_provider = []
 pos_next_bootstrap_settings = []
+# //// Neoffice — the till takes the appointments of the site's reservation app over (NeoSalon, step 2, lot G4; pos_next.api.appointments). Two
+# //// extension points, each a list of dotted paths whose first answer that is not None counts, so that POS Next names neither a reservation app
+# //// nor a client: the day's appointments to collect, and the draft invoice of one appointment, with the sales person of each line.
+pos_next_appointments_of_the_day = []
+pos_next_appointment_draft = []
+# //// Neoffice — and the gestures of salon mode (the plan of 10.11.2026, note 10 of the vault, « Contrat v2 »): move, cancel, start or stop a step, what can be
+# //// booked, the free slots, book, and the sale that replaced the draft of an appointment once an offline till synchronised.
+pos_next_appointment_move = []
+pos_next_appointment_cancel = []
+pos_next_appointment_clock = []
+pos_next_appointment_services = []
+pos_next_appointment_slots = []
+pos_next_appointment_book = []
+pos_next_appointment_sold = []
 # //// Neoffice — the restaurant rides the seam upstream gave satellite apps: the bootstrap, the settings dialog, the
 # //// profile data and the answer of a save all call it after they read the till's POS Settings. One function tells every
 # //// screen which restaurant (`restaurant`, `restaurant_name`) the till works for (NeoResto lot 1, task 2), the next what

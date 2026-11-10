@@ -77,6 +77,7 @@
   "till_tip_account",
   "enable_sales_persons",
   "track_product_sales_by_person",
+  "enable_appointments",
   "section_break_display",
   "default_card_view",
   "display_item_code",
@@ -660,6 +661,13 @@
    "label": "Track product sales by person too"
   },
   {
+   "default": "0",
+   "description": "The till shows the day's appointments and takes one over: its draft invoice, made by the reservation app of the site, is loaded into the cart and paid. Shop till only; nothing happens where the site has no reservation app.",
+   "fieldname": "enable_appointments",
+   "fieldtype": "Check",
+   "label": "Collect appointments"
+  },
+  {
    "collapsible": 1,
    "fieldname": "section_break_display",
    "fieldtype": "Section Break",
@@ -1044,7 +1052,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-10 09:30:00.000000",
+ "modified": "2026-11-10 12:14:44.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "POS Settings",

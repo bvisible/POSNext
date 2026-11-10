@@ -477,9 +477,14 @@ def _editable(setting, can, desk=False):
 
 def _site_facts():
 	"""The facts of the site some settings need (`Setting.needs_site`)."""
+	# //// Neoffice — and whether the site has a reservation app (the appointments of the till, NeoSalon lot G4)
+	from pos_next.api.appointments import site_has_appointments
 	from pos_next.pos_next.doctype.pos_settings.pos_settings import _site_allows_negative_stock
 
-	return {registry.SITE_ALLOWS_NEGATIVE_STOCK: bool(_site_allows_negative_stock())}
+	return {
+		registry.SITE_ALLOWS_NEGATIVE_STOCK: bool(_site_allows_negative_stock()),
+		registry.SITE_HAS_APPOINTMENTS: site_has_appointments(),
+	}
 
 
 def _answer(till, can, desk=False):
