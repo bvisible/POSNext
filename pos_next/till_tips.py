@@ -111,9 +111,18 @@ def ensure_tip_item(company: str | None, tip_account: str | None) -> str:
 		}
 	)
 
-	# Set default income account to the tip transit account
+	# Set default income account to the tip transit account. The row names a warehouse of its own company: left empty,
+	# Frappe fills it with the site's default warehouse, which can belong to another company of the site, and ERPNext
+	# then refuses the whole item (« Warehouse … doesn't belong to Company … »), so tips could not be switched on.
 	if tip_account:
-		item.append("item_defaults", {"company": company, "income_account": tip_account})
+		item.append(
+			"item_defaults",
+			{
+				"company": company,
+				"income_account": tip_account,
+				"default_warehouse": _a_warehouse_of(company),
+			},
+		)
 
 	item.insert(ignore_permissions=True)
 
@@ -122,6 +131,19 @@ def ensure_tip_item(company: str | None, tip_account: str | None) -> str:
 
 	frappe.msgprint(_("Created tip item: TIP"))
 	return TIP_ITEM
+
+
+def _a_warehouse_of(company: str | None) -> str | None:
+	"""The site's default warehouse when it is the company's, else the company's first warehouse that is no group.
+
+	The TIP item is no stock item: any warehouse of its company will do, as long as it is of that company.
+	"""
+	default = frappe.defaults.get_defaults().get("default_warehouse")
+	if default and frappe.db.get_value("Warehouse", default, "company") == company:
+		return default
+	return frappe.db.get_value(
+		"Warehouse", {"company": company, "is_group": 0, "disabled": 0}, "name", order_by="creation asc"
+	)
 
 
 def _grant_no_commission(item_code: str) -> None:

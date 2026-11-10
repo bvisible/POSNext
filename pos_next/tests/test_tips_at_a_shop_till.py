@@ -175,6 +175,32 @@ class TestTipsAtAShopTill(TillSettingsCase):
 
 		self.assertEqual((item.grant_commission, item.is_internal_item, item.is_stock_item), (0, 1, 0))
 
+	def test_tips_switch_on_where_the_default_warehouse_is_another_companys(self):
+		# The nightly CI of 10.11: the site's default warehouse (Stock Settings) belonged to another of its companies.
+		# Frappe gives that warehouse to the new row of the item's defaults, ERPNext refuses the row ("Warehouse …
+		# doesn't belong to Company …"), and no till and no restaurant of this company could switch tips on.
+		other = frappe.db.get_value("Warehouse", {"company": ["!=", self.company], "is_group": 0}, "name")
+		if not other:
+			self.skipTest("the site has one company only")
+		original = frappe.defaults.get_defaults
+
+		def defaults_with_another_companys_warehouse(*args, **kwargs):
+			return {**original(*args, **kwargs), "default_warehouse": other}
+
+		frappe.local.new_doc_templates.pop("Item Default", None)
+		self.addCleanup(frappe.local.new_doc_templates.pop, "Item Default", None)
+		with (
+			patch.object(till_tips, "TIP_ITEM", "_Test Tip Item Of One Company"),
+			patch("frappe.defaults.get_defaults", defaults_with_another_companys_warehouse),
+		):
+			self.tips_on()
+
+		item = self.stored_settings(self.shop_till, "till_tip_item").till_tip_item
+		self.assertEqual(item, "_Test Tip Item Of One Company")
+		row = frappe.get_doc("Item", item).item_defaults[0]
+		self.assertEqual(row.company, self.company)
+		self.assertEqual(frappe.db.get_value("Warehouse", row.default_warehouse, "company"), self.company)
+
 	def test_a_tip_item_a_restaurant_made_before_is_set_right(self):
 		till_tips.ensure_tip_item(self.company, None)
 		frappe.db.set_value("Item", "TIP", "grant_commission", 1)
