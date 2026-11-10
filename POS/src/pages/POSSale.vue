@@ -494,6 +494,7 @@
 								<svg class="w-5 h-5 hidden min-[400px]:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v14a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z" />
 								</svg>
+								<!-- //// Neoffice — see the block marker above: label stays on one line -->
 								<span class="whitespace-nowrap">{{ __("Appointments") }}</span>
 								<span
 									v-if="appointmentsStore.toCollectCount > 0"

@@ -2860,6 +2860,7 @@ def submit_invoice(invoice=None, data=None):
 		if appointment:
 			from pos_next.api import appointments as appointments_module
 
+			# //// Neoffice — see the block marker above: appointment_date carried through
 			appointments_module.after_a_sale(
 				appointment, invoice_doc.name, pos_profile, bool(offline_id), appointment_date
 			)
