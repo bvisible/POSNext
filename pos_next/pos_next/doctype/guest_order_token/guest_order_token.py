@@ -7,6 +7,10 @@
 # //// be closed, and a LinkValidationError there would leave the token Active for ever (b96ddc17 +
 # //// 70c81008). expire_tokens_for_table() is what the table-cleaning flow calls when a table goes
 # //// back to Empty (07d0d493, 2026-03-29).
+# //// Since 10.11.2026 nothing new is bound to a POS Opening Entry, the session of ERPNext's own till, which this till never opens:
+# //// a table's code follows the table and dies when it is freed or after its delay (product owner, neoffice-maintenance#2484), a
+# //// shop session follows the till's POS Opening Shift (`pos_opening_shift`, #2473), a takeaway session the restaurant's takeaway
+# //// hours. A code bound to an entry by an older version still dies with that entry.
 # Copyright (c) 2026, BrainWise and contributors
 # For license information, please see license.txt
 

@@ -51,6 +51,13 @@
   "section_web_takeaway",
   "enable_web_takeaway",
   "takeaway_menu",
+  "takeaway_hours",
+  "takeaway_open_from",
+  "takeaway_open_to",
+  "takeaway_days",
+  "column_break_web_takeaway",
+  "takeaway_first_order_after",
+  "takeaway_last_order_before",
   "section_reservations",
   "enable_reservations",
   "default_reservation_duration",
@@ -352,6 +359,57 @@
    "options": "Restaurant Card"
   },
   {
+   "default": "Always",
+   "depends_on": "eval:doc.enable_web_takeaway",
+   "description": "When the online takeaway page takes a new order: always, by the opening hours (those of the takeaway card when it has some), or at fixed hours. An order already sent is always paid.",
+   "fieldname": "takeaway_hours",
+   "fieldtype": "Select",
+   "label": "Takeaway Orders Taken",
+   "options": "Always\nOpening Hours\nFixed Hours"
+  },
+  {
+   "depends_on": "eval:doc.enable_web_takeaway && doc.takeaway_hours=='Fixed Hours'",
+   "fieldname": "takeaway_open_from",
+   "fieldtype": "Time",
+   "label": "Takeaway From"
+  },
+  {
+   "depends_on": "eval:doc.enable_web_takeaway && doc.takeaway_hours=='Fixed Hours'",
+   "fieldname": "takeaway_open_to",
+   "fieldtype": "Time",
+   "label": "Takeaway To"
+  },
+  {
+   "depends_on": "eval:doc.enable_web_takeaway && doc.takeaway_hours=='Fixed Hours'",
+   "description": "None: every day",
+   "fieldname": "takeaway_days",
+   "fieldtype": "Table",
+   "label": "Takeaway Days",
+   "options": "Restaurant Takeaway Day"
+  },
+  {
+   "fieldname": "column_break_web_takeaway",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.enable_web_takeaway && doc.takeaway_hours!='Always'",
+   "description": "No new order in the first minutes after each opening",
+   "fieldname": "takeaway_first_order_after",
+   "fieldtype": "Int",
+   "label": "First Takeaway Order After Opening (minutes)",
+   "non_negative": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.enable_web_takeaway && doc.takeaway_hours!='Always'",
+   "description": "No new order in the last minutes before each closing",
+   "fieldname": "takeaway_last_order_before",
+   "fieldtype": "Int",
+   "label": "Last Takeaway Order Before Closing (minutes)",
+   "non_negative": 1
+  },
+  {
    "fieldname": "section_reservations",
    "fieldtype": "Section Break",
    "label": "Reservations"
@@ -428,7 +486,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-08 20:30:00.000000",
+ "modified": "2026-11-10 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "Restaurant",

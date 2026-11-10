@@ -21,7 +21,15 @@ from frappe.utils.synchronization import filelock
 # //// Neoffice — the limits count the address nginx accepted, not the first entry of X-Forwarded-For
 # //// (maintenance#2296)
 from pos_next.rate_limits import rate_limit_by_peer
-from pos_next.restaurant import guest_account, permissions, portions, scope, service_families, tickets
+from pos_next.restaurant import (
+	guest_account,
+	permissions,
+	portions,
+	scope,
+	service_families,
+	takeaway_hours,
+	tickets,
+)
 
 # //// Neoffice — the several open orders (.0, .1, .2) a table may hold: a guest's order goes onto the first (NeoResto lot 1, notes)
 from pos_next.restaurant import notes as notes_module
@@ -107,19 +115,18 @@ def _require_ordering_open(token_doc, settings):
 	if token_doc.mode == "takeaway":
 		if not settings.get("enable_web_takeaway"):
 			frappe.throw(_("Takeaway web ordering is not enabled."))
+		# //// Neoffice — and outside the hours the restaurant takes takeaway orders in (neoffice-maintenance#2484)
+		takeaway_hours.require_taking_orders(settings)
 	elif not settings.get("enable_qr_ordering"):
 		frappe.throw(_("Ordering from the table's QR code is not enabled here."))
 
 
-def _get_active_pos_opening(pos_profile):
-	"""Return the name of the current open POS Opening Entry for a profile."""
-	result = frappe.db.get_value(
-		"POS Opening Entry",
-		{"pos_profile": pos_profile, "status": "Open", "docstatus": 1},
-		"name",
-		order_by="creation desc",
-	)
-	return result
+# //// Neoffice — `_get_active_pos_opening` is gone (neoffice-maintenance#2484). It bound a table's code to ERPNext's own till session, a
+# //// POS Opening Entry; this till opens a POS Opening Shift and never an entry, so the code of a site that never sold with ERPNext's till
+# //// was bound to nothing, and the code of a site that kept old entries « Open » to one of them (osiris: codes of October bound to entries
+# //// of 2025). A table's code follows the table, not the till's shift (product owner, 10.11.2026): table orders outlive a closing on
+# //// purpose (two services), and a payment made on the QR page is booked only while its code is valid. It expires when the table is freed,
+# //// or after its delay. A code bound by an older version keeps its entry, and still dies with it (GuestOrderToken.is_valid).
 
 
 def _get_or_create_invoice(token_doc):
@@ -644,6 +651,11 @@ def validate_token(token: str):
 	"""
 	token_doc = _require_valid_token(token)
 	settings = _get_restaurant_settings(token_doc.pos_profile)
+	# //// Neoffice — a takeaway session the page kept from earlier, with no order yet, is refused outside the restaurant's takeaway hours: the
+	# //// page drops it, asks for a new one, and says when orders open again (neoffice-maintenance#2484). A session that holds an order goes
+	# //// through: the page a payment sends the customer back to reads it first.
+	if token_doc.mode == "takeaway" and not token_doc.invoice:
+		takeaway_hours.require_taking_orders(settings)
 
 	table_info = None
 	if token_doc.table:
@@ -1977,8 +1989,8 @@ def create_table_token(table, pos_profile):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 	# The code the table already has: its newest active token that can still be used (is_valid: not past
-	# its time, its POS opening still open). An active token that cannot be used any more is expired, as it
-	# always was; a usable one is never touched, not even when the table has several.
+	# its time; for a code bound by an older version, its POS opening still open). An active token that cannot be used any more is
+	# expired, as it always was; a usable one is never touched, not even when the table has several.
 	token_doc = None
 	active_tokens = frappe.get_all(
 		"Guest Order Token",
@@ -2009,14 +2021,12 @@ def create_table_token(table, pos_profile):
 		frappe.db.set_value(
 			"Guest Order Token",
 			token_doc.name,
-			{"pos_profile": pos_profile, "pos_opening": _get_active_pos_opening(pos_profile)},
+			# //// Neoffice — bound to no till session: a table's code follows the table (neoffice-maintenance#2484)
+			{"pos_profile": pos_profile, "pos_opening": None},
 		)
 		token_doc.reload()
 
 	if token_doc is None:
-		# Find the current open POS opening
-		pos_opening = _get_active_pos_opening(pos_profile)
-
 		# Compute expires_at from settings
 		settings = _get_restaurant_settings(pos_profile)
 		expires_at = None
@@ -2029,7 +2039,6 @@ def create_table_token(table, pos_profile):
 			"mode": "restaurant",
 			"table": table,
 			"pos_profile": pos_profile,
-			"pos_opening": pos_opening,
 			"expires_at": expires_at,
 		})
 		token_doc.flags.ignore_permissions = True
@@ -2088,6 +2097,9 @@ def create_takeaway_token():  # permission-check: ok a public door: the restaura
 	settings = _get_restaurant_settings()
 	if not settings.enable_web_takeaway:
 		frappe.throw(_("Takeaway web ordering is not enabled."))
+	# //// Neoffice — a new session only in the hours the restaurant takes takeaway orders in: the page then says when they open again
+	# //// (neoffice-maintenance#2484). A session the page already keeps is not asked for again (its payment's return comes back to it).
+	takeaway_hours.require_taking_orders(settings)
 
 	# Compute expires_at from settings
 	expires_at = None

@@ -719,6 +719,93 @@ SETTINGS = (
 		choices="restaurant_cards",
 		applies=APPLIES_RESTAURANT,
 	),
+	# //// Neoffice — when the online takeaway takes a new order (neoffice-maintenance#2484, product owner 10.11.2026): nothing closed it
+	# //// before, the page took orders day and night (pos_next.restaurant.takeaway_hours)
+	Setting(
+		"takeaway_hours",
+		"web_takeaway",
+		_lt("Orders taken"),
+		_lt(
+			"When the online ordering page takes a new order: always, by the opening hours of the « Hours and cards »"
+			" tab (those of the card offered when it has some), or at fixed hours. An order already sent is always paid."
+		),
+		"segmented",
+		doctype=RESTAURANT,
+		till=RESTAURANT_TILL,
+		depends_on=(on("enable_web_takeaway"),),
+		options=(
+			("Always", _lt("Always")),
+			("Opening Hours", _lt("By the opening hours")),
+			("Fixed Hours", _lt("Fixed hours")),
+		),
+		applies=APPLIES_RESTAURANT,
+	),
+	Setting(
+		"takeaway_open_from",
+		"web_takeaway",
+		_lt("From"),
+		_lt("Only with « Fixed hours »: the first order of the day is taken from this time."),
+		"time",
+		doctype=RESTAURANT,
+		till=RESTAURANT_TILL,
+		depends_on=(on("enable_web_takeaway"), equals("takeaway_hours", "Fixed Hours")),
+		applies=APPLIES_RESTAURANT,
+	),
+	Setting(
+		"takeaway_open_to",
+		"web_takeaway",
+		_lt("To"),
+		_lt(
+			"Only with « Fixed hours »: no order is taken after this time. Before « From »: until that time the next night."
+		),
+		"time",
+		doctype=RESTAURANT,
+		till=RESTAURANT_TILL,
+		depends_on=(on("enable_web_takeaway"), equals("takeaway_hours", "Fixed Hours")),
+		applies=APPLIES_RESTAURANT,
+	),
+	Setting(
+		"takeaway_days",
+		"web_takeaway",
+		_lt("Days"),
+		_lt("Only with « Fixed hours »: the days orders are taken. None chosen: every day."),
+		"multiselect",
+		doctype=RESTAURANT,
+		till=RESTAURANT_TILL,
+		depends_on=(on("enable_web_takeaway"), equals("takeaway_hours", "Fixed Hours")),
+		choices="weekdays",
+		placeholder=_lt("Every day"),
+		applies=APPLIES_RESTAURANT,
+	),
+	Setting(
+		"takeaway_first_order_after",
+		"web_takeaway",
+		_lt("First order after opening (minutes)"),
+		_lt(
+			"Not with « Always »: no order is taken in the first minutes after each opening. 0: from the opening."
+		),
+		"int",
+		doctype=RESTAURANT,
+		till=RESTAURANT_TILL,
+		depends_on=(on("enable_web_takeaway"),),
+		min=0,
+		applies=APPLIES_RESTAURANT,
+	),
+	Setting(
+		"takeaway_last_order_before",
+		"web_takeaway",
+		_lt("Last order before closing (minutes)"),
+		_lt(
+			"Not with « Always »: no order is taken in the last minutes before each closing, so that the kitchen cooks it"
+			" in time. 0: until the closing."
+		),
+		"int",
+		doctype=RESTAURANT,
+		till=RESTAURANT_TILL,
+		depends_on=(on("enable_web_takeaway"),),
+		min=0,
+		applies=APPLIES_RESTAURANT,
+	),
 	# ---------------------------------------------------------------- Reservations
 	Setting(
 		"enable_reservations",

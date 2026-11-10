@@ -5,7 +5,12 @@
 the QR button a second time, or from a second till, killed the code already placed on the table (shown on a tablet, printed,
 stuck under a glass) and every phone that had scanned it was told its session was over. It now answers the table's active
 token, and makes one only when the table has none that can still be used. A token that can no longer be used (its time ran
-out, its POS opening closed, or the table was freed) is expired, as it always was.
+out, or the table was freed) is expired, as it always was.
+
+A table's code follows the table, not the till's shift (neoffice-maintenance#2484, product owner 10.11.2026): it was bound to
+ERPNext's own till session (a POS Opening Entry), which this till never opens, so it was bound to nothing on a site that never
+sold with ERPNext's till and to an old entry left « Open » elsewhere. A new code is bound to no till session, and closing an
+entry leaves it; a code an older version bound to an entry still dies with that entry (nothing expired comes back).
 
 Because a press now reuses the table's live code, whoever presses is checked first, and by the rule of the floor read
 (`get_tables`, through `permissions.require_floor_access`): whoever the till shows the floor to may press QR for a table of
@@ -36,7 +41,7 @@ from pos_next.tests.test_restaurant_mode_comes_from_the_till import (
 	a_site_where_neoresto_is,
 	the_refusal,
 )
-from pos_next.tests.test_till_writes_need_the_till import CASHIER_ROLE, _user
+from pos_next.tests.test_till_writes_need_the_till import CASHIER_ROLE, TILL, _user
 
 # The accounts of the scoping suite: two cashiers (each assigned to the till of his restaurant), and a portal account that
 # was given the cashier's roles and a till by mistake
@@ -253,20 +258,53 @@ class TestTheQrButtonOfATable(TheQrButton, Tills, FrappeTestCase):
 		self.assertEqual(self.press_qr(), first)
 		self.assertEqual(self.active_tokens(), [first["token"]])
 
-	def test_a_code_whose_pos_opening_has_closed_is_replaced(self):
-		# The code is made while the till's shift is open, and bound to it
+	def press_qr_as_the_cashier(self):
+		"""The QR button pressed by the till's cashier, whom the till shows the floor to."""
+		frappe.set_user(TILL)
+		try:
+			return self.press_qr()
+		finally:
+			frappe.set_user("Administrator")
+
+	def test_a_new_code_is_bound_to_no_till_session_even_where_an_erpnext_entry_is_open(self):
+		# An entry of ERPNext's own till left « Open » (a site that sold with it before): the code used to be bound to it
+		self.open_a_shift()
+
+		code = self.press_qr_as_the_cashier()
+
+		self.assertFalse(frappe.db.get_value("Guest Order Token", code["name"], "pos_opening"))
+
+	def test_closing_an_erpnext_entry_leaves_the_code_of_the_table(self):
 		opening = self.open_a_shift()
-		first = self.press_qr()
-		self.assertEqual(frappe.db.get_value("Guest Order Token", first["name"], "pos_opening"), opening)
-		self.assertEqual(self.press_qr(), first)
+		first = self.press_qr_as_the_cashier()
 
-		# The shift is closed: the code can no longer be used, whatever its time
 		frappe.db.set_value("POS Opening Entry", opening, "status", "Closed")
-		second = self.press_qr()
 
-		self.assertNotEqual(second["token"], first["token"])
-		self.assertEqual(self.status_of(first["name"]), "Expired")
-		self.assertEqual(self.active_tokens(), [second["token"]])
+		self.assertEqual(self.press_qr_as_the_cashier(), first)
+		self.assertEqual(self.status_of(first["name"]), "Active")
+		self.assertTrue(frappe.get_doc("Guest Order Token", first["name"]).is_valid())
+
+	def test_a_code_an_older_version_bound_to_an_entry_still_dies_with_it(self):
+		opening = self.open_a_shift()
+		bound = self.place_a_token()
+		frappe.db.set_value("Guest Order Token", bound, "pos_opening", opening)
+
+		frappe.db.set_value("POS Opening Entry", opening, "status", "Closed")
+		code = self.press_qr_as_the_cashier()
+
+		self.assertNotEqual(code["name"], bound)
+		self.assertEqual(self.status_of(bound), "Expired")
+		self.assertEqual(self.active_tokens(), [code["token"]])
+
+	def test_a_code_brought_to_the_till_that_asks_drops_the_entry_an_older_version_bound_it_to(self):
+		opening = self.open_a_shift()
+		stale = self.place_a_token()
+		frappe.db.set_value("Guest Order Token", stale, {"pos_profile": self.fx.other_profile, "pos_opening": opening})
+
+		code = self.press_qr_as_the_cashier()
+
+		self.assertEqual(code["name"], stale)
+		self.assertFalse(frappe.db.get_value("Guest Order Token", stale, "pos_opening"))
 
 	def test_the_newest_usable_code_is_the_one_shown_and_none_is_killed(self):
 		older = self.place_a_token(minutes_ago=10)

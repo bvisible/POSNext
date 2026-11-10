@@ -85,6 +85,11 @@ Whole new doctypes; every field in them is ours. At a merge they can only confli
   (`Restaurant` `after_delete`), guards the User and OAuth Bearer Token of a tablet's account, refuses its sign-in by
   any other path (`on_login`) and confines its session to its screens (`auth_hooks`) (see
   `pos_next.restaurant.devices`).
+  Since 10.11.2026 (neoffice-maintenance#2484): `restaurant_takeaway_day` (the days of the web takeaway's fixed hours), and
+  the Restaurant's fields `takeaway_hours` (« Always », the default, « Opening Hours » or « Fixed Hours »: when the
+  /pos/order page takes a new order), `takeaway_open_from`, `takeaway_open_to`, `takeaway_days`,
+  `column_break_web_takeaway`, `takeaway_first_order_after` and `takeaway_last_order_before` (the margins, in minutes),
+  read by `pos_next.restaurant.takeaway_hours`.
 - **Preparation / KDS** (`831857f`, `4df0caf` and follow-ups): `preparation_station`,
   `preparation_station_item`, `preparation_station_item_group`, `preparation_workflow`,
   `preparation_workflow_item`, `preparation_workflow_step`.
@@ -385,6 +390,7 @@ detail is in the sections above.
 | `pos_next/pos_next/doctype/restaurant_settlement/restaurant_settlement.json` | 21: `order`, `table_label`, `issue`, `column_break_one`, `total`, `consumed`, `reason`, `complaint_filed`, `section_who`, `waiter`, `settled_by`, `approved_by`, `column_break_two`, `restaurant`, `pos_profile`, `service_day`, `settled_at`, `section_result`, `invoice`, `customer`, `lines` |
 | `pos_next/pos_next/doctype/restaurant_settings/restaurant_settings.json` | 31: `section_runner`, `enable_runner`, `section_hours`, `opening_hours`, `section_tips`, `enable_tips`, `auto_detect_tip`, `column_break_tips`, `tip_item`, `tip_account`, `section_qr_ordering`, `enable_qr_ordering`, `guest_menu`, `qr_order_validation` … |
 | `pos_next/pos_next/doctype/restaurant_table/restaurant_table.json` | 10: `table_name`, `area`, `restaurant`, `capacity`, `status`, `pos_x`, `pos_y`, `width`, `height`, `shape` |
+| `pos_next/pos_next/doctype/restaurant_takeaway_day/restaurant_takeaway_day.json` | 1: `day_of_week` (a day the web takeaway of a restaurant takes orders on when it keeps fixed hours, the rows of `Restaurant.takeaway_days`; none: every day; neoffice-maintenance#2484, 10.11.2026) |
 | `pos_next/pos_next/doctype/restaurant_ticket_counter/restaurant_ticket_counter.json` | 4: `counter_key`, `restaurant`, `business_day`, `last_number` |
 | `pos_next/pos_next/doctype/restaurant_tip/restaurant_tip.json` | 17: `restaurant`, `tip_date`, `sales_invoice`, `restaurant_table`, `column_break_1`, `server`, `sales_person`, `employee`, `common_pot`, `pos_profile`, `amount`, `payment_method`, `section_distribution`, `status`, `column_break_2`, `distributed_to`, `distribution_date`. Tips at a shop till (NeoCoiffeur study, 09.11.2026) added `sales_person`, `employee` (the person the tip is for, from the sale's sales team), `common_pot` (a tip that is nobody's) and `pos_profile` (the shop till that took it, a tip that names its till belongs to no restaurant). On 10.11.2026 `employee` and `distributed_to` were given `ignore_user_permissions` (the Employee user permission every user holds on his own employee hid his colleagues' tips: who sees the tips is the till's setting, `pos_next.till_tips`), and `RestaurantTip.validate` empties `distributed_to` and `distribution_date` of a tip that is not Distributed (Frappe filled them with the cashier's employee); the patch `tips.a_tip_not_handed_out_names_nobody_it_was_handed_to` clears the rows written before |
 | `pos_next/pos_next/doctype/restaurant_portion/restaurant_portion.json` | 4: `item`, `counted`, `service_date`, `made` (the portions the kitchen made of a product, NeoResto lot 1) |

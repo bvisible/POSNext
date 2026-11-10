@@ -65,10 +65,12 @@
    "options": "POS Profile"
   },
   {
+   "description": "Set by an older version only: nothing new is bound to ERPNext's own till session, which this till never opens. A code bound to one still dies with it.",
    "fieldname": "pos_opening",
    "fieldtype": "Link",
    "label": "POS Opening Entry",
-   "options": "POS Opening Entry"
+   "options": "POS Opening Entry",
+   "read_only": 1
   },
   {
    "description": "The till's shift a shop session is bound to: the session dies when the till closes it.",
@@ -140,7 +142,7 @@
  "index_web_link_preview": 0,
  "issingle": 0,
  "links": [],
- "modified": "2026-11-10 18:30:00.000000",
+ "modified": "2026-11-10 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "Guest Order Token",

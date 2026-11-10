@@ -16,7 +16,9 @@ import { ref, computed } from "vue"
 // Guest API calls: no CSRF header needed for allow_guest=True endpoints
 // Sending an invalid/stale CSRF causes 417 errors, so we don't send one at all
 // The first message a refused call carries (Frappe packs them as a JSON list of JSON strings), without its markup
-function serverMessage(body) {
+//// Neoffice — exported: the takeaway page asks for its session by itself, and says what the server answered (« closed, open again at 18:00 »,
+//// neoffice-maintenance#2484)
+export function serverMessage(body) {
 	try {
 		const first = JSON.parse(JSON.parse(body?._server_messages || "[]")[0] || "null")
 		return String(first?.message || "").replace(/<[^>]*>/g, "").trim()

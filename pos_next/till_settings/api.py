@@ -700,9 +700,13 @@ def _document(till, doctype):
 
 
 def _link_field(setting):
-	"""The link column of the child table a multiselect setting fills (one per row)."""
-	child = frappe.get_meta(setting.doctype).get_field(setting.key).options
-	return next(df.fieldname for df in frappe.get_meta(child).fields if df.fieldtype == "Link")
+	"""The link column of the child table a multiselect setting fills (one per row): its Link, else its Select (a choice of a fixed list,
+	the days of the week of the web takeaway's fixed hours, neoffice-maintenance#2484)."""
+	fields = frappe.get_meta(frappe.get_meta(setting.doctype).get_field(setting.key).options).fields
+	return next(
+		(df.fieldname for df in fields if df.fieldtype == "Link"),
+		None,
+	) or next(df.fieldname for df in fields if df.fieldtype == "Select")
 
 
 def _table_fields(setting):
@@ -856,6 +860,10 @@ def _clean(setting, value, till, choices):
 		refused = [item for item in value if item not in allowed]
 		if refused:
 			frappe.throw(_("{0}: {1} cannot be chosen at this till").format(label, ", ".join(refused)))
+		if setting.choices == "weekdays":
+			# Kept in the order of the week, whatever order they were picked in
+			order = [choice["value"] for choice in choices.get(setting.key, [])]
+			return sorted(dict.fromkeys(value), key=order.index)
 		return list(dict.fromkeys(value))
 	if widget == "table":
 		return _rows(setting, label, value)
@@ -1126,6 +1134,13 @@ def _item_groups(till, current):
 	return _named(rows)
 
 
+# //// Neoffice — the days of the week, in their order, the web takeaway's fixed hours are kept on (neoffice-maintenance#2484)
+def _weekdays(till, current):
+	from pos_next.restaurant.takeaway_hours import WEEKDAYS
+
+	return [{"value": day, "label": _(day)} for day in WEEKDAYS]
+
+
 def _brands(till, current):
 	rows = frappe.get_all("Brand", fields=["name"], order_by="name asc")
 	return _named(rows)
@@ -1163,6 +1178,7 @@ CHOICES = {
 	"restaurant_cards": _restaurant_card_choices,
 	"languages": _languages,
 	"item_groups": _item_groups,
+	"weekdays": _weekdays,
 	"brands": _brands,
 	"journal_entry_templates": _journal_entry_templates,
 	"gift_card_notifications": _gift_card_notifications,

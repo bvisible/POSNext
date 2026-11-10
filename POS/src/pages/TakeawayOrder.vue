@@ -152,7 +152,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from "vue"
-import { useGuestOrderStore } from "@/stores/guestOrder"
+import { serverMessage, useGuestOrderStore } from "@/stores/guestOrder"
 import { useTabTitle } from "@/composables/useTabTitle"
 import GuestMenuView from "@/components/guest/GuestMenuView.vue"
 import GuestCart from "@/components/guest/GuestCart.vue"
@@ -202,7 +202,12 @@ async function newTakeawayToken() {
 		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify({}),
 	})
-	if (!response.ok) throw new Error(`HTTP ${response.status}`)
+	if (!response.ok) {
+		// //// Neoffice — what the server said (takeaway closed and when it opens again, takeaway off), not the status of the answer
+		// //// (neoffice-maintenance#2484)
+		const body = await response.json().catch(() => ({}))
+		throw new Error(serverMessage(body) || `HTTP ${response.status}`)
+	}
 	const data = await response.json()
 	const token = data.message?.token
 	if (!token) throw new Error("No token returned")
