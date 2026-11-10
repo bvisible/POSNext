@@ -420,8 +420,12 @@
 				class="flex-1 min-h-0 flex overflow-hidden relative"
 			>
 				<!-- Icon-Only Management Slider - Always Visible -->
+				<!-- //// Neoffice — the rail's appointments entry: shown on a till whose tick is on, open while the middle column shows them, with the count still to collect (NeoSalon, lot G4). -->
 				<ManagementSlider
 					:can-access-product-management="canAccessProductManagement"
+					:appointments-enabled="Boolean(settingsStore.appointmentsEnabled)"
+					:appointments-open="appointmentsShown"
+					:appointments-to-collect="appointmentsStore.toCollectCount"
 					@menu-clicked="handleManagementMenuClick"
 				/>
 
@@ -434,16 +438,20 @@
 					<div
 						class="lg:hidden bg-white border-b border-gray-200 flex shadow-sm sticky top-0 z-[100]"
 					>
+						<!-- //// Neoffice — with appointments, the Items tab shows the items only: the appointments have their own tab next to it (NeoSalon, lot G4). -->
 						<button
-							@click="handleTabSwitch('items')"
+							@click="
+								showAppointments = false;
+								handleTabSwitch('items');
+							"
 							:class="[
 								'flex-1 px-3 py-3 text-sm font-semibold transition-[color,background-color,border-color] duration-100 relative touch-manipulation',
-								uiStore.mobileActiveTab === 'items'
+								uiStore.mobileActiveTab === 'items' && !appointmentsShown
 									? 'text-blue-600 border-b-3 border-blue-600 bg-blue-50'
 									: 'text-gray-600 hover:text-gray-800 hover:bg-gray-50 active:bg-gray-100',
 							]"
 							:aria-label="__('View items')"
-							:aria-selected="uiStore.mobileActiveTab === 'items'"
+							:aria-selected="uiStore.mobileActiveTab === 'items' && !appointmentsShown"
 							role="tab"
 						>
 							<div class="flex items-center justify-center gap-1.5">
@@ -461,6 +469,37 @@
 									/>
 								</svg>
 								<span>{{ __("Items") }}</span>
+							</div>
+						</button>
+						<!-- //// Neoffice — the phone's third tab: the day's appointments, with the count still to collect (NeoSalon, lot G4, canvas « Rendez-vous 4 »). -->
+						<button
+							v-if="settingsStore.appointmentsEnabled"
+							data-test="tab-appointments"
+							@click="
+								showAppointments = true;
+								handleTabSwitch('items');
+							"
+							:class="[
+								'flex-1 px-3 py-3 text-sm font-semibold transition-[color,background-color,border-color] duration-100 relative touch-manipulation',
+								uiStore.mobileActiveTab === 'items' && appointmentsShown
+									? 'text-blue-600 border-b-3 border-blue-600 bg-blue-50'
+									: 'text-gray-600 hover:text-gray-800 hover:bg-gray-50 active:bg-gray-100',
+							]"
+							:aria-label="__('View appointments')"
+							:aria-selected="uiStore.mobileActiveTab === 'items' && appointmentsShown"
+							role="tab"
+						>
+							<div class="flex items-center justify-center gap-1.5">
+								<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v14a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z" />
+								</svg>
+								<span>{{ __("Appointments") }}</span>
+								<span
+									v-if="appointmentsStore.toCollectCount > 0"
+									class="bg-blue-600 text-white text-[10px] font-bold rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center shadow-sm"
+								>
+									{{ appointmentsStore.toCollectCount }}
+								</span>
 							</div>
 						</button>
 						<button
@@ -896,9 +935,11 @@
 
 								<!-- Items Selector (default view, hidden when card is active) -->
 								<!-- //// Neoffice — shownCards, like the row of cards above (NeoResto lot 1, task 25). -->
+								<!-- //// Neoffice — the day's appointments take the items' place while the rail's entry is open (NeoSalon, lot G4). -->
 								<ItemsSelector
 									v-if="
 										!showMenus &&
+										!appointmentsShown &&
 										!(
 											restaurantStore.isEnabled &&
 											restaurantStore.shownCards.length > 0 &&
@@ -910,6 +951,20 @@
 									:cart-items="cartStore.invoiceItems"
 									:currency="shiftStore.profileCurrency"
 									@item-selected="handleItemSelected"
+								/>
+								<!-- //// Neoffice — the agenda of a salon in the middle column: one column per person, a touch opens an appointment's sheet (NeoSalon, lot G4). -->
+								<SalonAgenda
+									v-if="appointmentsShown"
+									@new-appointment="openNewAppointment"
+								/>
+								<AppointmentSheet
+									v-if="sheetShown && !uiStore.isDesktop"
+									:appointment="appointmentsStore.selected"
+									class="absolute inset-0 z-20"
+									@close="appointmentsStore.select(null)"
+									@collect="collectAppointment"
+									@move="openMoveAppointment"
+									@cancel="openCancelAppointment"
 								/>
 							</template>
 							<!-- //// Neoffice — ▲▲▲ end of the restaurant left-pane region opened at the -->
@@ -963,6 +1018,17 @@
 							]"
 							style="min-width: min(450px, 100%); contain: layout style paint"
 						>
+							<!-- //// Neoffice — the appointment this cart was taken from, said above the cart; and, over it, the sheet of the appointment the agenda has open (NeoSalon, step 2, lot G4). -->
+							<AppointmentBanner />
+							<AppointmentSheet
+								v-if="sheetShown && uiStore.isDesktop"
+								:appointment="appointmentsStore.selected"
+								class="absolute inset-0 z-20"
+								@close="appointmentsStore.select(null)"
+								@collect="collectAppointment"
+								@move="openMoveAppointment"
+								@cancel="openCancelAppointment"
+							/>
 							<!-- //// Neoffice — two divergences inside this opening tag (no HTML comment can -->
 							<!-- //// sit between attributes, so they are listed here): -->
 							<!-- ////   :grand-total / :rounding-adjustment — CHF has a 0.05 smallest fraction, -->
@@ -1468,6 +1534,10 @@
 				@open-settings="openSettingsTab"
 			/>
 			<TipsPanel :show="showTipsPanel" @close="showTipsPanel = false" />
+			<!-- //// Neoffice — the dialogs of the appointments of a salon (NeoSalon, lot G4). -->
+			<MoveAppointmentDialog v-if="gestureTarget" v-model="showMoveAppointment" :appointment="gestureTarget" />
+			<CancelAppointmentDialog v-if="gestureTarget" v-model="showCancelAppointment" :appointment="gestureTarget" @cancelled="appointmentsStore.select(null)" />
+			<NewAppointmentDialog v-model="showNewAppointment" :start="newAppointmentStart" />
 			<ReservationDialog
 				:show="showReservationDialog"
 				@close="showReservationDialog = false"
@@ -2293,6 +2363,15 @@ import ItemModifiersDialog from "@/components/sale/ItemModifiersDialog.vue";
 import PriceEntryDialog from "@/components/sale/PriceEntryDialog.vue";
 import MenuSelectionDialog from "@/components/sale/MenuSelectionDialog.vue";
 import ItemsSelector from "@/components/sale/ItemsSelector.vue";
+//// Neoffice — the day's appointments of a salon, in the middle column where the items are (NeoSalon, step 2, lot G4; added files).
+import SalonAgenda from "@/components/sale/SalonAgenda.vue";
+import AppointmentSheet from "@/components/sale/AppointmentSheet.vue";
+import AppointmentBanner from "@/components/sale/AppointmentBanner.vue";
+import MoveAppointmentDialog from "@/components/sale/MoveAppointmentDialog.vue";
+import CancelAppointmentDialog from "@/components/sale/CancelAppointmentDialog.vue";
+import NewAppointmentDialog from "@/components/sale/NewAppointmentDialog.vue";
+import { useAppointment } from "@/composables/useAppointment";
+import { useAppointmentsStore } from "@/stores/appointments";
 //// Neoffice — the floor-plan editor and the per-table QR code: the POS starts from the room,
 //// not the catalogue (0ebfda03 2026-03-20 "Phase 2 - visual floor plan editor"; c5208ba7
 //// 2026-03-28 "QR button on table view"). The list of tables this block also imported
@@ -2943,6 +3022,60 @@ const showProductOptionsEditor = ref(false);
 const showWorkflowEditor = ref(false);
 const showTipsPanel = ref(false);
 const showReservationDialog = ref(false);
+
+//// Neoffice — the appointments of a salon (NeoSalon, step 2, lot G4): the rail's button swaps the middle column from the items to the day's
+//// appointments; the list is read while the till is open, on a till whose tick is on (off by default, a shop till only).
+const appointmentsStore = useAppointmentsStore();
+const showAppointments = ref(false);
+const appointmentsShown = computed(
+	() => showAppointments.value && Boolean(settingsStore.appointmentsEnabled),
+);
+watch(
+	() => Boolean(settingsStore.appointmentsEnabled) && shiftStore.hasOpenShift,
+	(on) => {
+		if (on) {
+			appointmentsStore.start();
+		} else {
+			appointmentsStore.reset();
+			showAppointments.value = false;
+		}
+	},
+	{ immediate: true },
+);
+onUnmounted(() => appointmentsStore.reset());
+
+// The sheet of the appointment open in the agenda, and the dialogs of the gestures that need one
+const sheetShown = computed(() => appointmentsShown.value && Boolean(appointmentsStore.selected));
+const gestureTarget = ref(null);
+const showMoveAppointment = ref(false);
+const showCancelAppointment = ref(false);
+const showNewAppointment = ref(false);
+const newAppointmentStart = ref({ person: null, from: null });
+const appointmentGestures = useAppointment();
+
+/** Collect an appointment: it goes into the cart (at today's prices) and the cashier is taken to it. */
+async function collectAppointment(appointment) {
+	if (!(await appointmentGestures.takeAppointment(appointment))) return;
+	appointmentsStore.select(null);
+	showAppointments.value = false;
+	appointmentsStore.refresh();
+	handleTabSwitch("cart");
+}
+
+function openMoveAppointment(appointment) {
+	gestureTarget.value = appointment;
+	showMoveAppointment.value = true;
+}
+
+function openCancelAppointment(appointment) {
+	gestureTarget.value = appointment;
+	showCancelAppointment.value = true;
+}
+
+function openNewAppointment(start) {
+	newAppointmentStart.value = start || { person: null, from: null };
+	showNewAppointment.value = true;
+}
 
 // Invoice Detail dialog
 const showInvoiceDetail = ref(false);
@@ -4777,6 +4910,8 @@ async function handlePaymentCompleted(paymentData) {
 				is_credit_sale: paymentData.is_credit_sale ? 1 : 0,
 				receivable_account: paymentData.receivable_account || null,
 				edited_from: editingOfflineContext?.originalOfflineId || null,
+				//// Neoffice — the appointment of a salon this sale collects: when the queue replays it, the server tells the reservation, which replaces the appointment's draft (NeoSalon, lot G4)
+				appointment: cartStore.appointment?.booking || null,
 			};
 
 			// Save to the offline queue first so we can use the worker's
@@ -5946,6 +6081,11 @@ function handleManagementMenuClick(menuItem) {
 		showTipsPanel.value = true;
 	} else if (menuItem === "reservations") {
 		showReservationDialog.value = true;
+		//// Neoffice — the day's appointments of a salon: the rail's button swaps the middle column and back (NeoSalon, lot G4).
+	} else if (menuItem === "appointments") {
+		showAppointments.value = !showAppointments.value;
+		if (showAppointments.value) handleTabSwitch("items");
+		else appointmentsStore.select(null);
 	}
 }
 

@@ -84,7 +84,14 @@ export const useWhoServesStore = defineStore("whoServes", () => {
 	 * @returns {{ sales_person: string, sales_person_name: string, sales_person_posed: boolean }|null}
 	 */
 	function personForNewLine(item) {
-		if (!isOn() || !person.value || item?.sales_person) return null
+		//// A line that keeps its person (an appointment's: the booked work was somebody else's, even when nobody is named) is given none
+		if (
+			!isOn() ||
+			!person.value ||
+			item?.sales_person ||
+			item?.keeps_its_person
+		)
+			return null
 		if (!productsTracked() && kindOf(item?.item_code) === PRODUCT) return null
 		return { ...person.value, sales_person_posed: true }
 	}

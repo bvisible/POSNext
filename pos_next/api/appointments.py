@@ -1,30 +1,38 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""The salon mode of the till: the day's appointments and what the till does with them (NeoSalon, step 2, lot G4; product owner, 10.11.2026).
+"""The salon mode of the till: the day's agenda and what the till does with it (NeoSalon, step 2, lot G4; product owner, 10.11.2026).
 
 A salon books its customers in a reservation app. In salon mode the till shows the day's agenda and works the appointments: it takes one over
 (a DRAFT Sales Invoice the reservation prepared, loaded into the cart and paid as THAT draft, never a second invoice), moves it, cancels it,
-starts and stops its steps (the time of the work), and books a new one.
+starts, pauses and finishes its time, and books a new one.
 
 POS Next never names a reservation app, nor a client: it calls functions of the site through extension points (hooks, like
-`pos_next_bootstrap_settings`) and takes the first answer that is not None. There are nine, one per gesture:
+`pos_next_bootstrap_settings`) and takes the first answer that is not None. The three lanes of the salon each fill theirs:
 
-- `pos_next_appointments_of_the_day`  `(pos_profile, date, providers=None) -> {"people", "appointments"} | list | None`  the agenda of the day;
+the day (the planning lane)
+- `pos_next_salon_day`                `(pos_profile, date=None) -> {"day", "visibility", "people", "unassigned"} | None`  who is there, and what each holds;
+- `pos_next_appointment_check_move`   `(pos_profile, booking, starts_at, sales_person=None) -> {"ok", "why"}`  can it go there;
+- `pos_next_appointment_move`         `(pos_profile, booking, starts_at, sales_person=None, notify=1) -> dict`;
+
+the money (the reservation lane)
+- `pos_next_appointments_of_the_day`  `(pos_profile, date=None, providers=None) -> list | None`  where each stands, what it announces and what was paid;
 - `pos_next_appointment_draft`        `(booking, pos_profile) -> {"invoice", ...} | None`  the draft of one appointment (made or found);
-- `pos_next_appointment_move`         `(booking, pos_profile, starts_at, sales_person=None, step=None, notify=True) -> dict`;
+- `pos_next_appointment_sold`         `(booking, invoice, pos_profile) -> dict | None`  a sale takes the place of the draft (a till that was offline);
 - `pos_next_appointment_cancel`       `(booking, pos_profile, reason="cancelled", notify=True) -> dict`;
-- `pos_next_appointment_clock`        `(booking, pos_profile, action, step=None, sales_person=None, at=None) -> dict`  start or stop a step;
 - `pos_next_appointment_services`     `(pos_profile) -> list[dict]`  what can be booked at the till, with its options and its people;
 - `pos_next_appointment_slots`        `(pos_profile, date, items, sales_person=None) -> list[dict]`  the free slots of a chain of services;
 - `pos_next_appointment_book`         `(pos_profile, customer, items, starts_at, sales_person=None, notify=True) -> dict`;
-- `pos_next_appointment_sold`         `(booking, invoice, pos_profile, replaced) -> None`  after an offline sale was synchronised.
 
-The shapes are the contract of the plan (note 10 of the vault, § G4, « Contrat v2 »). The user of the session is the cashier: the hooks decide what
-that cashier may see and do and mask the rest on the server (a colleague's appointment comes as « busy », without a name). What a hook answers is
-the site's own code, not the cashier's input, but the till still reads only the keys it knows, with the types it expects, cuts every list, drops
-what a « busy » appointment must not carry, and checks that a draft it is given is a draft of ITS till and of the appointment asked for.
+the time (the margin lane)
+- `pos_next_appointment_time_action`  `(appointment, action, pos_profile, employee=None) -> dict | None`  start, pause, finish, close_unmeasured;
+- `pos_next_appointment_time_state`   `(appointments, pos_profile) -> {appointment: state} | None`.
 
-The mode is off until a till manager ticks `POS Settings.enable_appointments` (a shop till), and absent where the site has no hook: then the list
-is not available and nothing is taken, moved, cancelled, started or booked.
+The till never sends an hour for the time (the server's clock is the only one) and never shows a cost or a margin. The shapes are the contract of the
+plan (note 10 of the vault, § G4, « Contrat v2 », and the notes of the lanes). The user of the session is the cashier: the hooks decide what that cashier may
+see and do and mask the rest on the server (a colleague's appointment comes as « busy », without a name); the till reads only the keys it knows, with the
+types it expects, cuts every list, composes the day from what the lanes answer, and shows a booking the day view does not show to nobody.
+
+The mode is off until a till manager ticks `POS Settings.enable_appointments` (a shop till), and absent where the site has no hook: then the agenda is
+not available and nothing is taken, moved, cancelled, timed or booked.
 """
 
 import json
@@ -32,20 +40,23 @@ import re
 
 import frappe
 from frappe import _
-from frappe.utils import add_to_date, cint, flt, get_datetime, getdate, now_datetime, nowdate
+from frappe.utils import cint, flt, get_datetime, getdate, nowdate
 
+DAY_HOOK = "pos_next_salon_day"
+CHECK_MOVE_HOOK = "pos_next_appointment_check_move"
+MOVE_HOOK = "pos_next_appointment_move"
 LIST_HOOK = "pos_next_appointments_of_the_day"
 DRAFT_HOOK = "pos_next_appointment_draft"
-MOVE_HOOK = "pos_next_appointment_move"
+SOLD_HOOK = "pos_next_appointment_sold"
 CANCEL_HOOK = "pos_next_appointment_cancel"
-CLOCK_HOOK = "pos_next_appointment_clock"
 SERVICES_HOOK = "pos_next_appointment_services"
 SLOTS_HOOK = "pos_next_appointment_slots"
 BOOK_HOOK = "pos_next_appointment_book"
-SOLD_HOOK = "pos_next_appointment_sold"
+TIME_ACTION_HOOK = "pos_next_appointment_time_action"
+TIME_STATE_HOOK = "pos_next_appointment_time_state"
 
 # More than a salon books in a day, and than one appointment holds lines: a hook that answers more is cut, never trusted
-MOST_APPOINTMENTS = 200
+MOST_APPOINTMENTS = 300
 MOST_PEOPLE = 60
 MOST_STEPS = 50
 MOST_LINES = 100
@@ -56,22 +67,21 @@ MOST_CHOICES = 30
 MOST_IN_A_CHAIN = 10
 MOST_PERIODS = 6
 OPTIONS_LENGTH = 5000
-# A gesture replayed from a till that was offline: not from the future, and not from before a week
-REPLAY_FUTURE_MINUTES = 5
-REPLAY_PAST_DAYS = 7
 
 STATES = ("booked", "started", "finished", "paid", "absent")
-PERSON_STATUSES = ("here", "later", "leave", "holiday", "off", "unknown")
-CLOCK_STATES = ("idle", "running", "done")
+STAFF_STATES = ("present", "break", "not_yet", "done", "scheduled", "on_leave", "holiday", "off")
+CLOCK_STATES = ("idle", "running", "paused", "done")
+# What the time lane calls a state, and what the till calls it
+TIME_STATUS = {"Not started": "idle", "In progress": "running", "Paused": "paused", "Finished": "done"}
 CANCEL_REASONS = ("cancelled", "no_show")
-CLOCK_ACTIONS = ("start", "stop")
+CLOCK_ACTIONS = ("start", "pause", "finish", "close_unmeasured")
 
 _HOUR = re.compile(r"^\d{2}:\d{2}$")
 
 
 def site_has_appointments() -> bool:
-	"""Whether the site has a reservation app that answers for the till (a hook of the list)."""
-	return bool(frappe.get_hooks(LIST_HOOK))
+	"""Whether the site has a reservation app that answers for the till (a hook of the day or of the list)."""
+	return bool(frappe.get_hooks(DAY_HOOK) or frappe.get_hooks(LIST_HOOK))
 
 
 def appointments_enabled(pos_profile: str | None) -> bool:
@@ -135,107 +145,218 @@ def _options(value):
 
 
 def _clock(value) -> dict:
-	"""The clock of a step: its state and the moments it started and stopped."""
+	"""The time of an appointment as the time lane states it: where it stands and how long it has really run. No cost, no margin: never."""
 	value = value if isinstance(value, dict) else {}
-	state = value.get("state") if value.get("state") in CLOCK_STATES else "idle"
 	return {
-		"state": state,
+		"state": TIME_STATUS.get(value.get("status"), "idle"),
 		"started_at": _moment(value.get("started_at")),
 		"ended_at": _moment(value.get("ended_at")),
+		"active_seconds": max(cint(value.get("active_seconds")), 0),
+		"paused_by": _text(value.get("paused_by")),
 	}
 
 
-def _step(row, busy: bool) -> dict | None:
+def _step(row) -> dict | None:
 	if not isinstance(row, dict):
 		return None
 	return {
 		"step": cint(row.get("step")) or None,
-		"label": None if busy else _text(row.get("label")),
-		"item_code": None if busy else _text(row.get("item_code")),
-		"qty": 1.0 if busy else (_number(row.get("qty")) or 1.0),
-		"options": None if busy else _options(row.get("options")),
+		"label": _text(row.get("label")),
+		"item_code": _text(row.get("item_code")),
+		"qty": _number(row.get("qty")) or 1.0,
+		"options": _options(row.get("options")),
 		"starts_at": _moment(row.get("starts_at")),
 		"ends_at": _moment(row.get("ends_at")),
 		"sales_person": _text(row.get("sales_person")),
 		"sales_person_name": _text(row.get("sales_person_name")),
-		"clock": _clock(None if busy else row.get("clock")),
 	}
 
 
-def _can(value, state: str, busy: bool) -> dict:
-	"""What the cashier may do with an appointment: what the reservation says, within what its state allows (a paid one is not moved)."""
-	allowed = {
+def _my_sales_people() -> set[str]:
+	"""The sales persons the signed-in account is: those of the employee whose user she is."""
+	employees = frappe.get_all(
+		"Employee", filters={"user_id": frappe.session.user, "status": "Active"}, pluck="name"
+	)
+	if not employees:
+		return set()
+	return set(frappe.get_all("Sales Person", filters={"employee": ["in", employees]}, pluck="name"))
+
+
+def _capabilities() -> dict:
+	"""What the site can do for the till: a gesture whose hook the site does not declare is not offered."""
+	return {
+		"check_move": bool(frappe.get_hooks(CHECK_MOVE_HOOK)),
+		"move": bool(frappe.get_hooks(MOVE_HOOK)),
+		"cancel": bool(frappe.get_hooks(CANCEL_HOOK)),
+		"clock": bool(frappe.get_hooks(TIME_ACTION_HOOK)),
+		"book": bool(
+			frappe.get_hooks(BOOK_HOOK) and frappe.get_hooks(SERVICES_HOOK) and frappe.get_hooks(SLOTS_HOOK)
+		),
+	}
+
+
+def _can(state: str, busy: bool, may: bool, capabilities: dict) -> dict:
+	"""What the cashier may do with an appointment: what its state allows, if it is hers to work (or she sees the whole salon), and
+	if the site has the gesture. A paid appointment lets nothing be done to it."""
+	if busy or not may:
+		return {"collect": False, "move": False, "cancel": False, "clock": False}
+	return {
 		"collect": state in ("booked", "started", "finished"),
-		"move": state == "booked",
-		"cancel": state == "booked",
-		"clock": state in ("booked", "started"),
+		"move": state == "booked" and capabilities["move"],
+		"cancel": state == "booked" and capabilities["cancel"],
+		"clock": state in ("booked", "started") and capabilities["clock"],
 	}
-	if busy:
-		return dict.fromkeys(allowed, False)
-	value = value if isinstance(value, dict) else None
-	return {key: allowed[key] and (True if value is None else bool(cint(value.get(key)))) for key in allowed}
 
 
-def _appointment(row) -> dict | None:
-	"""An appointment of the agenda, as the till reads it: only its own keys, and nothing that has no booking to take.
-
-	A « busy » appointment (a colleague's, for a cashier who may not read it) carries only its hours and its person: whatever the hook
-	said besides is dropped here as well, so that a hook that forgets to mask does not put a customer's name on the screen.
-	"""
+def _listed(row) -> dict | None:
+	"""A row of the reservation's list, read as the money lane states it: where it stands (`to_collect`, `in_the_till`, `collected`), what it
+	announces, what was paid, its steps."""
 	if not isinstance(row, dict) or not _text(row.get("booking")):
 		return None
-	busy = bool(cint(row.get("busy")))
-	state = row.get("state") if row.get("state") in STATES else "booked"
-	in_the_till = bool(cint(row.get("in_the_till"))) and not busy
-	steps = [s for s in (_step(r, busy) for r in (row.get("steps") or [])[:MOST_STEPS]) if s]
 	return {
 		"booking": _text(row.get("booking")),
 		"starts_at": _moment(row.get("starts_at")),
 		"ends_at": _moment(row.get("ends_at")),
-		"customer": None if busy else _text(row.get("customer")),
-		"customer_name": None if busy else _text(row.get("customer_name")),
-		"steps": steps,
-		"amount": 0.0 if busy else _number(row.get("amount")),
-		"paid_amount": 0.0 if busy else _number(row.get("paid_amount")),
-		"state": state,
-		"invoice": None if busy or not (in_the_till or state == "paid") else _text(row.get("invoice")),
-		"in_the_till": in_the_till,
-		"busy": busy,
-		"can": _can(row.get("can"), state, busy),
+		"customer": _text(row.get("customer")),
+		"customer_name": _text(row.get("customer_name")),
+		"steps": [s for s in (_step(r) for r in (row.get("steps") or [])[:MOST_STEPS]) if s],
+		"amount": _number(row.get("amount")),
+		"paid_amount": _number(row.get("paid_amount")),
+		"stands": row.get("state")
+		if row.get("state") in ("to_collect", "in_the_till", "collected")
+		else "to_collect",
+		"invoice": _text(row.get("invoice")),
 	}
 
 
-def _person(row) -> dict | None:
-	"""A column of the agenda: a person, how she stands today and the hours she works."""
-	if not isinstance(row, dict) or not _text(row.get("sales_person")):
+def _staff(row) -> dict | None:
+	"""A column of the agenda: a person of the team, how she stands today and the hours she works."""
+	if not isinstance(row, dict):
+		return None
+	person, user = _text(row.get("sales_person")), _text(row.get("user"))
+	if not person and not user:
 		return None
 	periods = []
-	for period in (row.get("hours") or [])[:MOST_PERIODS]:
+	for period in (row.get("periods") or [])[:MOST_PERIODS]:
 		if isinstance(period, list | tuple) and len(period) == 2 and _hour(period[0]) and _hour(period[1]):
 			periods.append([_hour(period[0]), _hour(period[1])])
+	name = _text(row.get("sales_person_name")) or _text(row.get("name")) or person or user
 	return {
-		"sales_person": _text(row.get("sales_person")),
-		"sales_person_name": _text(row.get("sales_person_name")) or _text(row.get("sales_person")),
-		"status": row.get("status") if row.get("status") in PERSON_STATUSES else "unknown",
-		"status_note": _text(row.get("status_note")),
-		"hours": periods,
+		"key": person or user,
+		"user": user,
+		"sales_person": person,
+		"sales_person_name": name,
+		"status": row.get("state") if row.get("state") in STAFF_STATES else "unknown",
+		"reason": _text(row.get("reason")),
+		"periods": periods,
+		"from": _hour(row.get("from")),
+		"until": _hour(row.get("until")),
+		"checked_in": _text(row.get("checked_in"), 40),
 	}
 
 
 def _people_of(appointments: list[dict]) -> list[dict]:
-	"""The columns when a hook answers only a list of appointments: the people who have a step in them, in the order of their first step."""
+	"""The columns when the site gives no team: the people who have a step in the appointments, in the order of their first step."""
 	seen = {}
 	for appointment in appointments:
 		for step in appointment["steps"]:
 			if step["sales_person"] and step["sales_person"] not in seen:
 				seen[step["sales_person"]] = {
+					"key": step["sales_person"],
+					"user": None,
 					"sales_person": step["sales_person"],
 					"sales_person_name": step["sales_person_name"] or step["sales_person"],
 					"status": "unknown",
-					"status_note": None,
-					"hours": [],
+					"reason": None,
+					"periods": [],
+					"from": None,
+					"until": None,
+					"checked_in": None,
 				}
 	return list(seen.values())
+
+
+def _appointment(row, listed, clock, may, capabilities, key) -> dict | None:
+	"""An appointment of the agenda, as the till reads it, from the day view (who, when, where it stands) and the money lane's list (what it
+	announces, what was paid): only its own keys. A « busy » appointment (a colleague's, for a cashier who may not read it) carries only its
+	hours and its person, whatever the hooks said besides."""
+	if not isinstance(row, dict):
+		return None
+	person, person_name = _text(row.get("sales_person")), _text(row.get("sales_person_name"))
+	if cint(row.get("busy")):
+		return {
+			"key": key,
+			"booking": None,
+			"starts_at": _moment(row.get("starts_at")),
+			"ends_at": _moment(row.get("ends_at")),
+			"customer": None,
+			"customer_name": None,
+			"steps": [
+				{
+					"step": None,
+					"label": None,
+					"item_code": None,
+					"qty": 1.0,
+					"options": None,
+					"starts_at": _moment(row.get("starts_at")),
+					"ends_at": _moment(row.get("ends_at")),
+					"sales_person": person,
+					"sales_person_name": person_name,
+				}
+			],
+			"amount": 0.0,
+			"paid_amount": 0.0,
+			"state": "booked",
+			"invoice": None,
+			"in_the_till": False,
+			"busy": True,
+			"clock": _clock(None),
+			"can": _can("booked", True, False, capabilities),
+		}
+	booking = _text(row.get("booking"))
+	if not booking:
+		return None
+	listed = listed or {}
+	stands = listed.get("stands")
+	if row.get("attendance") == "No Show":
+		state = "absent"
+	elif stands == "collected" or row.get("payment_status") == "Paid":
+		state = "paid"
+	elif clock["state"] == "done":
+		state = "finished"
+	elif clock["state"] in ("running", "paused"):
+		state = "started"
+	else:
+		state = "booked"
+	steps = listed.get("steps") or [
+		_step(
+			{
+				"label": row.get("label"),
+				"item_code": row.get("item_code"),
+				"starts_at": row.get("starts_at"),
+				"ends_at": row.get("ends_at"),
+				"sales_person": person,
+				"sales_person_name": person_name,
+			}
+		)
+	]
+	return {
+		"key": key,
+		"booking": booking,
+		"starts_at": _moment(row.get("starts_at")),
+		"ends_at": _moment(row.get("ends_at")),
+		"customer": _text(row.get("customer")),
+		"customer_name": _text(row.get("customer_name")),
+		"steps": steps,
+		"amount": listed.get("amount", 0.0),
+		"paid_amount": listed.get("paid_amount", 0.0),
+		"state": state,
+		"invoice": _text(row.get("invoice")) or listed.get("invoice"),
+		"in_the_till": stands == "in_the_till",
+		"busy": False,
+		"clock": clock,
+		"can": _can(state, False, may, capabilities),
+	}
 
 
 def _hints(answer) -> dict:
@@ -386,22 +507,9 @@ def _a_person(sales_person) -> str | None:
 	return sales_person
 
 
-def _a_step(step) -> int | None:
-	"""The rank of a step, or None for the whole appointment."""
-	if step in (None, ""):
-		return None
-	rank = cint(step)
-	if rank < 1 or rank > MOST_STEPS:
-		frappe.throw(_("This step is not known."))
-	return rank
-
-
-def _the_appointment(answer, booking: str | None = None) -> dict:
-	"""The appointment a gesture answers, as the agenda reads one; refused when it is another appointment's or none."""
-	row = _appointment(answer)
-	if row is None or (booking is not None and row["booking"] != booking):
-		frappe.throw(_("This appointment could not be read."))
-	return row
+def _employee_of(sales_person: str | None) -> str | None:
+	"""The employee behind a sales person (the time lane times a person, not a column); None for the appointment's own person."""
+	return frappe.db.get_value("Sales Person", sales_person, "employee") if sales_person else None
 
 
 def _chain(items) -> list[dict]:
@@ -425,74 +533,154 @@ def _chain(items) -> list[dict]:
 	return chain
 
 
-def draft_of_the_appointment(booking, pos_profile) -> str | None:
-	"""The draft an offline sale of an appointment replaces, or None: what the reservation names for that appointment, when it is a draft of THIS till.
+def _clocks_of(bookings: list[str], pos_profile: str) -> dict:
+	"""The state of the time of each appointment, from the time lane (nothing: every clock is idle)."""
+	if not bookings or not frappe.get_hooks(TIME_STATE_HOOK):
+		return {}
+	try:
+		answer = _first_answer(TIME_STATE_HOOK, bookings, pos_profile)
+	except frappe.ValidationError:
+		return {}
+	return answer if isinstance(answer, dict) else {}
 
-	Never raises: a reservation that refuses (the appointment was cancelled, or is paid already), that has no hook or that breaks leaves the sale
-	to be an ordinary invoice, and the reservation is told so afterwards (`after_an_offline_sale`).
+
+def after_a_sale(booking, invoice: str, pos_profile, offline: bool) -> None:
+	"""Tell the site that the sale of an appointment is booked.
+
+	A sale replayed from a till that was offline REPLACES the appointment's draft (`pos_next_appointment_sold`: the reservation deletes the draft,
+	points at the sale and does what a validation does). The time of the appointment is closed with the sale: one nobody started is closed as
+	« unmeasured » by the time lane (so that its margin is known to be unknown), one still running or in pause is finished. Never raises: the sale
+	is submitted, and a site that fails to hear of it must not turn it into an error.
 	"""
 	if not isinstance(booking, str) or not booking.strip():
-		return None
+		return
+	booking = booking.strip()
 	try:
-		answer = _first_answer(DRAFT_HOOK, booking.strip(), pos_profile)
-		name = _text(answer.get("invoice")) if isinstance(answer, dict) else None
-		row = (
-			frappe.db.get_value("Sales Invoice", name, ["docstatus", "pos_profile", "is_pos"], as_dict=True)
-			if name
-			else None
-		)
-		if row and cint(row.docstatus) == 0 and cint(row.is_pos) and row.pos_profile == pos_profile:
-			return name
-	except frappe.ValidationError:
-		# The reservation's own « no » (cancelled, paid already): nothing to replace, and nothing to log
-		return None
+		if offline:
+			_first_answer(SOLD_HOOK, booking, invoice, pos_profile)
 	except Exception:
 		frappe.log_error("The appointments hook failed", frappe.get_traceback())
-	return None
-
-
-def after_an_offline_sale(booking, invoice: str, pos_profile, replaced: bool) -> None:
-	"""Tell the reservation that the sale of an appointment made offline is booked: `replaced` when it took the place of the appointment's draft.
-
-	Never raises: the sale is submitted, and a reservation that fails to hear of it must not turn it into an error at the till.
-	"""
 	try:
-		if isinstance(booking, str) and booking.strip():
-			_first_answer(SOLD_HOOK, booking.strip(), invoice, pos_profile, bool(replaced))
+		if frappe.get_hooks(TIME_ACTION_HOOK):
+			state = _clock(_clocks_of([booking], pos_profile).get(booking))["state"]
+			action = {"idle": "close_unmeasured", "running": "finish", "paused": "finish"}.get(state)
+			if action:
+				_first_answer(TIME_ACTION_HOOK, booking, action, pos_profile, None)
 	except Exception:
 		frappe.log_error("The appointments hook failed", frappe.get_traceback())
 
 
 @frappe.whitelist()
 def get_appointments(pos_profile: str, date: str | None = None, providers=None) -> dict:
-	"""The agenda of the day of the till: `{"available", "date", "people", "appointments"}`.
+	"""The agenda of the day of the till: `{"available", "date", "visibility", "capabilities", "mine", "people", "appointments"}`.
 
-	Not available (nothing to show, nothing done) while the till's tick is off or where the site has no reservation app. The people are the
-	columns; when the reservation answers only a list of appointments, they are the people who have a step in it.
+	Not available (nothing to show, nothing done) while the till's tick is off or where the site has no reservation app. The agenda is composed:
+	the planning lane gives who is there and what each holds (a colleague's appointment « busy » for a cashier who may not read it), the money
+	lane where each stands, what it announces and what was paid, the time lane the state of the clock. A booking the day view does not show is shown
+	to nobody, whatever the money lane lists. Without a day view the list of the money lane is the agenda, and the people are those of its steps.
 	"""
 	from pos_next.api.cash_entry import require_till_access
 
 	require_till_access(pos_profile)
 	day = getdate(date or nowdate())
 	names = _names(providers)
-	nothing = {"available": False, "date": str(day), "people": [], "appointments": []}
+	nothing = {
+		"available": False,
+		"date": str(day),
+		"visibility": "all",
+		"capabilities": {},
+		"mine": [],
+		"people": [],
+		"appointments": [],
+	}
 	if not appointments_enabled(pos_profile) or not site_has_appointments():
 		return nothing
-	answer = _first_answer(LIST_HOOK, pos_profile, str(day), names)
-	if answer is None:
+	view = _first_answer(DAY_HOOK, pos_profile, str(day))
+	listing = _first_answer(LIST_HOOK, pos_profile, str(day), names)
+	if view is None and listing is None:
 		return nothing
-	if isinstance(answer, dict):
-		given_people, given_rows = answer.get("people") or [], answer.get("appointments") or []
-	elif isinstance(answer, list):
-		given_people, given_rows = [], answer
+	if view is not None and not isinstance(view, dict):
+		frappe.throw(_("The appointments could not be read."))
+	if listing is not None and not isinstance(listing, list):
+		frappe.throw(_("The appointments could not be read."))
+	listed = {}
+	for row in (listing or [])[:MOST_APPOINTMENTS]:
+		row = _listed(row)
+		if row:
+			listed[row["booking"]] = row
+	capabilities = _capabilities()
+	mine = _my_sales_people()
+	rows, people = [], []
+	if view is None:
+		visibility = "all"
+		for row in listed.values():
+			first = row["steps"][0] if row["steps"] else {}
+			rows.append(
+				_appointment(
+					{
+						"booking": row["booking"],
+						"starts_at": row["starts_at"],
+						"ends_at": row["ends_at"],
+						"customer": row["customer"],
+						"customer_name": row["customer_name"],
+						"sales_person": first.get("sales_person"),
+						"sales_person_name": first.get("sales_person_name"),
+						"label": first.get("label"),
+						"item_code": first.get("item_code"),
+						"invoice": row["invoice"],
+					},
+					row,
+					_clock(None),
+					True,
+					capabilities,
+					row["booking"],
+				)
+			)
+		people = _people_of([r for r in rows if r])
 	else:
-		frappe.throw(_("The appointments could not be read."))
-	if not isinstance(given_people, list) or not isinstance(given_rows, list):
-		frappe.throw(_("The appointments could not be read."))
-	rows = [a for a in (_appointment(r) for r in given_rows[:MOST_APPOINTMENTS]) if a]
+		visibility = "own" if view.get("visibility") == "own" else "all"
+		staff = view.get("people") or []
+		unassigned = view.get("unassigned") or []
+		if not isinstance(staff, list) or not isinstance(unassigned, list):
+			frappe.throw(_("The appointments could not be read."))
+		taken = []
+		for person in staff[:MOST_PEOPLE]:
+			column = _staff(person)
+			if column:
+				people.append(column)
+				taken.extend(a for a in (person.get("appointments") or []) if isinstance(a, dict))
+		taken.extend(a for a in unassigned if isinstance(a, dict))
+		taken = taken[:MOST_APPOINTMENTS]
+		clocks = _clocks_of(
+			[b for b in (_text(a.get("booking")) for a in taken if not cint(a.get("busy"))) if b], pos_profile
+		)
+		for n, appointment in enumerate(taken):
+			booking = _text(appointment.get("booking"))
+			person = _text(appointment.get("sales_person"))
+			may = visibility == "all" or (person is not None and person in mine)
+			rows.append(
+				_appointment(
+					appointment,
+					listed.get(booking),
+					_clock(clocks.get(booking)),
+					may,
+					capabilities,
+					booking if booking and not cint(appointment.get("busy")) else f"busy-{n}",
+				)
+			)
+	rows = [r for r in rows if r]
+	if names:
+		rows = [r for r in rows if any(s["sales_person"] in names for s in r["steps"])]
 	rows.sort(key=lambda row: row["starts_at"] or "")
-	people = [p for p in (_person(r) for r in given_people[:MOST_PEOPLE]) if p] or _people_of(rows)
-	return {"available": True, "date": str(day), "people": people, "appointments": rows}
+	return {
+		"available": True,
+		"date": str(day),
+		"visibility": visibility,
+		"capabilities": capabilities,
+		"mine": sorted(mine),
+		"people": people,
+		"appointments": rows,
+	}
 
 
 @frappe.whitelist(methods=["POST"])
@@ -506,36 +694,55 @@ def take_appointment(booking: str, pos_profile: str) -> dict:
 	return _draft(answer, booking, pos_profile)
 
 
+@frappe.whitelist()
+def check_appointment_move(
+	booking: str, pos_profile: str, starts_at: str, sales_person: str | None = None
+) -> dict:
+	"""Whether an appointment could go to this hour (and to this person): `{"ok", "why"}`. Not a promise: the move asks the engine again, under its lock."""
+	booking = _gate(pos_profile, booking)
+	answer = _first_answer(
+		CHECK_MOVE_HOOK,
+		pos_profile,
+		booking,
+		_the_moment(starts_at, _("The new time")),
+		_a_person(sales_person),
+	)
+	if not isinstance(answer, dict):
+		frappe.throw(_("This till does not take appointments."))
+	return {"ok": bool(cint(answer.get("ok"))), "why": _text(answer.get("why"), 300)}
+
+
 @frappe.whitelist(methods=["POST"])
 def move_appointment(
-	booking: str,
-	pos_profile: str,
-	starts_at: str,
-	sales_person: str | None = None,
-	step: int | None = None,
-	notify=1,
+	booking: str, pos_profile: str, starts_at: str, sales_person: str | None = None, notify=1
 ) -> dict:
-	"""Move an appointment: the whole of it in time, or one of its steps (its hour, its person). The reservation warns the customer when
-	`notify`, and checks the slot under its own lock; it answers the appointment as it now stands, or refuses in its own words."""
+	"""Move an appointment to another hour, and to another person when one is named. The planning lane warns the customer when `notify`, checks the
+	slot under its own lock and refuses in its own words; it answers `{"booking", "from", "to", "provider_changed", "notified"}`."""
 	booking = _gate(pos_profile, booking)
 	answer = _first_answer(
 		MOVE_HOOK,
-		booking,
 		pos_profile,
+		booking,
 		_the_moment(starts_at, _("The new time")),
 		_a_person(sales_person),
-		_a_step(step),
-		bool(cint(notify)),
+		1 if cint(notify) else 0,
 	)
-	if answer is None:
+	if not isinstance(answer, dict):
 		frappe.throw(_("This till does not take appointments."))
-	return _the_appointment(answer, booking)
+	notified = answer.get("notified") if isinstance(answer.get("notified"), dict) else {}
+	return {
+		"booking": booking,
+		"from": _moment(answer.get("from")),
+		"to": _moment(answer.get("to")),
+		"provider_changed": bool(cint(answer.get("provider_changed"))),
+		"notified": {"email": bool(cint(notified.get("email"))), "sms": bool(cint(notified.get("sms")))},
+	}
 
 
 @frappe.whitelist(methods=["POST"])
 def cancel_appointment(booking: str, pos_profile: str, reason: str = "cancelled", notify=1) -> dict:
-	"""Cancel an appointment (the customer cancels) or mark it absent (she did not come). Answers `{"state", "to_refund"}`: what had been paid
-	online and is to be given back, which the till says and does not move."""
+	"""Cancel an appointment (the customer cancels) or mark it absent (she did not come). The reservation gives back what was paid online and answers
+	`{"state", "refunded", "to_refund"}`: what it refunded, and what is still to be given back when the refund did not go through."""
 	booking = _gate(pos_profile, booking)
 	if reason not in CANCEL_REASONS:
 		frappe.throw(_("This reason is not known."))
@@ -546,38 +753,25 @@ def cancel_appointment(booking: str, pos_profile: str, reason: str = "cancelled"
 	return {
 		"booking": booking,
 		"state": answer.get("state") if answer.get("state") in ("cancelled", "absent") else default,
+		"refunded": max(_number(answer.get("refunded")), 0.0),
 		"to_refund": max(_number(answer.get("to_refund")), 0.0),
 	}
 
 
 @frappe.whitelist(methods=["POST"])
-def clock_appointment(
-	booking: str,
-	pos_profile: str,
-	action: str,
-	step: int | None = None,
-	sales_person: str | None = None,
-	at: str | None = None,
-) -> dict:
-	"""Start or stop a step of an appointment: the time of the work. `at` is only for a gesture made while the till was offline and replayed
-	now (the moment it was really made: never from the future, never from before a week); without it the reservation reads its own clock."""
+def clock_appointment(booking: str, pos_profile: str, action: str, sales_person: str | None = None) -> dict:
+	"""Start, pause or finish the time of an appointment (a person has one running at a time: starting another puts hers in pause by itself).
+	The till never sends an hour: the server reads its clock. `sales_person` only when the person timed is not the appointment's own one
+	(the front desk that starts it for a colleague). Answers the state of the clock afterwards."""
 	booking = _gate(pos_profile, booking)
 	if action not in CLOCK_ACTIONS:
 		frappe.throw(_("This action is not known."))
-	moment = None
-	if at not in (None, ""):
-		moment = _the_moment(at, _("The time of the gesture"))
-		when = get_datetime(moment)
-		if when > add_to_date(now_datetime(), minutes=REPLAY_FUTURE_MINUTES) or when < add_to_date(
-			now_datetime(), days=-REPLAY_PAST_DAYS
-		):
-			frappe.throw(_("The time of the gesture is not valid."))
 	answer = _first_answer(
-		CLOCK_HOOK, booking, pos_profile, action, _a_step(step), _a_person(sales_person), moment
+		TIME_ACTION_HOOK, booking, action, pos_profile, _employee_of(_a_person(sales_person))
 	)
-	if answer is None:
+	if not isinstance(answer, dict):
 		frappe.throw(_("This till does not take appointments."))
-	return _the_appointment(answer, booking)
+	return {"booking": booking, "clock": _clock(answer)}
 
 
 def _service(row) -> dict | None:
@@ -660,7 +854,7 @@ def book_appointment(
 	notify=1,
 ) -> dict:
 	"""Book a new appointment for a customer: the services in their order, the hour of the first one, and a person or none (the reservation
-	places each step). The customer pays at the till: nothing is paid here."""
+	places each step). The customer pays at the till: nothing is paid here. Answers the booking made, as `{"booking"}` at least."""
 	_gate(pos_profile)
 	if not frappe.db.exists("Customer", customer):
 		frappe.throw(_("This customer is not known."))
@@ -673,6 +867,6 @@ def book_appointment(
 		_a_person(sales_person),
 		bool(cint(notify)),
 	)
-	if answer is None:
-		frappe.throw(_("This till does not take appointments."))
-	return _the_appointment(answer)
+	if not isinstance(answer, dict) or not _text(answer.get("booking")):
+		frappe.throw(_("This appointment could not be read."))
+	return {"booking": _text(answer.get("booking")), "starts_at": _moment(answer.get("starts_at"))}

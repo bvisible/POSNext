@@ -97,10 +97,14 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 
 	def site_has(self, **hooks):
 		"""The hooks the site declares: `of_the_day=[paths]`, `draft=[paths]`."""
+		# Every hook of the salon the site could declare is empty but the ones this test gives: the real site's own lanes are not under test here
 		table = {
-			appointments.LIST_HOOK: [f"{ME}.{path}" for path in hooks.get("of_the_day", [])],
-			appointments.DRAFT_HOOK: [f"{ME}.{path}" for path in hooks.get("draft", [])],
+			getattr(appointments, name): []
+			for name in dir(appointments)
+			if name.endswith("_HOOK") and isinstance(getattr(appointments, name), str)
 		}
+		table[appointments.LIST_HOOK] = [f"{ME}.{path}" for path in hooks.get("of_the_day", [])]
+		table[appointments.DRAFT_HOOK] = [f"{ME}.{path}" for path in hooks.get("draft", [])]
 		real = frappe.get_hooks
 
 		def get_hooks(hook=None, *args, **kwargs):
@@ -155,7 +159,7 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 			],
 			"amount": 65.0,
 			"paid_amount": 0.0,
-			"state": "booked",
+			"state": "to_collect",
 			"invoice": None,
 			**changes,
 		}
@@ -164,7 +168,7 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 		"""What a hook has to answer at least: the invoice; and, if it likes, the step of a line and the hours."""
 		return {"invoice": invoice, **changes}
 
-	# The list
+	# The list of the money lane, when the site gives no day view: it is the agenda
 
 	def test_the_tick_is_off_by_default(self):
 		self.assertEqual(frappe.get_meta("POS Settings").get_field("enable_appointments").default, "0")
@@ -178,6 +182,17 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 		self.assertEqual(DEFAULT_POS_SETTINGS["enable_appointments"], 0)
 		self.assertEqual(self.as_the_cashier(get_pos_settings, self.fx.profile)["enable_appointments"], 1)
 
+	def nothing_shown(self):
+		return {
+			"available": False,
+			"date": "2026-11-10",
+			"visibility": "all",
+			"capabilities": {},
+			"mine": [],
+			"people": [],
+			"appointments": [],
+		}
+
 	def test_nothing_is_shown_while_the_tick_is_off(self):
 		self.site_has(of_the_day=["the_list"])
 		SITE["list"] = [self.an_appointment()]
@@ -185,7 +200,7 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 
 		answer = self.as_the_cashier(appointments.get_appointments, self.fx.profile, "2026-11-10")
 
-		self.assertEqual(answer, {"available": False, "date": "2026-11-10", "people": [], "appointments": []})
+		self.assertEqual(answer, self.nothing_shown())
 		self.assertNotIn("calls", SITE)
 
 	def test_nothing_is_shown_where_the_site_has_no_reservation_app(self):
@@ -193,7 +208,7 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 
 		answer = self.as_the_cashier(appointments.get_appointments, self.fx.profile, "2026-11-10")
 
-		self.assertEqual(answer, {"available": False, "date": "2026-11-10", "people": [], "appointments": []})
+		self.assertEqual(answer, self.nothing_shown())
 		self.assertFalse(appointments.site_has_appointments())
 
 	def test_the_appointments_come_sorted_by_time_and_cut_to_the_keys_the_till_knows(self):
@@ -201,7 +216,7 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 		late = self.an_appointment(
 			booking="BKG-2", starts_at="2026-11-10 14:00:00", notes="never shown", email="a@b.c"
 		)
-		early = self.an_appointment(state="paid", invoice="ACC-SINV-1", phone="079 000 00 00")
+		early = self.an_appointment(state="collected", invoice="ACC-SINV-1", phone="079 000 00 00")
 		SITE["list"] = [late, early, {"no": "booking"}, "not a dict", self.an_appointment(booking="")]
 
 		answer = self.as_the_cashier(appointments.get_appointments, self.fx.profile, "2026-11-10")
@@ -212,6 +227,7 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 		self.assertEqual(
 			set(first),
 			{
+				"key",
 				"booking",
 				"starts_at",
 				"ends_at",
@@ -224,6 +240,7 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 				"invoice",
 				"in_the_till",
 				"busy",
+				"clock",
 				"can",
 			},
 		)
@@ -240,27 +257,17 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 				"ends_at",
 				"sales_person",
 				"sales_person_name",
-				"clock",
 			},
 		)
 		self.assertEqual(answer["appointments"][1]["invoice"], None)
 
-	def test_a_state_the_contract_does_not_know_is_booked_and_names_no_invoice(self):
-		self.site_has(of_the_day=["the_list"])
-		SITE["list"] = [self.an_appointment(state="Paid", invoice="ACC-SINV-1")]
-
-		row = self.as_the_cashier(appointments.get_appointments, self.fx.profile, "2026-11-10")[
-			"appointments"
-		][0]
-
-		self.assertEqual((row["state"], row["invoice"]), ("booked", None))
-
-	def test_a_draft_open_in_a_till_is_named_and_a_paid_appointment_names_its_invoice(self):
+	def test_where_each_stands_is_what_the_money_lane_says_and_a_state_it_does_not_know_is_to_collect(self):
 		self.site_has(of_the_day=["the_list"])
 		SITE["list"] = [
-			self.an_appointment(booking="BKG-1", in_the_till=True, invoice="ACC-SINV-1"),
-			self.an_appointment(booking="BKG-2", state="paid", invoice="ACC-SINV-2"),
-			self.an_appointment(booking="BKG-3", state="started", invoice="ACC-SINV-3"),
+			self.an_appointment(booking="BKG-1", state="to_collect"),
+			self.an_appointment(booking="BKG-2", state="in_the_till", invoice="ACC-SINV-2"),
+			self.an_appointment(booking="BKG-3", state="collected", invoice="ACC-SINV-3"),
+			self.an_appointment(booking="BKG-4", state="Paid", invoice="ACC-SINV-4"),
 		]
 
 		rows = self.as_the_cashier(appointments.get_appointments, self.fx.profile, "2026-11-10")[
@@ -268,125 +275,16 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 		]
 
 		self.assertEqual(
-			[(row["booking"], row["in_the_till"], row["invoice"]) for row in rows],
-			[("BKG-1", True, "ACC-SINV-1"), ("BKG-2", False, "ACC-SINV-2"), ("BKG-3", False, None)],
-		)
-
-	def test_what_the_cashier_may_do_is_what_the_reservation_says_within_what_the_state_allows(self):
-		self.site_has(of_the_day=["the_list"])
-		everything = {"collect": 1, "move": 1, "cancel": 1, "clock": 1}
-		SITE["list"] = [
-			self.an_appointment(booking="BKG-1"),
-			self.an_appointment(booking="BKG-2", state="started", can={"collect": 1, "move": 1, "clock": 1}),
-			self.an_appointment(booking="BKG-3", state="paid", can=everything),
-			self.an_appointment(booking="BKG-4", can={"collect": 1, "move": 0, "cancel": "no", "clock": 1}),
-		]
-
-		rows = {
-			row["booking"]: row["can"]
-			for row in self.as_the_cashier(appointments.get_appointments, self.fx.profile, "2026-11-10")[
-				"appointments"
-			]
-		}
-
-		# Nothing said: the state decides
-		self.assertEqual(rows["BKG-1"], {"collect": True, "move": True, "cancel": True, "clock": True})
-		# A started appointment is not moved, whatever is said; a gesture not named is not allowed
-		self.assertEqual(rows["BKG-2"], {"collect": True, "move": False, "cancel": False, "clock": True})
-		# A paid one lets nothing be done to it
-		self.assertEqual(rows["BKG-3"], dict.fromkeys(everything, False))
-		self.assertEqual(rows["BKG-4"], {"collect": True, "move": False, "cancel": False, "clock": True})
-
-	def test_a_busy_appointment_carries_no_name_no_service_no_amount_and_no_gesture(self):
-		self.site_has(of_the_day=["the_list"])
-		busy = self.an_appointment(
-			booking="BKG-5",
-			busy=True,
-			in_the_till=True,
-			invoice="ACC-SINV-9",
-			amount=120.0,
-			paid_amount=40.0,
-			can={"collect": 1, "move": 1, "cancel": 1, "clock": 1},
-		)
-		busy["steps"][0]["options"] = '[{"x": 1}]'
-		busy["steps"][0]["clock"] = {"state": "running", "started_at": "2026-11-10 09:31:00"}
-		SITE["list"] = [busy]
-
-		row = self.as_the_cashier(appointments.get_appointments, self.fx.profile, "2026-11-10")[
-			"appointments"
-		][0]
-
-		self.assertEqual((row["customer"], row["customer_name"], row["invoice"]), (None, None, None))
-		self.assertEqual((row["amount"], row["paid_amount"], row["in_the_till"]), (0.0, 0.0, False))
-		self.assertEqual(row["can"], {"collect": False, "move": False, "cancel": False, "clock": False})
-		step = row["steps"][0]
-		self.assertEqual((step["label"], step["item_code"], step["options"]), (None, None, None))
-		self.assertEqual(step["clock"], {"state": "idle", "started_at": None, "ended_at": None})
-		# What stays is when, and who is busy
-		self.assertEqual((step["starts_at"], step["sales_person"]), ("2026-11-10 09:30:00", "Sonia"))
-		self.assertTrue(row["busy"])
-
-	def test_the_clock_of_a_step_is_read_with_its_state_and_its_moments(self):
-		self.site_has(of_the_day=["the_list"])
-		appointment = self.an_appointment()
-		appointment["steps"][0]["clock"] = {
-			"state": "running",
-			"started_at": "2026-11-10 09:31:08",
-			"ended_at": None,
-			"cost": 99,
-		}
-		appointment["steps"].append(
-			{"step": 2, "label": "Brushing", "clock": {"state": "sleeping"}, "qty": 0, "options": {"a": 1}}
-		)
-		SITE["list"] = [appointment]
-
-		steps = self.as_the_cashier(appointments.get_appointments, self.fx.profile, "2026-11-10")[
-			"appointments"
-		][0]["steps"]
-
-		self.assertEqual(
-			steps[0]["clock"], {"state": "running", "started_at": "2026-11-10 09:31:08", "ended_at": None}
-		)
-		# A state the contract does not know is an idle clock; a quantity of nothing is one; options given as a structure are their text
-		self.assertEqual(steps[1]["clock"]["state"], "idle")
-		self.assertEqual((steps[1]["qty"], steps[1]["options"]), (1.0, '{"a": 1}'))
-
-	def test_the_people_are_the_columns_of_the_day_with_how_they_stand_and_the_hours_they_work(self):
-		self.site_has(of_the_day=["the_list"])
-		SITE["list"] = {
-			"people": [
-				{
-					"sales_person": "Luc",
-					"sales_person_name": "Luc",
-					"status": "here",
-					"hours": [["09:00", "12:00"], ["13:00", "17:00"], ["9", "x"], "no"],
-				},
-				{
-					"sales_person": "Sonia",
-					"status": "leave",
-					"status_note": "Jusqu'au 20-11-2026",
-					"hours": [],
-				},
-				{"sales_person": "Camille", "status": "dancing", "secret": "never shown"},
-				{"sales_person": ""},
-				"not a dict",
+			[(r["booking"], r["state"], r["in_the_till"], r["invoice"]) for r in rows],
+			[
+				("BKG-1", "booked", False, None),
+				("BKG-2", "booked", True, "ACC-SINV-2"),
+				("BKG-3", "paid", False, "ACC-SINV-3"),
+				("BKG-4", "booked", False, "ACC-SINV-4"),
 			],
-			"appointments": [self.an_appointment()],
-		}
-
-		answer = self.as_the_cashier(appointments.get_appointments, self.fx.profile, "2026-11-10")
-
-		self.assertEqual(
-			[(p["sales_person"], p["sales_person_name"], p["status"]) for p in answer["people"]],
-			[("Luc", "Luc", "here"), ("Sonia", "Sonia", "leave"), ("Camille", "Camille", "unknown")],
-		)
-		self.assertEqual(answer["people"][0]["hours"], [["09:00", "12:00"], ["13:00", "17:00"]])
-		self.assertEqual(answer["people"][1]["status_note"], "Jusqu'au 20-11-2026")
-		self.assertEqual(
-			set(answer["people"][2]), {"sales_person", "sales_person_name", "status", "status_note", "hours"}
 		)
 
-	def test_when_the_reservation_gives_no_people_they_are_the_people_of_the_steps(self):
+	def test_the_people_are_the_people_of_the_steps_when_the_site_gives_no_team(self):
 		self.site_has(of_the_day=["the_list"])
 		other = self.an_appointment(booking="BKG-2", starts_at="2026-11-10 14:00:00")
 		other["steps"][0].update({"sales_person": "Luc", "sales_person_name": None})
@@ -395,9 +293,10 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 		answer = self.as_the_cashier(appointments.get_appointments, self.fx.profile, "2026-11-10")
 
 		self.assertEqual(
-			[(p["sales_person"], p["sales_person_name"], p["status"], p["hours"]) for p in answer["people"]],
+			[(p["key"], p["sales_person_name"], p["status"], p["periods"]) for p in answer["people"]],
 			[("Sonia", "Sonia", "unknown", []), ("Luc", "Luc", "unknown", [])],
 		)
+		self.assertEqual(answer["visibility"], "all")
 
 	def test_the_hook_is_given_the_till_the_day_and_the_people_asked_for(self):
 		self.site_has(of_the_day=["the_list"])
@@ -442,7 +341,7 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 		self.assertEqual([row["booking"] for row in answer["appointments"]], ["BKG-1"])
 		self.assertEqual([call[0] for call in SITE["calls"]], ["nothing_to_say", "the_list"])
 
-	def test_when_no_hook_answers_the_list_is_not_available(self):
+	def test_when_no_hook_answers_the_agenda_is_not_available(self):
 		self.site_has(of_the_day=["nothing_to_say"])
 
 		answer = self.as_the_cashier(appointments.get_appointments, self.fx.profile, "2026-11-10")
@@ -469,23 +368,17 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 		self.assertIn("The salon is closed today.", str(caught.exception))
 		self.assertNotIn("calls", SITE)
 
-	def test_an_answer_that_is_neither_a_list_nor_the_day_is_refused(self):
+	def test_an_answer_that_is_not_a_list_is_refused_and_an_empty_one_is_an_empty_agenda(self):
 		self.site_has(of_the_day=["the_list"])
-		for answer in ("not a list", 5, {"people": "x", "appointments": []}, {"appointments": "x"}):
+		for answer in ("not a list", 5, {"appointments": []}):
 			with self.subTest(answer=answer):
 				SITE["list"] = answer
 				with self.assertRaises(frappe.ValidationError):
 					self.as_the_cashier(appointments.get_appointments, self.fx.profile, "2026-11-10")
 
-	def test_a_day_with_nothing_in_it_is_available_and_empty(self):
-		self.site_has(of_the_day=["the_list"])
-		for answer in ([], {}, {"people": [], "appointments": []}):
-			with self.subTest(answer=answer):
-				SITE["list"] = answer
-				self.assertEqual(
-					self.as_the_cashier(appointments.get_appointments, self.fx.profile, "2026-11-10"),
-					{"available": True, "date": "2026-11-10", "people": [], "appointments": []},
-				)
+		SITE["list"] = []
+		answer = self.as_the_cashier(appointments.get_appointments, self.fx.profile, "2026-11-10")
+		self.assertEqual((answer["available"], answer["people"], answer["appointments"]), (True, [], []))
 
 	# The draft of an appointment
 

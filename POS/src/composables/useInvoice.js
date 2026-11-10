@@ -1387,7 +1387,10 @@ export function useInvoice() {
 		loyaltyData = null,
 		tipAmount = 0,
 		isCreditSale = false,
-		receivableAccount = null
+		receivableAccount = null,
+		//// Neoffice — the appointment of a salon this sale collects (its booking), told to the server with the payment: it closes the appointment's time and, for a sale that
+		//// was made offline, replaces the appointment's draft (NeoSalon, step 2, lot G4; pos_next.api.appointments.after_a_sale).
+		appointment = null
 	) {
 		/**
 		 * Two-step submission process with mutex protection:
@@ -1512,6 +1515,9 @@ export function useInvoice() {
 								}))
 							: [],
 				};
+
+				//// Neoffice — the appointment this payment collects (see the parameter above)
+				if (appointment) submitData.appointment = appointment;
 
 				if (redeemedCustomerCredit > 0 && customerCreditDict.length > 0) {
 					submitData.redeemed_customer_credit = redeemedCustomerCredit;

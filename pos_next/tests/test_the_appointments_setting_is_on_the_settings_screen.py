@@ -1,5 +1,5 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""« Collect appointments » is a setting of the till's settings screen (NeoSalon, step 2, lot G4; product owner, 10.11.2026).
+"""« Salon till » is a setting of the till's settings screen (NeoSalon, step 2, lot G4; product owner, 10.11.2026).
 
 The screen is drawn from the registry; the suite pins what the registry says and what the server does with it:
 

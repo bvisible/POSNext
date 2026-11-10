@@ -257,7 +257,7 @@ _GROUPS = (
 	# Sales
 	Group("payment", "sales", _lt("Payment"), 1),
 	# //// Neoffice — the till shows the day's appointments and collects them (NeoSalon, step 2, lot G4, product owner, 10.11.2026)
-	Group("appointments", "sales", _lt("Appointments"), 1),
+	Group("appointments", "sales", _lt("Salon"), 1),
 	Group("returns", "sales", _lt("Returns"), 2),
 	Group("sales_orders", "sales", _lt("Sales orders"), 2),
 	# //// Neoffice — who made the sale (NeoCoiffeur study, product owner, 09.11.2026): the option upstream ships and the fork had switched off.
@@ -1392,10 +1392,11 @@ SETTINGS = (
 	Setting(
 		"enable_appointments",
 		"appointments",
-		_lt("Collect appointments"),
+		_lt("Salon till"),
 		_lt(
-			"The till shows the day's appointments and takes one over: its invoice, prepared by the reservation, is loaded into the cart"
-			" with the person of each line, and paid. Shop till only. Greyed while the site takes no appointments."
+			"The till becomes the salon's counter: it shows the day's agenda, takes, moves and cancels appointments, times them, and collects them"
+			" (the invoice the reservation prepared is loaded into the cart with the person of each line, at today's prices). Shop till only."
+			" Greyed while the site has no reservation app."
 		),
 		"check",
 		doctype=POS_SETTINGS,

@@ -91,6 +91,36 @@
 			</div>
 		</button>
 
+		<!-- //// Neoffice — the day's appointments of a salon, where the till collects them (NeoSalon, step 2, lot G4, canvas « Rendez-vous 1 »): the middle column shows them in place of the items, -->
+		<!-- //// and the badge says how many wait to be collected. -->
+		<button
+			v-if="appointmentsEnabled"
+			@click="handleMenuClick('appointments')"
+			:class="[
+				'w-12 h-12 rounded-lg flex items-center justify-center transition-all relative group',
+				appointmentsOpen
+					? 'bg-blue-100 text-blue-700'
+					: 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+			]"
+			:title="__('Appointments')"
+			:aria-pressed="appointmentsOpen ? 'true' : 'false'"
+			data-test="rail-appointments"
+		>
+			<FeatherIcon name="calendar" class="w-5 h-5" />
+			<span
+				v-if="appointmentsToCollect > 0"
+				class="absolute -top-1 -end-1 min-w-[20px] h-5 px-1.5 rounded-full bg-orange-500 text-gray-900 text-[11px] font-bold flex items-center justify-center"
+				data-test="rail-appointments-count"
+			>
+				{{ appointmentsToCollect }}
+			</span>
+			<div
+				class="absolute start-full ms-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50"
+			>
+				{{ __("Appointments") }}
+			</div>
+		</button>
+
 		<!-- //// Neoffice — added block: the sidebar entries upstream POSNext has no feature behind. -->
 		<!-- //// Cash In/Out is always there (6c598630, 2026-03-28, Journal Entry Templates); Cards, -->
 		<!-- //// Product Options and Workflows (60d432a2, 2026-03-23), Tips (c4460c61, 2026-03-29) -->
@@ -273,6 +303,10 @@ defineProps({
 		type: Boolean,
 		default: false,
 	},
+	//// Neoffice — the day's appointments of a salon: whether the till collects them, whether the list is open, and how many wait (NeoSalon, step 2, lot G4)
+	appointmentsEnabled: { type: Boolean, default: false },
+	appointmentsOpen: { type: Boolean, default: false },
+	appointmentsToCollect: { type: Number, default: 0 },
 });
 
 const activeMenu = ref("");

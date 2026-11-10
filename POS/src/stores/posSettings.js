@@ -82,6 +82,8 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		enable_sales_persons: "Disabled",
 		//// Neoffice — a product asks for its person only if the till follows the sales of products by person too (NeoSalon, lot G1)
 		track_product_sales_by_person: 0,
+		//// Neoffice — the till shows the day's appointments of the salon's reservation app (NeoSalon, step 2, lot G4)
+		enable_appointments: 0,
 		//// Neoffice — defaults for settings upstream does not have: the customer-facing second screen
 		//// (turn it on, let the customer create their own account on it, show the address fields on
 		//// that form), and restaurant mode with its default dining area. They must exist in this seed
@@ -253,6 +255,8 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 	const enableSalesPersons = computed(() => ["Single", "Multiple"].includes(settings.value.enable_sales_persons));
 	const salesPersonsMode = computed(() => (enableSalesPersons.value ? settings.value.enable_sales_persons : "Disabled"));
 	//// Neoffice — whether a product asks for its person too (NeoSalon, lot G1): off, only the services do.
+	//// Neoffice — whether this till collects the salon's appointments (the tick of the till's settings; the server shows none where the site has no reservation app)
+	const appointmentsEnabled = computed(() => Boolean(Number(settings.value.enable_appointments)));
 	const trackProductSalesByPerson = computed(
 		() => enableSalesPersons.value && Boolean(Number(settings.value.track_product_sales_by_person))
 	);
@@ -434,6 +438,7 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 			enable_sales_persons: "Disabled",
 			//// Neoffice — and the tick of the products by person (NeoSalon, lot G1)
 			track_product_sales_by_person: 0,
+			enable_appointments: 0,
 			//// Neoffice — resetSettings has to zero OUR fields too, otherwise a logout left the previous
 			//// terminal's customer-display and restaurant configuration in place for the next cashier
 			//// (8bffb770 2026-02-04 customer display; 8aa35c29 2026-03-20 restaurant mode).
@@ -630,6 +635,8 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		salesPersonsMode,
 		//// Neoffice — whether a product asks for its person too (NeoSalon, lot G1)
 		trackProductSalesByPerson,
+		//// Neoffice — whether this till collects the salon's appointments (NeoSalon, step 2, lot G4)
+		appointmentsEnabled,
 		isSingleSalesPerson,
 		isMultipleSalesPersons,
 

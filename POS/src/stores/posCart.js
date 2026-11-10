@@ -695,6 +695,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		//// Neoffice — the check of a phone's paid cart ends with its ticket (scanning in the shop, lot 4)
 		shopCartCheck.value = null;
 		shopCartCheckOpen.value = false;
+		//// Neoffice — and so does the appointment that was taken over: its draft is no longer the cart's (NeoSalon, step 2, lot G4)
+		appointment.value = null;
 
 		// Reset offer processing state
 		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
@@ -744,6 +746,9 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	//// (components/shop/ShopCartControl.vue): its code, the lines it was paid for, what was paid; and whether the check is open.
 	const shopCartCheck = ref(null);
 	const shopCartCheckOpen = ref(false);
+	//// Neoffice — the appointment of a salon taken over by the till (composables/useAppointment): { booking, invoice, customer_name, starts_at, ends_at }, or null. Its draft is the one the
+	//// payment submits (shopCartInvoice); the cart says whose appointment it is, and the payment is refused without the network (NeoSalon, step 2, lot G4).
+	const appointment = ref(null);
 
 	function setPosProfile(profile) {
 		posProfile.value = profile;
@@ -855,7 +860,9 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			loyaltyData.value,
 			tipAmount.value,
 			Boolean(options.isCreditSale),
-			options.receivableAccount || null
+			options.receivableAccount || null,
+			//// Neoffice — the appointment of a salon this sale collects (NeoSalon, step 2, lot G4)
+			appointment.value?.booking || null
 		);
 		// Reset write-off amount and loyalty after successful submission
 		if (result) {
@@ -3391,6 +3398,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		//// Neoffice — the check of a phone's paid cart (scanning in the shop, lot 4)
 		shopCartCheck,
 		shopCartCheckOpen,
+		//// Neoffice — the appointment taken over (NeoSalon, step 2, lot G4)
+		appointment,
 		updateItemInstructions,
 		updateItemModifiers,
 		//// Neoffice — the waiter's own course for one line (service families, NeoResto lot 1).

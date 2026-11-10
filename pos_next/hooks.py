@@ -624,20 +624,31 @@ on_login = ["pos_next.restaurant.devices.guard_device_login"]
 # Extension points consumed by POS Next, implemented by optional apps
 pos_next_loyalty_provider = []
 pos_next_bootstrap_settings = []
-# //// Neoffice — the till takes the appointments of the site's reservation app over (NeoSalon, step 2, lot G4; pos_next.api.appointments). Two
-# //// extension points, each a list of dotted paths whose first answer that is not None counts, so that POS Next names neither a reservation app
-# //// nor a client: the day's appointments to collect, and the draft invoice of one appointment, with the sales person of each line.
-pos_next_appointments_of_the_day = []
-pos_next_appointment_draft = []
-# //// Neoffice — and the gestures of salon mode (the plan of 10.11.2026, note 10 of the vault, « Contrat v2 »): move, cancel, start or stop a step, what can be
-# //// booked, the free slots, book, and the sale that replaced the draft of an appointment once an offline till synchronised.
+# //// Neoffice — the salon mode of the till (NeoSalon, step 2, lot G4; pos_next.api.appointments). Extension points, each a list of dotted paths whose first answer
+# //// that is not None counts, so that POS Next names neither a reservation app nor a client. The planning lane fills the day, the check of a move and the move; the
+# //// money lane the list, the draft of an appointment, the sale that replaces it, cancel, the services, the free slots and booking; the time lane the gestures of the time
+# //// and its state (note 10 of the vault, § G4, « Contrat v2 », and the notes of the lanes).
+# //// Neoffice — the planning lane: the day of the salon (who is there, what each holds)
+pos_next_salon_day = []
+# //// Neoffice — the planning lane: whether an appointment could go to this hour, and the move itself
+pos_next_appointment_check_move = []
+# //// Neoffice — the planning lane: the move
 pos_next_appointment_move = []
+# //// Neoffice — the money lane: where each appointment stands, what it announces, what was paid
+pos_next_appointments_of_the_day = []
+# //// Neoffice — the money lane: the draft invoice of one appointment
+pos_next_appointment_draft = []
+# //// Neoffice — the money lane: a sale made offline takes the place of the draft
+pos_next_appointment_sold = []
+# //// Neoffice — the money lane: cancel (and refund what was paid online)
 pos_next_appointment_cancel = []
-pos_next_appointment_clock = []
+# //// Neoffice — the money lane: what can be booked, the free slots, book
 pos_next_appointment_services = []
 pos_next_appointment_slots = []
 pos_next_appointment_book = []
-pos_next_appointment_sold = []
+# //// Neoffice — the time lane: the gestures of the time of an appointment, and its state
+pos_next_appointment_time_action = []
+pos_next_appointment_time_state = []
 # //// Neoffice — the restaurant rides the seam upstream gave satellite apps: the bootstrap, the settings dialog, the
 # //// profile data and the answer of a save all call it after they read the till's POS Settings. One function tells every
 # //// screen which restaurant (`restaurant`, `restaurant_name`) the till works for (NeoResto lot 1, task 2), the next what
