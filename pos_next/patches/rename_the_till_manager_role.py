@@ -23,6 +23,11 @@ def rename(old, new):
 	Safe to run again: with no `old` role, it does nothing.
 	"""
 	if not frappe.db.exists("Role", old):
+		# The record is gone but accounts or rules can still carry its name (a site where the role was never made, or was
+		# deleted by hand). Frappe refuses to save an account whose row names a role that does not exist, and the first
+		# save the update makes of such an account makes the role again, under the name retired here: seen on the first
+		# client instance that took this patch (neoffice-maintenance#2428).
+		_move_what_still_says(old, new)
 		return
 
 	merging = bool(frappe.db.exists("Role", new))
@@ -42,7 +47,43 @@ def rename(old, new):
 	# the name of a role is its `role_name` (autoname by field): a rename moves the name, not the field
 	if frappe.db.get_value("Role", new, "role_name") != new:
 		frappe.db.set_value("Role", new, "role_name", new, update_modified=False)
+	_move_what_still_says(old, new)
 	frappe.clear_cache()
+
+
+def _move_what_still_says(old, new):
+	"""Every account and permission rule that still names `old` names `new`, and a row that would be a second copy goes."""
+	holders = frappe.get_all(
+		"Has Role", filters={"role": old}, fields=["name", "parent", "parenttype", "parentfield"]
+	)
+	rules = {
+		doctype: frappe.get_all(
+			doctype, filters={"role": old}, fields=["name", "parent", "permlevel", "if_owner"]
+		)
+		for doctype in ("Custom DocPerm", "DocPerm")
+	}
+	if not holders and not any(rules.values()):
+		return
+	if not frappe.db.exists("Role", new):
+		frappe.get_doc({"doctype": "Role", "role_name": new, "desk_access": 1}).insert(ignore_permissions=True)
+	for row in holders:
+		twin = {
+			"parent": row.parent,
+			"parenttype": row.parenttype,
+			"parentfield": row.parentfield,
+			"role": new,
+		}
+		if frappe.db.exists("Has Role", twin):
+			frappe.db.delete("Has Role", {"name": row.name})
+		else:
+			frappe.db.set_value("Has Role", row.name, "role", new, update_modified=False)
+	for doctype, rows in rules.items():
+		for rule in rows:
+			twin = {"parent": rule.parent, "role": new, "permlevel": rule.permlevel, "if_owner": rule.if_owner}
+			if frappe.db.exists(doctype, twin):
+				frappe.db.delete(doctype, {"name": rule.name})
+			else:
+				frappe.db.set_value(doctype, rule.name, "role", new, update_modified=False)
 
 
 def _hold_the_role_once(role):

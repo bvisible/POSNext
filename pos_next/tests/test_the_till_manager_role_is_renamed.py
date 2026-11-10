@@ -113,6 +113,32 @@ class TestTheTillManagerRoleIsRenamed(FrappeTestCase):
 
 		self.assertFalse(frappe.db.exists("Role", NEW))
 
+	def test_accounts_and_rules_that_still_carry_the_name_of_a_role_that_is_gone_follow_to_a_role_made_for_them(self):
+		# The record is gone, its rows stay and the new role is not there yet (neoffice-maintenance#2428): Frappe
+		# refuses to save such an account, and the first save made the role again under the old name.
+		frappe.db.delete("Role", {"name": OLD})
+
+		patch.rename(OLD, NEW)
+
+		self.assertFalse(frappe.db.exists("Role", OLD))
+		self.assertTrue(frappe.db.exists("Role", NEW))
+		self.assert_holds_only_the_new_one(USER)
+		self.assertFalse(frappe.db.exists("Custom DocPerm", {"role": OLD}))
+		self.assertTrue(frappe.db.exists("Custom DocPerm", {"parent": DOCTYPE, "role": NEW}))
+		frappe.get_doc("User", USER).save(ignore_permissions=True)
+		self.assertFalse(frappe.db.exists("Role", OLD))
+
+	def test_an_account_that_holds_both_names_of_a_role_that_is_gone_keeps_one_row(self):
+		_role(NEW)
+		_user(OTHER, [NEW, OLD])
+		frappe.db.delete("Role", {"name": OLD})
+
+		patch.rename(OLD, NEW)
+
+		self.assertFalse(frappe.db.exists("Role", OLD))
+		self.assert_holds_only_the_new_one(OTHER)
+		self.assert_holds_only_the_new_one(USER)
+
 	def test_the_files_of_the_app_say_the_new_name(self):
 		with open(frappe.get_app_path("pos_next", "fixtures", "role.json")) as fixture:
 			names = {row["name"] for row in json.load(fixture)}
