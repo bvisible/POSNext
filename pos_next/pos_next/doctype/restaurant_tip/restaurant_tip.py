@@ -11,6 +11,12 @@ from pos_next.restaurant.settings import restaurant_for_profile
 
 class RestaurantTip(Document):
 	def validate(self):
+		# //// Neoffice — a tip not handed out yet names nobody it was handed to (10.11.2026). Frappe fills a Link to Employee with the
+		# //// employee of the user's only Employee user permission when the record is made: every tip a cashier rang up, his
+		# //// colleague's share included, said it was distributed to him, and that permission then hid it from the colleague.
+		if self.status != "Distributed":
+			self.distributed_to = None
+			self.distribution_date = None
 		# //// Neoffice — a tip belongs to the restaurant it was taken in (NeoResto lot 1, task 2): the one of its
 		# //// table, else of the till that rang up its invoice, else the default restaurant (also when that till is
 		# //// not a restaurant till, as for any record that names none).

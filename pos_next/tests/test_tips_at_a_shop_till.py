@@ -23,7 +23,7 @@ from pos_next.api import invoices
 from pos_next.pos_next.report.tips_by_server import tips_by_server
 from pos_next.pos_next.utils import sales_person_commission
 from pos_next.tests.test_till_settings import TILL, TILL_MANAGER, TillSettingsCase, by_key
-from pos_next.tests.test_till_writes_need_the_till import _sale
+from pos_next.tests.test_till_writes_need_the_till import CASHIER_ROLE, _sale, _user
 from pos_next.till_settings.api import get_till_settings, save_till_settings
 
 KEY = "enable_till_tips"
@@ -561,3 +561,63 @@ class TestTipsAtAShopTill(TillSettingsCase):
 		self.assertNotIn("till_tips_visible_to", restaurant)
 		with self.assertRaises(frappe.ValidationError):
 			save_till_settings(self.shop_till, {"till_tips_visible_to": "Nobody"})
+
+	# ------------------------------------------------------------------------------------------------ « distributed to »
+	# 10.11.2026: Frappe filled « distributed to » with the employee of the cashier (his only Employee user permission) on every tip he
+	# rang up, his colleague's share included, and his colleague's own permission then hid it from her.
+	def test_a_tip_rung_up_by_a_cashier_names_nobody_it_was_handed_to(self):
+		self.tips_on()
+		invoice = self.a_sale([(self.luc, 60), (self.sonia, 40)])
+		frappe.set_user(TILL)
+		try:
+			invoices._add_tip_to_invoice(invoice, 5, {}, record_amount=5)
+		finally:
+			frappe.set_user("Administrator")
+
+		rows = frappe.get_all(
+			"Restaurant Tip",
+			filters={"sales_invoice": invoice.name},
+			fields=["sales_person", "distributed_to", "distribution_date"],
+		)
+		self.assertEqual(len(rows), 2)
+		self.assertEqual({(row.distributed_to, row.distribution_date) for row in rows}, {(None, None)})
+
+	def test_a_colleague_sees_her_share_of_a_sale_the_cashier_rang_up(self):
+		sonia_user = "tips-sonia@yopmail.com"
+		_user(sonia_user, [CASHIER_ROLE], "System User")
+		frappe.db.set_value("Employee", self.sonia_employee, "user_id", sonia_user)
+		self.tips_on()
+		invoice = self.a_sale([(self.luc, 60), (self.sonia, 40)])
+		frappe.set_user(TILL)
+		try:
+			invoices._add_tip_to_invoice(invoice, 5, {}, record_amount=5)
+		finally:
+			frappe.set_user("Administrator")
+
+		self.assertEqual(self.listed_for(sonia_user, invoice), sorted([self.luc, self.sonia]))
+		self.each_sees_their_own()
+		self.assertEqual(self.listed_for(sonia_user, invoice), [self.sonia])
+
+	def test_the_patch_clears_what_was_written_on_the_tips_not_handed_out(self):
+		from pos_next.patches.tips import a_tip_not_handed_out_names_nobody_it_was_handed_to as patch_module
+
+		invoice = self.a_shared_sale_with_its_tip()
+		names = frappe.get_all("Restaurant Tip", filters={"sales_invoice": invoice.name}, pluck="name")
+		frappe.db.set_value(
+			"Restaurant Tip", names[0], {"distributed_to": self.luc_employee, "distribution_date": nowdate()}
+		)
+		frappe.db.set_value(
+			"Restaurant Tip",
+			names[1],
+			{"status": "Distributed", "distributed_to": self.sonia_employee, "distribution_date": nowdate()},
+		)
+
+		patch_module.execute()
+
+		self.assertEqual(
+			frappe.db.get_value("Restaurant Tip", names[0], ["distributed_to", "distribution_date"]),
+			(None, None),
+		)
+		self.assertEqual(
+			frappe.db.get_value("Restaurant Tip", names[1], "distributed_to"), self.sonia_employee
+		)
