@@ -456,3 +456,108 @@ class TestTipsAtAShopTill(TillSettingsCase):
 		)
 
 		self.assertEqual([row for row in data if row["sales_person"]], [])
+
+	# ------------------------------------------------------------------------------------------------ who sees the tips
+	# Product owner, 10.11.2026: « par défaut, on voit tout partout » ; or each sees his own share, a choice asked to the salon.
+	def a_shared_sale_with_its_tip(self):
+		self.tips_on()
+		invoice = self.a_sale([(self.luc, 60), (self.sonia, 40)])
+		invoices._add_tip_to_invoice(invoice, 5, {}, record_amount=5)
+		return invoice
+
+	def each_sees_their_own(self):
+		self.as_user(TILL_MANAGER)
+		save_till_settings(self.shop_till, {"till_tips_visible_to": "Each their own share"})
+		frappe.set_user("Administrator")
+
+	def listed_for(self, user, invoice):
+		frappe.set_user(user)
+		try:
+			return sorted(
+				frappe.get_list(
+					"Restaurant Tip", filters={"sales_invoice": invoice.name}, pluck="sales_person"
+				)
+			)
+		finally:
+			frappe.set_user("Administrator")
+
+	def test_by_default_the_staff_of_the_till_see_every_tip(self):
+		invoice = self.a_shared_sale_with_its_tip()
+
+		self.assertEqual(
+			self.stored_settings(self.shop_till, "till_tips_visible_to").till_tips_visible_to, "Everyone"
+		)
+		self.assertEqual(self.listed_for(TILL, invoice), sorted([self.luc, self.sonia]))
+
+	def test_each_their_own_share_lists_a_cashier_only_his_share(self):
+		invoice = self.a_shared_sale_with_its_tip()
+		self.each_sees_their_own()
+
+		# TILL is Luc's account: he sees his 3.00 and not Sonia's 2.00
+		self.assertEqual(self.listed_for(TILL, invoice), [self.luc])
+
+	def test_each_their_own_share_refuses_to_open_a_colleagues_tip(self):
+		invoice = self.a_shared_sale_with_its_tip()
+		self.each_sees_their_own()
+		tips = {
+			t.sales_person: t.name
+			for t in frappe.get_all(
+				"Restaurant Tip", filters={"sales_invoice": invoice.name}, fields=["name", "sales_person"]
+			)
+		}
+
+		self.assertTrue(frappe.has_permission("Restaurant Tip", "read", tips[self.luc], user=TILL))
+		self.assertFalse(frappe.has_permission("Restaurant Tip", "read", tips[self.sonia], user=TILL))
+
+	def test_the_user_who_rang_a_sale_up_sees_its_tip_when_no_one_is_named(self):
+		self.tips_on()
+		invoice = self.a_sale()
+		frappe.set_user(TILL)
+		invoices._add_tip_to_invoice(invoice, 5, {}, record_amount=5)
+		frappe.set_user("Administrator")
+		self.each_sees_their_own()
+
+		self.assertEqual(len(self.listed_for(TILL, invoice)), 1)
+
+	def test_the_managers_see_every_tip_whatever_the_till_says(self):
+		invoice = self.a_shared_sale_with_its_tip()
+		self.each_sees_their_own()
+
+		self.assertEqual(self.listed_for(TILL_MANAGER, invoice), sorted([self.luc, self.sonia]))
+
+	def test_a_restaurants_tips_are_not_narrowed_down(self):
+		self.each_sees_their_own()
+		restaurant_tip = frappe.get_doc(
+			{
+				"doctype": "Restaurant Tip",
+				"restaurant": self.restaurant,
+				"tip_date": nowdate(),
+				"server": "Administrator",
+				"amount": 4,
+				"status": "Collected",
+			}
+		).insert(ignore_permissions=True)
+		frappe.set_user(TILL)
+		try:
+			listed = frappe.get_list("Restaurant Tip", filters={"name": restaurant_tip.name}, pluck="name")
+		finally:
+			frappe.set_user("Administrator")
+
+		self.assertEqual(listed, [restaurant_tip.name])
+
+	def test_who_sees_the_tips_is_a_setting_of_a_shop_till_with_two_choices(self):
+		self.as_user(TILL_MANAGER)
+
+		shop = by_key(get_till_settings(self.shop_till))
+		restaurant = by_key(get_till_settings(self.restaurant_till))
+
+		setting = shop["till_tips_visible_to"]
+		self.assertEqual(
+			(setting["tab"], setting["group"], setting["widget"]), ("sales", "till_tips", "segmented")
+		)
+		self.assertEqual(
+			[option["value"] for option in setting["options"]], ["Everyone", "Each their own share"]
+		)
+		self.assertNotIn("till_tips_visible_to", restaurant)
+		with self.assertRaises(frappe.ValidationError):
+			save_till_settings(self.shop_till, {"till_tips_visible_to": "Nobody"})

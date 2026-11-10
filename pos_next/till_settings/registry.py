@@ -1362,6 +1362,25 @@ SETTINGS = (
 		),
 		depends_on=(on("enable_till_tips"),),
 	),
+	# //// Neoffice — who sees the tips, asked to the salon (product owner, 10.11.2026: « par défaut on voit tout partout […] on préfère
+	# //// demander »): everyone, or each their own share (pos_next.till_tips.tips_query_conditions). The managers always see everything.
+	Setting(
+		"till_tips_visible_to",
+		"till_tips",
+		_lt("Who sees the tips"),
+		_lt(
+			"Everyone: the staff of the till see every tip. Each their own share: a member of the staff sees only the tips that are his"
+			" (the sales he rang up, his share of a sale made by several people). The managers and the accountants always see everything."
+		),
+		"segmented",
+		doctype=POS_SETTINGS,
+		till=SHOP,
+		options=(
+			("Everyone", _lt("Everyone sees all", context="Tips")),
+			("Each their own share", _lt("Each their own share", context="Tips")),
+		),
+		depends_on=(on("enable_till_tips"),),
+	),
 	Setting(
 		"allow_sales_order",
 		"sales_orders",

@@ -72,6 +72,7 @@
   "enable_till_tips",
   "till_tips_auto_detect",
   "till_tip_goes_to",
+  "till_tips_visible_to",
   "till_tip_item",
   "till_tip_account",
   "enable_sales_persons",
@@ -616,6 +617,15 @@
    "options": "Person who served\nCommon pot"
   },
   {
+   "default": "Everyone",
+   "depends_on": "enable_till_tips",
+   "description": "Everyone: the staff of the till see every tip. Each their own share: a member of the staff sees only the tips that are his (the sales he rang up, his share of a sale made by several people). The managers and the accountants always see everything.",
+   "fieldname": "till_tips_visible_to",
+   "fieldtype": "Select",
+   "label": "Who sees the tips",
+   "options": "Everyone\nEach their own share"
+  },
+  {
    "depends_on": "enable_till_tips",
    "description": "Made when tips are switched on",
    "fieldname": "till_tip_item",
@@ -1034,7 +1044,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-09 22:30:00.000000",
+ "modified": "2026-11-10 09:30:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "POS Settings",

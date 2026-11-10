@@ -591,6 +591,15 @@ ignore_links_on_delete = ["Restaurant Device", "Restaurant Device Pairing"]
 # Broader accounting roles are left unrestricted (see get_journal_entry_permission_query_conditions).
 permission_query_conditions = {
 	"Journal Entry": "pos_next.api.expenses.get_journal_entry_permission_query_conditions",
+	# //// Neoffice — added entry (no upstream equivalent): at a shop till set to « each their own share », a member of the staff
+	# //// lists only his own tips (pos_next.till_tips, product owner, 10.11.2026); everywhere else the tips are listed as before.
+	"Restaurant Tip": "pos_next.till_tips.tips_query_conditions",
+}
+
+# //// Neoffice — added hook (no upstream equivalent): the same rule for one tip record opened by its name (pos_next.till_tips.may_read_tip
+# //// refuses, never grants).
+has_permission = {
+	"Restaurant Tip": "pos_next.till_tips.may_read_tip",
 }
 
 # auth_hooks = [

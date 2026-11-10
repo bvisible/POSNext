@@ -257,3 +257,80 @@ def shares_of(invoice_doc, amount, settings) -> list[dict]:
 			}
 		)
 	return shares
+
+
+# ------------------------------------------------------------------------------------------------ who sees the tips
+# Who sees the tips of a shop till: a choice of the till, asked to the salon (product owner, 10.11.2026: « est-ce qu'on voit
+# tout ou est-ce que chacun voit ça ? […] par défaut, on voit tout partout […] on préfère demander, comme ça on gère les deux »).
+EVERYONE = "Everyone"
+OWN_SHARE = "Each their own share"
+
+# Whoever holds one of these sees every tip, whatever the till says: the till's and the salon's managers, and the accountants who pay them
+# out. The cashier role reads the tips too (the doctype gives it read): it is the one a till set to « each their own share » narrows down.
+SEES_EVERY_TIP = (
+	"System Manager",
+	"Admin",
+	"POSNext Manager",
+	"Sales Manager",
+	"Restaurant Manager",
+	"Accounts Manager",
+	"Accounts User",
+)
+
+
+def _sees_every_tip(user):
+	return user == "Administrator" or bool(set(SEES_EVERY_TIP).intersection(frappe.get_roles(user)))
+
+
+def _tills_where_each_sees_their_own():
+	"""The shop tills whose staff see only their own share of the tips (none until a till chooses it)."""
+	try:
+		tills = frappe.get_all(
+			"POS Settings", filters={"till_tips_visible_to": OWN_SHARE, "enabled": 1}, pluck="pos_profile"
+		)
+	except Exception as error:
+		if frappe.db.is_missing_column(error):
+			# The code is updated and the site is not migrated yet: no till has chosen
+			return []
+		raise
+	return [till for till in tills if till]
+
+
+def _own_employees(user):
+	return frappe.get_all("Employee", filters={"user_id": user}, pluck="name")
+
+
+def tips_query_conditions(user=None, doctype=None):
+	"""`permission_query_conditions` of Restaurant Tip: at a till set to « each their own share », a member of its staff lists the
+	tips that are his (he rang the sale up, or his employee is the person the share is for); every other tip is listed as before.
+
+	A restaurant's tips name no till and are never narrowed down here.
+	"""
+	user = user or frappe.session.user
+	if _sees_every_tip(user):
+		return ""
+	tills = _tills_where_each_sees_their_own()
+	if not tills:
+		return ""
+	own = [f"`tabRestaurant Tip`.`server` = {frappe.db.escape(user)}"]
+	employees = _own_employees(user)
+	if employees:
+		own.append(
+			"`tabRestaurant Tip`.`employee` in ({})".format(", ".join(frappe.db.escape(e) for e in employees))
+		)
+	listed = ", ".join(frappe.db.escape(till) for till in tills)
+	return f"(ifnull(`tabRestaurant Tip`.`pos_profile`, '') not in ({listed}) or {' or '.join(own)})"
+
+
+def may_read_tip(doc, ptype=None, user=None, debug=False):
+	"""`has_permission` of Restaurant Tip, the same rule for one record: False refuses a tip that is not the user's, at a till set to
+	« each their own share ». It never grants anything (None lets the other rules decide)."""
+	user = user or frappe.session.user
+	if ptype == "create" or _sees_every_tip(user):
+		return None
+	till = doc.get("pos_profile")
+	if not till or till not in _tills_where_each_sees_their_own():
+		return None
+	if doc.get("server") == user or (doc.get("employee") and doc.get("employee") in _own_employees(user)):
+		return None
+	return False
