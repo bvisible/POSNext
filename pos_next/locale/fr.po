@@ -25282,3 +25282,367 @@ msgstr "Tout le monde : le personnel de la caisse voit chaque pourboire. Chacun 
 #: pos_next/till_settings/registry.py:1370
 msgid "Who sees the tips"
 msgstr "Qui voit les pourboires"
+
+#: POS/src/components/sale/SalonAgenda.vue:107
+#: POS/src/components/sale/SalonAgenda.vue:132
+msgid "A colleague's appointment"
+msgstr "Rendez-vous d'un autre membre de l'équipe"
+
+#: POS/src/components/sale/AppointmentSheet.vue:113
+#: POS/src/components/sale/SalonAgenda.vue:286
+msgid "Absent"
+msgstr "Absente"
+
+#: POS/src/components/sale/AppointmentBanner.vue:15
+msgid "Add a product or change a service; the payment ends the appointment."
+msgstr "Ajoutez un produit ou modifiez une prestation ; le paiement clôt le rendez-vous."
+
+#: POS/src/components/sale/AppointmentSheet.vue:49
+msgid "Already paid online"
+msgstr "Déjà payé en ligne"
+
+#: POS/src/components/sale/AppointmentBanner.vue:34
+msgid "Appointment collected"
+msgstr "Rendez-vous encaissé"
+
+#: POS/src/components/sale/AppointmentBanner.vue:34
+#, python-brace-format
+msgid "Appointment of {0} collected"
+msgstr "Rendez-vous de {0} encaissé"
+
+#: POS/src/composables/useAppointment.js:160
+#: POS/src/composables/useAppointment.js:205
+#, python-brace-format
+msgid "Appointment of {0} taken over."
+msgstr "Rendez-vous de {0} repris."
+
+#: POS/src/utils/appointments.js:52
+msgid "Break"
+msgstr "Pause"
+
+#: POS/src/components/sale/CancelAppointmentDialog.vue:4
+#: POS/src/components/sale/CancelAppointmentDialog.vue:68
+msgid "Cancel the appointment"
+msgstr "Annuler le rendez-vous"
+
+#: POS/src/components/sale/NewAppointmentDialog.vue:62
+msgid "Choose a service to see the free slots."
+msgstr "Choisissez une prestation pour voir les créneaux libres."
+
+#: pos_next/api/appointments.py:523
+msgid "Choose at least one service."
+msgstr "Choisissez au moins une prestation."
+
+#: POS/src/components/sale/AppointmentSheet.vue:156
+msgid "Collect"
+msgstr "Encaisser"
+
+#. Label of a Check field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:668
+msgid "Collect appointments"
+msgstr "Encaisser les rendez-vous"
+
+#: POS/src/utils/appointments.js:59
+msgid "Done for today"
+msgstr "Journée terminée"
+
+#: POS/src/composables/useAppointment.js:121
+msgid "Empty the cart before taking over an appointment."
+msgstr "Videz le panier avant de reprendre un rendez-vous."
+
+#: POS/src/components/sale/AppointmentSheet.vue:125
+#, python-brace-format
+msgid "Finished at {0}"
+msgstr "Terminé à {0}"
+
+#: POS/src/components/sale/NewAppointmentDialog.vue:61
+msgid "Free slots"
+msgstr "Créneaux libres"
+
+#: POS/src/components/sale/AppointmentSheet.vue:105
+#: POS/src/components/sale/SalonAgenda.vue:278
+msgid "In pause"
+msgstr "En pause"
+
+#: POS/src/components/sale/AppointmentSheet.vue:43
+msgid "In pause: the time runs on the other appointment."
+msgstr "En pause : le temps court sur l'autre rendez-vous."
+
+#: POS/src/components/sale/AppointmentSheet.vue:109
+#: POS/src/components/sale/SalonAgenda.vue:282
+msgid "In the till"
+msgstr "Dans la caisse"
+
+#: POS/src/components/sale/CancelAppointmentDialog.vue:18
+msgid "It is refunded to her automatically."
+msgstr "Le montant lui est remboursé automatiquement."
+
+#: POS/src/components/sale/CancelAppointmentDialog.vue:27
+msgid "Keep the appointment"
+msgstr "Garder le rendez-vous"
+
+#: POS/src/components/sale/CancelAppointmentDialog.vue:68
+msgid "Mark absent"
+msgstr "Marquer absente"
+
+#: POS/src/components/sale/SalonAgenda.vue:21
+msgid "Me only"
+msgstr "Moi seul"
+
+#: POS/src/components/sale/SalonAgenda.vue:302
+#, python-brace-format
+msgid "Me — {0}"
+msgstr "Moi — {0}"
+
+#: POS/src/components/sale/NewAppointmentDialog.vue:15
+msgid "Name or mobile"
+msgstr "Nom ou mobile"
+
+#: POS/src/components/sale/NewAppointmentDialog.vue:64
+msgid "No free slot this day."
+msgstr "Aucun créneau libre ce jour-là."
+
+#: POS/src/components/sale/SalonAgenda.vue:36
+msgid "No network and no agenda kept: the till sells as usual, without appointments."
+msgstr "Pas de réseau et aucun agenda conservé : la caisse vend comme d'habitude, sans rendez-vous."
+
+#: POS/src/components/sale/SalonAgenda.vue:33
+msgid "No network."
+msgstr "Pas de réseau."
+
+#: POS/src/components/sale/AppointmentBanner.vue:16
+msgid "No network: the appointment is marked paid when the till is back online."
+msgstr "Pas de réseau : le rendez-vous sera marqué payé dès que la caisse sera de nouveau connectée."
+
+#: POS/src/components/sale/NewAppointmentDialog.vue:30
+msgid "No service can be booked at this till."
+msgstr "Aucune prestation ne peut être réservée à cette caisse."
+
+#: POS/src/components/sale/SalonAgenda.vue:142
+msgid "Nobody is booked and the team is not set up for this day."
+msgstr "Aucun rendez-vous et l'équipe n'est pas planifiée pour ce jour."
+
+#: POS/src/components/sale/SalonAgenda.vue:225
+msgid "Nobody yet"
+msgstr "Personne pour l'instant"
+
+#: POS/src/utils/appointments.js:55
+msgid "Not in yet"
+msgstr "Pas encore arrivée"
+
+#: POS/src/utils/appointments.js:67
+msgid "Not working"
+msgstr "Ne travaille pas"
+
+#: POS/src/components/sale/SalonAgenda.vue:136
+msgid "Nothing booked."
+msgstr "Aucun rendez-vous."
+
+#: POS/src/components/restaurant/phone/PhoneOrderScreen.vue:355
+msgctxt "Card button"
+msgid "options"
+msgstr "Options"
+
+#: POS/src/components/sale/AppointmentSheet.vue:163
+msgid "Resume the time"
+msgstr "Reprendre le temps"
+
+#: pos_next/till_settings/registry.py:1395
+msgid "Salon till"
+msgstr "Caisse de salon"
+
+#: POS/src/components/sale/AppointmentSheet.vue:22
+#: POS/src/components/sale/NewAppointmentDialog.vue:28
+msgid "Services"
+msgstr "Prestations"
+
+#: POS/src/components/sale/CancelAppointmentDialog.vue:61
+msgid "She did not come (absent)"
+msgstr "Elle ne s'est pas présentée (absente)"
+
+#: POS/src/components/sale/MoveAppointmentDialog.vue:38
+msgid "She is told the new hour by SMS and e-mail. Untick if you have already spoken to her."
+msgstr "Elle est prévenue du nouvel horaire par SMS et e-mail. Décochez si vous lui avez déjà parlé."
+
+#: POS/src/components/sale/CancelAppointmentDialog.vue:18
+#, python-brace-format
+msgid "She paid {0} online."
+msgstr "Elle a payé {0} en ligne."
+
+#: POS/src/components/sale/AppointmentSheet.vue:127
+#, python-brace-format
+msgid "Started at {0}"
+msgstr "Démarré à {0}"
+
+#: POS/src/components/sale/SalonAgenda.vue:39
+msgid "The agenda could not be read."
+msgstr "Impossible de lire l'agenda."
+
+#: POS/src/components/sale/SalonAgenda.vue:141
+msgid "The agenda is not available at this till."
+msgstr "L'agenda n'est pas disponible à cette caisse."
+
+#: POS/src/components/sale/SalonAgenda.vue:33
+#, python-brace-format
+msgid "The agenda is the one kept at {0}. Collecting an appointment works as usual."
+msgstr "L'agenda est celui de {0}. Encaisser un rendez-vous se fait comme d'habitude."
+
+#: POS/src/composables/useAppointment.js:248
+msgid "The appointment has been cancelled."
+msgstr "Le rendez-vous a été annulé."
+
+#: POS/src/composables/useAppointment.js:233
+msgid "The appointment has been moved."
+msgstr "Le rendez-vous a été déplacé."
+
+#: POS/src/composables/useAppointment.js:299
+msgid "The appointment is booked."
+msgstr "Le rendez-vous est réservé."
+
+#: POS/src/composables/useAppointment.js:247
+msgid "The appointment is marked absent."
+msgstr "La cliente est marquée absente."
+
+#: pos_next/api/appointments.py:603 pos_next/api/appointments.py:605
+#: pos_next/api/appointments.py:645
+msgid "The appointments could not be read."
+msgstr "Impossible de lire les rendez-vous."
+
+#: POS/src/components/sale/CancelAppointmentDialog.vue:60
+msgid "The customer cancels"
+msgstr "La cliente annule"
+
+#: pos_next/api/appointments.py:833
+msgid "The free slots could not be read."
+msgstr "Impossible de lire les créneaux libres."
+
+#: pos_next/api/appointments.py:707 pos_next/api/appointments.py:726
+msgid "The new time"
+msgstr "La nouvelle heure"
+
+#: pos_next/api/appointments.py:819
+msgid "The services could not be read."
+msgstr "Impossible de lire les prestations."
+
+#: POS/src/components/sale/CancelAppointmentDialog.vue:23
+msgid "The slot is free again in the agenda at once."
+msgstr "Le créneau est de nouveau libre dans l'agenda immédiatement."
+
+#: pos_next/till_settings/registry.py:1397
+msgid "The till becomes the salon's counter: it shows the day's agenda, takes, moves and cancels appointments, times them, and collects them (the invoice the reservation prepared is loaded into the cart with the person of each line, at today's prices). Shop till only. Greyed while the site has no reservation app."
+msgstr "La caisse devient le comptoir du salon : elle affiche l'agenda du jour, prend en charge, déplace et annule les rendez-vous, en mesure la durée et les encaisse (la facture préparée par l'application de réservation est chargée dans le panier, avec la personne de chaque ligne, aux prix du jour). Caisse boutique uniquement. Grisé tant que le site n'a pas d'application de réservation."
+
+#: POS/src/components/sale/AppointmentSheet.vue:52
+msgid "The till prices the services again at today's prices when you collect."
+msgstr "La caisse recalcule les prestations aux prix du jour lors de l'encaissement."
+
+#. Description of the 'Collect appointments' (Check) field in DocType 'POS
+#. Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:665
+msgid "The till shows the day's appointments and takes one over: its draft invoice, made by the reservation app of the site, is loaded into the cart and paid. Shop till only; nothing happens where the site has no reservation app."
+msgstr "La caisse affiche les rendez-vous du jour et en reprend un : sa facture provisoire, établie par l'application de réservation du site, est chargée dans le panier et payée. Caisse boutique uniquement ; rien ne se passe si le site n'a pas d'application de réservation."
+
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:665
+msgid "The till becomes the salon's counter: it shows the day's agenda, takes, moves and cancels appointments, times them, and collects them (the invoice the reservation prepared is loaded into the cart with the person of each line, at today's prices). Shop till only; nothing happens where the site has no reservation app."
+msgstr "La caisse devient le comptoir du salon : elle affiche l'agenda du jour, prend en charge, déplace et annule les rendez-vous, en mesure la durée et les encaisse (la facture préparée par l'application de réservation est chargée dans le panier, avec la personne de chaque ligne, aux prix du jour). Caisse boutique uniquement ; rien ne se passe si le site n'a pas d'application de réservation."
+
+#. Description of the 'POS Opening Shift' (Link) field in DocType 'Guest Order
+#. Token'
+#: pos_next/pos_next/doctype/guest_order_token/guest_order_token.json:74
+msgid "The till's shift a shop session is bound to: the session dies when the till closes it."
+msgstr "L'ouverture de caisse à laquelle une session boutique est liée : la session s'arrête quand la caisse la ferme."
+
+#: POS/src/composables/useAppointment.js:259
+msgid "The time of an appointment needs the network."
+msgstr "Le temps d'un rendez-vous demande le réseau."
+
+#: pos_next/api/appointments.py:866
+msgid "The time of the appointment"
+msgstr "L'heure du rendez-vous"
+
+#: pos_next/api/appointments.py:531
+msgid "These options are too long."
+msgstr "Ces options sont trop longues."
+
+#: POS/src/composables/useAppointment.js:172
+msgid "This appointment cannot be taken without the network."
+msgstr "Ce rendez-vous ne peut pas être repris sans réseau."
+
+#: pos_next/api/appointments.py:871
+msgid "This appointment could not be read."
+msgstr "Impossible de lire ce rendez-vous."
+
+#: pos_next/api/appointments.py:430 pos_next/api/appointments.py:433
+msgid "This appointment could not be taken."
+msgstr "Impossible de reprendre ce rendez-vous."
+
+#: pos_next/api/appointments.py:437
+msgid "This appointment has nothing to collect."
+msgstr "Ce rendez-vous n'a rien à encaisser."
+
+#: pos_next/api/appointments.py:422
+msgid "This appointment is not a draft of this till."
+msgstr "Ce rendez-vous n'est pas un brouillon de cette caisse."
+
+#: pos_next/api/appointments.py:860
+msgid "This customer is not known."
+msgstr "Cette cliente est inconnue."
+
+#: POS/src/components/sale/MoveAppointmentDialog.vue:32
+msgid "This hour is free."
+msgstr "Cet horaire est libre."
+
+#: POS/src/components/sale/MoveAppointmentDialog.vue:32
+msgid "This hour is not possible."
+msgstr "Cet horaire n'est pas possible."
+
+#: pos_next/api/appointments.py:506
+msgid "This person is not known."
+msgstr "Cette personne est inconnue."
+
+#: pos_next/api/appointments.py:748
+msgid "This reason is not known."
+msgstr "Ce motif est inconnu."
+
+#: pos_next/api/appointments.py:528
+msgid "This service is not known."
+msgstr "Cette prestation est inconnue."
+
+#: pos_next/api/appointments.py:489 pos_next/api/appointments.py:693
+#: pos_next/api/appointments.py:711 pos_next/api/appointments.py:731
+#: pos_next/api/appointments.py:751 pos_next/api/appointments.py:773
+msgid "This till does not take appointments."
+msgstr "Cette caisse ne prend pas de rendez-vous."
+
+#: POS/src/pages/POSSale.vue:488
+msgid "View appointments"
+msgstr "Voir les rendez-vous"
+
+#: POS/src/components/sale/CancelAppointmentDialog.vue:23
+#: POS/src/components/sale/MoveAppointmentDialog.vue:38
+msgid "Warn the customer"
+msgstr "Prévenir la cliente"
+
+#: POS/src/components/sale/NewAppointmentDialog.vue:50
+msgid "Whoever"
+msgstr "Peu importe"
+
+#: POS/src/components/sale/SalonAgenda.vue:85
+#, python-brace-format
+msgid "{0} free · {1}"
+msgstr "{0} libre · {1}"
+
+#: pos_next/api/appointments.py:498
+#, python-brace-format
+msgid "{0} is not a valid date and time."
+msgstr "{0} n'est pas une date et une heure valides."
+
+#: POS/src/components/sale/CancelAppointmentDialog.vue:91
+#, python-brace-format
+msgid "{0} is still to be refunded to the customer."
+msgstr "{0} reste à rembourser à la cliente."
+
+#: POS/src/components/sale/CancelAppointmentDialog.vue:90
+#, python-brace-format
+msgid "{0} refunded to the customer."
+msgstr "{0} remboursé à la cliente."

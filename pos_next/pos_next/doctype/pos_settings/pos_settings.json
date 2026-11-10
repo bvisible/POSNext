@@ -662,10 +662,10 @@
   },
   {
    "default": "0",
-   "description": "The till shows the day's appointments and takes one over: its draft invoice, made by the reservation app of the site, is loaded into the cart and paid. Shop till only; nothing happens where the site has no reservation app.",
+   "description": "The till becomes the salon's counter: it shows the day's agenda, takes, moves and cancels appointments, times them, and collects them (the invoice the reservation prepared is loaded into the cart with the person of each line, at today's prices). Shop till only; nothing happens where the site has no reservation app.",
    "fieldname": "enable_appointments",
    "fieldtype": "Check",
-   "label": "Collect appointments"
+   "label": "Salon till"
   },
   {
    "collapsible": 1,
@@ -1052,7 +1052,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-10 12:14:44.000000",
+ "modified": "2026-11-10 21:40:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "POS Settings",
