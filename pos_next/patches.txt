@@ -10,6 +10,11 @@ pos_next.patches.rename_modifier_to_product_option
 # //// everything that points at it follow, before the doctype sync writes the permission rows of the new name (the files themselves are
 # //// renamed by scripts/rename_the_till_manager_role.py, run again after every merge of upstream).
 pos_next.patches.rename_the_till_manager_role
+# //// Neoffice — the second run of the same patch (its own name in the Patch Log): the template server that the config sync reads
+# //// still held the old role, so every instance made it again, with the accounts that carry it, right after the first run
+# //// (neoffice-maintenance#2428). The rename merges what the sync left; safe on a site where nothing is left. To be removed once
+# //// the whole fleet has taken it.
+pos_next.patches.rename_the_till_manager_role #2428
 
 [post_model_sync]
 # Patches added in this section will be executed after doctypes are migrated

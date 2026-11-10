@@ -139,6 +139,15 @@ class TestTheTillManagerRoleIsRenamed(FrappeTestCase):
 		self.assert_holds_only_the_new_one(OTHER)
 		self.assert_holds_only_the_new_one(USER)
 
+	def test_the_patch_runs_a_second_time_on_the_sites_that_took_the_first_run(self):
+		# The template server that the config sync reads kept the old name, so every instance made the role
+		# again after the first run (neoffice-maintenance#2428): a second entry, with its own name in the
+		# Patch Log, merges what the sync left.
+		with open(frappe.get_app_path("pos_next", "patches.txt")) as handle:
+			lines = [line.strip() for line in handle]
+		entries = {line for line in lines if line.startswith("pos_next.patches.rename_the_till_manager_role")}
+		self.assertGreaterEqual(len(entries), 2)
+
 	def test_the_files_of_the_app_say_the_new_name(self):
 		with open(frappe.get_app_path("pos_next", "fixtures", "role.json")) as fixture:
 			names = {row["name"] for row in json.load(fixture)}
