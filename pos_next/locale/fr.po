@@ -25650,3 +25650,174 @@ msgstr "{0} reste à rembourser à la cliente."
 #, python-brace-format
 msgid "{0} refunded to the customer."
 msgstr "{0} remboursé à la cliente."
+
+#: pos_next/till_settings/registry.py:738
+msgid "By the opening hours"
+msgstr "Selon les heures d'ouverture"
+
+#. Label of a Currency field in DocType 'Restaurant Shopping List Line'
+#: pos_next/pos_next/doctype/restaurant_shopping_list_line/restaurant_shopping_list_line.json:98
+msgid "Estimated Price"
+msgstr "Prix estimé"
+
+#: pos_next/till_settings/registry.py:783
+msgid "First order after opening (minutes)"
+msgstr "Première commande après l'ouverture (minutes)"
+
+#. Label of a Int field in DocType 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:400
+msgid "First Takeaway Order After Opening (minutes)"
+msgstr "Première commande à emporter après l'ouverture (minutes)"
+
+#. Option for the 'Takeaway Orders Taken' (Select) field in DocType
+#. 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:368
+msgid "Fixed Hours"
+msgstr "Heures fixes"
+
+#: pos_next/till_settings/registry.py:739
+msgid "Fixed hours"
+msgstr "Heures fixes"
+
+#: pos_next/pos_next/doctype/restaurant/restaurant.py:70
+msgid "Fixed hours of online takeaway need a start time and an end time."
+msgstr "Les heures fixes de la vente à emporter en ligne demandent une heure de début et une heure de fin."
+
+#: pos_next/till_settings/registry.py:797
+msgid "Last order before closing (minutes)"
+msgstr "Dernière commande avant la fermeture (minutes)"
+
+#. Label of a Int field in DocType 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:409
+msgid "Last Takeaway Order Before Closing (minutes)"
+msgstr "Dernière commande à emporter avant la fermeture (minutes)"
+
+#. Description of the 'First Takeaway Order After Opening (minutes)' (Int)
+#. field in DocType 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:397
+msgid "No new order in the first minutes after each opening"
+msgstr "Aucune nouvelle commande dans les premières minutes après chaque ouverture"
+
+#. Description of the 'Last Takeaway Order Before Closing (minutes)' (Int)
+#. field in DocType 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:406
+msgid "No new order in the last minutes before each closing"
+msgstr "Aucune nouvelle commande dans les dernières minutes avant chaque fermeture"
+
+#. Description of the 'Takeaway Days' (Table) field in DocType 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:384
+msgid "None: every day"
+msgstr "Aucun : tous les jours"
+
+#: pos_next/till_settings/registry.py:785
+msgid "Not with « Always »: no order is taken in the first minutes after each opening. 0: from the opening."
+msgstr "Pas avec « Toujours » : aucune commande n'est prise dans les premières minutes après chaque ouverture. 0 : dès l'ouverture."
+
+#: pos_next/till_settings/registry.py:799
+msgid "Not with « Always »: no order is taken in the last minutes before each closing, so that the kitchen cooks it in time. 0: until the closing."
+msgstr "Pas avec « Toujours » : aucune commande n'est prise dans les dernières minutes avant chaque fermeture, afin que la cuisine puisse la préparer à temps. 0 : jusqu'à la fermeture."
+
+#: pos_next/restaurant/takeaway_hours.py:150
+msgid "Online takeaway orders are closed right now."
+msgstr "Les commandes à emporter en ligne sont fermées pour le moment."
+
+#: pos_next/till_settings/registry.py:759
+msgid "Only with « Fixed hours »: no order is taken after this time. Before « From »: until that time the next night."
+msgstr "Seulement avec « Heures fixes » : aucune commande n'est prise après cette heure. Avant « De » : jusqu'à cette heure, la nuit suivante."
+
+#: pos_next/till_settings/registry.py:771
+msgid "Only with « Fixed hours »: the days orders are taken. None chosen: every day."
+msgstr "Seulement avec « Heures fixes » : les jours où les commandes sont prises. Aucun jour choisi : tous les jours."
+
+#: pos_next/till_settings/registry.py:747
+msgid "Only with « Fixed hours »: the first order of the day is taken from this time."
+msgstr "Seulement avec « Heures fixes » : la première commande de la journée est prise à partir de cette heure."
+
+#: pos_next/till_settings/registry.py:727
+msgid "Orders taken"
+msgstr "Commandes prises"
+
+#. Description of the 'POS Opening Entry' (Link) field in DocType 'Guest Order
+#. Token'
+#: pos_next/pos_next/doctype/guest_order_token/guest_order_token.json:68
+msgid "Set by an older version only: nothing new is bound to ERPNext's own till session, which this till never opens. A code bound to one still dies with it."
+msgstr "Défini par une ancienne version seulement : plus rien de neuf n'est lié à la session de caisse d'ERPNext, que cette caisse n'ouvre jamais. Un code lié à une telle session disparaît avec elle."
+
+#. Label of a Table field in DocType 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:387
+msgid "Takeaway Days"
+msgstr "Jours de vente à emporter"
+
+#. Label of a Time field in DocType 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:374
+msgid "Takeaway From"
+msgstr "À emporter, de"
+
+#. Label of a Select field in DocType 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:367
+msgid "Takeaway Orders Taken"
+msgstr "Commandes à emporter prises"
+
+#. Label of a Time field in DocType 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:380
+msgid "Takeaway To"
+msgstr "À emporter, à"
+
+#: pos_next/pos_next/doctype/restaurant/restaurant.py:72
+msgid "The fixed hours of online takeaway cannot start and end at the same time."
+msgstr "Les heures fixes de la vente à emporter en ligne ne peuvent pas commencer et se terminer à la même heure."
+
+#: pos_next/restaurant/takeaway_hours.py:141
+#, python-brace-format
+msgid "They open again on Friday at {0}."
+msgstr "Elles reprennent vendredi à {0}."
+
+#: pos_next/restaurant/takeaway_hours.py:137
+#, python-brace-format
+msgid "They open again on Monday at {0}."
+msgstr "Elles reprennent lundi à {0}."
+
+#: pos_next/restaurant/takeaway_hours.py:142
+#, python-brace-format
+msgid "They open again on Saturday at {0}."
+msgstr "Elles reprennent samedi à {0}."
+
+#: pos_next/restaurant/takeaway_hours.py:143
+#, python-brace-format
+msgid "They open again on Sunday at {0}."
+msgstr "Elles reprennent dimanche à {0}."
+
+#: pos_next/restaurant/takeaway_hours.py:140
+#, python-brace-format
+msgid "They open again on Thursday at {0}."
+msgstr "Elles reprennent jeudi à {0}."
+
+#: pos_next/restaurant/takeaway_hours.py:138
+#, python-brace-format
+msgid "They open again on Tuesday at {0}."
+msgstr "Elles reprennent mardi à {0}."
+
+#: pos_next/restaurant/takeaway_hours.py:139
+#, python-brace-format
+msgid "They open again on Wednesday at {0}."
+msgstr "Elles reprennent mercredi à {0}."
+
+#: pos_next/restaurant/takeaway_hours.py:156
+#, python-brace-format
+msgid "They open again today at {0}."
+msgstr "Elles reprennent aujourd'hui à {0}."
+
+#: pos_next/restaurant/takeaway_hours.py:158
+#, python-brace-format
+msgid "They open again tomorrow at {0}."
+msgstr "Elles reprennent demain à {0}."
+
+#: pos_next/till_settings/registry.py:729
+msgid "When the online ordering page takes a new order: always, by the opening hours of the « Hours and cards » tab (those of the card offered when it has some), or at fixed hours. An order already sent is always paid."
+msgstr "Quand la page de commande en ligne accepte une nouvelle commande : toujours, selon les heures d'ouverture de l'onglet « Horaires et cartes » (celles de la carte proposée, lorsqu'elle en a), ou à heures fixes. Une commande déjà envoyée est toujours payée."
+
+#. Description of the 'Takeaway Orders Taken' (Select) field in DocType
+#. 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:364
+msgid "When the online takeaway page takes a new order: always, by the opening hours (those of the takeaway card when it has some), or at fixed hours. An order already sent is always paid."
+msgstr "Quand la page de vente à emporter en ligne accepte une nouvelle commande : toujours, selon les heures d'ouverture (celles de la carte à emporter, lorsqu'elle en a), ou à heures fixes. Une commande déjà envoyée est toujours payée."
