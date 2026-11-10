@@ -30,9 +30,24 @@ class TestAShopSessionOpensOnlyWhereAndWhenTheShopSells(ShopCase):
 		self.assertTrue(answer["shop_name"])
 		token = frappe.get_doc("Guest Order Token", {"token": answer["token"]})
 		self.assertEqual(
-			(token.mode, token.pos_profile, token.pos_opening, token.owner),
+			(token.mode, token.pos_profile, token.pos_opening_shift, token.owner),
 			("shop", self.fx.profile, self.opening, "Guest"),
 		)
+
+	def test_the_session_follows_the_shift_the_till_opens_not_an_old_opening_entry(self):
+		# A site that sold with ERPNext's till keeps POS Opening Entries « Open » for ever, and POS Next opens a POS Opening
+		# Shift: the shop is open while its shift is, whatever the old entries say (maintenance#2473)
+		self.an_old_opening_entry(self.fx.profile)
+		token = self.a_session()
+		self.assertTrue(self.as_guest(shop_scan.get_shop_cart, token) is not None)
+
+		frappe.db.set_value("POS Opening Shift", self.opening, "status", "Closed")
+
+		self.assertEqual(
+			self.refused(self.key), frappe._("The shop is closed: scanning starts again when its till opens.")
+		)
+		with self.assertRaises(frappe.AuthenticationError):
+			self.as_guest(shop_scan.get_shop_cart, token)
 
 	def test_the_page_carries_the_logo_of_the_shop_as_its_company_keeps_it(self):
 		# The pages a shop shows its own customers carry the shop's brand, not Neoffice's (05.11.2026)
@@ -66,7 +81,7 @@ class TestAShopSessionOpensOnlyWhereAndWhenTheShopSells(ShopCase):
 			self.assertEqual(self.refused(self.key), frappe._(UNAVAILABLE))
 
 	def test_a_closed_shop_gives_no_session(self):
-		frappe.db.set_value("POS Opening Entry", self.opening, "status", "Closed")
+		frappe.db.set_value("POS Opening Shift", self.opening, "status", "Closed")
 
 		self.assertEqual(
 			self.refused(self.key), frappe._("The shop is closed: scanning starts again when its till opens.")
@@ -74,7 +89,7 @@ class TestAShopSessionOpensOnlyWhereAndWhenTheShopSells(ShopCase):
 
 	def test_the_session_dies_with_the_tills_shift(self):
 		token = self.a_session()
-		frappe.db.set_value("POS Opening Entry", self.opening, "status", "Closed")
+		frappe.db.set_value("POS Opening Shift", self.opening, "status", "Closed")
 
 		with self.assertRaises(frappe.AuthenticationError):
 			self.as_guest(shop_scan.get_shop_cart, token)

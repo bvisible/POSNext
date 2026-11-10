@@ -79,10 +79,25 @@ def settings_of(pos_profile: str):
 	)
 
 
+def open_shift(pos_profile: str) -> str | None:
+	"""The till's shift open now, the one opened last: the POS Opening Shift the till opens to sell (api/shifts.py), by the
+	rule of the customer display. Not ERPNext's POS Opening Entry: this till never opens one, and a site that sold with
+	ERPNext's till before keeps old ones « Open » for ever (maintenance#2473)."""
+	return frappe.db.get_value(
+		"POS Opening Shift",
+		{
+			"pos_profile": pos_profile,
+			"docstatus": 1,
+			"status": "Open",
+			"pos_closing_shift": ["is", "not set"],
+		},
+		"name",
+		order_by="period_start_date desc",
+	)
+
+
 def start(key: str) -> dict:
 	"""Open a phone's session on the till whose QR code carries `key`: {"token", "shop_name", "shop_logo", "expires_at"}."""
-	from pos_next.api.guest_ordering import _get_active_pos_opening
-
 	# //// Neoffice — a key is a text (maintenance#2296): a list from a JSON body was read by `get_value` as
 	# //// an operator and a pattern, so a session opened at the till of the most recent key without its
 	# //// poster being seen.
@@ -93,8 +108,8 @@ def start(key: str) -> dict:
 	)
 	if not is_shop_till(settings):
 		_unavailable()
-	opening = _get_active_pos_opening(settings.pos_profile)
-	if not opening:
+	shift = open_shift(settings.pos_profile)
+	if not shift:
 		frappe.throw(_("The shop is closed: scanning starts again when its till opens."))
 
 	hours = cint(settings.shop_cart_lifetime_hours) or DEFAULT_LIFETIME_HOURS
@@ -103,7 +118,7 @@ def start(key: str) -> dict:
 			"doctype": "Guest Order Token",
 			"mode": "shop",
 			"pos_profile": settings.pos_profile,
-			"pos_opening": opening,
+			"pos_opening_shift": shift,
 			"expires_at": add_to_date(now_datetime(), hours=hours),
 		}
 	)

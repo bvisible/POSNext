@@ -11,10 +11,20 @@
 # For license information, please see license.txt
 
 import secrets
+
 import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import now_datetime
+
+
+# //// Neoffice — the shift the till opens to sell (POS Opening Shift, api/shifts.py): open while it is submitted, « Open »
+# //// and has no closing, the rule of the customer display (customer_display.get_pos_opening_entry) (maintenance#2473)
+def shift_is_open(shift: str) -> bool:
+	row = frappe.db.get_value(
+		"POS Opening Shift", shift, ["docstatus", "status", "pos_closing_shift"], as_dict=True
+	)
+	return bool(row and row.docstatus == 1 and row.status == "Open" and not row.pos_closing_shift)
 
 
 class GuestOrderToken(Document):
@@ -45,6 +55,10 @@ class GuestOrderToken(Document):
 			opening_status = frappe.db.get_value("POS Opening Entry", self.pos_opening, "status")
 			if opening_status != "Open":
 				return False
+
+		# //// Neoffice — a shop session dies with the till's shift it was opened in (maintenance#2473)
+		if self.get("pos_opening_shift") and not shift_is_open(self.pos_opening_shift):
+			return False
 
 		return True
 

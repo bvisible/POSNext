@@ -3,6 +3,8 @@
 price on the till's price list. The customer acts as `Guest`, the cashier at her till; the administrator only lays the
 decor. Each test rolls back to its savepoint."""
 
+import json
+
 import frappe
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import now_datetime, nowdate
@@ -51,7 +53,19 @@ class ShopCase(FrappeTestCase):
 		return doc.insert(ignore_permissions=True).name
 
 	def open_a_shift(self, pos_profile):
-		"""The POS Opening Entry of the till, open, as a cashier's shift leaves it."""
+		"""The till's shift, opened by its cashier as the till opens it (a POS Opening Shift, maintenance#2473)."""
+		from pos_next.api import shifts
+
+		opened = self.as_cashier(
+			shifts.create_opening_shift,
+			pos_profile,
+			self.fx.company,
+			json.dumps([{"mode_of_payment": self.fx.mode, "opening_amount": 0}]),
+		)
+		return opened["pos_opening_shift"]["name"]
+
+	def an_old_opening_entry(self, pos_profile):
+		"""An ERPNext POS Opening Entry left « Open », as a site that sold with ERPNext's till before keeps them."""
 		entry = frappe.get_doc(
 			{
 				"doctype": "POS Opening Entry",
