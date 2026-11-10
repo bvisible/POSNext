@@ -583,6 +583,24 @@ def _publish_to_the_tills(event, table_name, payload):
 MAX_ALERT_LINES = 5
 
 
+# //// Neoffice — added function (no upstream equivalent). What the till's save does when lines leave for the kitchen and the guest page's did not: the lines take the time
+# //// they LEFT, and the order takes the status its dishes now give it. Without the second, an order whose starter had been delivered kept `kds_status = Delivered`, which the
+# //// kitchen's screen reads FIRST (utils/kitchenBands.kitchenStatusOf): the three drinks a guest sent from the QR of such a table were Pending at the bar, counted on its chips,
+# //// and drawn nowhere, so nobody made them and the table, paid and kept Occupied for them, waited for ever (10.11.2026).
+def _record_the_send(invoice_name, batch):
+	"""Record the lines of send `batch` of the order as sent: their time, and the order's status from all its dishes."""
+	from pos_next.api import restaurant as restaurant_api
+
+	if frappe.db.has_column("Sales Invoice Item", "kds_sent_at"):
+		filters = {"parent": invoice_name, "parenttype": "Sales Invoice", "kds_status": "Pending", "kds_sent_at": ["is", "not set"]}
+		if frappe.db.has_column("Sales Invoice Item", "kds_batch"):
+			filters["kds_batch"] = batch
+		sent_at = now_datetime()
+		for row in frappe.get_all("Sales Invoice Item", filters=filters, pluck="name"):
+			frappe.db.set_value("Sales Invoice Item", row, "kds_sent_at", sent_at, update_modified=False)
+	restaurant_api._follow_the_dishes(invoice_name)
+
+
 def _lines_of_this_order(rows):
 	"""The lines a guest's order added, as the tills name them: `([{item_name, qty}], count)`, `count` all of the lines and the names the first `MAX_ALERT_LINES`.
 
@@ -962,6 +980,9 @@ def submit_guest_order(token: str, items):
 	if has_kds and validation_mode == "Direct to Kitchen" and not held_until_paid:
 		from pos_next.api.kitchen_events import kitchen_send
 
+		# //// Neoffice — and the lines are recorded as SENT, as the till's save records them (neoffice-maintenance, Daniel's test of 10.11.2026: three drinks ordered from the QR of a table
+		# //// whose starter was already delivered never reached the bar's screen)
+		_record_the_send(invoice_doc.name, next_batch)
 		kitchen_send(invoice_doc.name, next_batch)
 
 	if token_doc.table:
