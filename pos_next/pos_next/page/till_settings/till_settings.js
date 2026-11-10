@@ -1010,6 +1010,9 @@
 				df.options = choices.map(function (choice) {
 					return { value: choice.value, label: choice.label, checked: 0 };
 				});
+				//// Neoffice — the days of the web takeaway's fixed hours keep the order of the week the server gives them, not the
+				//// alphabetical order the control sorts by (« Dimanche, Jeudi, Lundi… », neoffice-maintenance#2484)
+				if (setting.key === "takeaway_days") df.sort_options = false;
 				break;
 			case "table":
 			case "special":
