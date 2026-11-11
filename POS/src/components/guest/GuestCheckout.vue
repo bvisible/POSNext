@@ -119,9 +119,14 @@
 								<span>{{ __('TVA') }}</span>
 								<span>{{ formatPrice(guestStore.taxAmount) }}</span>
 							</div>
+							<!-- //// Neoffice — the till's rounding on its own line, and the total it takes (maintenance#2254) -->
+							<div v-if="guestStore.rounding" data-test="guest-rounding" class="flex items-center justify-between text-sm text-gray-500">
+								<span>{{ __('Rounding') }}</span>
+								<span>{{ formatPrice(guestStore.rounding) }}</span>
+							</div>
 							<div class="flex items-center justify-between pt-1">
 								<span class="text-sm font-bold text-gray-900">{{ __('Total') }}</span>
-								<span class="text-lg font-bold text-green-700 dark:text-green-200">{{ formatPrice(guestStore.orderTotal) }}</span>
+								<span class="text-lg font-bold text-green-700 dark:text-green-200">{{ formatPrice(guestStore.amountDue) }}</span>
 							</div>
 						</div>
 					</div>
@@ -147,11 +152,11 @@
 						<span class="text-sm font-bold text-green-700 dark:text-green-200">{{ formatPrice(guestStore.paidAmount) }}</span>
 					</div>
 					<div class="w-full bg-green-200 rounded-full h-2 mb-2">
-						<div class="bg-green-600 h-2 rounded-full transition-all" :style="{ width: Math.min(100, (guestStore.paidAmount / guestStore.orderTotal) * 100) + '%' }"></div>
+						<div class="bg-green-600 h-2 rounded-full transition-all" :style="{ width: Math.min(100, (guestStore.paidAmount / guestStore.amountDue) * 100) + '%' }"></div>
 					</div>
 					<div class="flex justify-between text-xs text-gray-600">
 						<span>{{ __('Remaining: {0}', [formatPrice(guestStore.remainingAmount)]) }}</span>
-						<span>{{ __('Total: {0}', [formatPrice(guestStore.orderTotal)]) }}</span>
+						<span>{{ __('Total: {0}', [formatPrice(guestStore.amountDue)]) }}</span>
 					</div>
 				</div>
 
@@ -178,6 +183,17 @@
 						<span class="text-sm font-semibold text-gray-900">{{ __('Subtotal') }}</span>
 						<span class="text-base font-bold text-gray-900">{{ formatPrice(guestStore.orderTotal) }}</span>
 					</div>
+					<!-- //// Neoffice — the till's rounding, and the total it takes: what the phone pays (maintenance#2254) -->
+					<template v-if="guestStore.rounding">
+						<div data-test="guest-rounding" class="flex items-center justify-between text-sm text-gray-500 mt-1">
+							<span>{{ __('Rounding') }}</span>
+							<span>{{ formatPrice(guestStore.rounding) }}</span>
+						</div>
+						<div class="flex items-center justify-between mt-1">
+							<span class="text-sm font-semibold text-gray-900">{{ __('Total') }}</span>
+							<span class="text-base font-bold text-gray-900">{{ formatPrice(guestStore.amountDue) }}</span>
+						</div>
+					</template>
 				</div>
 					<!-- //// Neoffice — a takeaway order is paid whole, with no tip: nobody served it, and the server says what it owes (neoffice-maintenance#2132) -->
 					<!-- Tips -->

@@ -76,6 +76,12 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 	const cart = ref([]) // Array of { item, qty, modifiers, price }
 	const orderItems = ref([]) // Items from server (already submitted)
 	const orderTotal = ref(0)
+	//// Neoffice — the till's rounding of the order's total (to the currency's smallest coin where its profile rounds), and the amount the till
+	//// takes: what the phone pays (maintenance#2254). The page charged the exact total, 18.98, where the till takes 19.00.
+	const rounding = ref(0)
+	const amountDue = computed(() =>
+		orderTotal.value > 0 ? Math.round((orderTotal.value + rounding.value) * 100) / 100 : 0,
+	)
 	const paidAmount = ref(0)
 	const paymentStatus = ref(null) // null | 'pending' | 'paid' | 'partial'
 	const isLoading = ref(false)
@@ -109,12 +115,13 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 		return cart.value.reduce((sum, entry) => sum + entry.qty, 0)
 	})
 
+	//// Neoffice — what is left of the amount the till takes, and paid once that is paid (maintenance#2254): was counted on the exact total
 	const remainingAmount = computed(() => {
-		return Math.max(0, orderTotal.value - paidAmount.value)
+		return Math.max(0, Math.round((amountDue.value - paidAmount.value) * 100) / 100)
 	})
 
 	const isFullyPaid = computed(() => {
-		return orderTotal.value > 0 && paidAmount.value >= orderTotal.value
+		return amountDue.value > 0 && paidAmount.value >= amountDue.value
 	})
 
 	// What the restaurant decided: not proposed, optional or required
@@ -250,6 +257,8 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 			if ("account" in result) account.value = result.account || null
 			orderItems.value = result.items || []
 			orderTotal.value = result.grand_total || 0
+			//// Neoffice — the server says the till's rounding (maintenance#2254); a server that does not leaves the exact total
+			rounding.value = result.rounding || 0
 			paidAmount.value = result.paid_amount || 0
 			paymentStatus.value = result.payment_status || null
 			taxAmount.value = result.total_taxes_and_charges || 0
@@ -412,6 +421,7 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 		cart.value = []
 		orderItems.value = []
 		orderTotal.value = 0
+		rounding.value = 0
 		paidAmount.value = 0
 		paymentStatus.value = null
 		isLoading.value = false
@@ -439,6 +449,8 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 		cart,
 		orderItems,
 		orderTotal,
+		rounding,
+		amountDue,
 		paidAmount,
 		paidTipAmount,
 		paymentStatus,

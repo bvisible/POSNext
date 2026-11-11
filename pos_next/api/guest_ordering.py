@@ -37,6 +37,9 @@ from pos_next.restaurant.mode import require_neoresto
 from pos_next.restaurant.settings import get_restaurant_settings_for_profile
 from pos_next.restaurant.text import plain_text
 
+# //// Neoffice — the amount the till takes for a sale, its total rounded as it rounds (maintenance#2254): one rule for the shop scan and the QR
+from pos_next.shop_scan.cart import amount_due
+
 # A takeaway session is kept for the tab (the page asks again only when its session is gone): a visitor starts one or two
 # an hour; the room left above that is for the visitors who share an address (a mobile network, a shop's Wi-Fi)
 TAKEAWAY_SESSIONS_PER_VISITOR = 20
@@ -508,6 +511,13 @@ def _write_the_offers(invoice_doc, tip_item=None):
 			row.discount_amount = flt(row.rate) - offer["rate"]
 			row.rate = offer["rate"]
 			row.pricing_rules = offer["pricing_rules"]
+	# //// Neoffice — rounded as the till rounds its sale (maintenance#2254): to the currency's smallest coin unless the till's profile disables it,
+	# //// the flag the till itself sets on its sale (api/invoices.py) and the shop scan on its cart (shop_scan/pricing.py). A guest's draft carried
+	# //// none of its own, so the phone charged 18.98 where the till takes 19.00 for the same order.
+	if invoice_doc.pos_profile:
+		invoice_doc.disable_rounded_total = cint(
+			frappe.get_cached_value("POS Profile", invoice_doc.pos_profile, "disable_rounded_total")
+		)
 	with _as_the_system():
 		invoice_doc.run_method("calculate_taxes_and_totals")
 	return invoice_doc
@@ -519,7 +529,8 @@ def _still_owed(invoice_doc, tip_item):
 	if invoice_doc.docstatus != 0:
 		return 0
 	priced = _write_the_offers(frappe.get_doc("Sales Invoice", invoice_doc.name), tip_item)
-	return flt(flt(priced.grand_total) - flt(priced.paid_amount), 2)
+	# //// Neoffice — the total the till takes, rounded as it rounds (maintenance#2254): was `priced.grand_total`, the exact total
+	return flt(amount_due(priced) - flt(priced.paid_amount), 2)
 
 
 def _without_repricing(invoice_doc):
@@ -1122,6 +1133,9 @@ def get_order_status(token: str):
 
 	order_grand_total = flt(priced.grand_total) - tip_total
 	tax_amount = flt(priced.total_taxes_and_charges)
+	# //// Neoffice — what the order costs at the till, its total rounded as the till rounds it, and the rounding the page shows on its own line
+	# //// (maintenance#2254): the page said the exact total, the till asked the rounded one for the same order.
+	order_amount_due = flt(amount_due(priced) - tip_total, 2)
 
 	# paid_amount for the guest excludes tips (tips are voluntary extras, not shared debt)
 	paid_amount = flt(invoice_doc.paid_amount) if hasattr(invoice_doc, "paid_amount") else 0
@@ -1131,6 +1145,8 @@ def get_order_status(token: str):
 		"invoice": invoice_doc.name,
 		"items": order_items,
 		"grand_total": order_grand_total,
+		"rounding": flt(order_amount_due - order_grand_total, 2),
+		"amount_due": order_amount_due,
 		"net_total": flt(priced.net_total),
 		"paid_amount": paid_order_amount,
 		"tip_total": tip_total,
@@ -1690,15 +1706,22 @@ def _succeeded_intents(invoice_name):
 def _provider_confirmed(invoice_doc):
 	"""Whether the provider has settled the whole order: the intents that succeeded hold at least its total, the till's offers taken off as the page
 	showed them (they are in minor units)."""
-	owed = _write_the_offers(frappe.get_doc("Sales Invoice", invoice_doc.name)).grand_total
+	# //// Neoffice — the rounded total, as the till takes it (maintenance#2254): was `.grand_total`
+	owed = amount_due(_write_the_offers(frappe.get_doc("Sales Invoice", invoice_doc.name)))
 	return sum(cint(intent.amount) for intent in _succeeded_intents(invoice_doc.name)) >= round(flt(owed) * 100) > 0
 
 
 def _already_settled_takeaway_order(invoice_name):
 	"""The answer of `confirm_guest_payment` for a web takeaway order that is already submitted and paid (settled by the page's earlier call, or by the server
 	while the page was away), or None. Releasing again sends nothing twice: a line already sent is not touched."""
-	order = frappe.db.get_value("Sales Invoice", invoice_name, ["docstatus", "paid_amount", "grand_total"], as_dict=True)
-	if not order or order.docstatus != 1 or flt(order.paid_amount) < flt(order.grand_total):
+	# //// Neoffice — paid is paid its rounded total (maintenance#2254): a total rounded down (18.97, 18.95 at the till) was never « paid » by `grand_total`
+	order = frappe.db.get_value(
+		"Sales Invoice",
+		invoice_name,
+		["docstatus", "paid_amount", "grand_total", "rounded_total", "disable_rounded_total"],
+		as_dict=True,
+	)
+	if not order or order.docstatus != 1 or flt(order.paid_amount) < amount_due(order):
 		return None
 	return {
 		"status": "success",
@@ -1737,7 +1760,8 @@ def _settle_the_takeaway_order(invoice_doc):
 		if invoice_doc.docstatus == 0:
 			# //// Neoffice — the order as it was paid: the till's offers the page showed written on its lines (maintenance#2077)
 			_write_the_offers(invoice_doc)
-			if flt(invoice_doc.paid_amount) < flt(invoice_doc.grand_total):
+			# //// Neoffice — the rounded total the provider settled (maintenance#2254): was `grand_total`
+			if flt(invoice_doc.paid_amount) < amount_due(invoice_doc):
 				frappe.throw(_("The payment of this order is not recorded yet. Please try again."))
 			from pos_next.api.invoices import _set_payment_accounts
 
@@ -1829,7 +1853,19 @@ def send_the_pickup_email(invoice):
 	order = frappe.db.get_value(
 		"Sales Invoice",
 		invoice,
-		["docstatus", "customer", "language", "currency", "grand_total", "posa_ticket_no", "pos_profile", "company"],
+		# //// Neoffice — with the rounding: the mail says what was paid, the rounded total (maintenance#2254)
+		[
+			"docstatus",
+			"customer",
+			"language",
+			"currency",
+			"grand_total",
+			"rounded_total",
+			"disable_rounded_total",
+			"posa_ticket_no",
+			"pos_profile",
+			"company",
+		],
 		as_dict=True,
 	)
 	if not order or order.docstatus != 1 or not order.posa_ticket_no:
@@ -1851,7 +1887,7 @@ def send_the_pickup_email(invoice):
 		)
 	]
 	# The code and the amount in the site's number format: `fmt_money` with a currency drops it when Global Defaults hides the symbol
-	total = f"{order.currency} {fmt_money(flt(order.grand_total), precision=2)}"
+	total = f"{order.currency} {fmt_money(amount_due(order), precision=2)}"
 
 	kept = frappe.local.lang
 	frappe.local.lang = _language_of_the_mail(order)
