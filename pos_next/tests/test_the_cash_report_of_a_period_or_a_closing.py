@@ -451,6 +451,18 @@ class TestTheRegisterOfAClosing(TakeawayTill, FrappeTestCase):
 		self.assertTrue(subtotals)
 		self.assertIn(invoice, [row.get("sales_invoice") for row in data])
 
+	def test_the_flat_register_on_screen_shows_what_each_sale_was_paid(self):
+		# maintenance#1073: with no « Group by », the register's default, every sale read « Paid Amount 0.00 »
+		invoice = self.submitted()
+		paid, change = frappe.db.get_value("Sales Invoice", invoice, ["base_paid_amount", "change_amount"])
+		filters = frappe._dict(company=self.fx.company, from_date=today(), to_date=today(), group_by="")
+
+		_columns, data = neopos_register.execute(filters)
+
+		row = next(row for row in data if row.get("sales_invoice") == invoice)
+		self.assertTrue(flt(paid))
+		self.assertEqual(flt(row.get("paid_amount")), flt(paid) - flt(change))
+
 	def export(self, user, **filters):
 		frappe.set_user(user)
 		try:

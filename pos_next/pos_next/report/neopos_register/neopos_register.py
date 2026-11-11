@@ -132,10 +132,10 @@ def render_sheet(filters):
 	closing = apply_closing(filters)
 	validate_filters(filters)
 
-	# The sheet is grouped as the register's « Group by » says, and a flat list when it says nothing. A register that is not
-	# grouped has no paid amount on a sale, which any grouping field brings: the one asked for, else one the sheet ignores.
+	# The sheet is grouped as the register's « Group by » says, and a flat list when it says nothing (a flat register has
+	# the paid amount of each sale since maintenance#1073).
 	field = get_group_by_field(filters.get("group_by"))
-	entries = get_entries(filters, field or "transaction_type")
+	entries = get_entries(filters, field)
 	company = frappe.get_cached_doc("Company", filters.company)
 	currency = company.default_currency or ""
 
@@ -186,12 +186,13 @@ def get_pos_entries(filters, group_by_field):
 			"IFNULL(sip.base_amount - IF(sip.type = 'Cash', si.change_amount, 0), 0) != 0 AND"
 		)
 		order_by += ", sip.mode_of_payment"
-	elif group_by_field and group_by_field in ("pos_profile", "customer", "owner"):
-		order_by += ", si.{0}".format(
-			"owner" if group_by_field == "owner" else group_by_field
-		)
-		select_mop_field = ", si.base_paid_amount - si.change_amount as paid_amount"
-	elif group_by_field:
+	else:
+		if group_by_field in ("pos_profile", "customer", "owner"):
+			order_by += ", si.{0}".format(
+				"owner" if group_by_field == "owner" else group_by_field
+			)
+		# //// Neoffice — maintenance#1073: the flat list (no « Group by », the register's default) selected no paid
+		# //// amount, as ERPNext's POS Register it was copied from: every sale read « Paid Amount 0.00 ».
 		select_mop_field = ", si.base_paid_amount - si.change_amount as paid_amount"
 
 	entries = frappe.db.sql(
