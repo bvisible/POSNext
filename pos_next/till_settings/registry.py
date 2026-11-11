@@ -1021,6 +1021,21 @@ SETTINGS = (
 		doctype=POS_SETTINGS,
 		depends_on=(on("enable_customer_display"), on("enable_customer_display_account_creation")),
 	),
+	# //// Neoffice — the password a customer display is paired with (maintenance#2296, audit Q2): drawn by the server
+	# //// for the display's own account, shown once, typed once on each display (customer_display.new_display_password).
+	# //// A button, never a value: nothing of it is kept on this till nor shown again.
+	Setting(
+		"customer_display_password",
+		"customer_display",
+		_lt("Display password"),
+		_lt(
+			"The password the customer display asks for. A new one is shown once; every display paired with the"
+			" previous one asks for the new one."
+		),
+		"special",
+		store=DEVICE,
+		kind=ACTION,
+	),
 	# //// Neoffice — the kitchen alerts (NeoResto lot 1, Daniel, 01.11): a notice on the kitchen screen when the next course of a table is ordered,
 	# //// the sound of that notice and of the runner's dishes ready, and their volume. The tablets read them through `get_restaurant_settings`
 	# //// (pos_next.restaurant.kitchen_alerts); the screen of the till only edits them, with a Listen button for each sound. They are settings of the TILL (the General tab), so a restaurant manager,

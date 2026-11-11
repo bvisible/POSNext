@@ -608,7 +608,12 @@ has_permission = {
 # //// Neoffice — a restaurant's tablet signs in with an account of its own (NeoResto lot 1, task 16). Its session
 # //// reaches the page and the calls of its screens and nothing else, whatever other app serves signed-in users: an
 # //// auth hook runs for every request once the caller is known, by cookie, token or key. Upstream has none.
-auth_hooks = ["pos_next.restaurant.devices.confine_tablet_session"]
+auth_hooks = [
+	"pos_next.restaurant.devices.confine_tablet_session",
+	# //// Neoffice — so does the customer display's own account, which signs in with its key (maintenance#2296,
+	# //// audit Q2): the display's calls and pages, nothing else (pos_next.api.customer_display).
+	"pos_next.api.customer_display.confine_display_session",
+]
 # //// Neoffice — and it signs in by its pairing only: a password, a link, impersonation or `bench browse` are refused
 # //// before any session is made (pos_next.restaurant.devices.guard_device_login). Upstream has no on_login hook.
 on_login = ["pos_next.restaurant.devices.guard_device_login"]

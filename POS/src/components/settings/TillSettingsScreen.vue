@@ -319,6 +319,61 @@
 												</p>
 											</div>
 
+											<!-- //// Neoffice — the customer display's password (maintenance#2296, audit Q2): drawn by the server for the display's own account, shown once here, typed once on each display -->
+											<div
+												v-else-if="block.setting.key === 'customer_display_password'"
+												:class="['ml-[9px] border-l-2 border-pos-line pl-[19px]', greyed(block.setting) ? 'opacity-[0.42]' : '']"
+												data-setting="customer_display_password"
+											>
+												<div class="mb-[5px] flex flex-wrap items-center gap-1.5 text-[12.5px] text-pos-muted">
+													<span>{{ block.setting.label }}</span>
+													<HelpBulb v-model:open="groupHelp.customer_display_password" :text="block.setting.help" />
+												</div>
+												<button
+													v-if="!confirmingDisplayPassword"
+													type="button"
+													class="h-9 rounded-[10px] border border-pos-line bg-white px-3 text-[13px] font-semibold text-pos-ink"
+													:disabled="greyed(block.setting) || drawingDisplayPassword"
+													@click="confirmingDisplayPassword = true"
+												>
+													{{ __("New display password") }}
+												</button>
+												<div v-else class="rounded-lg border border-pos-line bg-white px-2.5 py-2 text-[12.5px] leading-[1.45] text-pos-ink">
+													<p>{{ __("Every customer display paired with the previous password will ask for the new one.") }}</p>
+													<div class="mt-1.5 flex flex-wrap gap-2">
+														<button
+															type="button"
+															class="h-8 rounded-[10px] border border-pos-line bg-white px-3 text-[12.5px] font-semibold text-pos-ink"
+															:disabled="drawingDisplayPassword"
+															@click="drawDisplayPassword"
+														>
+															{{ __("Draw the new password") }}
+														</button>
+														<button
+															type="button"
+															class="h-8 rounded-[10px] px-3 text-[12.5px] font-semibold text-pos-muted"
+															:disabled="drawingDisplayPassword"
+															@click="confirmingDisplayPassword = false"
+														>
+															{{ __("Cancel") }}
+														</button>
+													</div>
+												</div>
+												<p
+													v-if="displayPassword"
+													class="mt-1.5 rounded-lg border border-pos-line bg-white px-2.5 py-2 text-[12.5px] leading-[1.45] text-pos-ink"
+												>
+													{{ __("Type it on each customer display, once. It is not shown again.") }}
+													<span class="mt-1 block select-all font-mono text-[15px] font-semibold tracking-wide" data-display-password>{{ displayPassword }}</span>
+												</p>
+												<p
+													v-if="groupHelp.customer_display_password"
+													class="mb-1 mt-1.5 rounded-lg border-l-[3px] border-blue-400 bg-pos-action-soft px-2.5 py-2 text-[12.5px] leading-[1.45] text-pos-ink"
+												>
+													{{ block.setting.help }}
+												</p>
+											</div>
+
 											<!-- The QZ Tray printer of this computer -->
 											<div
 												v-else-if="block.setting.key === 'qz_printer'"
@@ -487,6 +542,24 @@ async function printThePoster() {
 	}
 }
 
+//// Neoffice — the customer display's password (maintenance#2296, audit Q2): the server draws it for the display's own
+//// account and answers it once; the screen shows it until it is closed (the watch under the props) and keeps it nowhere
+const confirmingDisplayPassword = ref(false)
+const drawingDisplayPassword = ref(false)
+const displayPassword = ref("")
+async function drawDisplayPassword() {
+	drawingDisplayPassword.value = true
+	try {
+		const drawn = await call("pos_next.api.customer_display.new_display_password")
+		displayPassword.value = drawn?.password || ""
+		confirmingDisplayPassword.value = false
+	} catch (error) {
+		showError(error?.messages?.[0] || error?.message || __("The display password could not be drawn."))
+	} finally {
+		drawingDisplayPassword.value = false
+	}
+}
+
 const props = defineProps({
 	modelValue: Boolean,
 	posProfile: String,
@@ -496,6 +569,17 @@ const props = defineProps({
 	//// hours (6b38498b, 2026-03-27; the tab is "hours" since NeoResto lot 1, task 13).
 	initialTab: { type: String, default: "" },
 })
+
+//// Neoffice — the display's password leaves the screen with it (see drawDisplayPassword)
+watch(
+	() => props.modelValue,
+	(open) => {
+		if (!open) {
+			displayPassword.value = ""
+			confirmingDisplayPassword.value = false
+		}
+	},
+)
 
 // open-card: the till opens that card in its own card editor, above this screen (which keeps its changes)
 const emit = defineEmits(["update:modelValue", "open-card"])

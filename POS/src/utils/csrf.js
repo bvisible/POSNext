@@ -239,7 +239,9 @@ export function createCSRFAwareRequest(originalRequest, { silent = false } = {})
 		// CSRF-exempt. Scoped to the /display route so it never affects the POS.
 		try {
 			if (typeof window !== "undefined" && window.location?.pathname?.includes("/display")) {
-				const displayKey = window.localStorage?.getItem("pos_display_api_key");
+				//// Neoffice — the key of the display's own account (stores/customerDisplay.js STORAGE_KEY_API_KEY,
+				//// maintenance#2296 audit Q2), never the client's super account's it kept before under "pos_display_api_key"
+				const displayKey = window.localStorage?.getItem("pos_display_key");
 				if (displayKey && args[0] && typeof args[0] === "object") {
 					args[0].headers = {
 						...(args[0].headers || {}),

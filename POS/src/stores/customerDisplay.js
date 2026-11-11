@@ -32,7 +32,11 @@ import { formatCurrency } from "@/utils/currency"
 const log = logger.create("CustomerDisplay")
 
 // Local storage keys
-const STORAGE_KEY_API_KEY = "pos_display_api_key"
+//// Neoffice — the display keeps the key of its own account (maintenance#2296, audit Q2), under a name of its own: the
+//// key it kept before, under "pos_display_api_key", was the client's super account's, and is dropped unread
+//// (LEGACY_STORAGE_KEY_API_KEY). utils/csrf.js reads the same name.
+export const STORAGE_KEY_API_KEY = "pos_display_key"
+const LEGACY_STORAGE_KEY_API_KEY = "pos_display_api_key"
 const STORAGE_KEY_POS_PROFILE = "pos_display_pos_profile"
 const STORAGE_KEY_POS_OPENING = "pos_display_pos_opening"
 
@@ -45,6 +49,8 @@ export const useCustomerDisplayStore = defineStore("customerDisplay", () => {
 	// ========================================================================
 
 	// Authentication state
+	//// Neoffice — the super account's key a display kept before leaves this browser, unsent (see STORAGE_KEY_API_KEY)
+	localStorage.removeItem(LEGACY_STORAGE_KEY_API_KEY)
 	const apiKey = ref(localStorage.getItem(STORAGE_KEY_API_KEY) || "")
 	const isAuthenticated = ref(false)
 	const user = ref(null)
@@ -175,6 +181,93 @@ export const useCustomerDisplayStore = defineStore("customerDisplay", () => {
 	// AUTHENTICATION
 	// ========================================================================
 
+	//// Neoffice — a POST of the display before it holds a key: a raw fetch carrying the page's CSRF token (see below)
+	async function postAsGuest(method, body) {
+		// A raw fetch, but not without the CSRF token: a browser where someone is signed in to
+		// the desk (the till's own, when the cashier opens the display from the till) sends that
+		// session's cookie, and Frappe refuses a POST without the session's token before the key
+		// is even read ("Invalid Request", HTTP 400), whatever the password. A browser with no
+		// session needs no token and ignores it. (maintenance#1721, 20.10.2026)
+		await ensureCSRFToken({ silent: true }).catch(() => false)
+		const headers = {
+			"Content-Type": "application/x-www-form-urlencoded",
+			Accept: "application/json",
+		}
+		if (
+			typeof window.csrf_token === "string" &&
+			window.csrf_token &&
+			window.csrf_token !== "{{ csrf_token }}"
+		) {
+			headers["X-Frappe-CSRF-Token"] = window.csrf_token
+		}
+		const response = await fetch(`/api/method/${method}`, {
+			method: "POST",
+			headers,
+			body: new URLSearchParams(body),
+		})
+		const data = await response.json()
+		if (data.exc_type) {
+			// Frappe error response
+			const error = new Error(
+				data._server_messages ? JSON.parse(data._server_messages)[0] : data.exc_type,
+			)
+			error.excType = data.exc_type
+			throw error
+		}
+		return data.message
+	}
+
+	function errorText(error) {
+		// Parse error message if it's JSON
+		let errorMessage = error.message || __("Authentication failed")
+		try {
+			if (errorMessage.startsWith("{")) {
+				const parsed = JSON.parse(errorMessage)
+				errorMessage = parsed.message || errorMessage
+			}
+		} catch {
+			// Keep original message
+		}
+		return errorMessage
+	}
+
+	//// Neoffice — the display and its key are paired (maintenance#2296, audit Q2): kept, the display signed in
+	async function signedIn(key, result) {
+		apiKey.value = key
+		user.value = {
+			name: result.user,
+			full_name: result.full_name,
+			email: result.email,
+		}
+		isAuthenticated.value = true
+		localStorage.setItem(STORAGE_KEY_API_KEY, key)
+		await loadPosProfiles()
+		log.info("Authentication successful", { user: result.user })
+	}
+
+	/**
+	 * //// Neoffice — pair the display with the password a till manager drew in the till's settings (maintenance#2296,
+	 * //// audit Q2). The server answers the key of the display's own account, which the display keeps.
+	 * @param {string} password - the display password
+	 * @returns {Promise<boolean>} Success status
+	 */
+	async function pair(password) {
+		isLoading.value = true
+		authError.value = null
+		try {
+			const result = await postAsGuest("pos_next.api.customer_display.pair_display", { password })
+			if (!result?.success || !result.key) throw new Error(__("Authentication failed"))
+			await signedIn(result.key, result)
+			return true
+		} catch (error) {
+			authError.value = errorText(error)
+			log.error("Pairing failed", error)
+			return false
+		} finally {
+			isLoading.value = false
+		}
+	}
+
 	/**
 	 * Validate API key and authenticate
 	 * Uses a direct fetch (the display has no session of its own), carrying the page's CSRF token
@@ -186,78 +279,23 @@ export const useCustomerDisplayStore = defineStore("customerDisplay", () => {
 		authError.value = null
 
 		try {
-			// A raw fetch, but not without the CSRF token: a browser where someone is signed in to
-			// the desk (the till's own, when the cashier opens the display from the till) sends that
-			// session's cookie, and Frappe refuses a POST without the session's token before the key
-			// is even read ("Invalid Request", HTTP 400), whatever the password. A browser with no
-			// session needs no token and ignores it. (maintenance#1721, 20.10.2026)
-			await ensureCSRFToken({ silent: true }).catch(() => false)
-			const headers = {
-				"Content-Type": "application/x-www-form-urlencoded",
-				Accept: "application/json",
-			}
-			if (
-				typeof window.csrf_token === "string" &&
-				window.csrf_token &&
-				window.csrf_token !== "{{ csrf_token }}"
-			) {
-				headers["X-Frappe-CSRF-Token"] = window.csrf_token
-			}
-			const response = await fetch(
-				"/api/method/pos_next.api.customer_display.validate_api_key",
-				{
-					method: "POST",
-					headers,
-					body: new URLSearchParams({
-						api_key_string: key,
-					}),
-				},
-			)
-
-			const data = await response.json()
-
-			if (data.exc_type) {
-				// Frappe error response
-				throw new Error(
-					data._server_messages
-						? JSON.parse(data._server_messages)[0]
-						: data.exc_type,
-				)
-			}
-
-			const result = data.message
+			//// Neoffice — the key the display kept, checked again (the shared POST of postAsGuest); refused (another
+			//// password was drawn since, or it is not the display's), it is dropped and the display pairs again.
+			const result = await postAsGuest("pos_next.api.customer_display.validate_api_key", {
+				api_key_string: key,
+			})
 			if (result && result.success) {
-				apiKey.value = key
-				user.value = {
-					name: result.user,
-					full_name: result.full_name,
-					email: result.email,
-				}
-				isAuthenticated.value = true
-
-				// Save to localStorage
-				localStorage.setItem(STORAGE_KEY_API_KEY, key)
-
-				// Load POS profiles
-				await loadPosProfiles()
-
-				log.info("Authentication successful", { user: result.user })
+				await signedIn(key, result)
 				return true
-			} else {
-				throw new Error("Authentication failed")
 			}
+			throw new Error("Authentication failed")
 		} catch (error) {
-			// Parse error message if it's JSON
-			let errorMessage = error.message || "Authentication failed"
-			try {
-				if (errorMessage.startsWith("{")) {
-					const parsed = JSON.parse(errorMessage)
-					errorMessage = parsed.message || errorMessage
-				}
-			} catch {
-				// Keep original message
+			// A key the server refused is dropped; a server that did not answer (offline, restarting) keeps it
+			if (error?.excType === "AuthenticationError") {
+				localStorage.removeItem(STORAGE_KEY_API_KEY)
+				apiKey.value = ""
 			}
-			authError.value = errorMessage
+			authError.value = errorText(error)
 			log.error("Authentication failed", error)
 		} finally {
 			isLoading.value = false
@@ -747,6 +785,7 @@ export const useCustomerDisplayStore = defineStore("customerDisplay", () => {
 
 		// Auth actions
 		authenticate,
+		pair,
 		logout,
 		loadPosProfiles,
 		selectPosProfile,

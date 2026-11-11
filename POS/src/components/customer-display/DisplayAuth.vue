@@ -56,11 +56,8 @@
 							<FeatherIcon name="info" class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
 							<div class="text-xs text-blue-700 dark:text-blue-300">
 								<p class="font-medium mb-1">{{ __("Where to find the password?") }}</p>
-								<p>{{ __("Set or retrieve the password on:") }}</p>
-								<a href="/app/thirdparty-api" target="_blank" class="inline-flex items-center gap-1 font-mono mt-1 text-blue-800 dark:text-blue-200 underline hover:text-blue-600">
-									/app/thirdparty-api
-									<FeatherIcon name="external-link" class="w-3 h-3" />
-								</a>
+								<!-- //// Neoffice — the display's own password (maintenance#2296, audit Q2): drawn by a till manager at the till, no longer the client's API password -->
+								<p>{{ __("A till manager draws it at the till: Settings, General tab, Customer display, New display password.") }}</p>
 							</div>
 						</div>
 					</div>
@@ -94,8 +91,8 @@ import { FeatherIcon } from "frappe-ui"
 import { ref } from "vue"
 import { useCustomerDisplayStore } from "@/stores/customerDisplay"
 
-const FIXED_API_KEY = "06fd969c2755b58"
-
+//// Neoffice — the display pairs with the password of its own account (maintenance#2296, audit Q2). It built the key of
+//// the client's super account from a key half written here, the same on every site, and the client's API password.
 const displayStore = useCustomerDisplayStore()
 
 const password = ref("")
@@ -104,9 +101,7 @@ const showPassword = ref(false)
 async function handleSubmit() {
 	if (!password.value) return
 
-	// Build the api_key:api_secret format expected by the backend
-	const apiKeyString = `${FIXED_API_KEY}:${password.value}`
-	const success = await displayStore.authenticate(apiKeyString)
+	const success = await displayStore.pair(password.value)
 	if (success) {
 		password.value = ""
 	}

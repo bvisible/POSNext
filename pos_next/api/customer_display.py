@@ -19,10 +19,13 @@ for secondary display screens.
 # //// Neoffice — hmac: the display's secret is compared in constant time (validate_api_key)
 import hmac
 import json
+
+# //// Neoffice — secrets: the display's password is drawn by the server (new_display_password)
+import secrets
+
 import frappe
 from frappe import _
 from frappe.utils import cint, flt, now
-
 
 # Cache key prefix for cart data
 CART_CACHE_PREFIX = "pos_next_cart_"
@@ -38,6 +41,248 @@ PAYMENT_QR_CACHE_TTL = 600  # 10 minutes
 # //// mistyping stays far below it
 KEY_REFUSALS_PER_ADDRESS = 10
 KEY_REFUSALS_WINDOW = 600  # 10 minutes
+
+# //// Neoffice — added (no upstream equivalent). The display's own account (maintenance#2296, audit Q2). The display
+# //// signed in with the key of the client's super account (every right of the API, Admin role) and kept it in the
+# //// browser of the till, in clear and with no end date: whoever read that browser left with the whole ERP. It now
+# //// signs in with an account of its own: a portal account holding one role that opens no doctype, whose session
+# //// reaches the calls of the display and nothing else (confine_display_session), with a key of its own that a till
+# //// manager draws at the till (new_display_password). A key stolen from a display gives the carts of the counters.
+DISPLAY_ACCOUNT = "customer-display@displays.invalid"
+DISPLAY_ROLE = "POSNext Customer Display"
+# The display's password: drawn by the server, typed once on the display by a person (no 0/O, 1/l/I to mistake)
+DISPLAY_SECRET_LENGTH = 20
+DISPLAY_SECRET_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789"
+# What the display's session may call: the display's own calls, and what the app reads as it starts (who is signed in,
+# the words of its language, whether the server answers, the site's name), the socket server's check of its connection,
+# and signing out. Measured on the display's traffic at osiris (11.11.2026).
+DISPLAY_METHODS = frozenset(
+	{
+		"pos_next.api.customer_display.validate_api_key",
+		"pos_next.api.customer_display.pair_display",
+		"pos_next.api.customer_display.get_pos_profiles",
+		"pos_next.api.customer_display.get_pos_opening_entry",
+		"pos_next.api.customer_display.get_display_settings",
+		"pos_next.api.customer_display.get_current_cart",
+		"pos_next.api.customer_display.create_customer_from_display",
+		"pos_next.api.customer_display.get_in_app_ads",
+		"frappe.auth.get_logged_user",
+		"pos_next.api.localization.get_app_translations",
+		"pos_next.api.localization.get_user_language",
+		"pos_next.api.localization.get_allowed_locales",
+		"pos_next.api.ping",
+		"pos_next.api.utilities.get_site_info",
+		"frappe.realtime.get_user_info",
+		"logout",
+		"web_logout",
+		"frappe.handler.logout",
+		"frappe.handler.web_logout",
+	}
+)
+# The pages its session may open: the app of the display, the static assets, the public files (the ads' images)
+DISPLAY_PAGES = ("/pos", "/pos-sw.js")
+DISPLAY_PAGE_PREFIXES = ("/pos/", "/assets/", "/files/")
+
+
+def is_display_account(user=None) -> bool:
+	"""Whether `user` (the session user by default) is the display's own account."""
+	return (user or frappe.session.user) == DISPLAY_ACCOUNT
+
+
+def _ensure_display_role():
+	if not frappe.db.exists("Role", DISPLAY_ROLE):
+		frappe.get_doc(
+			{"doctype": "Role", "role_name": DISPLAY_ROLE, "desk_access": 0}
+		).insert(ignore_permissions=True)
+	else:
+		frappe.db.set_value("Role", DISPLAY_ROLE, "desk_access", 0, update_modified=False)
+
+
+def ensure_display_account() -> str:
+	"""The display's account, made when it is missing, and put back to what it is: an enabled portal account that holds
+	the display's role and nothing else, with no password.
+
+	Other apps give every new user a role of theirs as it is inserted (the suite's, the learning platform's, the
+	wiki's): the account keeps none, so that nothing but the display's calls opens anything to it. Written straight to
+	the database after the insert, so that no hook of another app runs again on it.
+	"""
+	from frappe.utils.password import remove_encrypted_password
+
+	_ensure_display_role()
+	if not frappe.db.exists("User", DISPLAY_ACCOUNT):
+		account = frappe.get_doc(
+			{
+				"doctype": "User",
+				"email": DISPLAY_ACCOUNT,
+				"first_name": "Customer display",
+				"user_type": "Website User",
+				"send_welcome_email": 0,
+				"enabled": 1,
+			}
+		)
+		account.flags.ignore_permissions = True
+		account.flags.no_welcome_mail = True
+		account.insert()
+	held = frappe.get_all("Has Role", filters={"parent": DISPLAY_ACCOUNT, "parenttype": "User"}, pluck="role")
+	if held != [DISPLAY_ROLE]:
+		frappe.db.delete("Has Role", {"parent": DISPLAY_ACCOUNT, "parenttype": "User"})
+		frappe.get_doc(
+			{
+				"doctype": "Has Role",
+				"name": frappe.generate_hash(length=10),
+				"parent": DISPLAY_ACCOUNT,
+				"parenttype": "User",
+				"parentfield": "roles",
+				"idx": 1,
+				"role": DISPLAY_ROLE,
+			}
+		).db_insert()
+	# A sign-in password is never the display's: it signs in with its key
+	remove_encrypted_password("User", DISPLAY_ACCOUNT, "password")
+	frappe.db.set_value(
+		"User",
+		DISPLAY_ACCOUNT,
+		{"user_type": "Website User", "enabled": 1, "role_profile_name": None},
+		update_modified=False,
+	)
+	frappe.clear_cache(user=DISPLAY_ACCOUNT)
+	return DISPLAY_ACCOUNT
+
+
+def _display_tills() -> list:
+	"""The tills a display may follow: every till of the site in use, as the key it replaces could (a till picks its
+	screen: a display shows the shift the till opened it on)."""
+	return frappe.get_all("POS Profile", filters={"disabled": 0}, pluck="name", order_by="name")
+
+
+def _require_display_till(pos_profile):
+	"""The display's account reads a till of the site in use; refused anything else."""
+	if not pos_profile or not isinstance(pos_profile, str) or pos_profile not in _display_tills():
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+
+def _the_display_may_create_a_customer(pos_opening_entry, email):
+	"""The display's account creates a customer for an open shift of a till in use whose settings let the customer
+	create an account on the display; refused anything else. A new customer whose e-mail a Contact already carries is
+	refused, as for a cashier (customers._elevate_primary_contact): the Contact belongs to another party."""
+	opening = isinstance(pos_opening_entry, str) and frappe.db.get_value(
+		"POS Opening Shift",
+		pos_opening_entry,
+		["pos_profile", "docstatus", "status", "pos_closing_shift"],
+		as_dict=True,
+	)
+	if not opening or opening.docstatus != 1 or opening.status != "Open" or opening.pos_closing_shift:
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	_require_display_till(opening.pos_profile)
+	if not frappe.db.get_value(
+		"POS Settings",
+		{"pos_profile": opening.pos_profile, "enabled": 1},
+		"enable_customer_display_account_creation",
+	):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	email = (email or "").strip()
+	if email and frappe.db.exists("Contact", {"email_id": email}):
+		frappe.throw(
+			_(
+				"A contact already uses the e-mail {0}. Look for the existing customer, or ask someone allowed to manage contacts."
+			).format(email),
+			frappe.PermissionError,
+		)
+
+
+def confine_display_session():
+	"""``auth_hooks``: the display's session reaches the display and nothing else.
+
+	Run for every request once its caller is known (by cookie, token or key). The display's account may open the pages
+	of the app and the static assets (by a path that does not climb out of them), and call DISPLAY_METHODS; anything
+	else (the desk, `frappe.client`, any other app's whitelisted method, a website page) gets the 403 a portal account
+	gets. Any other session goes on at once. The reading of a request is the tablets' (devices._methods_called).
+	"""
+	from pos_next.restaurant.devices import _methods_called
+
+	session = getattr(frappe.local, "session", None)
+	if not session or session.get("user") != DISPLAY_ACCOUNT:
+		return
+	request = getattr(frappe.local, "request", None)
+	if request is None:
+		return
+	called = _methods_called(request)
+	if called is None:
+		path = request.path or ""
+		if ".." not in path.split("/") and (path in DISPLAY_PAGES or path.startswith(DISPLAY_PAGE_PREFIXES)):
+			return
+	elif all(method in DISPLAY_METHODS for method in called):
+		return
+	frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+
+def set_display_key(api_key: str, secret: str) -> None:
+	"""The display's account takes this key: its half `api_key`, and its secret kept encrypted, as a saved Password
+	field is (its column holds as many stars, the value lives in __Auth)."""
+	from frappe.utils.password import set_encrypted_password
+
+	frappe.db.set_value(
+		"User", DISPLAY_ACCOUNT, {"api_key": api_key, "api_secret": "*" * len(secret)}, update_modified=False
+	)
+	set_encrypted_password("User", DISPLAY_ACCOUNT, secret, "api_secret")
+	frappe.clear_cache(user=DISPLAY_ACCOUNT)
+
+
+def _new_secret() -> str:
+	return "".join(secrets.choice(DISPLAY_SECRET_ALPHABET) for _ in range(DISPLAY_SECRET_LENGTH))
+
+
+# //// Neoffice — added (no upstream equivalent): the till manager draws the display's password at the till (the
+# //// settings of the till, Customer display), and types it once on each display. Drawn by the server: a person
+# //// never chooses it. A new one replaces the last, and every display paired with the last pairs again.
+@frappe.whitelist(methods=["POST"])
+def new_display_password():
+	"""Draw a new password for the customer displays of the site and answer it, once: it is kept encrypted only."""
+	from pos_next.api.cash_entry import require_till_manager
+
+	require_till_manager()
+	ensure_display_account()
+	secret = _new_secret()
+	set_display_key(frappe.generate_hash(length=15), secret)
+	frappe.get_doc(
+		{
+			"doctype": "Comment",
+			"comment_type": "Info",
+			"reference_doctype": "User",
+			"reference_name": DISPLAY_ACCOUNT,
+			"content": _("New customer display password drawn by {0}").format(frappe.session.user),
+		}
+	).insert(ignore_permissions=True)
+	return {"password": secret}
+
+
+# //// Neoffice — added (no upstream equivalent): what a display sends when a person types the password the till
+# //// manager drew. Answers the key the display keeps, its account's own (the key half is the site's, drawn with it).
+# //// The same limit on refusals as validate_api_key.
+@frappe.whitelist(allow_guest=True, methods=["POST"])
+def pair_display(password: str | None = None):
+	"""Pair a customer display with the password drawn at the till; answer the key it keeps."""
+	from frappe.utils.password import get_decrypted_password
+
+	_hold_back_a_guessing_address()
+	if not password:
+		_refuse_the_key(_("Wrong password"))
+	account = frappe.db.get_value("User", {"name": DISPLAY_ACCOUNT, "enabled": 1}, ["name", "api_key"], as_dict=True)
+	stored = account and account.api_key and get_decrypted_password(
+		"User", DISPLAY_ACCOUNT, "api_secret", raise_exception=False
+	)
+	if not stored:
+		_refuse_the_key(
+			_("No password for the customer displays yet: a till manager draws one in the till's settings, Customer display.")
+		)
+	if not hmac.compare_digest(stored.encode(), password.strip().encode()):
+		_refuse_the_key(_("Wrong password"))
+	return {
+		"success": True,
+		"key": f"{account.api_key}:{stored}",
+		"user": DISPLAY_ACCOUNT,
+		"full_name": frappe.db.get_value("User", DISPLAY_ACCOUNT, "full_name"),
+	}
 
 
 # //// Neoffice — the customer display's writes come from the till, for its own shift: a submitted POS
@@ -119,7 +364,10 @@ def validate_api_key(api_key_string: str | None):
         as_dict=True
     )
 
-    if not user:
+    # //// Neoffice — the display's own account only (maintenance#2296, audit Q2): the key of any other account,
+    # //// the client's super account first, is refused as an unknown one, so that a display still holding it
+    # //// pairs again and drops it. Before the secret is compared: the answer tells nothing of another account.
+    if not user or not is_display_account(user.name):
         _refuse_the_key(_("Invalid API key"))
 
     # Validate API secret
@@ -151,6 +399,16 @@ def get_pos_profiles():
     Returns:
         list: List of POS profiles with name, company, warehouse
     """
+    # //// Neoffice — the display's own account follows any till of the site in use (see _display_tills), as the key
+    # //// it replaces did: it is assigned to none.
+    if is_display_account():
+        return frappe.get_all(
+            "POS Profile",
+            filters={"disabled": 0},
+            fields=["name", "company", "warehouse", "currency"],
+            order_by="name",
+        )
+
     profiles = frappe.db.sql(
         """
         SELECT DISTINCT p.name, p.company, p.warehouse, p.currency
@@ -174,6 +432,16 @@ def get_pos_profiles():
 def _require_display_reader(pos_opening_entry):
     from pos_next.api.cash_entry import is_till_manager, require_system_user, require_till_access
 
+    # //// Neoffice — the display's own account (a portal account, maintenance#2296 audit Q2) reads the shift of a
+    # //// till of the site in use; it is the cashier of none.
+    if is_display_account():
+        opening = isinstance(pos_opening_entry, str) and frappe.db.get_value(
+            "POS Opening Shift", pos_opening_entry, ["pos_profile"], as_dict=True
+        )
+        if not opening:
+            frappe.throw(_("Not permitted"), frappe.PermissionError)
+        _require_display_till(opening.pos_profile)
+        return
     require_system_user()
     opening = isinstance(pos_opening_entry, str) and frappe.db.get_value(
         "POS Opening Shift", pos_opening_entry, ["user", "pos_profile"], as_dict=True
@@ -221,10 +489,13 @@ def get_pos_opening_entry(pos_profile: str | None, opening: str | None = None):
         frappe.throw(_("POS Profile is required"))
 
     # //// Neoffice — its answer names the till's cashier and company: the till's (see
-    # //// _require_display_reader).
+    # //// _require_display_reader), or the display's own account's.
     from pos_next.api.cash_entry import require_till_access
 
-    require_till_access(pos_profile)
+    if is_display_account():
+        _require_display_till(pos_profile)
+    else:
+        require_till_access(pos_profile)
 
     open_entry = None
 
@@ -297,10 +568,13 @@ def get_display_settings(pos_profile: str | None):
     if not pos_profile:
         frappe.throw(_("POS Profile is required"))
 
-    # //// Neoffice — the till's settings answer the till (see _require_display_reader).
+    # //// Neoffice — the till's settings answer the till (see _require_display_reader), or the display's own account.
     from pos_next.api.cash_entry import require_till_access
 
-    require_till_access(pos_profile)
+    if is_display_account():
+        _require_display_till(pos_profile)
+    else:
+        require_till_access(pos_profile)
 
     # Get POS Settings for this profile
     settings = frappe.db.get_value(
@@ -474,7 +748,13 @@ def create_customer_from_display(customer_name, pos_opening_entry: str | None, e
         frappe.throw(_("POS Opening Entry is required"))
 
     # Check permission
-    if not frappe.has_permission("Customer", "create"):
+    # //// Neoffice — the display's own account holds no right on any doctype (maintenance#2296, audit Q2): it
+    # //// creates a customer for an open shift of a till in use whose settings let the customer do so, and that
+    # //// customer only (_the_display_may_create_a_customer).
+    by_the_display = is_display_account()
+    if by_the_display:
+        _the_display_may_create_a_customer(pos_opening_entry, email)
+    elif not frappe.has_permission("Customer", "create"):
         frappe.throw(_("You don't have permission to create customers"), frappe.PermissionError)
 
     # Get POS profile to determine company and customer settings
@@ -550,7 +830,10 @@ def create_customer_from_display(customer_name, pos_opening_entry: str | None, e
     # created for it, as in pos_next.api.customers.create_customer (see its address book block).
     from pos_next.api.customers import _elevate_primary_contact, _lacks_right
 
-    elevated = _elevate_primary_contact(customer)
+    # //// Neoffice — the display's account creates the customer and its primary Contact as the till does for it.
+    elevated = True if by_the_display else _elevate_primary_contact(customer)
+    if by_the_display:
+        customer.flags.ignore_permissions = True
     try:
         customer.insert()
     finally:
@@ -578,8 +861,11 @@ def create_customer_from_display(customer_name, pos_opening_entry: str | None, e
             })
             # Linked to the customer just created, and to nothing else.
             address.insert(
-                ignore_permissions=_lacks_right("Address")
-                and frappe.has_permission("Customer", "write", doc=customer.name)
+                ignore_permissions=by_the_display
+                or (
+                    _lacks_right("Address")
+                    and frappe.has_permission("Customer", "write", doc=customer.name)
+                )
             )
             address_name = address.name
 

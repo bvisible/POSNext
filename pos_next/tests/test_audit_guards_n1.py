@@ -465,10 +465,10 @@ class TestTheDisplayKey(TillCase):
 		super().setUp()
 		self.key = "n1displaykey"
 		self.secret = "the-display-password"
-		user = frappe.get_doc("User", DISPLAY)
-		user.api_key = self.key
-		user.api_secret = self.secret
-		user.save(ignore_permissions=True)
+		# //// Neoffice — the display's own account: the door takes no other (maintenance#2296, audit Q2,
+		# //// test_the_customer_display_has_an_account_of_its_own)
+		self.display = customer_display.ensure_display_account()
+		customer_display.set_display_key(self.key, self.secret)
 		self.addCleanup(self.forget_the_counters)
 		self.peers = set()
 
@@ -487,7 +487,7 @@ class TestTheDisplayKey(TillCase):
 				frappe.set_user("Administrator")
 
 	def test_the_display_signs_in(self):
-		self.assertEqual(self.guess(self.secret)["user"], DISPLAY)
+		self.assertEqual(self.guess(self.secret)["user"], self.display)
 
 	def test_a_guesser_is_held_back_whatever_he_writes_in_the_header(self):
 		held_back = False
@@ -511,7 +511,7 @@ class TestTheDisplayKey(TillCase):
 				break
 			except frappe.AuthenticationError:
 				continue
-		self.assertEqual(self.guess(self.secret, peer="203.0.113.51")["user"], DISPLAY)
+		self.assertEqual(self.guess(self.secret, peer="203.0.113.51")["user"], self.display)
 
 	def test_a_right_key_never_counts(self):
 		for _attempt in range(40):
