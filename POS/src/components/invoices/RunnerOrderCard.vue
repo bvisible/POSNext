@@ -403,7 +403,7 @@ onUnmounted(() => {
 })
 
 //// Neoffice — the toast that offers to take a delivery back for five seconds (task 38a-2, ruling 112): each dish goes back in the state it had (the card
-//// does not change them itself, so they are as they were when it was pressed), one call per item. The toast is the page's: the card is gone by then.
+//// does not change them itself, so they are as they were when it was pressed), one call per line. The toast is the page's: the card is gone by then.
 function offerBack(message, items) {
 	const entries = dishesToPutBack(
 		[...new Set(items.map((item) => item._invoiceName))].map((invoice) => {
@@ -411,7 +411,8 @@ function offerBack(message, items) {
 			return {
 				invoice,
 				//// Neoffice — what a delivery leaves each line in, and the whole state it had (status AND counters): a line cooked in part keeps its status when the runner delivers its cooked units
-				dishes: ofTheInvoice.map((item) => ({ item_code: item.item_code, ...stateAfterDelivery(item) })),
+				//// Neoffice — and its id: the line is put back alone, not with the other lines of its dish (maintenance#2075)
+				dishes: ofTheInvoice.map((item) => ({ name: item.name, item_code: item.item_code, ...stateAfterDelivery(item) })),
 				before: ofTheInvoice.map((item) => dishState(item)),
 			}
 		}),

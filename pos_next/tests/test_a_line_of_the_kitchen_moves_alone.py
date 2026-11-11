@@ -56,7 +56,8 @@ class TestALineMovesAlone(PartialCase):
 		row = frappe.db.get_value("Sales Invoice Item", {"parent": other}, "name")
 		before = frappe.db.get_value("Sales Invoice Item", row, "kds_status")
 
-		with as_role("cashier"):
+		# A line the order does not have is said, never a success that moved nothing
+		with as_role("cashier"), self.assertRaises(frappe.DoesNotExistError):
 			restaurant_api.update_item_kds_status(self.name, self.fx.item, "Delivered", row=row)
 
 		self.assertEqual(frappe.db.get_value("Sales Invoice Item", row, "kds_status"), before)
@@ -67,3 +68,20 @@ class TestALineMovesAlone(PartialCase):
 			restaurant_api.update_item_kds_status(self.name, self.fx.item, "Ready")
 
 		self.assertEqual((self.state(self.first)[0], self.state(self.second)[0]), ("Ready", "Ready"))
+
+	def test_a_line_the_till_has_saved_again_is_said_and_nothing_moves(self):
+		# The screen read the order, then the till saved the table again: its lines are new, the id the screen holds is gone
+		gone = self.second
+		frappe.db.delete("Sales Invoice Item", {"name": gone})
+
+		with as_role("cashier"), self.assertRaises(frappe.DoesNotExistError):
+			restaurant_api.update_item_kds_status(self.name, self.fx.item, "Ready", row=gone)
+
+		self.assertEqual(self.state(self.first)[0], "Preparing")
+
+	def test_the_kitchen_reads_each_line_with_its_id(self):
+		# The screen moves a line by the id it was given: the kitchen's reading carries it, one per line
+		with as_role("cashier"):
+			orders = {o["name"]: o for o in restaurant_api.get_kds_orders(restaurant=self.a)}
+
+		self.assertEqual([line.get("name") for line in orders[self.name]["items"]], [self.first, self.second])

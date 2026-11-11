@@ -137,6 +137,8 @@ describe("the runner screen", () => {
 				invoice_name: "SINV-1",
 				item_code: "SOUP",
 				status: "Ready",
+				//// Neoffice — the line by its id (maintenance#2075)
+				row: "r1",
 			},
 		)
 		expect(reads("get_runner_orders")).toBeGreaterThan(before)

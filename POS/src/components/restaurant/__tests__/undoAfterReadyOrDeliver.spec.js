@@ -321,8 +321,9 @@ describe("after « Deliver »", () => {
 		call.mockClear()
 		await press(wrapper, '[data-test="undo-button"]')
 		expect(call.mock.calls).toEqual([
-			[UPDATE, { invoice_name: "SINV-7", item_code: "SOUP", status: "Ready" }],
-			[UPDATE, { invoice_name: "SINV-7", item_code: "STEAK", status: "Ready" }],
+			//// Neoffice — each line by its id (maintenance#2075)
+			[UPDATE, { invoice_name: "SINV-7", item_code: "SOUP", status: "Ready", row: "row-1" }],
+			[UPDATE, { invoice_name: "SINV-7", item_code: "STEAK", status: "Ready", row: "row-2" }],
 		])
 		expect(undone).toHaveBeenCalledTimes(1)
 	})
@@ -360,7 +361,7 @@ describe("after « Deliver »", () => {
 		await press(wrapper, '[data-test="undo-button"]')
 
 		expect(call.mock.calls).toEqual([
-			[UPDATE, { invoice_name: "SINV-8", item_code: "SOUP", status: "Ready" }],
+			[UPDATE, { invoice_name: "SINV-8", item_code: "SOUP", status: "Ready", row: "row-1" }],
 		])
 	})
 
@@ -407,8 +408,8 @@ describe("after « Deliver »", () => {
 		await press(wrapper, '[data-test="undo-button"]')
 
 		expect(call.mock.calls).toEqual([
-			[UPDATE, { invoice_name: "SINV-1", item_code: "SOUP", status: "Ready" }],
-			[UPDATE, { invoice_name: "SINV-2", item_code: "STEAK", status: "Ready" }],
+			[UPDATE, { invoice_name: "SINV-1", item_code: "SOUP", status: "Ready", row: "r1" }],
+			[UPDATE, { invoice_name: "SINV-2", item_code: "STEAK", status: "Ready", row: "r2" }],
 		])
 	})
 })

@@ -449,7 +449,7 @@ import { FULLSCREEN_FRAME, KITCHEN_FRAME, TICKET_FRAME } from "@/utils/ticketLay
 import TicketDishNotes from "@/components/invoices/TicketDishNotes.vue"
 //// Neoffice — five seconds to take back a « Ready » or a « Deliver » (task 38a-2, ruling 112)
 import { offerUndo } from "@/composables/useUndoToast"
-import { dishesToPutBack, dishState, putBack, UNDOABLE_STATUSES } from "@/utils/kitchenUndo"
+import { dishesToPutBack, dishState, linesToMove, moveParams, putBack, UNDOABLE_STATUSES } from "@/utils/kitchenUndo"
 //// Neoffice — a line of several units can be marked ready for some of them: the units still to cook, and what already left (kitchen test of 01.11)
 import { isCookedInPart, orderedQty, unitsLeftToCookOfItem, unitsToCook } from "@/utils/kitchenRunner"
 //// Neoffice — what to write on a station's colour in dark mode (task 46)
@@ -852,7 +852,10 @@ function offers(item, status) {
 //// « ready » with that number is what it always was. The units still to cook are what a line shows as its quantity; `shownQty` is that, for a card handed the order itself
 //// or a view of it.
 const pickedUnits = ref(1)
-const unitsLeftOf = (item) => unitsLeftToCookOfItem(props.order.items || [], item.item_code)
+//// Neoffice — a line named by its id is marked ready alone (maintenance#2075): what is left to cook is that line's; a line without its id (an older server) still
+//// counts every line of its dish, which the server then fills in the order of the lines
+const unitsLeftOf = (item) =>
+	item.name ? unitsToCook(item) : unitsLeftToCookOfItem(props.order.items || [], item.item_code)
 const pickerShown = (item) => offers(item, "Ready") && unitsLeftOf(item) > 1
 const shownQty = (item) => (isCookedInPart(item) ? unitsToCook(item) : item.qty)
 const unitsSentOf = (item) => Math.min(Number(item.kds_ready_qty) || 0, orderedQty(item))
@@ -1052,8 +1055,10 @@ watch(() => props.order, measureHidden, { deep: true, flush: "post" })
 async function updateItemStatus(item, newStatus, units) {
 	activeItemMenu.value = null
 	const partial = units !== undefined
-	// Optimistic: update all items with same item_code instantly
-	const rows = props.order.items.filter((i) => i.item_code === item.item_code)
+	//// Neoffice — optimistic: the line itself, by its id (maintenance#2075: two rounds of one dish have a state each); a line without its id, every line of its dish, as the server moves them
+	const rows = item.name
+		? props.order.items.filter((i) => i.name === item.name)
+		: props.order.items.filter((i) => !i.name && i.item_code === item.item_code)
 	const oldStatuses = rows.map((i) => i.kds_status)
 	//// Neoffice — the state the dish had, counters included: what an undo puts back
 	const before = dishState(rows[0] || item)
@@ -1063,19 +1068,18 @@ async function updateItemStatus(item, newStatus, units) {
 		})
 	try {
 		await call("pos_next.api.restaurant.update_item_kds_status", {
-			invoice_name: props.order.name,
-			item_code: item.item_code,
-			status: newStatus,
+			...moveParams(props.order.name, { item_code: item.item_code, row: item.name }, newStatus),
 			...(partial ? { qty: units } : {}),
 		})
 		//// Neoffice — a dish made ready or delivered by a tap can be taken back for five seconds (task 38a-2, ruling 112); a line made ready in part goes back to the counters it had
 		const after = partial
 			? {
+					name: item.name,
 					item_code: item.item_code,
 					kds_status: "Preparing",
 					kds_ready_qty: (Number(before.kds_ready_qty) || 0) + units,
 				}
-			: { item_code: item.item_code, kds_status: newStatus }
+			: { name: item.name, item_code: item.item_code, kds_status: newStatus }
 		const entries = dishesToPutBack([
 			{ invoice: props.order.name, dishes: [after], before: [before] },
 		])
@@ -1293,7 +1297,7 @@ function onMainPress() {
 }
 
 //// Neoffice — the call-back to preparation, from the list of what waits at the pass (task 38a-1, ruling 112): every dish of the card, one
-//// call each (the server moves the lines of one item at a time, and moves them back as well as forward), at once on screen, put back
+//// call per line (the server moves one line by its id, and moves it back as well as forward), at once on screen, put back
 //// if the server refuses
 async function recall() {
 	loading.value = true
@@ -1303,12 +1307,9 @@ async function recall() {
 	const before = dishes.map((dish) => dish.kds_status)
 	for (const dish of dishes) dish.kds_status = "Preparing"
 	try {
-		for (const code of new Set(dishes.map((dish) => dish.item_code))) {
-			await call("pos_next.api.restaurant.update_item_kds_status", {
-				invoice_name: props.order.name,
-				item_code: code,
-				status: "Preparing",
-			})
+		//// Neoffice — one call per line, by its id (maintenance#2075)
+		for (const target of linesToMove(dishes)) {
+			await call("pos_next.api.restaurant.update_item_kds_status", moveParams(props.order.name, target, "Preparing"))
 		}
 		changed()
 		//// Neoffice — a main action pressed in the panel is the cook's last word on the ticket: the panel closes (task 38a-3)
@@ -1341,7 +1342,7 @@ function advanceDishes(newStatus) {
 	}
 }
 
-//// Neoffice — several dishes of the ticket moved to a status, one call for each distinct item (the server moves the lines of one item at a time), at once on screen, put back if the server refuses, and offered back for five
+//// Neoffice — several dishes of the ticket moved to a status, one call for each line (the server moves one line by its id, maintenance#2075), at once on screen, put back if the server refuses, and offered back for five
 //// seconds like a dish's own move. It is what a press on a SECTION does (all the dishes of the course) and what the main button does while a course waits (only the dishes that do not wait: Daniel, 01.11)
 async function moveDishes(dishes, newStatus, message, { closeAfter = false } = {}) {
 	const rank = RANK[newStatus] ?? 0
@@ -1352,12 +1353,9 @@ async function moveDishes(dishes, newStatus, message, { closeAfter = false } = {
 	const before = targets.map((dish) => dishState(dish))
 	for (const dish of targets) dish.kds_status = newStatus
 	try {
-		for (const code of new Set(targets.map((dish) => dish.item_code))) {
-			await call("pos_next.api.restaurant.update_item_kds_status", {
-				invoice_name: props.order.name,
-				item_code: code,
-				status: newStatus,
-			})
+		//// Neoffice — one call per line, by its id (maintenance#2075)
+		for (const target of linesToMove(targets)) {
+			await call("pos_next.api.restaurant.update_item_kds_status", moveParams(props.order.name, target, newStatus))
 		}
 		const entries = dishesToPutBack([{ invoice: props.order.name, dishes: targets, before }])
 		if (UNDOABLE_STATUSES.includes(newStatus) && entries.length) offerBack(message, entries)

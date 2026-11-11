@@ -233,6 +233,8 @@ describe("with a runner", () => {
 			invoice_name: "A",
 			item_code: "SOUP",
 			status: "Preparing",
+			//// Neoffice — the line by its id (maintenance#2075)
+			row: "A-0",
 		})
 		// The dish is the kitchen's again at once: the chip is back to nothing, and the ticket has both dishes
 		expect(countOnChip(wrapper)).toBe("0")

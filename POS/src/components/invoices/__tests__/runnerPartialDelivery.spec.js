@@ -189,6 +189,8 @@ describe("delivering a line cooked in part", () => {
 				invoice_name: "SINV-0042",
 				item_code: "CODE-a",
 				status: "Preparing",
+				//// Neoffice — the line by its id (maintenance#2075)
+				row: "a",
 				restore: JSON.stringify({ ready_qty: 4, delivered_qty: 0 }),
 			},
 		)
@@ -208,6 +210,7 @@ describe("delivering a line cooked in part", () => {
 				invoice_name: "SINV-0042",
 				item_code: "CODE-a",
 				status: "Ready",
+				row: "a",
 				restore: JSON.stringify({ ready_qty: 6, delivered_qty: 4 }),
 			},
 		)
@@ -267,6 +270,7 @@ describe("delivering a line cooked in part", () => {
 				invoice_name: "SINV-0042",
 				item_code: "SOUP",
 				status: "Ready",
+				row: "a",
 			},
 		)
 	})

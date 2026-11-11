@@ -1540,7 +1540,9 @@ def get_kds_orders(station=None, restaurant=None):
 	# if the user hasn't run `bench migrate` yet.
 	has_instructions_field = frappe.db.has_column("Sales Invoice Item", "posa_special_instructions")
 	has_kds_status_field = frappe.db.has_column("Sales Invoice Item", "kds_status")
-	item_fields = ["item_code", "item_name", "qty", "description", "preparation_station"]
+	# //// Neoffice — `name`, the line's id: the kitchen's screen moves a line by it (maintenance#2075), and the station resolved below is
+	# //// written on the line by it (without it the write named no line)
+	item_fields = ["name", "item_code", "item_name", "qty", "description", "preparation_station"]
 
 	if has_instructions_field:
 		item_fields.append("posa_special_instructions")
@@ -1793,6 +1795,10 @@ def update_item_kds_status(
 	)
 	if device and not items:
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	# //// Neoffice — a line named that the order no longer has (the till saved the table again since the screen read it: its lines are
+	# //// new) is said, never a success that moved nothing (maintenance#2075): the screen puts its look back and reads the orders again
+	if row and not items:
+		frappe.throw(_("This line is no longer on the order. The screen reads the orders again."), frappe.DoesNotExistError)
 
 	if restore is not None:
 		ready, delivered = restore["ready_qty"], restore["delivered_qty"]
@@ -2170,6 +2176,7 @@ def update_station(name: str | None, station_name=None, station_type=None, color
 	# And whoever may write a station (not a cashier), saved as that user
 	permissions.require("Preparation Station", "write", name)
 	import json
+
 	from frappe.utils import cint
 
 	doc = frappe.get_doc("Preparation Station", name)
@@ -3047,6 +3054,7 @@ def open_card_outside_hours(card_name, restaurant=None, authorization_token=None
 def get_active_menus(restaurant=None):
 	"""Fetch the active menus of one restaurant (the till's own unless one is named) with their courses."""
 	import json
+
 	from frappe.utils import today
 
 	permissions.require("Restaurant Menu", "read")
@@ -3340,7 +3348,8 @@ def _check_restaurant_open(hours):
 	Returns (is_open: bool, current_slot_label: str or None).
 	"""
 	import calendar
-	from frappe.utils import nowtime, get_time, nowdate, getdate
+
+	from frappe.utils import get_time, getdate, nowdate, nowtime
 
 	if not hours:
 		return True, None
@@ -4142,8 +4151,9 @@ def create_item(
 	description=None,
 ):
 	"""Create a new Item from the POS Card Editor with prices and optional stock."""
-	from frappe.utils import cint, flt
 	import json
+
+	from frappe.utils import cint, flt
 
 	if not frappe.has_permission("Item", "create"):
 		frappe.throw(_("You don't have permission to create items"), frappe.PermissionError)

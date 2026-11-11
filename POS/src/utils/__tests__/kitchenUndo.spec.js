@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from "vitest"
 import {
 	dishesToPutBack,
 	dishState,
+	linesToMove,
 	putBack,
 	putBackCalls,
 	UNDOABLE_STATUSES,
@@ -210,5 +211,38 @@ describe("a line cooked in part is put back exactly (kitchen test of 01.11)", ()
 				{ invoice_name: "SINV-1", item_code: "B", status: "Ready" },
 			],
 		])
+	})
+})
+
+//// Neoffice — a line is named by its own id (maintenance#2075): two rounds of one dish have a state each
+describe("a line that has its id", () => {
+	it("is put back alone, by its id, apart from the other round of its dish", () => {
+		const dishes = [
+			{ name: "r1", item_code: "A", kds_status: "Ready" },
+			{ name: "r2", item_code: "A", kds_status: "Ready" },
+		]
+
+		const entries = dishesToPutBack([{ invoice: "SINV-1", dishes, before: ["Preparing", "Pending"] }])
+
+		expect(entries).toEqual([
+			{ invoice: "SINV-1", item_code: "A", row: "r1", status: "Preparing" },
+			{ invoice: "SINV-1", item_code: "A", row: "r2", status: "Pending" },
+		])
+		expect(putBackCalls(entries).map(([, params]) => params)).toEqual([
+			{ invoice_name: "SINV-1", item_code: "A", status: "Preparing", row: "r1" },
+			{ invoice_name: "SINV-1", item_code: "A", status: "Pending", row: "r2" },
+		])
+	})
+
+	it("is moved by its id, one call per line; lines with no id, one call per dish", () => {
+		expect(
+			linesToMove([
+				{ name: "r1", item_code: "A" },
+				{ name: "r2", item_code: "A" },
+				{ item_code: "B" },
+				{ item_code: "B" },
+				{},
+			]),
+		).toEqual([{ item_code: "A", row: "r1" }, { item_code: "A", row: "r2" }, { item_code: "B" }])
 	})
 })
