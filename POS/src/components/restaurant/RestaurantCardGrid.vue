@@ -263,8 +263,9 @@ function nameClasses(item) {
 	background-color: var(--tile-soft);
 }
 
-:global(.dark) .tile--colored,
-:global([data-theme="dark"]) .tile--colored {
+/* //// Neoffice — the whole selector inside :global(): Vue compiles `:global(.dark) .x` to `.dark` alone and drops `.x`, so the rule painted <html> and never the element (maintenance#2256) */
+:global(.dark .tile--colored),
+:global([data-theme="dark"] .tile--colored) {
 	background-color: var(--tile-dim);
 }
 

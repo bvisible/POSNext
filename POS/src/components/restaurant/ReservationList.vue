@@ -644,43 +644,44 @@ function whenOf(res) {
 }
 
 /* The dark screen: the colour of the status at 16 % over the card, the ink light */
-:global(.dark) .res-card,
-:global([data-theme="dark"]) .res-card {
+/* //// Neoffice — the whole selector inside :global(): Vue compiles `:global(.dark) .x` to `.dark` alone and drops `.x`, so the rule painted <html> and never the element (maintenance#2256) */
+:global(.dark .res-card),
+:global([data-theme="dark"] .res-card) {
 	background: #1c1f26;
 	border-color: rgba(255, 255, 255, 0.1);
 	border-top-color: var(--edge);
 }
 
-:global(.dark) .card-time,
-:global(.dark) .card-name,
-:global([data-theme="dark"]) .card-time,
-:global([data-theme="dark"]) .card-name {
+:global(.dark .card-time),
+:global(.dark .card-name),
+:global([data-theme="dark"] .card-time),
+:global([data-theme="dark"] .card-name) {
 	color: #f4f1ea;
 }
 
-:global(.dark) .chip,
-:global(.dark) .tag,
-:global([data-theme="dark"]) .chip,
-:global([data-theme="dark"]) .tag {
+:global(.dark .chip),
+:global(.dark .tag),
+:global([data-theme="dark"] .chip),
+:global([data-theme="dark"] .tag) {
 	background: rgba(255, 255, 255, 0.08);
 	border-color: rgba(255, 255, 255, 0.1);
 	color: #dcd4c7;
 }
 
-:global(.dark) .status-tag,
-:global([data-theme="dark"]) .status-tag {
+:global(.dark .status-tag),
+:global([data-theme="dark"] .status-tag) {
 	background: rgba(255, 255, 255, 0.1);
 	color: #f4f1ea;
 }
 
-:global(.dark) .go-btn,
-:global([data-theme="dark"]) .go-btn {
+:global(.dark .go-btn),
+:global([data-theme="dark"] .go-btn) {
 	background: #f4f1ea;
 	color: #141414;
 }
 
-:global(.dark) .icon-btn,
-:global([data-theme="dark"]) .icon-btn {
+:global(.dark .icon-btn),
+:global([data-theme="dark"] .icon-btn) {
 	background: transparent;
 	border-color: rgba(255, 255, 255, 0.18);
 	color: #dcd4c7;

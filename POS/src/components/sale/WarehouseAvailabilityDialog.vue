@@ -1462,14 +1462,15 @@ function formatPrice(price) {
 }
 
 /* RTL mode - Right align text and placeholder */
-:global([dir="rtl"]) .stock-search-input,
-:global(.rtl) .stock-search-input {
+/* //// Neoffice — the whole selector inside :global(): Vue compiles `:global(.dark) .x` to `.dark` alone and drops `.x`, so the rule painted <html> and never the element (maintenance#2256) */
+:global([dir="rtl"] .stock-search-input),
+:global(.rtl .stock-search-input) {
 	text-align: right;
 	direction: rtl;
 }
 
-:global([dir="rtl"]) .stock-search-input::placeholder,
-:global(.rtl) .stock-search-input::placeholder {
+:global([dir="rtl"] .stock-search-input::placeholder),
+:global(.rtl .stock-search-input::placeholder) {
 	text-align: right;
 	direction: rtl;
 }
