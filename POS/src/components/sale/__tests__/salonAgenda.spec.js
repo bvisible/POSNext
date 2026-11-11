@@ -236,8 +236,8 @@ describe("the agenda of the salon", () => {
 		it("says the salon is closed and why, with the number of appointments booked before the closing to move or cancel", () => {
 			store.salon = { state: "closed", reason: "holiday", label: "Christmas Day", periods: [] }
 			store.appointments = [
-				row("BKG-9", "Maya", "10:00", "11:00", { to_handle: true }),
-				row("BKG-10", "Luc", "14:00", "15:00", { to_handle: true }),
+				row("BKG-9", "Maya", "10:00", "11:00", { to_handle: "closed" }),
+				row("BKG-10", "Luc", "14:00", "15:00", { to_handle: "closed" }),
 				row("BKG-11", "Luc", "16:00", "17:00", { state: "started", clock: { state: "running" } }),
 			]
 			const wrapper = mountIt()
@@ -261,7 +261,7 @@ describe("the agenda of the salon", () => {
 			store.salon = { state: "closed", reason: "closure", label: null, periods: [] }
 			// Two hours tall: a block shorter than 64 px has no room for its pill
 			store.appointments = [
-				row("BKG-9", "Maya", "10:00", "12:00", { to_handle: true }),
+				row("BKG-9", "Maya", "10:00", "12:00", { to_handle: "closed" }),
 				row("BKG-2", "Luc", "13:30", "15:30", { state: "started", clock: { state: "running" } }),
 			]
 			const wrapper = mountIt()
@@ -286,10 +286,22 @@ describe("the agenda of the salon", () => {
 			expect(wrapper.findAll("[data-test^='free-']").length).toBeGreaterThan(0)
 		})
 
+		it("draws the appointments of a person who is away, marked « To handle », and says how many, on a day the salon is open", () => {
+			store.salon = { state: "open", reason: null, label: null, periods: [["09:00", "18:00"]] }
+			store.appointments = [row("BKG-9", "Sonia", "10:00", "12:00", { to_handle: "away" })]
+			const wrapper = mountIt()
+
+			expect(wrapper.get("[data-test='column-off-Sonia']").text()).toContain("On leave")
+			expect(wrapper.get("[data-test='block-BKG-9']").text()).toContain("To handle")
+			expect(wrapper.get("[data-test='agenda-away']").text()).toContain("1 appointments of a person who is away that day")
+			expect(wrapper.find("[data-test='agenda-salon']").exists()).toBe(false)
+			expect(wrapper.find("[data-test='column-Sonia'] [data-test^='free-']").exists()).toBe(false)
+		})
+
 		it("lists the rows to handle on a phone, with no free hour", () => {
 			ui.isDesktop = false
 			store.salon = { state: "closed", reason: "holiday", label: null, periods: [] }
-			store.appointments = [row("BKG-9", "Luc", "10:00", "11:00", { to_handle: true })]
+			store.appointments = [row("BKG-9", "Luc", "10:00", "11:00", { to_handle: "closed" })]
 			const wrapper = mountIt()
 
 			expect(wrapper.get("[data-test='row-BKG-9']").text()).toContain("To handle")

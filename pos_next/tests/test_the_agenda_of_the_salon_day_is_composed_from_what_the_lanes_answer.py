@@ -613,15 +613,15 @@ class TestTheAgendaOfTheSalonDayIsComposedFromWhatTheLanesAnswer(FrappeTestCase)
 		self.assertEqual(
 			{key: row["to_handle"] for key, row in rows.items()},
 			{
-				"BKG-1": True,
+				"BKG-1": "closed",
 				# Under way, paid, absent, finished, or held in the till by a cashier: nothing to handle
-				"BKG-2": False,
-				"BKG-3": False,
-				"BKG-4": False,
-				"BKG-5": False,
-				"BKG-6": False,
+				"BKG-2": None,
+				"BKG-3": None,
+				"BKG-4": None,
+				"BKG-5": None,
+				"BKG-6": None,
 				# A colleague's busy hour: seventh of the day (the six of Luc come first)
-				"busy-6": False,
+				"busy-6": None,
 			},
 		)
 		# Nothing is cancelled or changed by the till: the appointment stays what the lanes said
@@ -650,7 +650,73 @@ class TestTheAgendaOfTheSalonDayIsComposedFromWhatTheLanesAnswer(FrappeTestCase)
 
 		# The cashier moves it or cancels it with the customer: the day being closed takes nothing away
 		self.assertEqual(row["can"], {"collect": True, "move": True, "cancel": True, "clock": False})
-		self.assertTrue(row["to_handle"])
+		self.assertEqual(row["to_handle"], "closed")
+
+	def test_the_planning_lane_says_on_each_appointment_why_it_needs_somebody_and_only_a_word_it_knows_counts(
+		self,
+	):
+		self.site_has("day", "list", "clocks")
+		self.a_day(
+			salon=self.a_salon(state="open", reason=None, label=None, periods=[["09:00", "18:00"]]),
+			people=[
+				self.person(
+					LUC,
+					state="on_leave",
+					appointments=[
+						self.row("BKG-1", LUC, to_handle="away"),
+						self.row("BKG-2", LUC, to_handle="closed", starts="2026-11-10 10:00:00"),
+						self.row("BKG-3", LUC, to_handle="dancing", starts="2026-11-10 11:00:00"),
+						self.row("BKG-4", LUC, to_handle=None, starts="2026-11-10 12:00:00"),
+						# Under way, paid, held in the till: the lane's word changes nothing for the till
+						self.row("BKG-5", LUC, to_handle="away", starts="2026-11-10 13:00:00"),
+						self.row(
+							"BKG-6",
+							LUC,
+							to_handle="away",
+							payment_status="Paid",
+							starts="2026-11-10 14:00:00",
+						),
+						self.row("BKG-7", LUC, to_handle="away", starts="2026-11-10 15:00:00"),
+					],
+				)
+			],
+		)
+		SITE["clocks"] = {"BKG-5": {"status": "In progress"}}
+		SITE["list"] = [{"booking": "BKG-7", "state": "booked", "in_the_till": True, "invoice": "ACC-SINV-7"}]
+
+		rows = {r["booking"]: r["to_handle"] for r in self.agenda()["appointments"]}
+
+		self.assertEqual(
+			rows,
+			{
+				"BKG-1": "away",
+				"BKG-2": "closed",
+				"BKG-3": None,
+				"BKG-4": None,
+				"BKG-5": None,
+				"BKG-6": None,
+				"BKG-7": None,
+			},
+		)
+
+	def test_a_closed_day_keeps_the_word_the_lane_gave_to_an_appointment_and_says_closed_for_the_others(self):
+		self.site_has("day")
+		self.a_day(
+			salon=self.a_salon(),
+			people=[
+				self.person(
+					LUC,
+					appointments=[
+						self.row("BKG-1", LUC, to_handle="away"),
+						self.row("BKG-2", LUC, starts="2026-11-10 10:00:00"),
+					],
+				)
+			],
+		)
+
+		rows = {r["booking"]: r["to_handle"] for r in self.agenda()["appointments"]}
+
+		self.assertEqual(rows, {"BKG-1": "away", "BKG-2": "closed"})
 
 	# What a colleague's appointment says
 

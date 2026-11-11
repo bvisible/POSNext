@@ -102,6 +102,10 @@ export const useAppointmentsStore = defineStore("appointments", () => {
 	const toHandleCount = computed(
 		() => appointments.value.filter((row) => row.to_handle).length,
 	)
+	// …of them, those whose person is away (leave, holiday) on a day the salon is open
+	const awayCount = computed(
+		() => appointments.value.filter((row) => row.to_handle === "away").length,
+	)
 	// What waits for its payment: only today's count (the other days' are not the cashier's concern now)
 	const toCollectCount = computed(() =>
 		isToday.value ? countToCollect(appointments.value, now.value) : 0,
@@ -203,6 +207,7 @@ export const useAppointmentsStore = defineStore("appointments", () => {
 		salon,
 		closed,
 		toHandleCount,
+		awayCount,
 		mine,
 		people,
 		appointments,

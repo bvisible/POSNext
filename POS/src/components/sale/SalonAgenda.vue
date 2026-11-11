@@ -35,6 +35,10 @@
 			<template v-if="salonNotice.detail"> · {{ salonNotice.detail }}</template>
 			<div v-if="store.toHandleCount" class="mt-0.5" data-test="agenda-to-handle">{{ __("{0} booked before the closing, to move or cancel with the customers. None is cancelled by itself.", [store.toHandleCount]) }}</div>
 		</div>
+		<!-- A person who is away that day (leave, holiday) with appointments booked before: said once; none is cancelled by itself -->
+		<p v-else-if="store.awayCount" class="mx-4 mb-2 rounded-lg bg-yellow-50 px-4 py-2 text-sm text-yellow-900 dark:bg-yellow-400/15 dark:text-yellow-100" data-test="agenda-away">
+			{{ __("{0} appointments of a person who is away that day, to move or cancel with the customers. None is cancelled by itself.", [store.awayCount]) }}
+		</p>
 
 		<p v-if="store.fromCache" data-test="agenda-offline" class="mx-4 mb-2 rounded-lg bg-yellow-50 px-4 py-2 text-sm text-yellow-800 dark:bg-yellow-400/15 dark:text-yellow-100">
 			<b class="font-semibold">{{ __("No network.") }}</b> {{ __("The agenda is the one kept at {0}. Collecting an appointment works as usual.", [keptAt]) }}
@@ -70,14 +74,14 @@
 				</div>
 
 				<div v-for="column in store.columns" :key="`col-${column.key}`" class="relative border-s border-gray-100 dark:border-gray-800" :style="{ height: `${gridHeight}px`, backgroundImage: lines, backgroundSize: `100% ${PX_PER_HOUR}px` }" :data-test="`column-${column.key}`">
-					<!-- Not working that day: hatched, and said -->
+					<!-- Not working that day: hatched, and said. Her appointments stay drawn: they were booked before, and are « to handle » (never cancelled by themselves). -->
 					<div v-if="column.person && isOff(column.person)" class="absolute inset-0" :style="{ backgroundImage: HATCH }">
-						<div class="absolute inset-x-3 top-24 rounded-lg border border-gray-200 bg-white px-3 py-3 text-center text-xs leading-snug text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" :data-test="`column-off-${column.key}`">
+						<div class="absolute inset-x-3 top-2 rounded-lg border border-gray-200 bg-white px-3 py-3 text-center text-xs leading-snug text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" :data-test="`column-off-${column.key}`">
 							<b class="text-sm text-gray-800 dark:text-gray-100">{{ standing(column.person).label }}</b>
 							<div v-if="column.person.reason" class="mt-0.5">{{ column.person.reason }}</div>
 						</div>
 					</div>
-					<template v-else>
+					<template v-if="column">
 						<div v-for="(gap, at) in shaded(column.person)" :key="`off-${at}`" class="absolute inset-x-0 bg-gray-100/80 dark:bg-gray-800/70" :style="{ top: `${gap.top}px`, height: `${gap.height}px` }" aria-hidden="true" />
 						<button
 							v-for="free in freeOf(column)"
@@ -273,7 +277,7 @@ function shaded(person) {
 }
 
 function freeOf(column) {
-	return column.person && !store.closed ? freeHoursOf(column.person, column.appointments) : []
+	return column.person && !store.closed && !isOff(column.person) ? freeHoursOf(column.person, column.appointments) : []
 }
 
 function blockHeight(row) {

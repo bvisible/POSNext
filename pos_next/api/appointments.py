@@ -34,8 +34,10 @@ the people who rent their chair (the planning lane)
 - `pos_next_independent_users`        `() -> list[str]`  the accounts the salon declared independent: what they do is theirs, so the till never offers
                                       one as the seller of a line (`pos_next.api.pos_profile.get_sales_persons`).
 
-The day view also says how the salon stands that day (`salon`: open, closed, or other hours). On a closed day the appointments booked before it
-was closed are never cancelled by themselves: the till marks the ones nobody has begun « to handle ».
+The day view also says how the salon stands that day (`salon`: open, closed, or other hours) and, on each appointment, why it needs somebody (`to_handle`:
+« closed » when the salon is closed that day, « away » when its person is on leave or on a holiday). An appointment booked before is never cancelled by itself:
+the till marks the ones nobody has begun « to handle », for the cashier to move or cancel with the customer. (`pos_next_salon_calendar`, the days and absences of a
+period, is not read yet.)
 
 The till never sends an hour for the time (the server's clock is the only one) and never shows a cost or a margin. The shapes are the contract of the
 plan (note 10 of the vault, § G4, « Contrat v2 », and the notes of the lanes). The user of the session is the cashier: the hooks decide what that cashier may
@@ -89,6 +91,8 @@ STAFF_STATES = ("present", "break", "not_yet", "done", "scheduled", "on_leave", 
 SALON_STATES = ("open", "closed", "special")
 SALON_REASONS = ("holiday", "closure", "weekly_off", "special_hours", "no_hours")
 GESTURES = ("collect", "move", "cancel", "clock")
+# Why an appointment of a day needs somebody, as the planning lane says it
+TO_HANDLE = ("closed", "away")
 CLOCK_STATES = ("idle", "running", "paused", "done")
 # What the time lane calls a state, and what the till calls it
 TIME_STATUS = {"Not started": "idle", "In progress": "running", "Paused": "paused", "Finished": "done"}
@@ -385,7 +389,7 @@ def _appointment(row, listed, clock, may, capabilities, key) -> dict | None:
 			"state": "booked",
 			"invoice": None,
 			"in_the_till": False,
-			"to_handle": False,
+			"to_handle": None,
 			"busy": True,
 			"clock": _clock(None),
 			"can": _can("booked", True, False, capabilities),
@@ -440,7 +444,11 @@ def _appointment(row, listed, clock, may, capabilities, key) -> dict | None:
 		"state": state,
 		"invoice": _text(row.get("invoice")) or listed.get("invoice"),
 		"in_the_till": bool(listed.get("in_the_till")),
-		"to_handle": False,
+		# Why it needs somebody (the planning lane's word, for an appointment nobody has begun): « closed » (the salon is closed that day) or
+		# « away » (its person is on leave or on a holiday); None otherwise
+		"to_handle": row.get("to_handle")
+		if row.get("to_handle") in TO_HANDLE and state == "booked" and not listed.get("in_the_till")
+		else None,
 		"busy": False,
 		"clock": clock,
 		"can": can,
@@ -814,8 +822,15 @@ def get_appointments(pos_profile: str, date: str | None = None, providers=None) 
 	if salon and salon["state"] == "closed":
 		# An appointment booked on a day the salon then closes is never cancelled by itself (product owner, 10.11.2026): the till marks the ones nobody
 		# has begun « to handle », for the cashier to move or cancel with the customer
+		# (the planning lane says it on each appointment: a lane that does not leaves the day's own word to say it)
 		for row in rows:
-			row["to_handle"] = not row["busy"] and row["state"] == "booked" and not row["in_the_till"]
+			if (
+				not row["to_handle"]
+				and not row["busy"]
+				and row["state"] == "booked"
+				and not row["in_the_till"]
+			):
+				row["to_handle"] = "closed"
 	return {
 		"available": True,
 		"date": str(day),

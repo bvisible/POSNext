@@ -25973,3 +25973,12 @@ msgstr "Réserver 1 rendez-vous"
 #: POS/src/components/sale/RepeatAppointmentDialog.vue:81
 msgid "1 appointment booked."
 msgstr "1 rendez-vous réservé."
+
+#: POS/src/components/sale/SalonAgenda.vue:40
+#, python-brace-format
+msgid "{0} appointments of a person who is away that day, to move or cancel with the customers. None is cancelled by itself."
+msgstr "{0} rendez-vous d'une personne absente ce jour-là, à déplacer ou à annuler avec les clientes. Aucun n'est annulé automatiquement."
+
+#: POS/src/components/sale/AppointmentSheet.vue:18
+msgid "The person is away that day. Nothing is cancelled by itself: move this appointment to another person or day, or cancel it with the customer."
+msgstr "La personne est absente ce jour-là. Rien n'est annulé automatiquement : déplacez ce rendez-vous vers une autre personne ou un autre jour, ou annulez-le avec la cliente."
