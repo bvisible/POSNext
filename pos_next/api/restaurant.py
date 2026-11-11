@@ -1740,7 +1740,10 @@ def get_tips(
 # //// carries its cookie; the screens and the till call it by POST (frappe-ui `call`).
 @frappe.whitelist(methods=["POST"])
 # //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
-def update_item_kds_status(invoice_name: str | None, item_code: str | None, status, qty=None, restore=None):
+# //// Neoffice — `row`: one line by its own id (maintenance#2075), see the docstring.
+def update_item_kds_status(
+	invoice_name: str | None, item_code: str | None, status, qty=None, restore=None, row: str | None = None
+):
 	"""Update the KDS status of a specific item in a sales invoice.
 
 	The kitchen's tablet sets one of the kitchen's states (devices.KDS_STATES) on an open order of its restaurant, and a
@@ -1753,6 +1756,9 @@ def update_item_kds_status(invoice_name: str | None, item_code: str | None, stat
 
 	`restore` is the way a move is taken back exactly (the toast of the screens, five seconds after): the counters the line had,
 	`{"ready_qty": 4, "delivered_qty": 0}`, written beside the status, within the line's quantity.
+
+	`row` names ONE line of the order by its id (the Sales Invoice Item's name), and only that line moves: two lines of the same dish
+	(another round, another course, another batch) have a state each. Without it, every line of the dish moves, as it always did.
 	"""
 	device = devices.screen_device(devices.KITCHEN)
 	if device:
@@ -1771,6 +1777,12 @@ def update_item_kds_status(invoice_name: str | None, item_code: str | None, stat
 		restore = _counters_to_restore(restore)
 
 	filters = {"parent": invoice_name, "item_code": item_code}
+	# //// Neoffice — one line by its id when the screen names it (maintenance#2075): by its dish alone, two lines of one dish shared one
+	# //// state. The dish, when named too, must be the line's.
+	if row:
+		filters["name"] = row
+		if not item_code:
+			del filters["item_code"]
 	if device and device.station:
 		filters["preparation_station"] = device.station
 	items = frappe.get_all(
