@@ -1598,7 +1598,11 @@ def get_kds_orders(station=None, restaurant=None):
 		items = frappe.get_all(
 			"Sales Invoice Item",
 			filters={"parent": order.name},
-			fields=item_fields
+			fields=item_fields,
+			# //// Neoffice — the lines in the order of the sale (neoffice-maintenance#2075): without an order_by,
+			# //// get_all sorts by `modified`, which the lines of one save share, so the kitchen and the runner read
+			# //// them in any order (the CI saw a dish's second line come first).
+			order_by="idx asc",
 		)
 
 		# Resolve and persist preparation_station for items that don't have one
@@ -3755,7 +3759,11 @@ def get_runner_orders(area: str | None = None, restaurant=None):
 		items = frappe.get_all(
 			"Sales Invoice Item",
 			filters={"parent": order.name},
-			fields=item_fields
+			fields=item_fields,
+			# //// Neoffice — the lines in the order of the sale (neoffice-maintenance#2075): without an order_by,
+			# //// get_all sorts by `modified`, which the lines of one save share, so the kitchen and the runner read
+			# //// them in any order (the CI saw a dish's second line come first).
+			order_by="idx asc",
 		)
 
 		ready_items = []
