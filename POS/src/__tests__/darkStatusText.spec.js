@@ -61,6 +61,37 @@ const TINTS = {
 	amber: over([245, 158, 11, 0.24], CARD),
 };
 
+// Every light ground of these hues the till's sources write, which the text above may sit on: light text on a light ground is the defect turned over
+function lightGroundsInTheSources() {
+	const grounds = new Set();
+	const walk = (dir) => {
+		for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+			if (entry.name === "__tests__" || entry.name === "node_modules") continue;
+			const full = path.join(dir, entry.name);
+			if (entry.isDirectory()) walk(full);
+			else if (/\.(vue|js|ts)$/.test(entry.name))
+				for (const match of fs
+					.readFileSync(full, "utf8")
+					.matchAll(/(?<![\w:/-])bg-(green|emerald|red|rose|amber|yellow)-(50|100|200|300)(?![\w/-])/g))
+					grounds.add(match[0]);
+		}
+	};
+	walk(path.resolve(here, ".."));
+	return [...grounds].sort();
+}
+
+/** The background a dark-scope rule gives to `className`; null when none does. */
+function darkBackgroundOf(className) {
+	let painted = null;
+	root.walkRules((rule) => {
+		if (rule.selectors.includes(`[data-theme='dark'] .${className}`))
+			rule.walkDecls("background-color", (decl) => {
+				painted = decl.value;
+			});
+	});
+	return painted;
+}
+
 describe("green, red and amber text in the dark theme", () => {
 	const RAMP = {
 		green: { 600: "#3DBE74", 700: "#3DBE74", 800: "#CBEDD7", 900: "#CBEDD7" },
@@ -113,16 +144,10 @@ describe("green, red and amber text in the dark theme", () => {
 		expect(alerts).toBeGreaterThan(ours);
 	});
 
-	it("remaps the mid tints the darker text is written on, as the light ones are", () => {
-		for (const tint of ["bg-green-200", "bg-red-200", "bg-amber-200", "bg-yellow-200"]) {
-			let painted = false;
-			root.walkRules((rule) => {
-				if (rule.selectors.includes(`[data-theme='dark'] .${tint}`))
-					rule.walkDecls("background-color", () => {
-						painted = true;
-					});
-			});
-			expect(painted, tint).toBe(true);
-		}
+	it("remaps every light ground of these hues the till writes, so that the pale text never sits on a light one", () => {
+		const grounds = lightGroundsInTheSources();
+		// The kitchen's « À faire » pill is one of them (bg-yellow-100 text-yellow-800)
+		expect(grounds).toContain("bg-yellow-100");
+		for (const ground of grounds) expect(darkBackgroundOf(ground), ground).toMatch(/^rgba\(/);
 	});
 });
