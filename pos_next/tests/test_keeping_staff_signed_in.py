@@ -73,9 +73,11 @@ def a_session_that_is_aged(sid, hours):
 
 
 @contextmanager
-def signed_in(user, address="203.0.113.9"):
+def signed_in(user, address="203.0.113.9", audit_user=None):
 	"""`user` signed in as a sign-in does it, in a browser of its own: the request, the cookies and the session stay in place
-	for the endpoint to run on. What the sign-in changed in the request is put back afterwards, and the session leaves the cache."""
+	for the endpoint to run on. What the sign-in changed in the request is put back afterwards, and the session leaves the cache.
+
+	`audit_user`: the session is minted for an audit, as `bench browse --user-for-audit <name>` mints it."""
 	saved = {
 		key: getattr(frappe.local, key, MISSING)
 		for key in ("request", "request_ip", "login_manager", "cookie_manager", "session_obj", "lang")
@@ -89,7 +91,7 @@ def signed_in(user, address="203.0.113.9"):
 	frappe.local.login_manager = LoginManager()
 	sid = None
 	try:
-		frappe.local.login_manager.login_as(user)
+		frappe.local.login_manager.login_as(user, audit_user=audit_user)
 		sid = frappe.session.sid
 		yield sid
 	finally:
@@ -209,7 +211,9 @@ class TheTillsSettingsDocument(FrappeTestCase):
 
 	def test_a_new_restaurant_till_keeps_staff_signed_in_for_thirty_days(self):
 		a_till(TILL, [STAFF], enable_restaurant_mode=1)
-		self.assertEqual(frappe.db.get_value("POS Settings", {"pos_profile": TILL}, "keep_signed_in_days"), 30)
+		self.assertEqual(
+			frappe.db.get_value("POS Settings", {"pos_profile": TILL}, "keep_signed_in_days"), 30
+		)
 
 	def test_a_new_counter_till_follows_the_site(self):
 		a_till(TILL, [STAFF], enable_restaurant_mode=0)
@@ -450,6 +454,16 @@ class TheEndpoint(FrappeTestCase):
 				with self.subTest(profile=profile), self.assertRaises(frappe.PermissionError):
 					keep_signed_in(profile)
 			self.assertEqual(stamped_in_the_row(sid), 6 * 3600)
+
+	def test_a_session_minted_for_an_audit_keeps_the_site_rule(self):
+		"""A desk session minted for a test or an audit (`bench browse --user-for-audit`) is not the till's staff at work: a
+		test run that opens /pos must not leave an open session for a month (neoffice-maintenance#1113: 16 of the 42
+		Administrator sessions of the test instance carried 30 days)."""
+		with signed_in(STAFF, audit_user="audit-run") as sid:
+			self.assertEqual(keep_signed_in(TILL), {"days": 30, "stamped": False})
+			self.assertEqual(self.stamp(), SITE_RULE)
+			self.assertEqual(stamped_in_the_row(sid), 6 * 3600)
+			self.assertNotEqual(frappe.local.cookie_manager.cookies["sid"].get("max_age"), MONTH)
 
 	def test_a_get_is_not_enough(self):
 		"""The endpoint changes a session: it answers a POST only."""

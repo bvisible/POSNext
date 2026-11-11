@@ -45,10 +45,9 @@ def expiry_to_stamp(keep_signed_in_days, current_expiry) -> str | None:
 		return None
 	wanted = f"{days * 24}:00:00"
 	try:
-		if (
+		if current_expiry and sessions.get_expiry_in_seconds(
 			current_expiry
-			and sessions.get_expiry_in_seconds(current_expiry) >= sessions.get_expiry_in_seconds(wanted)
-		):
+		) >= sessions.get_expiry_in_seconds(wanted):
 			return None
 	except Exception:
 		# An unreadable stamp is honoured by nobody (the fork falls back to the site's rule), so it is replaced
@@ -63,7 +62,8 @@ def keep_signed_in(pos_profile):
 	Returns `{"days": <the setting, capped>, "stamped": <whether the session was changed>}`. `{"days": 0, ...}` is a till
 	that follows the site's rule. Refused (PermissionError) to a visitor, a portal account and anyone who is not on the
 	till's own user list: the month is for the till's staff, not for every account that may run every till (a manager who
-	works a till is on its list, as opening a shift needs him to be).
+	works a till is on its list, as opening a shift needs him to be). A session minted for an audit or a test (`bench browse
+	--user-for-audit`) is never stamped: it is nobody's till, and it keeps the site's rule.
 	"""
 	_require_staff_of(pos_profile)
 	days = _days_of(pos_profile)
@@ -76,6 +76,11 @@ def keep_signed_in(pos_profile):
 		return {"days": days, "stamped": False}
 
 	data = session_obj.data.data
+	if data.get("audit_user"):
+		# A session minted for an audit or a test run (`bench browse --user-for-audit`, the test benches) that opens /pos is
+		# not the till's staff at work: stamped, it stayed open a month after its run (neoffice-maintenance#1113, 16 of the
+		# 42 Administrator sessions of the test instance). It keeps the site's rule and the nightly sweep takes it.
+		return {"days": days, "stamped": False}
 	stamp = expiry_to_stamp(days, data.get("session_expiry") or sessions.get_expiry_period())
 	if stamp is None:
 		return {"days": days, "stamped": False}
