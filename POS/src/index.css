@@ -640,6 +640,7 @@ button.active\:scale-95:active,
 [data-theme='dark'] .bg-rose-200, .dark .bg-rose-200 { background-color: rgba(239, 68, 68, 0.32) !important; }
 [data-theme='dark'] .bg-amber-200, .dark .bg-amber-200,
 [data-theme='dark'] .bg-yellow-200, .dark .bg-yellow-200 { background-color: rgba(245, 158, 11, 0.32) !important; }
+/* //// Neoffice — remapped bg-yellow-100/-300 grounds too, missed by 5ab29f20 "gave green, red and amber text its pale shade in the dark theme" (a9c7ed26 "fix(till): every light ground of the status hues is dark in the dark theme") */
 /* the light grounds of these hues no rule above remapped: a pill bg-yellow-100 text-yellow-800 (the kitchen's « À faire ») kept its light
    yellow under the pale text; -300, the stronger chips */
 [data-theme='dark'] .bg-yellow-100, .dark .bg-yellow-100 { background-color: rgba(245, 158, 11, 0.24) !important; }
