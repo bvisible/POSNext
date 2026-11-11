@@ -51,6 +51,15 @@ export function useResponsivePayment() {
 		return `${Math.min(Math.max(500, availableHeight), height - 80)}px`;
 	});
 
+	//// Neoffice — the height the dialog's two columns may take on a desktop, so that the whole dialog stays in the window (maintenance#1976).
+	//// The grid was held to `100dvh - 32px - 6rem`, which forgets that frappe-ui's dialog opens 48px below the top: at 1366 × 768 a table's
+	//// payment (the split payment row, the loyalty points) ran to 784px and its main button, « Exact cash », lay under the bottom of the
+	//// window. 10rem is the dialog's offset, its title and its padding; the right column scrolls inside it and keeps its button in sight.
+	//// A phone or a tablet (under 1024px) keeps no maximum: the dialog scrolls as a whole, as before.
+	const paymentBodyMaxHeight = computed(() =>
+		viewportWidth.value < 1024 ? "none" : `min(${dialogContentMaxHeight.value}, calc(100dvh - 10rem))`
+	);
+
 	// Dynamic column heights based on viewport
 	const dynamicLeftColumnHeight = computed(() => {
 		const height = viewportHeight.value;
@@ -177,6 +186,8 @@ export function useResponsivePayment() {
 		dynamicDialogSize,
 		isMobileView,
 		dialogContentMaxHeight,
+		//// Neoffice — see paymentBodyMaxHeight above (maintenance#1976)
+		paymentBodyMaxHeight,
 		dynamicLeftColumnHeight,
 		isCompactMode,
 		isSmallMobile,

@@ -38,9 +38,10 @@
 				]"
 				:style="{
 					// Whole dialog within 100dvh - 32px (6rem for title and padding)
+					//// Neoffice — on a desktop, the height the dialog keeps within the window (paymentBodyMaxHeight, maintenance#1976)
 					maxHeight: isMobileView
 						? 'calc(100dvh - 32px - 6rem)'
-						: `min(${dialogContentMaxHeight}, calc(100dvh - 32px - 6rem))`,
+						: paymentBodyMaxHeight,
 					overflowY: isMobileView ? 'auto' : undefined,
 				}"
 			>
@@ -1216,14 +1217,17 @@
 
 				<!-- Right Column (3/5): Payment Methods + Quick Amounts + Numpad -->
 				<!-- //// Neoffice — same Neoffice radius token swap, rounded-lg → rounded-neo-* (87f168fe). -->
+				<!-- //// Neoffice — on a desktop the right column keeps within the dialog's height and scrolls inside, its main button pinned under the scroll (maintenance#1976): at 1366 × 768 « Exact cash » lay under the bottom of the window. Its measured height (rightColumnMinHeight) holds within that height. -->
 				<div
 					ref="rightColumnRef"
 					:class="[
-						'lg:col-span-3 bg-gray-50 rounded-neo-md border border-gray-200 flex flex-col',
+						'lg:col-span-3 bg-gray-50 rounded-neo-md border border-gray-200 flex flex-col lg:min-h-0',
 						isSmallMobile ? 'p-1.5' : 'p-2 lg:p-3',
 					]"
-					:style="isMobileView ? {} : { minHeight: rightColumnMinHeight }"
+					:style="isMobileView ? {} : rightColumnBounds"
 				>
+					<!-- //// Neoffice — the scrolling part of the right column (maintenance#1976): everything above its action buttons -->
+					<div :class="isMobileView ? 'contents' : 'flex-1 min-h-0 overflow-y-auto'" data-test="payment-right-scroll">
 					<!-- //// Neoffice — the customer HAS been charged but the sale is not
 					     booked yet. This must stay on screen the whole time: the money
 					     used to be invisible the moment the terminal dialog closed. -->
@@ -2288,6 +2292,8 @@
 					</div>
 
 					<!-- //// Neoffice — end of the radius-only numpad region ▲▲▲ -->
+					</div>
+					<!-- //// Neoffice — end of the scrolling part (maintenance#1976): the action buttons stay below it, in sight -->
 					<!-- Action Buttons - Below Keypad (Desktop only) -->
 					<!-- //// Neoffice — the desktop action area was stacked instead of a two-button row: -->
 					<!-- //// Complete Payment takes the full width and 'Pay on Account' is demoted to the -->
@@ -2295,7 +2301,7 @@
 					<!-- //// by mistake (2584aa58, 2026-03-24 "UX improvements - Complete Payment -->
 					<!-- //// full-width, Pay on Account as discrete link"). -->
 					<div
-						:class="['hidden lg:flex flex-col gap-1', isCompactMode ? 'mt-2' : 'mt-4']"
+						:class="['hidden lg:flex flex-col gap-1 flex-none', isCompactMode ? 'mt-2' : 'mt-4']"
 					>
 						<!-- //// Neoffice — upstream develop's "Exact cash" button (Enter) is taken and comes first -->
 						<!-- //// while nothing is entered, full width like Complete Payment in our stacked layout. -->
@@ -3021,6 +3027,8 @@ const {
 	dynamicDialogSize,
 	isMobileView,
 	dialogContentMaxHeight,
+	//// Neoffice — see the right column (maintenance#1976)
+	paymentBodyMaxHeight,
 	dynamicLeftColumnHeight,
 	isCompactMode,
 	isSmallMobile,
@@ -3030,6 +3038,15 @@ const {
 	mobileButtonSize,
 	dynamicNumpadSize,
 } = useResponsivePayment();
+
+//// Neoffice — the right column on a desktop: within the dialog's height, and its measured height no more than that (maintenance#1976)
+const rightColumnBounds = computed(() => ({
+	maxHeight: paymentBodyMaxHeight.value,
+	minHeight:
+		rightColumnMinHeight.value === "auto"
+			? undefined
+			: `min(${rightColumnMinHeight.value}, ${paymentBodyMaxHeight.value})`,
+}));
 
 // Calculate and sync column heights when dialog opens
 function syncColumnHeights() {
