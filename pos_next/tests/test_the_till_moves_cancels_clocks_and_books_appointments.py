@@ -465,7 +465,12 @@ class TestTheTillMovesCancelsClocksAndBooksAppointments(FrappeTestCase):
 					{
 						"group": "Length",
 						"required": 1,
-						"choices": [{"label": "Mid", "price_delta": 15}, {"no": "label"}, "x"],
+						"choices": [
+							{"item": "OPT-MID", "label": "Mid", "price_delta": 15},
+							{"label": "Long", "price_delta": 25},
+							{"no": "label"},
+							"x",
+						],
 					},
 					{"no": "group"},
 				],
@@ -489,7 +494,10 @@ class TestTheTillMovesCancelsClocksAndBooksAppointments(FrappeTestCase):
 						{
 							"group": "Length",
 							"required": True,
-							"choices": [{"label": "Mid", "price_delta": 15.0}],
+							"choices": [
+								{"item": "OPT-MID", "label": "Mid", "price_delta": 15.0},
+								{"item": None, "label": "Long", "price_delta": 25.0},
+							],
 						}
 					],
 					"people": [{"sales_person": "Luc", "duration_minutes": 75}],

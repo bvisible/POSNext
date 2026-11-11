@@ -928,8 +928,13 @@ def _service(row) -> dict | None:
 	for group in (row.get("options") or [])[:MOST_GROUPS]:
 		if not isinstance(group, dict) or not _text(group.get("group")):
 			continue
+		# `item` is the article that sells the choice: it is what the reservation applies to the booking when the till sends the choice back
 		choices = [
-			{"label": _text(choice.get("label")), "price_delta": _number(choice.get("price_delta"))}
+			{
+				"item": _text(choice.get("item")),
+				"label": _text(choice.get("label")),
+				"price_delta": _number(choice.get("price_delta")),
+			}
 			for choice in (group.get("choices") or [])[:MOST_CHOICES]
 			if isinstance(choice, dict) and _text(choice.get("label"))
 		]

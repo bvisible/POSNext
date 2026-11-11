@@ -208,7 +208,7 @@ describe("the new appointment dialog", () => {
 			item_code: "COUPE",
 			label: "Coupe femme",
 			price: 65,
-			options: [{ group: "Length", required: false, choices: [{ label: "Mid", price_delta: 15 }, { label: "Long", price_delta: 25 }] }],
+			options: [{ group: "Length", required: false, choices: [{ item: "OPT-MID", label: "Mid", price_delta: 15 }, { item: "OPT-LONG", label: "Long", price_delta: 25 }] }],
 			people: [{ sales_person: "Luc" }, { sales_person: "Maya" }],
 		},
 		{ item_code: "BRUSHING", label: "Brushing", price: 45, options: [], people: [{ sales_person: "Maya" }] },
@@ -254,7 +254,8 @@ describe("the new appointment dialog", () => {
 		await wrapper.get("[data-test='new-option-COUPE-Mid']").trigger("click")
 		await flushPromises()
 
-		const chain = [{ item_code: "COUPE", options: JSON.stringify([{ group: "Length", options: [{ name: "Mid", price_adjustment: 15 }] }]) }]
+		// The choice goes back by the article that sells it (what the reservation applies to the booking), not by its words
+		const chain = [{ item_code: "COUPE", options: JSON.stringify([{ item: "OPT-MID" }]) }]
 		expect(lane.slots).toHaveBeenLastCalledWith("2026-11-10", chain, "Luc")
 		// The hour the cashier pressed is the slot she meant
 		expect(wrapper.get("[data-test='new-confirm']").text()).toBe("Book 15:30")
@@ -265,6 +266,20 @@ describe("the new appointment dialog", () => {
 		expect(store.refresh).toHaveBeenCalled()
 		expect(wrapper.emitted("booked")[0][0].booking).toBe("BKG-9")
 		expect(wrapper.emitted("update:modelValue")[0]).toEqual([false])
+	})
+
+	it("sends a choice back by its article, and sends nothing for a choice the reservation gave no article for", async () => {
+		lane.services.mockResolvedValue([
+			{ item_code: "COUPE", label: "Coupe femme", price: 65, options: [{ group: "Length", required: false, choices: [{ item: null, label: "Mid", price_delta: 15 }] }], people: [] },
+		])
+		const wrapper = open()
+		await flushPromises()
+
+		await wrapper.get("[data-test='new-service-COUPE']").trigger("click")
+		await wrapper.get("[data-test='new-option-COUPE-Mid']").trigger("click")
+		await flushPromises()
+
+		expect(lane.slots).toHaveBeenLastCalledWith("2026-11-10", [{ item_code: "COUPE", options: null }], "Luc")
 	})
 
 	it("offers only the people who do every service chosen, and falls back to whoever when the person cannot do one", async () => {

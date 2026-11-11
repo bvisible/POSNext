@@ -132,16 +132,14 @@ const offered = computed(() => {
 	const named = picks.value.map((pick) => pick.service.people.map((p) => p.sales_person))
 	return store.people.filter((option) => option.sales_person && !isOff(option) && named.every((list) => !list.length || list.includes(option.sales_person)))
 })
-/** What the reservation is given: the services in order, each with its options in the shape a line of the till carries them. */
+/** What the reservation is given: the services in order, each with the choices made, by the article that sells each choice (`item`): that is what the reservation applies to the booking. */
 const items = computed(() =>
 	picks.value.map((pick) => {
-		const groups = pick.service.options
-			.map((group) => {
-				const choice = group.choices.find((c) => c.label === pick.options[group.group])
-				return choice ? { group: group.group, options: [{ name: choice.label, price_adjustment: choice.price_delta }] } : null
-			})
-			.filter(Boolean)
-		return { item_code: pick.service.item_code, options: groups.length ? JSON.stringify(groups) : null }
+		const chosen = pick.service.options
+			.map((group) => group.choices.find((c) => c.label === pick.options[group.group]))
+			.filter((choice) => choice?.item)
+			.map((choice) => ({ item: choice.item }))
+		return { item_code: pick.service.item_code, options: chosen.length ? JSON.stringify(chosen) : null }
 	}),
 )
 const ready = computed(() => Boolean(customer.value && items.value.length && slotChosen.value))
