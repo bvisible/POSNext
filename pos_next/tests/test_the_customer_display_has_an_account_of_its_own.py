@@ -168,6 +168,10 @@ class TestTheCustomerDisplayHasAnAccountOfItsOwn(TillCase):
 		finally:
 			frappe.set_user("Administrator")
 
+	def test_a_portal_account_lists_no_till_of_the_display(self):
+		with self.assertRaises(frappe.PermissionError):
+			self.as_user(PORTAL, customer_display.get_pos_profiles)
+
 	def test_the_display_writes_no_cart(self):
 		self.draw()
 		for call, args in (

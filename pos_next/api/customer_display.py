@@ -260,7 +260,7 @@ def new_display_password():
 # //// manager drew. Answers the key the display keeps, its account's own (the key half is the site's, drawn with it).
 # //// The same limit on refusals as validate_api_key.
 @frappe.whitelist(allow_guest=True, methods=["POST"])
-def pair_display(password: str | None = None):
+def pair_display(password: str | None = None):  # permission-check: ok a display has no session yet: the password a till manager drew is its proof, and refusals are counted per address
 	"""Pair a customer display with the password drawn at the till; answer the key it keeps."""
 	from frappe.utils.password import get_decrypted_password
 
@@ -400,7 +400,10 @@ def get_pos_profiles():
         list: List of POS profiles with name, company, warehouse
     """
     # //// Neoffice — the display's own account follows any till of the site in use (see _display_tills), as the key
-    # //// it replaces did: it is assigned to none.
+    # //// it replaces did: it is assigned to none. Any other caller is a desk account (a portal account works at
+    # //// no till: maintenance#2296).
+    from pos_next.api.cash_entry import require_system_user
+
     if is_display_account():
         return frappe.get_all(
             "POS Profile",
@@ -408,6 +411,7 @@ def get_pos_profiles():
             fields=["name", "company", "warehouse", "currency"],
             order_by="name",
         )
+    require_system_user()
 
     profiles = frappe.db.sql(
         """
