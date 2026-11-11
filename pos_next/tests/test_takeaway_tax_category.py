@@ -183,6 +183,8 @@ class TakeawayTill:
 		cls.fx = _till_fixture()
 		cls.till = cls.fx.profile
 		company = cls.fx.company
+		# //// Neoffice — the till's warehouse, which the till sends on each line (maintenance#2073, see sale())
+		cls.warehouse = frappe.db.get_value("POS Profile", cls.till, "warehouse")
 
 		_fresh("Tax Category", CATEGORY)
 		cls.category = (
@@ -274,7 +276,12 @@ class TakeawayTill:
 		)
 
 	def sale(self, items, **changes):
-		"""A cash sale of the till, as the till sends it: each item at PRICE, the tax included, paid in full."""
+		"""A cash sale of the till, as the till sends it: each item at PRICE, the tax included, paid in full.
+
+		Each line names the till's warehouse, as the till does (useInvoice.formatItemsForSubmission): a line sent without one
+		takes the site's default warehouse when the payment re-creates it, and on a site of several companies (the clone of
+		a fleet's site) that warehouse is another company's, refused before any assertion (maintenance#2073).
+		"""
 		sale = {
 			"doctype": "Sales Invoice",
 			"is_pos": 1,
@@ -284,7 +291,8 @@ class TakeawayTill:
 			"customer": self.fx.customer,
 			"selling_price_list": self.fx.price_list,
 			"items": [
-				{"item_code": code, "qty": 1, "rate": PRICE, "price_list_rate": PRICE} for code in items
+				{"item_code": code, "qty": 1, "rate": PRICE, "price_list_rate": PRICE, "warehouse": self.warehouse}
+				for code in items
 			],
 			"payments": [{"mode_of_payment": self.fx.mode, "amount": flt(PRICE * len(items), 2)}],
 		}

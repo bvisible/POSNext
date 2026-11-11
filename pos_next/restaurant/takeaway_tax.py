@@ -158,6 +158,12 @@ def copy_taxes_of_the_returned_sale(doc) -> None:
 
 	A return made outside a till (ERPNext's own, which copies them) and a line that matches no line of the sale are
 	left as they come.
+
+	Each tax row also takes whether its sale's row of the same account included the tax in the price (maintenance#2073): the
+	till's own setting was applied only at the end of `validate`, after ERPNext had computed the return as its template has it.
+	At a till whose prices exclude the VAT, the template's rows include it: the return was computed at its net (21.62 for a sale
+	of 22.18), ERPNext's POS return then "paid" the difference to the till's default mode of payment, replacing the refund the
+	till had sent, and once the VAT came back on top the return was booked paid 0.56 with 21.62 still owed to the customer.
 	"""
 	if not doc.get("return_against"):
 		return
@@ -183,6 +189,17 @@ def copy_taxes_of_the_returned_sale(doc) -> None:
 			continue
 		item.item_tax_template = sold.item_tax_template
 		item.item_tax_rate = get_item_tax_map(doc.company, sold.item_tax_template, as_json=True)
+	included = {
+		row.account_head: cint(row.included_in_print_rate)
+		for row in frappe.get_all(
+			"Sales Taxes and Charges",
+			filters={"parent": doc.return_against, "parenttype": "Sales Invoice"},
+			fields=["account_head", "included_in_print_rate"],
+		)
+	}
+	for tax in doc.get("taxes") or []:
+		if tax.get("charge_type") != "Actual" and tax.get("account_head") in included:
+			tax.included_in_print_rate = included[tax.account_head]
 
 
 def _item_tax_rows(item_codes: list[str]) -> dict[str, list]:

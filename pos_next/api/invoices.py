@@ -1770,6 +1770,14 @@ def update_invoice(data):
 		invoice_doc.ignore_pricing_rule = 1
 		invoice_doc.flags.ignore_pricing_rule = True
 
+		# //// Neoffice — a return takes the taxes of its sale BEFORE its first total (maintenance#2073): computed as the till's template has
+		# //// it, a return at a till whose prices exclude the VAT came to its net, and ERPNext's POS return replaced the refund the till sent
+		# //// with « the difference » on the default mode of payment (see copy_taxes_of_the_returned_sale). before_validate does it again, the same.
+		if doctype == "Sales Invoice" and cint(invoice_doc.get("is_return")) and invoice_doc.get("return_against"):
+			from pos_next.restaurant.takeaway_tax import copy_taxes_of_the_returned_sale
+
+			copy_taxes_of_the_returned_sale(invoice_doc)
+
 		# Calculate totals and apply discounts (with rounding disabled)
 		invoice_doc.calculate_taxes_and_totals()
 		# //// debug: add more logging to trace discount persistence — 833ef3d
