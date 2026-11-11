@@ -213,22 +213,31 @@ def setup_default_print_format(quiet=False):
 # //// Cashier rules are granted, the way add_permission() does: the doctype's standard rules are
 # //// copied first when it has no custom rule yet. Idempotent: a rule already there is left as is.
 CASHIER_ROLE = "POSNext Cashier"
+# //// Neoffice — the till manager's rules are granted too (maintenance#2078): the file's Sales Invoice row of the manager
+# //// is where cancelling and amending a sale went when the cashier lost them (maintenance#852), and a manager who holds
+# //// only his own role read no invoice at all. A rule the site already has for the role is left as is, as for the cashier.
+MANAGER_ROLE = "POSNext Manager"
+GRANTED_ROLES = (CASHIER_ROLE, MANAGER_ROLE)
 
 
 # //// Neoffice — added (no upstream equivalent): see the marker above CASHIER_ROLE.
 def grant_cashier_permissions():
-	"""Give the POSNext Cashier role its rules from setup/custom_docperm.json."""
-	if not frappe.db.exists("Role", CASHIER_ROLE):
-		return
+	"""Give the till's roles (POSNext Cashier, POSNext Manager) their rules from setup/custom_docperm.json."""
 	from frappe.permissions import rights, setup_custom_perms
 	from frappe.utils import cint
 
+	# //// Neoffice — was the cashier's rules only, and nothing at all without the cashier role (maintenance#2078)
+	roles = [role for role in GRANTED_ROLES if frappe.db.exists("Role", role)]
+	if not roles:
+		return
 	with open(frappe.get_app_path("pos_next", "setup", "custom_docperm.json")) as f:
-		rules = [rule for rule in json.load(f) if rule.get("role") == CASHIER_ROLE]
+		# //// Neoffice — the rules of every granted role, the till manager's too (maintenance#2078)
+		rules = [rule for rule in json.load(f) if rule.get("role") in roles]
 	for rule in rules:
-		doctype, permlevel = rule["parent"], cint(rule.get("permlevel"))
+		# //// Neoffice — each rule is granted to its own role, looked for by that role (maintenance#2078)
+		doctype, permlevel, role = rule["parent"], cint(rule.get("permlevel")), rule["role"]
 		if not frappe.db.exists("DocType", doctype) or frappe.db.exists(
-			"Custom DocPerm", {"parent": doctype, "role": CASHIER_ROLE, "permlevel": permlevel}
+			"Custom DocPerm", {"parent": doctype, "role": role, "permlevel": permlevel}
 		):
 			continue
 		try:
@@ -239,7 +248,8 @@ def grant_cashier_permissions():
 					"parent": doctype,
 					"parenttype": "DocType",
 					"parentfield": "permissions",
-					"role": CASHIER_ROLE,
+					# //// Neoffice — the rule's own role, the cashier's or the till manager's (maintenance#2078)
+					"role": role,
 					"permlevel": permlevel,
 					"if_owner": cint(rule.get("if_owner")),
 					**{right: cint(rule.get(right)) for right in rights},

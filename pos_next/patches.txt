@@ -71,3 +71,6 @@ pos_next.patches.neorestau.keep_the_screen_lock_of_the_tills_that_lock
 pos_next.patches.neoresto.floor_notices_stay_until_seen
 # //// Neoffice — NeoSalon: the Sales Person of each Active employee, where a till already asks for a sales person (lot G1.2, product owner, 09.11.2026). Nothing happens where no till does; it runs after the doctype sync.
 pos_next.patches.neosalon.make_the_sales_persons_of_the_employees
+# //// Neoffice — the cashier no longer cancels nor amends a sale, nor validates a payment from the desk (maintenance#852): his rules on Sales
+# //// Invoice and Payment Entry take exactly the rights of setup/custom_docperm.json; the till manager's own rule (#2078) is made by after_migrate.
+pos_next.patches.the_cashier_no_longer_cancels_a_sale
