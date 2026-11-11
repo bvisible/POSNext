@@ -5,6 +5,8 @@ import { offlineState } from "../utils/offline/offlineState";
 import { logger } from "../utils/logger";
 import { useBootstrapStore } from "../stores/bootstrap";
 import { setLocale } from "../utils/currency";
+//// Neoffice — added import (maintenance#1975): see initLocale()
+import { isAVisitorWithoutSession } from "../utils/visitorPage";
 
 const log = logger.create("Locale");
 
@@ -291,7 +293,9 @@ export function useLocale() {
 		}
 
 		// If online and haven't fetched from server yet, get server language
-		if (!offlineState.isOffline && !serverLanguageFetched) {
+		//// Neoffice — not for a visitor with no session on a customer's page: both calls want a session and were refused (403) on every
+		//// such page (maintenance#1975, utils/visitorPage.js); the visitor's page is read in the language his browser asks for
+		if (!offlineState.isOffline && !serverLanguageFetched && !isAVisitorWithoutSession()) {
 			serverLanguageFetched = true;
 
 			// Fetch allowed locales from server

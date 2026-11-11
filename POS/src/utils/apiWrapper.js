@@ -1,4 +1,6 @@
-import { call as frappeCall } from "frappe-ui";
+//// Neoffice — frappe-ui's `call` threw a TypeError on an error answer that is not JSON (a 403 page for a visitor): ours reads it as a
+//// refusal with its status (maintenance#1975, utils/frappeRequest.js)
+import { call as frappeCall } from "./frappeRequest";
 
 import { forceRefreshCSRFToken, isCSRFApiError } from "./csrf";
 

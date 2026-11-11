@@ -416,29 +416,14 @@ async function checkEnabled() {
 		const data = await response.json().catch(() => ({}))
 		// The form opens when the restaurant answers the day's slots, and stays closed when it refuses
 		enabled.value = !refusalOf(response, data)
+		//// Neoffice — the restaurant's picture comes with its slots (maintenance#1975): the page read the company's from
+		//// frappe.client.get_list, which a visitor is refused (403), so no picture ever showed
+		companyLogo.value = (enabled.value && data.message?.logo) || ""
 	} catch {
 		enabled.value = false
 	}
 }
 
-// Fetch company logo
-async function fetchLogo() {
-	try {
-		const response = await fetch(
-			`/api/method/frappe.client.get_list?${new URLSearchParams({
-				doctype: "Company",
-				fields: '["company_logo"]',
-				limit_page_length: "1",
-			})}`,
-		)
-		const data = await response.json()
-		if (data.message?.[0]?.company_logo) {
-			companyLogo.value = data.message[0].company_logo
-		}
-	} catch {
-		// No logo
-	}
-}
 
 watch(
 	() => form.reservation_date,
@@ -460,7 +445,7 @@ watch(
 )
 
 onMounted(async () => {
-	await Promise.all([checkEnabled(), fetchLogo()])
+	await checkEnabled()
 	if (enabled.value) {
 		await fetchSlots()
 	}

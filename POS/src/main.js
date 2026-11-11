@@ -47,11 +47,14 @@ import {
 	FormControl,
 	Input,
 	TextInput,
-	frappeRequest,
 	pageMetaPlugin,
 	resourcesPlugin,
 	setConfig,
 } from "frappe-ui";
+//// Neoffice — frappe-ui's fetcher read an error answer that is not JSON (a 403 page for a visitor) as JSON and threw a TypeError on it:
+//// ours reads it as a refusal with its status (maintenance#1975, utils/frappeRequest.js)
+import { frappeRequest } from "./utils/frappeRequest";
+import { isAVisitorWithoutSession } from "./utils/visitorPage";
 
 import "./index.css";
 
@@ -185,6 +188,9 @@ async function initializeApp() {
 			return true;
 		}
 
+		//// Neoffice — a visitor with no session on a customer's page is refused the token (403): not asked (maintenance#1975, utils/visitorPage.js)
+		if (isAVisitorWithoutSession()) return false;
+
 		log.debug("Fetching CSRF token...");
 		try {
 			await ensureCSRFToken({ silent: true });
@@ -197,6 +203,9 @@ async function initializeApp() {
 	})();
 
 	const userPromise = (async () => {
+		//// Neoffice — a visitor with no session on a customer's page has no user to read: get_logged_user refused him (403) on every
+		//// such page (maintenance#1975, utils/visitorPage.js). The sign-in reads the user it opens (data/session.js).
+		if (isAVisitorWithoutSession()) return null;
 		try {
 			if (!userResource.loading) userResource.fetch();
 			await userResource.promise;

@@ -1032,3 +1032,28 @@ class TestABookingItsGuestNeverConfirmsExpires(OnlineBooking, FrappeTestCase):
 			pluck="name",
 		)
 		self.assertEqual(shown, [at_the_till])
+
+
+# //// Neoffice — maintenance#1975: the booking page read its picture from frappe.client.get_list on Company, refused to a visitor (403):
+# //// no picture ever showed, and the page logged the refusal. The picture comes with the slots, the page's own guest call.
+class TestTheBookingPageHasItsPicture(OnlineBooking, FrappeTestCase):
+	def picture_seen(self):
+		status, answer = self.web("GET", SLOTS, query={"date": NEXT_WEEK, "restaurant": self.restaurant})
+		self.assertEqual(status, 200, answer)
+		return answer["message"]["logo"]
+
+	def test_a_visitor_gets_the_restaurants_picture_with_its_slots(self):
+		frappe.db.set_value("Restaurant", self.restaurant, "logo", "/files/_test-booking-logo.png")
+		frappe.clear_document_cache("Restaurant", self.restaurant)
+
+		self.assertEqual(self.picture_seen(), "/files/_test-booking-logo.png")
+
+	def test_a_restaurant_without_one_shows_its_companys_and_a_private_file_is_never_handed_out(self):
+		company = frappe.db.get_value("Restaurant", self.restaurant, "company")
+		frappe.db.set_value("Company", company, "company_logo", "/files/_test-booking-company-logo.png")
+		self.assertEqual(self.picture_seen(), "/files/_test-booking-company-logo.png")
+
+		frappe.db.set_value("Restaurant", self.restaurant, "logo", "/private/files/_test-booking-logo.png")
+		frappe.db.set_value("Company", company, "company_logo", "/private/files/_test-booking-company-logo.png")
+		frappe.clear_document_cache("Restaurant", self.restaurant)
+		self.assertEqual(self.picture_seen(), "")

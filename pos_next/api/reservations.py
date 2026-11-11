@@ -9,6 +9,15 @@
 # //// The public form gives a visitor which tables are free and nothing of the other guests, counts
 # //// the bookings it mails per visitor, per address and per site, and a booking its guest never
 # //// confirms expires instead of holding its tables (NeoResto lot 1, task 18).
+import hashlib
+import hmac
+import ipaddress
+import json
+import re
+import secrets
+from datetime import datetime, timedelta
+from time import time as epoch_seconds
+
 import frappe
 from frappe import _
 from frappe.utils import (
@@ -21,6 +30,7 @@ from frappe.utils import (
 	nowdate,
 	validate_email_address,
 )
+
 from pos_next.pos_next.doctype.restaurant_reservation.restaurant_reservation import (
 	EXPIRED,
 	HOLD_STATUSES,
@@ -31,14 +41,6 @@ from pos_next.pos_next.doctype.restaurant_reservation.restaurant_reservation imp
 from pos_next.restaurant import direct_service, permissions, scope
 from pos_next.restaurant.mode import require_neoresto
 from pos_next.restaurant.settings import get_restaurant_settings, restaurant_of
-import hashlib
-import hmac
-import ipaddress
-import json
-import re
-import secrets
-from datetime import datetime, timedelta
-from time import time as epoch_seconds
 
 # What a visitor reads of a table on the public form: which one it is, its label, its seats, and whether it is free
 # for the slot he asks. Never who holds it, nor when.
@@ -355,8 +357,11 @@ def get_available_slots(date: str, restaurant: str | None = None):
 	if not settings.enable_reservations or not settings.enable_online_reservations:
 		frappe.throw(_("Online reservations are not enabled"))
 
+	# //// Neoffice — the picture the booking page opens with comes with its slots (maintenance#1975): the page read it from
+	# //// frappe.client.get_list on Company, refused to a visitor (403), so the page never showed it and logged the refusal
+	logo = _visitor_logo(settings)
 	if not settings.opening_hours:
-		return {"slots": []}
+		return {"slots": [], "logo": logo}
 
 	day_name = datetime.strptime(str(date), "%Y-%m-%d").strftime("%A")
 	slots = []
@@ -369,7 +374,18 @@ def get_available_slots(date: str, restaurant: str | None = None):
 				"label": row.label or "",
 			})
 
-	return {"slots": slots}
+	return {"slots": slots, "logo": logo}
+
+
+# //// Neoffice — added (maintenance#1975), see get_available_slots.
+def _visitor_logo(settings) -> str:
+	"""The restaurant's picture for a visitor: its own, else its company's (as on its public menu), and only one a guest can open."""
+	from pos_next.api.public_menu import _public_file
+
+	own = _public_file(settings.get("logo"))
+	if own or not settings.get("company"):
+		return own
+	return _public_file(frappe.db.get_value("Company", settings.get("company"), "company_logo"))
 
 
 @frappe.whitelist(allow_guest=True)
