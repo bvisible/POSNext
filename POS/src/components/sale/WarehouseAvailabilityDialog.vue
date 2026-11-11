@@ -1469,6 +1469,7 @@ function formatPrice(price) {
 	direction: rtl;
 }
 
+/* //// Neoffice — see the block marker above: :global() drop fix */
 :global([dir="rtl"] .stock-search-input::placeholder),
 :global(.rtl .stock-search-input::placeholder) {
 	text-align: right;
