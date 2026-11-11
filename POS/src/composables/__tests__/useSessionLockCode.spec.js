@@ -51,6 +51,12 @@ function theServer({ right = RIGHT, reply } = {}) {
 	})
 }
 
+/** Whether the storage keeps the code as a value of its own: alone, or between characters that are neither digits nor hex. */
+function holdsTheCode(storage, code) {
+	const alone = new RegExp(`(^|[^0-9a-f])${code}([^0-9a-f]|$)`, "i")
+	return Object.keys(storage).some((key) => alone.test(String(storage[key])))
+}
+
 async function cachedHash() {
 	await vi.waitFor(() => expect(localStorage.getItem(HASH_KEY)).not.toBeNull())
 	return JSON.parse(localStorage.getItem(HASH_KEY))
@@ -166,12 +172,21 @@ describe("unlocking with the personal code", () => {
 			expect(lock.isLocked.value).toBe(true)
 		})
 
+		//// Neoffice — the code is looked for as a value of its own, never inside a longer run of digits or hex (maintenance#2481): the storage also
+		//// holds the clock in milliseconds (`pos_last_active`, « 1794336448295 » holds 4829) and the hash and salt of the code in hex, and the
+		//// whole storage searched as one text found the code there by chance, about one run in a thousand.
 		it("never puts the code in the lock's own state", async () => {
 			await lock.unlockWithCode("9306")
-			expect(JSON.stringify(localStorage)).not.toContain("9306")
+			expect(holdsTheCode(localStorage, "9306")).toBe(false)
 			await lock.unlockWithCode(RIGHT)
 			await cachedHash()
-			expect(JSON.stringify(localStorage)).not.toContain(RIGHT)
+			expect(holdsTheCode(localStorage, RIGHT)).toBe(false)
+		})
+
+		it("would see the code if it were stored, and not in a clock or a hash that hold its digits", () => {
+			expect(holdsTheCode({ pos_last_active: "1794336448295", h: JSON.stringify({ hash: "ab4829cd", salt: "4829ef" }) }, RIGHT)).toBe(false)
+			expect(holdsTheCode({ pos_lock_code: RIGHT }, RIGHT)).toBe(true)
+			expect(holdsTheCode({ x: JSON.stringify({ user: "w", code: RIGHT }) }, RIGHT)).toBe(true)
 		})
 	})
 
