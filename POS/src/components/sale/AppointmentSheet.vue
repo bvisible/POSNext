@@ -84,7 +84,7 @@ import { formatCurrency } from "@/utils/currency"
 const props = defineProps({
 	appointment: { type: Object, required: true },
 })
-const emit = defineEmits(["close", "collect", "move", "cancel"])
+const emit = defineEmits(["close", "collect", "move", "cancel", "repeat"])
 
 const store = useAppointmentsStore()
 const shiftStore = usePOSShiftStore()
@@ -174,14 +174,19 @@ const primary = computed(() => {
 	}
 	return can.value.collect ? collect.value : null
 })
+/** Coming back: any appointment the site can repeat, a paid one too (the customer's next visit), never an absent one. */
+const repeating = computed(() => ({ key: "repeat", label: __("Repeat"), run: () => emit("repeat", props.appointment) }))
+const canRepeat = computed(() => Boolean(store.capabilities.repeat) && Boolean(props.appointment.booking) && props.appointment.state !== "absent")
 const secondary = computed(() => {
 	const row = props.appointment
-	if (row.state === "paid" || row.state === "absent") return []
+	if (row.state === "paid") return canRepeat.value ? [repeating.value] : []
+	if (row.state === "absent") return []
 	const list = []
 	if (primary.value && primary.value.key !== "collect" && can.value.collect) list.push(collect.value)
 	if (store.capabilities.clock && can.value.clock && state.value === "running") list.push({ key: "pause", label: __("Pause"), run: () => timeGesture("pause") })
 	if (store.capabilities.move && primary.value?.key !== "move") list.push({ key: "move", label: __("Move"), off: !can.value.move, run: () => emit("move", row) })
 	if (store.capabilities.cancel) list.push({ key: "cancel", label: __("Cancel"), danger: true, off: !can.value.cancel, run: () => emit("cancel", row) })
+	if (canRepeat.value) list.push(repeating.value)
 	return list
 })
 </script>

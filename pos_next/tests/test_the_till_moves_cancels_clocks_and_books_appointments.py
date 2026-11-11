@@ -74,6 +74,10 @@ def book(*args):
 	return _record("book", *args)
 
 
+def repeat(*args):
+	return _record("repeat", *args)
+
+
 def nothing_to_say(*args):
 	SITE.setdefault("calls", []).append(("nothing_to_say", *args))
 	return None
@@ -95,6 +99,7 @@ GESTURES = {
 	"services": appointments.SERVICES_HOOK,
 	"slots": appointments.SLOTS_HOOK,
 	"book": appointments.BOOK_HOOK,
+	"repeat": appointments.REPEAT_HOOK,
 }
 
 
@@ -315,7 +320,11 @@ class TestTheTillMovesCancelsClocksAndBooksAppointments(FrappeTestCase):
 
 	def test_a_booking_that_is_blank_is_refused_on_every_gesture_that_names_one(self):
 		self.site_has(
-			move=["move"], cancel=["cancel"], time_action=["time_action"], check_move=["check_move"]
+			move=["move"],
+			cancel=["cancel"],
+			time_action=["time_action"],
+			check_move=["check_move"],
+			repeat=["repeat"],
 		)
 		SITE["answer"] = {}
 		till = self.fx.profile
@@ -324,12 +333,178 @@ class TestTheTillMovesCancelsClocksAndBooksAppointments(FrappeTestCase):
 			(appointments.check_appointment_move, (till, "2026-11-10 16:00:00")),
 			(appointments.cancel_appointment, (till,)),
 			(appointments.clock_appointment, (till, "start")),
+			(appointments.repeat_appointment, (till, 4, 3)),
 		):
 			with self.subTest(method=method.__name__):
 				with self.assertRaises(frappe.PermissionError):
 					self.as_the_cashier(method, "   ", *args)
 
 		self.assertNotIn("calls", SITE)
+
+	# Repeat
+
+	def a_preview(self):
+		return {
+			"booking": "BKG-1",
+			"every_weeks": 6,
+			"max": 12,
+			"secret": "never shown",
+			"dates": [
+				{
+					"index": 1,
+					"date": "2026-12-30",
+					"starts_at": "2026-12-30 10:30",
+					"was": None,
+					"state": "free",
+					"why": None,
+				},
+				{
+					"index": 2,
+					"date": "2027-02-10",
+					"starts_at": "2027-02-10 11:00",
+					"was": "10:30",
+					"state": "shifted",
+					"why": "10:30 is taken.",
+				},
+				{
+					"index": 3,
+					"date": "2027-03-24",
+					"starts_at": None,
+					"was": None,
+					"state": "skipped",
+					"why": "She is away.",
+				},
+				{
+					"index": 4,
+					"date": "2027-05-05",
+					"starts_at": None,
+					"was": None,
+					"state": "beyond",
+					"why": None,
+				},
+				{"index": 5, "date": "2027-06-16", "state": "dancing"},
+				"not a dict",
+			],
+		}
+
+	def test_a_preview_of_a_series_is_cut_to_the_keys_the_till_knows_and_writes_nothing(self):
+		self.site_has(repeat=["repeat"])
+		SITE["answer"] = self.a_preview()
+
+		answer = self.as_the_cashier(appointments.repeat_appointment, "BKG-1", self.fx.profile, 6, 4)
+
+		self.assertEqual((answer["mode"], answer["every_weeks"], answer["max"]), ("preview", 6, 12))
+		self.assertEqual(set(answer), {"mode", "every_weeks", "max", "dates"})
+		self.assertEqual([d["state"] for d in answer["dates"]], ["free", "shifted", "skipped", "beyond"])
+		self.assertEqual(set(answer["dates"][0]), {"index", "date", "starts_at", "was", "state", "why"})
+		self.assertEqual(
+			(answer["dates"][1]["starts_at"], answer["dates"][1]["was"]), ("2027-02-10 11:00", "10:30")
+		)
+		# The preview is asked with confirm 0, whatever the till is told
+		self.assertEqual(SITE["calls"], [("repeat", self.fx.profile, "BKG-1", 6, 4, None, None, 0)])
+
+	def test_the_booking_of_a_series_says_what_was_booked_and_what_was_skipped(self):
+		self.site_has(repeat=["repeat"])
+		SITE["answer"] = {
+			"series": "BSR-1",
+			"booked": [
+				{
+					"index": 1,
+					"booking": "BKG-2",
+					"starts_at": "2026-12-30 10:30",
+					"state": "free",
+					"secret": 1,
+				},
+				{"index": 2, "booking": "", "starts_at": "x"},
+				"x",
+			],
+			"skipped": [{"index": 3, "date": "2027-03-24", "why": "She is away.", "secret": 1}],
+		}
+
+		answer = self.as_the_cashier(
+			appointments.repeat_appointment, "BKG-1", self.fx.profile, 6, 3, confirm=1
+		)
+
+		self.assertEqual(
+			answer,
+			{
+				"mode": "booked",
+				"series": "BSR-1",
+				"booked": [
+					{"index": 1, "booking": "BKG-2", "starts_at": "2026-12-30 10:30", "state": "free"}
+				],
+				"skipped": [{"index": 3, "date": "2027-03-24", "why": "She is away."}],
+			},
+		)
+		self.assertEqual(SITE["calls"], [("repeat", self.fx.profile, "BKG-1", 6, 3, None, None, 1)])
+
+	def test_a_series_asks_until_when_instead_of_how_many_and_carries_the_dates_changed_by_hand(self):
+		self.site_has(repeat=["repeat"])
+		SITE["answer"] = self.a_preview()
+		changes = (
+			'{"2": "2027-02-10 14:00", "x": "2027-01-01 10:00", "3": "not a date", "99": "2027-01-01 10:00"}'
+		)
+
+		self.as_the_cashier(
+			appointments.repeat_appointment,
+			"BKG-1",
+			self.fx.profile,
+			4,
+			until="2027-06-30",
+			changes=changes,
+		)
+
+		self.assertEqual(
+			SITE["calls"],
+			[("repeat", self.fx.profile, "BKG-1", 4, None, "2027-06-30", {"2": "2027-02-10 14:00"}, 0)],
+		)
+
+	def test_a_series_the_contract_does_not_allow_is_refused_before_the_lane_hears_of_it(self):
+		self.site_has(repeat=["repeat"])
+		SITE["answer"] = self.a_preview()
+		for args, kwargs in (
+			((0, 3), {}),
+			((53, 3), {}),
+			(("abc", 3), {}),
+			((4, 0), {}),
+			((4, 13), {}),
+			((4,), {}),
+			((4,), {"until": "not a date"}),
+		):
+			with self.subTest(args=args, kwargs=kwargs):
+				with self.assertRaises((frappe.ValidationError, ValueError)):
+					self.as_the_cashier(
+						appointments.repeat_appointment, "BKG-1", self.fx.profile, *args, **kwargs
+					)
+
+		self.assertNotIn("calls", SITE)
+
+	def test_a_site_with_no_lane_for_series_has_no_repeat_and_the_gesture_is_refused(self):
+		self.site_has()
+
+		self.assertFalse(appointments._capabilities()["repeat"])
+		with self.assertRaises(frappe.ValidationError):
+			self.as_the_cashier(appointments.repeat_appointment, "BKG-1", self.fx.profile, 4, 3)
+
+	def test_a_lane_that_refuses_says_its_words_and_one_that_breaks_or_says_nothing_is_a_refusal(self):
+		for path, kind in (
+			("refuses", frappe.ValidationError),
+			("breaks", frappe.ValidationError),
+			("nothing_to_say", frappe.ValidationError),
+		):
+			with self.subTest(lane=path):
+				SITE.clear()
+				self.site_has(repeat=[path])
+				with self.assertRaises(kind):
+					self.as_the_cashier(appointments.repeat_appointment, "BKG-1", self.fx.profile, 4, 3)
+
+	def test_a_preview_that_is_not_a_dict_is_refused(self):
+		self.site_has(repeat=["repeat"])
+		for answer in ("x", ["x"], 3):
+			with self.subTest(answer=str(answer)):
+				SITE["answer"] = answer
+				with self.assertRaises(frappe.ValidationError):
+					self.as_the_cashier(appointments.repeat_appointment, "BKG-1", self.fx.profile, 4, 3)
 
 	# Cancel
 

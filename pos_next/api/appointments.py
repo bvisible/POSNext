@@ -26,6 +26,10 @@ the time (the margin lane)
 - `pos_next_appointment_time_action`  `(appointment, action, pos_profile, employee=None) -> dict | None`  start, pause, finish, close_unmeasured;
 - `pos_next_appointment_time_state`   `(appointments, pos_profile) -> {appointment: state} | None`;
 
+the series (the package and series lane)
+- `pos_next_appointment_repeat`       `(pos_profile, booking, every_weeks, count=None, until=None, changes=None, confirm=0) -> dict | None`  a preview of the dates
+                                      of an appointment that comes back (`confirm=0`), then the booking of them (`confirm=1`);
+
 the people who rent their chair (the planning lane)
 - `pos_next_independent_users`        `() -> list[str]`  the accounts the salon declared independent: what they do is theirs, so the till never offers
                                       one as the seller of a line (`pos_next.api.pos_profile.get_sales_persons`).
@@ -62,6 +66,7 @@ BOOK_HOOK = "pos_next_appointment_book"
 TIME_ACTION_HOOK = "pos_next_appointment_time_action"
 TIME_STATE_HOOK = "pos_next_appointment_time_state"
 INDEPENDENTS_HOOK = "pos_next_independent_users"
+REPEAT_HOOK = "pos_next_appointment_repeat"
 
 # More than a salon books in a day, and than one appointment holds lines: a hook that answers more is cut, never trusted
 MOST_APPOINTMENTS = 300
@@ -74,6 +79,8 @@ MOST_GROUPS = 12
 MOST_CHOICES = 30
 MOST_IN_A_CHAIN = 10
 MOST_PERIODS = 6
+MOST_REPEATS = 12
+MOST_WEEKS = 52
 OPTIONS_LENGTH = 5000
 
 STATES = ("booked", "started", "finished", "paid", "absent")
@@ -227,6 +234,7 @@ def _capabilities() -> dict:
 		"move": bool(frappe.get_hooks(MOVE_HOOK)),
 		"cancel": bool(frappe.get_hooks(CANCEL_HOOK)),
 		"clock": bool(frappe.get_hooks(TIME_ACTION_HOOK)),
+		"repeat": bool(frappe.get_hooks(REPEAT_HOOK)),
 		"book": bool(
 			frappe.get_hooks(BOOK_HOOK) and frappe.get_hooks(SERVICES_HOOK) and frappe.get_hooks(SLOTS_HOOK)
 		),
@@ -900,6 +908,115 @@ def cancel_appointment(
 		"state": answer.get("state") if answer.get("state") in ("cancelled", "absent") else default,
 		"refunded": max(_number(answer.get("refunded")), 0.0),
 		"to_refund": max(_number(answer.get("to_refund")), 0.0),
+	}
+
+
+REPEAT_STATES = ("free", "shifted", "skipped", "beyond")
+
+
+def _repeat_dates(value) -> list[dict]:
+	"""The dates of a preview as the till reads them: where each stands (free, shifted to the nearest free hour, skipped, beyond the booking horizon)."""
+	dates = []
+	if not isinstance(value, list):
+		return dates
+	for row in value[:MOST_REPEATS]:
+		if not isinstance(row, dict) or row.get("state") not in REPEAT_STATES:
+			continue
+		dates.append(
+			{
+				"index": cint(row.get("index")),
+				"date": _text(row.get("date"), 10),
+				"starts_at": _moment(row.get("starts_at")) if _text(row.get("starts_at")) else None,
+				"was": _hour(row.get("was")),
+				"state": row["state"],
+				"why": _text(row.get("why"), 300),
+			}
+		)
+	return dates
+
+
+def _changes(value) -> dict | None:
+	"""The dates the cashier changed by hand, `{"<index>": "YYYY-MM-DD HH:MM"}`: only well-formed ones, at most one per date of the series."""
+	if isinstance(value, str):
+		try:
+			value = json.loads(value) if value.strip() else None
+		except ValueError:
+			value = None
+	if not isinstance(value, dict):
+		return None
+	changes = {}
+	for index, moment in list(value.items())[:MOST_REPEATS]:
+		text = _text(moment, 16)
+		if (
+			cint(index) in range(1, MOST_REPEATS + 1)
+			and text
+			and re.match(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$", text)
+		):
+			changes[str(cint(index))] = text
+	return changes or None
+
+
+@frappe.whitelist(methods=["POST"])
+def repeat_appointment(
+	booking: str,
+	pos_profile: str,
+	every_weeks,
+	count=None,
+	until: str | None = None,
+	changes=None,
+	confirm=0,
+	date: str | None = None,
+) -> dict:
+	"""Repeat an appointment every so many weeks: a preview of the dates, each checked one by one (`confirm` 0), then their booking (`confirm` 1).
+
+	The preview answers `{"mode": "preview", "every_weeks", "max", "dates"}`; the booking `{"mode": "booked", "series", "booked", "skipped"}`. The same person, the same
+	service and the same customer: the reservation books ordinary appointments, each paid on its day. Which dates are free is the reservation's word, asked again at the
+	moment of the booking.
+	"""
+	booking = _gate(pos_profile, booking, date)
+	weeks = cint(every_weeks)
+	if not 1 <= weeks <= MOST_WEEKS:
+		frappe.throw(_("Repeat every 1 to {0} weeks.").format(MOST_WEEKS))
+	times = cint(count) if count not in (None, "") else None
+	if times is not None and not 1 <= times <= MOST_REPEATS:
+		frappe.throw(_("Repeat 1 to {0} times.").format(MOST_REPEATS))
+	last = str(getdate(until)) if until else None
+	if times is None and last is None:
+		frappe.throw(_("Say how many times, or until when."))
+	answer = _first_answer(
+		REPEAT_HOOK, pos_profile, booking, weeks, times, last, _changes(changes), 1 if cint(confirm) else 0
+	)
+	if not isinstance(answer, dict):
+		frappe.throw(_("This till does not repeat appointments."))
+	if cint(confirm):
+		return {
+			"mode": "booked",
+			"series": _text(answer.get("series")),
+			"booked": [
+				{
+					"index": cint(row.get("index")),
+					"booking": _text(row.get("booking")),
+					"starts_at": _moment(row.get("starts_at")),
+					"state": _text(row.get("state"), 20),
+				}
+				for row in (answer.get("booked") or [])[:MOST_REPEATS]
+				if isinstance(row, dict) and _text(row.get("booking"))
+			],
+			"skipped": [
+				{
+					"index": cint(row.get("index")),
+					"date": _text(row.get("date"), 10),
+					"why": _text(row.get("why"), 300),
+				}
+				for row in (answer.get("skipped") or [])[:MOST_REPEATS]
+				if isinstance(row, dict)
+			],
+		}
+	return {
+		"mode": "preview",
+		"every_weeks": cint(answer.get("every_weeks")) or weeks,
+		"max": min(cint(answer.get("max")) or MOST_REPEATS, MOST_REPEATS),
+		"dates": _repeat_dates(answer.get("dates")),
 	}
 
 

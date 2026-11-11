@@ -25858,3 +25858,98 @@ msgstr "À traiter"
 #: POS/src/components/sale/AppointmentSheet.vue:18
 msgid "The salon is closed that day. Nothing is cancelled by itself: move this appointment, or cancel it with the customer."
 msgstr "Le salon est fermé ce jour-là. Rien n'est annulé automatiquement : déplacez ce rendez-vous, ou annulez-le avec la cliente."
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:5
+msgid "Repeat this appointment"
+msgstr "Répéter ce rendez-vous"
+
+#: POS/src/components/sale/AppointmentSheet.vue:160
+msgid "Repeat"
+msgstr "Répéter"
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:15
+msgid "Every"
+msgstr "Toutes les"
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:17
+#, python-brace-format
+msgid "{0} weeks"
+msgstr "{0} semaines"
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:19
+msgid "weeks"
+msgstr "semaines"
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:27
+msgid "How many times"
+msgstr "Combien de fois"
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:31
+msgid "Until…"
+msgstr "Jusqu'au…"
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:37
+msgid "The dates, checked one by one"
+msgstr "Les dates, vérifiées une à une"
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:39
+msgid "The dates could not be read."
+msgstr "Les dates n'ont pas pu être lues."
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:51
+msgid "Same hour, same person"
+msgstr "Même heure, même personne"
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:55
+msgid "Too far ahead"
+msgstr "Trop loin"
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:55 POS/src/components/sale/RepeatAppointmentDialog.vue:119
+msgid "Skipped"
+msgstr "Sautée"
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:56
+msgid "Beyond what the salon takes bookings for: this date is not proposed."
+msgstr "Au-delà de ce que le salon prend en réservation : cette date n'est pas proposée."
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:62
+msgid "Check"
+msgstr "Vérifier"
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:65
+msgid "Changed by hand"
+msgstr "Changée à la main"
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:65
+msgid "Change this date"
+msgstr "Changer cette date"
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:118
+msgid "Moved"
+msgstr "Décalé"
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:120
+msgid "Too far"
+msgstr "Trop loin"
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:73
+#, python-brace-format
+msgid "Book {0} appointments"
+msgstr "Réserver {0} rendez-vous"
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:73
+msgid "Nothing to book"
+msgstr "Rien à réserver"
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:81
+#, python-brace-format
+msgid "{0} appointments booked."
+msgstr "{0} rendez-vous réservés."
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:93
+msgid "Skipped, to book by hand:"
+msgstr "Sautées, à réserver à la main :"
+
+#: POS/src/composables/useAppointment.js:330
+msgid "Repeating an appointment needs the network."
+msgstr "Répéter un rendez-vous demande le réseau."

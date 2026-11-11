@@ -306,6 +306,30 @@ export function useAppointment() {
 		return done
 	}
 
+	/**
+	 * Repeat an appointment every so many weeks: the preview of its dates (`confirm` false: nothing is written), then their booking (`confirm` true).
+	 * `changes` is `{ "<index>": "YYYY-MM-DD HH:MM" }`, a date the cashier changed by hand. Needs the network.
+	 * @returns {Promise<object|null>} `{ mode: "preview", every_weeks, max, dates }` or `{ mode: "booked", series, booked, skipped }`
+	 */
+	async function repeat(
+		booking,
+		{ everyWeeks, count = null, until = null, changes = null, confirm = false } = {},
+	) {
+		if (offlineState.isOffline) {
+			showWarning(__("Repeating an appointment needs the network."))
+			return null
+		}
+		const done = await ask("repeat_appointment", {
+			booking,
+			every_weeks: everyWeeks,
+			count,
+			until,
+			changes: changes && Object.keys(changes).length ? JSON.stringify(changes) : null,
+			confirm: confirm ? 1 : 0,
+		})
+		return done
+	}
+
 	return {
 		loadDay,
 		takeAppointment,
@@ -316,5 +340,6 @@ export function useAppointment() {
 		services,
 		slots,
 		book,
+		repeat,
 	}
 }

@@ -179,6 +179,30 @@ describe("the sheet of an appointment", () => {
 		expect(wrapper.get("[data-test='sheet-move']").attributes("disabled")).toBeDefined()
 	})
 
+	describe("repeating an appointment", () => {
+		it("offers « Repeat » beside the other gestures when the site repeats, and emits it for the page to open its dialog", async () => {
+			store.capabilities = { ...store.capabilities, repeat: true }
+			const wrapper = mountIt()
+
+			await wrapper.get("[data-test='sheet-repeat']").trigger("click")
+
+			expect(wrapper.get("[data-test='sheet-repeat']").text()).toBe("Repeat")
+			expect(wrapper.emitted("repeat")[0][0].booking).toBe("BKG-1")
+		})
+
+		it("keeps it off the sheet where the site does not repeat", () => {
+			expect(mountIt().find("[data-test='sheet-repeat']").exists()).toBe(false)
+		})
+
+		it("offers it on a paid appointment (the customer's next visit) and on that one only, never on an absent one", () => {
+			store.capabilities = { ...store.capabilities, repeat: true }
+
+			const paid = mountIt({ state: "paid", invoice: "ACC-SINV-9", clock: { state: "done" } })
+			expect(paid.findAll("[data-test='sheet-gestures'] button").map((node) => node.attributes("data-test"))).toEqual(["sheet-repeat"])
+			expect(mountIt({ state: "absent" }).find("[data-test='sheet-repeat']").exists()).toBe(false)
+		})
+	})
+
 	describe("an appointment booked before the salon closed that day", () => {
 		it("says it, names it « To handle », and makes moving it the filled button", async () => {
 			const wrapper = mountIt({ to_handle: true })

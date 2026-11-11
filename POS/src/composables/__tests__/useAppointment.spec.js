@@ -457,6 +457,24 @@ describe("the gestures of the salon", () => {
 		expect(toast.showWarning).toHaveBeenCalled()
 	})
 
+	it("asks the dates of a series, then books them, with the dates changed by hand sent as text, and only with the network", async () => {
+		call.mockResolvedValue({ message: { mode: "preview", every_weeks: 6, max: 12, dates: [] } })
+		const gestures = useAppointment()
+
+		await gestures.repeat("BKG-1", { everyWeeks: 6, count: 4 })
+		await gestures.repeat("BKG-1", { everyWeeks: 4, until: "2027-06-30", changes: { 2: "2027-02-10 14:00" }, confirm: true })
+
+		expect(asked("repeat_appointment").map(([, args]) => args)).toEqual([
+			{ pos_profile: "Till A", date: "2026-11-10", booking: "BKG-1", every_weeks: 6, count: 4, until: null, changes: null, confirm: 0 },
+			{ pos_profile: "Till A", date: "2026-11-10", booking: "BKG-1", every_weeks: 4, count: null, until: "2027-06-30", changes: JSON.stringify({ 2: "2027-02-10 14:00" }), confirm: 1 },
+		])
+		call.mockClear()
+		network.isOffline = true
+		expect(await gestures.repeat("BKG-1", { everyWeeks: 6, count: 4 })).toBeNull()
+		expect(call).not.toHaveBeenCalled()
+		expect(toast.showWarning).toHaveBeenCalled()
+	})
+
 	it("lists what can be booked and the free slots, and books with the chain as the site reads it", async () => {
 		call.mockImplementation(async (method) => ({
 			message: method.endsWith("get_services")

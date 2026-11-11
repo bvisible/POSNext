@@ -967,6 +967,7 @@
 									@collect="collectAppointment"
 									@move="openMoveAppointment"
 									@cancel="openCancelAppointment"
+									@repeat="openRepeatAppointment"
 								/>
 							</template>
 							<!-- //// Neoffice — ▲▲▲ end of the restaurant left-pane region opened at the -->
@@ -1030,6 +1031,7 @@
 								@collect="collectAppointment"
 								@move="openMoveAppointment"
 								@cancel="openCancelAppointment"
+								@repeat="openRepeatAppointment"
 							/>
 							<!-- //// Neoffice — two divergences inside this opening tag (no HTML comment can -->
 							<!-- //// sit between attributes, so they are listed here): -->
@@ -1540,6 +1542,8 @@
 			<MoveAppointmentDialog v-if="gestureTarget" v-model="showMoveAppointment" :appointment="gestureTarget" />
 			<CancelAppointmentDialog v-if="gestureTarget" v-model="showCancelAppointment" :appointment="gestureTarget" @cancelled="appointmentsStore.select(null)" />
 			<NewAppointmentDialog v-model="showNewAppointment" :start="newAppointmentStart" />
+			<!-- //// Neoffice — « Repeat this appointment » (NeoSalon, lot G14): opened by the sheet, as the move and the cancel above. -->
+			<RepeatAppointmentDialog v-if="gestureTarget" v-model="showRepeatAppointment" :appointment="gestureTarget" />
 			<ReservationDialog
 				:show="showReservationDialog"
 				@close="showReservationDialog = false"
@@ -2372,6 +2376,7 @@ import AppointmentBanner from "@/components/sale/AppointmentBanner.vue";
 import MoveAppointmentDialog from "@/components/sale/MoveAppointmentDialog.vue";
 import CancelAppointmentDialog from "@/components/sale/CancelAppointmentDialog.vue";
 import NewAppointmentDialog from "@/components/sale/NewAppointmentDialog.vue";
+import RepeatAppointmentDialog from "@/components/sale/RepeatAppointmentDialog.vue";
 import { useAppointment } from "@/composables/useAppointment";
 import { useAppointmentsStore } from "@/stores/appointments";
 //// Neoffice — the floor-plan editor and the per-table QR code: the POS starts from the room,
@@ -3051,6 +3056,7 @@ const sheetShown = computed(() => appointmentsShown.value && Boolean(appointment
 const gestureTarget = ref(null);
 const showMoveAppointment = ref(false);
 const showCancelAppointment = ref(false);
+const showRepeatAppointment = ref(false);
 const showNewAppointment = ref(false);
 const newAppointmentStart = ref({ person: null, from: null });
 const appointmentGestures = useAppointment();
@@ -3072,6 +3078,11 @@ function openMoveAppointment(appointment) {
 function openCancelAppointment(appointment) {
 	gestureTarget.value = appointment;
 	showCancelAppointment.value = true;
+}
+
+function openRepeatAppointment(appointment) {
+	gestureTarget.value = appointment;
+	showRepeatAppointment.value = true;
 }
 
 function openNewAppointment(start) {

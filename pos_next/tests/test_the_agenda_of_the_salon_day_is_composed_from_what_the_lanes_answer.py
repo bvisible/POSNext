@@ -83,6 +83,10 @@ def some_slots(*args):
 	return []
 
 
+def a_repeat(*args):
+	return None
+
+
 def a_booking(*args):
 	return {}
 
@@ -98,6 +102,7 @@ HOOKS = {
 	"services": appointments.SERVICES_HOOK,
 	"slots": appointments.SLOTS_HOOK,
 	"book": appointments.BOOK_HOOK,
+	"repeat": appointments.REPEAT_HOOK,
 }
 STUBS = {
 	"day": "the_day",
@@ -110,6 +115,7 @@ STUBS = {
 	"services": "some_services",
 	"slots": "some_slots",
 	"book": "a_booking",
+	"repeat": "a_repeat",
 }
 
 
@@ -723,16 +729,17 @@ class TestTheAgendaOfTheSalonDayIsComposedFromWhatTheLanesAnswer(FrappeTestCase)
 			{"collect": True, "move": False, "cancel": False, "clock": False},
 		)
 		self.assertEqual(
-			answer["capabilities"], dict.fromkeys(("check_move", "move", "cancel", "clock", "book"), False)
+			answer["capabilities"],
+			dict.fromkeys(("check_move", "move", "cancel", "clock", "repeat", "book"), False),
 		)
 
 	def test_the_capabilities_are_the_gestures_the_site_declares(self):
-		self.site_has("day", "move", "check_move", "time_action", "services", "slots", "book")
+		self.site_has("day", "move", "check_move", "time_action", "services", "slots", "book", "repeat")
 		self.a_day()
 
 		self.assertEqual(
 			self.agenda()["capabilities"],
-			{"check_move": True, "move": True, "cancel": False, "clock": True, "book": True},
+			{"check_move": True, "move": True, "cancel": False, "clock": True, "repeat": True, "book": True},
 		)
 
 	# What is refused
