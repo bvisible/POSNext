@@ -21,6 +21,7 @@ The suite builds its own two restaurants, tills, tables and orders, relies on no
 import json
 
 import frappe
+
 # //// Neoffice — the people a test acts as (neoffice-maintenance#2125).
 from frappe.tests.roles import as_role
 from frappe.tests.utils import FrappeTestCase
@@ -174,7 +175,9 @@ class TestTheListOfTablesReadsTheFloor(TwoRestaurants, FrappeTestCase):
 
 	def test_who_reads_the_floor_but_not_the_invoices_is_not_told_the_total(self):
 		self.till_order(self.table_a, lines=2, rate=12.5)
-		for email, role in ((MANAGER, "Restaurant Manager"), (TILL_MANAGER, "POSNext Manager")):
+		# The till manager is no longer one of them: since maintenance#2078 his role has a Sales Invoice rule of its own
+		# (he cancels and amends a sale, the cashier no longer does), so he reads the invoices and is told the total
+		for email, role in ((MANAGER, "Restaurant Manager"),):
 			# A role missing from the site fails the test. _user() drops a role that does not exist, so the
 			# account would hold no role and the "cannot read the invoices" check would pass for nothing
 			self.assertTrue(
@@ -193,11 +196,16 @@ class TestTheListOfTablesReadsTheFloor(TwoRestaurants, FrappeTestCase):
 				self.assertEqual(summary["item_count"], 2)
 				frappe.set_user("Administrator")
 
-	def test_a_cashier_and_a_kitchen_tablet_are_told_the_total(self):
+	def test_a_cashier_a_till_manager_and_a_kitchen_tablet_are_told_the_total(self):
 		order = self.till_order(self.table_a, lines=2, rate=12.5)
 		total = flt(frappe.db.get_value("Sales Invoice", order, "grand_total"))
-		# A kitchen tablet runs on a desk account that holds a till role too (permissions.py)
-		for email, roles in ((CASHIER, [CASHIER_ROLE]), (KITCHEN, ["Restaurant Kitchen", CASHIER_ROLE])):
+		# A kitchen tablet runs on a desk account that holds a till role too (permissions.py); the till manager reads
+		# the invoices through his own Sales Invoice rule (maintenance#2078)
+		for email, roles in (
+			(CASHIER, [CASHIER_ROLE]),
+			(TILL_MANAGER, ["POSNext Manager"]),
+			(KITCHEN, ["Restaurant Kitchen", CASHIER_ROLE]),
+		):
 			with self.subTest(roles=roles):
 				self.as_user(email, roles)
 				self.assertTrue(frappe.has_permission("Sales Invoice", "read"))

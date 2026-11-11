@@ -1219,3 +1219,8 @@ msgstr "Se ha pagato, non si perde nulla: il pagamento viene registrato non appe
 #: POS/src/components/guest/GuestCheckout.vue:312
 msgid "Check again"
 msgstr "Controlli di nuovo"
+
+#: POS/src/components/guest/GuestCheckout.vue:124
+#: POS/src/components/guest/GuestCheckout.vue:189
+msgid "Rounding"
+msgstr "Arrotondamento"

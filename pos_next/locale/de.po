@@ -1234,3 +1234,8 @@ msgstr "Falls Sie bezahlt haben, ist nichts verloren: Die Zahlung wird erfasst, 
 #: POS/src/components/guest/GuestCheckout.vue:312
 msgid "Check again"
 msgstr "Erneut prüfen"
+
+#: POS/src/components/guest/GuestCheckout.vue:124
+#: POS/src/components/guest/GuestCheckout.vue:189
+msgid "Rounding"
+msgstr "Rundung"
