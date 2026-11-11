@@ -180,6 +180,11 @@ thanks, « Your pickup number », the sentence about showing it, « Your order s
 NeoResto lot 1, the report of the tips by server (product owner, 04.11.2026): its name and the row of a tip that names no server («Tips by Server», «No server») are appended to the
 end of `fr.po`; the French is Haiku's. `main.pot` is left as it was, the next run of the template rewrites it. A `.po` cannot carry a comment, so they are recorded here.
 
+The customer display's own password (neoffice-maintenance#2296, audit Q2, 2026-11-11): its twelve strings (the till's « New display password » and its confirmation,
+the password shown once, the pairing screen's help, « Wrong password », the refusal of a site with no password yet) are appended to the end of `fr.po`; the French is
+Haiku's. `main.pot` is the template regenerated on osiris, with the 45 entries the extractor no longer sees (the fallbacks of the hand-written dictionaries) put back
+at its end. A `.po` cannot carry a comment, so they are recorded here.
+
 ### Images
 
 `pos_next/public/icons/badges/*.svg` (23) and `pos_next/public/icons/badges/png/*.png` (23) — the

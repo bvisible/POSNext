@@ -25979,3 +25979,55 @@ msgstr "{0} rendez-vous d'une personne absente ce jour-là, à déplacer ou à a
 #: POS/src/components/sale/AppointmentSheet.vue:18
 msgid "The person is away that day. Nothing is cancelled by itself: move this appointment to another person or day, or cancel it with the customer."
 msgstr "La personne est absente ce jour-là. Rien n'est annulé automatiquement : déplacez ce rendez-vous vers une autre personne ou un autre jour, ou annulez-le avec la cliente."
+
+#: POS/src/components/customer-display/DisplayAuth.vue:60
+#: pos_next/public/pos/assets/CustomerDisplay-L544U9tY.js:1
+msgid "A till manager draws it at the till: Settings, General tab, Customer display, New display password."
+msgstr "Un responsable de caisse le génère sur la caisse : Paramètres, onglet Général, Affichage client, Nouveau mot de passe d'affichage."
+
+#: POS/src/stores/customerDisplay.js:222 POS/src/stores/customerDisplay.js:259
+#: pos_next/public/pos/assets/CustomerDisplay-L544U9tY.js:1
+msgid "Authentication failed"
+msgstr "Authentification échouée"
+
+#: pos_next/till_settings/registry.py:1030
+msgid "Display password"
+msgstr "Mot de passe d'affichage"
+
+#: POS/src/components/settings/TillSettingsScreen.vue:350
+msgid "Draw the new password"
+msgstr "Générer le nouveau mot de passe"
+
+#: POS/src/components/settings/TillSettingsScreen.vue:342
+msgid "Every customer display paired with the previous password will ask for the new one."
+msgstr "Chaque écran client associé avec l'ancien mot de passe demandera le nouveau."
+
+#: pos_next/api/customer_display.py:253
+#, python-brace-format
+msgid "New customer display password drawn by {0}"
+msgstr "Nouveau mot de passe de l'affichage client généré par {0}"
+
+#: POS/src/components/settings/TillSettingsScreen.vue:339
+msgid "New display password"
+msgstr "Nouveau mot de passe d'affichage"
+
+#: pos_next/api/customer_display.py:276
+msgid "No password for the customer displays yet: a till manager draws one in the till's settings, Customer display."
+msgstr "Aucun mot de passe pour les écrans clients pour l'instant : un responsable de caisse en génère un dans les paramètres de la caisse, rubrique Affichage client."
+
+#: POS/src/components/settings/TillSettingsScreen.vue:557
+#: pos_next/public/pos/assets/POSSale-oF8bBqoP.js:70
+msgid "The display password could not be drawn."
+msgstr "Le mot de passe d'affichage n'a pas pu être généré."
+
+#: pos_next/till_settings/registry.py:1032
+msgid "The password the customer display asks for. A new one is shown once; every display paired with the previous one asks for the new one."
+msgstr "Le mot de passe que demande l'écran client. Un nouveau mot de passe n'est affiché qu'une fois ; chaque écran associé à l'ancien demandera le nouveau."
+
+#: POS/src/components/settings/TillSettingsScreen.vue:366
+msgid "Type it on each customer display, once. It is not shown again."
+msgstr "Saisissez-le une fois sur chaque écran client. Il ne sera plus affiché."
+
+#: pos_next/api/customer_display.py:269 pos_next/api/customer_display.py:279
+msgid "Wrong password"
+msgstr "Mauvais mot de passe"
