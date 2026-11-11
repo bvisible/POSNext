@@ -576,6 +576,74 @@ button.active\:scale-95:active,
 [data-theme='dark'] .bg-gray-100\/70, .dark .bg-gray-100\/70,
 [data-theme='dark'] .bg-gray-200\/70, .dark .bg-gray-200\/70,
 [data-theme='dark'] .bg-gray-200\/50, .dark .bg-gray-200\/50 { background-color: rgba(32, 36, 44, 0.80) !important; }
+/* //// Neoffice — green, red and amber TEXT in the dark theme (maintenance#2256). The theme tinted the light status grounds
+   (bg-green-50, bg-red-100, bg-amber-50…) and lightened the blue, orange, purple and indigo text, but left the green, red and
+   amber text dark: a « Payé » pill (bg-green-50 text-green-800) or a band of an amount (bg-green-50 text-green-900) read dark
+   green on dark green. They take the design system's dark ramp (readme 9.1: success #3DBE74, warning #E6A93B, destructive
+   #FF6369) and, for the darker shades written on a tint, its pale -100 of the same hue. An element that chose its own dark
+   colour (a `dark:text-…` class) keeps it. The guest pages are painted dark too (utils/colorMode), so they read the same.
+   This block stands BEFORE the alerts' rules below, which give an alert's text its own colour and must keep winning. */
+[data-theme='dark'] .text-green-600:not([class*="dark:text-"]), .dark .text-green-600:not([class*="dark:text-"]),
+[data-theme='dark'] .text-green-700:not([class*="dark:text-"]), .dark .text-green-700:not([class*="dark:text-"]),
+[data-theme='dark'] .text-emerald-600:not([class*="dark:text-"]), .dark .text-emerald-600:not([class*="dark:text-"]),
+[data-theme='dark'] .text-emerald-700:not([class*="dark:text-"]), .dark .text-emerald-700:not([class*="dark:text-"]) { color: #3DBE74 !important; } /* success, dark ramp */
+[data-theme='dark'] .text-green-800:not([class*="dark:text-"]), .dark .text-green-800:not([class*="dark:text-"]),
+[data-theme='dark'] .text-green-900:not([class*="dark:text-"]), .dark .text-green-900:not([class*="dark:text-"]),
+[data-theme='dark'] .text-emerald-800:not([class*="dark:text-"]), .dark .text-emerald-800:not([class*="dark:text-"]),
+[data-theme='dark'] .text-emerald-900:not([class*="dark:text-"]), .dark .text-emerald-900:not([class*="dark:text-"]) { color: #CBEDD7 !important; } /* --green-100, text on a green tint */
+[data-theme='dark'] .text-red-600:not([class*="dark:text-"]), .dark .text-red-600:not([class*="dark:text-"]),
+[data-theme='dark'] .text-red-700:not([class*="dark:text-"]), .dark .text-red-700:not([class*="dark:text-"]),
+[data-theme='dark'] .text-rose-600:not([class*="dark:text-"]), .dark .text-rose-600:not([class*="dark:text-"]),
+[data-theme='dark'] .text-rose-700:not([class*="dark:text-"]), .dark .text-rose-700:not([class*="dark:text-"]) { color: #FF6369 !important; } /* destructive, dark ramp */
+[data-theme='dark'] .text-red-800:not([class*="dark:text-"]), .dark .text-red-800:not([class*="dark:text-"]),
+[data-theme='dark'] .text-red-900:not([class*="dark:text-"]), .dark .text-red-900:not([class*="dark:text-"]),
+[data-theme='dark'] .text-rose-800:not([class*="dark:text-"]), .dark .text-rose-800:not([class*="dark:text-"]),
+[data-theme='dark'] .text-rose-900:not([class*="dark:text-"]), .dark .text-rose-900:not([class*="dark:text-"]) { color: #F6D2C9 !important; } /* --red-100, text on a red tint */
+[data-theme='dark'] .text-amber-600:not([class*="dark:text-"]), .dark .text-amber-600:not([class*="dark:text-"]),
+[data-theme='dark'] .text-amber-700:not([class*="dark:text-"]), .dark .text-amber-700:not([class*="dark:text-"]),
+[data-theme='dark'] .text-yellow-600:not([class*="dark:text-"]), .dark .text-yellow-600:not([class*="dark:text-"]),
+[data-theme='dark'] .text-yellow-700:not([class*="dark:text-"]), .dark .text-yellow-700:not([class*="dark:text-"]) { color: #E6A93B !important; } /* warning, dark ramp */
+[data-theme='dark'] .text-amber-800:not([class*="dark:text-"]), .dark .text-amber-800:not([class*="dark:text-"]),
+[data-theme='dark'] .text-amber-900:not([class*="dark:text-"]), .dark .text-amber-900:not([class*="dark:text-"]),
+[data-theme='dark'] .text-yellow-800:not([class*="dark:text-"]), .dark .text-yellow-800:not([class*="dark:text-"]),
+[data-theme='dark'] .text-yellow-900:not([class*="dark:text-"]), .dark .text-yellow-900:not([class*="dark:text-"]) { color: #F8E2B4 !important; } /* --amber-100, text on an amber tint */
+/* a ramp shade written ON the stronger tint of its hue (a pill bg-green-100 text-green-700) reads 4.4:1 there: it takes the pale -100 too */
+[data-theme='dark'] .bg-green-100.text-green-600:not([class*="dark:text-"]), .dark .bg-green-100.text-green-600:not([class*="dark:text-"]),
+[data-theme='dark'] .bg-green-200.text-green-600:not([class*="dark:text-"]), .dark .bg-green-200.text-green-600:not([class*="dark:text-"]),
+[data-theme='dark'] .bg-green-100.text-green-700:not([class*="dark:text-"]), .dark .bg-green-100.text-green-700:not([class*="dark:text-"]),
+[data-theme='dark'] .bg-green-200.text-green-700:not([class*="dark:text-"]), .dark .bg-green-200.text-green-700:not([class*="dark:text-"]) { color: #CBEDD7 !important; }
+[data-theme='dark'] .bg-emerald-100.text-emerald-600:not([class*="dark:text-"]), .dark .bg-emerald-100.text-emerald-600:not([class*="dark:text-"]),
+[data-theme='dark'] .bg-emerald-200.text-emerald-600:not([class*="dark:text-"]), .dark .bg-emerald-200.text-emerald-600:not([class*="dark:text-"]),
+[data-theme='dark'] .bg-emerald-100.text-emerald-700:not([class*="dark:text-"]), .dark .bg-emerald-100.text-emerald-700:not([class*="dark:text-"]),
+[data-theme='dark'] .bg-emerald-200.text-emerald-700:not([class*="dark:text-"]), .dark .bg-emerald-200.text-emerald-700:not([class*="dark:text-"]) { color: #CBEDD7 !important; }
+[data-theme='dark'] .bg-red-100.text-red-600:not([class*="dark:text-"]), .dark .bg-red-100.text-red-600:not([class*="dark:text-"]),
+[data-theme='dark'] .bg-red-200.text-red-600:not([class*="dark:text-"]), .dark .bg-red-200.text-red-600:not([class*="dark:text-"]),
+[data-theme='dark'] .bg-red-100.text-red-700:not([class*="dark:text-"]), .dark .bg-red-100.text-red-700:not([class*="dark:text-"]),
+[data-theme='dark'] .bg-red-200.text-red-700:not([class*="dark:text-"]), .dark .bg-red-200.text-red-700:not([class*="dark:text-"]) { color: #F6D2C9 !important; }
+[data-theme='dark'] .bg-rose-100.text-rose-600:not([class*="dark:text-"]), .dark .bg-rose-100.text-rose-600:not([class*="dark:text-"]),
+[data-theme='dark'] .bg-rose-200.text-rose-600:not([class*="dark:text-"]), .dark .bg-rose-200.text-rose-600:not([class*="dark:text-"]),
+[data-theme='dark'] .bg-rose-100.text-rose-700:not([class*="dark:text-"]), .dark .bg-rose-100.text-rose-700:not([class*="dark:text-"]),
+[data-theme='dark'] .bg-rose-200.text-rose-700:not([class*="dark:text-"]), .dark .bg-rose-200.text-rose-700:not([class*="dark:text-"]) { color: #F6D2C9 !important; }
+[data-theme='dark'] .bg-amber-100.text-amber-600:not([class*="dark:text-"]), .dark .bg-amber-100.text-amber-600:not([class*="dark:text-"]),
+[data-theme='dark'] .bg-amber-200.text-amber-600:not([class*="dark:text-"]), .dark .bg-amber-200.text-amber-600:not([class*="dark:text-"]),
+[data-theme='dark'] .bg-amber-100.text-amber-700:not([class*="dark:text-"]), .dark .bg-amber-100.text-amber-700:not([class*="dark:text-"]),
+[data-theme='dark'] .bg-amber-200.text-amber-700:not([class*="dark:text-"]), .dark .bg-amber-200.text-amber-700:not([class*="dark:text-"]) { color: #F8E2B4 !important; }
+[data-theme='dark'] .bg-yellow-100.text-yellow-600:not([class*="dark:text-"]), .dark .bg-yellow-100.text-yellow-600:not([class*="dark:text-"]),
+[data-theme='dark'] .bg-yellow-200.text-yellow-600:not([class*="dark:text-"]), .dark .bg-yellow-200.text-yellow-600:not([class*="dark:text-"]),
+[data-theme='dark'] .bg-yellow-100.text-yellow-700:not([class*="dark:text-"]), .dark .bg-yellow-100.text-yellow-700:not([class*="dark:text-"]),
+[data-theme='dark'] .bg-yellow-200.text-yellow-700:not([class*="dark:text-"]), .dark .bg-yellow-200.text-yellow-700:not([class*="dark:text-"]) { color: #F8E2B4 !important; }
+/* the mid tints such a text is written on (bg-red-200 text-red-800 on the closing, bg-amber-200 on the payment) stayed light,
+   as the -50 and -100 tints did before they were remapped above: the same hues, a step stronger */
+[data-theme='dark'] .bg-green-200, .dark .bg-green-200,
+[data-theme='dark'] .bg-emerald-200, .dark .bg-emerald-200 { background-color: rgba(34, 197, 94, 0.32) !important; }
+[data-theme='dark'] .bg-red-200, .dark .bg-red-200,
+[data-theme='dark'] .bg-rose-200, .dark .bg-rose-200 { background-color: rgba(239, 68, 68, 0.32) !important; }
+[data-theme='dark'] .bg-amber-200, .dark .bg-amber-200,
+[data-theme='dark'] .bg-yellow-200, .dark .bg-yellow-200 { background-color: rgba(245, 158, 11, 0.32) !important; }
+[data-theme='dark'] .hover\:bg-green-200:hover, .dark .hover\:bg-green-200:hover,
+[data-theme='dark'] .hover\:bg-amber-300:hover, .dark .hover\:bg-amber-300:hover,
+[data-theme='dark'] .hover\:bg-red-200:hover, .dark .hover\:bg-red-200:hover,
+[data-theme='dark'] .hover\:bg-emerald-200:hover, .dark .hover\:bg-emerald-200:hover { background-color: rgba(255, 255, 255, 0.12) !important; }
 /* Toast / inline alert (Toast.vue: border-s-4 + bg-*-50 + text-*-900/700/600).
    The generic *-50 tint is far too faint for an ALERT, and the semantic *-900
    text (red/green/orange are NOT remapped to clay) stays dark → dark-on-dark,
