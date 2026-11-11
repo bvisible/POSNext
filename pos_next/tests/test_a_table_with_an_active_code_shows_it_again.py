@@ -29,6 +29,7 @@ Nothing is committed, and the realtime alert of a table that gets seated is repl
 from unittest.mock import patch
 
 import frappe
+from frappe.exceptions import FrappeTypeError
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import add_days, add_to_date, now_datetime, nowdate
 
@@ -507,11 +508,17 @@ class TestWhoMayPressTheQrButton(TheQrButton, Tills, FrappeTestCase):
 		self.assertEqual(self.tokens_of(self.table_a), 0)
 
 	def test_a_name_is_not_a_till_or_a_table_unless_it_is_a_string(self):
+		# Since the endpoint types its arguments as text (5e0141b1), Frappe refuses a non-string
+		# before the body runs, with its own type error; a body that ran anyway would refuse with
+		# PermissionError. Either way: refused, and no code made.
 		for table, till in (
 			({"name": self.table_a}, self.fx.profile),
 			(self.table_a, {"name": self.fx.profile}),
 		):
-			with self.subTest(table=table, till=till), self.assertRaises(frappe.PermissionError):
+			with (
+				self.subTest(table=table, till=till),
+				self.assertRaises((frappe.PermissionError, FrappeTypeError)),
+			):
 				guest_ordering.create_table_token(table, till)
 
 		self.assertEqual(self.tokens_of(self.table_a), 0)

@@ -7,7 +7,7 @@
 
 - « Always » (`ALWAYS`, the default, and whatever a site not migrated yet reads): at any time.
 - « By the opening hours » (`OPENING_HOURS`): the rows of the restaurant's opening hours, those of its takeaway card when the card has
-  some, else all of them. A row is read on its own weekday, as the opening hours always are (`api.restaurant._cards_of_the_hours`): one
+  some, else all of them. A row is read on its own weekday, as the opening hours of the cards always are (api/restaurant.py): one
   that ends before it starts (22:00 to 02:00) covers that day from its start to midnight and from midnight to its end. A row without a
   start or an end is left out; midnight is an hour like another (a Time of 00:00 comes back as a zero timedelta, which reads as false:
   it is tested against None, not for truth). A restaurant without any hours takes no takeaway order.
