@@ -208,7 +208,9 @@ async function initializeApp() {
 		//// such page (maintenance#1975, utils/visitorPage.js). The sign-in reads the user it opens (data/session.js).
 		if (isAVisitorWithoutSession()) return null;
 		try {
-			if (!userResource.loading) userResource.fetch();
+			//// Neoffice — frappe-ui's fetch() rethrows a refusal after its handlers: unread, a signed-out tablet's or till's start (403) was a page
+			//// error on top of the refusal it reports below (maintenance#1975); the refusal itself is read from `promise`, as before
+			if (!userResource.loading) userResource.fetch().catch(() => {});
 			await userResource.promise;
 			return sessionUser();
 		} catch (error) {
