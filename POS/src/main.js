@@ -47,6 +47,7 @@ import {
 	FormControl,
 	Input,
 	TextInput,
+	//// Neoffice — removed frappeRequest from this import (3ab0105e "fix(guest pages): a refusal answered as an HTML page is a refusal, and a visitor is not asked what needs a session"): frappe-ui's fetcher read a non-JSON error body (a guest's 403 HTML page) as JSON and threw; see the ./utils/frappeRequest import below
 	pageMetaPlugin,
 	resourcesPlugin,
 	setConfig,
