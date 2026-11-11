@@ -39,6 +39,11 @@ describe("the height the payment dialog keeps", () => {
 		expect(sizes.paymentBodyMaxHeight.value).toBe("min(668px, calc(100dvh - 10rem))");
 	});
 
+	it("is the compact layout on a till of 1366 × 768, and the full one from 800px of height", async () => {
+		expect((await sizesAt(1366, 768)).isCompactMode.value).toBe(true);
+		expect((await sizesAt(1920, 1080)).isCompactMode.value).toBe(false);
+	});
+
 	it("is no maximum on a tablet or a phone, where the dialog scrolls as a whole", async () => {
 		expect((await sizesAt(800, 1280)).paymentBodyMaxHeight.value).toBe("none");
 		expect((await sizesAt(390, 844)).paymentBodyMaxHeight.value).toBe("none");

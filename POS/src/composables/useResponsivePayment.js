@@ -73,7 +73,9 @@ export function useResponsivePayment() {
 	});
 
 	// Check if we're in compact mode (small screens)
-	const isCompactMode = computed(() => viewportHeight.value < 700 || viewportWidth.value < 1024);
+	//// Neoffice — compact under 800px of height, not 700 (maintenance#1976): a till of 1366 × 768 is the small screen the compact layout is for, and
+	//// a table's payment (its split payment row, the customer's loyalty points) needed 180px more than the window had at full size
+	const isCompactMode = computed(() => viewportHeight.value < 800 || viewportWidth.value < 1024);
 
 	// Check if we're on a very small mobile screen
 	const isSmallMobile = computed(() => viewportWidth.value < 360 || viewportHeight.value < 600);
