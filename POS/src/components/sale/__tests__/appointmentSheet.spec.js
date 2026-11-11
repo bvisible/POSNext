@@ -179,6 +179,37 @@ describe("the sheet of an appointment", () => {
 		expect(wrapper.get("[data-test='sheet-move']").attributes("disabled")).toBeDefined()
 	})
 
+	describe("an appointment booked before the salon closed that day", () => {
+		it("says it, names it « To handle », and makes moving it the filled button", async () => {
+			const wrapper = mountIt({ to_handle: true })
+
+			expect(wrapper.get("[data-test='sheet-state']").text()).toBe("To handle")
+			expect(wrapper.get("[data-test='sheet-to-handle']").text()).toContain("Nothing is cancelled by itself")
+			expect(wrapper.find("[data-test='sheet-start']").exists()).toBe(false)
+			// Move is the one filled button, and it is not offered twice
+			expect(wrapper.findAll("[data-test='sheet-move']")).toHaveLength(1)
+			expect(wrapper.get("[data-test='sheet-move']").classes()).toContain("bg-gray-900")
+			expect(wrapper.get("[data-test='sheet-cancel']").exists()).toBe(true)
+
+			await wrapper.get("[data-test='sheet-move']").trigger("click")
+			expect(wrapper.emitted("move")[0][0].booking).toBe("BKG-1")
+		})
+
+		it("falls back to the usual gestures when it can no longer be moved (its hour is past)", () => {
+			const wrapper = mountIt({ to_handle: true, can: { collect: true, move: false, cancel: true, clock: true } })
+
+			expect(wrapper.get("[data-test='sheet-start']").exists()).toBe(true)
+			expect(wrapper.get("[data-test='sheet-move']").attributes("disabled")).toBeDefined()
+		})
+
+		it("is an ordinary appointment once it is begun, whatever the flag says", () => {
+			const wrapper = mountIt({ to_handle: true, state: "started", clock: { state: "running", active_seconds: 60 } })
+
+			expect(wrapper.find("[data-test='sheet-to-handle']").exists()).toBe(false)
+			expect(wrapper.get("[data-test='sheet-state']").text()).toBe("In progress")
+		})
+	})
+
 	it("never shows a cost or a margin", () => {
 		const wrapper = mountIt({ clock: { state: "running", active_seconds: 100, cost: 42, margin: 12 }, state: "started" })
 

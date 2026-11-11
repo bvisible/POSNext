@@ -29,6 +29,13 @@
 			</button>
 		</header>
 
+		<!-- The salon is closed that day, or has other hours: said once, above the columns. What was booked before the closing is never cancelled by itself. -->
+		<div v-if="salonNotice" class="mx-4 mb-2 rounded-lg px-4 py-2 text-sm" :class="salonNotice.closed ? 'bg-yellow-50 text-yellow-900 dark:bg-yellow-400/15 dark:text-yellow-100' : 'bg-blue-50 text-blue-900 dark:bg-blue-400/15 dark:text-blue-100'" data-test="agenda-salon">
+			<b class="font-semibold" data-test="agenda-salon-title">{{ salonNotice.title }}</b>
+			<template v-if="salonNotice.detail"> · {{ salonNotice.detail }}</template>
+			<div v-if="store.toHandleCount" class="mt-0.5" data-test="agenda-to-handle">{{ __("{0} booked before the closing, to move or cancel with the customers. None is cancelled by itself.", [store.toHandleCount]) }}</div>
+		</div>
+
 		<p v-if="store.fromCache" data-test="agenda-offline" class="mx-4 mb-2 rounded-lg bg-yellow-50 px-4 py-2 text-sm text-yellow-800 dark:bg-yellow-400/15 dark:text-yellow-100">
 			<b class="font-semibold">{{ __("No network.") }}</b> {{ __("The agenda is the one kept at {0}. Collecting an appointment works as usual.", [keptAt]) }}
 		</p>
@@ -187,6 +194,7 @@ const DOTS = {
 	started: "bg-blue-600",
 	finished: "bg-orange-500",
 	in_the_till: "bg-blue-600",
+	to_handle: "bg-yellow-500",
 	paid: "bg-green-600",
 	absent: "bg-red-500",
 }
@@ -195,6 +203,7 @@ const PILLS = {
 	started: "bg-blue-50 text-blue-700 dark:bg-blue-400/20 dark:text-blue-100",
 	finished: "bg-orange-50 text-orange-700 dark:bg-orange-400/20 dark:text-orange-100",
 	in_the_till: "bg-blue-50 text-blue-700 dark:bg-blue-400/20 dark:text-blue-100",
+	to_handle: "bg-yellow-100 text-yellow-800 dark:bg-yellow-400/20 dark:text-yellow-100",
 	paid: "bg-green-50 text-green-700 dark:bg-green-400/20 dark:text-green-100",
 	absent: "bg-red-50 text-red-700 dark:bg-red-400/20 dark:text-red-100",
 }
@@ -212,6 +221,22 @@ const dayTitle = computed(() => {
 	if (Number.isNaN(when.getTime())) return store.date
 	// A phone has no room for « mardi 10 novembre » beside the day arrows: the short form there
 	return when.toLocaleDateString(undefined, uiStore.isDesktop ? { weekday: "long", day: "numeric", month: "long" } : { weekday: "short", day: "numeric", month: "short" })
+})
+const SALON_REASONS = {
+	holiday: () => __("Public holiday"),
+	closure: () => __("Closure"),
+	weekly_off: () => __("Weekly day off"),
+	special_hours: () => __("Special hours"),
+	no_hours: () => __("No opening hours"),
+}
+/** What the agenda says about the day when the salon is closed or has other hours: `{ closed, title, detail }`, or null on a normal day. */
+const salonNotice = computed(() => {
+	const salon = store.salon
+	if (!salon || salon.state === "open") return null
+	const why = salon.label || (SALON_REASONS[salon.reason] ? SALON_REASONS[salon.reason]() : "")
+	if (salon.state === "closed") return { closed: true, title: __("Salon closed"), detail: why }
+	const hours = (salon.periods || []).map(([from, to]) => `${from}–${to}`).join(" · ")
+	return { closed: false, title: __("Special hours"), detail: [hours, salon.label].filter(Boolean).join(" · ") }
 })
 const keptAt = computed(() => (store.cachedAt ? new Date(store.cachedAt).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }) : ""))
 // The cashier's own column is where « New » starts; the first column otherwise
@@ -248,7 +273,7 @@ function shaded(person) {
 }
 
 function freeOf(column) {
-	return column.person ? freeHoursOf(column.person, column.appointments) : []
+	return column.person && !store.closed ? freeHoursOf(column.person, column.appointments) : []
 }
 
 function blockHeight(row) {
@@ -282,6 +307,8 @@ function pillText(row) {
 			return __("To collect")
 		case "in_the_till":
 			return __("In the till")
+		case "to_handle":
+			return __("To handle")
 		case "paid":
 			return __("Paid")
 		case "absent":
@@ -314,7 +341,7 @@ const phonePerson = computed(() => store.columns.find((column) => column.key ===
 const phoneRows = computed(() => {
 	const column = store.columns.find((item) => item.key === selectedChip.value)
 	const rows = (column ? column.appointments : store.appointments).map((row) => ({ key: row.key, row }))
-	const frees = column?.person ? freeHoursOf(column.person, column.appointments).map((free) => ({ key: `free-${free.from}`, free })) : []
+	const frees = column?.person && !store.closed ? freeHoursOf(column.person, column.appointments).map((free) => ({ key: `free-${free.from}`, free })) : []
 	return [...rows, ...frees].sort((a, b) => (a.free ? a.free.from : minutesOf(a.row.starts_at)) - (b.free ? b.free.from : minutesOf(b.row.starts_at)))
 })
 </script>

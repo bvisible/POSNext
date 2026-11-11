@@ -25821,3 +25821,40 @@ msgstr "Quand la page de commande en ligne accepte une nouvelle commande : toujo
 #: pos_next/pos_next/doctype/restaurant/restaurant.json:364
 msgid "When the online takeaway page takes a new order: always, by the opening hours (those of the takeaway card when it has some), or at fixed hours. An order already sent is always paid."
 msgstr "Quand la page de vente à emporter en ligne accepte une nouvelle commande : toujours, selon les heures d'ouverture (celles de la carte à emporter, lorsqu'elle en a), ou à heures fixes. Une commande déjà envoyée est toujours payée."
+
+#: POS/src/components/sale/SalonAgenda.vue:36
+#, python-brace-format
+msgid "{0} booked before the closing, to move or cancel with the customers. None is cancelled by itself."
+msgstr "{0} pris avant la fermeture, à déplacer ou à annuler avec les clientes. Aucun n'est annulé automatiquement."
+
+#: POS/src/components/sale/SalonAgenda.vue:226
+msgid "Public holiday"
+msgstr "Jour férié"
+
+#: POS/src/components/sale/SalonAgenda.vue:227
+msgid "Closure"
+msgstr "Fermeture"
+
+#: POS/src/components/sale/SalonAgenda.vue:228
+msgid "Weekly day off"
+msgstr "Jour de repos hebdomadaire"
+
+#: POS/src/components/sale/SalonAgenda.vue:229 POS/src/components/sale/SalonAgenda.vue:239
+msgid "Special hours"
+msgstr "Horaires spéciaux"
+
+#: POS/src/components/sale/SalonAgenda.vue:230
+msgid "No opening hours"
+msgstr "Pas d'horaires d'ouverture"
+
+#: POS/src/components/sale/SalonAgenda.vue:237
+msgid "Salon closed"
+msgstr "Salon fermé"
+
+#: POS/src/components/sale/AppointmentSheet.vue:117 POS/src/components/sale/SalonAgenda.vue:311
+msgid "To handle"
+msgstr "À traiter"
+
+#: POS/src/components/sale/AppointmentSheet.vue:18
+msgid "The salon is closed that day. Nothing is cancelled by itself: move this appointment, or cancel it with the customer."
+msgstr "Le salon est fermé ce jour-là. Rien n'est annulé automatiquement : déplacez ce rendez-vous, ou annulez-le avec la cliente."

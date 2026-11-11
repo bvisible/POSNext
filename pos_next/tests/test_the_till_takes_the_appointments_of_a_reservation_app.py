@@ -159,7 +159,8 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 			],
 			"amount": 65.0,
 			"paid_amount": 0.0,
-			"state": "to_collect",
+			"state": "booked",
+			"in_the_till": False,
 			"invoice": None,
 			**changes,
 		}
@@ -188,6 +189,7 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 			"date": "2026-11-10",
 			"visibility": "all",
 			"capabilities": {},
+			"salon": None,
 			"mine": [],
 			"people": [],
 			"appointments": [],
@@ -216,7 +218,7 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 		late = self.an_appointment(
 			booking="BKG-2", starts_at="2026-11-10 14:00:00", notes="never shown", email="a@b.c"
 		)
-		early = self.an_appointment(state="collected", invoice="ACC-SINV-1", phone="079 000 00 00")
+		early = self.an_appointment(state="paid", invoice="ACC-SINV-1", phone="079 000 00 00")
 		SITE["list"] = [late, early, {"no": "booking"}, "not a dict", self.an_appointment(booking="")]
 
 		answer = self.as_the_cashier(appointments.get_appointments, self.fx.profile, "2026-11-10")
@@ -239,6 +241,7 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 				"state",
 				"invoice",
 				"in_the_till",
+				"to_handle",
 				"busy",
 				"clock",
 				"can",
@@ -261,13 +264,19 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 		)
 		self.assertEqual(answer["appointments"][1]["invoice"], None)
 
-	def test_where_each_stands_is_what_the_money_lane_says_and_a_state_it_does_not_know_is_to_collect(self):
+	def test_where_each_stands_is_what_the_money_lane_says_and_a_state_it_does_not_know_is_booked(self):
 		self.site_has(of_the_day=["the_list"])
 		SITE["list"] = [
-			self.an_appointment(booking="BKG-1", state="to_collect"),
-			self.an_appointment(booking="BKG-2", state="in_the_till", invoice="ACC-SINV-2"),
-			self.an_appointment(booking="BKG-3", state="collected", invoice="ACC-SINV-3"),
+			self.an_appointment(booking="BKG-1", state="booked"),
+			# A draft open in the till: it is `booked` still, and `in_the_till` says so
+			self.an_appointment(booking="BKG-2", state="booked", in_the_till=True, invoice="ACC-SINV-2"),
+			self.an_appointment(booking="BKG-3", state="paid", invoice="ACC-SINV-3"),
+			# A state the till does not know (and the old words of the first contract, which no lane says any more)
 			self.an_appointment(booking="BKG-4", state="Paid", invoice="ACC-SINV-4"),
+			self.an_appointment(booking="BKG-5", state="started"),
+			self.an_appointment(booking="BKG-6", state="finished"),
+			self.an_appointment(booking="BKG-7", state="absent"),
+			self.an_appointment(booking="BKG-8", state="collected", in_the_till="no"),
 		]
 
 		rows = self.as_the_cashier(appointments.get_appointments, self.fx.profile, "2026-11-10")[
@@ -281,6 +290,10 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 				("BKG-2", "booked", True, "ACC-SINV-2"),
 				("BKG-3", "paid", False, "ACC-SINV-3"),
 				("BKG-4", "booked", False, "ACC-SINV-4"),
+				("BKG-5", "started", False, None),
+				("BKG-6", "finished", False, None),
+				("BKG-7", "absent", False, None),
+				("BKG-8", "booked", False, None),
 			],
 		)
 

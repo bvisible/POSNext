@@ -205,13 +205,19 @@ class TestTheAgendaOfTheSalonDayIsComposedFromWhatTheLanesAnswer(FrappeTestCase)
 			"amount": 120,
 		}
 
-	def a_day(self, visibility="all", people=None, unassigned=None):
+	def a_day(self, visibility="all", people=None, unassigned=None, salon=None):
 		SITE["day"] = {
 			"day": "2026-11-10",
 			"visibility": visibility,
 			"people": people if people is not None else [],
 			"unassigned": unassigned or [],
 		}
+		if salon is not None:
+			SITE["day"]["salon"] = salon
+
+	def a_salon(self, **changes):
+		"""The block of the planning lane that says how the salon stands that day: closed for a holiday, unless changed."""
+		return {"state": "closed", "reason": "holiday", "label": "Christmas Day", "periods": [], **changes}
 
 	# The people
 
@@ -283,11 +289,12 @@ class TestTheAgendaOfTheSalonDayIsComposedFromWhatTheLanesAnswer(FrappeTestCase)
 				"steps": [{"label": "Coupe femme", "item_code": "SRV-COUPE", "sales_person": LUC}],
 				"amount": 65.0,
 				"paid_amount": 40.0,
-				"state": "in_the_till",
+				"state": "booked",
+				"in_the_till": True,
 				"invoice": "ACC-SINV-1",
 			},
 			# A booking the day view does not show is shown to nobody
-			{"booking": "BKG-SECRET", "amount": 99.0, "state": "to_collect"},
+			{"booking": "BKG-SECRET", "amount": 99.0, "state": "booked"},
 		]
 
 		rows = self.agenda()["appointments"]
@@ -323,11 +330,20 @@ class TestTheAgendaOfTheSalonDayIsComposedFromWhatTheLanesAnswer(FrappeTestCase)
 						self.row("BKG-5", LUC),
 						self.row("BKG-6", LUC),
 						self.row("BKG-7", LUC),
+						self.row("BKG-8", LUC),
+						self.row("BKG-9", LUC),
+						self.row("BKG-10", LUC),
 					],
 				)
 			]
 		)
-		SITE["list"] = [{"booking": "BKG-7", "state": "collected", "invoice": "ACC-SINV-7"}]
+		SITE["list"] = [
+			{"booking": "BKG-7", "state": "paid", "invoice": "ACC-SINV-7"},
+			{"booking": "BKG-8", "state": "absent"},
+			# The money lane knows it from the same records as the time lane: it says it where the time lane says nothing
+			{"booking": "BKG-9", "state": "finished"},
+			{"booking": "BKG-10", "state": "started"},
+		]
 		SITE["clocks"] = {
 			"BKG-4": {
 				"status": "Finished",
@@ -351,6 +367,9 @@ class TestTheAgendaOfTheSalonDayIsComposedFromWhatTheLanesAnswer(FrappeTestCase)
 				"BKG-5": "started",
 				"BKG-6": "started",
 				"BKG-7": "paid",
+				"BKG-8": "absent",
+				"BKG-9": "finished",
+				"BKG-10": "started",
 			},
 		)
 		self.assertEqual(rows["BKG-4"]["clock"]["active_seconds"], 3300)
@@ -456,6 +475,177 @@ class TestTheAgendaOfTheSalonDayIsComposedFromWhatTheLanesAnswer(FrappeTestCase)
 		self.assertEqual([r["booking"] for r in answer["appointments"]], ["BKG-2"])
 		self.assertEqual(len(answer["people"]), 2)
 
+	# What the money lane says the cashier may do
+
+	def test_what_the_money_lane_says_the_cashier_may_do_can_only_take_gestures_away(self):
+		self.site_has("day", "list", "move", "cancel", "time_action")
+		self.a_day(
+			people=[
+				self.person(
+					LUC,
+					appointments=[
+						self.row("BKG-1", LUC),
+						self.row("BKG-2", LUC, starts="2026-11-10 11:00:00"),
+						self.row("BKG-3", LUC, starts="2026-11-10 12:00:00"),
+					],
+				)
+			]
+		)
+		SITE["list"] = [
+			# A draft is open in the till: the lane keeps the appointment from being moved or cancelled
+			{
+				"booking": "BKG-1",
+				"state": "booked",
+				"in_the_till": True,
+				"can": {"collect": True, "move": False, "cancel": False, "clock": True},
+			},
+			# The lane allows everything: what the state and the site allow stays
+			{
+				"booking": "BKG-2",
+				"state": "booked",
+				"can": {"collect": True, "move": True, "cancel": True, "clock": True},
+			},
+			# The lane says nothing about it: the till's own rule
+			{"booking": "BKG-3", "state": "booked"},
+		]
+
+		rows = {r["booking"]: r["can"] for r in self.agenda()["appointments"]}
+
+		self.assertEqual(rows["BKG-1"], {"collect": True, "move": False, "cancel": False, "clock": True})
+		self.assertEqual(rows["BKG-2"], {"collect": True, "move": True, "cancel": True, "clock": True})
+		self.assertEqual(rows["BKG-3"], {"collect": True, "move": True, "cancel": True, "clock": True})
+
+	def test_what_the_money_lane_allows_never_gives_a_gesture_the_site_or_the_state_does_not_have(self):
+		self.site_has("day", "list", "move")
+		self.a_day(
+			people=[
+				self.person(
+					LUC,
+					appointments=[
+						self.row("BKG-1", LUC),
+						self.row("BKG-2", LUC, payment_status="Paid", starts="2026-11-10 11:00:00"),
+					],
+				)
+			]
+		)
+		everything = {"collect": True, "move": True, "cancel": True, "clock": True}
+		SITE["list"] = [
+			{"booking": "BKG-1", "state": "booked", "can": everything},
+			{"booking": "BKG-2", "state": "booked", "can": everything},
+		]
+
+		rows = {r["booking"]: r["can"] for r in self.agenda()["appointments"]}
+
+		# No cancel and no time hook on this site; a paid one lets nothing be done to it
+		self.assertEqual(rows["BKG-1"], {"collect": True, "move": True, "cancel": False, "clock": False})
+		self.assertEqual(rows["BKG-2"], dict.fromkeys(("collect", "move", "cancel", "clock"), False))
+
+	# How the salon stands on the day, and what was booked on a day it closes
+
+	def test_a_day_the_planning_lane_does_not_say_how_the_salon_stands_has_no_salon(self):
+		self.site_has("day")
+		self.a_day(people=[self.person(LUC, appointments=[self.row("BKG-1", LUC)])])
+
+		answer = self.agenda()
+
+		self.assertIsNone(answer["salon"])
+		self.assertFalse(answer["appointments"][0]["to_handle"])
+
+	def test_the_salon_block_is_read_with_only_the_keys_the_till_knows(self):
+		self.site_has("day")
+		self.a_day(
+			salon={
+				"state": "special",
+				"reason": "special_hours",
+				"label": "x" * 500,
+				"periods": [["10:00", "14:00"], ["bad"], ["25:0", "26"], "no", ["15:00", "18:00"]],
+				"secret": "never shown",
+			}
+		)
+
+		salon = self.agenda()["salon"]
+
+		self.assertEqual(set(salon), {"state", "reason", "label", "periods"})
+		self.assertEqual((salon["state"], salon["reason"]), ("special", "special_hours"))
+		self.assertEqual(len(salon["label"]), 140)
+		self.assertEqual(salon["periods"], [["10:00", "14:00"], ["15:00", "18:00"]])
+
+	def test_a_state_the_till_does_not_know_is_no_salon_and_a_reason_it_does_not_know_is_no_reason(self):
+		self.site_has("day")
+		for block in ("closed", ["closed"], {"state": "dancing"}, {"reason": "holiday"}):
+			with self.subTest(block=str(block)):
+				self.a_day(salon=block)
+				self.assertIsNone(self.agenda()["salon"])
+		self.a_day(salon=self.a_salon(reason="because", label=None))
+
+		self.assertEqual(self.agenda()["salon"]["reason"], None)
+
+	def test_on_a_closed_day_what_was_booked_and_nobody_has_begun_is_to_handle(self):
+		self.site_has("day", "list", "clocks")
+		self.a_day(
+			salon=self.a_salon(),
+			people=[
+				self.person(
+					LUC,
+					appointments=[
+						self.row("BKG-1", LUC),
+						self.row("BKG-2", LUC, starts="2026-11-10 10:00:00"),
+						self.row("BKG-3", LUC, payment_status="Paid", starts="2026-11-10 11:00:00"),
+						self.row("BKG-4", LUC, attendance="No Show", starts="2026-11-10 12:00:00"),
+						self.row("BKG-5", LUC, starts="2026-11-10 13:00:00"),
+						self.row("BKG-6", LUC, starts="2026-11-10 14:00:00"),
+					],
+				),
+				self.person(SONIA, appointments=[self.busy(SONIA)]),
+			],
+		)
+		SITE["clocks"] = {"BKG-2": {"status": "In progress"}, "BKG-6": {"status": "Finished"}}
+		SITE["list"] = [{"booking": "BKG-5", "state": "booked", "in_the_till": True, "invoice": "ACC-SINV-5"}]
+
+		rows = {r["key"]: r for r in self.agenda()["appointments"]}
+
+		self.assertEqual(
+			{key: row["to_handle"] for key, row in rows.items()},
+			{
+				"BKG-1": True,
+				# Under way, paid, absent, finished, or held in the till by a cashier: nothing to handle
+				"BKG-2": False,
+				"BKG-3": False,
+				"BKG-4": False,
+				"BKG-5": False,
+				"BKG-6": False,
+				# A colleague's busy hour: seventh of the day (the six of Luc come first)
+				"busy-6": False,
+			},
+		)
+		# Nothing is cancelled or changed by the till: the appointment stays what the lanes said
+		self.assertEqual(rows["BKG-1"]["state"], "booked")
+
+	def test_on_an_open_day_or_one_with_other_hours_nothing_is_to_handle(self):
+		self.site_has("day", "move", "cancel")
+		for block in (
+			self.a_salon(state="open", reason=None, label=None, periods=[["09:00", "18:00"]]),
+			self.a_salon(
+				state="special", reason="special_hours", label="Late opening", periods=[["10:00", "14:00"]]
+			),
+		):
+			with self.subTest(state=block["state"]):
+				self.a_day(salon=block, people=[self.person(LUC, appointments=[self.row("BKG-1", LUC)])])
+				answer = self.agenda()
+
+				self.assertEqual(answer["salon"]["state"], block["state"])
+				self.assertFalse(answer["appointments"][0]["to_handle"])
+
+	def test_a_closed_day_does_not_take_the_gestures_away_from_what_was_booked(self):
+		self.site_has("day", "move", "cancel")
+		self.a_day(salon=self.a_salon(), people=[self.person(LUC, appointments=[self.row("BKG-1", LUC)])])
+
+		row = self.agenda()["appointments"][0]
+
+		# The cashier moves it or cancels it with the customer: the day being closed takes nothing away
+		self.assertEqual(row["can"], {"collect": True, "move": True, "cancel": True, "clock": False})
+		self.assertTrue(row["to_handle"])
+
 	# What a colleague's appointment says
 
 	def test_a_busy_appointment_carries_no_name_no_service_no_amount_and_no_gesture(self):
@@ -466,7 +656,7 @@ class TestTheAgendaOfTheSalonDayIsComposedFromWhatTheLanesAnswer(FrappeTestCase)
 				self.person(SONIA, appointments=[self.busy(SONIA), self.busy(SONIA, "2026-11-10 12:00:00")])
 			],
 		)
-		SITE["list"] = [{"booking": "BKG-1", "amount": 120.0, "state": "in_the_till"}]
+		SITE["list"] = [{"booking": "BKG-1", "amount": 120.0, "state": "booked", "in_the_till": True}]
 
 		rows = self.agenda()["appointments"]
 

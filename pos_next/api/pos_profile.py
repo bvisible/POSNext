@@ -518,7 +518,12 @@ def get_sales_persons(pos_profile: str | None = None):
 		if not may_read_the_rates:
 			row["commission_rate"] = None
 
-	return sales_persons
+	# //// Neoffice — a person who rents her chair (an account the salon's planning declares independent, NeoSalon lot G13) is never offered as the
+	# //// seller of a line: what she does is hers, not the salon's (product owner, 10.11.2026). The site declares them through a hook; a site that
+	# //// declares none changes nothing. Remove if the salon mode leaves the till.
+	from pos_next.api.appointments import without_independents
+
+	return without_independents(sales_persons)
 
 
 @frappe.whitelist()

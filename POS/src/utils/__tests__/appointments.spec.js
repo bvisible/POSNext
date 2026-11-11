@@ -147,6 +147,18 @@ describe("where an appointment stands", () => {
 		expect(standsAs({})).toBe("booked")
 	})
 
+	it("is to handle when the salon was closed on its day after it was booked, and nobody has begun it", () => {
+		expect(
+			standsAs(row("A", "Luc", "09:00", "10:00", { to_handle: true })),
+		).toBe("to_handle")
+		// Begun, paid or absent: what it is wins over the flag
+		for (const state of ["started", "finished", "paid", "absent"]) {
+			expect(
+				standsAs(row("A", "Luc", "09:00", "10:00", { to_handle: true, state })),
+			).toBe(state)
+		}
+	})
+
 	it("waits for its payment when the work is done or its hour is over, and it is hers to collect", () => {
 		const now = 12 * 60
 		expect(isToCollect(row("A", "Luc", "09:00", "10:00"), now)).toBe(true)

@@ -54,6 +54,8 @@ export const useAppointmentsStore = defineStore("appointments", () => {
 	const day = ref("")
 	const visibility = ref("all")
 	const capabilities = ref({})
+	// How the salon stands on the day shown: `{ state: "open"|"closed"|"special", reason, label, periods }`, or null when the site does not say
+	const salon = ref(null)
 	const mine = ref([])
 	const people = ref([])
 	const appointments = ref([])
@@ -95,6 +97,11 @@ export const useAppointmentsStore = defineStore("appointments", () => {
 	const range = computed(() =>
 		dayRange(shownPeople.value, shownAppointments.value),
 	)
+	const closed = computed(() => salon.value?.state === "closed")
+	// The appointments booked before the salon was closed that day, which nobody has begun: the cashier moves or cancels them
+	const toHandleCount = computed(
+		() => appointments.value.filter((row) => row.to_handle).length,
+	)
 	// What waits for its payment: only today's count (the other days' are not the cashier's concern now)
 	const toCollectCount = computed(() =>
 		isToday.value ? countToCollect(appointments.value, now.value) : 0,
@@ -104,6 +111,7 @@ export const useAppointmentsStore = defineStore("appointments", () => {
 		available.value = Boolean(answer?.available)
 		visibility.value = answer?.visibility === "own" ? "own" : "all"
 		capabilities.value = answer?.capabilities || {}
+		salon.value = answer?.salon || null
 		mine.value = answer?.mine || []
 		people.value = answer?.people || []
 		appointments.value = answer?.appointments || []
@@ -173,6 +181,7 @@ export const useAppointmentsStore = defineStore("appointments", () => {
 		available.value = false
 		visibility.value = "all"
 		capabilities.value = {}
+		salon.value = null
 		mine.value = []
 		people.value = []
 		appointments.value = []
@@ -191,6 +200,9 @@ export const useAppointmentsStore = defineStore("appointments", () => {
 		isToday,
 		visibility,
 		capabilities,
+		salon,
+		closed,
+		toHandleCount,
 		mine,
 		people,
 		appointments,

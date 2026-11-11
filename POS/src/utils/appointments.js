@@ -71,10 +71,13 @@ export function standingOf(person) {
 }
 
 /**
- * Where an appointment stands, for its pill: `in_the_till` while a cashier holds its draft (and it is not paid), else its state.
- * @returns {"in_the_till"|"booked"|"started"|"finished"|"paid"|"absent"}
+ * Where an appointment stands, for its pill: `to_handle` when the salon was closed on its day after it was booked (and nobody has begun it),
+ * `in_the_till` while a cashier holds its draft (and it is not paid), else its state.
+ * @returns {"to_handle"|"in_the_till"|"booked"|"started"|"finished"|"paid"|"absent"}
  */
 export function standsAs(appointment) {
+	if (appointment?.to_handle && appointment.state === "booked")
+		return "to_handle"
 	if (appointment?.in_the_till && appointment.state !== "paid")
 		return "in_the_till"
 	return appointment?.state || "booked"

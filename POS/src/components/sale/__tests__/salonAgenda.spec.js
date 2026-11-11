@@ -225,6 +225,78 @@ describe("the agenda of the salon", () => {
 		expect(load.mock.calls.map(([day]) => day)).toEqual(["2026-11-11", "2026-11-10", "2026-11-09"])
 	})
 
+	describe("on a day the salon is closed, or has other hours", () => {
+		it("says nothing on a normal day, or when the site does not say", () => {
+			expect(mountIt().find("[data-test='agenda-salon']").exists()).toBe(false)
+
+			store.salon = { state: "open", reason: null, label: null, periods: [["09:00", "18:00"]] }
+			expect(mountIt().find("[data-test='agenda-salon']").exists()).toBe(false)
+		})
+
+		it("says the salon is closed and why, with the number of appointments booked before the closing to move or cancel", () => {
+			store.salon = { state: "closed", reason: "holiday", label: "Christmas Day", periods: [] }
+			store.appointments = [
+				row("BKG-9", "Maya", "10:00", "11:00", { to_handle: true }),
+				row("BKG-10", "Luc", "14:00", "15:00", { to_handle: true }),
+				row("BKG-11", "Luc", "16:00", "17:00", { state: "started", clock: { state: "running" } }),
+			]
+			const wrapper = mountIt()
+
+			const notice = wrapper.get("[data-test='agenda-salon']")
+			expect(notice.text()).toContain("Salon closed")
+			expect(notice.text()).toContain("Christmas Day")
+			expect(wrapper.get("[data-test='agenda-to-handle']").text()).toContain("2 booked before the closing")
+			expect(wrapper.get("[data-test='agenda-to-handle']").text()).toContain("None is cancelled by itself")
+		})
+
+		it("names the reason when the site gives no label, and does not count what nobody has to handle", () => {
+			store.salon = { state: "closed", reason: "weekly_off", label: null, periods: [] }
+			const wrapper = mountIt()
+
+			expect(wrapper.get("[data-test='agenda-salon']").text()).toContain("Weekly day off")
+			expect(wrapper.find("[data-test='agenda-to-handle']").exists()).toBe(false)
+		})
+
+		it("marks an appointment booked before the closing « To handle », and one under way as it was", () => {
+			store.salon = { state: "closed", reason: "closure", label: null, periods: [] }
+			// Two hours tall: a block shorter than 64 px has no room for its pill
+			store.appointments = [
+				row("BKG-9", "Maya", "10:00", "12:00", { to_handle: true }),
+				row("BKG-2", "Luc", "13:30", "15:30", { state: "started", clock: { state: "running" } }),
+			]
+			const wrapper = mountIt()
+
+			expect(wrapper.get("[data-test='block-BKG-9']").text()).toContain("To handle")
+			expect(wrapper.get("[data-test='block-BKG-2']").text()).toContain("In progress")
+		})
+
+		it("offers no free hour to book: nobody works that day", () => {
+			store.salon = { state: "closed", reason: "holiday", label: null, periods: [] }
+			store.appointments = []
+
+			expect(mountIt().findAll("[data-test^='free-']")).toHaveLength(0)
+		})
+
+		it("keeps the free hours of a day with other hours, and says the hours", () => {
+			store.salon = { state: "special", reason: "special_hours", label: "Late opening", periods: [["10:00", "14:00"]] }
+			const wrapper = mountIt()
+
+			expect(wrapper.get("[data-test='agenda-salon-title']").text()).toBe("Special hours")
+			expect(wrapper.get("[data-test='agenda-salon']").text()).toContain("10:00–14:00 · Late opening")
+			expect(wrapper.findAll("[data-test^='free-']").length).toBeGreaterThan(0)
+		})
+
+		it("lists the rows to handle on a phone, with no free hour", () => {
+			ui.isDesktop = false
+			store.salon = { state: "closed", reason: "holiday", label: null, periods: [] }
+			store.appointments = [row("BKG-9", "Luc", "10:00", "11:00", { to_handle: true })]
+			const wrapper = mountIt()
+
+			expect(wrapper.get("[data-test='row-BKG-9']").text()).toContain("To handle")
+			expect(wrapper.findAll("[data-test^='free-']")).toHaveLength(0)
+		})
+	})
+
 	it("is not available when the site has no agenda for this till", () => {
 		store.available = false
 		store.people = []

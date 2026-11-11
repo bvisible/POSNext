@@ -13,6 +13,10 @@
 		</div>
 
 		<div class="flex-1 min-h-0 overflow-y-auto">
+			<!-- Booked before the salon closed that day, and not begun: nothing cancels it by itself, the cashier decides with the customer -->
+			<div v-if="stands === 'to_handle'" class="mx-4 mt-3 mb-1 rounded-lg bg-yellow-50 px-3 py-2 text-sm text-yellow-900 dark:bg-yellow-400/15 dark:text-yellow-100" data-test="sheet-to-handle">
+				{{ __("The salon is closed that day. Nothing is cancelled by itself: move this appointment, or cancel it with the customer.") }}
+			</div>
 			<div class="flex flex-col gap-0.5 border-t border-gray-100 px-4 py-3 dark:border-gray-800">
 				<b dir="auto" class="text-3xl leading-tight text-gray-900 dark:text-gray-100" style="font-family: Forum, Georgia, serif" data-test="sheet-customer">{{ appointment.customer_name || __("Walk-in") }}</b>
 				<span class="text-sm text-gray-500 dark:text-gray-400">{{ whenText }}</span>
@@ -92,6 +96,7 @@ const PILLS = {
 	started: "bg-blue-50 text-blue-700 dark:bg-blue-400/20 dark:text-blue-100",
 	finished: "bg-orange-50 text-orange-700 dark:bg-orange-400/20 dark:text-orange-100",
 	in_the_till: "bg-blue-50 text-blue-700 dark:bg-blue-400/20 dark:text-blue-100",
+	to_handle: "bg-yellow-100 text-yellow-800 dark:bg-yellow-400/20 dark:text-yellow-100",
 	paid: "bg-green-50 text-green-700 dark:bg-green-400/20 dark:text-green-100",
 	absent: "bg-red-50 text-red-700 dark:bg-red-400/20 dark:text-red-100",
 }
@@ -108,6 +113,8 @@ const stateText = computed(() => {
 			return __("To collect")
 		case "in_the_till":
 			return __("In the till")
+		case "to_handle":
+			return __("To handle")
 		case "paid":
 			return __("Paid")
 		case "absent":
@@ -158,6 +165,8 @@ const collect = computed(() => ({ key: "collect", label: stands.value === "in_th
 const primary = computed(() => {
 	const row = props.appointment
 	if (row.state === "paid" || row.state === "absent") return null
+	// The salon is closed that day: what the cashier does first is move it (or, when it can no longer be moved, cancel it below)
+	if (stands.value === "to_handle" && store.capabilities.move && can.value.move) return { key: "move", label: __("Move"), run: () => emit("move", row) }
 	if (store.capabilities.clock && can.value.clock) {
 		if (state.value === "idle") return { key: "start", label: __("Start"), run: () => timeGesture("start") }
 		if (state.value === "running") return { key: "finish", label: __("Finish"), run: () => timeGesture("finish") }
@@ -171,7 +180,7 @@ const secondary = computed(() => {
 	const list = []
 	if (primary.value && primary.value.key !== "collect" && can.value.collect) list.push(collect.value)
 	if (store.capabilities.clock && can.value.clock && state.value === "running") list.push({ key: "pause", label: __("Pause"), run: () => timeGesture("pause") })
-	if (store.capabilities.move) list.push({ key: "move", label: __("Move"), off: !can.value.move, run: () => emit("move", row) })
+	if (store.capabilities.move && primary.value?.key !== "move") list.push({ key: "move", label: __("Move"), off: !can.value.move, run: () => emit("move", row) })
 	if (store.capabilities.cancel) list.push({ key: "cancel", label: __("Cancel"), danger: true, off: !can.value.cancel, run: () => emit("cancel", row) })
 	return list
 })

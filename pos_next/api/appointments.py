@@ -24,7 +24,14 @@ the money (the reservation lane)
 
 the time (the margin lane)
 - `pos_next_appointment_time_action`  `(appointment, action, pos_profile, employee=None) -> dict | None`  start, pause, finish, close_unmeasured;
-- `pos_next_appointment_time_state`   `(appointments, pos_profile) -> {appointment: state} | None`.
+- `pos_next_appointment_time_state`   `(appointments, pos_profile) -> {appointment: state} | None`;
+
+the people who rent their chair (the planning lane)
+- `pos_next_independent_users`        `() -> list[str]`  the accounts the salon declared independent: what they do is theirs, so the till never offers
+                                      one as the seller of a line (`pos_next.api.pos_profile.get_sales_persons`).
+
+The day view also says how the salon stands that day (`salon`: open, closed, or other hours). On a closed day the appointments booked before it
+was closed are never cancelled by themselves: the till marks the ones nobody has begun « to handle ».
 
 The till never sends an hour for the time (the server's clock is the only one) and never shows a cost or a margin. The shapes are the contract of the
 plan (note 10 of the vault, § G4, « Contrat v2 », and the notes of the lanes). The user of the session is the cashier: the hooks decide what that cashier may
@@ -54,6 +61,7 @@ SLOTS_HOOK = "pos_next_appointment_slots"
 BOOK_HOOK = "pos_next_appointment_book"
 TIME_ACTION_HOOK = "pos_next_appointment_time_action"
 TIME_STATE_HOOK = "pos_next_appointment_time_state"
+INDEPENDENTS_HOOK = "pos_next_independent_users"
 
 # More than a salon books in a day, and than one appointment holds lines: a hook that answers more is cut, never trusted
 MOST_APPOINTMENTS = 300
@@ -70,6 +78,10 @@ OPTIONS_LENGTH = 5000
 
 STATES = ("booked", "started", "finished", "paid", "absent")
 STAFF_STATES = ("present", "break", "not_yet", "done", "scheduled", "on_leave", "holiday", "off")
+# How the salon stands on a day (the planning lane's `salon` block), and why it is closed or has other hours
+SALON_STATES = ("open", "closed", "special")
+SALON_REASONS = ("holiday", "closure", "weekly_off", "special_hours", "no_hours")
+GESTURES = ("collect", "move", "cancel", "clock")
 CLOCK_STATES = ("idle", "running", "paused", "done")
 # What the time lane calls a state, and what the till calls it
 TIME_STATUS = {"Not started": "idle", "In progress": "running", "Paused": "paused", "Finished": "done"}
@@ -182,6 +194,32 @@ def _my_sales_people() -> set[str]:
 	return set(frappe.get_all("Sales Person", filters={"employee": ["in", employees]}, pluck="name"))
 
 
+def without_independents(sales_persons: list[dict]) -> list[dict]:
+	"""The sales persons of the picker, less the people who rent their chair (the accounts the site declares independent).
+
+	What an independent does is hers, not the salon's: she is never offered as the seller of a line, nor chosen first as « the cashier ». A site with no
+	planning lane declares none, and a hook that breaks declares none either (logged): the picker stays as it was.
+	"""
+	try:
+		declared = _first_answer(INDEPENDENTS_HOOK)
+	except frappe.ValidationError:
+		return sales_persons
+	users = (
+		{u for u in (_text(user) for user in declared) if u}
+		if isinstance(declared, list | tuple | set)
+		else set()
+	)
+	employees = [row["employee"] for row in sales_persons if row.get("employee")]
+	if not users or not employees:
+		return sales_persons
+	hers = set(
+		frappe.get_all(
+			"Employee", filters={"name": ["in", employees], "user_id": ["in", list(users)]}, pluck="name"
+		)
+	)
+	return [row for row in sales_persons if row.get("employee") not in hers]
+
+
 def _capabilities() -> dict:
 	"""What the site can do for the till: a gesture whose hook the site does not declare is not offered."""
 	return {
@@ -208,9 +246,17 @@ def _can(state: str, busy: bool, may: bool, capabilities: dict) -> dict:
 	}
 
 
+def _gestures(value) -> dict | None:
+	"""What the money lane says this cashier may do (`can`: collect, move, cancel, clock), or None when it says nothing."""
+	if not isinstance(value, dict):
+		return None
+	return {gesture: bool(cint(value.get(gesture))) for gesture in GESTURES}
+
+
 def _listed(row) -> dict | None:
-	"""A row of the reservation's list, read as the money lane states it: where it stands (`to_collect`, `in_the_till`, `collected`), what it
-	announces, what was paid, its steps."""
+	"""A row of the reservation's list, read as the money lane states it (contract v2): where it stands (`state`: booked, started, finished, paid,
+	absent), whether a cashier holds its draft (`in_the_till`, and `invoice` is then the draft, or the sale once paid), what it announces, what was
+	paid, its steps, and what this cashier may do (`can`)."""
 	if not isinstance(row, dict) or not _text(row.get("booking")):
 		return None
 	return {
@@ -222,10 +268,35 @@ def _listed(row) -> dict | None:
 		"steps": [s for s in (_step(r) for r in (row.get("steps") or [])[:MOST_STEPS]) if s],
 		"amount": _number(row.get("amount")),
 		"paid_amount": _number(row.get("paid_amount")),
-		"stands": row.get("state")
-		if row.get("state") in ("to_collect", "in_the_till", "collected")
-		else "to_collect",
+		"state": row.get("state") if row.get("state") in STATES else None,
+		"in_the_till": bool(cint(row.get("in_the_till"))),
+		"can": _gestures(row.get("can")),
 		"invoice": _text(row.get("invoice")),
+	}
+
+
+def _periods(value) -> list[list[str]]:
+	"""The hours a person works, or the salon is open, as `[["09:00", "12:00"], ...]`: only well-formed periods."""
+	if not isinstance(value, list | tuple):
+		return []
+	periods = []
+	for period in value[:MOST_PERIODS]:
+		if isinstance(period, list | tuple) and len(period) == 2 and _hour(period[0]) and _hour(period[1]):
+			periods.append([_hour(period[0]), _hour(period[1])])
+	return periods
+
+
+def _salon(view) -> dict | None:
+	"""How the salon stands on the day (the planning lane's `salon` block): open, closed (a holiday, a closure, a weekly day off) or with other
+	hours; None when the lane does not say (a site without the planning lane, or a lane that has not delivered it yet)."""
+	block = view.get("salon") if isinstance(view, dict) else None
+	if not isinstance(block, dict) or block.get("state") not in SALON_STATES:
+		return None
+	return {
+		"state": block["state"],
+		"reason": block.get("reason") if block.get("reason") in SALON_REASONS else None,
+		"label": _text(block.get("label")),
+		"periods": _periods(block.get("periods")),
 	}
 
 
@@ -236,10 +307,7 @@ def _staff(row) -> dict | None:
 	person, user = _text(row.get("sales_person")), _text(row.get("user"))
 	if not person and not user:
 		return None
-	periods = []
-	for period in (row.get("periods") or [])[:MOST_PERIODS]:
-		if isinstance(period, list | tuple) and len(period) == 2 and _hour(period[0]) and _hour(period[1]):
-			periods.append([_hour(period[0]), _hour(period[1])])
+	periods = _periods(row.get("periods"))
 	name = _text(row.get("sales_person_name")) or _text(row.get("name")) or person or user
 	return {
 		"key": person or user,
@@ -309,6 +377,7 @@ def _appointment(row, listed, clock, may, capabilities, key) -> dict | None:
 			"state": "booked",
 			"invoice": None,
 			"in_the_till": False,
+			"to_handle": False,
 			"busy": True,
 			"clock": _clock(None),
 			"can": _can("booked", True, False, capabilities),
@@ -317,17 +386,27 @@ def _appointment(row, listed, clock, may, capabilities, key) -> dict | None:
 	if not booking:
 		return None
 	listed = listed or {}
-	stands = listed.get("stands")
-	if row.get("attendance") == "No Show":
+	stands = listed.get("state")
+	# Where the time stands is the time lane's word; the money lane's list says it too (from the same records) where the time lane says nothing
+	worked = (
+		clock["state"]
+		if clock["state"] != "idle"
+		else {"finished": "done", "started": "running"}.get(stands, "idle")
+	)
+	if row.get("attendance") == "No Show" or stands == "absent":
 		state = "absent"
-	elif stands == "collected" or row.get("payment_status") == "Paid":
+	elif stands == "paid" or row.get("payment_status") == "Paid":
 		state = "paid"
-	elif clock["state"] == "done":
+	elif worked == "done":
 		state = "finished"
-	elif clock["state"] in ("running", "paused"):
+	elif worked in ("running", "paused"):
 		state = "started"
 	else:
 		state = "booked"
+	can = _can(state, False, may, capabilities)
+	# What the money lane says this cashier may do with it (a draft open in the till, a start already past) can only take gestures away
+	if listed.get("can"):
+		can = {gesture: can[gesture] and listed["can"][gesture] for gesture in GESTURES}
 	steps = listed.get("steps") or [
 		_step(
 			{
@@ -352,10 +431,11 @@ def _appointment(row, listed, clock, may, capabilities, key) -> dict | None:
 		"paid_amount": listed.get("paid_amount", 0.0),
 		"state": state,
 		"invoice": _text(row.get("invoice")) or listed.get("invoice"),
-		"in_the_till": stands == "in_the_till",
+		"in_the_till": bool(listed.get("in_the_till")),
+		"to_handle": False,
 		"busy": False,
 		"clock": clock,
-		"can": _can(state, False, may, capabilities),
+		"can": can,
 	}
 
 
@@ -620,7 +700,8 @@ def after_a_sale(booking, invoice: str, pos_profile, offline: bool, date=None) -
 
 @frappe.whitelist()
 def get_appointments(pos_profile: str, date: str | None = None, providers=None) -> dict:
-	"""The agenda of the day of the till: `{"available", "date", "visibility", "capabilities", "mine", "people", "appointments"}`.
+	"""The agenda of the day of the till: `{"available", "date", "visibility", "capabilities", "salon", "mine", "people", "appointments"}`
+	(`salon`: how the salon stands that day, `{"state": open|closed|special, "reason", "label", "periods"}`, or None when the planning lane does not say).
 
 	Not available (nothing to show, nothing done) while the till's tick is off or where the site has no reservation app. The agenda is composed:
 	the planning lane gives who is there and what each holds (a colleague's appointment « busy » for a cashier who may not read it), the money
@@ -637,6 +718,7 @@ def get_appointments(pos_profile: str, date: str | None = None, providers=None) 
 		"date": str(day),
 		"visibility": "all",
 		"capabilities": {},
+		"salon": None,
 		"mine": [],
 		"people": [],
 		"appointments": [],
@@ -720,11 +802,18 @@ def get_appointments(pos_profile: str, date: str | None = None, providers=None) 
 	if names:
 		rows = [r for r in rows if any(s["sales_person"] in names for s in r["steps"])]
 	rows.sort(key=lambda row: row["starts_at"] or "")
+	salon = _salon(view)
+	if salon and salon["state"] == "closed":
+		# An appointment booked on a day the salon then closes is never cancelled by itself (product owner, 10.11.2026): the till marks the ones nobody
+		# has begun « to handle », for the cashier to move or cancel with the customer
+		for row in rows:
+			row["to_handle"] = not row["busy"] and row["state"] == "booked" and not row["in_the_till"]
 	return {
 		"available": True,
 		"date": str(day),
 		"visibility": visibility,
 		"capabilities": capabilities,
+		"salon": salon,
 		"mine": sorted(mine),
 		"people": people,
 		"appointments": rows,
