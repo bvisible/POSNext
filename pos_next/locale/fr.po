@@ -26031,3 +26031,51 @@ msgstr "Saisissez-le une fois sur chaque écran client. Il ne sera plus affiché
 #: pos_next/api/customer_display.py:269 pos_next/api/customer_display.py:279
 msgid "Wrong password"
 msgstr "Mauvais mot de passe"
+
+#. Name of a DocType
+#: pos_next/pos_next/doctype/pos_closing_shift_cash_movement/pos_closing_shift_cash_movement.json:73
+msgid "POS Closing Shift Cash Movement"
+msgstr "Mouvement de caisse de clôture de session POS"
+
+#: pos_next/api/appointments.py:997
+#, python-brace-format
+msgid "Repeat 1 to {0} times."
+msgstr "Répéter de 1 à {0} fois."
+
+#: pos_next/api/appointments.py:994
+#, python-brace-format
+msgid "Repeat every 1 to {0} weeks."
+msgstr "Répéter toutes les 1 à {0} semaines."
+
+#. Name of a DocType
+#: pos_next/pos_next/doctype/restaurant_device/restaurant_device.json:125
+msgid "Restaurant Device"
+msgstr "Appareil du restaurant"
+
+#. Name of a DocType
+#: pos_next/pos_next/doctype/restaurant_device_pairing/restaurant_device_pairing.json:93
+msgid "Restaurant Device Pairing"
+msgstr "Appairage d'appareil du restaurant"
+
+#. Name of a DocType
+#: pos_next/pos_next/doctype/restaurant_portion/restaurant_portion.json:51
+msgid "Restaurant Portion"
+msgstr "Portion du restaurant"
+
+#. Name of a DocType
+#: pos_next/pos_next/doctype/restaurant_takeaway_day/restaurant_takeaway_day.json:28
+msgid "Restaurant Takeaway Day"
+msgstr "Jour de vente à emporter du restaurant"
+
+#. Name of a DocType
+#: pos_next/pos_next/doctype/restaurant_ticket_counter/restaurant_ticket_counter.json:55
+msgid "Restaurant Ticket Counter"
+msgstr "Compteur de tickets du restaurant"
+
+#: pos_next/api/restaurant.py:1801
+msgid "This line is no longer on the order. The screen reads the orders again."
+msgstr "Cette ligne ne figure plus sur la commande. L'écran recharge les commandes."
+
+#: pos_next/api/appointments.py:1005
+msgid "This till does not repeat appointments."
+msgstr "Cette caisse ne répète pas les rendez-vous."
