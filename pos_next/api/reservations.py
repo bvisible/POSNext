@@ -344,7 +344,7 @@ def get_reservation_stats(from_date, to_date, restaurant=None):
 
 
 @frappe.whitelist(allow_guest=True)
-def get_available_slots(date: str, restaurant: str | None = None):
+def get_available_slots(date: str, restaurant: str | None = None):  # permission-check: ok the public booking page reads it as a guest: opening hours and the public picture only
 	"""Return available time slots for a given date based on the opening hours of the restaurant.
 
 	A visitor names no restaurant on a site with one; the default restaurant answers. The arguments are strings: Frappe
