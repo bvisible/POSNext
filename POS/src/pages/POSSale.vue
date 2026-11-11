@@ -959,6 +959,7 @@
 									v-if="appointmentsShown"
 									@new-appointment="openNewAppointment"
 								/>
+								<!-- //// Neoffice — the sheet's "Repeat" gesture opens the repeat-booking dialog, below (c729537 "feat(appointments): « Repeat this appointment » at the till"). -->
 								<AppointmentSheet
 									v-if="sheetShown && !uiStore.isDesktop"
 									:appointment="appointmentsStore.selected"
@@ -2376,6 +2377,7 @@ import AppointmentBanner from "@/components/sale/AppointmentBanner.vue";
 import MoveAppointmentDialog from "@/components/sale/MoveAppointmentDialog.vue";
 import CancelAppointmentDialog from "@/components/sale/CancelAppointmentDialog.vue";
 import NewAppointmentDialog from "@/components/sale/NewAppointmentDialog.vue";
+//// Neoffice — dialog for the "Repeat this appointment" gesture at the till (c729537 "feat(appointments): « Repeat this appointment » at the till").
 import RepeatAppointmentDialog from "@/components/sale/RepeatAppointmentDialog.vue";
 import { useAppointment } from "@/composables/useAppointment";
 import { useAppointmentsStore } from "@/stores/appointments";
@@ -3056,6 +3058,7 @@ const sheetShown = computed(() => appointmentsShown.value && Boolean(appointment
 const gestureTarget = ref(null);
 const showMoveAppointment = ref(false);
 const showCancelAppointment = ref(false);
+//// Neoffice — visibility flag for the repeat-booking dialog (c729537 "feat(appointments): « Repeat this appointment » at the till").
 const showRepeatAppointment = ref(false);
 const showNewAppointment = ref(false);
 const newAppointmentStart = ref({ person: null, from: null });
@@ -3080,6 +3083,7 @@ function openCancelAppointment(appointment) {
 	showCancelAppointment.value = true;
 }
 
+//// Neoffice — opens the "Repeat this appointment" dialog, which asks the reservation for the recurring dates (c729537 "feat(appointments): « Repeat this appointment » at the till").
 function openRepeatAppointment(appointment) {
 	gestureTarget.value = appointment;
 	showRepeatAppointment.value = true;
