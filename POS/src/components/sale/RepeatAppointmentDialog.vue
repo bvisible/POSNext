@@ -51,8 +51,8 @@
 										<span class="block text-sm text-gray-500 dark:text-gray-400">{{ row.why || __("Same hour, same person") }}</span>
 									</template>
 									<template v-else>
-										<b class="block text-[15px] text-gray-900 dark:text-gray-100">{{ row.state === "beyond" ? __("Too far ahead") : __("Skipped") }}</b>
-										<span class="block text-sm text-gray-500 dark:text-gray-400">{{ row.why || (row.state === "beyond" ? __("Beyond what the salon takes bookings for: this date is not proposed.") : "") }}</span>
+										<b class="block text-[15px] text-gray-900 dark:text-gray-100">{{ row.state === "beyond" ? __("Beyond the booking horizon") : row.why || __("No free slot") }}</b>
+										<span class="block text-sm text-gray-500 dark:text-gray-400">{{ row.state === "beyond" ? row.why || __("This date is not proposed.") : __("This date is skipped.") }}</span>
 									</template>
 									<div v-if="row.state !== 'beyond' && editing === row.index" class="mt-2 flex items-center gap-2">
 										<input v-model="editValue" type="datetime-local" step="300" :data-test="`repeat-edit-${row.index}`" class="min-h-[40px] min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-sm dark:border-gray-600 dark:bg-gray-800" />
@@ -68,13 +68,13 @@
 
 					<div class="flex items-center justify-end gap-3 pt-1">
 						<button type="button" data-test="repeat-cancel" class="min-h-[48px] rounded-xl px-4 text-[15px] font-semibold text-gray-700 dark:text-gray-200" @click="show = false">{{ __("Cancel") }}</button>
-						<button type="button" data-test="repeat-confirm" class="min-h-[48px] rounded-xl bg-gray-900 px-5 text-[15px] font-semibold text-white disabled:opacity-50 dark:bg-gray-100 dark:text-gray-900" :disabled="working || loading || !bookable" @click="submit()">{{ bookable ? __("Book {0} appointments", [bookable]) : __("Nothing to book") }}</button>
+						<button type="button" data-test="repeat-confirm" class="min-h-[48px] rounded-xl bg-gray-900 px-5 text-[15px] font-semibold text-white disabled:opacity-50 dark:bg-gray-100 dark:text-gray-900" :disabled="working || loading || !bookable" @click="submit()">{{ bookable === 1 ? __("Book 1 appointment") : bookable ? __("Book {0} appointments", [bookable]) : __("Nothing to book") }}</button>
 					</div>
 				</template>
 
 				<template v-else>
 					<div class="rounded-xl bg-green-50 px-4 py-3 text-[15px] text-green-800 dark:bg-green-400/15 dark:text-green-100" data-test="repeat-done">
-						<b>{{ __("{0} appointments booked.", [result.booked.length]) }}</b>
+						<b>{{ result.booked.length === 1 ? __("1 appointment booked.") : __("{0} appointments booked.", [result.booked.length]) }}</b>
 						<ul class="mt-1 text-sm">
 							<li v-for="row in result.booked" :key="row.booking">{{ dayWords(row.starts_at).top }} {{ dayWords(row.starts_at).day }} · {{ hourOf(row.starts_at) }}</li>
 						</ul>
@@ -120,7 +120,7 @@ const PILLS = {
 	beyond: "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300",
 }
 const STATE_WORDS = {
-	free: () => __("Free"),
+	free: () => __("Free date"),
 	shifted: () => __("Moved"),
 	skipped: () => __("Skipped"),
 	beyond: () => __("Too far"),

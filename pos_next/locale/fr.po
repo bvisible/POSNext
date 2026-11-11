@@ -25900,17 +25900,9 @@ msgstr "Les dates n'ont pas pu être lues."
 msgid "Same hour, same person"
 msgstr "Même heure, même personne"
 
-#: POS/src/components/sale/RepeatAppointmentDialog.vue:55
-msgid "Too far ahead"
-msgstr "Trop loin"
-
 #: POS/src/components/sale/RepeatAppointmentDialog.vue:55 POS/src/components/sale/RepeatAppointmentDialog.vue:119
 msgid "Skipped"
 msgstr "Sautée"
-
-#: POS/src/components/sale/RepeatAppointmentDialog.vue:56
-msgid "Beyond what the salon takes bookings for: this date is not proposed."
-msgstr "Au-delà de ce que le salon prend en réservation : cette date n'est pas proposée."
 
 #: POS/src/components/sale/RepeatAppointmentDialog.vue:62
 msgid "Check"
@@ -25953,3 +25945,31 @@ msgstr "Sautées, à réserver à la main :"
 #: POS/src/composables/useAppointment.js:330
 msgid "Repeating an appointment needs the network."
 msgstr "Répéter un rendez-vous demande le réseau."
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:119
+msgid "Free date"
+msgstr "Libre"
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:55
+msgid "No free slot"
+msgstr "Aucun créneau libre"
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:56
+msgid "This date is skipped."
+msgstr "Cette date est sautée."
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:55
+msgid "Beyond the booking horizon"
+msgstr "Au-delà de l'horizon de réservation"
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:56
+msgid "This date is not proposed."
+msgstr "Cette date n'est pas proposée."
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:73
+msgid "Book 1 appointment"
+msgstr "Réserver 1 rendez-vous"
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:81
+msgid "1 appointment booked."
+msgstr "1 rendez-vous réservé."

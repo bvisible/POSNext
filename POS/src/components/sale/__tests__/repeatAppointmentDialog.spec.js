@@ -73,7 +73,7 @@ describe("the repeat dialog", () => {
 		const wrapper = mountIt()
 		await settle()
 
-		expect(wrapper.get("[data-test='repeat-state-1']").text()).toBe("Free")
+		expect(wrapper.get("[data-test='repeat-state-1']").text()).toBe("Free date")
 		expect(wrapper.get("[data-test='repeat-date-1']").text()).toContain("10:30 · Sonia")
 		expect(wrapper.get("[data-test='repeat-date-1']").text()).toContain("Same hour, same person")
 		expect(wrapper.get("[data-test='repeat-state-2']").text()).toBe("Moved")
@@ -81,8 +81,10 @@ describe("the repeat dialog", () => {
 		expect(wrapper.get("[data-test='repeat-date-2']").text()).toContain("10:30 is taken")
 		expect(wrapper.get("[data-test='repeat-state-3']").text()).toBe("Skipped")
 		expect(wrapper.get("[data-test='repeat-date-3']").text()).toContain("Sonia is away that day.")
+		expect(wrapper.get("[data-test='repeat-date-3']").text()).toContain("This date is skipped.")
 		expect(wrapper.get("[data-test='repeat-state-4']").text()).toBe("Too far")
-		expect(wrapper.get("[data-test='repeat-date-4']").text()).toContain("Beyond what the salon takes bookings for")
+		expect(wrapper.get("[data-test='repeat-date-4']").text()).toContain("Beyond the booking horizon")
+		expect(wrapper.get("[data-test='repeat-date-4']").text()).toContain("This date is not proposed.")
 	})
 
 	it("books the free and the moved dates only, and says how many on the button", async () => {
@@ -91,6 +93,19 @@ describe("the repeat dialog", () => {
 
 		expect(wrapper.get("[data-test='repeat-confirm']").text()).toBe("Book 2 appointments")
 		expect(wrapper.get("[data-test='repeat-confirm']").attributes("disabled")).toBeUndefined()
+	})
+
+	it("says « Book 1 appointment » and « 1 appointment booked » in the singular", async () => {
+		lane.repeat.mockResolvedValue(preview([free(1, "2026-12-23"), dates[3]]))
+		const wrapper = mountIt()
+		await settle()
+		expect(wrapper.get("[data-test='repeat-confirm']").text()).toBe("Book 1 appointment")
+
+		lane.repeat.mockResolvedValue({ mode: "booked", series: "BSR-1", booked: [{ index: 1, booking: "BKG-2", starts_at: "2026-12-23 11:00", state: "free" }], skipped: [] })
+		await wrapper.get("[data-test='repeat-confirm']").trigger("click")
+		await flushPromises()
+		expect(wrapper.get("[data-test='repeat-done']").text()).toContain("1 appointment booked.")
+		expect(wrapper.find("[data-test='repeat-skipped']").exists()).toBe(false)
 	})
 
 	it("asks again when the rhythm or the number changes, once, after the last change", async () => {
