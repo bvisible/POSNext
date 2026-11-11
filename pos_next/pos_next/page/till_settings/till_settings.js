@@ -26,6 +26,45 @@
 		'<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/>' +
 		'<path d="M9 18h6"/><path d="M10 22h4"/></svg>';
 
+	// //// Neoffice — the page in the desk's dark theme (maintenance#2491). Its card stayed white while the desk's fields, written into it, took the
+	// //// dark theme's light text: the labels of the switches and of the multiple choices, the greyed fields, all light on white. In the dark theme
+	// //// the page takes the desk's own surfaces and text (the variables the theme gives the desk, light and dark), and the design system's dark
+	// //// values where the page has a colour of its own (readme 9.1: ink becomes paper, success #3DBE74, warning #E6A93B; the signal's soft tint
+	// //// and its text). The light theme is the rules above, unchanged.
+	var DARK = '[data-theme="dark"] ';
+	var DARK_CSS = [
+		".tsp-sub,.tsp-section,.tsp-tab,.tsp-label,.tsp-bulb,.tsp-lock,.tsp-empty,.tsp-group h3,.tsp-badge{color:var(--text-muted)}",
+		".tsp-sub b,.tsp-help,.tsp-people,.tsp-note,.tsp-till,.tsp-chip{color:var(--text-color)}",
+		".tsp-panel{background:var(--card-bg);border-color:var(--border-color)}",
+		".tsp-rail,.tsp-note{background:var(--subtle-fg);border-color:var(--border-color)}",
+		".tsp-tab:hover,.tsp-till:hover{background:rgba(255,251,245,.08)}",
+		".tsp-tab.on,.tsp-till.on{background:#FFFDF8;border-color:#FFFDF8;color:#141414}",
+		".tsp-group h3,.tsp-setting.indent{border-color:var(--border-color)}",
+		".tsp-badge{background:rgba(255,251,245,.08)}",
+		".tsp-badge.restaurant,.tsp-bulb:hover,.tsp-bulb.on{background:rgba(245,93,26,.16);color:#FFB599}",
+		".tsp-help{background:rgba(245,93,26,.10)}",
+		".tsp-dirty,.tsp-badge.site{background:rgba(230,169,59,.16);color:#F8E2B4}",
+		".tsp-till,.tsp-chip{background:var(--card-bg);border-color:var(--border-color)}",
+		".tsp-chip.ok{background:rgba(61,190,116,.16);border-color:rgba(61,190,116,.42);color:#CBEDD7}",
+		".tsp-chip.todo{background:rgba(230,169,59,.16);border-color:rgba(230,169,59,.42);color:#F8E2B4}",
+		".tsp-people .bad{color:#E6A93B}",
+		".tsp-people .good{color:#3DBE74}",
+	]
+		.map(function (rule) {
+			// Each selector of a rule in the dark scope
+			var at = rule.indexOf("{");
+			return (
+				rule
+					.slice(0, at)
+					.split(",")
+					.map(function (selector) {
+						return DARK + selector;
+					})
+					.join(",") + rule.slice(at)
+			);
+		})
+		.join("");
+
 	// Ink for every action, the signal tint for what is selected (design system: the signal is a field, never a button)
 	var CSS =
 		".tsp{display:flex;flex-direction:column;gap:12px;padding:6px 0 24px}" +
@@ -78,7 +117,8 @@
 		".tsp-note{padding:8px 12px;border-radius:10px;background:#F6F3ED;color:#3A342C;font-size:13px;line-height:1.45}" +
 		".tsp-empty{padding:48px 16px;text-align:center;color:#6F665A}" +
 		"@media (max-width:991px){.tsp-body{flex-direction:column}.tsp-rail{flex:none;width:100%;flex-direction:row;flex-wrap:wrap;position:static}" +
-		".tsp-section{display:none}.tsp-tab{width:auto}.tsp-panel{grid-template-columns:minmax(0,1fr)!important;width:100%}}";
+		".tsp-section{display:none}.tsp-tab{width:auto}.tsp-panel{grid-template-columns:minmax(0,1fr)!important;width:100%}}" +
+		DARK_CSS;
 
 	// ------------------------------------------------------------------------------------------------ the rules
 	// Pure: the same rules as POS/src/components/settings/tillSettingsForm.js, kept equal by a spec that runs both.
@@ -1245,6 +1285,8 @@
 		isTimeOfDay: isTimeOfDay,
 		withinBounds: withinBounds,
 		railSections: railSections,
+		// //// Neoffice — the page's stylesheet, read by its spec (maintenance#2491: the dark theme)
+		stylesheet: CSS,
 	};
 
 	frappe.pages["till-settings"].on_page_load = function (wrapper) {
