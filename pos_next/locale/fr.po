@@ -26079,3 +26079,16 @@ msgstr "Cette ligne ne figure plus sur la commande. L'écran recharge les comman
 #: pos_next/api/appointments.py:1005
 msgid "This till does not repeat appointments."
 msgstr "Cette caisse ne répète pas les rendez-vous."
+
+#: POS/src/components/sale/CancelAppointmentDialog.vue:79
+msgid "Marked absent, all of it is kept for the absence: nothing goes back."
+msgstr "Cliente marquée absente : tout est gardé pour l'absence, rien n'est rendu sur sa carte."
+
+#: POS/src/components/sale/CancelAppointmentDialog.vue:75
+msgid "Marked absent, what the scale asks for an absence is kept and the rest goes back to her card."
+msgstr "Cliente marquée absente : ce que le barème prévoit pour une absence est gardé, et le reste est rendu sur sa carte."
+
+#: POS/src/components/sale/CancelAppointmentDialog.vue:78
+#, python-brace-format
+msgid "Marked absent, {0} is kept for the absence and {1} goes back to her card."
+msgstr "Cliente marquée absente : {0} est gardé pour l'absence et {1} est rendu sur sa carte."

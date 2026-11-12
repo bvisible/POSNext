@@ -148,6 +148,13 @@ def _number(value) -> float:
 	return flt(value) if isinstance(value, int | float | str) else 0.0
 
 
+def _amount_or_none(value) -> float | None:
+	"""An amount the money lane may leave out (a reservation app that predates it says nothing): None, not 0, when it is not there."""
+	return (
+		flt(value) if isinstance(value, int | float) or (isinstance(value, str) and value.strip()) else None
+	)
+
+
 def _moment(value):
 	"""A date and time as the site writes them (`YYYY-MM-DD HH:MM:SS`), or None."""
 	return _text(value, 19)
@@ -280,6 +287,10 @@ def _listed(row) -> dict | None:
 		"steps": [s for s in (_step(r) for r in (row.get("steps") or [])[:MOST_STEPS]) if s],
 		"amount": _number(row.get("amount")),
 		"paid_amount": _number(row.get("paid_amount")),
+		# What marking her absent would keep of what she paid (the scale's fee of an absence, compensation) and give back to her card: the
+		# dialog says it before the cashier marks it (12.11). None when the reservation app does not say.
+		"absent_kept": _amount_or_none(row.get("absent_kept")),
+		"absent_refund": _amount_or_none(row.get("absent_refund")),
 		"state": row.get("state") if row.get("state") in STATES else None,
 		"in_the_till": bool(cint(row.get("in_the_till"))),
 		"can": _gestures(row.get("can")),
@@ -386,6 +397,8 @@ def _appointment(row, listed, clock, may, capabilities, key) -> dict | None:
 			],
 			"amount": 0.0,
 			"paid_amount": 0.0,
+			"absent_kept": None,
+			"absent_refund": None,
 			"state": "booked",
 			"invoice": None,
 			"in_the_till": False,
@@ -441,6 +454,8 @@ def _appointment(row, listed, clock, may, capabilities, key) -> dict | None:
 		"steps": steps,
 		"amount": listed.get("amount", 0.0),
 		"paid_amount": listed.get("paid_amount", 0.0),
+		"absent_kept": listed.get("absent_kept"),
+		"absent_refund": listed.get("absent_refund"),
 		"state": state,
 		"invoice": _text(row.get("invoice")) or listed.get("invoice"),
 		"in_the_till": bool(listed.get("in_the_till")),

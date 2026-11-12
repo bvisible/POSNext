@@ -1224,3 +1224,16 @@ msgstr "Controlli di nuovo"
 #: POS/src/components/guest/GuestCheckout.vue:189
 msgid "Rounding"
 msgstr "Arrotondamento"
+
+#: POS/src/components/sale/CancelAppointmentDialog.vue:79
+msgid "Marked absent, all of it is kept for the absence: nothing goes back."
+msgstr "Segnata come assente: l'intero importo viene trattenuto per l'assenza, nulla viene rimborsato."
+
+#: POS/src/components/sale/CancelAppointmentDialog.vue:75
+msgid "Marked absent, what the scale asks for an absence is kept and the rest goes back to her card."
+msgstr "Segnata come assente: l'importo previsto dalla tariffa per un'assenza viene trattenuto, il resto le viene rimborsato sulla carta."
+
+#: POS/src/components/sale/CancelAppointmentDialog.vue:78
+#, python-brace-format
+msgid "Marked absent, {0} is kept for the absence and {1} goes back to her card."
+msgstr "Segnata come assente: {0} viene trattenuto per l'assenza e {1} le viene rimborsato sulla carta."

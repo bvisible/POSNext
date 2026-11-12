@@ -15,7 +15,7 @@
 				</fieldset>
 
 				<p v-if="appointment.paid_amount > 0" class="rounded-xl bg-yellow-50 px-4 py-3 text-sm leading-snug text-yellow-800 dark:bg-yellow-400/15 dark:text-yellow-100" data-test="cancel-refund">
-					<b>{{ __("She paid {0} online.", [money(appointment.paid_amount)]) }}</b> {{ __("It is refunded to her automatically.") }}
+					<b>{{ __("She paid {0} online.", [money(appointment.paid_amount)]) }}</b> {{ refundSaid }}
 				</p>
 
 				<label class="flex items-start gap-3 text-[15px] text-gray-900 dark:text-gray-100">
@@ -66,6 +66,18 @@ const notify = ref(true)
 const working = ref(false)
 const money = (amount) => formatCurrency(amount, shiftStore.profileCurrency || undefined)
 const confirmText = computed(() => (reason.value === "no_show" ? __("Mark absent") : __("Cancel the appointment")))
+//// Neoffice — what an absence keeps and gives back, before it is marked (12.11): the fee the scale asks for an absence is kept out of
+//// what she paid, as compensation, and the rest goes back to her card. The dialog said « refunded automatically » for an absence too.
+const refundSaid = computed(() => {
+	if (reason.value !== "no_show") return __("It is refunded to her automatically.")
+	// A reservation app that predates these amounts says nothing: no figure rather than a false « nothing goes back »
+	if (props.appointment.absent_kept == null && props.appointment.absent_refund == null)
+		return __("Marked absent, what the scale asks for an absence is kept and the rest goes back to her card.")
+	const kept = Number(props.appointment.absent_kept || 0)
+	const back = Number(props.appointment.absent_refund || 0)
+	if (back > 0) return __("Marked absent, {0} is kept for the absence and {1} goes back to her card.", [money(kept), money(back)])
+	return __("Marked absent, all of it is kept for the absence: nothing goes back.")
+})
 
 watch(
 	() => props.modelValue,

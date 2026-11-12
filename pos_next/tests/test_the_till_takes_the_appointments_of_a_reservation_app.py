@@ -171,6 +171,21 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 
 	# The list of the money lane, when the site gives no day view: it is the agenda
 
+	def test_what_an_absence_would_keep_and_give_back_reaches_the_till_and_is_none_when_the_app_says_nothing(
+		self,
+	):
+		"""The cancel dialog says what marking her absent keeps and gives back before it is marked (12.11): the amounts of the money lane
+		pass through; a reservation app that predates them says nothing, and the till must not read « nothing goes back » from a 0."""
+		from pos_next.api import appointments as lane
+
+		said = lane._listed(self.an_appointment(paid_amount=56.1, absent_kept="22.44", absent_refund=33.66))
+		self.assertEqual((said["absent_kept"], said["absent_refund"]), (22.44, 33.66))
+		silent = lane._listed(self.an_appointment())
+		self.assertEqual((silent["absent_kept"], silent["absent_refund"]), (None, None))
+		self.assertEqual(
+			lane._listed(self.an_appointment(absent_kept="", absent_refund=[1]))["absent_kept"], None
+		)
+
 	def test_the_tick_is_off_by_default(self):
 		self.assertEqual(frappe.get_meta("POS Settings").get_field("enable_appointments").default, "0")
 		self.assertEqual(frappe.new_doc("POS Settings").enable_appointments, 0)
@@ -238,6 +253,8 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 				"steps",
 				"amount",
 				"paid_amount",
+				"absent_kept",
+				"absent_refund",
 				"state",
 				"invoice",
 				"in_the_till",

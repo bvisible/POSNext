@@ -178,6 +178,35 @@ describe("the cancel dialog", () => {
 		expect(open().find("[data-test='cancel-refund']").exists()).toBe(false)
 	})
 
+	it("says before marking her absent what the absence keeps and what goes back to her card", async () => {
+		const wrapper = open({ paid_amount: 40, absent_kept: 16, absent_refund: 24 })
+
+		await wrapper.get("[data-test='cancel-no_show']").setValue(true)
+
+		const said = wrapper.get("[data-test='cancel-refund']").text()
+		expect(said).toContain("She paid CHF 40.00 online.")
+		expect(said).toContain("CHF 16.00 is kept for the absence and CHF 24.00 goes back to her card")
+		expect(said).not.toContain("refunded to her automatically")
+	})
+
+	it("says that an absence the scale keeps whole gives nothing back", async () => {
+		const wrapper = open({ paid_amount: 40, absent_kept: 40, absent_refund: 0 })
+
+		await wrapper.get("[data-test='cancel-no_show']").setValue(true)
+
+		expect(wrapper.get("[data-test='cancel-refund']").text()).toContain("all of it is kept for the absence: nothing goes back")
+	})
+
+	it("names no amount for an absence when the reservation app does not say what it keeps", async () => {
+		const wrapper = open({ paid_amount: 40 })
+
+		await wrapper.get("[data-test='cancel-no_show']").setValue(true)
+
+		const said = wrapper.get("[data-test='cancel-refund']").text()
+		expect(said).toContain("what the scale asks for an absence is kept and the rest goes back to her card")
+		expect(said).not.toContain("nothing goes back")
+	})
+
 	it("cancels, says what was refunded and what is still to give back, reads the agenda again and closes", async () => {
 		lane.cancel.mockResolvedValue({ booking: "BKG-1", state: "cancelled", refunded: 30, to_refund: 10 })
 		const wrapper = open({ paid_amount: 40 })
