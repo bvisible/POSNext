@@ -69,7 +69,15 @@ const confirmText = computed(() => (reason.value === "no_show" ? __("Mark absent
 //// Neoffice — what an absence keeps and gives back, before it is marked (12.11): the fee the scale asks for an absence is kept out of
 //// what she paid, as compensation, and the rest goes back to her card. The dialog said « refunded automatically » for an absence too.
 const refundSaid = computed(() => {
-	if (reason.value !== "no_show") return __("It is refunded to her automatically.")
+	if (reason.value !== "no_show") {
+		//// Neoffice — a late cancellation keeps what the scale asks at this notice out of what she paid (12.11): « refunded automatically »
+		//// was said whatever it kept. Nothing kept, or a reservation app that does not say: the sentence it always said.
+		const kept = Number(props.appointment.cancel_kept || 0)
+		const back = Number(props.appointment.cancel_refund || 0)
+		if (!(kept > 0)) return __("It is refunded to her automatically.")
+		if (back > 0) return __("Cancelled now, {0} is kept by the cancellation scale and {1} goes back to her card.", [money(kept), money(back)])
+		return __("Cancelled now, all of it is kept by the cancellation scale: nothing goes back.")
+	}
 	// A reservation app that predates these amounts says nothing: no figure rather than a false « nothing goes back »
 	if (props.appointment.absent_kept == null && props.appointment.absent_refund == null)
 		return __("Marked absent, what the scale asks for an absence is kept and the rest goes back to her card.")

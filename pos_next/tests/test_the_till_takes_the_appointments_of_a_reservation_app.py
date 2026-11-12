@@ -178,10 +178,24 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 		pass through; a reservation app that predates them says nothing, and the till must not read « nothing goes back » from a 0."""
 		from pos_next.api import appointments as lane
 
-		said = lane._listed(self.an_appointment(paid_amount=56.1, absent_kept="22.44", absent_refund=33.66))
-		self.assertEqual((said["absent_kept"], said["absent_refund"]), (22.44, 33.66))
+		said = lane._listed(
+			self.an_appointment(
+				paid_amount=56.1,
+				absent_kept="22.44",
+				absent_refund=33.66,
+				cancel_kept=11.22,
+				cancel_refund="44.88",
+			)
+		)
+		self.assertEqual(
+			(said["absent_kept"], said["absent_refund"], said["cancel_kept"], said["cancel_refund"]),
+			(22.44, 33.66, 11.22, 44.88),
+		)
 		silent = lane._listed(self.an_appointment())
-		self.assertEqual((silent["absent_kept"], silent["absent_refund"]), (None, None))
+		self.assertEqual(
+			(silent["absent_kept"], silent["absent_refund"], silent["cancel_kept"], silent["cancel_refund"]),
+			(None, None, None, None),
+		)
 		self.assertEqual(
 			lane._listed(self.an_appointment(absent_kept="", absent_refund=[1]))["absent_kept"], None
 		)
@@ -255,6 +269,8 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 				"paid_amount",
 				"absent_kept",
 				"absent_refund",
+				"cancel_kept",
+				"cancel_refund",
 				"state",
 				"invoice",
 				"in_the_till",

@@ -1237,3 +1237,12 @@ msgstr "Segnata come assente: l'importo previsto dalla tariffa per un'assenza vi
 #, python-brace-format
 msgid "Marked absent, {0} is kept for the absence and {1} goes back to her card."
 msgstr "Segnata come assente: {0} viene trattenuto per l'assenza e {1} le viene rimborsato sulla carta."
+
+#: POS/src/components/sale/CancelAppointmentDialog.vue:79
+msgid "Cancelled now, all of it is kept by the cancellation scale: nothing goes back."
+msgstr "Annullato ora: l'intero importo viene trattenuto secondo la tariffa di annullamento, nulla le viene restituito."
+
+#: POS/src/components/sale/CancelAppointmentDialog.vue:78
+#, python-brace-format
+msgid "Cancelled now, {0} is kept by the cancellation scale and {1} goes back to her card."
+msgstr "Annullato ora: {0} viene trattenuto secondo la tariffa di annullamento e {1} le viene rimborsato sulla carta."

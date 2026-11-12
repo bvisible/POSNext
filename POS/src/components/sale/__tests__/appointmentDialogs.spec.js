@@ -207,6 +207,23 @@ describe("the cancel dialog", () => {
 		expect(said).not.toContain("nothing goes back")
 	})
 
+	it("says what a late cancellation keeps and what goes back to her card", () => {
+		const wrapper = open({ paid_amount: 32.5, cancel_kept: 26, cancel_refund: 6.5 })
+
+		const said = wrapper.get("[data-test='cancel-refund']").text()
+		expect(said).toContain("CHF 26.00 is kept by the cancellation scale and CHF 6.50 goes back to her card")
+		expect(said).not.toContain("refunded to her automatically")
+	})
+
+	it("says that a cancellation whose scale keeps it all gives nothing back, and that one keeping nothing is refunded", () => {
+		expect(open({ paid_amount: 32.5, cancel_kept: 32.5, cancel_refund: 0 }).get("[data-test='cancel-refund']").text()).toContain(
+			"all of it is kept by the cancellation scale: nothing goes back",
+		)
+		expect(open({ paid_amount: 32.5, cancel_kept: 0, cancel_refund: 32.5 }).get("[data-test='cancel-refund']").text()).toContain(
+			"refunded to her automatically",
+		)
+	})
+
 	it("cancels, says what was refunded and what is still to give back, reads the agenda again and closes", async () => {
 		lane.cancel.mockResolvedValue({ booking: "BKG-1", state: "cancelled", refunded: 30, to_refund: 10 })
 		const wrapper = open({ paid_amount: 40 })

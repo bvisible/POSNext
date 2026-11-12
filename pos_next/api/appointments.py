@@ -291,6 +291,9 @@ def _listed(row) -> dict | None:
 		# dialog says it before the cashier marks it (12.11). None when the reservation app does not say.
 		"absent_kept": _amount_or_none(row.get("absent_kept")),
 		"absent_refund": _amount_or_none(row.get("absent_refund")),
+		# ...and what cancelling it now would (the scale at this notice): a late cancellation keeps part of what she paid
+		"cancel_kept": _amount_or_none(row.get("cancel_kept")),
+		"cancel_refund": _amount_or_none(row.get("cancel_refund")),
 		"state": row.get("state") if row.get("state") in STATES else None,
 		"in_the_till": bool(cint(row.get("in_the_till"))),
 		"can": _gestures(row.get("can")),
@@ -399,6 +402,8 @@ def _appointment(row, listed, clock, may, capabilities, key) -> dict | None:
 			"paid_amount": 0.0,
 			"absent_kept": None,
 			"absent_refund": None,
+			"cancel_kept": None,
+			"cancel_refund": None,
 			"state": "booked",
 			"invoice": None,
 			"in_the_till": False,
@@ -456,6 +461,8 @@ def _appointment(row, listed, clock, may, capabilities, key) -> dict | None:
 		"paid_amount": listed.get("paid_amount", 0.0),
 		"absent_kept": listed.get("absent_kept"),
 		"absent_refund": listed.get("absent_refund"),
+		"cancel_kept": listed.get("cancel_kept"),
+		"cancel_refund": listed.get("cancel_refund"),
 		"state": state,
 		"invoice": _text(row.get("invoice")) or listed.get("invoice"),
 		"in_the_till": bool(listed.get("in_the_till")),

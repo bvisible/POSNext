@@ -1252,3 +1252,12 @@ msgstr "Als abwesend erfasst: Der Betrag, den der Tarif für eine Abwesenheit vo
 #, python-brace-format
 msgid "Marked absent, {0} is kept for the absence and {1} goes back to her card."
 msgstr "Als abwesend erfasst: {0} wird für die Abwesenheit einbehalten, {1} wird auf ihre Karte zurückerstattet."
+
+#: POS/src/components/sale/CancelAppointmentDialog.vue:79
+msgid "Cancelled now, all of it is kept by the cancellation scale: nothing goes back."
+msgstr "Jetzt storniert. Der gesamte Betrag wird gemäss dem Annullationstarif einbehalten: Es wird nichts zurückerstattet."
+
+#: POS/src/components/sale/CancelAppointmentDialog.vue:78
+#, python-brace-format
+msgid "Cancelled now, {0} is kept by the cancellation scale and {1} goes back to her card."
+msgstr "Jetzt storniert: {0} wird gemäss dem Annullationstarif einbehalten, {1} wird auf ihre Karte zurückerstattet."
