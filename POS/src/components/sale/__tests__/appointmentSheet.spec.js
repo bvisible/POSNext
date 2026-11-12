@@ -179,6 +179,13 @@ describe("the sheet of an appointment", () => {
 		expect(wrapper.emitted("cancel")[0][0].booking).toBe("BKG-1")
 	})
 
+	it("says the till prices the services again only where it collects them, never on a paid appointment", () => {
+		expect(mountIt().get("[data-test='sheet-reprice']").text()).toContain("The till prices the services again")
+		const paid = mountIt({ state: "paid", invoice: "ACC-SINV-9", can: { collect: false, move: false, cancel: true, clock: false } })
+
+		expect(paid.text()).not.toContain("The till prices the services again")
+	})
+
 	it("offers nothing for an appointment where the cashier may do nothing", () => {
 		const wrapper = mountIt({ can: { collect: false, move: false, cancel: false, clock: false } })
 

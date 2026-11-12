@@ -54,7 +54,8 @@
 					<span>{{ __("Already paid online") }}</span><b>− {{ money(appointment.paid_amount) }}</b>
 				</div>
 				<div v-if="appointment.invoice && appointment.state === 'paid'" class="text-xs text-gray-500" data-test="sheet-invoice">{{ __("Invoice {0}", [appointment.invoice]) }}</div>
-				<div class="text-xs text-gray-500">{{ __("The till prices the services again at today's prices when you collect.") }}</div>
+				<!-- //// Neoffice — only where the till collects it: on a paid appointment there is nothing left to collect (12.11). -->
+				<div v-if="can.collect" class="text-xs text-gray-500" data-test="sheet-reprice">{{ __("The till prices the services again at today's prices when you collect.") }}</div>
 			</div>
 		</div>
 
