@@ -437,6 +437,10 @@ def _appointment(row, listed, clock, may, capabilities, key) -> dict | None:
 	# What the money lane says this cashier may do with it (a draft open in the till, a start already past) can only take gestures away
 	if listed.get("can"):
 		can = {gesture: can[gesture] and listed["can"][gesture] for gesture in GESTURES}
+		# Paid online and not served yet: the reservation app says it may still be cancelled or marked absent, and the till offers it
+		# (everything happens at the till, 10.11). Paid at the till, or an app that says nothing: nothing, as before.
+		if state == "paid" and listed["can"]["cancel"] and capabilities["cancel"] and may:
+			can["cancel"] = True
 	steps = listed.get("steps") or [
 		_step(
 			{

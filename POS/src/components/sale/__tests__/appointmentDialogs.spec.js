@@ -163,7 +163,9 @@ describe("the cancel dialog", () => {
 
 		await wrapper.get("[data-test='cancel-no_show']").setValue(true)
 
-		expect(wrapper.get("[data-test='cancel-notify']").element.checked).toBe(false)
+		expect(wrapper.find("[data-test='cancel-notify']").exists()).toBe(false)
+		expect(wrapper.get("[data-test='cancel-no-message']").text()).toBe("She receives no message for an absence.")
+		expect(wrapper.text()).not.toContain("The slot is free again")
 		expect(wrapper.get("[data-test='cancel-confirm']").text()).toBe("Mark absent")
 		await wrapper.get("[data-test='cancel-confirm']").trigger("click")
 		await flushPromises()

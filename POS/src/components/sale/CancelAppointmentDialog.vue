@@ -18,10 +18,12 @@
 					<b>{{ __("She paid {0} online.", [money(appointment.paid_amount)]) }}</b> {{ refundSaid }}
 				</p>
 
-				<label class="flex items-start gap-3 text-[15px] text-gray-900 dark:text-gray-100">
+				<label v-if="reason !== 'no_show'" class="flex items-start gap-3 text-[15px] text-gray-900 dark:text-gray-100">
 					<input v-model="notify" type="checkbox" data-test="cancel-notify" class="mt-1 h-5 w-5 rounded border-gray-400" />
 					<span><b>{{ __("Warn the customer") }}</b><span class="block text-sm text-gray-500 dark:text-gray-400">{{ __("The slot is free again in the agenda at once.") }}</span></span>
 				</label>
+				<!-- //// Neoffice — an absence sends the customer no message (the reservation app tells nobody): the box offered to warn her and said the slot was free again, an hour already gone (12.11). -->
+				<p v-else class="text-sm text-gray-500 dark:text-gray-400" data-test="cancel-no-message">{{ __("She receives no message for an absence.") }}</p>
 
 				<div class="flex items-center justify-end gap-3 pt-1">
 					<button type="button" data-test="cancel-keep" class="min-h-[48px] rounded-xl px-4 text-[15px] font-semibold text-gray-800 dark:text-gray-100" @click="show = false">{{ __("Keep the appointment") }}</button>

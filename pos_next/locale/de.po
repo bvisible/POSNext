@@ -1261,3 +1261,7 @@ msgstr "Jetzt storniert. Der gesamte Betrag wird gemäss dem Annullationstarif e
 #, python-brace-format
 msgid "Cancelled now, {0} is kept by the cancellation scale and {1} goes back to her card."
 msgstr "Jetzt storniert: {0} wird gemäss dem Annullationstarif einbehalten, {1} wird auf ihre Karte zurückerstattet."
+
+#: POS/src/components/sale/CancelAppointmentDialog.vue:26
+msgid "She receives no message for an absence."
+msgstr "Bei einem Nichterscheinen erhält die Kundin keine Nachricht."

@@ -1246,3 +1246,7 @@ msgstr "Annullato ora: l'intero importo viene trattenuto secondo la tariffa di a
 #, python-brace-format
 msgid "Cancelled now, {0} is kept by the cancellation scale and {1} goes back to her card."
 msgstr "Annullato ora: {0} viene trattenuto secondo la tariffa di annullamento e {1} le viene rimborsato sulla carta."
+
+#: POS/src/components/sale/CancelAppointmentDialog.vue:26
+msgid "She receives no message for an absence."
+msgstr "In caso di assenza, la cliente non riceve alcun messaggio."

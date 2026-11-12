@@ -96,7 +96,7 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 		frappe.db.set_value("POS Settings", {"pos_profile": self.fx.profile}, "enable_appointments", int(on))
 
 	def site_has(self, **hooks):
-		"""The hooks the site declares: `of_the_day=[paths]`, `draft=[paths]`."""
+		"""The hooks the site declares: `of_the_day=[paths]`, `draft=[paths]`, `cancel=[paths]`."""
 		# Every hook of the salon the site could declare is empty but the ones this test gives: the real site's own lanes are not under test here
 		table = {
 			getattr(appointments, name): []
@@ -105,6 +105,7 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 		}
 		table[appointments.LIST_HOOK] = [f"{ME}.{path}" for path in hooks.get("of_the_day", [])]
 		table[appointments.DRAFT_HOOK] = [f"{ME}.{path}" for path in hooks.get("draft", [])]
+		table[appointments.CANCEL_HOOK] = [f"{ME}.{path}" for path in hooks.get("cancel", [])]
 		real = frappe.get_hooks
 
 		def get_hooks(hook=None, *args, **kwargs):
@@ -377,6 +378,25 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 			with self.subTest(sent=sent):
 				with self.assertRaises(frappe.PermissionError):
 					self.as_the_cashier(appointments.get_appointments, self.fx.profile, "2026-11-10", sent)
+
+	def test_a_paid_appointment_the_money_lane_lets_cancel_offers_it_and_none_other_does(self):
+		"""Paid online and not served yet, the reservation app says it may still be cancelled or marked absent (everything happens at the
+		till, 10.11): the till offers it. A paid appointment the app says nothing of, or refuses, offers nothing (paid at the till: a refund)."""
+		# The site has the gesture (its cancel hook): only the money lane's word decides here
+		self.site_has(of_the_day=["the_list"], cancel=["the_list"])
+		paid = {"state": "paid", "paid_amount": 56.1, "invoice": "ACC-SINV-9"}
+		for said, offered in (
+			({"collect": 0, "move": 0, "cancel": 1, "clock": 0}, True),
+			({"collect": 0, "move": 0, "cancel": 0, "clock": 0}, False),
+			(None, False),
+		):
+			SITE["list"] = [self.an_appointment(**paid, **({"can": said} if said else {}))]
+			(row,) = self.as_the_cashier(appointments.get_appointments, self.fx.profile, "2026-11-10")[
+				"appointments"
+			]
+			self.assertEqual(
+				(row["state"], row["can"]["cancel"], row["can"]["collect"]), ("paid", offered, False), said
+			)
 
 	def test_the_first_hook_with_an_answer_counts_and_one_with_nothing_to_say_is_passed_over(self):
 		self.site_has(of_the_day=["nothing_to_say", "the_list"])

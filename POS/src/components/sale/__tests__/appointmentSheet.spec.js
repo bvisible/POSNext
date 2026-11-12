@@ -163,12 +163,20 @@ describe("the sheet of an appointment", () => {
 		expect(wrapper.emitted("cancel")[0][0].booking).toBe("BKG-1")
 	})
 
-	it("offers nothing for a paid appointment, and shows its invoice", () => {
-		const wrapper = mountIt({ state: "paid", invoice: "ACC-SINV-9", clock: { state: "done" } })
+	it("offers nothing for an appointment paid at the till, and shows its invoice", () => {
+		const wrapper = mountIt({ state: "paid", invoice: "ACC-SINV-9", clock: { state: "done" }, can: { collect: false, move: false, cancel: false, clock: false } })
 
 		expect(wrapper.find("[data-test='sheet-gestures'] button").exists()).toBe(false)
 		expect(wrapper.get("[data-test='sheet-invoice']").text()).toContain("ACC-SINV-9")
 		expect(wrapper.get("[data-test='sheet-state']").text()).toBe("Paid")
+	})
+
+	it("offers to cancel an appointment paid online and not served yet, which the reservation app lets go", async () => {
+		const wrapper = mountIt({ state: "paid", invoice: "ACC-SINV-9", can: { collect: false, move: false, cancel: true, clock: false } })
+
+		expect(wrapper.findAll("[data-test='sheet-gestures'] button").map((node) => node.attributes("data-test"))).toEqual(["sheet-cancel"])
+		await wrapper.get("[data-test='sheet-cancel']").trigger("click")
+		expect(wrapper.emitted("cancel")[0][0].booking).toBe("BKG-1")
 	})
 
 	it("offers nothing for an appointment where the cashier may do nothing", () => {
@@ -197,7 +205,7 @@ describe("the sheet of an appointment", () => {
 		it("offers it on a paid appointment (the customer's next visit) and on that one only, never on an absent one", () => {
 			store.capabilities = { ...store.capabilities, repeat: true }
 
-			const paid = mountIt({ state: "paid", invoice: "ACC-SINV-9", clock: { state: "done" } })
+			const paid = mountIt({ state: "paid", invoice: "ACC-SINV-9", clock: { state: "done" }, can: { collect: false, move: false, cancel: false, clock: false } })
 			expect(paid.findAll("[data-test='sheet-gestures'] button").map((node) => node.attributes("data-test"))).toEqual(["sheet-repeat"])
 			expect(mountIt({ state: "absent" }).find("[data-test='sheet-repeat']").exists()).toBe(false)
 		})

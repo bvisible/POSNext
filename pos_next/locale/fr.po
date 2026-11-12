@@ -26101,3 +26101,7 @@ msgstr "Annulé maintenant : tout est retenu selon le barème d'annulation, rien
 #, python-brace-format
 msgid "Cancelled now, {0} is kept by the cancellation scale and {1} goes back to her card."
 msgstr "Annulé maintenant : {0} est retenu selon le barème d'annulation et {1} est rendu sur sa carte."
+
+#: POS/src/components/sale/CancelAppointmentDialog.vue:26
+msgid "She receives no message for an absence."
+msgstr "La cliente ne reçoit aucun message si vous la marquez absente."

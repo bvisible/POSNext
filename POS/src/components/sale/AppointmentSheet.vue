@@ -179,7 +179,14 @@ const repeating = computed(() => ({ key: "repeat", label: __("Repeat"), run: () 
 const canRepeat = computed(() => Boolean(store.capabilities.repeat) && Boolean(props.appointment.booking) && props.appointment.state !== "absent")
 const secondary = computed(() => {
 	const row = props.appointment
-	if (row.state === "paid") return canRepeat.value ? [repeating.value] : []
+	//// Neoffice — paid online and not served yet, the reservation app lets it be cancelled or marked absent at the till (everything
+	//// happens at the till, 10.11); paid at the till, it says no: the way back is a refund there.
+	if (row.state === "paid") {
+		const list = []
+		if (store.capabilities.cancel && can.value.cancel) list.push({ key: "cancel", label: __("Cancel"), danger: true, run: () => emit("cancel", row) })
+		if (canRepeat.value) list.push(repeating.value)
+		return list
+	}
 	if (row.state === "absent") return []
 	const list = []
 	if (primary.value && primary.value.key !== "collect" && can.value.collect) list.push(collect.value)
