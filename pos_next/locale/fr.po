@@ -25502,7 +25502,7 @@ msgstr "Le rendez-vous est réservé."
 
 #: POS/src/composables/useAppointment.js:247
 msgid "The appointment is marked absent."
-msgstr "La cliente est marquée absente."
+msgstr ""
 
 #: pos_next/api/appointments.py:603 pos_next/api/appointments.py:605
 #: pos_next/api/appointments.py:645
@@ -25511,7 +25511,7 @@ msgstr "Impossible de lire les rendez-vous."
 
 #: POS/src/components/sale/CancelAppointmentDialog.vue:60
 msgid "The customer cancels"
-msgstr "La cliente annule"
+msgstr ""
 
 #: pos_next/api/appointments.py:833
 msgid "The free slots could not be read."
@@ -25587,7 +25587,7 @@ msgstr "Ce rendez-vous n'est pas un brouillon de cette caisse."
 
 #: pos_next/api/appointments.py:860
 msgid "This customer is not known."
-msgstr "Cette cliente est inconnue."
+msgstr ""
 
 #: POS/src/components/sale/MoveAppointmentDialog.vue:32
 msgid "This hour is free."
@@ -25622,7 +25622,7 @@ msgstr "Voir les rendez-vous"
 #: POS/src/components/sale/CancelAppointmentDialog.vue:23
 #: POS/src/components/sale/MoveAppointmentDialog.vue:38
 msgid "Warn the customer"
-msgstr "Prévenir la cliente"
+msgstr ""
 
 #: POS/src/components/sale/NewAppointmentDialog.vue:50
 msgid "Whoever"
@@ -25641,12 +25641,12 @@ msgstr "{0} n'est pas une date et une heure valides."
 #: POS/src/components/sale/CancelAppointmentDialog.vue:91
 #, python-brace-format
 msgid "{0} is still to be refunded to the customer."
-msgstr "{0} reste à rembourser à la cliente."
+msgstr ""
 
 #: POS/src/components/sale/CancelAppointmentDialog.vue:90
 #, python-brace-format
 msgid "{0} refunded to the customer."
-msgstr "{0} remboursé à la cliente."
+msgstr ""
 
 #: pos_next/till_settings/registry.py:738
 msgid "By the opening hours"
@@ -25822,7 +25822,7 @@ msgstr "Quand la page de vente à emporter en ligne accepte une nouvelle command
 #: POS/src/components/sale/SalonAgenda.vue:36
 #, python-brace-format
 msgid "{0} booked before the closing, to move or cancel with the customers. None is cancelled by itself."
-msgstr "{0} pris avant la fermeture, à déplacer ou à annuler avec les clientes. Aucun n'est annulé automatiquement."
+msgstr ""
 
 #: POS/src/components/sale/SalonAgenda.vue:226
 msgid "Public holiday"
@@ -25974,11 +25974,11 @@ msgstr "1 rendez-vous réservé."
 #: POS/src/components/sale/SalonAgenda.vue:40
 #, python-brace-format
 msgid "{0} appointments of a person who is away that day, to move or cancel with the customers. None is cancelled by itself."
-msgstr "{0} rendez-vous d'une personne absente ce jour-là, à déplacer ou à annuler avec les clientes. Aucun n'est annulé automatiquement."
+msgstr ""
 
 #: POS/src/components/sale/AppointmentSheet.vue:18
 msgid "The person is away that day. Nothing is cancelled by itself: move this appointment to another person or day, or cancel it with the customer."
-msgstr "La personne est absente ce jour-là. Rien n'est annulé automatiquement : déplacez ce rendez-vous vers une autre personne ou un autre jour, ou annulez-le avec la cliente."
+msgstr ""
 
 #: POS/src/components/customer-display/DisplayAuth.vue:60
 #: pos_next/public/pos/assets/CustomerDisplay-L544U9tY.js:1
@@ -26082,7 +26082,7 @@ msgstr "Cette caisse ne répète pas les rendez-vous."
 
 #: POS/src/components/sale/CancelAppointmentDialog.vue:79
 msgid "Marked absent, all of it is kept for the absence: nothing goes back."
-msgstr "Cliente marquée absente : tout est gardé pour l'absence, rien n'est rendu sur sa carte."
+msgstr ""
 
 #: POS/src/components/sale/CancelAppointmentDialog.vue:75
 msgid "Marked absent, what the scale asks for an absence is kept and the rest goes back to her card."
