@@ -688,6 +688,18 @@
 			</div>
 		</div>
 
+		<!-- //// Neoffice — the banners of the packages of the customer, under the customer (NeoSalon lots G11, voie 1; the board « Use a package at the till »). -->
+		<PackageBanners
+			v-if="packagesStore.usable"
+			:packages="packagesStore.packages"
+			:rows="items"
+			:chosen="selectedCartRow"
+			:is-offered="isOfferedRow"
+			:busy="bannerBusy"
+			:refusals="bannerRefusals"
+			@use="useFromBanner"
+		/>
+
 		<!-- Action Buttons Section -->
 		<!-- //// Neoffice — the header zone of the cart is tighter on a phone (kitchen test, 01.11): every pixel it takes is a pixel less for the lines. -->
 		<!-- //// Neoffice — compact cart head, the zone of the cart's actions is one row (NeoResto lot 1, product owner, 05.11.2026) -->
@@ -2423,6 +2435,9 @@ import { useOfferedItemsStore } from "@/stores/offeredItems";
 //// Neoffice — « Use a package » (NeoSalon lots G11, voie 1): the packages of the cart's customer, and the window that pays a line with a session of one.
 import { useCustomerPackagesStore } from "@/stores/customerPackages";
 import UsePackageDialog from "@/components/sale/UsePackageDialog.vue";
+//// Neoffice — the banners of the packages, and the line a banner's package pays (NeoSalon lots G11, voie 1).
+import PackageBanners from "@/components/sale/PackageBanners.vue";
+import { takenByOtherLines } from "@/utils/packageTarget";
 import { useItemSearchStore } from "@/stores/itemSearch";
 import { offlineWorker } from "@/utils/offline/workerClient";
 import { logger } from "@/utils/logger";
@@ -3859,6 +3874,38 @@ async function applyPackage({ pack, answer }) {
 		uom,
 		row,
 	);
+}
+
+//// Neoffice — « Use » on the banner of a package: the site is asked about the line the banner chose, and its answer applied to that line (or its words shown under the banner).
+const bannerBusy = ref("");
+const bannerRefusals = ref({});
+async function useFromBanner({ pack, row }) {
+	if (!row || bannerBusy.value) return;
+	bannerBusy.value = pack.package;
+	try {
+		const answer = await packagesStore.check(props.posProfile, pack, row, takenByOtherLines(pack, props.items, row));
+		if (!answer.ok) {
+			bannerRefusals.value = {
+				...bannerRefusals.value,
+				[pack.package]: answer.why || __("This package cannot pay this line."),
+			};
+			return;
+		}
+		bannerRefusals.value = { ...bannerRefusals.value, [pack.package]: "" };
+		await cartStore.updateItemDetails(
+			row.item_code,
+			{
+				customer_package: pack.package,
+				package_label: answer.label,
+				package_remaining: answer.remaining_after,
+				discount_percentage: 100,
+			},
+			row.uom || row.stock_uom,
+			row,
+		);
+	} finally {
+		bannerBusy.value = "";
+	}
 }
 
 async function handleReleasePackage() {
