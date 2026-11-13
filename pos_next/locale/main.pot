@@ -29516,3 +29516,15 @@ msgstr ""
 #: POS/src/components/sale/UsePackageDialog.vue
 msgid "{0} sessions"
 msgstr ""
+
+#: POS/src/components/sale/PackageBanners.vue:32
+msgid "No line of the cart is paid by this package."
+msgstr ""
+
+#: POS/src/components/sale/PackageBanners.vue:35
+msgid "Use package"
+msgstr ""
+
+#: pos_next/gift_card_vat.py:149
+msgid "The item {0} is also the gift card item of the till {1} (kind of gift card: {2}). A value voucher and a service voucher are not taxed the same way: give each kind its own item."
+msgstr ""

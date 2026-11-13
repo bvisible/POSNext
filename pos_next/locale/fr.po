@@ -26535,3 +26535,16 @@ msgstr "Utiliser {0} séances"
 #, python-brace-format
 msgid "{0} of {1} sessions left"
 msgstr "{0} séance(s) restante(s) sur {1}"
+
+#: POS/src/components/sale/PackageBanners.vue:32
+msgid "No line of the cart is paid by this package."
+msgstr "Aucune ligne du panier n'est couverte par ce forfait."
+
+#: pos_next/gift_card_vat.py:149
+#, python-brace-format
+msgid "The item {0} is also the gift card item of the till {1} (kind of gift card: {2}). A value voucher and a service voucher are not taxed the same way: give each kind its own item."
+msgstr "L'article {0} est aussi l'article de carte cadeau de la caisse {1} (type de carte cadeau : {2}). Un bon de valeur et un bon de prestation ne sont pas soumis à la même TVA : attribuez à chaque type son propre article."
+
+#: POS/src/components/sale/PackageBanners.vue:35
+msgid "Use package"
+msgstr "Utiliser"
