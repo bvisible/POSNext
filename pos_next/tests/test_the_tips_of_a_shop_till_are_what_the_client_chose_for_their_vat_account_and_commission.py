@@ -86,6 +86,15 @@ class TestTheTipsOfAShopTillAreWhatTheClientChose(TillSettingsCase):
 		self.assertIn(self.eight, taxes)
 		self.assertNotIn(self.zero, taxes)
 
+	def test_the_template_proposed_is_not_one_made_for_a_supply_abroad(self):
+		# A tip is not an export: « Export 0 % » comes first by its name, and still the last one proposed
+		names = ["Export 0 % - x", "No VAT - x", "Supply abroad 0 % - x"]
+
+		with patch.object(frappe.db, "sql", return_value=names):
+			proposed = till_tips.zero_rate_templates("x")
+
+		self.assertEqual(proposed, ["No VAT - x", "Export 0 % - x", "Supply abroad 0 % - x"])
+
 	def test_a_template_of_another_company_is_refused(self):
 		other = frappe.db.get_value("Company", {"name": ["!=", self.company]}, "name")
 		if not other:

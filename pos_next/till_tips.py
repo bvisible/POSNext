@@ -198,7 +198,15 @@ def zero_rate_templates(company: str | None = None) -> list[str]:
 		{"company": company},
 		pluck=True,
 	)
-	return templates
+	return sorted(templates, key=lambda name: (_is_about_what_leaves_the_country(name), name))
+
+
+# A tip is not an export: the templates made for a supply abroad come after the others in what is proposed (the client may still choose one)
+ABROAD_WORDS = ("export", "abroad", "foreign", "étranger", "ausland")
+
+
+def _is_about_what_leaves_the_country(template_name: str) -> bool:
+	return any(word in template_name.lower() for word in ABROAD_WORDS)
 
 
 def vat_template_of(item, company: str | None) -> str | None:

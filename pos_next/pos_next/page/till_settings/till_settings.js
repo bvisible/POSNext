@@ -42,7 +42,9 @@
 		".tsp-group h3,.tsp-setting.indent{border-color:var(--border-color)}",
 		".tsp-badge{background:rgba(255,251,245,.08)}",
 		".tsp-badge.restaurant,.tsp-bulb:hover,.tsp-bulb.on{background:rgba(245,93,26,.16);color:#FFB599}",
-		".tsp-help{background:rgba(245,93,26,.10)}",
+		".tsp-help,.tsp-reason{background:rgba(245,93,26,.10)}",
+		".tsp-reason{color:var(--text-color)}",
+		".tsp-help a{color:#FFB599}",
 		".tsp-dirty,.tsp-badge.site{background:rgba(230,169,59,.16);color:#F8E2B4}",
 		".tsp-till,.tsp-chip{background:var(--card-bg);border-color:var(--border-color)}",
 		".tsp-chip.ok{background:rgba(61,190,116,.16);border-color:rgba(61,190,116,.42);color:#CBEDD7}",
@@ -90,6 +92,8 @@
 		// //// Neoffice — a setting greyed for want of a fact of the site says why, and the reason stays readable: only the rest is dimmed
 		".tsp-setting[data-greyed=true][data-reason]{opacity:1}.tsp-setting[data-greyed=true][data-reason]>:not(.tsp-reason){opacity:.42}" +
 		".tsp-reason{margin:6px 0 2px;padding:8px 10px;border-radius:8px;background:#FFF6F1;color:#141414;font-size:12.5px;line-height:1.45}" +
+		// //// Neoffice — the source cited under a help reads as a link: underlined, in the signal's text tone (the plain colour of the text hid it)
+		".tsp-help a{color:#AA3700;text-decoration:underline;text-underline-offset:2px}" +
 		".tsp-label{display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:12.5px;color:#6F665A}" +
 		".tsp-row{display:flex;align-items:center;gap:8px}" +
 		".tsp-row .tsp-control{flex:1 1 auto;min-width:0}" +
