@@ -40,11 +40,12 @@
 						class="rounded-xl border border-gray-200 p-4 dark:border-gray-700"
 						:data-test="`package-${pack.package}`"
 					>
-						<div class="flex items-start justify-between gap-3">
-							<div class="min-w-0">
+						<!-- At a phone's width the sessions left go under the title instead of squeezing it -->
+						<div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+							<div class="min-w-0 flex-1 basis-48">
 								<b
 									dir="auto"
-									class="block truncate text-[15px] text-gray-900 dark:text-gray-100"
+									class="block break-words text-[15px] text-gray-900 dark:text-gray-100"
 									>{{ pack.title }}</b
 								>
 								<span
