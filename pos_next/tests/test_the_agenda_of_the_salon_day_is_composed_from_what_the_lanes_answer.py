@@ -91,6 +91,22 @@ def a_booking(*args):
 	return {}
 
 
+def what_the_site_runs():
+	"""The site's answer about what it runs today: both, unless a test says otherwise."""
+	answer = SITE.get("runs", {"repeat": True, "packages": True})
+	if isinstance(answer, Exception):
+		raise answer
+	return answer
+
+
+def some_packages(*args):
+	return []
+
+
+def a_package_use(*args):
+	return None
+
+
 HOOKS = {
 	"day": appointments.DAY_HOOK,
 	"list": appointments.LIST_HOOK,
@@ -103,6 +119,9 @@ HOOKS = {
 	"slots": appointments.SLOTS_HOOK,
 	"book": appointments.BOOK_HOOK,
 	"repeat": appointments.REPEAT_HOOK,
+	"packages": appointments.PACKAGES_HOOK,
+	"use_package": appointments.USE_PACKAGE_HOOK,
+	"runs": appointments.TILL_CAPABILITIES_HOOK,
 }
 STUBS = {
 	"day": "the_day",
@@ -116,6 +135,9 @@ STUBS = {
 	"slots": "some_slots",
 	"book": "a_booking",
 	"repeat": "a_repeat",
+	"packages": "some_packages",
+	"use_package": "a_package_use",
+	"runs": "what_the_site_runs",
 }
 
 
@@ -822,17 +844,75 @@ class TestTheAgendaOfTheSalonDayIsComposedFromWhatTheLanesAnswer(FrappeTestCase)
 		)
 		self.assertEqual(
 			answer["capabilities"],
-			dict.fromkeys(("check_move", "move", "cancel", "clock", "repeat", "book"), False),
+			dict.fromkeys(("check_move", "move", "cancel", "clock", "repeat", "packages", "book"), False),
 		)
 
 	def test_the_capabilities_are_the_gestures_the_site_declares(self):
-		self.site_has("day", "move", "check_move", "time_action", "services", "slots", "book", "repeat")
+		self.site_has(
+			"day", "move", "check_move", "time_action", "services", "slots", "book", "repeat", "runs"
+		)
 		self.a_day()
 
 		self.assertEqual(
 			self.agenda()["capabilities"],
-			{"check_move": True, "move": True, "cancel": False, "clock": True, "repeat": True, "book": True},
+			{
+				"check_move": True,
+				"move": True,
+				"cancel": False,
+				"clock": True,
+				"repeat": True,
+				"packages": False,
+				"book": True,
+			},
 		)
+
+	# « Repeat » and « use a package » are offered when the site SAYS it runs them: a theme declares their hooks on every site
+
+	def capabilities_when(self, runs, *hooks):
+		self.site_has("day", *hooks)
+		self.a_day()
+		if runs is not None:
+			SITE["runs"] = runs
+		return self.agenda()["capabilities"]
+
+	def test_repeat_is_offered_only_where_the_site_runs_series(self):
+		for runs, expected in (
+			({"repeat": True, "packages": False}, True),
+			({"repeat": False, "packages": True}, False),
+			({}, False),
+		):
+			with self.subTest(runs=runs):
+				self.assertIs(self.capabilities_when(runs, "repeat", "runs")["repeat"], expected)
+
+	def test_packages_are_offered_only_where_the_site_runs_them_and_has_both_hooks(self):
+		for runs, hooks, expected in (
+			({"repeat": False, "packages": True}, ("packages", "use_package", "runs"), True),
+			({"repeat": True, "packages": False}, ("packages", "use_package", "runs"), False),
+			({"repeat": True, "packages": True}, ("packages", "runs"), False),
+			({"repeat": True, "packages": True}, ("use_package", "runs"), False),
+		):
+			with self.subTest(runs=runs, hooks=hooks):
+				self.assertIs(self.capabilities_when(runs, *hooks)["packages"], expected)
+
+	def test_a_site_that_does_not_say_what_it_runs_offers_neither(self):
+		# The hooks of both gestures are there (a theme declares them everywhere) but the site has no hook that says it runs them
+		capabilities = self.capabilities_when(None, "repeat", "packages", "use_package")
+
+		self.assertFalse(capabilities["repeat"])
+		self.assertFalse(capabilities["packages"])
+
+	def test_an_answer_that_is_not_a_mapping_or_a_hook_that_breaks_says_nothing_runs(self):
+		for runs in (
+			"yes",
+			["repeat"],
+			1,
+			RuntimeError("the theme is broken"),
+			{"repeat": "yes", "packages": 1},
+		):
+			with self.subTest(runs=str(runs)):
+				capabilities = self.capabilities_when(runs, "repeat", "packages", "use_package", "runs")
+				self.assertFalse(capabilities["repeat"])
+				self.assertFalse(capabilities["packages"])
 
 	# What is refused
 

@@ -30,6 +30,15 @@ the series (the package and series lane)
 - `pos_next_appointment_repeat`       `(pos_profile, booking, every_weeks, count=None, until=None, changes=None, confirm=0) -> dict | None`  a preview of the dates
                                       of an appointment that comes back (`confirm=0`), then the booking of them (`confirm=1`);
 
+the packages of sessions (the package and series lane)
+- `pos_next_customer_packages`        `(pos_profile, customer) -> list | None`  the packages a customer can use today;
+- `pos_next_use_package`              `(pos_profile, customer, package, item_code, qty=1, in_cart=0) -> dict | None`  may a line be paid by a package (writes nothing);
+
+what the site runs today (the package and series lane)
+- `pos_next_till_capabilities`        `() -> {"repeat": bool, "packages": bool}`  whether the site's appointments come back and whether it sells packages today. A
+                                      theme declares the hooks of the gestures on every site and answers None where the feature is off, so the presence of a hook proves
+                                      nothing: a gesture is offered when its hooks are declared AND this answer says so (no hook, a failure, another shape: no);
+
 the people who rent their chair (the planning lane)
 - `pos_next_independent_users`        `() -> list[str]`  the accounts the salon declared independent: what they do is theirs, so the till never offers
                                       one as the seller of a line (`pos_next.api.pos_profile.get_sales_persons`).
@@ -72,6 +81,9 @@ TIME_ACTION_HOOK = "pos_next_appointment_time_action"
 TIME_STATE_HOOK = "pos_next_appointment_time_state"
 INDEPENDENTS_HOOK = "pos_next_independent_users"
 REPEAT_HOOK = "pos_next_appointment_repeat"
+PACKAGES_HOOK = "pos_next_customer_packages"
+USE_PACKAGE_HOOK = "pos_next_use_package"
+TILL_CAPABILITIES_HOOK = "pos_next_till_capabilities"
 
 # More than a salon books in a day, and than one appointment holds lines: a hook that answers more is cut, never trusted
 MOST_APPOINTMENTS = 300
@@ -278,14 +290,34 @@ def without_independents(sales_persons: list[dict]) -> list[dict]:
 	return [row for row in sales_persons if row.get("employee") not in hers]
 
 
+def _what_the_site_runs() -> dict:
+	"""`{"repeat": bool, "packages": bool}`: what the site says it runs today (hook `pos_next_till_capabilities`).
+
+	A theme declares its hooks on every site, so the presence of a hook says nothing about whether the feature is on: a button shown for a feature that is off
+	ends in a refusal. No hook, a hook that fails or that answers anything but a mapping says that nothing runs. It must never break the agenda.
+	"""
+	nothing = {"repeat": False, "packages": False}
+	try:
+		answer = _first_answer(TILL_CAPABILITIES_HOOK)
+	except frappe.ValidationError:
+		return nothing
+	if not isinstance(answer, dict):
+		return nothing
+	return {key: answer.get(key) is True for key in nothing}
+
+
 def _capabilities() -> dict:
-	"""What the site can do for the till: a gesture whose hook the site does not declare is not offered."""
+	"""What the site can do for the till: a gesture whose hook the site does not declare is not offered, and `repeat` and `packages` also need the site to say it
+	runs them today (`_what_the_site_runs`)."""
+	runs = _what_the_site_runs()
 	return {
 		"check_move": bool(frappe.get_hooks(CHECK_MOVE_HOOK)),
 		"move": bool(frappe.get_hooks(MOVE_HOOK)),
 		"cancel": bool(frappe.get_hooks(CANCEL_HOOK)),
 		"clock": bool(frappe.get_hooks(TIME_ACTION_HOOK)),
-		"repeat": bool(frappe.get_hooks(REPEAT_HOOK)),
+		"repeat": bool(frappe.get_hooks(REPEAT_HOOK)) and runs["repeat"],
+		"packages": bool(frappe.get_hooks(PACKAGES_HOOK) and frappe.get_hooks(USE_PACKAGE_HOOK))
+		and runs["packages"],
 		"book": bool(
 			frappe.get_hooks(BOOK_HOOK) and frappe.get_hooks(SERVICES_HOOK) and frappe.get_hooks(SLOTS_HOOK)
 		),
