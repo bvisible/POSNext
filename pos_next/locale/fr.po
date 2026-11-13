@@ -25502,7 +25502,7 @@ msgstr "Le rendez-vous est réservé."
 
 #: POS/src/composables/useAppointment.js:247
 msgid "The appointment is marked absent."
-msgstr ""
+msgstr "Le rendez-vous est marqué absent."
 
 #: pos_next/api/appointments.py:603 pos_next/api/appointments.py:605
 #: pos_next/api/appointments.py:645
@@ -25511,7 +25511,7 @@ msgstr "Impossible de lire les rendez-vous."
 
 #: POS/src/components/sale/CancelAppointmentDialog.vue:60
 msgid "The customer cancels"
-msgstr ""
+msgstr "Le client annule"
 
 #: pos_next/api/appointments.py:833
 msgid "The free slots could not be read."
@@ -25587,7 +25587,7 @@ msgstr "Ce rendez-vous n'est pas un brouillon de cette caisse."
 
 #: pos_next/api/appointments.py:860
 msgid "This customer is not known."
-msgstr ""
+msgstr "Ce client est inconnu."
 
 #: POS/src/components/sale/MoveAppointmentDialog.vue:32
 msgid "This hour is free."
@@ -25622,7 +25622,7 @@ msgstr "Voir les rendez-vous"
 #: POS/src/components/sale/CancelAppointmentDialog.vue:23
 #: POS/src/components/sale/MoveAppointmentDialog.vue:38
 msgid "Warn the customer"
-msgstr ""
+msgstr "Prévenir le client"
 
 #: POS/src/components/sale/NewAppointmentDialog.vue:50
 msgid "Whoever"
@@ -25641,12 +25641,12 @@ msgstr "{0} n'est pas une date et une heure valides."
 #: POS/src/components/sale/CancelAppointmentDialog.vue:91
 #, python-brace-format
 msgid "{0} is still to be refunded to the customer."
-msgstr ""
+msgstr "{0} reste à rembourser au client."
 
 #: POS/src/components/sale/CancelAppointmentDialog.vue:90
 #, python-brace-format
 msgid "{0} refunded to the customer."
-msgstr ""
+msgstr "{0} remboursé au client."
 
 #: pos_next/till_settings/registry.py:738
 msgid "By the opening hours"
@@ -25822,7 +25822,7 @@ msgstr "Quand la page de vente à emporter en ligne accepte une nouvelle command
 #: POS/src/components/sale/SalonAgenda.vue:36
 #, python-brace-format
 msgid "{0} booked before the closing, to move or cancel with the customers. None is cancelled by itself."
-msgstr ""
+msgstr "{0} réservés avant la fermeture, à déplacer ou à annuler avec les clients. Aucun n'est annulé automatiquement."
 
 #: POS/src/components/sale/SalonAgenda.vue:226
 msgid "Public holiday"
@@ -25974,11 +25974,11 @@ msgstr "1 rendez-vous réservé."
 #: POS/src/components/sale/SalonAgenda.vue:40
 #, python-brace-format
 msgid "{0} appointments of a person who is away that day, to move or cancel with the customers. None is cancelled by itself."
-msgstr ""
+msgstr "{0} rendez-vous d'une personne absente ce jour-là, à déplacer ou à annuler avec les clients. Aucun n'est annulé automatiquement."
 
 #: POS/src/components/sale/AppointmentSheet.vue:18
 msgid "The person is away that day. Nothing is cancelled by itself: move this appointment to another person or day, or cancel it with the customer."
-msgstr ""
+msgstr "La personne est absente ce jour-là. Rien n'est annulé automatiquement : déplacez ce rendez-vous vers une autre personne ou un autre jour, ou annulez-le avec le client."
 
 #: POS/src/components/customer-display/DisplayAuth.vue:60
 #: pos_next/public/pos/assets/CustomerDisplay-L544U9tY.js:1
@@ -26082,7 +26082,7 @@ msgstr "Cette caisse ne répète pas les rendez-vous."
 
 #: POS/src/components/sale/CancelAppointmentDialog.vue:79
 msgid "Marked absent, all of it is kept for the absence: nothing goes back."
-msgstr ""
+msgstr "Marqué absent : tout est retenu pour l'absence, rien n'est remboursé."
 
 #: POS/src/components/sale/CancelAppointmentDialog.vue:75
 msgid "Marked absent, what the scale asks for an absence is kept and the rest goes back to her card."
@@ -26105,3 +26105,261 @@ msgstr "Annulé maintenant : {0} est retenu selon le barème d'annulation et {1}
 #: POS/src/components/sale/CancelAppointmentDialog.vue:26
 msgid "She receives no message for an absence."
 msgstr "La cliente ne reçoit aucun message si vous la marquez absente."
+
+#. Description of the 'Common pot' (Check) field in DocType 'Restaurant Tip'
+#: pos_next/pos_next/doctype/restaurant_tip/restaurant_tip.json:86
+msgid "A tip that is nobody's, shared out by the business (a shop till set to a common pot)"
+msgstr "Un pourboire à personne, réparti par le commerce (une caisse de boutique réglée sur une cagnotte commune)"
+
+#. Label of a Check field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:715
+#: pos_next/till_settings/registry.py:1581
+msgid "Appointments till"
+msgstr "Caisse avec rendez-vous"
+
+#. Option for the 'Lines that ask for a person' (Select) field in DocType 'POS
+#. Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:692
+#: pos_next/till_settings/registry.py:1676
+msgid "As the site says"
+msgstr "Selon le site"
+
+#: POS/src/components/sale/CancelAppointmentDialog.vue:80
+#: pos_next/public/pos/assets/POSSale-BRoGDGK4.js:18
+#, python-brace-format
+msgid "Cancelled now, {0} is kept by the cancellation scale and {1} is refunded by the same means of payment."
+msgstr "Annulé maintenant : {0} est retenu selon le barème d'annulation et {1} est remboursé par le même moyen de paiement."
+
+#: POS/src/components/sale/SalonAgenda.vue:241
+#: pos_next/public/pos/assets/POSSale-BRoGDGK4.js:18
+msgid "Closed that day"
+msgstr "Fermé ce jour-là"
+
+#. Label of a Select field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:666
+#: pos_next/till_settings/registry.py:1552
+msgid "Commission on the tip"
+msgstr "Commission sur le pourboire"
+
+#. Label of a Table field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:699
+#: pos_next/till_settings/registry.py:1684
+msgid "Groups of services"
+msgstr "Groupes de services"
+
+#: POS/src/components/sale/CancelAppointmentDialog.vue:79
+#: pos_next/public/pos/assets/POSSale-BRoGDGK4.js:18
+msgid "It is refunded automatically, by the same means of payment."
+msgstr "Il est remboursé automatiquement, par le même moyen de paiement."
+
+#. Option for the 'Lines that ask for a person' (Select) field in DocType 'POS
+#. Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:692
+#: pos_next/till_settings/registry.py:1677
+msgid "Items not kept in stock"
+msgstr "Articles non suivis en stock"
+
+#. Option for the 'Lines that ask for a person' (Select) field in DocType 'POS
+#. Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:692
+#: pos_next/till_settings/registry.py:1678
+msgid "Items of the chosen groups"
+msgstr "Articles des groupes choisis"
+
+#. Option for the 'Commission on the tip' (Select) field in DocType 'POS
+#. Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:667
+#: pos_next/till_settings/registry.py:1563
+msgid "Like the sale"
+msgstr "Comme la vente"
+
+#. Label of a Select field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:691
+#: pos_next/till_settings/registry.py:1665
+msgid "Lines that ask for a person"
+msgstr "Lignes qui demandent une personne"
+
+#: POS/src/components/sale/CancelAppointmentDialog.vue:85
+#: pos_next/public/pos/assets/POSSale-BRoGDGK4.js:18
+msgid "Marked absent, what the scale asks for an absence is kept and the rest is refunded by the same means of payment."
+msgstr "Marqué absent : ce que le barème demande pour une absence est retenu, le reste est remboursé par le même moyen de paiement."
+
+#: POS/src/components/sale/CancelAppointmentDialog.vue:88
+#: pos_next/public/pos/assets/POSSale-BRoGDGK4.js:18
+#, python-brace-format
+msgid "Marked absent, {0} is kept for the absence and {1} is refunded by the same means of payment."
+msgstr "Marqué absent : {0} est retenu pour l'absence et {1} est remboursé par le même moyen de paiement."
+
+#: POS/src/components/sale/CancelAppointmentDialog.vue:26
+msgid "No message is sent for an absence."
+msgstr "Aucun message n'est envoyé pour une absence."
+
+#: pos_next/till_settings/registry.py:1570
+msgid "No source"
+msgstr "Aucune source"
+
+#: pos_next/till_settings/registry.py:1568
+msgid "No source found for the commission on tips: it is for your contracts and your agreement to say"
+msgstr "Aucune source trouvée pour la commission sur les pourboires : c'est à vos contrats et à votre convention de le dire"
+
+#. Description of the 'Commission on the tip' (Select) field in DocType 'POS
+#. Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:663
+msgid "None: the tip counts for nothing in the commission of the people of the sale (proposed). Like the sale: it counts in the turnover their commission is worked out on. A property of the tip item, shared by the tills that use it."
+msgstr "Aucune : le pourboire ne compte pour rien dans la commission des personnes de la vente (proposé). Comme la vente : il compte dans le chiffre d'affaires sur lequel leur commission est calculée. Une propriété de l'article pourboire, partagée par les caisses qui l'utilisent."
+
+#: pos_next/till_settings/registry.py:1554
+msgid "None: the tip counts for nothing in the commission of the people of the sale (proposed). Like the sale: the tip counts in the turnover their commission is worked out on. Whether a tip enters a commission is set by your employment contracts or your collective agreement. It is a property of the tip item, shared by the tills that use it."
+msgstr "Aucune : le pourboire ne compte pour rien dans la commission des personnes de la vente (proposé). Comme la vente : le pourboire compte dans le chiffre d'affaires sur lequel la commission est calculée. Si un pourboire entre dans une commission est fixé par vos contrats de travail ou votre convention collective. C'est une propriété de l'article pourboire, partagée par les caisses qui l'utilisent."
+
+#. Description of the 'The tip goes to' (Select) field in DocType 'POS
+#. Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:620
+msgid "Person who served: the tip is shared between the people of the sale, each for their part of it. Common pot: one tip that is nobody's, shared out by the business."
+msgstr "Personne qui a servi : le pourboire est partagé entre les personnes de la vente, chacune pour sa part. Cagnotte commune : un pourboire à personne, réparti par le commerce."
+
+#. Option for the 'Price collected' (Select) field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:724
+#: pos_next/till_settings/registry.py:1608
+msgid "Price announced at booking"
+msgstr "Prix annoncé à la réservation"
+
+#. Label of a Select field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:723
+#: pos_next/till_settings/registry.py:1597
+msgid "Price collected"
+msgstr "Prix encaissé"
+
+#. Option for the 'Price collected' (Select) field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:724
+#: pos_next/till_settings/registry.py:1607
+msgid "Price of the day"
+msgstr "Prix du jour"
+
+#: pos_next/till_settings/registry.py:1545
+msgid "Secondary source: the text of the Administration itself was not found"
+msgstr "Source secondaire : texte de l'Administration introuvable"
+
+#: pos_next/till_settings/registry.py:1518
+msgid "The account the tips are booked on, kept apart from the turnover. The account 2211 « Tip transit account » is proposed when none is chosen. The numbering of the accounts is your books': have your fiduciary confirm it."
+msgstr "Le compte sur lequel les pourboires sont comptabilisés, à part du chiffre d'affaires. Le compte 2211 « Compte de transit des pourboires » est proposé quand aucun n'est choisi. La numérotation des comptes est celle de vos livres : faites-la confirmer par votre fiduciaire."
+
+#. Description of the 'Tip account' (Link) field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:646
+msgid "The account the tips are booked on, kept apart from the turnover. The transit account 2211 is proposed when none is chosen; the numbering is to be confirmed by your fiduciary."
+msgstr "Le compte sur lequel les pourboires sont comptabilisés, à part du chiffre d'affaires. Le compte de transit 2211 est proposé quand aucun n'est choisi ; la numérotation est à confirmer par votre fiduciaire."
+
+#: pos_next/till_settings/registry.py:1543
+msgid "The conditions of the Federal Tax Administration, as reported by the Beobachter"
+msgstr "Les conditions de l'Administration fédérale des contributions, telles que rapportées par le Beobachter"
+
+#: POS/src/components/sale/CancelAppointmentDialog.vue:63
+#: pos_next/public/pos/assets/POSSale-BRoGDGK4.js:18
+msgid "The customer did not come (absent)"
+msgstr "Le client ne s'est pas présenté (absent)"
+
+#. Description of the 'Groups of services' (Table) field in DocType 'POS
+#. Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:696
+#: pos_next/till_settings/registry.py:1685
+msgid "The item groups whose items are services (their sub-groups too)."
+msgstr "Les groupes d'articles dont les articles sont des services (leurs sous-groupes aussi)."
+
+#: pos_next/till_settings/registry.py:1532
+#, python-format
+msgid "The item tax template of the tip. 0 % is proposed, and tips cannot be switched on without a template at 0 % until you choose one. To stay outside the turnover, the Federal Tax Administration asks that the tip is paid out in full to the staff (and the payment can be proved), is not booked as income, is invoiced apart, and shows no tax. The choice is yours."
+msgstr "Le modèle de taxe d'article du pourboire. 0 % est proposé, et les pourboires ne peuvent pas être activés sans modèle à 0 % tant que vous n'en choisissez pas un. Pour rester hors du chiffre d'affaires, l'Administration fédérale des contributions demande que le pourboire soit intégralement reversé au personnel (et que le versement puisse être prouvé), ne soit pas comptabilisé comme revenu, soit facturé à part et n'affiche aucune taxe. Le choix vous appartient."
+
+#. Description of the 'VAT of the tip' (Link) field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:654
+#, python-format
+msgid "The item tax template of the tip: 0 % is proposed. The tip is outside the turnover only if it is paid out in full to the staff, invoiced apart and shows no tax."
+msgstr "Le modèle de taxe d'article du pourboire : 0 % est proposé. Le pourboire ne sort du chiffre d'affaires que s'il est intégralement reversé au personnel, facturé à part et n'affiche aucune taxe."
+
+#: POS/src/components/sale/MoveAppointmentDialog.vue:39
+msgid "The new time is sent by SMS and e-mail. Untick if the customer has already been told."
+msgstr "La nouvelle heure est envoyée par SMS et e-mail. Décochez si le client a déjà été prévenu."
+
+#: pos_next/till_settings/registry.py:1479
+msgid "The person who served: the tip is shared between the people of the sale, each for their part of it (the user who rang it up when no one is named). Common pot: one tip that is nobody's, shared out by the business."
+msgstr "La personne qui a servi : le pourboire est partagé entre les personnes de la vente, chacune pour sa part (l'utilisateur qui a encaissé si personne n'est nommé). Cagnotte commune : un pourboire à personne, réparti par le commerce."
+
+#: pos_next/till_settings/registry.py:1599
+msgid "The price a collected appointment is rung at. Price of the day (proposed): the till prices the services again at today's prices, offers included. Price announced at booking: each line keeps the amount the booking prepared, for a trade whose announced price binds. Without the network the till can only price at the day's prices it has kept."
+msgstr "Le prix auquel un rendez-vous encaissé est saisi. Prix du jour (proposé) : la caisse recalcule les prestations au prix du jour, promotions comprises. Prix annoncé à la réservation : chaque ligne garde le montant prévu par la réservation, pour un commerce dont le prix annoncé fait foi. Sans réseau, la caisse ne peut calculer qu'aux prix du jour déjà gardés en mémoire."
+
+#. Description of the 'Price collected' (Select) field in DocType 'POS
+#. Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:720
+msgid "The price a collected appointment is rung at: the price of the day (the till prices the services again, offers included) or the price announced at booking (the line keeps the amount the booking prepared)."
+msgstr "Le prix auquel un rendez-vous encaissé est saisi : le prix du jour (la caisse recalcule les prestations, promotions comprises) ou le prix annoncé à la réservation (la ligne garde le montant prévu par la réservation)."
+
+#: POS/src/components/sale/AppointmentSheet.vue:58
+msgid "The price announced at booking is collected."
+msgstr "Le prix annoncé à la réservation est encaissé."
+
+#. Label of a Data field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:707
+#: pos_next/till_settings/registry.py:1695
+msgid "The question for the person"
+msgstr "La question pour la personne"
+
+#. Description of the 'The question for the person' (Data) field in DocType
+#. 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+#: pos_next/till_settings/registry.py:1697
+msgid "The question the cashier reads for a service, in your words (« Who did the work? », « Mechanic », « Seller »). Empty: the usual words."
+msgstr "La question que la personne en caisse lit pour une prestation, dans vos mots (« Qui a fait le travail ? », « Mécanique », « Vente »). Vide : les mots usuels."
+
+#: pos_next/till_settings/registry.py:94
+msgid "The site's booking does not answer for this till yet, so there would be no agenda to show. It becomes available once the site takes appointments."
+msgstr "La réservation du site ne répond pas encore pour cette caisse : il n'y aurait donc pas d'agenda à afficher. Il sera disponible dès que le site prendra des rendez-vous."
+
+#: pos_next/till_settings/registry.py:1583
+msgid "The till shows the day's agenda, takes, moves and cancels appointments, times them, and collects them (the invoice the booking prepared is loaded into the cart with the person of each line, at today's prices). Shop till only. Available once the site's booking answers for this till."
+msgstr "La caisse affiche l'agenda du jour, prend, déplace et annule les rendez-vous, les pointe et les encaisse (la facture préparée par la réservation est chargée dans le panier avec la personne de chaque ligne, au prix du jour). Caisse de boutique uniquement. Disponible dès que la réservation du site répond pour cette caisse."
+
+#. Description of the 'Appointments till' (Check) field in DocType 'POS
+#. Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:712
+msgid "The till shows the day's agenda, takes, moves and cancels appointments, times them, and collects them (the invoice the booking prepared is loaded into the cart with the person of each line, at today's prices). Shop till only; available once the site's booking answers for this till."
+msgstr "La caisse affiche l'agenda du jour, prend, déplace et annule les rendez-vous, les pointe et les encaisse (la facture préparée par la réservation est chargée dans le panier avec la personne de chaque ligne, au prix du jour). Caisse de boutique uniquement ; disponible dès que la réservation du site répond pour cette caisse."
+
+#: pos_next/till_tips.py:239
+#, python-brace-format
+msgid "The VAT of the tip must be a template of the company of this till ({0})."
+msgstr "La TVA du pourboire doit être un modèle de la société de cette caisse ({0})."
+
+#: POS/src/components/sale/AppointmentSheet.vue:18
+msgid "This day is closed. Nothing is cancelled by itself: move this appointment, or cancel it with the customer."
+msgstr "Ce jour est fermé. Rien n'est annulé automatiquement : déplacez ce rendez-vous, ou annulez-le avec le client."
+
+#: pos_next/till_tips.py:246
+#, python-brace-format
+msgid "Tips cannot be switched on: the company {0} has no item tax template at 0 %, and a tip carries no VAT unless you choose it. Make a template with every rate at 0 % (Accounting, Item Tax Template), or choose the template of the tip in « VAT of the tip » in the same save."
+msgstr "Les pourboires ne peuvent pas être activés : la société {0} n'a pas de modèle de taxe d'article à 0 %, et un pourboire ne porte aucune TVA sauf si vous la choisissez. Créez un modèle avec tous les taux à 0 % (Comptabilité, Modèle de taxe d'article), ou choisissez le modèle du pourboire dans « TVA du pourboire » dans le même enregistrement."
+
+#: pos_next/till_tips.py:234
+msgid "Tips cannot be switched on: the tip account could not be made for the company of this till. Choose one in « Tip account »."
+msgstr "Les pourboires ne peuvent pas être activés : le compte de pourboires n'a pas pu être créé pour la société de cette caisse. Choisissez-en un dans « Compte pourboires »."
+
+#. Label of a Link field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:657
+#: pos_next/till_settings/registry.py:1530
+msgid "VAT of the tip"
+msgstr "TVA du pourboire"
+
+#. Description of the 'Lines that ask for a person' (Select) field in DocType
+#. 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:688
+msgid "Which items count as services, the lines that always ask who did the work. As the site says: the site tells services from products (where it tells nothing, every line is a service). Items not kept in stock: a service is an item that is not kept in stock. Items of the chosen groups: a service is an item of those groups."
+msgstr "Quels articles comptent comme services, c'est-à-dire les lignes qui demandent toujours qui a fait le travail. Selon le site : le site distingue les services des produits (là où il ne distingue rien, chaque ligne est un service). Articles non suivis en stock : un service est un article non suivi en stock. Articles des groupes choisis : un service est un article de ces groupes."
+
+#: pos_next/till_settings/registry.py:1667
+msgid "Which items count as services, the lines that always ask who did the work. As the site says: the site tells services from products (where it tells nothing, every line is a service). Items not kept in stock: a service is an item that is not kept in stock. Items of the chosen groups: a service is an item of those groups. A product asks only if the choice above says so."
+msgstr "Quels articles comptent comme services, c'est-à-dire les lignes qui demandent toujours qui a fait le travail. Selon le site : le site distingue les services des produits (là où il ne distingue rien, chaque ligne est un service). Articles non suivis en stock : un service est un article non suivi en stock. Articles des groupes choisis : un service est un article de ces groupes. Un produit ne demande la personne que si le choix ci-dessus le prévoit."
+
+#: POS/src/components/sale/CancelAppointmentDialog.vue:18
+#, python-brace-format
+msgid "{0} was paid online."
+msgstr "{0} a été payé en ligne."
