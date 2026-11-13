@@ -1490,7 +1490,8 @@
 									</h4>
 									<!-- //// Neoffice — the total is right-aligned on a phone, where it stands beside the name -->
 									<div data-cart-total class="flex-shrink-0 tabular-nums max-sm:text-end min-[1100px]:text-end">
-										<div class="text-base font-bold text-[#1d2433]" :class="isStruck(item) ? 'line-through' : ''">
+										<!-- //// Neoffice — the line's total in the dark theme: its ink was a fixed dark blue, the same as the dark panel behind it, so the total vanished (seen at the till with a line paid by a package, 13.11.2026) -->
+										<div class="text-base font-bold text-[#1d2433] dark:text-gray-100" :class="isStruck(item) ? 'line-through' : ''">
 											{{ formatCurrency(getLineAmount(item)) }}
 										</div>
 										<div v-if="lineSaving(item) > 0" class="text-xs text-gray-500 line-through">
