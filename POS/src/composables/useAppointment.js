@@ -9,6 +9,7 @@ import { customerOfTheOrder } from "@/composables/useOpenTable"
 import { useToast } from "@/composables/useToast"
 import { useAppointmentsStore } from "@/stores/appointments"
 import { usePOSCartStore } from "@/stores/posCart"
+import { usePOSSettingsStore } from "@/stores/posSettings"
 import { usePOSShiftStore } from "@/stores/posShift"
 import { call } from "@/utils/apiWrapper"
 import { parseError } from "@/utils/errorHandler"
@@ -27,12 +28,17 @@ const answerOf = (answer) => answer?.message ?? answer
  *
  * @param {object} line - `{ item_code, item_name, qty, uom, stock_uom, conversion_factor, image, sales_person, sales_person_name, posa_item_modifiers, price_list_rate }`
  * @param {number|null} dayRate - the unit price of the day, without the options (the till's price list); null: the line's own price
+ * @param {boolean} announced - the till collects at the price the booking announced (setting « Price collected »): the line keeps the rate of the draft as
+ *   it is, the options already part of it; a line that has no price of its own (the agenda offline carries none) falls back to the day's price
  * @returns {{ item: object, qty: number }}
  */
-export function cartLineOfAppointment(line, dayRate = null) {
+export function cartLineOfAppointment(line, dayRate = null, announced = false) {
 	const adjustment = modifiersPriceAdjustment(line.posa_item_modifiers)
+	const announcedRate = announced && line.rate != null ? Number(line.rate) : Number.NaN
 	const base = Number(dayRate ?? line.price_list_rate ?? line.rate) || 0
-	const rate = Math.round((base + adjustment) * 1e6) / 1e6
+	const rate = Number.isFinite(announcedRate)
+		? announcedRate
+		: Math.round((base + adjustment) * 1e6) / 1e6
 	return {
 		qty: Number(line.qty) || 1,
 		item: {
@@ -108,14 +114,19 @@ export function useAppointment() {
 		return Number.isFinite(rate) && rate >= 0 ? rate : null
 	}
 
-	/** Put lines in the cart at the day's prices, each with its person. */
+	/**
+	 * Put lines in the cart, each with its person: at the day's prices (proposed), or, where the till is set to collect the price announced at booking
+	 * (« Price collected »), at the draft's own rates: the day's price is then not even asked.
+	 */
 	async function fillTheCart(lines, customer) {
 		const cartStore = usePOSCartStore()
+		const announced = usePOSSettingsStore().appointmentsAtTheAnnouncedPrice
 		await cartStore.clearCart()
 		for (const line of lines) {
 			const { item, qty } = cartLineOfAppointment(
 				line,
-				await dayRateOf(line, customer),
+				announced && line.rate != null ? null : await dayRateOf(line, customer),
+				announced,
 			)
 			cartStore.addItem(item, qty)
 		}

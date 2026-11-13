@@ -2,7 +2,7 @@
 //// The rule is the server's (`validate_sales_person_coverage`, pos_next.sales_person_lines) and the till must agree with it, or the cashier is blocked where the server
 //// would let the sale through, or lets it go and is refused at the end: a free line and a line worth nothing ask for none, a service always asks, a product only if the
 //// till follows the sales of products by person too. This file holds the rule so that the cart, the payment and the spec read the same one.
-import { kindOf, PRODUCT, SERVICE, siteTellsTheKinds } from "@/utils/itemKinds"
+import { kindOf, PRODUCT, SERVICE, siteQuestion, siteTellsTheKinds } from "@/utils/itemKinds"
 
 /** The line is free or worth nothing: the server asks no person of it (a net of zero). */
 export function lineIsWorthNothing(line) {
@@ -54,8 +54,11 @@ export function sameLinePerson(a, b) {
  * and « Who sold it? » of a product; a site that does not keeps the ordinary « Sales Person » (a shop, a restaurant).
  * @param {string} kind - "service", "product" or "" for what is asked about
  * @param {boolean} [told] - whether the site tells the kinds (default: it is read from the kinds loaded)
+ * @param {string} [question] - the question the till's manager chose for a service, in the client's words (default: the one loaded); it is asked of a
+ *   service, and of a line whose kind is not known, never of a product
  */
-export function whoLabel(kind, told = siteTellsTheKinds()) {
+export function whoLabel(kind, told = siteTellsTheKinds(), question = siteQuestion()) {
+	if (question && kind !== PRODUCT) return question
 	if (!told) return __("Sales Person")
 	return kind === PRODUCT
 		? __("Who sold it?", null, "Sales persons")

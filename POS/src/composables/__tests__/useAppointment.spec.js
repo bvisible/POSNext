@@ -175,6 +175,7 @@ describe("the till works an appointment", () => {
 		Object.assign(settings, {
 			enableSalesPersons: true,
 			trackProductSalesByPerson: false,
+			appointmentsAtTheAnnouncedPrice: false,
 		})
 		cart = usePOSCartStore()
 		cart.setPosProfile("Till A")
@@ -517,5 +518,78 @@ describe("the gestures of the salon", () => {
 		call.mockRejectedValue(new Error("gone"))
 
 		expect(await useAppointment().services()).toEqual([])
+	})
+})
+
+describe("an appointment collected at the price announced at booking (setting « Price collected »)", () => {
+	let cart
+	beforeEach(() => {
+		setActivePinia(createPinia())
+		useAppointmentsStore().day = "2026-11-10"
+		forgetItemKinds()
+		call.mockReset()
+		network.isOffline = false
+		cached.items = {}
+		Object.assign(settings, {
+			enableSalesPersons: true,
+			trackProductSalesByPerson: false,
+			appointmentsAtTheAnnouncedPrice: true,
+		})
+		cart = usePOSCartStore()
+		cart.setPosProfile("Till A")
+	})
+	const lines = () => cart.invoiceItems.filter((item) => !item.is_free_item)
+
+	it("keeps the rate of the draft on each line and does not even ask the day's price", async () => {
+		answerTheTill()
+
+		await useAppointment().takeAppointment(row)
+
+		expect(
+			lines().map((item) => [item.item_code, item.rate, item.sales_person]),
+		).toEqual([
+			["COUPE", 65, "Sonia"],
+			["COULEUR", 78, "Luc"],
+			["SOIN", 32, null],
+		])
+		expect(asked("get_item_details")).toHaveLength(0)
+		expect(cart.shopCartInvoice).toBe("ACC-SINV-1")
+	})
+
+	it("is the whole price of the draft: the options of a line are not added a second time, and they stay marked so saving them again does not take them off twice", () => {
+		const options = JSON.stringify([
+			{ group: "Length", options: [{ name: "Mid", price_adjustment: 15 }] },
+		])
+
+		const { item } = cartLineOfAppointment(
+			line("COULEUR", "Couleur", 78, "Luc", { posa_item_modifiers: options }),
+			80,
+			true,
+		)
+
+		expect([item.rate, item.price_list_rate, item._modifiers_applied]).toEqual([
+			78, 78, 15,
+		])
+	})
+
+	it("keeps the day's price for a line that has no price of its own (the agenda kept offline carries none)", async () => {
+		network.isOffline = true
+		cached.items = { COUPE: { price_list_rate: 70 }, COULEUR: { price_list_rate: 80 } }
+
+		await useAppointment().takeAppointment(row)
+
+		expect(lines().map((item) => [item.item_code, item.rate])).toEqual([
+			["COUPE", 70],
+			["COULEUR", 95],
+		])
+	})
+
+	it("is not what a till that says nothing does: the day's prices stay the proposal", async () => {
+		settings.appointmentsAtTheAnnouncedPrice = false
+		answerTheTill()
+
+		await useAppointment().takeAppointment(row)
+
+		expect(lines().map((item) => item.rate)).toEqual([70, 80, 32])
 	})
 })

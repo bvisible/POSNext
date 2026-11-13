@@ -87,6 +87,9 @@
 		".tsp-setting{min-width:0}" +
 		".tsp-setting.indent{margin-left:9px;padding-left:19px;border-left:2px solid #ECE7DE}" +
 		".tsp-setting[data-greyed=true]{opacity:.42}" +
+		// //// Neoffice — a setting greyed for want of a fact of the site says why, and the reason stays readable: only the rest is dimmed
+		".tsp-setting[data-greyed=true][data-reason]{opacity:1}.tsp-setting[data-greyed=true][data-reason]>:not(.tsp-reason){opacity:.42}" +
+		".tsp-reason{margin:6px 0 2px;padding:8px 10px;border-radius:8px;background:#FFF6F1;color:#141414;font-size:12.5px;line-height:1.45}" +
 		".tsp-label{display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:12.5px;color:#6F665A}" +
 		".tsp-row{display:flex;align-items:center;gap:8px}" +
 		".tsp-row .tsp-control{flex:1 1 auto;min-width:0}" +
@@ -827,6 +830,18 @@
 		);
 	};
 
+	// //// Neoffice — where the rule behind a setting comes from, cited under its help (product owner, 13.11.2026), and what kind of source it is
+	function sources_html(setting) {
+		return (setting.sources || [])
+			.map(function (source) {
+				var label = source.url
+					? '<a href="' + esc(source.url) + '" target="_blank" rel="noopener noreferrer">' + esc(source.label) + "</a>"
+					: esc(source.label);
+				return "<br><small>" + label + (source.note ? " — " + esc(source.note) : "") + "</small>";
+			})
+			.join("");
+	}
+
 	TillSettingsPage.prototype.render_setting = function ($group, setting) {
 		var is_check = setting.widget === "check";
 		var carries_help = this.group_carries(setting);
@@ -868,10 +883,14 @@
 		if (setting.key === "applicable_for_users") $setting.append(this.people_html());
 		if (setting.help && !carries_help)
 			$setting.append(
-				'<p class="tsp-help" style="display:none">' + esc(setting.help) + "</p>"
+				'<p class="tsp-help" style="display:none">' + esc(setting.help) + sources_html(setting) + "</p>"
 			);
 		if (!setting.editable) {
 			$setting.append('<p class="tsp-lock">' + esc(this.lock_text(setting)) + "</p>");
+		}
+		if (setting.greyed && setting.greyed_reason) {
+			$setting.attr("data-reason", "1");
+			$setting.append('<p class="tsp-reason">' + esc(setting.greyed_reason) + "</p>");
 		}
 	};
 

@@ -10,7 +10,9 @@ vi.hoisted(() => {
 	globalThis.__ = (text, args = []) => (args || []).reduce((out, arg, at) => out.replace(`{${at}}`, arg), text)
 })
 const gestures = vi.hoisted(() => ({ clock: vi.fn(async () => ({ clock: { state: "running" } })) }))
+const till = vi.hoisted(() => ({ appointmentsAtTheAnnouncedPrice: false }))
 
+vi.mock("@/stores/posSettings", () => ({ usePOSSettingsStore: () => till }))
 vi.mock("@/stores/posShift", () => ({ usePOSShiftStore: () => ({ profileName: "Till A", profileCurrency: "CHF" }) }))
 vi.mock("@/composables/useAppointment", () => ({
 	useAppointment: () => ({ clock: gestures.clock, loadDay: vi.fn(async () => null) }),
@@ -57,6 +59,7 @@ describe("the sheet of an appointment", () => {
 	beforeEach(() => {
 		setActivePinia(createPinia())
 		gestures.clock.mockClear()
+		till.appointmentsAtTheAnnouncedPrice = false
 		store = useAppointmentsStore()
 		store.capabilities = { clock: true, move: true, cancel: true, check_move: true, book: true }
 		vi.spyOn(store, "refresh").mockResolvedValue()
@@ -184,6 +187,15 @@ describe("the sheet of an appointment", () => {
 		const paid = mountIt({ state: "paid", invoice: "ACC-SINV-9", can: { collect: false, move: false, cancel: true, clock: false } })
 
 		expect(paid.text()).not.toContain("The till prices the services again")
+	})
+
+	it("says the announced price is collected where the till is set to, and nothing about pricing again", () => {
+		till.appointmentsAtTheAnnouncedPrice = true
+
+		const text = mountIt().get("[data-test='sheet-reprice']").text()
+
+		expect(text).toBe("The price announced at booking is collected.")
+		expect(text).not.toContain("prices the services again")
 	})
 
 	it("offers nothing for an appointment where the cashier may do nothing", () => {

@@ -106,6 +106,8 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 		table[appointments.LIST_HOOK] = [f"{ME}.{path}" for path in hooks.get("of_the_day", [])]
 		table[appointments.DRAFT_HOOK] = [f"{ME}.{path}" for path in hooks.get("draft", [])]
 		table[appointments.CANCEL_HOOK] = [f"{ME}.{path}" for path in hooks.get("cancel", [])]
+		# The old names of the extension points are empty too: the lanes of the work site do not answer for the suite
+		table.update({hook: [] for hook in appointments.LEGACY_HOOKS.values()})
 		real = frappe.get_hooks
 
 		def get_hooks(hook=None, *args, **kwargs):

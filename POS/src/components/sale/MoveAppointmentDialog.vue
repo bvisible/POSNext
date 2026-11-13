@@ -36,7 +36,7 @@
 
 				<label class="flex items-start gap-3 text-[15px] text-gray-900 dark:text-gray-100">
 					<input v-model="notify" type="checkbox" data-test="move-notify" class="mt-1 h-5 w-5 rounded border-gray-400" />
-					<span><b>{{ __("Warn the customer") }}</b><span class="block text-sm text-gray-500 dark:text-gray-400">{{ __("She is told the new hour by SMS and e-mail. Untick if you have already spoken to her.") }}</span></span>
+					<span><b>{{ __("Warn the customer") }}</b><span class="block text-sm text-gray-500 dark:text-gray-400">{{ __("The new time is sent by SMS and e-mail. Untick if the customer has already been told.") }}</span></span>
 				</label>
 
 				<div class="flex items-center justify-end gap-3 pt-1">

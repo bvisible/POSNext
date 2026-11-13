@@ -141,6 +141,8 @@ class TestTheAgendaOfTheSalonDayIsComposedFromWhatTheLanesAnswer(FrappeTestCase)
 	def site_has(self, *names):
 		"""The hooks the site declares, by the name of the gesture."""
 		table = {hook: [f"{ME}.{STUBS[name]}"] if name in names else [] for name, hook in HOOKS.items()}
+		# The old names of the extension points are empty too: the lanes of the work site do not answer for the suite
+		table.update({hook: [] for hook in appointments.LEGACY_HOOKS.values()})
 		real = frappe.get_hooks
 
 		def get_hooks(hook=None, *args, **kwargs):
@@ -428,6 +430,8 @@ class TestTheAgendaOfTheSalonDayIsComposedFromWhatTheLanesAnswer(FrappeTestCase)
 			appointments.DAY_HOOK: [f"{ME}.the_day"],
 			appointments.TIME_STATE_HOOK: [f"{ME}.a_clock_that_refuses"],
 		}
+		# The old names of the extension points are empty too: the lanes of the work site do not answer for the suite
+		table.update({hook: [] for hook in appointments.LEGACY_HOOKS.values()})
 		real = frappe.get_hooks
 		with patch(
 			"frappe.get_hooks",

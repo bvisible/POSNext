@@ -11,7 +11,7 @@ export const PRODUCT = "product"
 // item_code -> "service" | "product" | "" (the site has no answer); reactive, so that a line shows the right words as soon as they are known
 const kinds = reactive({})
 const asked = new Set()
-const site = reactive({ told: false, known: false })
+const site = reactive({ told: false, known: false, question: "" })
 // A first ask is on its way (or answered): a second one with no item to ask for would only repeat it
 let siteAsked = false
 
@@ -20,9 +20,14 @@ export function kindOf(itemCode) {
 	return itemCode ? kinds[itemCode] : undefined
 }
 
-/** Whether the site tells services from products at all (it has the hook): else the till keeps its ordinary words. */
+/** Whether the kinds are told (by the site's hook, or by the till's own rule of what counts as a service): else the till keeps its ordinary words. */
 export function siteTellsTheKinds() {
 	return site.told
+}
+
+/** The question the till's manager chose for a service (« Mechanic », « Seller »), or "" for the usual words. */
+export function siteQuestion() {
+	return site.question
 }
 
 /**
@@ -46,6 +51,7 @@ export async function loadItemKinds(posProfile, itemCodes = []) {
 		})
 		const body = answer?.message || answer || {}
 		site.told = Boolean(body.told)
+		site.question = String(body.question || "")
 		site.known = true
 		Object.assign(kinds, body.kinds || {})
 	} catch (error) {
@@ -60,6 +66,7 @@ export function forgetItemKinds() {
 	for (const code of Object.keys(kinds)) delete kinds[code]
 	asked.clear()
 	site.told = false
+	site.question = ""
 	site.known = false
 	siteAsked = false
 }

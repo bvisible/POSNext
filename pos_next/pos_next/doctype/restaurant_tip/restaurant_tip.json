@@ -83,7 +83,7 @@
   },
   {
    "default": "0",
-   "description": "A tip that is nobody's, shared out by the salon (a shop till set to a common pot)",
+   "description": "A tip that is nobody's, shared out by the business (a shop till set to a common pot)",
    "fieldname": "common_pot",
    "fieldtype": "Check",
    "label": "Common pot"

@@ -98,6 +98,8 @@ export const useAppointmentsStore = defineStore("appointments", () => {
 		dayRange(shownPeople.value, shownAppointments.value),
 	)
 	const closed = computed(() => salon.value?.state === "closed")
+	// The site's booking has answered, and has nothing for this till (it answers « not available »): the till offers no agenda, and never an empty « unavailable » one
+	const unanswered = computed(() => loaded.value && !available.value)
 	// The appointments booked before the salon was closed that day, which nobody has begun: the cashier moves or cancels them
 	const toHandleCount = computed(
 		() => appointments.value.filter((row) => row.to_handle).length,
@@ -206,6 +208,7 @@ export const useAppointmentsStore = defineStore("appointments", () => {
 		capabilities,
 		salon,
 		closed,
+		unanswered,
 		toHandleCount,
 		awayCount,
 		mine,

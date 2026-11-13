@@ -633,7 +633,9 @@ pos_next_bootstrap_settings = []
 # //// that is not None counts, so that POS Next names neither a reservation app nor a client. The planning lane fills the day, the check of a move and the move; the
 # //// money lane the list, the draft of an appointment, the sale that replaces it, cancel, the services, the free slots and booking; the time lane the gestures of the time
 # //// and its state (note 10 of the vault, § G4, « Contrat v2 », and the notes of the lanes).
-# //// Neoffice — the planning lane: the day of the salon (who is there, what each holds)
+# //// Neoffice — the planning lane: the day of the business (who is there, what each holds), under a name that says what it is (13.11.2026)
+pos_next_booking_day = []
+# //// Neoffice — the old name of the same extension point, still read where a site declares it (a lane renames its declaration when it is ready); remove when none does
 pos_next_salon_day = []
 # //// Neoffice — the planning lane: whether an appointment could go to this hour, and the move itself
 pos_next_appointment_check_move = []

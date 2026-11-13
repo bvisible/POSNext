@@ -15,7 +15,7 @@
 		<div class="flex-1 min-h-0 overflow-y-auto">
 			<!-- Booked before the salon closed that day, and not begun: nothing cancels it by itself, the cashier decides with the customer -->
 			<div v-if="stands === 'to_handle'" class="mx-4 mt-3 mb-1 rounded-lg bg-yellow-50 px-3 py-2 text-sm text-yellow-900 dark:bg-yellow-400/15 dark:text-yellow-100" data-test="sheet-to-handle">
-				{{ appointment.to_handle === "away" ? __("The person is away that day. Nothing is cancelled by itself: move this appointment to another person or day, or cancel it with the customer.") : __("The salon is closed that day. Nothing is cancelled by itself: move this appointment, or cancel it with the customer.") }}
+				{{ appointment.to_handle === "away" ? __("The person is away that day. Nothing is cancelled by itself: move this appointment to another person or day, or cancel it with the customer.") : __("This day is closed. Nothing is cancelled by itself: move this appointment, or cancel it with the customer.") }}
 			</div>
 			<div class="flex flex-col gap-0.5 border-t border-gray-100 px-4 py-3 dark:border-gray-800">
 				<b dir="auto" class="text-3xl leading-tight text-gray-900 dark:text-gray-100" style="font-family: Forum, Georgia, serif" data-test="sheet-customer">{{ appointment.customer_name || __("Walk-in") }}</b>
@@ -55,7 +55,7 @@
 				</div>
 				<div v-if="appointment.invoice && appointment.state === 'paid'" class="text-xs text-gray-500" data-test="sheet-invoice">{{ __("Invoice {0}", [appointment.invoice]) }}</div>
 				<!-- //// Neoffice — only where the till collects it: on a paid appointment there is nothing left to collect (12.11). -->
-				<div v-if="can.collect" class="text-xs text-gray-500" data-test="sheet-reprice">{{ __("The till prices the services again at today's prices when you collect.") }}</div>
+				<div v-if="can.collect" class="text-xs text-gray-500" data-test="sheet-reprice">{{ announcedPrice ? __("The price announced at booking is collected.") : __("The till prices the services again at today's prices when you collect.") }}</div>
 			</div>
 		</div>
 
@@ -78,6 +78,7 @@
 import { computed, ref } from "vue"
 import { useAppointment } from "@/composables/useAppointment"
 import { useAppointmentsStore } from "@/stores/appointments"
+import { usePOSSettingsStore } from "@/stores/posSettings"
 import { usePOSShiftStore } from "@/stores/posShift"
 import { activeTimeOf, avatarColorOf, hourOf, initialsOf, lengthOf, minutesLongOf, standsAs } from "@/utils/appointments"
 import { formatCurrency } from "@/utils/currency"
@@ -89,6 +90,8 @@ const emit = defineEmits(["close", "collect", "move", "cancel", "repeat"])
 
 const store = useAppointmentsStore()
 const shiftStore = usePOSShiftStore()
+//// Neoffice — what the till collects: the price announced at booking, or the day's (setting « Price collected »)
+const announcedPrice = computed(() => usePOSSettingsStore().appointmentsAtTheAnnouncedPrice)
 const { clock } = useAppointment()
 const busy = ref(false)
 

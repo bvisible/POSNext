@@ -55,7 +55,10 @@ import frappe
 from frappe import _
 from frappe.utils import cint, flt, get_datetime, getdate, nowdate
 
-DAY_HOOK = "pos_next_salon_day"
+# //// Neoffice — the day view is read under a name that says what it is (13.11.2026: a software for every trade, nothing named « salon » that a garage or a
+# //// practice would read), and under the old name when the site still declares that one (a lane renames its declaration when it is ready)
+DAY_HOOK = "pos_next_booking_day"
+LEGACY_HOOKS = {DAY_HOOK: "pos_next_salon_day"}
 CHECK_MOVE_HOOK = "pos_next_appointment_check_move"
 MOVE_HOOK = "pos_next_appointment_move"
 LIST_HOOK = "pos_next_appointments_of_the_day"
@@ -102,9 +105,43 @@ CLOCK_ACTIONS = ("start", "pause", "finish", "close_unmeasured")
 _HOUR = re.compile(r"^\d{2}:\d{2}$")
 
 
+def _declared(hook: str) -> list[str]:
+	"""The paths the site declares for an extension point: under its name, then under the old name it used to have (never twice)."""
+	paths = list(frappe.get_hooks(hook) or [])
+	old = LEGACY_HOOKS.get(hook)
+	if old:
+		paths += [path for path in (frappe.get_hooks(old) or []) if path not in paths]
+	return paths
+
+
 def site_has_appointments() -> bool:
-	"""Whether the site has a reservation app that answers for the till (a hook of the day or of the list)."""
-	return bool(frappe.get_hooks(DAY_HOOK) or frappe.get_hooks(LIST_HOOK))
+	"""Whether the site declares a reservation app for the till (a hook of the day or of the list). Not whether it answers: see `site_takes_appointments`."""
+	return bool(_declared(DAY_HOOK) or _declared(LIST_HOOK))
+
+
+def site_takes_appointments(pos_profile: str | None) -> bool:
+	"""Whether the site's booking ANSWERS for this till today: the day view, or failing it the list, says something other than None.
+
+	A theme declares its hooks on every site and answers None where nothing is booked, so the presence of a hook proves nothing (13.11.2026: a till
+	ticked on a site that did not book showed an agenda « unavailable »). The question is about the site, not about the account that asks: it is put
+	as the administrator, so that nobody is told « no » for want of a right, and only whether there is an answer is kept.
+	"""
+	if not pos_profile or not site_has_appointments():
+		return False
+	today = str(getdate(nowdate()))
+	user = frappe.session.user
+	frappe.set_user("Administrator")
+	try:
+		for hook, args in ((DAY_HOOK, (pos_profile, today)), (LIST_HOOK, (pos_profile, today, None))):
+			for path in _declared(hook):
+				try:
+					if frappe.get_attr(path)(*args) is not None:
+						return True
+				except Exception:
+					frappe.log_error("The appointments hook failed", f"{path}\n{frappe.get_traceback()}")
+		return False
+	finally:
+		frappe.set_user(user)
 
 
 def appointments_enabled(pos_profile: str | None) -> bool:
@@ -126,7 +163,7 @@ def _first_answer(hook: str, *args):
 	A refusal the reservation words for the cashier (`frappe.ValidationError`) goes up as it is. Any other failure of a hook is logged and the
 	next hook is tried: a reservation app that breaks must not break the till.
 	"""
-	for path in frappe.get_hooks(hook) or []:
+	for path in _declared(hook):
 		try:
 			answer = frappe.get_attr(path)(*args)
 		except frappe.ValidationError:
@@ -603,7 +640,7 @@ def _may_work(pos_profile: str, booking: str, date=None, person: str | None = No
 	as a colleague's « busy » row) and either she sees the whole salon or it is one of her own; and, for a gesture that names the person timed, that
 	person is one of hers too. The agenda hides a colleague's appointment from a cashier who may not read it; this is the same rule at the door of
 	the gestures, because a hidden button is not a permission (found on the work site: a coiffeuse took, and started the time of, a colleague's)."""
-	if not frappe.get_hooks(DAY_HOOK):
+	if not _declared(DAY_HOOK):
 		# A site with no day view has no one to hide an appointment from: the whole list is the cashier's
 		return True
 	view = _first_answer(DAY_HOOK, pos_profile, str(getdate(date or nowdate())))

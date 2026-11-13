@@ -75,9 +75,15 @@
   "till_tips_visible_to",
   "till_tip_item",
   "till_tip_account",
+  "till_tip_tax_template",
+  "till_tip_commission",
   "enable_sales_persons",
   "track_product_sales_by_person",
+  "sales_person_lines_ask",
+  "sales_person_service_groups",
+  "sales_person_question",
   "enable_appointments",
+  "appointment_price",
   "section_break_display",
   "default_card_view",
   "display_item_code",
@@ -611,7 +617,7 @@
   {
    "default": "Person who served",
    "depends_on": "enable_till_tips",
-   "description": "Person who served: the tip is shared between the people of the sale, each for their part of it. Common pot: one tip that is nobody's, shared out by the salon.",
+   "description": "Person who served: the tip is shared between the people of the sale, each for their part of it. Common pot: one tip that is nobody's, shared out by the business.",
    "fieldname": "till_tip_goes_to",
    "fieldtype": "Select",
    "label": "The tip goes to",
@@ -637,12 +643,28 @@
   },
   {
    "depends_on": "enable_till_tips",
-   "description": "Made when tips are switched on: the transit account (2211) the tips are booked on, not turnover",
+   "description": "The account the tips are booked on, kept apart from the turnover. The transit account 2211 is proposed when none is chosen; the numbering is to be confirmed by your fiduciary.",
    "fieldname": "till_tip_account",
    "fieldtype": "Link",
    "label": "Tip account",
-   "options": "Account",
-   "read_only": 1
+   "options": "Account"
+  },
+  {
+   "depends_on": "enable_till_tips",
+   "description": "The item tax template of the tip: 0 % is proposed. The tip is outside the turnover only if it is paid out in full to the staff, invoiced apart and shows no tax.",
+   "fieldname": "till_tip_tax_template",
+   "fieldtype": "Link",
+   "label": "VAT of the tip",
+   "options": "Item Tax Template"
+  },
+  {
+   "default": "None",
+   "depends_on": "enable_till_tips",
+   "description": "None: the tip counts for nothing in the commission of the people of the sale (proposed). Like the sale: it counts in the turnover their commission is worked out on. A property of the tip item, shared by the tills that use it.",
+   "fieldname": "till_tip_commission",
+   "fieldtype": "Select",
+   "label": "Commission on the tip",
+   "options": "None\nLike the sale"
   },
   {
    "default": "Disabled",
@@ -661,11 +683,45 @@
    "label": "Track product sales by person too"
   },
   {
+   "default": "As the site says",
+   "depends_on": "eval:doc.enable_sales_persons && doc.enable_sales_persons != 'Disabled'",
+   "description": "Which items count as services, the lines that always ask who did the work. As the site says: the site tells services from products (where it tells nothing, every line is a service). Items not kept in stock: a service is an item that is not kept in stock. Items of the chosen groups: a service is an item of those groups.",
+   "fieldname": "sales_person_lines_ask",
+   "fieldtype": "Select",
+   "label": "Lines that ask for a person",
+   "options": "As the site says\nItems not kept in stock\nItems of the chosen groups"
+  },
+  {
+   "depends_on": "eval:doc.sales_person_lines_ask == 'Items of the chosen groups'",
+   "description": "The item groups whose items are services (their sub-groups too).",
+   "fieldname": "sales_person_service_groups",
+   "fieldtype": "Table",
+   "label": "Groups of services",
+   "options": "POS Item Group"
+  },
+  {
+   "depends_on": "eval:doc.enable_sales_persons && doc.enable_sales_persons != 'Disabled'",
+   "description": "The question the cashier reads for a service, in your words (« Who did the work? », « Mechanic », « Seller »). Empty: the usual words.",
+   "fieldname": "sales_person_question",
+   "fieldtype": "Data",
+   "label": "The question for the person",
+   "length": 60
+  },
+  {
    "default": "0",
-   "description": "The till becomes the salon's counter: it shows the day's agenda, takes, moves and cancels appointments, times them, and collects them (the invoice the reservation prepared is loaded into the cart with the person of each line, at today's prices). Shop till only; nothing happens where the site has no reservation app.",
+   "description": "The till shows the day's agenda, takes, moves and cancels appointments, times them, and collects them (the invoice the booking prepared is loaded into the cart with the person of each line, at today's prices). Shop till only; available once the site's booking answers for this till.",
    "fieldname": "enable_appointments",
    "fieldtype": "Check",
-   "label": "Salon till"
+   "label": "Appointments till"
+  },
+  {
+   "default": "Price of the day",
+   "depends_on": "enable_appointments",
+   "description": "The price a collected appointment is rung at: the price of the day (the till prices the services again, offers included) or the price announced at booking (the line keeps the amount the booking prepared).",
+   "fieldname": "appointment_price",
+   "fieldtype": "Select",
+   "label": "Price collected",
+   "options": "Price of the day\nPrice announced at booking"
   },
   {
    "collapsible": 1,

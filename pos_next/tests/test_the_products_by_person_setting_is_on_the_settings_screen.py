@@ -37,7 +37,11 @@ class TestTheProductsByPersonSettingIsOnTheSettingsScreen(TillSettingsCase):
 		self.assertEqual(settings[KEY]["group"], settings[CHOICE]["group"])
 		self.assertTrue(settings[KEY]["editable"])
 		keys = [setting["key"] for setting in answer["settings"] if setting["group"] == "sales_persons"]
-		self.assertEqual(keys, [CHOICE, KEY])
+		# The three that say which items are services and in which words the question is asked (13.11.2026) come after it
+		self.assertEqual(
+			keys,
+			[CHOICE, KEY, "sales_person_lines_ask", "sales_person_service_groups", "sales_person_question"],
+		)
 		self.assertEqual(answer["values"][KEY], 0)
 
 	def test_it_comes_with_its_help_and_label(self):

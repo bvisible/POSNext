@@ -7,7 +7,9 @@
 # //// - the SETTINGS of a till that is not a restaurant till, read from its POS Settings row (the restaurant's are the
 # ////   restaurant's own: `pos_next.restaurant.settings`);
 # //// - the PROVISIONING of the account and the item, which the restaurant used to do on its own: one function each,
-# ////   called by the restaurant and by the till, so that the two can never book a tip differently;
+# ////   called by the restaurant and by the till, so that the two can never book a tip differently. At a SHOP till the account, the
+# ////   VAT and the commission of the tip are the client's choices, proposed (2211, 0 %, none) and written only where the till says so
+# ////   (product owner, 13.11.2026: « une valeur légale est un réglage que le client remplit »);
 # //// - the SHARES: a sale made by two people gives each the part of the tip their part of the sale makes.
 import frappe
 from frappe import _
@@ -74,16 +76,15 @@ def ensure_tip_account(company: str | None) -> str | None:
 def ensure_tip_item(company: str | None, tip_account: str | None) -> str:
 	"""The TIP service item, made if the site has none. Its code is returned.
 
-	A tip earns no commission: the item grants none, so that the person a sale is shared with is not paid a
-	percentage on what the customer left for them (a tip is not turnover, and the collective agreement's minimum
-	turnover leaves it out). An item made before this was written says yes by Frappe's default; it is set right here.
+	A new tip item grants no commission, the default offered on the till's settings: whether a tip enters a commission is for the client's
+	contracts to say, so an item that exists is never set back (the patch `keep_the_tip_item_out_of_commissions` repaired the ones made
+	before a till could share a sale, once).
 	"""
 	if frappe.db.exists("Item", TIP_ITEM):
 		# Ensure 0% tax template is assigned even on existing item
 		item = frappe.get_doc("Item", TIP_ITEM)
 		if not item.taxes:
 			_assign_zero_tax_template(item)
-		_grant_no_commission(TIP_ITEM)
 		return TIP_ITEM
 
 	# Ensure "Services" item group exists
@@ -146,11 +147,6 @@ def _a_warehouse_of(company: str | None) -> str | None:
 	)
 
 
-def _grant_no_commission(item_code: str) -> None:
-	if cint(frappe.db.get_value("Item", item_code, "grant_commission")):
-		frappe.db.set_value("Item", item_code, "grant_commission", 0)
-
-
 def _assign_zero_tax_template(item) -> None:
 	"""Assign a 0% tax template to the TIP item if available."""
 	# Find an Item Tax Template where all tax rates are 0
@@ -179,26 +175,124 @@ def _assign_zero_tax_template(item) -> None:
 	item.save(ignore_permissions=True)
 
 
+# What the client chooses for the commission on a tip, and what it means for the item
+COMMISSION_NONE = "None"
+COMMISSION_LIKE_THE_SALE = "Like the sale"
+
+
+def zero_rate_templates(company: str | None = None) -> list[str]:
+	"""The item tax templates whose every rate is 0 % (the company's when one is given), the first being the one proposed for a tip."""
+	templates = frappe.db.sql(
+		"""
+		SELECT DISTINCT detail.parent
+		FROM `tabItem Tax Template Detail` detail
+		INNER JOIN `tabItem Tax Template` template ON template.name = detail.parent
+		WHERE detail.tax_rate = 0
+		AND template.disabled = 0
+		AND (%(company)s IS NULL OR template.company = %(company)s)
+		AND detail.parent NOT IN (
+			SELECT DISTINCT parent FROM `tabItem Tax Template Detail` WHERE tax_rate != 0
+		)
+		ORDER BY detail.parent
+	""",
+		{"company": company},
+		pluck=True,
+	)
+	return templates
+
+
+def vat_template_of(item, company: str | None) -> str | None:
+	"""The tax template an item holds for a company (the one whose company is that), or None."""
+	for row in item.get("taxes") or []:
+		if row.item_tax_template and frappe.db.get_value("Item Tax Template", row.item_tax_template, "company") == company:
+			return row.item_tax_template
+	return None
+
+
 def provision(settings) -> None:
 	"""Make what tipping needs for the till a POS Settings document is, when it asks for tips.
 
 	Called by the document's validation, the way the restaurant provisions its own when it is saved: the account of the
 	till's company, then the item. A till whose company has no account to hang the transit account under cannot take
 	tips, and says so in words.
+
+	The account, the VAT and the commission of the tip are the client's: the till's own setting wins, and what is proposed (the
+	transit account 2211, a template at 0 %, no commission) is only what an empty setting is given. Tips are refused, in words, when
+	the company has no template at 0 % and none was chosen: a tip must not carry a VAT nobody chose.
 	"""
 	if not cint(settings.get("enable_till_tips")):
 		return
 	company = (
 		frappe.db.get_value("POS Profile", settings.pos_profile, "company") if settings.pos_profile else None
 	)
+	switching_on = bool(settings.is_new() or settings.has_value_changed("enable_till_tips"))
 	if not settings.get("till_tip_account"):
 		settings.till_tip_account = ensure_tip_account(company)
 	if not settings.get("till_tip_account"):
 		frappe.throw(
-			_("Tips cannot be switched on: the tip account could not be made for the company of this till.")
+			_(
+				"Tips cannot be switched on: the tip account could not be made for the company of this till. Choose one in « Tip account »."
+			)
 		)
-	if not settings.get("till_tip_item"):
+	template = settings.get("till_tip_tax_template")
+	if template and frappe.db.get_value("Item Tax Template", template, "company") != company:
+		frappe.throw(_("The VAT of the tip must be a template of the company of this till ({0}).").format(company))
+	made_item = not settings.get("till_tip_item")
+	if not template and (switching_on or made_item or settings.has_value_changed("till_tip_tax_template")):
+		proposed = zero_rate_templates(company)
+		if not proposed:
+			frappe.throw(
+				_(
+					"Tips cannot be switched on: the company {0} has no item tax template at 0 %, and a tip carries no VAT unless you choose it. "
+					"Make a template with every rate at 0 % (Accounting, Item Tax Template), or choose the template of the tip in « VAT of the tip » in the same save."
+				).format(company)
+			)
+		template = settings.till_tip_tax_template = proposed[0]
+	if made_item:
 		settings.till_tip_item = ensure_tip_item(company, settings.till_tip_account)
+	_set_the_item_of_the_till(
+		settings,
+		company,
+		template,
+		commission_chosen=bool(made_item or switching_on or settings.has_value_changed("till_tip_commission")),
+	)
+
+
+def _set_the_item_of_the_till(settings, company, template, *, commission_chosen) -> None:
+	"""Write the client's choices on the tip item the till uses: the account it is booked on for the company, the VAT it carries, and,
+	when the choice was just made, the commission. Nothing is saved when nothing changes."""
+	item = frappe.get_doc("Item", settings.till_tip_item)
+	changed = False
+	account = settings.get("till_tip_account")
+	row = next((row for row in item.item_defaults if row.company == company), None)
+	if row is None:
+		item.append(
+			"item_defaults",
+			{"company": company, "income_account": account, "default_warehouse": _a_warehouse_of(company)},
+		)
+		changed = True
+	elif row.income_account != account:
+		row.income_account = account
+		changed = True
+	if template and vat_template_of(item, company) != template:
+		item.set(
+			"taxes",
+			[
+				row
+				for row in item.taxes
+				if not row.item_tax_template
+				or frappe.db.get_value("Item Tax Template", row.item_tax_template, "company") != company
+			],
+		)
+		item.append("taxes", {"item_tax_template": template})
+		changed = True
+	if commission_chosen:
+		grants = 1 if settings.get("till_tip_commission") == COMMISSION_LIKE_THE_SALE else 0
+		if cint(item.grant_commission) != grants:
+			item.grant_commission = grants
+			changed = True
+	if changed:
+		item.save(ignore_permissions=True)
 
 
 # ------------------------------------------------------------------------------------------------ settings

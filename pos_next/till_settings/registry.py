@@ -88,6 +88,12 @@ SITE_ALLOWS_NEGATIVE_STOCK = "allows_negative_stock"
 # //// Neoffice — the site has a reservation app that answers for the till (a hook of pos_next.api.appointments): the setting that takes its
 # //// appointments means nothing without it (NeoSalon, step 2, lot G4).
 SITE_HAS_APPOINTMENTS = "has_appointments"
+# //// Neoffice — what the screen says under a setting greyed for want of a fact of the site (13.11.2026: the reason is shown, not left to the help)
+SITE_REASONS = {
+	SITE_HAS_APPOINTMENTS: _lt(
+		"The site's booking does not answer for this till yet, so there would be no agenda to show. It becomes available once the site takes appointments."
+	),
+}
 
 
 # Compared by identity: a lazy text refuses == (frappe.types.lazytranslatedstring)
@@ -115,6 +121,17 @@ class When:
 	key: str
 	equals: str | None = None
 	off: bool = False
+
+
+@dataclass(frozen=True)
+class Source:
+	"""Where a rule a setting turns into a choice comes from, cited beside the setting (product owner, 13.11.2026: « une valeur légale est un
+	réglage que le client remplit […] la source est citée à côté »). `note` says what kind of source it is (« secondary source » when it is
+	a report of the rule, not its text); without a `url`, the label says that no source was found."""
+
+	label: object
+	url: str | None = None
+	note: object = None
 
 
 @dataclass(frozen=True, eq=False)
@@ -157,6 +174,8 @@ class Setting:
 	restaurant_manager_may_edit: bool = False
 	# A fact of the site it means nothing without (SITE_ALLOWS_NEGATIVE_STOCK...): greyed while it does not hold
 	needs_site: str | None = None
+	# //// Neoffice — where the rule behind the setting comes from, drawn under its help (see Source)
+	sources: tuple = ()
 
 	@property
 	def field(self) -> str | None:
@@ -257,7 +276,7 @@ _GROUPS = (
 	# Sales
 	Group("payment", "sales", _lt("Payment"), 1),
 	# //// Neoffice — the till shows the day's appointments and collects them (NeoSalon, step 2, lot G4, product owner, 10.11.2026)
-	Group("appointments", "sales", _lt("Salon"), 1),
+	Group("appointments", "sales", _lt("Appointments"), 1),
 	Group("returns", "sales", _lt("Returns"), 2),
 	Group("sales_orders", "sales", _lt("Sales orders"), 2),
 	# //// Neoffice — who made the sale (NeoCoiffeur study, product owner, 09.11.2026): the option upstream ships and the fork had switched off.
@@ -1458,7 +1477,7 @@ SETTINGS = (
 		_lt("The tip goes to"),
 		_lt(
 			"The person who served: the tip is shared between the people of the sale, each for their part of it (the user"
-			" who rang it up when no one is named). Common pot: one tip that is nobody's, shared out by the salon."
+			" who rang it up when no one is named). Common pot: one tip that is nobody's, shared out by the business."
 		),
 		"segmented",
 		doctype=POS_SETTINGS,
@@ -1488,22 +1507,107 @@ SETTINGS = (
 		),
 		depends_on=(on("enable_till_tips"),),
 	),
-	# //// Neoffice — the till shows the day's appointments of the salon's reservation app, and a tap takes one over: its draft invoice is loaded into the
+	# //// Neoffice — the three things about a tip that a rule of law or of the books used to decide in silence, now the client's choice with their
+	# //// source beside them (product owner, 13.11.2026: « une valeur légale est un réglage que le client remplit »): the account it is booked on,
+	# //// the VAT it carries, whether it counts in a commission. Each is proposed (2211, 0 %, none) and none is written without the client seeing it.
+	Setting(
+		"till_tip_account",
+		"till_tips",
+		_lt("Tip account"),
+		_lt(
+			"The account the tips are booked on, kept apart from the turnover. The account 2211 « Tip transit account » is proposed when none is chosen."
+			" The numbering of the accounts is your books': have your fiduciary confirm it."
+		),
+		"link",
+		doctype=POS_SETTINGS,
+		till=SHOP,
+		choices="tip_accounts",
+		depends_on=(on("enable_till_tips"),),
+	),
+	Setting(
+		"till_tip_tax_template",
+		"till_tips",
+		_lt("VAT of the tip"),
+		_lt(
+			"The item tax template of the tip. 0 % is proposed, and tips cannot be switched on without a template at 0 % until you choose one."
+			" To stay outside the turnover, the Federal Tax Administration asks that the tip is paid out in full to the staff (and the payment can"
+			" be proved), is not booked as income, is invoiced apart, and shows no tax. The choice is yours."
+		),
+		"link",
+		doctype=POS_SETTINGS,
+		till=SHOP,
+		choices="item_tax_templates",
+		depends_on=(on("enable_till_tips"),),
+		sources=(
+			Source(
+				_lt("The conditions of the Federal Tax Administration, as reported by the Beobachter"),
+				"https://www.beobachter.ch/arbeit-bildung/arbeitsrecht/ist-trinkgeld-jetzt-schwarzgeld-700573",
+				_lt("Secondary source: the text of the Administration itself was not found"),
+			),
+		),
+	),
+	Setting(
+		"till_tip_commission",
+		"till_tips",
+		_lt("Commission on the tip"),
+		_lt(
+			"None: the tip counts for nothing in the commission of the people of the sale (proposed). Like the sale: the tip counts in the turnover their"
+			" commission is worked out on. Whether a tip enters a commission is set by your employment contracts or your collective agreement."
+			" It is a property of the tip item, shared by the tills that use it."
+		),
+		"segmented",
+		doctype=POS_SETTINGS,
+		till=SHOP,
+		options=(
+			("None", _lt("None", context="Tip commission")),
+			("Like the sale", _lt("Like the sale", context="Tip commission")),
+		),
+		depends_on=(on("enable_till_tips"),),
+		sources=(
+			Source(
+				_lt("No source found for the commission on tips: it is for your contracts and your agreement to say"),
+				None,
+				_lt("No source"),
+			),
+		),
+	),
+	# //// Neoffice — the till shows the day's appointments of the site's booking, and a tap takes one over: its draft invoice is loaded into the
 	# //// cart, each line with the person who did it, and paid (NeoSalon, step 2, lot G4, product owner, 10.11.2026). Off by default; a shop till only;
-	# //// greyed where the site has no reservation app (SITE_HAS_APPOINTMENTS).
+	# //// greyed, with its reason, unless the site's booking answers for the till (SITE_HAS_APPOINTMENTS). Named by what it does, not by the trade
+	# //// it was made for (13.11.2026: « un logiciel pour tout le monde »).
 	Setting(
 		"enable_appointments",
 		"appointments",
-		_lt("Salon till"),
+		_lt("Appointments till"),
 		_lt(
-			"The till becomes the salon's counter: it shows the day's agenda, takes, moves and cancels appointments, times them, and collects them"
-			" (the invoice the reservation prepared is loaded into the cart with the person of each line, at today's prices). Shop till only."
-			" Greyed while the site has no reservation app."
+			"The till shows the day's agenda, takes, moves and cancels appointments, times them, and collects them"
+			" (the invoice the booking prepared is loaded into the cart with the person of each line, at today's prices). Shop till only."
+			" Available once the site's booking answers for this till."
 		),
 		"check",
 		doctype=POS_SETTINGS,
 		till=SHOP,
 		needs_site=SITE_HAS_APPOINTMENTS,
+	),
+	# //// Neoffice — the price a collected appointment is rung at (13.11.2026: « un métier dont le prix annoncé engage »): the price of the day is what was decided on
+	# //// 10.11 and stays the proposal; the other keeps the amount the booking announced.
+	Setting(
+		"appointment_price",
+		"appointments",
+		_lt("Price collected"),
+		_lt(
+			"The price a collected appointment is rung at. Price of the day (proposed): the till prices the services again at today's prices, offers included."
+			" Price announced at booking: each line keeps the amount the booking prepared, for a trade whose announced price binds."
+			" Without the network the till can only price at the day's prices it has kept."
+		),
+		"segmented",
+		doctype=POS_SETTINGS,
+		till=SHOP,
+		options=(
+			("Price of the day", _lt("Price of the day", context="Appointment price")),
+			("Price announced at booking", _lt("Price announced at booking", context="Appointment price")),
+		),
+		depends_on=(on("enable_appointments"),),
 	),
 	Setting(
 		"allow_sales_order",
@@ -1552,6 +1656,51 @@ SETTINGS = (
 		doctype=POS_SETTINGS,
 		till=SHOP,
 		indent=True,
+	),
+	# //// Neoffice — which items are the services that always ask who did the work, and the question the cashier reads (13.11.2026: « un garage, une boutique, pas
+	# //// seulement le salon »). A trade that is not a salon says it here instead of relying on the site's hook; the default is what every till did before.
+	Setting(
+		"sales_person_lines_ask",
+		"sales_persons",
+		_lt("Lines that ask for a person"),
+		_lt(
+			"Which items count as services, the lines that always ask who did the work. As the site says: the site tells services from products"
+			" (where it tells nothing, every line is a service). Items not kept in stock: a service is an item that is not kept in stock."
+			" Items of the chosen groups: a service is an item of those groups. A product asks only if the choice above says so."
+		),
+		"select",
+		doctype=POS_SETTINGS,
+		till=SHOP,
+		indent=True,
+		options=(
+			("As the site says", _lt("As the site says", context="Sales persons")),
+			("Items not kept in stock", _lt("Items not kept in stock", context="Sales persons")),
+			("Items of the chosen groups", _lt("Items of the chosen groups", context="Sales persons")),
+		),
+	),
+	Setting(
+		"sales_person_service_groups",
+		"sales_persons",
+		_lt("Groups of services"),
+		_lt("The item groups whose items are services (their sub-groups too)."),
+		"multiselect",
+		doctype=POS_SETTINGS,
+		till=SHOP,
+		choices="item_groups",
+		depends_on=(When("sales_person_lines_ask", equals="Items of the chosen groups"),),
+	),
+	Setting(
+		"sales_person_question",
+		"sales_persons",
+		_lt("The question for the person"),
+		_lt(
+			"The question the cashier reads for a service, in your words (« Who did the work? », « Mechanic », « Seller »). Empty: the usual words."
+		),
+		"text",
+		doctype=POS_SETTINGS,
+		till=SHOP,
+		indent=True,
+		placeholder=_lt("Who did the work?"),
 	),
 	Setting(
 		"enable_gift_cards",
@@ -2301,9 +2450,9 @@ NOT_LISTED = {
 			" keeps the two in step, so the page asks once"
 		),
 		"shop_scan_key": _SET_BY_THE_SYSTEM,
-		# //// Neoffice — made when tips are switched on (pos_next.till_tips.provision), nobody types them
+		# //// Neoffice — made when tips are switched on (pos_next.till_tips.provision), nobody types it; the account, the VAT and the commission are the client's
+		# //// (settings of the list above), proposed by the same function
 		"till_tip_item": _MADE_WITH_THE_TIPS,
-		"till_tip_account": _MADE_WITH_THE_TIPS,
 		"allow_return": _INERT,
 		"default_card_view": _INERT,
 		"show_customer_balance": _INERT,
@@ -2460,6 +2609,10 @@ def serialize(setting: Setting) -> dict:
 		"search": setting.search,
 		"placeholder": str(setting.placeholder) if setting.placeholder else "",
 		"applies": setting.applies,
+		"sources": [
+			{"label": str(source.label), "url": source.url, "note": str(source.note) if source.note else ""}
+			for source in setting.sources
+		],
 	}
 
 

@@ -84,6 +84,8 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		track_product_sales_by_person: 0,
 		//// Neoffice — the till shows the day's appointments of the salon's reservation app (NeoSalon, step 2, lot G4)
 		enable_appointments: 0,
+		//// Neoffice — the price a collected appointment is rung at: the price of the day, or the price announced at booking
+		appointment_price: "Price of the day",
 		//// Neoffice — defaults for settings upstream does not have: the customer-facing second screen
 		//// (turn it on, let the customer create their own account on it, show the address fields on
 		//// that form), and restaurant mode with its default dining area. They must exist in this seed
@@ -257,6 +259,10 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 	//// Neoffice — whether a product asks for its person too (NeoSalon, lot G1): off, only the services do.
 	//// Neoffice — whether this till collects the salon's appointments (the tick of the till's settings; the server shows none where the site has no reservation app)
 	const appointmentsEnabled = computed(() => Boolean(Number(settings.value.enable_appointments)));
+	//// Neoffice — an appointment is collected at the price announced at booking, not at the day's (13.11.2026)
+	const appointmentsAtTheAnnouncedPrice = computed(
+		() => settings.value.appointment_price === "Price announced at booking",
+	);
 	const trackProductSalesByPerson = computed(
 		() => enableSalesPersons.value && Boolean(Number(settings.value.track_product_sales_by_person))
 	);
@@ -439,6 +445,7 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 			//// Neoffice — and the tick of the products by person (NeoSalon, lot G1)
 			track_product_sales_by_person: 0,
 			enable_appointments: 0,
+			appointment_price: "Price of the day",
 			//// Neoffice — resetSettings has to zero OUR fields too, otherwise a logout left the previous
 			//// terminal's customer-display and restaurant configuration in place for the next cashier
 			//// (8bffb770 2026-02-04 customer display; 8aa35c29 2026-03-20 restaurant mode).
@@ -637,6 +644,7 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		trackProductSalesByPerson,
 		//// Neoffice — whether this till collects the salon's appointments (NeoSalon, step 2, lot G4)
 		appointmentsEnabled,
+		appointmentsAtTheAnnouncedPrice,
 		isSingleSalesPerson,
 		isMultipleSalesPersons,
 

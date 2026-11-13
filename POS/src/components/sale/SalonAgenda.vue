@@ -238,7 +238,7 @@ const salonNotice = computed(() => {
 	const salon = store.salon
 	if (!salon || salon.state === "open") return null
 	const why = salon.label || (SALON_REASONS[salon.reason] ? SALON_REASONS[salon.reason]() : "")
-	if (salon.state === "closed") return { closed: true, title: __("Salon closed"), detail: why }
+	if (salon.state === "closed") return { closed: true, title: __("Closed that day"), detail: why }
 	const hours = (salon.periods || []).map(([from, to]) => `${from}–${to}`).join(" · ")
 	return { closed: false, title: __("Special hours"), detail: [hours, salon.label].filter(Boolean).join(" · ") }
 })

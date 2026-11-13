@@ -95,6 +95,8 @@ class TestASaleMadeOfflineReplacesTheDraftOfItsAppointment(FrappeTestCase):
 				appointments.TIME_ACTION_HOOK: [f"{ME}.{path}" for path in hooks.get("time_action", [])],
 			}
 		)
+		# The old names of the extension points are empty too: the lanes of the work site do not answer for the suite
+		table.update({hook: [] for hook in appointments.LEGACY_HOOKS.values()})
 		real = frappe.get_hooks
 
 		def get_hooks(hook=None, *args, **kwargs):

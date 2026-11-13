@@ -158,13 +158,13 @@ describe("the cancel dialog", () => {
 		expect(wrapper.get("[data-test='cancel-confirm']").text()).toBe("Cancel the appointment")
 	})
 
-	it("does not warn a customer who did not come, and marks her absent", async () => {
+	it("does not warn a customer who did not come, and marks the customer absent", async () => {
 		const wrapper = open()
 
 		await wrapper.get("[data-test='cancel-no_show']").setValue(true)
 
 		expect(wrapper.find("[data-test='cancel-notify']").exists()).toBe(false)
-		expect(wrapper.get("[data-test='cancel-no-message']").text()).toBe("She receives no message for an absence.")
+		expect(wrapper.get("[data-test='cancel-no-message']").text()).toBe("No message is sent for an absence.")
 		expect(wrapper.text()).not.toContain("The slot is free again")
 		expect(wrapper.get("[data-test='cancel-confirm']").text()).toBe("Mark absent")
 		await wrapper.get("[data-test='cancel-confirm']").trigger("click")
@@ -172,23 +172,23 @@ describe("the cancel dialog", () => {
 		expect(lane.cancel).toHaveBeenCalledWith("BKG-1", { reason: "no_show", notify: false })
 	})
 
-	it("says what she paid online and that it is refunded automatically", () => {
+	it("says what was paid online and that it is refunded automatically", () => {
 		const wrapper = open({ paid_amount: 40 })
 
-		expect(wrapper.get("[data-test='cancel-refund']").text()).toContain("She paid CHF 40.00 online.")
-		expect(wrapper.get("[data-test='cancel-refund']").text()).toContain("refunded to her automatically")
+		expect(wrapper.get("[data-test='cancel-refund']").text()).toContain("CHF 40.00 was paid online.")
+		expect(wrapper.get("[data-test='cancel-refund']").text()).toContain("refunded automatically, by the same means of payment")
 		expect(open().find("[data-test='cancel-refund']").exists()).toBe(false)
 	})
 
-	it("says before marking her absent what the absence keeps and what goes back to her card", async () => {
+	it("says before marking the customer absent what the absence keeps and what is refunded by the same means of payment", async () => {
 		const wrapper = open({ paid_amount: 40, absent_kept: 16, absent_refund: 24 })
 
 		await wrapper.get("[data-test='cancel-no_show']").setValue(true)
 
 		const said = wrapper.get("[data-test='cancel-refund']").text()
-		expect(said).toContain("She paid CHF 40.00 online.")
-		expect(said).toContain("CHF 16.00 is kept for the absence and CHF 24.00 goes back to her card")
-		expect(said).not.toContain("refunded to her automatically")
+		expect(said).toContain("CHF 40.00 was paid online.")
+		expect(said).toContain("CHF 16.00 is kept for the absence and CHF 24.00 is refunded by the same means of payment")
+		expect(said).not.toContain("refunded automatically, by the same means of payment")
 	})
 
 	it("says that an absence the scale keeps whole gives nothing back", async () => {
@@ -205,16 +205,16 @@ describe("the cancel dialog", () => {
 		await wrapper.get("[data-test='cancel-no_show']").setValue(true)
 
 		const said = wrapper.get("[data-test='cancel-refund']").text()
-		expect(said).toContain("what the scale asks for an absence is kept and the rest goes back to her card")
+		expect(said).toContain("what the scale asks for an absence is kept and the rest is refunded by the same means of payment")
 		expect(said).not.toContain("nothing goes back")
 	})
 
-	it("says what a late cancellation keeps and what goes back to her card", () => {
+	it("says what a late cancellation keeps and what is refunded by the same means of payment", () => {
 		const wrapper = open({ paid_amount: 32.5, cancel_kept: 26, cancel_refund: 6.5 })
 
 		const said = wrapper.get("[data-test='cancel-refund']").text()
-		expect(said).toContain("CHF 26.00 is kept by the cancellation scale and CHF 6.50 goes back to her card")
-		expect(said).not.toContain("refunded to her automatically")
+		expect(said).toContain("CHF 26.00 is kept by the cancellation scale and CHF 6.50 is refunded by the same means of payment")
+		expect(said).not.toContain("refunded automatically, by the same means of payment")
 	})
 
 	it("says that a cancellation whose scale keeps it all gives nothing back, and that one keeping nothing is refunded", () => {
@@ -222,7 +222,7 @@ describe("the cancel dialog", () => {
 			"all of it is kept by the cancellation scale: nothing goes back",
 		)
 		expect(open({ paid_amount: 32.5, cancel_kept: 0, cancel_refund: 32.5 }).get("[data-test='cancel-refund']").text()).toContain(
-			"refunded to her automatically",
+			"refunded automatically, by the same means of payment",
 		)
 	})
 

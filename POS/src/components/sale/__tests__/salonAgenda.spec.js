@@ -225,7 +225,7 @@ describe("the agenda of the salon", () => {
 		expect(load.mock.calls.map(([day]) => day)).toEqual(["2026-11-11", "2026-11-10", "2026-11-09"])
 	})
 
-	describe("on a day the salon is closed, or has other hours", () => {
+	describe("on a day that is closed, or has other hours", () => {
 		it("says nothing on a normal day, or when the site does not say", () => {
 			expect(mountIt().find("[data-test='agenda-salon']").exists()).toBe(false)
 
@@ -233,7 +233,7 @@ describe("the agenda of the salon", () => {
 			expect(mountIt().find("[data-test='agenda-salon']").exists()).toBe(false)
 		})
 
-		it("says the salon is closed and why, with the number of appointments booked before the closing to move or cancel", () => {
+		it("says the day is closed and why, with the number of appointments booked before the closing to move or cancel", () => {
 			store.salon = { state: "closed", reason: "holiday", label: "Christmas Day", periods: [] }
 			store.appointments = [
 				row("BKG-9", "Maya", "10:00", "11:00", { to_handle: "closed" }),
@@ -243,7 +243,7 @@ describe("the agenda of the salon", () => {
 			const wrapper = mountIt()
 
 			const notice = wrapper.get("[data-test='agenda-salon']")
-			expect(notice.text()).toContain("Salon closed")
+			expect(notice.text()).toContain("Closed that day")
 			expect(notice.text()).toContain("Christmas Day")
 			expect(wrapper.get("[data-test='agenda-to-handle']").text()).toContain("2 booked before the closing")
 			expect(wrapper.get("[data-test='agenda-to-handle']").text()).toContain("None is cancelled by itself")
@@ -307,6 +307,18 @@ describe("the agenda of the salon", () => {
 			expect(wrapper.get("[data-test='row-BKG-9']").text()).toContain("To handle")
 			expect(wrapper.findAll("[data-test^='free-']")).toHaveLength(0)
 		})
+	})
+
+	it("says the site's booking has nothing for this till once it answered so, never before", () => {
+		const fresh = useAppointmentsStore()
+
+		store.loaded = false
+		store.available = false
+		expect(fresh.unanswered).toBe(false)
+		store.loaded = true
+		expect(fresh.unanswered).toBe(true)
+		store.available = true
+		expect(fresh.unanswered).toBe(false)
 	})
 
 	it("is not available when the site has no agenda for this till", () => {

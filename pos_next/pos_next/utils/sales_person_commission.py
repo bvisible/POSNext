@@ -491,7 +491,8 @@ def validate_sales_person_coverage(
 	uncovered = [
 		item
 		for item in uncovered
-		if asks_for_a_person(_line_item_code(item), products_tracked=products_tracked)
+		# //// Neoffice — the till's own rule of what counts as a service (13.11.2026) is read for this profile
+		if asks_for_a_person(_line_item_code(item), products_tracked=products_tracked, pos_profile=profile)
 	]
 	if uncovered and not has_invoice_team:
 		frappe.throw(

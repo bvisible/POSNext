@@ -120,6 +120,32 @@ describe("the words of the question", () => {
 		expect(whoLabel("product")).toBe("Who sold it?")
 	})
 
+	it("asks a service in the words the till's manager chose, and a product in the usual ones", async () => {
+		call.mockResolvedValue({ message: { told: true, question: "Mechanic", kinds: { CUT: "service", SHAMPOO: "product" } } })
+		await loadItemKinds("Till A", ["CUT", "SHAMPOO"])
+
+		expect(whoLabel("service")).toBe("Mechanic")
+		expect(whoLabel("")).toBe("Mechanic")
+		expect(whoLabel("product")).toBe("Who sold it?")
+	})
+
+	it("uses the manager's words even where the site tells no kind (a garage that said nothing else)", async () => {
+		call.mockResolvedValue({ message: { told: false, question: "Seller", kinds: {} } })
+		await loadItemKinds("Till A", [])
+
+		expect(whoLabel("service")).toBe("Seller")
+		// Nothing is told: a product stays the ordinary « Sales Person »
+		expect(whoLabel("product")).toBe("Sales Person")
+	})
+
+	it("forgets the manager's words with the rest on a sign-out", async () => {
+		call.mockResolvedValue({ message: { told: true, question: "Mechanic", kinds: {} } })
+		await loadItemKinds("Till A", [])
+		forgetItemKinds()
+
+		expect(whoLabel("service", false)).toBe("Sales Person")
+	})
+
 	it("words a cart of products alone as a sale, and any cart with a service as the work", async () => {
 		await theSiteSays({ CUT: "service", SHAMPOO: "product" })
 		expect(kindOfLines([shampoo])).toBe("product")

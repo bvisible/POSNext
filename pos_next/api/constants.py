@@ -36,8 +36,9 @@ POS_SETTINGS_FIELDS = [
 	"enable_sales_persons",
 	# //// Neoffice — a product asks for its person only if this is on (NeoSalon, pos_next.sales_person_lines)
 	"track_product_sales_by_person",
-	# //// Neoffice — the till shows the day's appointments (NeoSalon, pos_next.api.appointments)
+	# //// Neoffice — the till shows the day's appointments (NeoSalon, pos_next.api.appointments), and the price it collects them at
 	"enable_appointments",
+	"appointment_price",
 	"silent_print",
 	"allow_print_draft_invoices",
 	"allow_sales_order",
@@ -142,6 +143,7 @@ DEFAULT_POS_SETTINGS = {
 	"track_product_sales_by_person": 0,
 	# //// Neoffice — see POS_SETTINGS_FIELDS
 	"enable_appointments": 0,
+	"appointment_price": "Price of the day",
 	"silent_print": 0,
 	"allow_print_draft_invoices": 0,
 	"allow_sales_order": 0,

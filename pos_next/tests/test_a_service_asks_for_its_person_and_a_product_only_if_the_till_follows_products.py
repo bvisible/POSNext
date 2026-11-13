@@ -238,12 +238,13 @@ class TestAServiceAsksForItsPersonAndAProductOnlyIfTheTillFollowsProducts(Frappe
 		with patch("frappe.get_hooks", return_value=[]):
 			answer = item_kinds(self.fx.profile, [self.product])
 
-		self.assertEqual(answer, {"told": False, "kinds": {self.product: ""}})
+		# The question the cashier reads is the till's own setting: empty while the manager chose none
+		self.assertEqual(answer, {"told": False, "question": "", "kinds": {self.product: ""}})
 
 	def test_the_first_ask_of_a_screen_needs_no_item_to_know_whether_the_site_tells_the_kinds(self):
 		frappe.set_user(TILL)
 
-		self.assertEqual(item_kinds(self.fx.profile), {"told": True, "kinds": {}})
+		self.assertEqual(item_kinds(self.fx.profile), {"told": True, "question": "", "kinds": {}})
 
 	def test_the_till_reads_the_setting_with_the_others(self):
 		self.follow_products(True)

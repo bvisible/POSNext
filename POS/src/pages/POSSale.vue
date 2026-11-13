@@ -423,7 +423,7 @@
 				<!-- //// Neoffice — the rail's appointments entry: shown on a till whose tick is on, open while the middle column shows them, with the count still to collect (NeoSalon, lot G4). -->
 				<ManagementSlider
 					:can-access-product-management="canAccessProductManagement"
-					:appointments-enabled="Boolean(settingsStore.appointmentsEnabled)"
+					:appointments-enabled="appointmentsOffered"
 					:appointments-open="appointmentsShown"
 					:appointments-to-collect="appointmentsStore.toCollectCount"
 					@menu-clicked="handleManagementMenuClick"
@@ -473,7 +473,7 @@
 						</button>
 						<!-- //// Neoffice — the phone's third tab: the day's appointments, with the count still to collect (NeoSalon, lot G4, canvas « Rendez-vous 4 »). -->
 						<button
-							v-if="settingsStore.appointmentsEnabled"
+							v-if="appointmentsOffered"
 							data-test="tab-appointments"
 							@click="
 								showAppointments = true;
@@ -3036,9 +3036,11 @@ const showReservationDialog = ref(false);
 //// appointments; the list is read while the till is open, on a till whose tick is on (off by default, a shop till only).
 const appointmentsStore = useAppointmentsStore();
 const showAppointments = ref(false);
-const appointmentsShown = computed(
-	() => showAppointments.value && Boolean(settingsStore.appointmentsEnabled),
+// //// Neoffice — the entry is offered only where the site's booking answered for this till: a till ticked on a site that books nothing shows no agenda « unavailable » (13.11.2026)
+const appointmentsOffered = computed(
+	() => Boolean(settingsStore.appointmentsEnabled) && !appointmentsStore.unanswered,
 );
+const appointmentsShown = computed(() => showAppointments.value && appointmentsOffered.value);
 watch(
 	() => Boolean(settingsStore.appointmentsEnabled) && shiftStore.hasOpenShift,
 	(on) => {

@@ -475,15 +475,15 @@ def _editable(setting, can, desk=False):
 	return True
 
 
-def _site_facts():
+def _site_facts(till):
 	"""The facts of the site some settings need (`Setting.needs_site`)."""
-	# //// Neoffice — and whether the site has a reservation app (the appointments of the till, NeoSalon lot G4)
-	from pos_next.api.appointments import site_has_appointments
+	# //// Neoffice — and whether the site's booking answers for this till (the appointments of the till, NeoSalon lot G4): an answer, not the presence of a hook
+	from pos_next.api.appointments import site_takes_appointments
 	from pos_next.pos_next.doctype.pos_settings.pos_settings import _site_allows_negative_stock
 
 	return {
 		registry.SITE_ALLOWS_NEGATIVE_STOCK: bool(_site_allows_negative_stock()),
-		registry.SITE_HAS_APPOINTMENTS: site_has_appointments(),
+		registry.SITE_HAS_APPOINTMENTS: site_takes_appointments(till.pos_profile),
 	}
 
 
@@ -491,7 +491,7 @@ def _answer(till, can, desk=False):
 	shown = _shown(till, can, desk)
 	tab_keys = {setting.tab for setting in shown}
 	group_keys = {setting.group for setting in shown}
-	facts = _site_facts()
+	facts = _site_facts(till)
 	definitions = []
 	for setting in shown:
 		definition = registry.serialize(setting)
@@ -499,6 +499,8 @@ def _answer(till, can, desk=False):
 		if setting.needs_site:
 			# The site does not allow what it is about: the screen shows it greyed, its help says why (ruling 82)
 			definition["greyed"] = not facts[setting.needs_site]
+			if definition["greyed"] and setting.needs_site in registry.SITE_REASONS:
+				definition["greyed_reason"] = str(registry.SITE_REASONS[setting.needs_site])
 		if setting.store == DOCUMENT:
 			definition["required"] = bool(frappe.get_meta(setting.doctype).get_field(setting.key).reqd)
 		if setting.widget == "table":
@@ -1146,6 +1148,58 @@ def _brands(till, current):
 	return _named(rows)
 
 
+# //// Neoffice — the item tax templates of the till's company, with the rate each one carries (the VAT of the tip, a choice of the client's: 0 % is proposed)
+def _item_tax_templates(till, current):
+	rows = frappe.get_all(
+		"Item Tax Template",
+		filters={"company": till.profile.company, "disabled": 0},
+		fields=["name", "title"],
+		order_by="title asc",
+	)
+	rates = {}
+	for row in frappe.get_all(
+		"Item Tax Template Detail",
+		filters={"parent": ["in", [row.name for row in rows] or [""]]},
+		fields=["parent", "tax_rate"],
+		parent_doctype="Item Tax Template",
+	):
+		rates.setdefault(row.parent, []).append(flt(row.tax_rate))
+	choices = [
+		{
+			"value": row.name,
+			"label": "{} ({})".format(
+				row.title or row.name,
+				", ".join(f"{rate:g} %" for rate in sorted(set(rates.get(row.name) or [0.0]))),
+			),
+		}
+		for row in rows
+	]
+	return _with_current(choices, "Item Tax Template", current, "title")
+
+
+# //// Neoffice — the accounts a tip may be booked on: the company's, not groups, of the books' liabilities or income (the transit account is a liability)
+def _tip_accounts(till, current):
+	rows = frappe.get_all(
+		"Account",
+		filters={
+			"company": till.profile.company,
+			"is_group": 0,
+			"disabled": 0,
+			"root_type": ["in", ["Liability", "Income"]],
+		},
+		fields=["name", "account_name", "account_number"],
+		order_by="account_number asc, account_name asc",
+	)
+	choices = [
+		{
+			"value": row.name,
+			"label": " - ".join(part for part in (row.account_number, row.account_name) if part) or row.name,
+		}
+		for row in rows
+	]
+	return _with_current(choices, "Account", current)
+
+
 def _journal_entry_templates(till, current):
 	rows = frappe.get_all(
 		"Journal Entry Template",
@@ -1182,4 +1236,6 @@ CHOICES = {
 	"brands": _brands,
 	"journal_entry_templates": _journal_entry_templates,
 	"gift_card_notifications": _gift_card_notifications,
+	"item_tax_templates": _item_tax_templates,
+	"tip_accounts": _tip_accounts,
 }

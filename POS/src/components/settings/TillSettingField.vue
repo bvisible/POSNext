@@ -8,7 +8,8 @@
 		class="till-setting min-w-0"
 		:class="[
 			setting.indent ? 'ml-[9px] border-l-2 border-pos-line pl-[19px]' : '',
-			greyed ? 'opacity-[0.42]' : '',
+			// //// Neoffice — a setting greyed for want of a fact of the site says why, and the reason stays readable: only the rest is dimmed
+			greyed ? (setting.greyed_reason ? '[&>*:not([data-reason])]:opacity-[0.42]' : 'opacity-[0.42]') : '',
 		]"
 		:data-setting="setting.key"
 		:data-greyed="greyed ? 'true' : 'false'"
@@ -293,13 +294,24 @@
 			/>
 		</template>
 
-		<p
+		<!-- //// Neoffice — why the setting is greyed, when it is for want of a fact of the site (13.11.2026): the site's booking does not answer for this till -->
+		<p v-if="greyed && setting.greyed_reason" data-reason data-test="setting-greyed-reason" class="till-setting-reason mt-1.5 rounded-lg bg-pos-action-soft px-2.5 py-2 text-[12.5px] leading-[1.45] text-pos-ink">{{ setting.greyed_reason }}</p>
+
+		<div
 			v-if="helpOpen && setting.help"
 			class="till-setting-help mb-1 mt-1.5 rounded-lg border-l-[3px] border-blue-400 bg-pos-action-soft px-2.5 py-2 text-[12.5px] leading-[1.45] text-pos-ink"
 			:class="setting.widget === 'check' ? 'ml-7' : ''"
 		>
-			{{ setting.help }}
-		</p>
+			<p>{{ setting.help }}</p>
+			<!-- //// Neoffice — where the rule behind the setting comes from, cited beside it (product owner, 13.11.2026), and what kind of source it is -->
+			<ul v-if="setting.sources?.length" class="till-setting-sources mt-1.5 space-y-0.5 text-[12px] text-pos-muted" data-test="setting-sources">
+				<li v-for="source in setting.sources" :key="source.label">
+					<a v-if="source.url" :href="source.url" target="_blank" rel="noopener noreferrer" class="underline decoration-dotted underline-offset-2 hover:text-pos-ink">{{ source.label }}</a>
+					<span v-else>{{ source.label }}</span>
+					<span v-if="source.note"> — {{ source.note }}</span>
+				</li>
+			</ul>
+		</div>
 	</div>
 </template>
 

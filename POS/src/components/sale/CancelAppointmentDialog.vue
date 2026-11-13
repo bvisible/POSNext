@@ -15,7 +15,7 @@
 				</fieldset>
 
 				<p v-if="appointment.paid_amount > 0" class="rounded-xl bg-yellow-50 px-4 py-3 text-sm leading-snug text-yellow-800 dark:bg-yellow-400/15 dark:text-yellow-100" data-test="cancel-refund">
-					<b>{{ __("She paid {0} online.", [money(appointment.paid_amount)]) }}</b> {{ refundSaid }}
+					<b>{{ __("{0} was paid online.", [money(appointment.paid_amount)]) }}</b> {{ refundSaid }}
 				</p>
 
 				<label v-if="reason !== 'no_show'" class="flex items-start gap-3 text-[15px] text-gray-900 dark:text-gray-100">
@@ -23,7 +23,7 @@
 					<span><b>{{ __("Warn the customer") }}</b><span class="block text-sm text-gray-500 dark:text-gray-400">{{ __("The slot is free again in the agenda at once.") }}</span></span>
 				</label>
 				<!-- //// Neoffice — an absence sends the customer no message (the reservation app tells nobody): the box offered to warn her and said the slot was free again, an hour already gone (12.11). -->
-				<p v-else class="text-sm text-gray-500 dark:text-gray-400" data-test="cancel-no-message">{{ __("She receives no message for an absence.") }}</p>
+				<p v-else class="text-sm text-gray-500 dark:text-gray-400" data-test="cancel-no-message">{{ __("No message is sent for an absence.") }}</p>
 
 				<div class="flex items-center justify-end gap-3 pt-1">
 					<button type="button" data-test="cancel-keep" class="min-h-[48px] rounded-xl px-4 text-[15px] font-semibold text-gray-800 dark:text-gray-100" @click="show = false">{{ __("Keep the appointment") }}</button>
@@ -60,7 +60,7 @@ const { showInfo, showWarning } = useToast()
 
 const REASONS = [
 	{ value: "cancelled", label: __("The customer cancels") },
-	{ value: "no_show", label: __("She did not come (absent)") },
+	{ value: "no_show", label: __("The customer did not come (absent)") },
 ]
 const show = computed({ get: () => props.modelValue, set: (value) => emit("update:modelValue", value) })
 const reason = ref("cancelled")
@@ -76,16 +76,16 @@ const refundSaid = computed(() => {
 		//// was said whatever it kept. Nothing kept, or a reservation app that does not say: the sentence it always said.
 		const kept = Number(props.appointment.cancel_kept || 0)
 		const back = Number(props.appointment.cancel_refund || 0)
-		if (!(kept > 0)) return __("It is refunded to her automatically.")
-		if (back > 0) return __("Cancelled now, {0} is kept by the cancellation scale and {1} goes back to her card.", [money(kept), money(back)])
+		if (!(kept > 0)) return __("It is refunded automatically, by the same means of payment.")
+		if (back > 0) return __("Cancelled now, {0} is kept by the cancellation scale and {1} is refunded by the same means of payment.", [money(kept), money(back)])
 		return __("Cancelled now, all of it is kept by the cancellation scale: nothing goes back.")
 	}
 	// A reservation app that predates these amounts says nothing: no figure rather than a false « nothing goes back »
 	if (props.appointment.absent_kept == null && props.appointment.absent_refund == null)
-		return __("Marked absent, what the scale asks for an absence is kept and the rest goes back to her card.")
+		return __("Marked absent, what the scale asks for an absence is kept and the rest is refunded by the same means of payment.")
 	const kept = Number(props.appointment.absent_kept || 0)
 	const back = Number(props.appointment.absent_refund || 0)
-	if (back > 0) return __("Marked absent, {0} is kept for the absence and {1} goes back to her card.", [money(kept), money(back)])
+	if (back > 0) return __("Marked absent, {0} is kept for the absence and {1} is refunded by the same means of payment.", [money(kept), money(back)])
 	return __("Marked absent, all of it is kept for the absence: nothing goes back.")
 })
 

@@ -95,11 +95,53 @@ def a_parent_for_the_tip_account(company):
 	).insert(ignore_permissions=True)
 
 
+def a_zero_rate_template(company, title="_Test Tip VAT 0", rate=0):
+	"""An item tax template of the company with one rate (0 % unless said), made in the test's transaction: a site made for the tests holds none,
+	and tips are refused, in words, where the company has no template at 0 % to propose."""
+	abbr = frappe.get_cached_value("Company", company, "abbr")
+	name = f"{title} - {abbr}"
+	if frappe.db.exists("Item Tax Template", name):
+		return name
+	group = frappe.db.get_value(
+		"Account", {"company": company, "account_type": "Tax", "is_group": 1}, "name"
+	) or frappe.db.get_value("Account", {"company": company, "root_type": "Liability", "is_group": 1}, "name")
+	account_name = f"{title} Account"
+	account = frappe.db.get_value("Account", {"account_name": account_name, "company": company}, "name")
+	if not account:
+		account = (
+			frappe.get_doc(
+				{
+					"doctype": "Account",
+					"account_name": account_name,
+					"parent_account": group,
+					"company": company,
+					"account_type": "Tax",
+					"is_group": 0,
+				}
+			)
+			.insert(ignore_permissions=True)
+			.name
+		)
+	return (
+		frappe.get_doc(
+			{
+				"doctype": "Item Tax Template",
+				"title": title,
+				"company": company,
+				"taxes": [{"tax_type": account, "tax_rate": rate}],
+			}
+		)
+		.insert(ignore_permissions=True)
+		.name
+	)
+
+
 class TestTipsAtAShopTill(TillSettingsCase):
 	@classmethod
 	def setUpClass(cls):
 		super().setUpClass()
 		a_parent_for_the_tip_account(cls.fx.company)
+		a_zero_rate_template(cls.fx.company)
 
 	def setUp(self):
 		super().setUp()
@@ -201,13 +243,14 @@ class TestTipsAtAShopTill(TillSettingsCase):
 		self.assertEqual(row.company, self.company)
 		self.assertEqual(frappe.db.get_value("Warehouse", row.default_warehouse, "company"), self.company)
 
-	def test_a_tip_item_a_restaurant_made_before_is_set_right(self):
+	def test_a_tip_item_the_client_set_to_grant_a_commission_is_left_as_it_is(self):
+		# 13.11.2026: whether a tip enters a commission is the client's to say; the code no longer sets the item back
 		till_tips.ensure_tip_item(self.company, None)
 		frappe.db.set_value("Item", "TIP", "grant_commission", 1)
 
 		till_tips.ensure_tip_item(self.company, None)
 
-		self.assertEqual(frappe.db.get_value("Item", "TIP", "grant_commission"), 0)
+		self.assertEqual(frappe.db.get_value("Item", "TIP", "grant_commission"), 1)
 
 	def test_the_patch_sets_the_tip_item_of_a_restaurant_right(self):
 		from pos_next.patches.tips import keep_the_tip_item_out_of_commissions
@@ -261,7 +304,12 @@ class TestTipsAtAShopTill(TillSettingsCase):
 				self.assertTrue(shop[key]["label"].strip() and shop[key]["help"].strip())
 				self.assertNotIn(key, restaurant)
 		self.assertNotIn("till_tip_item", shop)
-		self.assertNotIn("till_tip_account", shop)
+		# The account, the VAT and the commission are the client's: listed, with their sources where there is one to cite
+		for key in ("till_tip_account", "till_tip_tax_template", "till_tip_commission"):
+			with self.subTest(key=key):
+				self.assertEqual((shop[key]["tab"], shop[key]["group"]), ("sales", "till_tips"))
+				self.assertTrue(shop[key]["label"].strip() and shop[key]["help"].strip())
+				self.assertNotIn(key, restaurant)
 
 	def test_a_value_the_tip_goes_to_does_not_offer_is_refused(self):
 		self.as_user(TILL_MANAGER)
