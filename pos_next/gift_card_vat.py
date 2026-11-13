@@ -125,6 +125,26 @@ def ensure_mode_of_payment() -> None:
 	).insert(ignore_permissions=True)
 
 
+def _refuse_an_item_shared_by_two_kinds(settings) -> None:
+	"""A gift card item is taxed one way (the item carries the template of its sale): two tills that sell the same item as two kinds of card would
+	each rewrite the other's. The item is refused, in words, to the till that comes second."""
+	item = settings.get("gift_card_item")
+	if not item:
+		return
+	kind = the_kind_of(settings)
+	for other in frappe.get_all(
+		"POS Settings",
+		filters={"gift_card_item": item, "enable_gift_cards": 1, "name": ["!=", settings.get("name") or ""]},
+		fields=["pos_profile", "gift_card_kind"],
+	):
+		if the_kind_of(other) != kind:
+			frappe.throw(
+				_(
+					"The item {0} is also the gift card item of the till {1} (kind of gift card: {2}). A value voucher and a service voucher are not taxed the same way: give each kind its own item."
+				).format(item, other.pos_profile, _(the_kind_of(other)))
+			)
+
+
 def provision(settings) -> None:
 	"""Make what a value card needs for the till a POS Settings document is, when the client touches its gift cards (called by the document's validation).
 
@@ -132,7 +152,7 @@ def provision(settings) -> None:
 	setting is given. A value voucher is refused, in words, where the company has no template at 0 % and none was chosen: its sale carries no VAT, and the
 	code does not pick one nobody chose. A service voucher is left to its item (taxed as that item says), nothing is made for it.
 	"""
-	if not cint(settings.get("enable_gift_cards")) or the_kind_of(settings) != KIND_VALUE:
+	if not cint(settings.get("enable_gift_cards")):
 		return
 	touched = settings.is_new() or any(
 		settings.has_value_changed(field)
@@ -145,6 +165,9 @@ def provision(settings) -> None:
 		)
 	)
 	if not touched:
+		return
+	_refuse_an_item_shared_by_two_kinds(settings)
+	if the_kind_of(settings) != KIND_VALUE:
 		return
 	company = _company_of(settings.pos_profile)
 	account = settings.get("gift_card_account")

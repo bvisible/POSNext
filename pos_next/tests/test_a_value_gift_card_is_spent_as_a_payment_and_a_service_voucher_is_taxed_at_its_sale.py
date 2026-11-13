@@ -214,6 +214,32 @@ class TestAValueGiftCardIsSpentAsAPayment(TakeawayTill, FrappeTestCase):
 			[row for row in item.item_defaults if row.company == self.fx.company and row.income_account]
 		)
 
+	def test_an_item_cannot_be_the_gift_card_item_of_two_kinds_of_card(self):
+		shared = _item("_Test Gift Card Shared Item", self.dishes, self.fx.company, [])
+		self.make_the_till(
+			gift_card_kind=gift_card_vat.KIND_SERVICE,
+			gift_card_item=shared,
+			gift_card_account=None,
+			gift_card_tax_template=None,
+		)
+		# A second till (not saved) that would sell the same item as value vouchers
+		second = frappe._dict(
+			name="_Test Second Till Settings",
+			pos_profile=self.till,
+			enable_gift_cards=1,
+			gift_card_kind=gift_card_vat.KIND_VALUE,
+			gift_card_item=shared,
+			gift_card_account=self.liability,
+			gift_card_tax_template=self.zero,
+			is_new=lambda: True,
+			has_value_changed=lambda field: True,
+		)
+
+		with self.assertRaises(frappe.ValidationError) as refused:
+			gift_card_vat.provision(second)
+
+		self.assertIn("give each kind its own item", str(refused.exception))
+
 	def test_a_template_of_another_company_is_refused(self):
 		foreign = frappe.db.get_value("Item Tax Template", {"company": ["!=", self.fx.company]}, "name")
 		if not foreign:
@@ -388,6 +414,93 @@ class TestAValueGiftCardIsSpentAsAPayment(TakeawayTill, FrappeTestCase):
 		self.assertEqual(self.ledger(credit.name).get(self.liability), -flt(PRICE, 2))
 
 	# ------------------------------------------------------------------------------------------------ the patch
+	def test_the_patch_makes_the_custom_field_itself_when_the_fixtures_have_not_yet(self):
+		# On a migration the patches run BEFORE the fixtures are imported: it would find no column, and do nothing
+		with patch.object(frappe.db, "has_column", return_value=False):
+			with patch("frappe.custom.doctype.custom_field.custom_field.create_custom_field") as made:
+				the_patch.ensure_the_column()
+
+		made.assert_called_once()
+		self.assertEqual(made.call_args.args[0], "Coupon Code")
+		self.assertEqual(made.call_args.args[1]["fieldname"], "pos_next_vat_taken_at_sale")
+
+		with patch("frappe.custom.doctype.custom_field.custom_field.create_custom_field") as untouched:
+			the_patch.ensure_the_column()
+		untouched.assert_not_called()
+
+	def test_the_patch_reads_the_line_that_sold_a_card_even_when_its_item_is_no_longer_the_tills(self):
+		# The item a till sells as a gift card can have changed since: the line that sold the card is the one whose price is its value
+		other_sale = self.submit(self.sale([self.food]))
+		card = self.a_card(PRICE, code="VATCARDOTHERITEM")
+		frappe.db.set_value(
+			"Coupon Code", card, {"source_invoice": other_sale.name, "pos_next_vat_taken_at_sale": 0}
+		)
+
+		the_patch.execute()
+
+		self.assertEqual(frappe.db.get_value("Coupon Code", card, "pos_next_vat_taken_at_sale"), 1)
+
+	def test_the_patch_is_not_fooled_by_a_taxed_product_sold_in_the_same_basket_as_an_untaxed_card(self):
+		basket = self.the_card_sale(60)
+		basket["items"].append({**self.sale([self.food])["items"][0]})
+		sold = self.submit(basket)
+		card = frappe.get_all("Coupon Code", filters={"source_invoice": sold.name}, pluck="name")[0]
+		frappe.db.set_value("Coupon Code", card, "pos_next_vat_taken_at_sale", 1)
+
+		the_patch.execute()
+
+		# The line that sold the card (its price is the card's value) carried no VAT, whatever the product beside it was charged
+		self.assertEqual(frappe.db.get_value("Coupon Code", card, "pos_next_vat_taken_at_sale"), 0)
+
+	def _a_card_sold_on_a_line_with_no_template(self, invoice_rate):
+		"""A card sold on a line with no item tax template, on an invoice whose VAT rows carry `invoice_rate`; its flag is set to 1 for the patch to say."""
+		sold = self.submit(self.the_card_sale(60))
+		card = frappe.get_all("Coupon Code", filters={"source_invoice": sold.name}, pluck="name")[0]
+		frappe.db.set_value("Sales Invoice Item", {"parent": sold.name}, "item_tax_rate", "{}")
+		frappe.db.set_value(
+			"Sales Taxes and Charges",
+			{"parent": sold.name, "parenttype": "Sales Invoice"},
+			"rate",
+			invoice_rate,
+		)
+		frappe.db.set_value("Coupon Code", card, "pos_next_vat_taken_at_sale", 1)
+		the_patch.execute()
+		return frappe.db.get_value("Coupon Code", card, "pos_next_vat_taken_at_sale")
+
+	def test_a_line_with_no_template_is_charged_the_rate_of_its_invoice_so_its_card_was_taxed(self):
+		# A site that sells with one tax row at the standard rate: an item with no template is charged that rate
+		self.assertEqual(self._a_card_sold_on_a_line_with_no_template(8.1), 1)
+
+	def test_a_line_with_no_template_where_the_rows_of_the_invoice_are_at_zero_was_not_taxed(self):
+		# The Swiss layout item by item (the tests' own): the rows are at 0 and each item's template gives the rate, so no template is no VAT
+		self.assertEqual(self._a_card_sold_on_a_line_with_no_template(0), 0)
+
+	def test_a_template_at_zero_wins_over_the_rate_of_the_invoice(self):
+		sold = self.submit(self.the_card_sale(60))
+		card = frappe.get_all("Coupon Code", filters={"source_invoice": sold.name}, pluck="name")[0]
+		frappe.db.set_value(
+			"Sales Taxes and Charges", {"parent": sold.name, "parenttype": "Sales Invoice"}, "rate", 8.1
+		)
+		frappe.db.set_value("Coupon Code", card, "pos_next_vat_taken_at_sale", 1)
+
+		the_patch.execute()
+
+		# The line names both VAT accounts at 0 (the template of a value voucher): no VAT, whatever the rows of the invoice say
+		self.assertEqual(frappe.db.get_value("Coupon Code", card, "pos_next_vat_taken_at_sale"), 0)
+
+	def test_a_card_whose_sale_line_cannot_be_told_keeps_the_old_way_when_any_line_of_its_sale_was_taxed(
+		self,
+	):
+		other_sale = self.submit(self.sale([self.food, self.alcohol]))
+		card = self.a_card(77, code="VATCARDDOUBT")
+		frappe.db.set_value(
+			"Coupon Code", card, {"source_invoice": other_sale.name, "pos_next_vat_taken_at_sale": 0}
+		)
+
+		the_patch.execute()
+
+		self.assertEqual(frappe.db.get_value("Coupon Code", card, "pos_next_vat_taken_at_sale"), 1)
+
 	def test_the_patch_says_from_the_sales_how_each_card_was_taxed_and_what_each_till_sells(self):
 		taxed_sale = self.submit(self.the_card_sale(100))
 		frappe.db.set_value(
