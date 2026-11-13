@@ -3036,10 +3036,11 @@ const showReservationDialog = ref(false);
 //// appointments; the list is read while the till is open, on a till whose tick is on (off by default, a shop till only).
 const appointmentsStore = useAppointmentsStore();
 const showAppointments = ref(false);
-// //// Neoffice — the entry is offered only where the site's booking answered for this till: a till ticked on a site that books nothing shows no agenda « unavailable » (13.11.2026)
+//// Neoffice — the entry is offered only where the site's booking answered for this till: a till ticked on a site that books nothing shows no agenda « unavailable » (13.11.2026)
 const appointmentsOffered = computed(
 	() => Boolean(settingsStore.appointmentsEnabled) && !appointmentsStore.unanswered,
 );
+//// Neoffice — the agenda is shown only while the entry is offered (it used to follow the tick alone)
 const appointmentsShown = computed(() => showAppointments.value && appointmentsOffered.value);
 watch(
 	() => Boolean(settingsStore.appointmentsEnabled) && shiftStore.hasOpenShift,
