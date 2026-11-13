@@ -47,26 +47,28 @@ const legacy = () =>
 describe("ERPNext's taxes and totals of a till's sale", () => {
 	afterEach(legacy)
 
-	it("rounds each line's net, then the VAT once over the cart: a coffee at 4.20 holds 0.32", () => {
+	// ERPNext 15.125.0 (bc4c5ffd2e): an included VAT is computed on the net before rounding (4.20 × 8.1 / 108.1 = 0.3147);
+	// it was the VAT of the net rounded first (3.89 × 8.1 % = 0.3151, so 0.32)
+	it("computes an included VAT on the net before rounding: a coffee at 4.20 holds 0.31", () => {
 		legacy()
 		const result = calculateTaxesAndTotals({
 			items: [sold(4.2, ON_SITE)],
 			taxes: rows(1),
 		})
 		expect(result.net_total).toBe(3.89)
-		expect(result.total_taxes_and_charges).toBe(0.32)
+		expect(result.total_taxes_and_charges).toBe(0.31)
 		// The price includes the tax: the rounding gap goes to the grand total, which stays 4.20
 		expect(result.grand_total).toBe(4.2)
 	})
 
-	it("taxes a mixed takeaway cart per account: 0.33 at 2.6 %, 0.32 at 8.1 %", () => {
+	it("taxes a mixed takeaway cart per account: 0.33 at 2.6 %, 0.31 at 8.1 %", () => {
 		legacy()
 		const result = calculateTaxesAndTotals({
 			items: [sold(6.5, TAKEAWAY), sold(6.5, TAKEAWAY), sold(4.2, ON_SITE)],
 			taxes: rows(1),
 		})
-		expect(vat(result)).toEqual({ "VAT 8.1": 0.32, "VAT 2.6": 0.33 })
-		expect(result.total_taxes_and_charges).toBe(0.65)
+		expect(vat(result)).toEqual({ "VAT 8.1": 0.31, "VAT 2.6": 0.33 })
+		expect(result.total_taxes_and_charges).toBe(0.64)
 		expect(result.grand_total).toBe(17.2)
 	})
 

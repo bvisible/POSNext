@@ -69,7 +69,9 @@ const CARTS = [
 		name: "a coffee at 4.20 on site",
 		inclusive: true,
 		lines: [{ item: "food", price: 4.2 }],
-		erpnext: { vat: 0.32, grand_total: 4.2, rounded_total: 4.2 },
+		// ERPNext 15.125.0 computes an included VAT on the net before rounding: 4.20 × 8.1 / 108.1 = 0.3147, so 0.31
+		// (it was 0.32, the VAT of the net rounded first: 3.89 × 8.1 %)
+		erpnext: { vat: 0.31, grand_total: 4.2, rounded_total: 4.2 },
 	},
 	{
 		name: "a takeaway order: two dishes at 6.50 and a beer at 4.20",
@@ -79,11 +81,12 @@ const CARTS = [
 			{ item: "food", price: 6.5, qty: 2 },
 			{ item: "alcohol", price: 4.2 },
 		],
+		// the beer's VAT on its net before rounding (ERPNext 15.125.0): 0.31, the dishes' 13.00 × 2.6 / 102.6 = 0.33
 		erpnext: {
-			vat: 0.65,
+			vat: 0.64,
 			grand_total: 17.2,
 			rounded_total: 17.2,
-			accounts: { "VAT 8.1": 0.32, "VAT 2.6": 0.33 },
+			accounts: { "VAT 8.1": 0.31, "VAT 2.6": 0.33 },
 		},
 	},
 	{

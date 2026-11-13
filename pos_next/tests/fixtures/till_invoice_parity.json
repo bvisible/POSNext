@@ -21,11 +21,11 @@
     }
    ],
    "till": {
-    "total_taxes_and_charges": 0.32,
+    "total_taxes_and_charges": 0.31,
     "grand_total": 4.2,
     "rounded_total": 4.2,
     "accounts": {
-     "VAT 8.1": 0.32,
+     "VAT 8.1": 0.31,
      "VAT 2.6": 0
     },
     "lines": [
@@ -65,11 +65,11 @@
     }
    ],
    "till": {
-    "total_taxes_and_charges": 0.65,
+    "total_taxes_and_charges": 0.64,
     "grand_total": 17.2,
     "rounded_total": 17.2,
     "accounts": {
-     "VAT 8.1": 0.32,
+     "VAT 8.1": 0.31,
      "VAT 2.6": 0.33
     },
     "lines": [

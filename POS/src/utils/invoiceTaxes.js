@@ -18,6 +18,11 @@ const fltFloat = (value) => roundFloat(Number(value) || 0)
 
 const included = (tax) => Boolean(Number(tax.included_in_print_rate))
 
+//// Neoffice — tuple(sorted(item_tax_map.items())) of ERPNext 15.125.0: the lines whose rounding is carried together share
+//// their VAT map
+const taxKey = (itemTaxMap) =>
+	JSON.stringify(Object.entries(itemTaxMap || {}).sort())
+
 /** _load_item_tax_rate: an item's VAT map, as a JSON string or an object ({} when it has none). */
 export function loadItemTaxRate(itemTaxRate) {
 	if (!itemTaxRate) return {}
@@ -91,7 +96,12 @@ export function calculateTaxesAndTotals({
 	applyDiscountOn = "Grand Total",
 	roundRowWiseTax = false,
 } = {}) {
-	const lines = items.map(invoiceLine)
+	//// Neoffice — ERPNext 15.125.0 (bc4c5ffd2e « distribute inclusive net rounding ») keeps each line's net before rounding:
+	//// an included tax is computed on it, and the rounding of the nets is carried from line to line within a VAT map.
+	const lines = items.map((row) => ({
+		...invoiceLine(row),
+		_unrounded_net_amount: null,
+	}))
 	const rows = taxes.map((tax, index) => ({
 		...tax,
 		idx: index + 1,
@@ -165,7 +175,9 @@ export function calculateTaxesAndTotals({
 	// determine_exclusive_rate: the net of a price that includes its taxes
 	function determineExclusiveRate() {
 		if (!rows.some(included)) return
+		const netTotals = {}
 		for (const line of lines) {
+			if (!state.discountApplied) line._unrounded_net_amount = null
 			let totalSlope = 0
 			let totalIntercept = 0
 			rows.forEach((tax, i) => {
@@ -190,7 +202,19 @@ export function calculateTaxesAndTotals({
 				line.qty &&
 				(totalSlope || totalIntercept)
 			) {
-				line.net_amount = flt((line.amount - totalIntercept) / (1 + totalSlope))
+				line._unrounded_net_amount =
+					(line.amount - totalIntercept) / (1 + totalSlope)
+				line.net_amount = flt(line._unrounded_net_amount)
+				if (!roundRowWiseTax) {
+					//// Neoffice — carry rounding between lines with the same taxes, without mixing tax groups (ERPNext 15.125.0)
+					const netTotal = (netTotals[taxKey(line.itemTaxMap)] ||= {
+						unrounded: 0,
+						rounded: 0,
+					})
+					netTotal.unrounded += line._unrounded_net_amount
+					line.net_amount = flt(flt(netTotal.unrounded) - netTotal.rounded)
+					netTotal.rounded += line.net_amount
+				}
 			}
 		}
 	}
@@ -214,8 +238,14 @@ export function calculateTaxesAndTotals({
 					doc.net_total ? (line.net_amount * actual) / doc.net_total : 0,
 				]
 			}
-			case "On Net Total":
-				return [line.net_amount, (rate / 100) * line.net_amount]
+			case "On Net Total": {
+				//// Neoffice — an included tax is computed on the net before rounding, so it is not rounded twice (ERPNext 15.125.0)
+				const netForTax =
+					included(tax) && line._unrounded_net_amount != null
+						? line._unrounded_net_amount
+						: line.net_amount
+				return [line.net_amount, (rate / 100) * netForTax]
+			}
 			case "On Previous Row Amount":
 				return [
 					previous.tax_amount_for_current_item,
@@ -394,19 +424,34 @@ export function calculateTaxesAndTotals({
 		if (!discount) return
 		const totalForDiscountAmount = getTotalForDiscountAmount()
 		if (!totalForDiscountAmount) return
-		let netTotal = 0
-		let expectedNetTotal = 0
+		//// Neoffice — ERPNext 15.125.0: on the grand total of included taxes, the discount is spread over the nets before rounding,
+		//// and the rounding gap is carried within a VAT map
+		const useUnroundedNet =
+			applyDiscountOn === "Grand Total" &&
+			!roundRowWiseTax &&
+			rows.some(included)
+		const netTotals = {}
 		for (const line of lines) {
-			const distributedAmount =
-				(discount * line.net_amount) / totalForDiscountAmount
-			const adjustedNetAmount = line.net_amount - distributedAmount
-			expectedNetTotal += adjustedNetAmount
+			const netTotal = (netTotals[
+				useUnroundedNet ? taxKey(line.itemTaxMap) : ""
+			] ||= {
+				unrounded: 0,
+				rounded: 0,
+			})
+			const netAmount =
+				useUnroundedNet && line._unrounded_net_amount != null
+					? line._unrounded_net_amount
+					: line.net_amount
+			const adjustedNetAmount =
+				netAmount - (discount * netAmount) / totalForDiscountAmount
+			line._unrounded_net_amount = useUnroundedNet ? adjustedNetAmount : null
+			netTotal.unrounded += adjustedNetAmount
 			line.net_amount = flt(adjustedNetAmount)
-			netTotal += line.net_amount
-			const roundingDifference = flt(expectedNetTotal - netTotal)
+			netTotal.rounded += line.net_amount
+			const roundingDifference = flt(netTotal.unrounded - netTotal.rounded)
 			if (roundingDifference) {
 				line.net_amount = flt(line.net_amount + roundingDifference)
-				netTotal += roundingDifference
+				netTotal.rounded += roundingDifference
 			}
 		}
 		state.discountApplied = true
