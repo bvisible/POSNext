@@ -466,6 +466,8 @@ export function useInvoice() {
 				// Optional item-level Sales Person (commission attribution)
 				sales_person: item.sales_person || null,
 				sales_person_name: item.sales_person_name || null,
+				//// Neoffice — what the cart line says of its price when it could not be what the till is set to (an appointment collected at the announced price, offline, with none kept): a note under the line
+				...(item.price_note ? { price_note: item.price_note } : {}),
 				//// Neoffice — the person was given by the head of the cart, not chosen for this line (see askTheKindOf in the cart store)
 				...(item.sales_person_posed ? { sales_person_posed: true } : {}),
 				//// Neoffice — the item's VAT maps for this till as the server sends them (pos_next.api.items): for the

@@ -315,6 +315,28 @@ class TestTheAgendaOfTheSalonDayIsComposedFromWhatTheLanesAnswer(FrappeTestCase)
 		)
 		self.assertEqual(row["steps"][0]["label"], "Coupe femme")
 
+	def test_a_step_keeps_the_price_the_reservation_announced_for_it_so_that_the_till_holds_it_offline(self):
+		# 13.11.2026: a till set to collect the price announced at booking holds that choice without the network, from the agenda it kept
+		self.site_has("day", "list")
+		self.a_day(people=[self.person(LUC, appointments=[self.row("BKG-1", LUC)])])
+		SITE["list"] = [
+			{
+				"booking": "BKG-1",
+				"starts_at": "2026-11-10 09:00:00",
+				"ends_at": "2026-11-10 10:00:00",
+				"steps": [
+					{"label": "Coupe femme", "item_code": "SRV-COUPE", "sales_person": LUC, "price": 65.5},
+					{"label": "Brushing", "item_code": "SRV-BRUSHING", "sales_person": LUC},
+				],
+				"amount": 120.0,
+				"state": "booked",
+			}
+		]
+
+		steps = self.agenda()["appointments"][0]["steps"]
+
+		self.assertEqual([step["price"] for step in steps], [65.5, None])
+
 	def test_without_the_money_lane_an_appointment_shows_its_service_and_announces_nothing(self):
 		self.site_has("day")
 		self.a_day(people=[self.person(LUC, appointments=[self.row("BKG-1", LUC)])])

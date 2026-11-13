@@ -55,7 +55,7 @@ vi.mock("@/composables/useOpenTable", () => ({
 
 const { usePOSCartStore } = await import("@/stores/posCart")
 const { forgetItemKinds } = await import("@/utils/itemKinds")
-const { useAppointment, cartLineOfAppointment } = await import(
+const { useAppointment, cartLineOfAppointment, announcedPriceOfStep } = await import(
 	"../useAppointment"
 )
 
@@ -572,7 +572,7 @@ describe("an appointment collected at the price announced at booking (setting «
 		])
 	})
 
-	it("keeps the day's price for a line that has no price of its own (the agenda kept offline carries none)", async () => {
+	it("says so, and keeps the day's price, for a line whose announced price the agenda kept offline does not hold", async () => {
 		network.isOffline = true
 		cached.items = { COUPE: { price_list_rate: 70 }, COULEUR: { price_list_rate: 80 } }
 
@@ -581,6 +581,55 @@ describe("an appointment collected at the price announced at booking (setting «
 		expect(lines().map((item) => [item.item_code, item.rate])).toEqual([
 			["COUPE", 70],
 			["COULEUR", 95],
+		])
+		expect(lines().map((item) => item.price_note)).toEqual([
+			"Announced price not known offline: the price of the day is kept.",
+			"Announced price not known offline: the price of the day is kept.",
+		])
+	})
+
+	it("holds the price announced for each step offline, from the agenda it kept, and does not ask the day's price", async () => {
+		network.isOffline = true
+		cached.items = { COUPE: { price_list_rate: 70 }, COULEUR: { price_list_rate: 80 } }
+		const priced = {
+			...row,
+			steps: [
+				{ ...row.steps[0], price: 65 },
+				{ ...row.steps[1], price: 93 },
+			],
+		}
+
+		await useAppointment().takeAppointment(priced)
+
+		expect(lines().map((item) => [item.item_code, item.rate, item.price_note ?? null])).toEqual([
+			["COUPE", 65, null],
+			["COULEUR", 93, null],
+		])
+		// The options are already part of the announced price: they are marked, never added a second time
+		expect(lines()[1]._modifiers_applied).toBe(15)
+	})
+
+	it("takes the amount of a one-step appointment for the announced price of its step when the reservation says no price per step", async () => {
+		network.isOffline = true
+		cached.items = { COUPE: { price_list_rate: 70 } }
+		const single = { ...row, steps: [row.steps[0]], amount: 65 }
+
+		await useAppointment().takeAppointment(single)
+
+		expect(lines().map((item) => [item.item_code, item.rate, item.price_note ?? null])).toEqual([["COUPE", 65, null]])
+	})
+
+	it("is still the day's price, with nothing said, for a till that did not choose the announced price", async () => {
+		settings.appointmentsAtTheAnnouncedPrice = false
+		network.isOffline = true
+		cached.items = { COUPE: { price_list_rate: 70 }, COULEUR: { price_list_rate: 80 } }
+		const priced = { ...row, steps: [{ ...row.steps[0], price: 65 }, { ...row.steps[1], price: 93 }] }
+
+		await useAppointment().takeAppointment(priced)
+
+		expect(lines().map((item) => [item.rate, item.price_note ?? null])).toEqual([
+			[70, null],
+			[95, null],
 		])
 	})
 
@@ -591,5 +640,27 @@ describe("an appointment collected at the price announced at booking (setting «
 		await useAppointment().takeAppointment(row)
 
 		expect(lines().map((item) => item.rate)).toEqual([70, 80, 32])
+	})
+})
+
+describe("the announced price of a step, as the agenda the till holds says it", () => {
+	const step = (extra = {}) => ({ item_code: "COUPE", qty: 1, ...extra })
+
+	it("is the step's own price when the reservation states it", () => {
+		expect(announcedPriceOfStep(step({ price: 65.5 }), { steps: [step(), step()], amount: 200 })).toBe(65.5)
+	})
+
+	it("is the amount per unit of a one-step appointment that states no price per step", () => {
+		expect(announcedPriceOfStep(step({ qty: 2 }), { steps: [step({ qty: 2 })], amount: 130 })).toBe(65)
+	})
+
+	it("is unknown for a step of several that states none, and for an appointment that announces nothing", () => {
+		expect(announcedPriceOfStep(step(), { steps: [step(), step()], amount: 200 })).toBeNull()
+		expect(announcedPriceOfStep(step(), { steps: [step()], amount: 0 })).toBeNull()
+		expect(announcedPriceOfStep(step(), { steps: [step()] })).toBeNull()
+	})
+
+	it("knows a price of zero when the reservation says zero (a gift)", () => {
+		expect(announcedPriceOfStep(step({ price: 0 }), { steps: [step()], amount: 50 })).toBe(0)
 	})
 })

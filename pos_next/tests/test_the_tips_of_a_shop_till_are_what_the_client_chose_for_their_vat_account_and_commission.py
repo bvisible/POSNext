@@ -10,6 +10,8 @@ and with a commission the code forced back to zero at every provisioning. The su
   template of another company is refused;
 - the account is the one the client chooses (2211 is only proposed when none is), and the tip item is booked on it for the till's company;
 - the commission is none until the client says « like the sale », and nothing sets it back: a later save of another setting leaves it;
+- the restaurant's tip item follows the same rule: the template it holds for the company is kept, one at 0 % of the company is given when it holds none,
+  and a company with none at 0 % refuses in words (it used to take any company's first template at 0 %, or none, and say nothing);
 - the three settings are listed with the choices the client picks from, and the VAT carries the source cited beside it.
 """
 
@@ -105,6 +107,38 @@ class TestTheTipsOfAShopTillAreWhatTheClientChose(TillSettingsCase):
 			self.save(**{VAT: foreign})
 
 		self.assertEqual(self.stored(KEY)[KEY], 0)
+
+	# ------------------------------------------------------------------------------------------------ the restaurant's tip item follows the same rule
+	def the_tip_item_without_a_template(self):
+		till_tips.ensure_tip_item(self.company, None)
+		frappe.db.delete("Item Tax", {"parent": till_tips.TIP_ITEM, "parenttype": "Item"})
+
+	def test_the_tip_item_of_a_restaurant_is_refused_in_words_where_the_company_has_no_template_at_zero(self):
+		self.the_tip_item_without_a_template()
+
+		with patch.object(till_tips, "zero_rate_templates", return_value=[]):
+			with self.assertRaises(frappe.ValidationError) as refused:
+				till_tips.ensure_tip_item(self.company, None)
+
+		self.assertIn("item tax template at 0 %", str(refused.exception))
+		self.assertIsNone(till_tips.vat_template_of(self.tip_item(), self.company))
+
+	def test_the_tip_item_of_a_restaurant_with_no_template_is_given_the_first_one_at_zero_of_its_company(
+		self,
+	):
+		self.the_tip_item_without_a_template()
+
+		till_tips.ensure_tip_item(self.company, None)
+
+		held = till_tips.vat_template_of(self.tip_item(), self.company)
+		self.assertEqual(held, till_tips.zero_rate_templates(self.company)[0])
+
+	def test_the_tip_item_of_a_restaurant_keeps_the_template_a_shop_till_client_chose(self):
+		self.save(**{VAT: self.eight})
+
+		till_tips.ensure_tip_item(self.company, None)
+
+		self.assertEqual(till_tips.vat_template_of(self.tip_item(), self.company), self.eight)
 
 	# ------------------------------------------------------------------------------------------------ the account
 	def test_the_account_the_client_chooses_is_the_one_the_tip_is_booked_on(self):

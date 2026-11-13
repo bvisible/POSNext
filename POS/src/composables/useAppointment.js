@@ -29,16 +29,23 @@ const answerOf = (answer) => answer?.message ?? answer
  * @param {object} line - `{ item_code, item_name, qty, uom, stock_uom, conversion_factor, image, sales_person, sales_person_name, posa_item_modifiers, price_list_rate }`
  * @param {number|null} dayRate - the unit price of the day, without the options (the till's price list); null: the line's own price
  * @param {boolean} announced - the till collects at the price the booking announced (setting « Price collected »): the line keeps the rate of the draft as
- *   it is, the options already part of it; a line that has no price of its own (the agenda offline carries none) falls back to the day's price
+ *   it is, the options already part of it (a line offline holds what the agenda kept of the announcement, `announced_rate`); a line with no announced price falls back
+ *   to the day's price AND says so (`price_note`)
  * @returns {{ item: object, qty: number }}
  */
 export function cartLineOfAppointment(line, dayRate = null, announced = false) {
 	const adjustment = modifiersPriceAdjustment(line.posa_item_modifiers)
-	const announcedRate = announced && line.rate != null ? Number(line.rate) : Number.NaN
+	const announcedValue = line.rate ?? line.announced_rate
+	const announcedRate = announced && announcedValue != null ? Number(announcedValue) : Number.NaN
 	const base = Number(dayRate ?? line.price_list_rate ?? line.rate) || 0
 	const rate = Number.isFinite(announcedRate)
 		? announcedRate
 		: Math.round((base + adjustment) * 1e6) / 1e6
+	// Set to collect the announced price, and the price is not known (offline, no price kept with the agenda): the line says so, it never takes the day's price in silence
+	const priceNote =
+		announced && !Number.isFinite(announcedRate)
+			? __("Announced price not known offline: the price of the day is kept.")
+			: null
 	return {
 		qty: Number(line.qty) || 1,
 		item: {
@@ -52,12 +59,32 @@ export function cartLineOfAppointment(line, dayRate = null, announced = false) {
 			image: line.image,
 			posa_item_modifiers: line.posa_item_modifiers || null,
 			_modifiers_applied: adjustment,
+			price_note: priceNote,
 			sales_person: line.sales_person || null,
 			sales_person_name: line.sales_person_name || null,
 			// Whatever the line holds, the person who serves is not given to it
 			keeps_its_person: true,
 		},
 	}
+}
+
+/**
+ * The price an appointment step announced, from the agenda the till holds (the reservation's own `price` of the step, options included); for an
+ * appointment of one step that says none, the amount the whole appointment announces (per unit); null when it is not known.
+ *
+ * @param {object} step - a step of the agenda row
+ * @param {object} appointment - the row
+ * @returns {number|null}
+ */
+export function announcedPriceOfStep(step, appointment) {
+	const own = step?.price
+	if (own !== null && own !== undefined && Number.isFinite(Number(own))) return Number(own)
+	const steps = (appointment?.steps || []).filter((each) => each?.item_code)
+	const amount = Number(appointment?.amount)
+	if (steps.length === 1 && Number.isFinite(amount) && amount > 0) {
+		return Math.round((amount / (Number(step?.qty) || 1)) * 1e6) / 1e6
+	}
+	return null
 }
 
 export function useAppointment() {
@@ -125,7 +152,9 @@ export function useAppointment() {
 		for (const line of lines) {
 			const { item, qty } = cartLineOfAppointment(
 				line,
-				announced && line.rate != null ? null : await dayRateOf(line, customer),
+				announced && (line.rate ?? line.announced_rate) != null
+					? null
+					: await dayRateOf(line, customer),
 				announced,
 			)
 			cartStore.addItem(item, qty)
@@ -195,6 +224,8 @@ export function useAppointment() {
 				item_name: step.label,
 				qty: step.qty || 1,
 				posa_item_modifiers: step.options,
+				// Not `rate`: that one is a draft's, which the day's price may replace; this is what the agenda kept of the announcement
+				announced_rate: announcedPriceOfStep(step, appointment),
 				sales_person: step.sales_person,
 				sales_person_name: step.sales_person_name,
 			})),

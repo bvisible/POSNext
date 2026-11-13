@@ -1625,6 +1625,14 @@
 								>
 									{{ formatModifiers(item.posa_item_modifiers) }}
 								</div>
+								<!-- //// Neoffice — a line collected at the price announced at booking whose price is not known offline says so, instead of taking the day's price in silence (13.11.2026) -->
+								<div
+									v-if="item.price_note"
+									data-cart-price-note
+									class="text-[10px] text-amber-700 dark:text-amber-300 mt-0.5"
+								>
+									{{ item.price_note }}
+								</div>
 
 								<!-- Controls: quantity, unit, remove -->
 								<!-- //// Neoffice — compact cart line, the controls row hands its parts to the grid (NeoResto lot 1, product owner, 05.11.2026) -->

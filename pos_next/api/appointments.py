@@ -236,6 +236,9 @@ def _step(row) -> dict | None:
 		"ends_at": _moment(row.get("ends_at")),
 		"sales_person": _text(row.get("sales_person")),
 		"sales_person_name": _text(row.get("sales_person_name")),
+		# //// Neoffice — the price this step announced, options included, as the reservation states it (13.11.2026): kept with the agenda the till holds, so that
+		# //// a till set to collect the price announced at booking holds that choice without the network too. None when the reservation does not say.
+		"price": _amount_or_none(row.get("price")),
 	}
 
 
