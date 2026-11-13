@@ -97,7 +97,7 @@ FIELDS = (
 		"label": "Origin",
 		"options": f"{SOLD_WITH_VAT}\n{SOLD_WITHOUT_VAT}\n{OFFERED}",
 		"default": OFFERED,
-		"depends_on": "eval:doc.pos_next_gift_card",
+		"depends_on": "eval:doc.pos_next_gift_card || doc.coupon_type == 'Gift Card'",
 		"insert_after": "original_gift_card_amount",
 	},
 	{
