@@ -56,6 +56,10 @@ class POSSettings(Document):
 		from pos_next import till_tips
 
 		till_tips.provision(self)
+		# //// Neoffice — gift cards are value vouchers unless the client says they name a service (13.11.2026): the account, the VAT and the mode of payment of a value card (pos_next.gift_card_vat)
+		from pos_next import gift_card_vat
+
+		gift_card_vat.provision(self)
 		# Guard against None values and validate discount percentage
 		# //// Neoffice — upstream passed these validation and notification texts to frappe.throw /
 		# //// frappe.msgprint as bare strings, which Frappe does not translate: they stayed English whatever

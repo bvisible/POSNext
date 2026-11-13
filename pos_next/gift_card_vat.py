@@ -1,0 +1,335 @@
+# //// Neoffice — added file (no upstream equivalent). What a gift card is for VAT (NeoCoiffeur study, product owner, 13.11.2026).
+# ////
+# //// The Federal Tax Administration's practice of 17.03.2025 (MWST-Info 04, ch. 2.7.6, in German only) tells two vouchers apart:
+# ////
+# //// - a VALUE voucher (2.7.6.2: an amount, no service named) is a means of payment. Its sale is no supply and carries no VAT, which is taken when the
+# ////   voucher is spent;
+# //// - a SERVICE voucher (2.7.6.3: a service named or nameable) is taxed when it is sold, as the service.
+# ////
+# //// The till used to sell a card as an ordinary item line (taxed as its item group said) and take it as a DISCOUNT of the invoice: the VAT of a card sold
+# //// without VAT was never taken, and a card sold with it had it taken at the wrong time. The sale of a value card is now booked on a liability account
+# //// the client chooses, at no VAT, and the card is SPENT AS A PAYMENT (a mode of payment whose account is that liability): the invoice carries its full
+# //// price, so its VAT is taken in full, and an invoice a card covers entirely is booked like any other.
+# ////
+# //// A card says which way it goes (`Coupon Code.pos_next_vat_taken_at_sale`): a card whose sale was taxed keeps its old way (a discount: its VAT
+# //// is taken already, a payment would take it twice); any other is spent as a payment, once its till has the account and the mode of payment that make it
+# //// possible (a till that has not is left as it was: nothing changes under a client's books before its manager says so).
+import frappe
+from frappe import _
+from frappe.utils import cint, flt
+
+from pos_next import till_tips
+
+KIND_VALUE = "Value voucher"
+KIND_SERVICE = "Service voucher"
+
+# The mode of payment a value card is spent through; the payment row names the account, the debt to the holder
+MODE_OF_PAYMENT = "Gift Card"
+
+# What a till's card settings are read from
+SETTINGS_FIELDS = (
+	"enable_gift_cards",
+	"gift_card_kind",
+	"gift_card_item",
+	"gift_card_account",
+	"gift_card_tax_template",
+)
+
+
+# ------------------------------------------------------------------------------------------------ the settings
+def settings_of(pos_profile: str | None) -> frappe._dict:
+	"""The card settings of a till (empty when it has none, or when the column is not there yet)."""
+	if not pos_profile or not frappe.db.exists("POS Settings", {"pos_profile": pos_profile}):
+		return frappe._dict()
+	fields = [field for field in SETTINGS_FIELDS if frappe.db.has_column("POS Settings", field)]
+	return (
+		frappe.db.get_value("POS Settings", {"pos_profile": pos_profile}, fields, as_dict=True)
+		or frappe._dict()
+	)
+
+
+def the_kind_of(settings) -> str:
+	"""The kind of card a till sells: a value voucher unless the client said it names a service."""
+	return KIND_SERVICE if settings.get("gift_card_kind") == KIND_SERVICE else KIND_VALUE
+
+
+def _company_of(pos_profile: str | None) -> str | None:
+	return frappe.db.get_value("POS Profile", pos_profile, "company") if pos_profile else None
+
+
+# ------------------------------------------------------------------------------------------------ the provisioning
+def the_account_of(company: str | None) -> str | None:
+	"""The account a value card's sale is booked on, proposed when the client chose none: the company's account 2020 when it is a liability, else a liability
+	account that says what it is (gift card, voucher, bon cadeau), else one made under a liability group. None when none can be made (the client chooses)."""
+	if not company:
+		return None
+	numbered = frappe.db.get_value(
+		"Account",
+		{
+			"company": company,
+			"account_number": "2020",
+			"root_type": "Liability",
+			"is_group": 0,
+			"disabled": 0,
+		},
+		"name",
+	)
+	if numbered:
+		return numbered
+	named = frappe.db.sql(
+		"""
+		SELECT name FROM `tabAccount`
+		WHERE company = %(company)s AND root_type = 'Liability' AND is_group = 0 AND disabled = 0
+		AND (account_name LIKE %(gift)s OR account_name LIKE %(voucher)s OR account_name LIKE %(cadeau)s)
+		ORDER BY account_number, account_name LIMIT 1
+		""",
+		{"company": company, "gift": "%gift card%", "voucher": "%voucher%", "cadeau": "%cadeau%"},
+		pluck=True,
+	)
+	if named:
+		return named[0]
+	parent = frappe.db.get_value(
+		"Account",
+		{"company": company, "root_type": "Liability", "is_group": 1, "parent_account": ["is", "set"]},
+		"name",
+		order_by="lft asc",
+	)
+	if not parent:
+		return None
+	number = (
+		"2020" if not frappe.db.exists("Account", {"company": company, "account_number": "2020"}) else None
+	)
+	account = frappe.get_doc(
+		{
+			"doctype": "Account",
+			"account_name": _("Gift Card Liability"),
+			"account_number": number,
+			"parent_account": parent,
+			"company": company,
+			"account_type": "",
+			"is_group": 0,
+		}
+	)
+	account.insert(ignore_permissions=True)
+	frappe.msgprint(_("Created gift card account: {0}").format(account.name))
+	return account.name
+
+
+def ensure_mode_of_payment() -> None:
+	"""The mode of payment a value card is spent through, made if the site has none. It carries no account of its own (ERPNext keeps the accounts of a mode to
+	Bank, Cash and Receivable): the payment row names the till's gift card account, the debt to the holder."""
+	if frappe.db.exists("Mode of Payment", MODE_OF_PAYMENT):
+		return
+	frappe.get_doc(
+		{"doctype": "Mode of Payment", "mode_of_payment": MODE_OF_PAYMENT, "type": "General", "enabled": 1}
+	).insert(ignore_permissions=True)
+
+
+def provision(settings) -> None:
+	"""Make what a value card needs for the till a POS Settings document is, when the client touches its gift cards (called by the document's validation).
+
+	The account, the VAT and the kind are the client's: what they chose wins, and what is proposed (a liability account, a template at 0 %) is only what an empty
+	setting is given. A value voucher is refused, in words, where the company has no template at 0 % and none was chosen: its sale carries no VAT, and the
+	code does not pick one nobody chose. A service voucher is left to its item (taxed as that item says), nothing is made for it.
+	"""
+	if not cint(settings.get("enable_gift_cards")) or the_kind_of(settings) != KIND_VALUE:
+		return
+	touched = settings.is_new() or any(
+		settings.has_value_changed(field)
+		for field in (
+			"enable_gift_cards",
+			"gift_card_kind",
+			"gift_card_item",
+			"gift_card_account",
+			"gift_card_tax_template",
+		)
+	)
+	if not touched:
+		return
+	company = _company_of(settings.pos_profile)
+	account = settings.get("gift_card_account")
+	if not account:
+		account = settings.gift_card_account = the_account_of(company)
+	if not account:
+		frappe.throw(
+			_(
+				"Gift cards cannot be switched on as value vouchers: no account could be made for the company {0}. Choose one in « Gift card account »."
+			).format(company)
+		)
+	template = settings.get("gift_card_tax_template")
+	if template and frappe.db.get_value("Item Tax Template", template, "company") != company:
+		frappe.throw(
+			_("The VAT of the gift card sale must be a template of the company of this till ({0}).").format(
+				company
+			)
+		)
+	if not template:
+		proposed = till_tips.zero_rate_templates(company)
+		if not proposed:
+			frappe.throw(
+				_(
+					"Gift cards cannot be switched on as value vouchers: the company {0} has no item tax template at 0 %, and the sale of a value voucher carries no VAT. "
+					"Make a template with every rate at 0 % (Accounting, Item Tax Template), or choose one in « VAT of the gift card sale » in the same save."
+				).format(company)
+			)
+		template = settings.gift_card_tax_template = proposed[0]
+	ensure_mode_of_payment()
+	if settings.get("gift_card_item"):
+		_set_the_item(settings.gift_card_item, company, template, account)
+
+
+def _set_the_item(item_code: str, company: str, template: str, account: str) -> None:
+	"""The gift card item takes the VAT template and the account of its company (the rows of another company are left alone)."""
+	item = frappe.get_doc("Item", item_code)
+	changed = False
+	held = till_tips.vat_template_of(item, company)
+	if held != template:
+		item.set(
+			"taxes",
+			[
+				row
+				for row in item.get("taxes") or []
+				if not row.item_tax_template
+				or frappe.db.get_value("Item Tax Template", row.item_tax_template, "company") != company
+			],
+		)
+		item.append("taxes", {"item_tax_template": template})
+		changed = True
+	row = next((row for row in item.get("item_defaults") or [] if row.company == company), None)
+	if row and row.income_account != account:
+		row.income_account = account
+		changed = True
+	elif not row:
+		item.append(
+			"item_defaults",
+			{
+				"company": company,
+				"income_account": account,
+				"default_warehouse": till_tips._a_warehouse_of(company),
+			},
+		)
+		changed = True
+	if changed:
+		item.save(ignore_permissions=True)
+
+
+# ------------------------------------------------------------------------------------------------ the way a card goes
+def vat_was_taken_at_the_sale(coupon) -> bool:
+	"""Whether the sale of a card was taxed: it is then spent as a discount, its VAT being taken already."""
+	get = coupon.get if hasattr(coupon, "get") else (lambda key, default=None: getattr(coupon, key, default))
+	return bool(cint(get("pos_next_vat_taken_at_sale")))
+
+
+def the_card_of(invoice):
+	"""The gift card an invoice spends (its Coupon Code row), or None."""
+	name = invoice.get("posa_coupon_code") or invoice.get("coupon_code")
+	if not name:
+		return None
+	from pos_next.api import gift_cards
+
+	return gift_cards._get_gift_card_coupon(
+		name.strip(), ["name", "coupon_type", "pos_next_gift_card", "pos_next_vat_taken_at_sale"]
+	)
+
+
+def the_account_that_spends(invoice) -> str | None:
+	"""The account a value card is spent through at the till of an invoice: the till's gift card account, once the mode of payment exists. None where the till
+	has not been given one (the card is then spent as it always was)."""
+	settings = settings_of(invoice.get("pos_profile"))
+	account = settings.get("gift_card_account")
+	if (
+		not account
+		or the_kind_of(settings) != KIND_VALUE
+		or not frappe.db.exists("Mode of Payment", MODE_OF_PAYMENT)
+	):
+		return None
+	return account
+
+
+# ------------------------------------------------------------------------------------------------ the spending, on the invoice
+def the_card_pays_by_payment(doc, method=None) -> None:
+	"""A value card spent on a sale is a PAYMENT of that sale, not a discount of it (hook: Sales Invoice, before_validate).
+
+	The till sends the card as the invoice's discount (the cart works that way, and the card stays the balance's business: `posa_gift_card_amount_used`).
+	When the invoice is submitted, the part of its discount that is the card goes to a payment row of the mode of payment that clears the debt to the holder:
+	the invoice then carries its full price, its VAT is taken in full, and an invoice the card covers entirely is booked like any other. A card whose sale was
+	taxed, a till that has no account for it, and a return are left as they were.
+	"""
+	if cint(doc.get("docstatus")) != 1 or cint(doc.get("is_return")) or not cint(doc.get("is_pos")):
+		return
+	used = flt(doc.get("posa_gift_card_amount_used"))
+	if used <= 0 or any(row.mode_of_payment == MODE_OF_PAYMENT for row in doc.get("payments") or []):
+		return
+	coupon = the_card_of(doc)
+	if not coupon or vat_was_taken_at_the_sale(coupon):
+		return
+	from pos_next.api.gift_cards import is_gift_card
+
+	if not is_gift_card(coupon):
+		return
+	account = the_account_that_spends(doc)
+	if not account:
+		return
+	taken = min(used, flt(doc.get("discount_amount")))
+	if taken <= 0:
+		return
+	doc.discount_amount = flt(doc.discount_amount) - taken
+	doc.additional_discount_percentage = 0
+	rate = flt(doc.get("conversion_rate")) or 1
+	doc.append(
+		"payments",
+		{
+			"mode_of_payment": MODE_OF_PAYMENT,
+			"amount": flt(taken),
+			"base_amount": flt(taken * rate),
+			"account": account,
+		},
+	)
+
+
+def the_return_gives_the_card_back(doc, method=None) -> None:
+	"""A return of a sale a value card paid for gives the card's share back to the card (hook: Sales Invoice, before_validate).
+
+	The return refunds its whole total through the means the cashier chose: the share the card paid goes back on the debt to the holder (a negative card
+	payment) instead of out of the till, the other rows being reduced by it. The card's balance is restored by `process_gift_card_on_submit`, in the same
+	proportion.
+	"""
+	if cint(doc.get("docstatus")) != 1 or not cint(doc.get("is_return")) or not doc.get("return_against"):
+		return
+	rows = doc.get("payments") or []
+	if not rows or any(row.mode_of_payment == MODE_OF_PAYMENT for row in rows):
+		return
+	paid = flt(
+		frappe.db.get_value(
+			"Sales Invoice Payment",
+			{"parent": doc.return_against, "mode_of_payment": MODE_OF_PAYMENT, "parenttype": "Sales Invoice"},
+			"sum(amount)",
+		)
+	)
+	if paid <= 0:
+		return
+	original = abs(flt(frappe.db.get_value("Sales Invoice", doc.return_against, "grand_total")))
+	this = abs(flt(doc.get("grand_total")))
+	if original <= 0 or this <= 0:
+		return
+	share = flt(paid * min(1.0, this / original), 2)
+	left = share
+	for row in rows:
+		take = min(abs(flt(row.amount)), left)
+		if take > 0:
+			row.amount = flt(row.amount) + take
+			row.base_amount = flt(row.base_amount) + take
+			left -= take
+	given = flt(share - left, 2)
+	if given <= 0:
+		return
+	account = frappe.db.get_value(
+		"Sales Invoice Payment",
+		{"parent": doc.return_against, "parenttype": "Sales Invoice", "mode_of_payment": MODE_OF_PAYMENT},
+		"account",
+	)
+	doc.set("payments", [row for row in doc.payments if flt(row.amount)])
+	doc.append(
+		"payments",
+		{"mode_of_payment": MODE_OF_PAYMENT, "amount": -given, "base_amount": -given, "account": account},
+	)

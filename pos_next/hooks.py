@@ -170,6 +170,8 @@ _custom_field_names = [
 	"Coupon Code-pos_next_gift_card",
 	"Coupon Code-gift_card_amount",
 	"Coupon Code-original_gift_card_amount",
+	# //// Neoffice — how the sale of a gift card was taxed (13.11.2026): a card whose sale was taxed is spent as a discount, any other as a payment (pos_next.gift_card_vat).
+	"Coupon Code-pos_next_vat_taken_at_sale",
 	"Coupon Code-coupon_code_residual",
 	"Coupon Code-source_invoice",
 	"Coupon Code-referral_code",
@@ -338,6 +340,9 @@ doc_events = {
 		"before_validate": [
 			"pos_next.restaurant.takeaway_tax.apply_takeaway_tax_category",
 			"pos_next.shop_scan.pricing.keep_the_phones_prices",
+			# //// Neoffice — a value gift card spent on a sale is a PAYMENT of it, not a discount, and a return gives its share back to the card (13.11.2026, pos_next.gift_card_vat).
+			"pos_next.gift_card_vat.the_card_pays_by_payment",
+			"pos_next.gift_card_vat.the_return_gives_the_card_back",
 		],
 		"validate": [
 			"pos_next.api.sales_invoice_hooks.validate",

@@ -79,7 +79,8 @@ def get_gift_card_settings(pos_profile):
 			"gift_card_item",
 			"enable_gift_card_splitting",
 			"gift_card_validity_months",
-			"gift_card_notification"
+			"gift_card_notification",
+			"gift_card_kind",
 		],
 		as_dict=True
 	)
@@ -247,7 +248,9 @@ def _create_gift_card(amount, customer, company, source_invoice, settings):
 			"pos_next_gift_card": 1,
 			"gift_card_amount": flt(amount),
 			"original_gift_card_amount": flt(amount),
-			"source_invoice": source_invoice
+			"source_invoice": source_invoice,
+			# The way the card goes (pos_next.gift_card_vat): a service voucher was taxed when it was sold, a value voucher was not
+			"pos_next_vat_taken_at_sale": 1 if settings.get("gift_card_kind") == "Service voucher" else 0,
 		})
 		coupon.insert(ignore_permissions=True)
 

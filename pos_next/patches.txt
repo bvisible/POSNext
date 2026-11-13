@@ -74,3 +74,5 @@ pos_next.patches.neosalon.make_the_sales_persons_of_the_employees
 # //// Neoffice — the cashier no longer cancels nor amends a sale, nor validates a payment from the desk (maintenance#852): his rules on Sales
 # //// Invoice and Payment Entry take exactly the rights of setup/custom_docperm.json; the till manager's own rule (#2078) is made by after_migrate.
 pos_next.patches.the_cashier_no_longer_cancels_a_sale
+# //// Neoffice — each gift card says how its sale was taxed, and each till what kind of card it sells: a value voucher is spent as a payment, a service voucher as a discount (13.11.2026). It runs after the doctype sync, which is what makes the columns.
+pos_next.patches.gift_cards.say_how_the_sale_of_each_gift_card_was_taxed

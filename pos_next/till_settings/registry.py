@@ -1720,6 +1720,62 @@ SETTINGS = (
 		depends_on=(on("enable_gift_cards"),),
 		search="Item",
 	),
+	# //// Neoffice — what a gift card is for VAT (product owner, 13.11.2026: « une valeur légale est un réglage que le client remplit », the source cited beside it). The rule is the
+	# //// Federal Tax Administration's practice of 17.03.2025 (MWST-Info 04, ch. 2.7.6, in German only): the sale of a value voucher is no supply and carries no VAT, which is taken when
+	# //// the voucher is spent; a voucher that names a service is taxed when it is sold.
+	Setting(
+		"gift_card_kind",
+		"gift_cards",
+		_lt("Kind of gift card"),
+		_lt(
+			"Value voucher (proposed): the card can be spent on anything. Its sale is no supply, carries no VAT and is booked as a debt to the holder;"
+			" the VAT is taken when the card is spent, as a payment. Service voucher: the card names one service, and its sale is taxed like that service."
+		),
+		"segmented",
+		doctype=POS_SETTINGS,
+		depends_on=(on("enable_gift_cards"),),
+		options=(
+			("Value voucher", _lt("Value voucher")),
+			("Service voucher", _lt("Service voucher")),
+		),
+		sources=(
+			Source(
+				_lt("MWST-Info 04 of the Federal Tax Administration, ch. 2.7.6.2: value vouchers (text in German, practice of 17.03.2025)"),
+				"https://www.gate.estv.admin.ch/mwst-webpublikationen/public/pages/taxInfos/cipherDisplay.xhtml?componentId=1795037&publicationId=1003047&lang=de",
+				_lt("Official source"),
+			),
+			Source(
+				_lt("MWST-Info 04 of the Federal Tax Administration, ch. 2.7.6.3: service vouchers (text in German, practice of 17.03.2025)"),
+				"https://www.gate.estv.admin.ch/mwst-webpublikationen/public/pages/taxInfos/cipherDisplay.xhtml?componentId=1795045&publicationId=1003047&lang=de",
+				_lt("Official source"),
+			),
+		),
+	),
+	Setting(
+		"gift_card_account",
+		"gift_cards",
+		_lt("Gift card account"),
+		_lt(
+			"The account the sale of a value voucher is booked on: a debt to the holder, which the card spent clears. One is proposed when none is chosen; the numbering of"
+			" your accounts is for your fiduciary to confirm."
+		),
+		"link",
+		doctype=POS_SETTINGS,
+		choices="liability_accounts",
+		depends_on=(on("enable_gift_cards"), When("gift_card_kind", equals="Value voucher")),
+	),
+	Setting(
+		"gift_card_tax_template",
+		"gift_cards",
+		_lt("VAT of the gift card sale"),
+		_lt(
+			"The item tax template of the gift card item. A value voucher carries no VAT: a template at 0 % is proposed, and a value voucher cannot be switched on without one until you choose it."
+		),
+		"link",
+		doctype=POS_SETTINGS,
+		choices="item_tax_templates",
+		depends_on=(on("enable_gift_cards"), When("gift_card_kind", equals="Value voucher")),
+	),
 	Setting(
 		"enable_gift_card_splitting",
 		"gift_cards",

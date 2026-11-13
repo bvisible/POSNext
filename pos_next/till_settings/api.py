@@ -1178,6 +1178,24 @@ def _item_tax_templates(till, current):
 
 
 # //// Neoffice — the accounts a tip may be booked on: the company's, not groups, of the books' liabilities or income (the transit account is a liability)
+# //// Neoffice — the accounts a gift card sale can be booked on: a debt to the holder, so a liability account only (13.11.2026)
+def _liability_accounts(till, current):
+	rows = frappe.get_all(
+		"Account",
+		filters={"company": till.profile.company, "is_group": 0, "disabled": 0, "root_type": "Liability"},
+		fields=["name", "account_name", "account_number"],
+		order_by="account_number asc, account_name asc",
+	)
+	choices = [
+		{
+			"value": row.name,
+			"label": " - ".join(part for part in (row.account_number, row.account_name) if part) or row.name,
+		}
+		for row in rows
+	]
+	return _with_current(choices, "Account", current)
+
+
 def _tip_accounts(till, current):
 	rows = frappe.get_all(
 		"Account",
@@ -1238,4 +1256,5 @@ CHOICES = {
 	"gift_card_notifications": _gift_card_notifications,
 	"item_tax_templates": _item_tax_templates,
 	"tip_accounts": _tip_accounts,
+	"liability_accounts": _liability_accounts,
 }
