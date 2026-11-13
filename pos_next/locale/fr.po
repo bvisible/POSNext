@@ -26491,3 +26491,47 @@ msgstr "Vendue sans TVA"
 #: pos_next/fixtures/custom_field.json
 msgid "The account the sale of this card was credited to: spending the card clears that account, so that the revenue of the sale is not counted twice. Empty: the gift card account of the till."
 msgstr "Le compte crédité par la vente de cette carte : l'utilisation de la carte apure ce compte, afin que le produit de la vente ne soit pas compté deux fois. Vide : le compte des cartes cadeaux de la caisse."
+
+#: POS/src/components/sale/EditItemDialog.vue
+msgid "Give the session back"
+msgstr "Rendre la séance au forfait"
+
+#: POS/src/components/sale/UsePackageDialog.vue
+msgid "No package of this customer pays this line."
+msgstr "Aucun forfait de cette cliente ne règle cette ligne."
+
+#: POS/src/components/sale/InvoiceCart.vue
+msgid "Settled by the package"
+msgstr "Réglé par le forfait"
+
+#: POS/src/components/sale/UsePackageDialog.vue
+msgid "This package cannot pay this line."
+msgstr "Ce forfait ne peut pas régler cette ligne."
+
+#: pos_next/api/packages.py
+msgid "This till does not use packages."
+msgstr "Cette caisse n'utilise pas de forfaits."
+
+#: POS/src/components/sale/UsePackageDialog.vue
+msgid "Use 1 session"
+msgstr "Utiliser 1 séance"
+
+#: pos_next/api/packages.py
+#, python-brace-format
+msgid "Use 1 to {0} sessions at once."
+msgstr "Utilisez de 1 à {0} séances à la fois."
+
+#: POS/src/components/sale/EditItemDialog.vue
+#: POS/src/components/sale/UsePackageDialog.vue
+msgid "Use a package"
+msgstr "Utiliser un forfait"
+
+#: POS/src/components/sale/UsePackageDialog.vue
+#, python-brace-format
+msgid "Use {0} sessions"
+msgstr "Utiliser {0} séances"
+
+#: POS/src/components/sale/UsePackageDialog.vue
+#, python-brace-format
+msgid "{0} of {1} sessions left"
+msgstr "{0} séance(s) restante(s) sur {1}"

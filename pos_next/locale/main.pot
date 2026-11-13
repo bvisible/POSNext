@@ -29459,3 +29459,60 @@ msgstr ""
 #: pos_next/fixtures/custom_field.json
 msgid "The account the sale of this card was credited to: spending the card clears that account, so that the revenue of the sale is not counted twice. Empty: the gift card account of the till."
 msgstr ""
+
+#: POS/src/components/sale/UsePackageDialog.vue
+msgid "1 session"
+msgstr ""
+
+#: POS/src/components/sale/EditItemDialog.vue
+msgid "Give the session back"
+msgstr ""
+
+#: POS/src/components/sale/UsePackageDialog.vue
+msgid "No end date"
+msgstr ""
+
+#: POS/src/components/sale/UsePackageDialog.vue
+msgid "No package of this customer pays this line."
+msgstr ""
+
+#: POS/src/components/sale/InvoiceCart.vue
+msgid "Settled by the package"
+msgstr ""
+
+#: POS/src/components/sale/UsePackageDialog.vue
+msgid "This package cannot pay this line."
+msgstr ""
+
+#: pos_next/api/packages.py
+msgid "This till does not use packages."
+msgstr ""
+
+#: POS/src/components/sale/UsePackageDialog.vue
+msgid "Use 1 session"
+msgstr ""
+
+#: pos_next/api/packages.py
+msgid "Use 1 to {0} sessions at once."
+msgstr ""
+
+#: POS/src/components/sale/EditItemDialog.vue
+#: POS/src/components/sale/UsePackageDialog.vue
+msgid "Use a package"
+msgstr ""
+
+#: POS/src/components/sale/UsePackageDialog.vue
+msgid "Use {0} sessions"
+msgstr ""
+
+#: POS/src/components/sale/UsePackageDialog.vue
+msgid "Valid until {0}"
+msgstr ""
+
+#: POS/src/components/sale/UsePackageDialog.vue
+msgid "{0} of {1} sessions left"
+msgstr ""
+
+#: POS/src/components/sale/UsePackageDialog.vue
+msgid "{0} sessions"
+msgstr ""
