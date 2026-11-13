@@ -26467,3 +26467,27 @@ msgstr "Bon de valeur (proposé) : la carte peut servir à tout. Sa vente n'est 
 #: pos_next/till_settings/registry.py:1770
 msgid "VAT of the gift card sale"
 msgstr "TVA de la vente de la carte cadeau"
+
+#: pos_next/fixtures/custom_field.json
+msgid "Account of the sale"
+msgstr "Compte de la vente"
+
+#: pos_next/fixtures/custom_field.json
+msgid "Given for free"
+msgstr "Offerte"
+
+#: pos_next/fixtures/custom_field.json
+msgid "How this card came to be, which decides the way it is spent. Sold with VAT: its sale was taxed, so it is spent as a discount (its VAT is taken already). Sold without VAT: it is a value voucher, spent as a payment (its VAT is taken when it is spent). Given for free: no money was received for it (a promotion), so it is a discount. Change it to a sold origin only if money was received."
+msgstr "Comment cette carte a été obtenue, ce qui détermine la manière dont elle s'utilise. Vendue avec TVA : la vente a été soumise à la TVA, la carte s'utilise donc comme une remise (sa TVA a déjà été prélevée). Vendue sans TVA : c'est un bon de valeur, qui s'utilise comme un moyen de paiement (sa TVA est prélevée à son utilisation). Offerte : aucun argent n'a été reçu pour elle (une promotion), elle s'utilise donc comme une remise. Ne la passez à une origine « vendue » que si de l'argent a été encaissé."
+
+#: pos_next/fixtures/custom_field.json
+msgid "Sold with VAT"
+msgstr "Vendue avec TVA"
+
+#: pos_next/fixtures/custom_field.json
+msgid "Sold without VAT"
+msgstr "Vendue sans TVA"
+
+#: pos_next/fixtures/custom_field.json
+msgid "The account the sale of this card was credited to: spending the card clears that account, so that the revenue of the sale is not counted twice. Empty: the gift card account of the till."
+msgstr "Le compte crédité par la vente de cette carte : l'utilisation de la carte apure ce compte, afin que le produit de la vente ne soit pas compté deux fois. Vide : le compte des cartes cadeaux de la caisse."

@@ -29435,3 +29435,27 @@ msgstr ""
 #: pos_next/pos_next/page/till_settings/till_settings.js:323
 msgid "Choose a till to see its settings."
 msgstr ""
+
+#: pos_next/fixtures/custom_field.json
+msgid "Account of the sale"
+msgstr ""
+
+#: pos_next/fixtures/custom_field.json
+msgid "Sold with VAT"
+msgstr ""
+
+#: pos_next/fixtures/custom_field.json
+msgid "Sold without VAT"
+msgstr ""
+
+#: pos_next/fixtures/custom_field.json
+msgid "Given for free"
+msgstr ""
+
+#: pos_next/fixtures/custom_field.json
+msgid "How this card came to be, which decides the way it is spent. Sold with VAT: its sale was taxed, so it is spent as a discount (its VAT is taken already). Sold without VAT: it is a value voucher, spent as a payment (its VAT is taken when it is spent). Given for free: no money was received for it (a promotion), so it is a discount. Change it to a sold origin only if money was received."
+msgstr ""
+
+#: pos_next/fixtures/custom_field.json
+msgid "The account the sale of this card was credited to: spending the card clears that account, so that the revenue of the sale is not counted twice. Empty: the gift card account of the till."
+msgstr ""
