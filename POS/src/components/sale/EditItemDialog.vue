@@ -510,6 +510,31 @@
 												{{ __("SKU promotion applied — discount is locked") }}
 											</div>
 
+											<!-- //// Neoffice — a package of sessions (NeoSalon lots G11, voie 1): pay the line with a session of a package of its customer (the cart opens the -->
+											<!-- //// window of the packages), or, for a line a package already pays, give the session back. Shown where the cart allows it (canUsePackage, paidByPackage). -->
+											<div v-if="(canUsePackage || paidByPackage) && localItem" class="border-t border-gray-200 pt-4">
+												<button
+													v-if="canUsePackage"
+													type="button"
+													data-test="package-start"
+													class="w-full h-11 flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-colors"
+													@click="emit('use-package')"
+												>
+													<FeatherIcon name="layers" class="w-4 h-4" />
+													{{ __("Use a package") }}
+												</button>
+												<button
+													v-else
+													type="button"
+													data-test="package-release"
+													class="w-full h-11 flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-colors"
+													@click="emit('release-package')"
+												>
+													<FeatherIcon name="rotate-ccw" class="w-4 h-4" />
+													{{ __("Give the session back") }}
+												</button>
+											</div>
+
 											<!-- //// Neoffice — « Offert » (NeoResto lot 1, task 24): offer some or all of the line, at zero. The -->
 											<!-- //// quantity offered goes from 1 to the line's, « Tout » offers the whole line; Confirm is then the -->
 											<!-- //// footer's one primary action (ink, Neoffice design system). Shown where the cart allows it (canOffer). -->
@@ -787,10 +812,21 @@ const props = defineProps({
 		type: Boolean,
 		default: false,
 	},
+	//// Neoffice — a package of sessions (NeoSalon lots G11, voie 1): whether the cart may offer to pay the line with a session of a package of its customer, and whether
+	//// a package already pays it (then the session can be given back).
+	canUsePackage: {
+		type: Boolean,
+		default: false,
+	},
+	paidByPackage: {
+		type: Boolean,
+		default: false,
+	},
 });
 
 //// Neoffice — offer-item ({ quantity }): « Offert » confirmed (task 24).
-const emit = defineEmits(["update:modelValue", "update-item", "offer-item"]);
+//// Neoffice — use-package, release-package (no payload): the package of sessions pays the line, or gives its session back (NeoSalon lots G11, voie 1).
+const emit = defineEmits(["update:modelValue", "update-item", "offer-item", "use-package", "release-package"]);
 
 // Local state
 const localItem = ref(null);

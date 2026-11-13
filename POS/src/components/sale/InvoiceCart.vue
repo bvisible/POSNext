@@ -1550,6 +1550,15 @@
 									>
 										{{ item.sales_person_name || item.sales_person }}
 									</span>
+									<!-- //// Neoffice — a line paid by a session of a package (NeoSalon lots G11, voie 1): the words the site gave it; the line is worth 0.00, its price struck through. -->
+									<span
+										v-if="item.customer_package"
+										class="font-semibold text-emerald-700 dark:text-emerald-300 truncate max-w-[14rem]"
+										:title="item.package_label || __('Settled by the package')"
+										data-test="line-package"
+									>
+										{{ item.package_label || __("Settled by the package") }}
+									</span>
 									<!-- //// Neoffice — a product the till does not follow by person says it asks for nobody, instead of looking forgotten (NeoSalon, lot G1, canvas « Caisse 1 »). -->
 									<span
 										v-else-if="settingsStore.enableSalesPersons && !settingsStore.trackProductSalesByPerson && kindOfLine(item) === 'product'"
@@ -2358,8 +2367,22 @@
 			:warehouses="warehouses"
 			:currency="currency"
 			:can-offer="canOfferSelected"
+			:can-use-package="canUsePackageSelected"
+			:paid-by-package="paidByPackageSelected"
 			@update-item="handleUpdateItem"
 			@offer-item="handleOfferItem"
+			@use-package="handleUsePackage"
+			@release-package="handleReleasePackage"
+		/>
+		<!-- //// Neoffice — « Use a package » (NeoSalon lots G11, voie 1): the packages of the customer that cover the line. -->
+		<UsePackageDialog
+			v-model="showUsePackage"
+			:row="selectedCartRow"
+			:rows="cartStore.invoiceItems"
+			:pos-profile="posProfile"
+			:customer-id="customer?.name || ''"
+			:customer-name="customer?.customer_name || customer?.name || ''"
+			@apply="applyPackage"
 		/>
 	</div>
 </template>
@@ -2397,6 +2420,9 @@ import { nestFreeRows } from "@/utils/gwpSameItemFreeRows";
 //// Neoffice — « Offert » (NeoResto lot 1, task 24): offered rows nested under their paid line, the cart's offer actions.
 import { OFFER_CONTEXT, canOfferRow, isOfferedRow, listPrice, nestOfferedRows } from "@/utils/offeredRows";
 import { useOfferedItemsStore } from "@/stores/offeredItems";
+//// Neoffice — « Use a package » (NeoSalon lots G11, voie 1): the packages of the cart's customer, and the window that pays a line with a session of one.
+import { useCustomerPackagesStore } from "@/stores/customerPackages";
+import UsePackageDialog from "@/components/sale/UsePackageDialog.vue";
 import { useItemSearchStore } from "@/stores/itemSearch";
 import { offlineWorker } from "@/utils/offline/workerClient";
 import { logger } from "@/utils/logger";
@@ -3794,6 +3820,54 @@ function openEditDialog(item) {
 const offeredItems = useOfferedItemsStore();
 const selectedCartRow = ref(null);
 const canOfferSelected = computed(() => offeredItems.canOffer && canOfferRow(selectedCartRow.value));
+
+//// Neoffice — « Use a package » (NeoSalon lots G11, voie 1): the packages of the cart's customer are read when the customer changes (none for the cash customer, none
+//// offline); the dialog's line may use one when a package of the customer covers it and none pays it yet.
+const packagesStore = useCustomerPackagesStore();
+const showUsePackage = ref(false);
+watch(
+	() => [props.posProfile, props.customer?.name],
+	([profile, who]) => packagesStore.load(profile, who),
+	{ immediate: true },
+);
+const canUsePackageSelected = computed(
+	() =>
+		packagesStore.usable &&
+		!isOfferedRow(selectedCartRow.value) &&
+		!selectedCartRow.value?.customer_package &&
+		packagesStore.anyCovers(selectedCartRow.value),
+);
+const paidByPackageSelected = computed(() => Boolean(selectedCartRow.value?.customer_package));
+
+function handleUsePackage() {
+	showEditDialog.value = false;
+	showUsePackage.value = true;
+}
+
+async function applyPackage({ pack, answer }) {
+	const row = selectedCartRow.value;
+	if (!row) return;
+	const uom = selectedItem.value?.uom || selectedItem.value?.stock_uom;
+	await cartStore.updateItemDetails(
+		row.item_code,
+		{
+			customer_package: pack.package,
+			package_label: answer.label,
+			package_remaining: answer.remaining_after,
+			discount_percentage: 100,
+		},
+		uom,
+		row,
+	);
+}
+
+async function handleReleasePackage() {
+	const row = selectedCartRow.value;
+	if (!row) return;
+	const uom = selectedItem.value?.uom || selectedItem.value?.stock_uom;
+	await cartStore.updateItemDetails(row.item_code, { customer_package: null, discount_percentage: 0 }, uom, row);
+	showEditDialog.value = false;
+}
 
 async function handleOfferItem({ quantity }) {
 	if (selectedCartRow.value) await offeredItems.offer(selectedCartRow.value, quantity);

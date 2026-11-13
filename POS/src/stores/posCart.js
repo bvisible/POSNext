@@ -574,6 +574,11 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		if (!item) return;
 
 		const newQty = Number.parseFloat(quantity) || 1;
+		//// Neoffice — a line paid by sessions of a package is paid for the quantity the site agreed to: another quantity gives the package back, and the line is a
+		//// paid one again (the cashier uses the package once more for the new quantity). NeoSalon lots G11, voie 1.
+		if (item.customer_package && newQty !== item.quantity) {
+			clearPackageOfLine(item);
+		}
 		// Same-item gift rows carved out of this line
 		const carved = invoiceItems.value.filter(
 			(i) =>
@@ -2559,6 +2564,16 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	 * @param {string|null} currentUom - Current UOM (required when same item has multiple UOMs)
 	 * @param {Object|null} [row] - //// Neoffice — the cart line to update, when the caller has it: a table's cart can hold the same dish twice (NeoResto lot 1, task 22, fix round 1)
 	 */
+	//// Neoffice — a line paid by sessions of a package (NeoSalon lots G11, voie 1): the package it is in the name of, and the words the site gave it (« Settled by the
+	//// package · 1 session »). The line keeps its price (struck through) at 100 % off, so it is worth 0.00; the site counts the session when the invoice is submitted.
+	function clearPackageOfLine(item) {
+		item.customer_package = null;
+		item.package_label = null;
+		item.package_remaining = null;
+		item.discount_percentage = 0;
+		item.discount_amount = 0;
+	}
+
 	async function updateItemDetails(itemCode, updates, currentUom = null, row = null) {
 		try {
 			//// Neoffice — the line of that row first, see the note on updateItemQuantity (fix round 1).
@@ -2646,6 +2661,15 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			if (updates.quantity !== undefined && !raisesSentLine) cartItem.quantity = updates.quantity;
 			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			if (updates.warehouse !== undefined) cartItem.warehouse = updates.warehouse;
+			//// Neoffice — the package that pays the line, or none (G11, voie 1); with its discount of 100 % it is one change.
+			if (updates.customer_package !== undefined) {
+				cartItem.customer_package = updates.customer_package || null;
+				cartItem.package_label = updates.package_label || null;
+				cartItem.package_remaining = updates.package_remaining ?? null;
+				// The discount is the package's (100 %, worth 0.00) or nothing: its amount is worked out again from the percentage
+				cartItem.discount_amount = 0;
+				if (!updates.customer_package && updates.discount_percentage === undefined) cartItem.discount_percentage = 0;
+			}
 			if (updates.discount_percentage !== undefined)
 				cartItem.discount_percentage = updates.discount_percentage;
 			if (updates.discount_amount !== undefined)

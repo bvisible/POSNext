@@ -345,6 +345,8 @@ export function useInvoice() {
 						!i.is_free_item &&
 						//// Neoffice — never an offered row (task 24).
 						!isOfferedRow(i) &&
+						//// Neoffice — never a line paid by a package: a unit added is a paid one (G11, voie 1).
+						!i.customer_package &&
 						i.item_code === item.item_code &&
 						i.uom === itemUom &&
 						//// Neoffice — and only into a line that names the same person: two « Cut » done by two hairdressers are two lines, each with its own commission, not one that
@@ -480,6 +482,15 @@ export function useInvoice() {
 			//// Neoffice — a line that comes offered (a table's draft, a held cart) stays offered: its flag, its list
 			//// price, 100 % off (task 24). Nothing for a paid line.
 			Object.assign(newItem, offeredLineFields(item));
+			//// Neoffice — a line that comes paid by a package (a held cart) stays so: its package, its words, 100 % off (G11, voie 1).
+			if (item.customer_package) {
+				Object.assign(newItem, {
+					customer_package: item.customer_package,
+					package_label: item.package_label || null,
+					package_remaining: item.package_remaining ?? null,
+					discount_percentage: 100,
+				});
+			}
 			// Recalculate the newly added item to apply taxes
 			recalculateItem(newItem);
 
@@ -1132,6 +1143,9 @@ export function useInvoice() {
 			is_free_item: item.is_free_item || 0,
 			//// Neoffice — an offered row reaches the server flagged (task 24): rate 0, its list price kept, 100 % off.
 			posa_is_offered: isOfferedRow(item) ? 1 : 0,
+			//// Neoffice — a line paid by a session of a package reaches the server with its package (G11, voie 1): the site refuses at the submission a package line
+			//// that is not worth 0.00, of another customer, expired, not covered or with no session left, and counts the session there.
+			customer_package: item.customer_package || null,
 			//// Neoffice — restaurant fields carried into the submission payload. Upstream has no
 			//// table service, so a submitted line lost its modifiers, its free-text instruction, the
 			//// station that has to cook it and the KDS state it had already reached — re-validating
@@ -1823,6 +1837,15 @@ export function useInvoice() {
 			};
 			//// Neoffice — an offered row of the order comes back offered: its flag, its list price, 100 % off (task 24).
 			Object.assign(newItem, offeredLineFields(item));
+			//// Neoffice — a line that comes paid by a package (a held cart) stays so: its package, its words, 100 % off (G11, voie 1).
+			if (item.customer_package) {
+				Object.assign(newItem, {
+					customer_package: item.customer_package,
+					package_label: item.package_label || null,
+					package_remaining: item.package_remaining ?? null,
+					discount_percentage: 100,
+				});
+			}
 			recalculateItem(newItem);
 			return newItem;
 		});

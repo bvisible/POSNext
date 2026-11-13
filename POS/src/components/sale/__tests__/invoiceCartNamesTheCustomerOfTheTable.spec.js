@@ -18,6 +18,12 @@ const offered = vi.hoisted(() => ({
 	cancelOffer: vi.fn(),
 }))
 
+//// Neoffice — the cart reads the packages of its customer (NeoSalon lots G11, voie 1); this file is about something else, with no package: a double that offers none.
+vi.mock("@/stores/customerPackages", () => ({
+	covers: () => false,
+	useCustomerPackagesStore: () => ({ usable: false, available: false, packages: [], load: vi.fn(), anyCovers: () => false }),
+}))
+vi.mock("@/components/sale/UsePackageDialog.vue", () => ({ default: { template: "<div />" } }))
 vi.mock("frappe-ui", () => ({
 	FeatherIcon: { props: ["name"], template: "<i :data-icon='name' />" },
 	createResource: () => ({
