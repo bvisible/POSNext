@@ -87,7 +87,7 @@ OLD_FLAG = "Coupon Code-pos_next_vat_taken_at_sale"
 
 SOLD_WITH_VAT = "Sold with VAT"
 SOLD_WITHOUT_VAT = "Sold without VAT"
-OFFERED = "Offered"
+OFFERED = "Given for free"
 
 # The same definitions as the fixtures' (the import finds them made and leaves them be)
 FIELDS = (

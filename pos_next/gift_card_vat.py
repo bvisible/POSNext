@@ -27,7 +27,7 @@ KIND_SERVICE = "Service voucher"
 # Where a card comes from (`Coupon Code.pos_next_origin`)
 ORIGIN_SOLD_WITH_VAT = "Sold with VAT"
 ORIGIN_SOLD_WITHOUT_VAT = "Sold without VAT"
-ORIGIN_OFFERED = "Offered"
+ORIGIN_OFFERED = "Given for free"
 
 # The mode of payment a value card is spent through; the payment row names the account, the debt to the holder
 MODE_OF_PAYMENT = "Gift Card"

@@ -49,8 +49,16 @@ def _due(doc):
 class TestAValueGiftCardIsSpentAsAPayment(TakeawayTill, FrappeTestCase):
 	@classmethod
 	def setUpClass(cls):
-		# A clone of a site that has not migrated yet has not the custom fields of a card: made as the patch makes them, before the class's transaction begins
+		# A clone of a site that has not migrated yet has not the custom fields of a card (or has them as an earlier version made them): made and brought up to the
+		# definitions of the patch, before the class's transaction begins
 		the_patch.ensure_the_columns()
+		for field in the_patch.FIELDS:
+			name = f"Coupon Code-{field['fieldname']}"
+			if frappe.db.exists("Custom Field", name):
+				for key in ("options", "default", "depends_on"):
+					if (frappe.db.get_value("Custom Field", name, key) or None) != (field.get(key) or None):
+						frappe.db.set_value("Custom Field", name, key, field.get(key))
+		frappe.clear_cache(doctype="Coupon Code")
 		frappe.db.commit()
 		super().setUpClass()
 		# The doc events as THIS process reads them: a copy of the app run from a folder of its own (a test of a change not yet on the bench) must not
