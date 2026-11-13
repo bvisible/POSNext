@@ -207,6 +207,8 @@ def _create_gift_card(amount, customer, company, source_invoice, settings):
 	Returns:
 		dict: Created gift card info
 	"""
+	from pos_next import gift_card_vat
+
 	try:
 		code = generate_gift_card_code()
 		validity_months = settings.get("gift_card_validity_months") or 12
@@ -249,8 +251,14 @@ def _create_gift_card(amount, customer, company, source_invoice, settings):
 			"gift_card_amount": flt(amount),
 			"original_gift_card_amount": flt(amount),
 			"source_invoice": source_invoice,
-			# The way the card goes (pos_next.gift_card_vat): a service voucher was taxed when it was sold, a value voucher was not
-			"pos_next_vat_taken_at_sale": 1 if settings.get("gift_card_kind") == "Service voucher" else 0,
+			# //// Neoffice — where the card comes from, which decides how it is spent (pos_next.gift_card_vat): a service voucher was taxed when it was sold; a value
+			# //// voucher was not, and its sale credited an account that spending it must clear. A card made without a sale takes the field's default (offered).
+			"pos_next_origin": gift_card_vat.ORIGIN_SOLD_WITH_VAT
+			if settings.get("gift_card_kind") == gift_card_vat.KIND_SERVICE
+			else gift_card_vat.ORIGIN_SOLD_WITHOUT_VAT,
+			"pos_next_sale_account": gift_card_vat.the_account_the_sale_credited(
+				source_invoice, settings.get("gift_card_item"), amount
+			),
 		})
 		coupon.insert(ignore_permissions=True)
 

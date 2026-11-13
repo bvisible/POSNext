@@ -11,9 +11,11 @@
 # //// the client chooses, at no VAT, and the card is SPENT AS A PAYMENT (a mode of payment whose account is that liability): the invoice carries its full
 # //// price, so its VAT is taken in full, and an invoice a card covers entirely is booked like any other.
 # ////
-# //// A card says which way it goes (`Coupon Code.pos_next_vat_taken_at_sale`): a card whose sale was taxed keeps its old way (a discount: its VAT
-# //// is taken already, a payment would take it twice); any other is spent as a payment, once its till has the account and the mode of payment that make it
-# //// possible (a till that has not is left as it was: nothing changes under a client's books before its manager says so).
+# //// A card says where it comes from (`Coupon Code.pos_next_origin`, which the business can correct): SOLD WITH VAT keeps its old way (a discount: its VAT is
+# //// taken already, a payment would take it twice); OFFERED (a promotion, no money came in) is a discount too (a payment would clear a debt to the holder that
+# //// was never booked); SOLD WITHOUT VAT is spent as a payment, once its till has the account and the mode of payment that make it possible (a till that has
+# //// not is left as it was: nothing changes under a client's books before its manager says so). The payment names the account the card's sale credited
+# //// (`Coupon Code.pos_next_sale_account`): the liability of the till for a card sold since, a revenue account for one sold before.
 import frappe
 from frappe import _
 from frappe.utils import cint, flt
@@ -22,6 +24,10 @@ from pos_next import till_tips
 
 KIND_VALUE = "Value voucher"
 KIND_SERVICE = "Service voucher"
+# Where a card comes from (`Coupon Code.pos_next_origin`)
+ORIGIN_SOLD_WITH_VAT = "Sold with VAT"
+ORIGIN_SOLD_WITHOUT_VAT = "Sold without VAT"
+ORIGIN_OFFERED = "Offered"
 
 # The mode of payment a value card is spent through; the payment row names the account, the debt to the holder
 MODE_OF_PAYMENT = "Gift Card"
@@ -237,10 +243,33 @@ def _set_the_item(item_code: str, company: str, template: str, account: str) -> 
 
 
 # ------------------------------------------------------------------------------------------------ the way a card goes
-def vat_was_taken_at_the_sale(coupon) -> bool:
-	"""Whether the sale of a card was taxed: it is then spent as a discount, its VAT being taken already."""
+def the_origin_of(coupon) -> str:
+	"""Where a card comes from (`Coupon Code.pos_next_origin`), which decides how it is spent. A card that says nothing is an offered one: spent as a
+	discount, which is how every card was spent before this existed."""
 	get = coupon.get if hasattr(coupon, "get") else (lambda key, default=None: getattr(coupon, key, default))
-	return bool(cint(get("pos_next_vat_taken_at_sale")))
+	origin = get("pos_next_origin")
+	return origin if origin in (ORIGIN_SOLD_WITH_VAT, ORIGIN_SOLD_WITHOUT_VAT) else ORIGIN_OFFERED
+
+
+def the_account_the_sale_credited(source_invoice: str | None, item_code: str | None, amount) -> str | None:
+	"""The account the sale of a card credited: the income account of the line of its invoice that sold it (the line of the gift card item, or the one whose
+	price is the card's value). The liability account of a till for a card sold since this exists, a revenue account for one sold before."""
+	if not source_invoice:
+		return None
+	for doctype in ("Sales Invoice Item", "POS Invoice Item"):
+		rows = frappe.get_all(
+			doctype,
+			filters={"parent": source_invoice},
+			fields=["item_code", "rate", "income_account"],
+			order_by="idx",
+		)
+		if rows:
+			ours = [
+				row for row in rows if row.item_code == item_code and abs(flt(row.rate) - flt(amount)) < 0.01
+			]
+			ours = ours or [row for row in rows if abs(flt(row.rate) - flt(amount)) < 0.01]
+			return next((row.income_account for row in ours if row.income_account), None)
+	return None
 
 
 def the_card_of(invoice):
@@ -251,13 +280,16 @@ def the_card_of(invoice):
 	from pos_next.api import gift_cards
 
 	return gift_cards._get_gift_card_coupon(
-		name.strip(), ["name", "coupon_type", "pos_next_gift_card", "pos_next_vat_taken_at_sale"]
+		name.strip(),
+		["name", "coupon_type", "pos_next_gift_card", "pos_next_origin", "pos_next_sale_account"],
 	)
 
 
-def the_account_that_spends(invoice) -> str | None:
-	"""The account a value card is spent through at the till of an invoice: the till's gift card account, once the mode of payment exists. None where the till
-	has not been given one (the card is then spent as it always was)."""
+def the_account_that_spends(invoice, coupon=None) -> str | None:
+	"""The account a value card is spent through at the till of an invoice, once the till has been given its gift card account and the mode of payment exists
+	(None otherwise: the card is then spent as it always was). It is the account the card's SALE credited when the card says it (a card sold before this
+	existed was credited to a revenue account: debiting a liability that sale never credited would leave it negative and count the revenue twice), else
+	the till's account."""
 	settings = settings_of(invoice.get("pos_profile"))
 	account = settings.get("gift_card_account")
 	if (
@@ -266,6 +298,9 @@ def the_account_that_spends(invoice) -> str | None:
 		or not frappe.db.exists("Mode of Payment", MODE_OF_PAYMENT)
 	):
 		return None
+	sale_account = (coupon or {}).get("pos_next_sale_account") if coupon else None
+	if sale_account and frappe.db.get_value("Account", sale_account, "company") == invoice.get("company"):
+		return sale_account
 	return account
 
 
@@ -276,7 +311,7 @@ def the_card_pays_by_payment(doc, method=None) -> None:
 	The till sends the card as the invoice's discount (the cart works that way, and the card stays the balance's business: `posa_gift_card_amount_used`).
 	When the invoice is submitted, the part of its discount that is the card goes to a payment row of the mode of payment that clears the debt to the holder:
 	the invoice then carries its full price, its VAT is taken in full, and an invoice the card covers entirely is booked like any other. A card whose sale was
-	taxed, a till that has no account for it, and a return are left as they were.
+	taxed or offered, a till that has no account for it, and a return are left as they were.
 	"""
 	if cint(doc.get("docstatus")) != 1 or cint(doc.get("is_return")) or not cint(doc.get("is_pos")):
 		return
@@ -284,13 +319,14 @@ def the_card_pays_by_payment(doc, method=None) -> None:
 	if used <= 0 or any(row.mode_of_payment == MODE_OF_PAYMENT for row in doc.get("payments") or []):
 		return
 	coupon = the_card_of(doc)
-	if not coupon or vat_was_taken_at_the_sale(coupon):
+	# A card sold with VAT (its VAT is taken already) and an offered one (no money came in, so no debt to the holder to clear) are discounts
+	if not coupon or the_origin_of(coupon) != ORIGIN_SOLD_WITHOUT_VAT:
 		return
 	from pos_next.api.gift_cards import is_gift_card
 
 	if not is_gift_card(coupon):
 		return
-	account = the_account_that_spends(doc)
+	account = the_account_that_spends(doc, coupon)
 	if not account:
 		return
 	taken = min(used, flt(doc.get("discount_amount")))

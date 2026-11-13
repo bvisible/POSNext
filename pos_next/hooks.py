@@ -170,8 +170,10 @@ _custom_field_names = [
 	"Coupon Code-pos_next_gift_card",
 	"Coupon Code-gift_card_amount",
 	"Coupon Code-original_gift_card_amount",
-	# //// Neoffice — how the sale of a gift card was taxed (13.11.2026): a card whose sale was taxed is spent as a discount, any other as a payment (pos_next.gift_card_vat).
-	"Coupon Code-pos_next_vat_taken_at_sale",
+	# //// Neoffice — where a gift card comes from (13.11.2026): sold with VAT or offered, it is spent as a discount; sold without VAT, as a payment on the account its
+	# //// sale credited (pos_next.gift_card_vat).
+	"Coupon Code-pos_next_origin",
+	"Coupon Code-pos_next_sale_account",
 	"Coupon Code-coupon_code_residual",
 	"Coupon Code-source_invoice",
 	"Coupon Code-referral_code",
