@@ -483,3 +483,14 @@ those edits are recorded here (the code edits are marked in place with `//// Neo
 - `pos_next/restaurant/recipe_data/based-tzatziki.json` — new file, same free-library recipe draft pattern as above — NeoResto lot R3 (394089f4 "feat(recipes): a restaurant keeps its recipes, and the free library adds them only when someone picks a fiche (NeoResto lot R3)")
 - `pos_next/restaurant/recipe_data/based-zarangollo.json` — new file, same free-library recipe draft pattern as above — NeoResto lot R3 (394089f4 "feat(recipes): a restaurant keeps its recipes, and the free library adds them only when someone picks a fiche (NeoResto lot R3)")
 - `pos_next/restaurant/season_data/switzerland.json` — new file, no upstream equivalent (113 products of the Saisonkalender 2025 of the Schweizer Bäuerinnen und Bauern — vegetables, fruits, herbs — each with its harvest months and stored-produce months, a French name and the spellings a recipe may use; the months were read from the shapes of the published PDF and checked against its rendering, none of its text or layout reproduced, and the sibling `manifest.json` records the source, that the document carries no licence statement, and keeps "reviewed" empty until someone of the restaurant's side has read it) — NeoResto recipes, the season calendar (fbded35f "feat(recipes): the Swiss season calendar ships with the app, read from the farmers' published calendar and not yet read through by anyone (#2197)")
+
+### Build output rewritten by build-frontend
+
+The build bot commits these on every frontend build (commit-the-build). A marker written into
+them would be wiped by the next build, so the marker guard skips them; their divergence is
+marked in their source.
+
+| Artifact | Why |
+|---|---|
+| `pos_next/www/pos.html` | HTML entry regenerated from the vite output, rewritten by the build bot on every build |
+| `pos_next/www/pos-sw.js/**` | SPA build output (vite), rewritten by the build bot on every build |
