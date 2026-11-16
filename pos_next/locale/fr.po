@@ -26548,3 +26548,41 @@ msgstr "L'article {0} est aussi l'article de carte cadeau de la caisse {1} (type
 #: POS/src/components/sale/PackageBanners.vue:35
 msgid "Use package"
 msgstr "Utiliser"
+
+#: pos_next/till_settings/registry.py
+msgid "A draft left after its shift was closed, or by a cashier whose account is disabled, is deleted after this many days. A table's order, a takeaway order, a printed draft and a draft paid on a phone are never deleted. Empty: 30 days."
+msgstr "Un brouillon laissé après la clôture de sa session, ou par une caissière dont le compte est désactivé, est supprimé après ce nombre de jours. La commande d'une table, une commande à emporter, un brouillon imprimé et un brouillon payé sur téléphone ne sont jamais supprimés. Vide : 30 jours."
+
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "A till's draft is deleted once it has been left this many days after its shift was closed, or by a cashier whose account is disabled. A restaurant table's order, a takeaway order, a printed draft and a draft paid by a payment provider are never deleted."
+msgstr "Le brouillon d'une caisse est supprimé lorsqu'il a été laissé ce nombre de jours après la clôture de sa session, ou par une caissière dont le compte est désactivé. La commande d'une table de restaurant, une commande à emporter, un brouillon imprimé et un brouillon payé par un prestataire de paiement ne sont jamais supprimés."
+
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Abandoned Draft Lifetime (Days)"
+msgstr "Durée de vie des brouillons abandonnés (jours)"
+
+#: pos_next/till_settings/registry.py
+msgid "An abandoned draft is deleted after (days)"
+msgstr "Un brouillon abandonné est supprimé après (jours)"
+
+#: POS/src/components/ShiftClosingDialog.vue
+msgid "Paid online"
+msgstr "Payé en ligne"
+
+#: pos_next/paid_online.py
+msgid "Paid online while no till of its restaurant had a shift open: this sale is in no closing and no end-of-day report."
+msgstr "Payé en ligne alors qu'aucune caisse de son restaurant n'avait de session ouverte : cette vente ne figure dans aucune clôture ni dans aucun rapport de fin de journée."
+
+#: pos_next/paid_online.py
+msgid "Paid online, not counted"
+msgstr "Payé en ligne, non compté"
+
+#: POS/src/components/sale/PaymentDialog.vue
+msgctxt "Split the bill"
+msgid "Split"
+msgstr "Fractionner"
+
+#: POS/src/components/ShiftClosingDialog.vue
+#, python-brace-format
+msgid "{0} sales paid on the phone, not counted in the drawer"
+msgstr "{0} ventes payées sur téléphone, non comptées dans le tiroir-caisse"
