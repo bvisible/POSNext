@@ -320,3 +320,14 @@ export function tillLayout({ isDesktop, agenda, leftPanelWidth, mobileTab }) {
 	if (agenda) return { leftWidth: "100%", leftGrows: true, divider: false, cart: false, sheet: "drawer" }
 	return { leftWidth: `${leftPanelWidth}px`, leftGrows: false, divider: true, cart: true, sheet: null }
 }
+
+/** A person's colour: the one the reservation gives her (`color`, the same as on the planning of the desk, NeoSalon B' 16.11.2026), else her name's. */
+export function colorOfPerson(person) {
+	return person?.color || avatarColorOf(person?.sales_person_name || person?.sales_person)
+}
+
+/** The colour of the person of a step: hers in the team of the day where she is in it, else her name's. */
+export function colorOfStep(step, people) {
+	const person = (people || []).find((one) => one.sales_person && one.sales_person === step?.sales_person)
+	return person?.color || avatarColorOf(step?.sales_person_name || step?.sales_person)
+}

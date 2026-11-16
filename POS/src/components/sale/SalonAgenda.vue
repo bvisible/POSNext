@@ -164,7 +164,7 @@ import { computed, ref } from "vue"
 import { useAppointmentsStore } from "@/stores/appointments"
 import { usePOSUIStore } from "@/stores/posUI"
 import {
-	avatarColorOf,
+	colorOfPerson,
 	blockGeometry,
 	clockOf,
 	freeHoursOf,
@@ -249,7 +249,8 @@ const defaultPerson = computed(() => {
 	return (own || store.columns.find((column) => column.person))?.person || null
 })
 
-const colorOf = (person) => avatarColorOf(person.sales_person_name)
+// the colour the reservation gives her, the same as on the planning of the desk (NeoSalon B', 16.11.2026)
+const colorOf = (person) => colorOfPerson(person)
 const standing = (person) => (person ? standingOf(person) : null)
 
 function hoursText(person) {

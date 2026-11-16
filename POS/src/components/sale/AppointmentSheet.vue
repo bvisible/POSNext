@@ -31,7 +31,7 @@
 						<span v-if="optionsText(step)" class="block truncate text-xs text-gray-500">{{ optionsText(step) }}</span>
 					</span>
 					<span v-if="step.sales_person" class="inline-flex flex-none items-center gap-2 rounded-full bg-gray-100 py-0.5 pe-3 ps-1 text-[13px] font-medium text-gray-900 dark:bg-gray-700 dark:text-gray-100">
-						<span class="flex h-[22px] w-[22px] items-center justify-center rounded-full text-[10px] font-bold text-white" :style="{ background: avatarColorOf(step.sales_person_name || step.sales_person) }" aria-hidden="true">{{ initialsOf(step.sales_person_name || step.sales_person) }}</span>
+						<span class="flex h-[22px] w-[22px] items-center justify-center rounded-full text-[10px] font-bold text-white" :style="{ background: colorOfStep(step, store.people) }" aria-hidden="true">{{ initialsOf(step.sales_person_name || step.sales_person) }}</span>
 						{{ step.sales_person_name || step.sales_person }}
 					</span>
 					<span v-else class="inline-flex flex-none items-center rounded-full border border-dashed border-gray-400 px-3 py-0.5 text-[13px] text-gray-600 dark:text-gray-300">{{ __("To assign") }}</span>
@@ -80,7 +80,7 @@ import { useAppointment } from "@/composables/useAppointment"
 import { useAppointmentsStore } from "@/stores/appointments"
 import { usePOSSettingsStore } from "@/stores/posSettings"
 import { usePOSShiftStore } from "@/stores/posShift"
-import { activeTimeOf, avatarColorOf, hourOf, initialsOf, lengthOf, minutesLongOf, standsAs } from "@/utils/appointments"
+import { activeTimeOf, colorOfStep, hourOf, initialsOf, lengthOf, minutesLongOf, standsAs } from "@/utils/appointments"
 import { formatCurrency } from "@/utils/currency"
 
 const props = defineProps({

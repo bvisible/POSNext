@@ -29,3 +29,20 @@ describe("the till's layout", () => {
 		expect(tillLayout({ isDesktop: false, agenda: false, leftPanelWidth: 720, mobileTab: "cart" }).cart).toBe(true)
 	})
 })
+
+describe("the colour of a person at the till", () => {
+	it("is the one the reservation gives her, the same as on the planning of the desk", async () => {
+		const { colorOfPerson, colorOfStep } = await import("../appointments")
+		const people = [{ sales_person: "Maya", sales_person_name: "Maya Rochat", color: "#3A5572" }]
+
+		expect(colorOfPerson(people[0])).toBe("#3A5572")
+		expect(colorOfStep({ sales_person: "Maya", sales_person_name: "Maya Rochat" }, people)).toBe("#3A5572")
+	})
+
+	it("falls back on the colour of her name where the reservation gives none", async () => {
+		const { avatarColorOf, colorOfPerson, colorOfStep } = await import("../appointments")
+
+		expect(colorOfPerson({ sales_person_name: "Luc Bonvin" })).toBe(avatarColorOf("Luc Bonvin"))
+		expect(colorOfStep({ sales_person: "Luc", sales_person_name: "Luc Bonvin" }, [])).toBe(avatarColorOf("Luc Bonvin"))
+	})
+})

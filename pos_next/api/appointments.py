@@ -188,6 +188,16 @@ def _first_answer(hook: str, *args):
 	return None
 
 
+# A colour as the reservation gives it (`#RRGGBB`): what reaches a style attribute of the agenda is a colour and nothing else
+COLOUR = re.compile(r"#[0-9A-Fa-f]{6}")
+
+
+def _colour(value):
+	"""The colour the reservation gives a person (NeoSalon B', 16.11.2026: the same on the till and on the planning of the desk), or None."""
+	value = _text(value, 7)
+	return value if value and COLOUR.fullmatch(value) else None
+
+
 def _text(value, most=140):
 	"""A text of at most `most` characters, or None."""
 	return None if value in (None, "") else str(value)[:most]
@@ -412,6 +422,7 @@ def _staff(row) -> dict | None:
 		"user": user,
 		"sales_person": person,
 		"sales_person_name": name,
+		"color": _colour(row.get("color")),
 		"status": row.get("state") if row.get("state") in STAFF_STATES else "unknown",
 		"reason": _text(row.get("reason")),
 		"periods": periods,
