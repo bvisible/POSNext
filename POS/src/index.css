@@ -697,3 +697,22 @@ button.active\:scale-95:active,
 	--pos-line: rgba(255, 255, 255, 0.1);
 	--pos-action-soft: rgba(214, 138, 89, 0.16);
 }
+
+/* //// Neoffice — the till's dialogs in the dark theme (maintenance#2678), once, for every frappe-ui Dialog (`.dialog-content` is its
+   //// panel). The panel itself already turns dark through frappe-ui's own tokens; what stayed light inside it are the design
+   //// system's light-theme colours written as literal values (the customer form's type switch and country list, the tablet pairing
+   //// card, the amounts in green): ink #141414 on the dark panel, cream fills and lines. In the dark scope each takes the system's
+   //// dark value (tokens/colors.css: paper and sand for text, the dark ramp for the status colours). An element that says its own
+   //// dark colour (a `dark:` class) keeps it; the light theme is unchanged. */
+:is([data-theme='dark'], .dark) .dialog-content .text-\[\#141414\]:not([class*="dark:text-"]),
+:is([data-theme='dark'], .dark) .dialog-content .hover\:text-\[\#141414\]:hover:not([class*="dark:hover:text-"]) { color: #fffdf8; }
+:is([data-theme='dark'], .dark) .dialog-content .text-\[\#6F665A\]:not([class*="dark:text-"]) { color: #bfb5a4; }
+:is([data-theme='dark'], .dark) .dialog-content .text-\[\#A15A2E\]:not([class*="dark:text-"]) { color: #d68a59; }
+:is([data-theme='dark'], .dark) .dialog-content .text-\[\#0f7a4a\]:not([class*="dark:text-"]) { color: #3dbe74; }
+:is([data-theme='dark'], .dark) .dialog-content .text-\[\#b45309\]:not([class*="dark:text-"]) { color: #e6a93b; }
+:is([data-theme='dark'], .dark) .dialog-content .bg-\[\#F6F3ED\]:not([class*="dark:bg-"]),
+:is([data-theme='dark'], .dark) .dialog-content .bg-\[\#FAF8F5\]:not([class*="dark:bg-"]) { background-color: rgba(255, 255, 255, 0.05); }
+:is([data-theme='dark'], .dark) .dialog-content .hover\:bg-\[\#F6F3ED\]:hover:not([class*="dark:hover:bg-"]) { background-color: rgba(255, 255, 255, 0.08); }
+:is([data-theme='dark'], .dark) .dialog-content .bg-\[\#FCF3EA\]:not([class*="dark:bg-"]) { background-color: rgba(214, 138, 89, 0.12); }
+:is([data-theme='dark'], .dark) .dialog-content .border-\[\#ECE7DE\]:not([class*="dark:border-"]),
+:is([data-theme='dark'], .dark) .dialog-content .border-\[\#DCD4C7\]:not([class*="dark:border-"]) { border-color: rgba(255, 255, 255, 0.1); }
