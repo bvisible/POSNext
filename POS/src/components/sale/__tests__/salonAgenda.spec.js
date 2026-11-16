@@ -15,7 +15,8 @@ const load = vi.hoisted(() => vi.fn(async () => null))
 
 vi.mock("@/stores/posUI", () => ({ usePOSUIStore: () => ui }))
 vi.mock("@/stores/posShift", () => ({ usePOSShiftStore: () => ({ profileName: "Till A" }) }))
-vi.mock("@/composables/useAppointment", () => ({ useAppointment: () => ({ loadDay: load }) }))
+const loadWeek = vi.hoisted(() => vi.fn(async () => null))
+vi.mock("@/composables/useAppointment", () => ({ useAppointment: () => ({ loadDay: load, loadWeek }) }))
 vi.mock("@/utils/offline/offlineState", () => ({ offlineState: network }))
 
 const { useAppointmentsStore } = await import("@/stores/appointments")
@@ -376,6 +377,49 @@ describe("the agenda of the salon", () => {
 
 			await wrapper.get("[data-test='free-630']").trigger("click")
 			expect(wrapper.emitted("new-appointment")[0][0]).toMatchObject({ from: 630, person: { sales_person: "Luc" } })
+		})
+	})
+
+	// Jérémy, 16.11: « vous avez de la place jeudi ? » answered in a second, without leaving the day
+	describe("the band of the week", () => {
+		const week = [
+			["2026-11-09", 300],
+			["2026-11-10", 180],
+			["2026-11-11", 0],
+			["2026-11-12", 90],
+			["2026-11-13", 240],
+			["2026-11-14", 420],
+			["2026-11-15", null],
+		].map(([date, free]) => ({ date, working: free === null ? 0 : 2, worked_minutes: 960, free_minutes: free || 0 }))
+
+		it("says each day's free time, the day shown marked, a full day and a day nobody works told apart", () => {
+			store.week = week
+			const days = mountIt().findAll("[data-test='agenda-week'] button")
+
+			expect(days).toHaveLength(7)
+			expect(days[1].attributes("aria-pressed")).toBe("true")
+			expect(days[3].text()).toContain("1 h 30")
+			expect(days[2].text()).toContain("Full")
+			expect(days[6].text()).toContain("Nobody works")
+		})
+
+		it("goes to the day touched", async () => {
+			store.week = week
+			const wrapper = mountIt()
+
+			await wrapper.findAll("[data-test='agenda-week'] button")[3].trigger("click")
+
+			expect(store.date).toBe("2026-11-12")
+			expect(load).toHaveBeenCalledWith("2026-11-12")
+		})
+
+		it("goes to any date chosen beyond the week", async () => {
+			const wrapper = mountIt()
+
+			await wrapper.get("[data-test='agenda-date']").setValue("2026-12-03")
+			await wrapper.get("[data-test='agenda-date']").trigger("change")
+
+			expect(store.date).toBe("2026-12-03")
 		})
 	})
 })

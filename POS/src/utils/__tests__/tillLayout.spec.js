@@ -6,20 +6,27 @@ import { describe, expect, it } from "vitest"
 import { tillLayout } from "../appointments"
 
 describe("the till's layout", () => {
-	it("gives the agenda the whole width of a desktop and hides the cart and the divider", () => {
-		const layout = tillLayout({ isDesktop: true, agenda: true, leftPanelWidth: 720, mobileTab: "items" })
+	it("gives the agenda the whole width of a desktop, with no panel, while no appointment is chosen", () => {
+		const layout = tillLayout({ isDesktop: true, agenda: true, selected: false, leftPanelWidth: 720, mobileTab: "items" })
 
-		expect(layout).toEqual({ leftWidth: "100%", leftGrows: true, divider: false, cart: false, sheet: "drawer" })
+		expect(layout).toEqual({ leftWidth: "100%", leftGrows: true, divider: false, cart: false, sheet: null })
+	})
+
+	// Jérémy, 16.11: the sheet « prend la place du panier à droite », it does not open over the agenda
+	it("puts a chosen appointment's sheet in the cart's place on the right, the agenda beside it", () => {
+		const layout = tillLayout({ isDesktop: true, agenda: true, selected: true, leftPanelWidth: 720, mobileTab: "items" })
+
+		expect(layout).toEqual({ leftWidth: "auto", leftGrows: true, divider: false, cart: false, sheet: "panel" })
 	})
 
 	it("keeps the sale as it was when the agenda is closed: the items at their width, the divider, the cart", () => {
-		const layout = tillLayout({ isDesktop: true, agenda: false, leftPanelWidth: 720, mobileTab: "items" })
+		const layout = tillLayout({ isDesktop: true, agenda: false, selected: false, leftPanelWidth: 720, mobileTab: "items" })
 
 		expect(layout).toEqual({ leftWidth: "720px", leftGrows: false, divider: true, cart: true, sheet: null })
 	})
 
 	it("on a phone keeps one tab at a time, and the sheet covers the agenda", () => {
-		expect(tillLayout({ isDesktop: false, agenda: true, leftPanelWidth: 720, mobileTab: "items" })).toEqual({
+		expect(tillLayout({ isDesktop: false, agenda: true, selected: true, leftPanelWidth: 720, mobileTab: "items" })).toEqual({
 			leftWidth: "100%",
 			leftGrows: true,
 			divider: false,
@@ -44,5 +51,19 @@ describe("the colour of a person at the till", () => {
 
 		expect(colorOfPerson({ sales_person_name: "Luc Bonvin" })).toBe(avatarColorOf("Luc Bonvin"))
 		expect(colorOfStep({ sales_person: "Luc", sales_person_name: "Luc Bonvin" }, [])).toBe(avatarColorOf("Luc Bonvin"))
+	})
+})
+
+describe("the hour an appointment is dropped at in the agenda", () => {
+	it("is the quarter under the pointer, inside the day", async () => {
+		const { dropTime } = await import("../appointments")
+		const range = { start: 8, end: 19 }
+
+		// 56 px an hour: 2 h 30 below the top is 10:30, 2 h 37 rounds to 10:30, 2 h 45 to 10:45
+		expect(dropTime(140, range, 56)).toBe("10:30")
+		expect(dropTime(146.5, range, 56)).toBe("10:30")
+		expect(dropTime(154, range, 56)).toBe("10:45")
+		expect(dropTime(-40, range, 56)).toBe("08:00")
+		expect(dropTime(10000, range, 56)).toBe("18:45")
 	})
 })

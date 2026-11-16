@@ -26586,3 +26586,21 @@ msgstr "Fractionner"
 #, python-brace-format
 msgid "{0} sales paid on the phone, not counted in the drawer"
 msgstr "{0} ventes payées sur téléphone, non comptées dans le tiroir-caisse"
+
+#: POS/src/components/sale/SalonAgenda.vue
+msgid "Choose a date"
+msgstr "Choisissez une date"
+
+#: POS/src/components/sale/SalonAgenda.vue
+msgid "Nobody works"
+msgstr "Personne ne travaille"
+
+#: POS/src/components/sale/SalonAgenda.vue
+msgid "The week"
+msgstr "La semaine"
+
+#: POS/src/components/sale/SalonAgenda.vue
+#, python-brace-format
+msgctxt "free time"
+msgid "{0} free"
+msgstr "{0} libres"

@@ -15,6 +15,8 @@
 					<svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" /></svg>
 				</button>
 			</div>
+			<!-- //// Neoffice — any date, beyond the band of the week (NeoSalon B', 16.11.2026) -->
+			<input type="date" data-test="agenda-date" class="h-11 rounded-lg border border-gray-200 bg-white px-2 text-sm text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200" :value="store.date" :aria-label="__('Choose a date')" @change="chooseDate" />
 			<h2 class="flex-1 min-w-0 truncate text-2xl leading-tight text-gray-900 dark:text-gray-100" style="font-family: Forum, Georgia, serif" data-test="agenda-title">{{ dayTitle }}</h2>
 			<div v-if="store.mine.length" class="inline-flex rounded-lg bg-gray-100 p-0.5 text-sm dark:bg-gray-800" role="group" :aria-label="__('Columns')">
 				<button type="button" data-test="agenda-all" class="min-h-[40px] rounded-md px-3" :class="!store.onlyMine ? 'bg-white font-semibold shadow-sm dark:bg-gray-700' : 'text-gray-600 dark:text-gray-300'" @click="store.onlyMine = false">{{ __("All") }}</button>
@@ -28,6 +30,14 @@
 				{{ __("New appointment") }}
 			</button>
 		</header>
+
+		<!-- //// Neoffice — the band of the week (NeoSalon B', 16.11.2026, Jérémy: « vous avez de la place jeudi ? »): each day's free time, a touch goes there -->
+		<nav v-if="weekDays.length" class="grid grid-cols-7 gap-1.5 px-4 pb-2" data-test="agenda-week" :aria-label="__('The week')">
+			<button v-for="d in weekDays" :key="d.date" type="button" class="min-h-[52px] rounded-lg border px-2 py-1 text-left leading-tight" :class="d.selected ? 'border-blue-500 bg-blue-50 dark:bg-blue-400/20' : 'border-gray-200 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800'" :aria-pressed="d.selected ? 'true' : 'false'" @click="store.setDay(d.date)">
+				<span class="block truncate text-[13px] font-semibold text-gray-900 dark:text-gray-100">{{ d.label }}</span>
+				<span class="block truncate text-xs" :class="d.tone">{{ d.free }}</span>
+			</button>
+		</nav>
 
 		<!-- The salon is closed that day, or has other hours: said once, above the columns. What was booked before the closing is never cancelled by itself. -->
 		<div v-if="salonNotice" class="mx-4 mb-2 rounded-lg px-4 py-2 text-sm" :class="salonNotice.closed ? 'bg-yellow-50 text-yellow-900 dark:bg-yellow-400/15 dark:text-yellow-100' : 'bg-blue-50 text-blue-900 dark:bg-blue-400/15 dark:text-blue-100'" data-test="agenda-salon">
@@ -74,6 +84,10 @@
 				</div>
 
 				<div v-for="column in store.columns" :key="`col-${column.key}`" class="relative border-s border-gray-100 dark:border-gray-800" :style="{ height: `${gridHeight}px`, backgroundImage: lines, backgroundSize: `100% ${PX_PER_HOUR}px` }" :data-test="`column-${column.key}`">
+					<!-- //// Neoffice — where a dragged appointment would go: the person and the quarter under the pointer (NeoSalon B', 16.11.2026) -->
+					<div v-if="drag && drag.mark && drag.mark.key === String(column.key)" class="pointer-events-none absolute inset-x-1.5 z-10 rounded-lg border-2 border-dashed border-blue-500 bg-blue-50/70 dark:bg-blue-400/20" :style="{ top: `${drag.mark.top}px`, height: `${drag.mark.height}px` }" data-test="agenda-drop">
+						<span class="m-1 inline-block rounded bg-blue-600 px-1.5 text-[11px] font-semibold text-white">{{ drag.mark.time }}</span>
+					</div>
 					<!-- Not working that day: hatched, and said. Her appointments stay drawn: they were booked before, and are « to handle » (never cancelled by themselves). -->
 					<div v-if="column.person && isOff(column.person)" class="absolute inset-0" :style="{ backgroundImage: HATCH }">
 						<div class="absolute inset-x-3 top-2 rounded-lg border border-gray-200 bg-white px-3 py-3 text-center text-xs leading-snug text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" :data-test="`column-off-${column.key}`">
@@ -105,7 +119,8 @@
 							:disabled="row.busy"
 							:aria-label="row.busy ? __('Busy') : `${row.customer_name || ''} ${hourOf(row.starts_at)}`"
 							:data-test="`block-${row.key}`"
-							@click="!row.busy && select(row)"
+							@pointerdown="startDrag($event, row)"
+							@click="!row.busy && !justDragged() && select(row)"
 						>
 							<span class="flex items-center justify-between gap-1">
 								<b class="flex min-w-0 items-center gap-1.5 truncate text-[13px] text-gray-900 dark:text-gray-100">
@@ -174,6 +189,7 @@ import {
 	lengthOf,
 	minutesLongOf,
 	minutesOf,
+	dropTime,
 	offsetOf,
 	standingOf,
 	standsAs,
@@ -181,7 +197,7 @@ import {
 } from "@/utils/appointments"
 import { offlineState } from "@/utils/offline/offlineState"
 
-const emit = defineEmits(["new-appointment", "selected"])
+const emit = defineEmits(["new-appointment", "selected", "move-to"])
 
 const store = useAppointmentsStore()
 const uiStore = usePOSUIStore()
@@ -220,6 +236,21 @@ const nowOffset = computed(() => {
 	const top = offsetOf(store.now, store.range, PX_PER_HOUR)
 	return top >= 0 && top <= gridHeight.value ? top : null
 })
+// The band of the week: each day's free time in the words of the till (NeoSalon B', 16.11.2026)
+const weekDays = computed(() =>
+	(store.week || []).map((d) => {
+		const when = new Date(`${d.date}T12:00:00`)
+		const label = Number.isNaN(when.getTime()) ? d.date : when.toLocaleDateString(undefined, { weekday: "short", day: "numeric" })
+		const free = !d.working ? __("Nobody works") : d.free_minutes > 0 ? __("{0} free", [lengthOf(d.free_minutes)], "free time") : __("Full")
+		const tone = !d.working ? "text-gray-400" : d.free_minutes > 0 ? "text-green-700 dark:text-green-300" : "text-red-700 dark:text-red-300"
+		return { date: d.date, label, free, tone, selected: d.date === store.date }
+	}),
+)
+// a date chosen beyond the week; a date half typed is nothing yet
+const chooseDate = (event) => {
+	const value = event?.target?.value
+	if (/^\d{4}-\d{2}-\d{2}$/.test(value || "")) store.setDay(value)
+}
 const dayTitle = computed(() => {
 	const when = new Date(`${store.date}T12:00:00`)
 	if (Number.isNaN(when.getTime())) return store.date
@@ -321,6 +352,48 @@ function pillText(row) {
 		default:
 			return __("Booked")
 	}
+}
+
+// An appointment dragged to another person or another hour of the day (NeoSalon B', 16.11.2026): the drop opens « Move » on what it proposes,
+// with the window's own check and « Warn the customer ». A mouse or a pen drags; a touch keeps the tap (the sheet, then « Move »), the agenda
+// scrolls under a finger.
+const drag = ref(null)
+let draggedAt = 0
+const justDragged = () => Date.now() - draggedAt < 400
+
+function startDrag(event, row) {
+	if (row.busy || !store.capabilities.move || row.can?.move === false || event.button !== 0 || event.pointerType === "touch") return
+	const rect = event.currentTarget.getBoundingClientRect()
+	drag.value = { row, x: event.clientX, y: event.clientY, grab: event.clientY - rect.top, height: rect.height, moved: false, mark: null }
+	window.addEventListener("pointermove", onDrag)
+	window.addEventListener("pointerup", endDrag, { once: true })
+}
+
+function onDrag(event) {
+	const d = drag.value
+	if (!d) return
+	if (!d.moved && Math.hypot(event.clientX - d.x, event.clientY - d.y) < 6) return
+	d.moved = true
+	const body = document.elementFromPoint(event.clientX, event.clientY)?.closest?.("[data-test^='column-']")
+	const key = body ? body.getAttribute("data-test").slice("column-".length) : null
+	const column = key === null ? null : store.columns.find((c) => String(c.key) === key)
+	if (!column?.person) {
+		d.mark = null
+		return
+	}
+	const time = dropTime(event.clientY - body.getBoundingClientRect().top - d.grab, store.range, PX_PER_HOUR)
+	const [hours, minutes] = time.split(":").map(Number)
+	d.mark = { key, person: column.person, time, top: offsetOf(hours * 60 + minutes, store.range, PX_PER_HOUR), height: d.height }
+}
+
+function endDrag() {
+	window.removeEventListener("pointermove", onDrag)
+	const d = drag.value
+	drag.value = null
+	if (!d?.moved) return
+	draggedAt = Date.now()
+	if (!d.mark) return
+	emit("move-to", { appointment: d.row, person: d.mark.person.sales_person, day: store.date, time: d.mark.time })
 }
 
 function select(row) {

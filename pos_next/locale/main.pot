@@ -29528,3 +29528,20 @@ msgstr ""
 #: pos_next/gift_card_vat.py:149
 msgid "The item {0} is also the gift card item of the till {1} (kind of gift card: {2}). A value voucher and a service voucher are not taxed the same way: give each kind its own item."
 msgstr ""
+
+#: POS/src/components/sale/SalonAgenda.vue
+msgid "Choose a date"
+msgstr ""
+
+#: POS/src/components/sale/SalonAgenda.vue
+msgid "The week"
+msgstr ""
+
+#: POS/src/components/sale/SalonAgenda.vue
+msgctxt "free time"
+msgid "{0} free"
+msgstr ""
+
+#: POS/src/components/sale/SalonAgenda.vue
+msgid "Nobody works"
+msgstr ""

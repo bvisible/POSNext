@@ -78,6 +78,22 @@ describe("the move dialog", () => {
 		expect(wrapper.get("[data-test='move-notify']").element.checked).toBe(true)
 	})
 
+	// NeoSalon B', 16.11: an appointment dropped on another person or hour in the agenda opens this window on what the drop proposes
+	it("opens on the person and the hour a drop in the agenda proposes, and asks whether it fits", async () => {
+		vi.useFakeTimers()
+		const wrapper = mountWith(MoveAppointmentDialog, {
+			modelValue: true,
+			appointment: appointment(),
+			proposal: { person: "Camille", day: "2026-11-10", time: "16:30" },
+		})
+		await vi.advanceTimersByTimeAsync(350)
+		await flushPromises()
+
+		expect(wrapper.get("[data-test='move-person']").element.value).toBe("Camille")
+		expect(wrapper.get("[data-test='move-time']").element.value).toBe("16:30")
+		expect(lane.checkMove).toHaveBeenCalledWith("BKG-1", "2026-11-10 16:30:00", "Camille")
+	})
+
 	it("offers the people who work that day, and not the one who is on leave", () => {
 		const options = open().findAll("[data-test='move-person'] option").map((node) => node.text())
 

@@ -57,6 +57,7 @@ The mode is off until a till manager ticks `POS Settings.enable_appointments` (a
 not available and nothing is taken, moved, cancelled, timed or booked.
 """
 
+import datetime
 import json
 import re
 
@@ -67,7 +68,9 @@ from frappe.utils import cint, flt, get_datetime, getdate, nowdate
 # //// Neoffice — the day view is read under a name that says what it is (13.11.2026: a software for every trade, nothing named « salon » that a garage or a
 # //// practice would read), and under the old name when the site still declares that one (a lane renames its declaration when it is ready)
 DAY_HOOK = "pos_next_booking_day"
-LEGACY_HOOKS = {DAY_HOOK: "pos_next_salon_day"}
+# //// Neoffice — who works each day and how much of it is booked, for the band of the week (NeoSalon B', 16.11.2026)
+TEAM_HOOK = "pos_next_booking_team"
+LEGACY_HOOKS = {DAY_HOOK: "pos_next_salon_day", TEAM_HOOK: "pos_next_salon_team"}
 CHECK_MOVE_HOOK = "pos_next_appointment_check_move"
 MOVE_HOOK = "pos_next_appointment_move"
 LIST_HOOK = "pos_next_appointments_of_the_day"
@@ -1199,6 +1202,45 @@ def _service(row) -> dict | None:
 		"options": groups,
 		"people": people,
 	}
+
+
+def _free_of_the_day(team) -> dict:
+	"""How much time the team still has on a day: `{working, worked_minutes, free_minutes}`, what each person works (her periods) less what is
+	booked for her, never below nothing. A person with no period does not work that day."""
+	working = worked = free = 0
+	for row in (team or [])[:MOST_PEOPLE]:
+		if not isinstance(row, dict):
+			continue
+		minutes = 0
+		for start, end in _periods(row.get("periods")):
+			begin, finish = (int(start[:2]) * 60 + int(start[3:5])), (int(end[:2]) * 60 + int(end[3:5]))
+			minutes += max(finish - begin, 0)
+		if minutes <= 0:
+			continue
+		working += 1
+		worked += minutes
+		free += max(minutes - min(cint(row.get("booked_minutes")), minutes), 0)
+	return {"working": working, "worked_minutes": worked, "free_minutes": free}
+
+
+@frappe.whitelist()
+def get_week(pos_profile: str, date: str | None = None) -> dict:
+	"""The week of the day at a glance, Monday to Sunday (NeoSalon B', 16.11.2026: « vous avez de la place jeudi ? » answered in a second):
+	`{"available", "days": [{"date", "working", "worked_minutes", "free_minutes"}]}`, each day's free time the team's (`_free_of_the_day`),
+	read through the reservation's team of the day, the hours as the reservation reads them. Not available where the agenda is not."""
+	from pos_next.api.cash_entry import require_till_access
+
+	require_till_access(pos_profile)
+	day = getdate(date or nowdate())
+	if not appointments_enabled(pos_profile) or not site_has_appointments():
+		return {"available": False, "days": []}
+	monday = day - datetime.timedelta(days=day.weekday())
+	days = []
+	for offset in range(7):
+		one = monday + datetime.timedelta(days=offset)
+		team = _first_answer(TEAM_HOOK, pos_profile, str(one))
+		days.append({"date": str(one), **_free_of_the_day(team if isinstance(team, list) else [])})
+	return {"available": True, "days": days}
 
 
 @frappe.whitelist()

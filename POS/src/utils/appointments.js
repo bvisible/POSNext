@@ -303,12 +303,13 @@ export function dayMoved(day, days) {
 
 /**
  * The till's screen while its agenda is open (NeoSalon B', 16.11.2026, Jérémy: « masquer le panneau de droite, ça bouffe toute une partie de
- * la partie rendez-vous »). On a desktop the agenda takes the whole width: no divider, no cart beside it, the sheet of an appointment opens
- * over the agenda on the right (`drawer`); « Encaisser » closes the agenda and the cart comes back. On a phone one tab shows at a time and
- * the sheet covers the agenda (`cover`). The agenda closed, the sale is as it always was.
- * @returns {{leftWidth: string, leftGrows: boolean, divider: boolean, cart: boolean, sheet: "drawer"|"cover"|null}}
+ * la partie rendez-vous »). On a desktop, no appointment chosen, the agenda takes the whole width: no divider, no panel beside it. An
+ * appointment chosen, its sheet takes the cart's place on the right (`panel`: « c'est nickel », it does not open over the agenda) and the
+ * agenda keeps the rest; « Encaisser » closes the agenda and the cart comes back. On a phone one tab shows at a time and the sheet covers
+ * the agenda (`cover`). The agenda closed, the sale is as it always was.
+ * @returns {{leftWidth: string, leftGrows: boolean, divider: boolean, cart: boolean, sheet: "panel"|"cover"|null}}
  */
-export function tillLayout({ isDesktop, agenda, leftPanelWidth, mobileTab }) {
+export function tillLayout({ isDesktop, agenda, selected, leftPanelWidth, mobileTab }) {
 	if (!isDesktop)
 		return {
 			leftWidth: "100%",
@@ -317,7 +318,10 @@ export function tillLayout({ isDesktop, agenda, leftPanelWidth, mobileTab }) {
 			cart: mobileTab === "cart",
 			sheet: agenda ? "cover" : null,
 		}
-	if (agenda) return { leftWidth: "100%", leftGrows: true, divider: false, cart: false, sheet: "drawer" }
+	if (agenda)
+		return selected
+			? { leftWidth: "auto", leftGrows: true, divider: false, cart: false, sheet: "panel" }
+			: { leftWidth: "100%", leftGrows: true, divider: false, cart: false, sheet: null }
 	return { leftWidth: `${leftPanelWidth}px`, leftGrows: false, divider: true, cart: true, sheet: null }
 }
 
@@ -330,4 +334,15 @@ export function colorOfPerson(person) {
 export function colorOfStep(step, people) {
 	const person = (people || []).find((one) => one.sales_person && one.sales_person === step?.sales_person)
 	return person?.color || avatarColorOf(step?.sales_person_name || step?.sales_person)
+}
+
+/**
+ * The hour an appointment dragged in the agenda is dropped at (NeoSalon B', 16.11.2026): the quarter under the pointer, `offsetY` pixels below
+ * the top of the day, inside the day (its first quarter at most `step` minutes before its end).
+ */
+export function dropTime(offsetY, range, pxPerHour, step = 15) {
+	const minutes = range.start * 60 + (Number(offsetY) / pxPerHour) * 60
+	const snapped = Math.round(minutes / step) * step
+	const clamped = Math.min(Math.max(snapped, range.start * 60), range.end * 60 - step)
+	return `${String(Math.floor(clamped / 60)).padStart(2, "0")}:${String(clamped % 60).padStart(2, "0")}`
 }

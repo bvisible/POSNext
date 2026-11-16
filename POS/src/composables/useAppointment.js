@@ -117,6 +117,15 @@ export function useAppointment() {
 		return ask("get_appointments", { date }, { quiet: true })
 	}
 
+	/**
+	 * The week of a day at a glance, Monday to Sunday: how much time the team still has each day (NeoSalon B', 16.11.2026).
+	 * @returns {Promise<object|null>} `{ available, days: [{ date, working, worked_minutes, free_minutes }] }`, or null
+	 */
+	async function loadWeek(date = null) {
+		if (offlineState.isOffline) return null
+		return ask("get_week", { date }, { quiet: true })
+	}
+
 	/** The price of the day of an item at this till (its price list, for this customer), or null when it cannot be asked. */
 	async function dayRateOf(line, customer) {
 		if (!offlineState.isOffline) {
@@ -374,6 +383,7 @@ export function useAppointment() {
 
 	return {
 		loadDay,
+		loadWeek,
 		takeAppointment,
 		checkMove,
 		move,

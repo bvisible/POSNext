@@ -956,20 +956,18 @@
 									@item-selected="handleItemSelected"
 								/>
 								<!-- //// Neoffice — the agenda of a salon in the middle column: one column per person, a touch opens an appointment's sheet (NeoSalon, lot G4). -->
+								<!-- //// Neoffice — an appointment dropped on another person or hour opens « Move » on what the drop proposes (NeoSalon B', 16.11.2026) -->
 								<SalonAgenda
 									v-if="appointmentsShown"
 									@new-appointment="openNewAppointment"
+									@move-to="openMoveAppointmentTo"
 								/>
 								<!-- //// Neoffice — the sheet's "Repeat" gesture opens the repeat-booking dialog, below (c729537 "feat(appointments): « Repeat this appointment » at the till"). -->
-								<!-- //// Neoffice — the sheet opens over the agenda: a drawer on the right on a desktop (the cart is hidden while the agenda is open), the whole pane on a phone (NeoSalon B', 16.11.2026) -->
+								<!-- //// Neoffice — on a phone the sheet covers the agenda; on a desktop it takes the cart's place on the right, below (layout, NeoSalon B', 16.11.2026) -->
 								<AppointmentSheet
-									v-if="sheetShown"
+									v-if="layout.sheet === 'cover'"
 									:appointment="appointmentsStore.selected"
-									:class="
-										layout.sheet === 'drawer'
-											? 'absolute inset-y-0 right-0 z-20 w-[430px] max-w-full border-l border-gray-200 shadow-2xl'
-											: 'absolute inset-0 z-20'
-									"
+									class="absolute inset-0 z-20"
 									@close="appointmentsStore.select(null)"
 									@collect="collectAppointment"
 									@move="openMoveAppointment"
@@ -1101,6 +1099,17 @@
 							/>
 						</div>
 					</keep-alive>
+					<!-- //// Neoffice — an appointment chosen in the agenda: its sheet takes the cart's place on the right, the agenda keeps the rest (Jérémy, 16.11.2026: « c'est nickel »; layout) -->
+					<AppointmentSheet
+						v-if="layout.sheet === 'panel'"
+						:appointment="appointmentsStore.selected"
+						class="relative w-[430px] max-w-[45%] flex-shrink-0 border-l border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"
+						@close="appointmentsStore.select(null)"
+						@collect="collectAppointment"
+						@move="openMoveAppointment"
+						@cancel="openCancelAppointment"
+						@repeat="openRepeatAppointment"
+					/>
 
 					<!-- Mobile Floating Cart Button -->
 					<button
@@ -1538,7 +1547,7 @@
 			/>
 			<TipsPanel :show="showTipsPanel" @close="showTipsPanel = false" />
 			<!-- //// Neoffice — the dialogs of the appointments of a salon (NeoSalon, lot G4). -->
-			<MoveAppointmentDialog v-if="gestureTarget" v-model="showMoveAppointment" :appointment="gestureTarget" />
+			<MoveAppointmentDialog v-if="gestureTarget" v-model="showMoveAppointment" :appointment="gestureTarget" :proposal="moveProposal" />
 			<CancelAppointmentDialog v-if="gestureTarget" v-model="showCancelAppointment" :appointment="gestureTarget" @cancelled="appointmentsStore.select(null)" />
 			<NewAppointmentDialog v-model="showNewAppointment" :start="newAppointmentStart" />
 			<!-- //// Neoffice — « Repeat this appointment » (NeoSalon, lot G14): opened by the sheet, as the move and the cancel above. -->
@@ -3063,6 +3072,7 @@ const layout = computed(() =>
 	tillLayout({
 		isDesktop: uiStore.isDesktop,
 		agenda: appointmentsShown.value,
+		selected: sheetShown.value,
 		leftPanelWidth: uiStore.leftPanelWidth,
 		mobileTab: uiStore.mobileActiveTab,
 	}),
@@ -3087,6 +3097,15 @@ async function collectAppointment(appointment) {
 
 function openMoveAppointment(appointment) {
 	gestureTarget.value = appointment;
+	moveProposal.value = null;
+	showMoveAppointment.value = true;
+}
+
+//// Neoffice — a drop in the agenda: « Move » opens on the person and the hour dropped at, with the window's own check (NeoSalon B', 16.11.2026)
+const moveProposal = ref(null);
+function openMoveAppointmentTo({ appointment, person, day, time }) {
+	gestureTarget.value = appointment;
+	moveProposal.value = { person, day, time };
 	showMoveAppointment.value = true;
 }
 

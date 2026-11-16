@@ -16,6 +16,8 @@ import { offlineState } from "@/utils/offline/offlineState"
 
 // The agenda moves while the cashier works
 export const REFRESH_EVERY_MS = 60 * 1000
+// The band of the week is read again at most every five minutes on the same week (NeoSalon B', 16.11.2026)
+export const WEEK_EVERY_MS = 5 * 60 * 1000
 const CACHE_KEY = "pos_next_salon_agenda"
 
 const todayOf = () => {
@@ -52,6 +54,11 @@ function writeCache(profile, answer) {
 export const useAppointmentsStore = defineStore("appointments", () => {
 	// The day asked for, `YYYY-MM-DD` ("" = today)
 	const day = ref("")
+	// The band of the week (NeoSalon B', 16.11.2026): each day's free time, read again when the day shown changes of week, else every few
+	// minutes (a week is seven readings of the team)
+	const week = ref([])
+	let weekOf = ""
+	let weekAt = 0
 	const visibility = ref("all")
 	const capabilities = ref({})
 	// How the salon stands on the day shown: `{ state: "open"|"closed"|"special", reason, label, periods }`, or null when the site does not say
@@ -153,6 +160,19 @@ export const useAppointmentsStore = defineStore("appointments", () => {
 		}
 		take(answer)
 		if (answer.available && isToday.value) writeCache(shift.profileName, answer)
+		if (answer.available) refreshWeek()
+	}
+
+	/** Read the band of the week of the day shown, when its week changed or the last reading is older than five minutes. */
+	async function refreshWeek(force = false) {
+		const monday = dayMoved(date.value, -((new Date(`${date.value}T12:00:00`).getDay() + 6) % 7))
+		if (!force && monday === weekOf && Date.now() - weekAt < WEEK_EVERY_MS) return
+		const lane = useAppointment()
+		if (!lane.loadWeek) return
+		weekOf = monday
+		weekAt = Date.now()
+		const answer = await lane.loadWeek(date.value)
+		week.value = answer?.available ? answer.days || [] : []
 	}
 
 	function select(key) {
@@ -184,6 +204,9 @@ export const useAppointmentsStore = defineStore("appointments", () => {
 	function reset() {
 		stop()
 		day.value = ""
+		week.value = []
+		weekOf = ""
+		weekAt = 0
 		available.value = false
 		visibility.value = "all"
 		capabilities.value = {}
@@ -202,6 +225,8 @@ export const useAppointmentsStore = defineStore("appointments", () => {
 
 	return {
 		day,
+		week,
+		refreshWeek,
 		date,
 		isToday,
 		visibility,

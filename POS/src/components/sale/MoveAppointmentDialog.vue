@@ -60,6 +60,8 @@ import { firstStepOf, hourOf, isOff, lengthOf, minutesLongOf, titleOf } from "@/
 const props = defineProps({
 	modelValue: { type: Boolean, default: false },
 	appointment: { type: Object, required: true },
+	// what a drop in the agenda proposes: `{ person, day, time }` (NeoSalon B', 16.11.2026), else the appointment's own
+	proposal: { type: Object, default: null },
 })
 const emit = defineEmits(["update:modelValue", "moved"])
 
@@ -88,21 +90,24 @@ const verdictText = computed(() => {
 })
 
 watch(
-	() => [props.modelValue, props.appointment?.key],
+	() => [props.modelValue, props.appointment?.key, props.proposal],
 	([open]) => {
 		if (!open) return
 		const step = firstStepOf(props.appointment)
-		person.value = step.sales_person || null
-		day.value = String(props.appointment.starts_at || "").slice(0, 10)
-		time.value = hourOf(props.appointment.starts_at)
+		const proposed = props.proposal || {}
+		person.value = proposed.person || step.sales_person || null
+		day.value = proposed.day || String(props.appointment.starts_at || "").slice(0, 10)
+		time.value = proposed.time || hourOf(props.appointment.starts_at)
 		notify.value = true
 		verdict.value = null
+		// a drop proposes another hour: whether it fits is asked at once, as for a change made here
+		if (props.proposal) askFit()
 	},
 	{ immediate: true },
 )
 
 // Whether it fits is asked a moment after the last change, and said before the button is pressed
-watch([person, day, time], () => {
+function askFit() {
 	clearTimeout(asking)
 	verdict.value = null
 	if (!props.modelValue || !whenText.value || !store.capabilities.check_move) return
@@ -110,7 +115,8 @@ watch([person, day, time], () => {
 		const answer = await checkMove(props.appointment.booking, whenText.value, person.value)
 		verdict.value = answer ? { ok: Boolean(answer.ok), why: answer.why || "" } : null
 	}, 300)
-})
+}
+watch([person, day, time], askFit)
 
 async function submit() {
 	if (working.value || !canMove.value) return
