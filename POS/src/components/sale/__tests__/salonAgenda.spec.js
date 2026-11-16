@@ -2,9 +2,9 @@
 // A column per person with how she stands, the appointments as blocks (a colleague's busy, without a name), the free hours as buttons that book, a person off
 // that day hatched and said, « Me only », the agenda kept when the till has no network; on a phone, one person's day as a list.
 // @vitest-environment jsdom
-import { mount } from "@vue/test-utils"
+import { flushPromises, mount } from "@vue/test-utils"
 import { createPinia, setActivePinia } from "pinia"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 vi.hoisted(() => {
 	globalThis.__ = (text, args = []) => (args || []).reduce((out, arg, at) => out.replace(`{${at}}`, arg), text)
@@ -16,7 +16,8 @@ const load = vi.hoisted(() => vi.fn(async () => null))
 vi.mock("@/stores/posUI", () => ({ usePOSUIStore: () => ui }))
 vi.mock("@/stores/posShift", () => ({ usePOSShiftStore: () => ({ profileName: "Till A" }) }))
 const loadWeek = vi.hoisted(() => vi.fn(async () => null))
-vi.mock("@/composables/useAppointment", () => ({ useAppointment: () => ({ loadDay: load, loadWeek }) }))
+const checkMove = vi.hoisted(() => vi.fn(async () => ({ ok: true, why: "" })))
+vi.mock("@/composables/useAppointment", () => ({ useAppointment: () => ({ loadDay: load, loadWeek, checkMove }) }))
 vi.mock("@/utils/offline/offlineState", () => ({ offlineState: network }))
 
 const { useAppointmentsStore } = await import("@/stores/appointments")
@@ -420,6 +421,58 @@ describe("the agenda of the salon", () => {
 			await wrapper.get("[data-test='agenda-date']").trigger("change")
 
 			expect(store.date).toBe("2026-12-03")
+		})
+	})
+
+	// 16.11: at the counter a finger drags too (a long press), and the mark says before the drop whether it holds
+	describe("an appointment dragged in the agenda", () => {
+		const pointer = (type, target, { x = 10, y = 10, kind = "mouse" } = {}) => {
+			const event = new MouseEvent(type, { bubbles: true, clientX: x, clientY: y, button: 0 })
+			Object.defineProperty(event, "pointerType", { value: kind })
+			target.dispatchEvent(event)
+		}
+		let wrapper
+		const elementFromPoint = document.elementFromPoint
+		beforeEach(() => {
+			vi.useFakeTimers()
+			checkMove.mockClear()
+			wrapper = mountIt()
+			const column = wrapper.get("[data-test='column-Maya']").element
+			document.elementFromPoint = () => column
+		})
+		afterEach(() => {
+			wrapper.unmount()
+			document.elementFromPoint = elementFromPoint
+			vi.useRealTimers()
+		})
+
+		it("follows a finger held still a moment, and drops on the person under it", async () => {
+			pointer("pointerdown", wrapper.get("[data-test='block-BKG-4']").element, { kind: "touch" })
+			await vi.advanceTimersByTimeAsync(500)
+			pointer("pointermove", window, { y: 60, kind: "touch" })
+			pointer("pointerup", window, { y: 60, kind: "touch" })
+
+			expect(wrapper.emitted("move-to")?.[0]?.[0]).toMatchObject({ person: "Maya", day: "2026-11-10" })
+		})
+
+		it("lets a finger that moves at once scroll the agenda, and drags nothing", async () => {
+			pointer("pointerdown", wrapper.get("[data-test='block-BKG-4']").element, { kind: "touch" })
+			pointer("pointermove", window, { y: 60, kind: "touch" })
+			await vi.advanceTimersByTimeAsync(500)
+			pointer("pointerup", window, { y: 60, kind: "touch" })
+
+			expect(wrapper.emitted("move-to")).toBeUndefined()
+		})
+
+		it("says in the mark, before the drop, whether the hour holds there", async () => {
+			checkMove.mockResolvedValue({ ok: false, why: "Maya is with a customer." })
+			pointer("pointerdown", wrapper.get("[data-test='block-BKG-4']").element)
+			pointer("pointermove", window, { y: 60 })
+			await vi.advanceTimersByTimeAsync(300)
+			await flushPromises()
+
+			expect(checkMove).toHaveBeenCalledWith("BKG-4", expect.stringMatching(/^2026-11-10 \d\d:\d\d:00$/), "Maya")
+			expect(wrapper.get("[data-test='agenda-drop']").text()).toContain("Maya is with a customer.")
 		})
 	})
 })

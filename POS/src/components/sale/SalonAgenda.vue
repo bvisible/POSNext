@@ -85,8 +85,10 @@
 
 				<div v-for="column in store.columns" :key="`col-${column.key}`" class="relative border-s border-gray-100 dark:border-gray-800" :style="{ height: `${gridHeight}px`, backgroundImage: lines, backgroundSize: `100% ${PX_PER_HOUR}px` }" :data-test="`column-${column.key}`">
 					<!-- //// Neoffice — where a dragged appointment would go: the person and the quarter under the pointer (NeoSalon B', 16.11.2026) -->
-					<div v-if="drag && drag.mark && drag.mark.key === String(column.key)" class="pointer-events-none absolute inset-x-1.5 z-10 rounded-lg border-2 border-dashed border-blue-500 bg-blue-50/70 dark:bg-blue-400/20" :style="{ top: `${drag.mark.top}px`, height: `${drag.mark.height}px` }" data-test="agenda-drop">
-						<span class="m-1 inline-block rounded bg-blue-600 px-1.5 text-[11px] font-semibold text-white">{{ drag.mark.time }}</span>
+					<!-- //// and, a moment after the pointer stops, whether the hour holds there (the window's own check), before the drop -->
+					<div v-if="drag && drag.mark && drag.mark.key === String(column.key)" class="pointer-events-none absolute inset-x-1.5 z-10 flex flex-col items-start gap-0.5 overflow-hidden rounded-lg border-2 border-dashed p-1" :class="markClass(drag.mark.fit)" :style="{ top: `${drag.mark.top}px`, height: `${drag.mark.height}px` }" data-test="agenda-drop">
+						<span class="inline-block rounded px-1.5 text-[11px] font-semibold text-white" :class="drag.mark.fit && !drag.mark.fit.ok ? 'bg-yellow-700' : 'bg-blue-600'">{{ drag.mark.time }}</span>
+						<span v-if="drag.mark.fit" class="px-0.5 text-[11px] font-semibold leading-snug" :class="drag.mark.fit.ok ? 'text-green-800 dark:text-green-100' : 'text-yellow-800 dark:text-yellow-100'" data-test="agenda-drop-fit">{{ fitText(drag.mark.fit) }}</span>
 					</div>
 					<!-- Not working that day: hatched, and said. Her appointments stay drawn: they were booked before, and are « to handle » (never cancelled by themselves). -->
 					<div v-if="column.person && isOff(column.person)" class="absolute inset-0" :style="{ backgroundImage: HATCH }">
@@ -120,6 +122,8 @@
 							:aria-label="row.busy ? __('Busy') : `${row.customer_name || ''} ${hourOf(row.starts_at)}`"
 							:data-test="`block-${row.key}`"
 							@pointerdown="startDrag($event, row)"
+							@touchmove="holdStill"
+							@contextmenu="drag && drag.touch && $event.preventDefault()"
 							@click="!row.busy && !justDragged() && select(row)"
 						>
 							<span class="flex items-center justify-between gap-1">
@@ -175,7 +179,8 @@
  *
  * emits `new-appointment` `{ person, from }` (a free hour, or the « New » button) and `selected` (an appointment's sheet should open).
  */
-import { computed, ref } from "vue"
+import { computed, onBeforeUnmount, ref } from "vue"
+import { useAppointment } from "@/composables/useAppointment"
 import { useAppointmentsStore } from "@/stores/appointments"
 import { usePOSUIStore } from "@/stores/posUI"
 import {
@@ -201,6 +206,7 @@ const emit = defineEmits(["new-appointment", "selected", "move-to"])
 
 const store = useAppointmentsStore()
 const uiStore = usePOSUIStore()
+const { checkMove } = useAppointment()
 
 const PX_PER_HOUR = 56
 const HATCH = "repeating-linear-gradient(135deg, #F6F3ED 0, #F6F3ED 8px, #ECE7DE 8px, #ECE7DE 9px)"
@@ -355,46 +361,115 @@ function pillText(row) {
 }
 
 // An appointment dragged to another person or another hour of the day (NeoSalon B', 16.11.2026): the drop opens « Move » on what it proposes,
-// with the window's own check and « Warn the customer ». A mouse or a pen drags; a touch keeps the tap (the sheet, then « Move »), the agenda
-// scrolls under a finger.
+// with the window's own check and « Warn the customer ». A mouse or a pen drags at once. A finger drags after a long press (16.11:
+// at the counter they work with a finger): held still LONG_PRESS_MS on an appointment, it takes it; moved before, it scrolls the agenda.
+// While it drags, the mark says, a moment after it stops, whether the hour holds there (the same check as the window's).
+const LONG_PRESS_MS = 450
+const FINGER_SLOP_PX = 8
+const FIT_AFTER_MS = 250
 const drag = ref(null)
 let draggedAt = 0
+let pressTimer = null
+let fitTimer = null
 const justDragged = () => Date.now() - draggedAt < 400
 
 function startDrag(event, row) {
-	if (row.busy || !store.capabilities.move || row.can?.move === false || event.button !== 0 || event.pointerType === "touch") return
+	if (row.busy || !store.capabilities.move || row.can?.move === false || event.button !== 0) return
 	const rect = event.currentTarget.getBoundingClientRect()
-	drag.value = { row, x: event.clientX, y: event.clientY, grab: event.clientY - rect.top, height: rect.height, moved: false, mark: null }
+	const touch = event.pointerType === "touch"
+	drag.value = { row, x: event.clientX, y: event.clientY, grab: event.clientY - rect.top, height: rect.height, moved: false, mark: null, touch, armed: !touch, fits: {} }
 	window.addEventListener("pointermove", onDrag)
-	window.addEventListener("pointerup", endDrag, { once: true })
+	window.addEventListener("pointerup", endDrag)
+	window.addEventListener("pointercancel", stopDrag)
+	if (touch) {
+		pressTimer = setTimeout(() => {
+			if (!drag.value || drag.value.row !== row) return
+			drag.value.armed = true
+			navigator.vibrate?.(15)
+		}, LONG_PRESS_MS)
+	}
+}
+
+// A finger that took an appointment moves it, not the page (the listener sits on the block, so the browser waits for it before scrolling)
+function holdStill(event) {
+	if (drag.value?.armed && event.cancelable) event.preventDefault()
 }
 
 function onDrag(event) {
 	const d = drag.value
 	if (!d) return
-	if (!d.moved && Math.hypot(event.clientX - d.x, event.clientY - d.y) < 6) return
+	const far = Math.hypot(event.clientX - d.x, event.clientY - d.y)
+	if (!d.armed) {
+		// the finger moved before the long press: it scrolls the agenda, nothing is dragged
+		if (far > FINGER_SLOP_PX) stopDrag()
+		return
+	}
+	if (!d.moved && far < 6) return
 	d.moved = true
 	const body = document.elementFromPoint(event.clientX, event.clientY)?.closest?.("[data-test^='column-']")
 	const key = body ? body.getAttribute("data-test").slice("column-".length) : null
 	const column = key === null ? null : store.columns.find((c) => String(c.key) === key)
 	if (!column?.person) {
 		d.mark = null
+		clearTimeout(fitTimer)
 		return
 	}
 	const time = dropTime(event.clientY - body.getBoundingClientRect().top - d.grab, store.range, PX_PER_HOUR)
+	if (d.mark && d.mark.key === key && d.mark.time === time) return
 	const [hours, minutes] = time.split(":").map(Number)
-	d.mark = { key, person: column.person, time, top: offsetOf(hours * 60 + minutes, store.range, PX_PER_HOUR), height: d.height }
+	d.mark = { key, person: column.person, time, top: offsetOf(hours * 60 + minutes, store.range, PX_PER_HOUR), height: d.height, fit: null }
+	askFit(d)
+}
+
+// Whether it holds is asked once the pointer rests on a person and a quarter, and kept for the drag (back on a quarter already asked: said at once)
+function askFit(d) {
+	clearTimeout(fitTimer)
+	if (!store.capabilities.check_move || !d.row.booking) return
+	const at = `${d.mark.person.sales_person}|${d.mark.time}`
+	if (at in d.fits) {
+		d.mark.fit = d.fits[at]
+		return
+	}
+	const { person, time } = d.mark
+	fitTimer = setTimeout(async () => {
+		const answer = await checkMove(d.row.booking, `${store.date} ${time}:00`, person.sales_person)
+		const fit = answer ? { ok: Boolean(answer.ok), why: answer.why || "" } : null
+		d.fits[at] = fit
+		if (drag.value === d && d.mark && `${d.mark.person.sales_person}|${d.mark.time}` === at) d.mark.fit = fit
+	}, FIT_AFTER_MS)
+}
+
+// The window's words: « This hour is free. », or the lane's own reason, or the general one when it gives none
+function fitText(fit) {
+	if (fit.ok) return __("This hour is free.")
+	return fit.why || __("This hour is not possible.")
+}
+
+function markClass(fit) {
+	if (!fit) return "border-blue-500 bg-blue-50/80 dark:bg-blue-400/20"
+	return fit.ok ? "border-green-600 bg-green-50/90 dark:bg-green-400/20" : "border-yellow-600 bg-yellow-50/90 dark:bg-yellow-400/20"
+}
+
+function stopDrag() {
+	clearTimeout(pressTimer)
+	clearTimeout(fitTimer)
+	window.removeEventListener("pointermove", onDrag)
+	window.removeEventListener("pointerup", endDrag)
+	window.removeEventListener("pointercancel", stopDrag)
+	const d = drag.value
+	drag.value = null
+	return d
 }
 
 function endDrag() {
-	window.removeEventListener("pointermove", onDrag)
-	const d = drag.value
-	drag.value = null
+	const d = stopDrag()
 	if (!d?.moved) return
 	draggedAt = Date.now()
 	if (!d.mark) return
 	emit("move-to", { appointment: d.row, person: d.mark.person.sales_person, day: store.date, time: d.mark.time })
 }
+
+onBeforeUnmount(stopDrag)
 
 function select(row) {
 	store.select(row.key)
