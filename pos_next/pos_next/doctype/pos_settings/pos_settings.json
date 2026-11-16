@@ -113,6 +113,7 @@
   "return_validity_days",
   "allow_free_batch_return",
   "allow_print_draft_invoices",
+  "abandoned_draft_days",
   "section_break_pricing",
   "decimal_precision",
   "tax_inclusive",
@@ -934,6 +935,14 @@
    "label": "Allow Print Draft Invoices"
   },
   {
+   "default": "30",
+   "description": "A till's draft is deleted once it has been left this many days after its shift was closed, or by a cashier whose account is disabled. A restaurant table's order, a takeaway order, a printed draft and a draft paid by a payment provider are never deleted.",
+   "fieldname": "abandoned_draft_days",
+   "fieldtype": "Int",
+   "label": "Abandoned Draft Lifetime (Days)",
+   "non_negative": 1
+  },
+  {
    "collapsible": 1,
    "fieldname": "section_break_pricing",
    "fieldtype": "Section Break",
@@ -1136,7 +1145,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-10 21:40:00.000000",
+ "modified": "2026-11-16 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "POS Settings",

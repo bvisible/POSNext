@@ -507,6 +507,8 @@ scheduler_events = {
 		"pos_next.tasks.cleanup_expired_promotions.cleanup_expired_promotions",
 		# //// Neoffice — a phone's cart nobody paid nor took over is deleted after the lifetime its till sets (scanning in the shop)
 		"pos_next.shop_scan.purge.purge_abandoned_carts",
+		# //// Neoffice — a till's draft left after its shift was closed, or by a disabled cashier, is deleted after the days its till sets (maintenance#1980)
+		"pos_next.tasks.purge_abandoned_drafts.purge_abandoned_drafts",
 	],
 	# //// Neoffice — an online booking whose guest has not confirmed it from the e-mail by its deadline expires
 	# //// (NeoResto lot 1, task 18). It frees its tables at the deadline itself; this job writes it down soon after,

@@ -2091,6 +2091,21 @@ SETTINGS = (
 		"check",
 		doctype=POS_PROFILE,
 	),
+	# //// Neoffice — how long a draft the till left stays once nobody will finish it (maintenance#1980; product owner, 16.11.2026: « 30 jours et
+	# //// cela doit être configurable »): pos_next.tasks.purge_abandoned_drafts deletes it every day after that.
+	Setting(
+		"abandoned_draft_days",
+		"cash_movements",
+		_lt("An abandoned draft is deleted after (days)"),
+		_lt(
+			"A draft left after its shift was closed, or by a cashier whose account is disabled, is deleted after this"
+			" many days. A table's order, a takeaway order, a printed draft and a draft paid on a phone are never"
+			" deleted. Empty: 30 days."
+		),
+		"int",
+		doctype=POS_SETTINGS,
+		min=1,
+	),
 	Setting(
 		"eod_email_recipients",
 		"eod_report",
