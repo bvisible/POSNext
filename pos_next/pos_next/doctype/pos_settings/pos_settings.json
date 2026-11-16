@@ -49,9 +49,6 @@
   "section_break_gift_card",
   "enable_gift_cards",
   "gift_card_item",
-  "gift_card_kind",
-  "gift_card_account",
-  "gift_card_tax_template",
   "column_break_gift_card",
   "enable_gift_card_splitting",
   "gift_card_validity_months",
@@ -466,31 +463,6 @@
    "options": "Item",
    "depends_on": "enable_gift_cards",
    "description": "Item that represents a gift card purchase. When sold, creates a gift card coupon with the item's price as the gift card value."
-  },
-  {
-   "default": "Service voucher",
-   "depends_on": "enable_gift_cards",
-   "description": "A service voucher is taxed when it is sold, like a gift card of the shop (proposed). A value voucher can be spent on anything: its sale is no supply, carries no VAT and is booked as a debt to the holder; the VAT is taken when the card is spent.",
-   "fieldname": "gift_card_kind",
-   "fieldtype": "Select",
-   "label": "Kind of gift card",
-   "options": "Value voucher\nService voucher"
-  },
-  {
-   "depends_on": "eval:doc.enable_gift_cards && doc.gift_card_kind != 'Service voucher'",
-   "description": "The account the sale of a value voucher is booked on (a debt to the holder). Proposed when empty; the numbering is for your fiduciary to confirm.",
-   "fieldname": "gift_card_account",
-   "fieldtype": "Link",
-   "label": "Gift card account",
-   "options": "Account"
-  },
-  {
-   "depends_on": "eval:doc.enable_gift_cards && doc.gift_card_kind != 'Service voucher'",
-   "description": "The item tax template of the gift card item: a value voucher carries no VAT. A template at 0 % is proposed.",
-   "fieldname": "gift_card_tax_template",
-   "fieldtype": "Link",
-   "label": "VAT of the gift card sale",
-   "options": "Item Tax Template"
   },
   {
    "fieldname": "column_break_gift_card",
@@ -1145,7 +1117,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-16 14:00:00.000000",
+ "modified": "2026-11-16 17:28:45.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "POS Settings",

@@ -20390,8 +20390,8 @@ msgid "Gift card item"
 msgstr "Article carte cadeau"
 
 #: pos_next/till_settings/registry.py:985
-msgid "The item sold when a gift card is sold; its price becomes the value of the card."
-msgstr "L'article vendu lors de la vente d'une carte cadeau ; son prix devient la valeur de la carte."
+msgid "The item sold when a gift card is sold; its price becomes the value of the card. Choose an item taxed at the usual VAT rate: the card is taxed when it is sold, and taken as a discount when it is spent."
+msgstr "L'article vendu lors de la vente d'une carte cadeau ; son prix devient la valeur de la carte. Choisissez un article soumis au taux de TVA usuel : la carte est soumise à la TVA lors de sa vente, et prise en remise lorsqu'elle est dépensée."
 
 #: pos_next/till_settings/registry.py:994
 msgid "Keep the rest on the card"
@@ -26364,109 +26364,15 @@ msgstr "Quels articles comptent comme services, c'est-à-dire les lignes qui dem
 msgid "{0} was paid online."
 msgstr "{0} a été payé en ligne."
 
-#. Description of the 'Kind of gift card' (Select) field in DocType 'POS
-#. Settings'
-#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:472
-msgid "A service voucher is taxed when it is sold, like a gift card of the shop (proposed). A value voucher can be spent on anything: its sale is no supply, carries no VAT and is booked as a debt to the holder; the VAT is taken when the card is spent."
-msgstr "Un bon de prestation est imposé à la vente, comme une carte cadeau de la boutique (proposé). Un bon de valeur peut être dépensé pour n'importe quel achat : sa vente ne constitue pas une livraison, ne porte pas de TVA et est comptabilisée comme une dette envers le porteur ; la TVA est perçue lorsque la carte est dépensée."
-
 #: POS/src/composables/useAppointment.js:47
 #: pos_next/public/pos/assets/POSSale-CPIklKdN.js:18
 msgid "Announced price not known offline: the price of the day is kept."
 msgstr "Prix annoncé inconnu hors ligne : le prix du jour est conservé."
 
-#: pos_next/gift_card_vat.py:114
-#, python-brace-format
-msgid "Created gift card account: {0}"
-msgstr "Compte de la carte cadeau créé : {0}"
-
-#. Label of a Link field in DocType 'POS Settings'
-#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:483
-#: pos_next/till_settings/registry.py:1757
-msgid "Gift card account"
-msgstr "Compte de la carte cadeau"
-
-#: pos_next/gift_card_vat.py:105
-msgid "Gift Card Liability"
-msgstr "Dette envers le porteur de cartes cadeaux"
-
-#: pos_next/gift_card_vat.py:156
-#, python-brace-format
-msgid "Gift cards cannot be switched on as value vouchers: no account could be made for the company {0}. Choose one in « Gift card account »."
-msgstr "Les cartes cadeaux ne peuvent pas être activées comme bons de valeur : aucun compte n'a pu être créé pour la société {0}. Choisissez-en un dans « Compte de la carte cadeau »."
-
-#: pos_next/gift_card_vat.py:171
-#, python-brace-format
-msgid "Gift cards cannot be switched on as value vouchers: the company {0} has no item tax template at 0 %, and the sale of a value voucher carries no VAT. Make a template with every rate at 0 % (Accounting, Item Tax Template), or choose one in « VAT of the gift card sale » in the same save."
-msgstr "Les cartes cadeaux ne peuvent pas être activées comme bons de valeur : la société {0} n'a aucun modèle de taxe d'article à 0 %, et la vente d'un bon de valeur ne porte pas de TVA. Créez un modèle dont tous les taux sont à 0 % (Comptabilité, Modèle de taxe d'article), ou choisissez-en un dans « TVA de la vente de la carte cadeau » lors du même enregistrement."
-
-#. Label of a Select field in DocType 'POS Settings'
-#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:475
-#: pos_next/till_settings/registry.py:1729
-msgid "Kind of gift card"
-msgstr "Genre de carte cadeau"
-
-#: pos_next/till_settings/registry.py:1743
-msgid "MWST-Info 04 of the Federal Tax Administration, ch. 2.7.6.2: value vouchers (text in German, practice of 17.03.2025)"
-msgstr "MWST-Info 04 de l'Administration fédérale des contributions, ch. 2.7.6.2 : bons de valeur (texte en allemand, pratique du 17.03.2025)"
-
-#: pos_next/till_settings/registry.py:1748
-msgid "MWST-Info 04 of the Federal Tax Administration, ch. 2.7.6.3: service vouchers (text in German, practice of 17.03.2025)"
-msgstr "MWST-Info 04 de l'Administration fédérale des contributions, ch. 2.7.6.3 : bons de prestation (texte en allemand, pratique du 17.03.2025)"
-
-#. Option for the 'Kind of gift card' (Select) field in DocType 'POS Settings'
-#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:476
-#: pos_next/till_settings/registry.py:1739
-msgid "Service voucher"
-msgstr "Bon de prestation"
-
-#. Description of the 'Gift card account' (Link) field in DocType 'POS
-#. Settings'
-#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:480
-msgid "The account the sale of a value voucher is booked on (a debt to the holder). Proposed when empty; the numbering is for your fiduciary to confirm."
-msgstr "Le compte sur lequel est comptabilisée la vente d'un bon de valeur (une dette envers le porteur). Proposé lorsqu'il est vide ; la numérotation est à faire confirmer par votre fiduciaire."
-
-#: pos_next/till_settings/registry.py:1759
-msgid "The account the sale of a value voucher is booked on: a debt to the holder, which the card spent clears. One is proposed when none is chosen; the numbering of your accounts is for your fiduciary to confirm."
-msgstr "Le compte sur lequel est comptabilisée la vente d'un bon de valeur : une dette envers le porteur, que l'utilisation de la carte apure. Un compte est proposé lorsqu'aucun n'est choisi ; la numérotation de vos comptes est à faire confirmer par votre fiduciaire."
-
-#: pos_next/till_settings/registry.py:1772
-#, python-format
-msgid "The item tax template of the gift card item. A value voucher carries no VAT: a template at 0 % is proposed, and a value voucher cannot be switched on without one until you choose it."
-msgstr "Le modèle de taxe d'article de l'article carte cadeau. Un bon de valeur ne porte pas de TVA : un modèle à 0 % est proposé, et un bon de valeur ne peut pas être activé sans un tel modèle tant que vous n'en avez pas choisi un."
-
-#. Description of the 'VAT of the gift card sale' (Link) field in DocType 'POS
-#. Settings'
-#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:488
-#, python-format
-msgid "The item tax template of the gift card item: a value voucher carries no VAT. A template at 0 % is proposed."
-msgstr "Le modèle de taxe d'article de l'article carte cadeau : un bon de valeur ne porte pas de TVA. Un modèle à 0 % est proposé."
-
-#: pos_next/gift_card_vat.py:162
-#, python-brace-format
-msgid "The VAT of the gift card sale must be a template of the company of this till ({0})."
-msgstr "La TVA de la vente de la carte cadeau doit être un modèle de la société de cette caisse ({0})."
-
 #: pos_next/till_tips.py:169
 #, python-brace-format
 msgid "Tips cannot be switched on: the company {0} has no item tax template at 0 %, and a tip carries no VAT unless you choose it. Make a template with every rate at 0 % (Accounting, Item Tax Template) and save again."
 msgstr "Les pourboires ne peuvent pas être activés : la société {0} n'a aucun modèle de taxe d'article à 0 %, et un pourboire ne porte pas de TVA, sauf si vous en choisissez une. Créez un modèle dont tous les taux sont à 0 % (Comptabilité, Modèle de taxe d'article), puis enregistrez à nouveau."
-
-#. Option for the 'Kind of gift card' (Select) field in DocType 'POS Settings'
-#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:476
-#: pos_next/till_settings/registry.py:1738
-msgid "Value voucher"
-msgstr "Bon de valeur"
-
-#: pos_next/till_settings/registry.py:1731
-msgid "Service voucher (proposed): the card is taxed when it is sold, like the gift cards of the shop. Value voucher: the card can be spent on anything. Its sale is no supply, carries no VAT and is booked as a debt to the holder; the VAT is taken when the card is spent, as a payment."
-msgstr "Bon de prestation (proposé) : la carte est imposée à la vente, comme les cartes cadeaux de la boutique. Bon de valeur : la carte peut être dépensée pour n'importe quel achat. Sa vente ne constitue pas une livraison, ne porte pas de TVA et est comptabilisée comme une dette envers le porteur ; la TVA est perçue lors de l'utilisation de la carte, au moment du paiement."
-
-#. Label of a Link field in DocType 'POS Settings'
-#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:491
-#: pos_next/till_settings/registry.py:1770
-msgid "VAT of the gift card sale"
-msgstr "TVA de la vente de la carte cadeau"
 
 #: pos_next/fixtures/custom_field.json
 msgid "Account of the sale"
@@ -26477,8 +26383,8 @@ msgid "Given for free"
 msgstr "Offerte"
 
 #: pos_next/fixtures/custom_field.json
-msgid "How this card came to be, which decides the way it is spent. Sold with VAT: its sale was taxed, so it is spent as a discount (its VAT is taken already). Sold without VAT: it is a value voucher, spent as a payment (its VAT is taken when it is spent). Given for free: no money was received for it (a promotion), so it is a discount. Change it to a sold origin only if money was received."
-msgstr "Comment cette carte a été obtenue, ce qui détermine la manière dont elle s'utilise. Vendue avec TVA : la vente a été soumise à la TVA, la carte s'utilise donc comme une remise (sa TVA a déjà été prélevée). Vendue sans TVA : c'est un bon de valeur, qui s'utilise comme un moyen de paiement (sa TVA est prélevée à son utilisation). Offerte : aucun argent n'a été reçu pour elle (une promotion), elle s'utilise donc comme une remise. Ne la passez à une origine « vendue » que si de l'argent a été encaissé."
+msgid "How this card came to be. Sold with VAT: its sale was taxed. Sold without VAT: its item carried no VAT when it was sold. Given for free: no money was received for it (a promotion). At the till, every card is taken as a discount of the sale. Change it to a sold origin only if money was received."
+msgstr "Comment cette carte a été obtenue. Vendue avec TVA : sa vente a été soumise à la TVA. Vendue sans TVA : son article ne portait pas de TVA lors de la vente. Offerte : aucun argent n'a été encaissé pour elle (une promotion). À la caisse, chaque carte est prise en remise de la vente. Ne la passez à une origine « vendue » que si de l'argent a été encaissé."
 
 #: pos_next/fixtures/custom_field.json
 msgid "Sold with VAT"
@@ -26489,8 +26395,8 @@ msgid "Sold without VAT"
 msgstr "Vendue sans TVA"
 
 #: pos_next/fixtures/custom_field.json
-msgid "The account the sale of this card was credited to: spending the card clears that account, so that the revenue of the sale is not counted twice. Empty: the gift card account of the till."
-msgstr "Le compte crédité par la vente de cette carte : l'utilisation de la carte apure ce compte, afin que le produit de la vente ne soit pas compté deux fois. Vide : le compte des cartes cadeaux de la caisse."
+msgid "The account the sale of this card was credited to, kept for a card sold without VAT. Empty: the sale is unknown."
+msgstr "Le compte auquel la vente de cette carte a été créditée, conservé pour une carte vendue sans TVA. Vide : la vente est inconnue."
 
 #: POS/src/components/sale/EditItemDialog.vue
 msgid "Give the session back"
@@ -26539,11 +26445,6 @@ msgstr "{0} séance(s) restante(s) sur {1}"
 #: POS/src/components/sale/PackageBanners.vue:32
 msgid "No line of the cart is paid by this package."
 msgstr "Aucune ligne du panier n'est couverte par ce forfait."
-
-#: pos_next/gift_card_vat.py:149
-#, python-brace-format
-msgid "The item {0} is also the gift card item of the till {1} (kind of gift card: {2}). A value voucher and a service voucher are not taxed the same way: give each kind its own item."
-msgstr "L'article {0} est aussi l'article de carte cadeau de la caisse {1} (type de carte cadeau : {2}). Un bon de valeur et un bon de prestation ne sont pas soumis à la même TVA : attribuez à chaque type son propre article."
 
 #: POS/src/components/sale/PackageBanners.vue:35
 msgid "Use package"

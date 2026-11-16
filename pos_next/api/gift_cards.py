@@ -80,7 +80,6 @@ def get_gift_card_settings(pos_profile):
 			"enable_gift_card_splitting",
 			"gift_card_validity_months",
 			"gift_card_notification",
-			"gift_card_kind",
 		],
 		as_dict=True
 	)
@@ -235,6 +234,11 @@ def _create_gift_card(amount, customer, company, source_invoice, settings):
 			)
 			return None
 
+		# //// Neoffice — how the sale of the card was taxed (pos_next.gift_card_vat, 16.11.2026)
+		origin, sale_account = gift_card_vat.the_sale_of_a_card(
+			source_invoice, settings.get("gift_card_item"), amount
+		)
+
 		# Create ERPNext Coupon Code directly
 		coupon = frappe.get_doc({
 			"doctype": "Coupon Code",
@@ -251,15 +255,10 @@ def _create_gift_card(amount, customer, company, source_invoice, settings):
 			"gift_card_amount": flt(amount),
 			"original_gift_card_amount": flt(amount),
 			"source_invoice": source_invoice,
-			# //// Neoffice — where the card comes from, which decides how it is spent (pos_next.gift_card_vat): a service voucher was taxed when it was sold; a value
-			# //// voucher was not, and its sale credited an account that spending it must clear. A card made without a sale takes the field's default (offered).
-			# //// A till that never chose its kind sells service vouchers, taxed at their sale like the shop's cards (16.11.2026): only a value voucher says « without VAT ».
-			"pos_next_origin": gift_card_vat.ORIGIN_SOLD_WITHOUT_VAT
-			if gift_card_vat.the_kind_of(settings) == gift_card_vat.KIND_VALUE
-			else gift_card_vat.ORIGIN_SOLD_WITH_VAT,
-			"pos_next_sale_account": gift_card_vat.the_account_the_sale_credited(
-				source_invoice, settings.get("gift_card_item"), amount
-			),
+			# //// Neoffice — where the card comes from, read on the line of its sale (pos_next.gift_card_vat, 16.11.2026): taxed when it was sold, or sold by an item at 0 %
+			# //// (then with the account that sale credited). A card made without a sale takes the field's default (offered). Every origin is spent as a discount at the till.
+			"pos_next_origin": origin,
+			"pos_next_sale_account": sale_account,
 		})
 		coupon.insert(ignore_permissions=True)
 

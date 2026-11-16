@@ -676,12 +676,6 @@ msgstr ""
 msgid "A unit of the article: the packaging counted in. Left blank on a free line."
 msgstr ""
 
-#. Description of the 'Kind of gift card' (Select) field in DocType 'POS
-#. Settings'
-#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:472
-msgid "A value voucher can be spent on anything: its sale is no supply, carries no VAT and is booked as a debt to the holder; the VAT is taken when the card is spent. A service voucher names one service: its sale is taxed."
-msgstr ""
-
 #: pos_next/pos_next/doctype/wallet/wallet.py:50
 #, python-brace-format
 msgid "A wallet already exists for customer {0} in company {1}"
@@ -5318,11 +5312,6 @@ msgstr ""
 msgid "Created On"
 msgstr ""
 
-#: pos_next/gift_card_vat.py:114
-#, python-brace-format
-msgid "Created gift card account: {0}"
-msgstr ""
-
 #: pos_next/pos_next/doctype/restaurant_settings/restaurant_settings.py:113
 #: pos_next/till_tips.py:139
 msgid "Created tip item: TIP"
@@ -9324,10 +9313,6 @@ msgstr ""
 msgid "Gift Card Item"
 msgstr ""
 
-#: pos_next/gift_card_vat.py:105
-msgid "Gift Card Liability"
-msgstr ""
-
 #. Label of a Link field in DocType 'POS Settings'
 #: pos_next/pos_next/doctype/pos_settings/pos_settings.json:517
 msgid "Gift Card Notification"
@@ -9354,12 +9339,6 @@ msgstr ""
 
 #: POS/src/components/sale/PromotionManagement.vue:771
 msgid "Gift Pool Free Items"
-msgstr ""
-
-#. Label of a Link field in DocType 'POS Settings'
-#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:483
-#: pos_next/till_settings/registry.py:1757
-msgid "Gift card account"
 msgstr ""
 
 #: pos_next/api/gift_cards.py:493
@@ -9396,16 +9375,6 @@ msgstr ""
 
 #: pos_next/till_settings/registry.py:285
 msgid "Gift cards"
-msgstr ""
-
-#: pos_next/gift_card_vat.py:156
-#, python-brace-format
-msgid "Gift cards cannot be switched on as value vouchers: no account could be made for the company {0}. Choose one in « Gift card account »."
-msgstr ""
-
-#: pos_next/gift_card_vat.py:171
-#, python-brace-format
-msgid "Gift cards cannot be switched on as value vouchers: the company {0} has no item tax template at 0 %, and the sale of a value voucher carries no VAT. Make a template with every rate at 0 % (Accounting, Item Tax Template), or choose one in « VAT of the gift card sale » in the same save."
 msgstr ""
 
 #: POS/src/utils/offerProgress.js:29
@@ -11077,12 +11046,6 @@ msgstr ""
 msgid "Keyboard shortcuts"
 msgstr ""
 
-#. Label of a Select field in DocType 'POS Settings'
-#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:475
-#: pos_next/till_settings/registry.py:1729
-msgid "Kind of gift card"
-msgstr ""
-
 #. Option for the 'Station Type' (Select) field in DocType 'Preparation
 #. Station'
 #. Option for the 'Screen' (Select) field in DocType 'Restaurant Device'
@@ -11829,14 +11792,6 @@ msgstr ""
 #: pos_next/i18n_anchors.py:36
 msgctxt "Menu Badge"
 msgid "Lupin"
-msgstr ""
-
-#: pos_next/till_settings/registry.py:1743
-msgid "MWST-Info 04 of the Federal Tax Administration, ch. 2.7.6.2: value vouchers (text in German, practice of 17.03.2025)"
-msgstr ""
-
-#: pos_next/till_settings/registry.py:1748
-msgid "MWST-Info 04 of the Federal Tax Administration, ch. 2.7.6.3: service vouchers (text in German, practice of 17.03.2025)"
 msgstr ""
 
 #. Label of a Date field in DocType 'Restaurant Portion'
@@ -20652,12 +20607,6 @@ msgstr ""
 msgid "Service unavailable"
 msgstr ""
 
-#. Option for the 'Kind of gift card' (Select) field in DocType 'POS Settings'
-#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:476
-#: pos_next/till_settings/registry.py:1739
-msgid "Service voucher"
-msgstr ""
-
 #: POS/src/components/sale/AppointmentSheet.vue:26
 #: POS/src/components/sale/NewAppointmentDialog.vue:28
 msgid "Services"
@@ -22650,11 +22599,6 @@ msgstr ""
 msgid "The QR link expires"
 msgstr ""
 
-#: pos_next/gift_card_vat.py:162
-#, python-brace-format
-msgid "The VAT of the gift card sale must be a template of the company of this till ({0})."
-msgstr ""
-
 #: pos_next/till_tips.py:251
 #, python-brace-format
 msgid "The VAT of the tip must be a template of the company of this till ({0})."
@@ -22678,16 +22622,6 @@ msgstr ""
 
 #: pos_next/till_settings/registry.py:2309
 msgid "The account the change given back comes from, usually the cash of the till."
-msgstr ""
-
-#. Description of the 'Gift card account' (Link) field in DocType 'POS
-#. Settings'
-#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:480
-msgid "The account the sale of a value voucher is booked on (a debt to the holder). Proposed when empty; the numbering is for your fiduciary to confirm."
-msgstr ""
-
-#: pos_next/till_settings/registry.py:1759
-msgid "The account the sale of a value voucher is booked on: a debt to the holder, which the card spent clears. One is proposed when none is chosen; the numbering of your accounts is for your fiduciary to confirm."
 msgstr ""
 
 #: pos_next/till_settings/registry.py:1518
@@ -23117,19 +23051,7 @@ msgid "The item groups whose items are services (their sub-groups too)."
 msgstr ""
 
 #: pos_next/till_settings/registry.py:1717
-msgid "The item sold when a gift card is sold; its price becomes the value of the card."
-msgstr ""
-
-#: pos_next/till_settings/registry.py:1772
-#, python-format
-msgid "The item tax template of the gift card item. A value voucher carries no VAT: a template at 0 % is proposed, and a value voucher cannot be switched on without one until you choose it."
-msgstr ""
-
-#. Description of the 'VAT of the gift card sale' (Link) field in DocType 'POS
-#. Settings'
-#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:488
-#, python-format
-msgid "The item tax template of the gift card item: a value voucher carries no VAT. A template at 0 % is proposed."
+msgid "The item sold when a gift card is sold; its price becomes the value of the card. Choose an item taxed at the usual VAT rate: the card is taxed when it is sold, and taken as a discount when it is spent."
 msgstr ""
 
 #: pos_next/till_settings/registry.py:1532
@@ -25816,12 +25738,6 @@ msgid "Usual"
 msgstr ""
 
 #. Label of a Link field in DocType 'POS Settings'
-#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:491
-#: pos_next/till_settings/registry.py:1770
-msgid "VAT of the gift card sale"
-msgstr ""
-
-#. Label of a Link field in DocType 'POS Settings'
 #: pos_next/pos_next/doctype/pos_settings/pos_settings.json:685
 #: pos_next/till_settings/registry.py:1530
 msgid "VAT of the tip"
@@ -25916,16 +25832,6 @@ msgstr ""
 #: POS/src/components/sale/EditItemDialog.vue:593
 #: pos_next/public/pos/assets/ShiftOpeningDialog-BKFkTcwe.js:214
 msgid "Value offered"
-msgstr ""
-
-#. Option for the 'Kind of gift card' (Select) field in DocType 'POS Settings'
-#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:476
-#: pos_next/till_settings/registry.py:1738
-msgid "Value voucher"
-msgstr ""
-
-#: pos_next/till_settings/registry.py:1731
-msgid "Value voucher (proposed): the card can be spent on anything. Its sale is no supply, carries no VAT and is booked as a debt to the holder; the VAT is taken when the card is spent, as a payment. Service voucher: the card names one service, and its sale is taxed like that service."
 msgstr ""
 
 #: pos_next/i18n_anchors.py:39
@@ -29453,11 +29359,11 @@ msgid "Given for free"
 msgstr ""
 
 #: pos_next/fixtures/custom_field.json
-msgid "How this card came to be, which decides the way it is spent. Sold with VAT: its sale was taxed, so it is spent as a discount (its VAT is taken already). Sold without VAT: it is a value voucher, spent as a payment (its VAT is taken when it is spent). Given for free: no money was received for it (a promotion), so it is a discount. Change it to a sold origin only if money was received."
+msgid "How this card came to be. Sold with VAT: its sale was taxed. Sold without VAT: its item carried no VAT when it was sold. Given for free: no money was received for it (a promotion). At the till, every card is taken as a discount of the sale. Change it to a sold origin only if money was received."
 msgstr ""
 
 #: pos_next/fixtures/custom_field.json
-msgid "The account the sale of this card was credited to: spending the card clears that account, so that the revenue of the sale is not counted twice. Empty: the gift card account of the till."
+msgid "The account the sale of this card was credited to, kept for a card sold without VAT. Empty: the sale is unknown."
 msgstr ""
 
 #: POS/src/components/sale/UsePackageDialog.vue
@@ -29523,10 +29429,6 @@ msgstr ""
 
 #: POS/src/components/sale/PackageBanners.vue:35
 msgid "Use package"
-msgstr ""
-
-#: pos_next/gift_card_vat.py:149
-msgid "The item {0} is also the gift card item of the till {1} (kind of gift card: {2}). A value voucher and a service voucher are not taxed the same way: give each kind its own item."
 msgstr ""
 
 #: POS/src/components/sale/SalonAgenda.vue

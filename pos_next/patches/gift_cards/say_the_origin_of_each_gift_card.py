@@ -1,4 +1,4 @@
-# //// Neoffice — added file (no upstream equivalent). Each gift card says where it comes from, and each till what kind of card it sells (13.11.2026).
+# //// Neoffice — added file (no upstream equivalent). Each gift card says where it comes from (13.11.2026).
 """A gift card is spent as a discount or as a payment according to where it comes from (pos_next.gift_card_vat), which only its sale can say. This patch
 reads it there, and guesses nothing:
 
@@ -11,9 +11,8 @@ reads it there, and guesses nothing:
   which is how most sites sell). A card sold with VAT is SOLD WITH VAT: a discount, its VAT is taken already. Any other is SOLD WITHOUT VAT, and it keeps the
   account its sale credited (the income account of that line: a liability for a card sold since the change, a revenue account for one sold before), which spending
   it must clear. A card taxed in the doubt keeps its old way (a discount), never the new one, which would take its VAT twice;
-- a till that sells gift cards is a service-voucher till when a past sale of its gift card item was taxed, else a value-voucher till (the proposal).
 
-Nothing is made or moved in the books: the account and the mode of payment of a value card are made when the till's manager saves its settings.
+Nothing is made or moved in the books. (This patch also used to say which kind of card each till sells; the kind is gone, 16.11.2026.)
 It runs after the doctype sync (the columns of POS Settings), but BEFORE the fixtures are imported, which is what makes the custom fields of a card: it makes
 those fields itself when they are not there yet (the import then finds them), or it would find no column, do nothing, and leave every card of a site as it
 was made (a card taxed at its sale would then be spent as a payment, and its VAT taken twice). It also removes the field a first version of this change made
@@ -47,7 +46,6 @@ LINES_OF_INVOICES = """
 		ON stc.parent = si.name AND stc.parenttype = 'Sales Invoice' AND IFNULL(stc.rate, 0) > 0
 	WHERE si.docstatus = 1 AND sii.parent IN %(keys)s
 """
-LINES_OF_ITEMS = LINES_OF_INVOICES.replace("sii.parent IN %(keys)s", "sii.item_code IN %(keys)s")
 
 
 def _the_lines(query: str, keys) -> list:
@@ -160,17 +158,6 @@ def execute():
 			values[SALE_ACCOUNT] = account
 		if values:
 			frappe.db.set_value("Coupon Code", card.name, values, update_modified=False)
-
-	if frappe.db.has_column("POS Settings", "gift_card_kind"):
-		taxed_items = {row.item for row in _the_lines(LINES_OF_ITEMS, items) if _taxed(row)}
-		for till in frappe.get_all(
-			"POS Settings",
-			filters={"enable_gift_cards": 1},
-			fields=["name", "gift_card_item", "gift_card_kind"],
-		):
-			kind = "Service voucher" if till.gift_card_item in taxed_items else "Value voucher"
-			if till.gift_card_kind != kind:
-				frappe.db.set_value("POS Settings", till.name, "gift_card_kind", kind, update_modified=False)
 
 	if frappe.db.exists("Custom Field", OLD_FLAG):
 		frappe.delete_doc("Custom Field", OLD_FLAG, force=True, ignore_permissions=True)
