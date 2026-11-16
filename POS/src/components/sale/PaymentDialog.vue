@@ -1271,6 +1271,24 @@
 							>
 								{{ __("Payment Method") }}
 							</div>
+							<!-- //// Neoffice — the split choices wait behind this one button, closed by default, on a row that is there anyway (maintenance#2663): in a restaurant, with a customer who holds loyalty points, the split block's title, subtitle and ÷2 ÷3 ÷4 N row pushed the numpad under the right column's scroll at 1366 × 768. A running split is not behind it (see the split block below), and it gives way to that split. -->
+							<button
+								v-if="restaurantStore?.isEnabled && !splitMode"
+								type="button"
+								data-test="split-toggle"
+								@click="splitChoicesOpen = !splitChoicesOpen"
+								:aria-expanded="splitChoicesOpen"
+								:title="__('Split the bill between multiple people')"
+								:class="[
+									'ms-auto me-1 font-medium rounded-lg border transition-colors',
+									isSmallMobile ? 'px-1.5 py-0.5 text-[10px]' : 'px-2 py-0.5 text-xs',
+									splitChoicesOpen
+										? 'border-blue-400 bg-blue-50 text-blue-700'
+										: 'border-gray-200 bg-white text-gray-600 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700',
+								]"
+							>
+								{{ __("Split") }}
+							</button>
 							<!-- Clear All Payments Button -->
 							<button
 								v-if="paymentEntries.length > 0"
@@ -1567,23 +1585,13 @@
 					<!-- //// afterwards by hand (104959e6 + 64604eda, 2026-03-19 "native loyalty points -->
 					<!-- //// redemption in POS payment dialog", "custom amount input"). -->
 					<!-- Split Payment (restaurant mode) -->
+					<!-- //// Neoffice — the block takes no height until the « Split » button of the Payment Method row is opened or a split runs (maintenance#2663): its title and subtitle (now that button's label and tooltip) and the ÷2 ÷3 ÷4 N row, always drawn, pushed the numpad under the right column's scroll at 1366 × 768 for a customer with loyalty points. The running split below is drawn as it was. -->
 					<div
-						v-if="restaurantStore?.isEnabled"
+						v-if="restaurantStore?.isEnabled && (splitMode || splitChoicesOpen)"
 						:class="isCompactMode ? 'mb-2' : 'mb-3'"
 					>
-						<div
-							:class="[
-								'text-start font-semibold text-gray-500 uppercase tracking-wide',
-								isSmallMobile ? 'text-[10px] mb-0.5' : 'text-xs mb-1',
-							]"
-						>
-							{{ __("Split Payment") }}
-						</div>
 						<!-- Split inactive: show split buttons -->
 						<div v-if="!splitMode">
-							<p class="text-[10px] text-gray-400 mb-1.5">
-								{{ __("Split the bill between multiple people") }}
-							</p>
 							<div class="flex items-center gap-1.5">
 								<button
 									v-for="n in [2, 3, 4]"
@@ -1682,8 +1690,10 @@
 					</div>
 
 					<!-- Loyalty Points Redemption -->
+					<!-- //// Neoffice — data-test only, the card is unchanged: the test of maintenance#2663 reads that it stays in sight, behind no split state. -->
 					<div
 						v-if="loyaltyDetails.has_loyalty && loyaltyDetails.loyalty_points > 0"
+						data-test="payment-loyalty-card"
 						:class="[
 							'border border-amber-200 bg-amber-50 rounded-lg',
 							isCompactMode ? 'p-2 mb-2' : 'p-3 mb-3',
@@ -2698,6 +2708,14 @@ function deactivateSplit() {
 	splitAmountOverride.value = 0;
 	editingSplitAmount.value = false;
 }
+
+//// Neoffice — whether the ÷2 ÷3 ÷4 N choices are shown under the « Split » button (maintenance#2663): closed by default so that
+//// they take no height in the right column. A split that starts or stops closes them, so stopping a split goes back to the
+//// compact button; the dialog's open resets them too (see the watch on show).
+const splitChoicesOpen = ref(false);
+watch(splitMode, () => {
+	splitChoicesOpen.value = false;
+});
 
 function adjustSplitAmount(direction) {
 	const current = splitAmount.value;
@@ -4080,6 +4098,8 @@ watch(show, async (newVal) => {
 		//// (a750c5e3, 2026-03-23 tips; 2a539d5a, 2026-03-24 split payment bar).
 		tipAmount.value = 0;
 		deactivateSplit();
+		//// Neoffice — the split choices start closed at every opening of the dialog (maintenance#2663)
+		splitChoicesOpen.value = false;
 		numpadClear();
 		mobileCustomAmount.value = "";
 		lastSelectedMethod.value = null;
