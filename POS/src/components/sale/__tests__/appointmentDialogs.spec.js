@@ -111,6 +111,31 @@ describe("the move dialog", () => {
 		expect(wrapper.get("[data-test='move-confirm']").attributes("disabled")).toBeDefined()
 	})
 
+	// 16.11: the till showed the general sentence and the lane's reason glued together with no space, saying the same thing twice
+	it("says the lane's reason alone, without the general sentence beside it", async () => {
+		vi.useFakeTimers()
+		lane.checkMove.mockResolvedValue({ ok: false, why: "That time slot is no longer available." })
+		const wrapper = open()
+
+		await wrapper.get("[data-test='move-time']").setValue("16:00")
+		await vi.advanceTimersByTimeAsync(350)
+		await flushPromises()
+
+		expect(wrapper.get("[data-test='move-verdict']").text()).toBe("That time slot is no longer available.")
+	})
+
+	it("says the general sentence when the lane gives no reason", async () => {
+		vi.useFakeTimers()
+		lane.checkMove.mockResolvedValue({ ok: false, why: "" })
+		const wrapper = open()
+
+		await wrapper.get("[data-test='move-time']").setValue("16:00")
+		await vi.advanceTimersByTimeAsync(350)
+		await flushPromises()
+
+		expect(wrapper.get("[data-test='move-verdict']").text()).toBe("This hour is not possible.")
+	})
+
 	it("moves the appointment keeping the person when she did not change, reads the agenda again and closes", async () => {
 		const wrapper = open()
 

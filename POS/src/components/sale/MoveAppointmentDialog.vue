@@ -30,8 +30,7 @@
 				</div>
 
 				<p v-if="verdict" class="rounded-xl px-4 py-3 text-sm leading-snug" :class="verdict.ok ? 'bg-green-50 text-green-800 dark:bg-green-400/15 dark:text-green-100' : 'bg-yellow-50 text-yellow-800 dark:bg-yellow-400/15 dark:text-yellow-100'" data-test="move-verdict">
-					<b>{{ verdict.ok ? __("This hour is free.") : __("This hour is not possible.") }}</b>
-					<span v-if="verdict.why"> {{ verdict.why }}</span>
+					<b>{{ verdictText }}</b>
 				</p>
 
 				<label class="flex items-start gap-3 text-[15px] text-gray-900 dark:text-gray-100">
@@ -80,6 +79,13 @@ let asking = null
 const movable = computed(() => store.people.filter((option) => option.sales_person && (!isOff(option) || option.sales_person === person.value)))
 const whenText = computed(() => (day.value && time.value ? `${day.value} ${time.value}:00` : ""))
 const canMove = computed(() => Boolean(whenText.value) && verdict.value?.ok !== false)
+// One sentence: the lane's own reason when it refuses (« That time slot is no longer available. »), the general one only when it gives none.
+// Both side by side said the same thing twice, and the template compiler dropped the space between them (16.11)
+const verdictText = computed(() => {
+	if (!verdict.value) return ""
+	if (verdict.value.ok) return __("This hour is free.")
+	return verdict.value.why || __("This hour is not possible.")
+})
 
 watch(
 	() => [props.modelValue, props.appointment?.key],
