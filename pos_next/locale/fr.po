@@ -26505,3 +26505,40 @@ msgstr "La semaine"
 msgctxt "free time"
 msgid "{0} free"
 msgstr "{0} libres"
+
+#: POS/src/components/sale/AppointmentSheet.vue:43
+#: POS/src/components/sale/AppointmentSheet.vue:50
+msgid "Cabin"
+msgstr "Cabine"
+
+#: POS/src/components/sale/AppointmentSheet.vue:51
+msgid "Choose a cabin"
+msgstr "Choisir une cabine"
+
+#: POS/src/components/sale/MoveAppointmentDialog.vue:98
+#: pos_next/public/pos/assets/POSSale-DaKdVBPe.js:18
+#, python-brace-format
+msgid "It goes in {0}."
+msgstr "Il ira dans {0}."
+
+#: POS/src/utils/appointments.js:293
+#: pos_next/public/pos/assets/POSSale-DaKdVBPe.js:18
+msgid "not for this person"
+msgstr "pas à la disposition de cette personne"
+
+#: POS/src/composables/useAppointment.js:290
+#: pos_next/public/pos/assets/POSSale-DaKdVBPe.js:18
+#, python-brace-format
+msgid "The appointment is now in {0}."
+msgstr "Le rendez-vous est désormais dans {0}."
+
+#: POS/src/composables/useAppointment.js:291
+#: pos_next/public/pos/assets/POSSale-DaKdVBPe.js:18
+msgid "The cabin of the appointment has been changed."
+msgstr "La cabine du rendez-vous a été modifiée."
+
+#: POS/src/components/sale/MoveAppointmentDialog.vue:98
+#: pos_next/public/pos/assets/POSSale-DaKdVBPe.js:18
+#, python-brace-format
+msgid "{0} instead of {1}."
+msgstr "{0} au lieu de {1}."
