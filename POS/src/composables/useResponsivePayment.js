@@ -173,9 +173,13 @@ export function useResponsivePayment() {
 	});
 
 	// Dynamic numpad key size
+	//// Neoffice — the « Add » key spans two rows of keys: in the compact layout (keys 4px apart) it is two keys and that gap high,
+	//// not more (maintenance#2663). Taller (8.5rem under keys of 3rem, 7rem and 6.5rem under keys of 2.5rem), it made its two
+	//// rows taller than the others, 36px at 1366 × 768, and the numpad of a restaurant's table with loyalty points scrolled in its
+	//// column. The full layout (800px of height and more) keeps its size.
 	const dynamicNumpadSize = computed(() => {
-		if (viewportHeight.value < 600) return { key: "h-10", addBtn: "h-[6.5rem]" };
-		if (viewportHeight.value < 700) return { key: "h-10", addBtn: "h-[7rem]" };
+		if (viewportHeight.value < 700) return { key: "h-10", addBtn: "h-[5.25rem]" };
+		if (isCompactMode.value) return { key: "h-12", addBtn: "h-[6.25rem]" };
 		return { key: "h-12", addBtn: "h-[8.5rem]" };
 	});
 

@@ -44,6 +44,20 @@ describe("the height the payment dialog keeps", () => {
 		expect((await sizesAt(1920, 1080)).isCompactMode.value).toBe(false);
 	});
 
+	//// Neoffice — maintenance#2663: the « Add » key spans two rows of keys 4px apart in the compact layout; taller, it made the
+	//// numpad of a restaurant's table with loyalty points 36px too high for its column at 1366 × 768.
+	it("makes the « Add » key two keys and their gap high in the compact layout, and keeps the full one's", async () => {
+		expect((await sizesAt(1366, 768)).dynamicNumpadSize.value).toEqual({
+			key: "h-12",
+			addBtn: "h-[6.25rem]",
+		});
+		expect((await sizesAt(1366, 650)).dynamicNumpadSize.value).toEqual({
+			key: "h-10",
+			addBtn: "h-[5.25rem]",
+		});
+		expect((await sizesAt(1920, 1080)).dynamicNumpadSize.value.addBtn).toBe("h-[8.5rem]");
+	});
+
 	it("is no maximum on a tablet or a phone, where the dialog scrolls as a whole", async () => {
 		expect((await sizesAt(800, 1280)).paymentBodyMaxHeight.value).toBe("none");
 		expect((await sizesAt(390, 844)).paymentBodyMaxHeight.value).toBe("none");
@@ -189,7 +203,7 @@ describe("the right column at a restaurant table, for a customer with loyalty po
 		expect(toggle, "the « Split » button (data-test split-toggle)").toBeTruthy();
 		expect(open, "the state the « Split » button opens (its :aria-expanded)").toBeTruthy();
 		expect(
-			toggle.children.some((c) => c.type === 5 && c.content.content.includes('__("Split")')),
+			toggle.children.some((c) => c.type === 5 && c.content.content.includes('__("Split"')),
 		).toBe(true);
 		expect(drawn(toggle, table())).toBe(true);
 		for (const choice of choices) expect(drawn(choice, table({ opened: true }))).toBe(true);

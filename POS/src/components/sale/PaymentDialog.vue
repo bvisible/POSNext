@@ -1287,7 +1287,8 @@
 										: 'border-gray-200 bg-white text-gray-600 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700',
 								]"
 							>
-								{{ __("Split") }}
+								<!-- //// Neoffice — under its own context: the bare « Split » is another catalogue's « Scindé » (maintenance#2663) -->
+								{{ __("Split", null, "Split the bill") }}
 							</button>
 							<!-- Clear All Payments Button -->
 							<button
@@ -1590,8 +1591,10 @@
 						v-if="restaurantStore?.isEnabled && (splitMode || splitChoicesOpen)"
 						:class="isCompactMode ? 'mb-2' : 'mb-3'"
 					>
+						<!-- //// Neoffice — the « Split Payment » title is gone: the « Split » button of the Payment Method row says it (maintenance#2663) -->
 						<!-- Split inactive: show split buttons -->
 						<div v-if="!splitMode">
+							<!-- //// Neoffice — the subtitle is gone too: it is the « Split » button's tooltip (maintenance#2663) -->
 							<div class="flex items-center gap-1.5">
 								<button
 									v-for="n in [2, 3, 4]"
@@ -1690,16 +1693,23 @@
 					</div>
 
 					<!-- Loyalty Points Redemption -->
-					<!-- //// Neoffice — data-test only, the card is unchanged: the test of maintenance#2663 reads that it stays in sight, behind no split state. -->
+					<!-- //// Neoffice — the card stays in sight, behind no split state (the test of maintenance#2663 reads it by its data-test). In the -->
+					<!-- //// compact layout its balance and its amount stand on one row instead of two, 29px given back to the numpad at 1366 × 768. -->
 					<div
 						v-if="loyaltyDetails.has_loyalty && loyaltyDetails.loyalty_points > 0"
 						data-test="payment-loyalty-card"
 						:class="[
 							'border border-amber-200 bg-amber-50 rounded-lg',
-							isCompactMode ? 'p-2 mb-2' : 'p-3 mb-3',
+							isCompactMode ? 'p-2 mb-2 flex items-center gap-3' : 'p-3 mb-3',
 						]"
 					>
-						<div class="flex items-center justify-between mb-2">
+						<div
+							:class="
+								isCompactMode
+									? 'flex items-center gap-2 shrink-0'
+									: 'flex items-center justify-between mb-2'
+							"
+						>
 							<div class="flex items-center gap-1.5">
 								<span class="text-sm">⭐</span>
 								<span class="text-xs font-semibold text-amber-800">{{
@@ -1717,7 +1727,7 @@
 								{{ formatCurrency(loyaltyDetails.max_redeemable_amount) }}</span
 							>
 						</div>
-						<div class="flex items-center gap-2">
+						<div :class="['flex items-center gap-2', isCompactMode && 'flex-1 min-w-0']">
 							<div class="flex-1 relative">
 								<input
 									type="number"
