@@ -86,9 +86,10 @@
 				<div v-for="column in store.columns" :key="`col-${column.key}`" class="relative border-s border-gray-100 dark:border-gray-800" :style="{ height: `${gridHeight}px`, backgroundImage: lines, backgroundSize: `100% ${PX_PER_HOUR}px` }" :data-test="`column-${column.key}`">
 					<!-- //// Neoffice — where a dragged appointment would go: the person and the quarter under the pointer (NeoSalon B', 16.11.2026) -->
 					<!-- //// and, a moment after the pointer stops, whether the hour holds there (the window's own check), before the drop -->
-					<div v-if="drag && drag.mark && drag.mark.key === String(column.key)" class="pointer-events-none absolute inset-x-1.5 z-10 flex flex-col items-start gap-0.5 overflow-hidden rounded-lg border-2 border-dashed p-1" :class="markClass(drag.mark.fit)" :style="{ top: `${drag.mark.top}px`, height: `${drag.mark.height}px` }" data-test="agenda-drop">
+					<!-- //// Opaque in both themes (what lies under it no longer shows through the words), the words in a label just below it, read whatever the length of the appointment -->
+					<div v-if="drag && drag.mark && drag.mark.key === String(column.key)" class="pointer-events-none absolute inset-x-1.5 z-20 rounded-lg border-2 border-dashed bg-pos-surface p-1" :class="markClass(drag.mark.fit)" :style="{ top: `${drag.mark.top}px`, height: `${drag.mark.height}px` }" data-test="agenda-drop">
 						<span class="inline-block rounded px-1.5 text-[11px] font-semibold text-white" :class="drag.mark.fit && !drag.mark.fit.ok ? 'bg-yellow-700' : 'bg-blue-600'">{{ drag.mark.time }}</span>
-						<span v-if="drag.mark.fit" class="px-0.5 text-[11px] font-semibold leading-snug" :class="drag.mark.fit.ok ? 'text-green-800 dark:text-green-100' : 'text-yellow-800 dark:text-yellow-100'" data-test="agenda-drop-fit">{{ fitText(drag.mark.fit) }}</span>
+						<span v-if="drag.mark.fit" class="absolute inset-x-0 top-full mt-1 rounded-md border border-s-4 bg-pos-surface px-2 py-1 text-[11px] font-semibold leading-snug text-pos-ink shadow-sm" :class="markClass(drag.mark.fit)" data-test="agenda-drop-fit">{{ fitText(drag.mark.fit) }}</span>
 					</div>
 					<!-- Not working that day: hatched, and said. Her appointments stay drawn: they were booked before, and are « to handle » (never cancelled by themselves). -->
 					<div v-if="column.person && isOff(column.person)" class="absolute inset-0" :style="{ backgroundImage: HATCH }">
@@ -233,7 +234,8 @@ const PILLS = {
 	paid: "bg-green-50 text-green-700 dark:bg-green-400/20 dark:text-green-100",
 	absent: "bg-red-50 text-red-700 dark:bg-red-400/20 dark:text-red-100",
 }
-const lines = "linear-gradient(to bottom, #EFEAE1 0, #EFEAE1 1px, transparent 1px)"
+//// Neoffice — the hour lines in the till's own line colour, which follows its dark theme (a fixed #EFEAE1 drew bright white lines across the dark agenda, 16.11)
+const lines = "linear-gradient(to bottom, var(--pos-line) 0, var(--pos-line) 1px, transparent 1px)"
 
 const offline = computed(() => offlineState.isOffline)
 const gridHeight = computed(() => (store.range.end - store.range.start) * PX_PER_HOUR)
@@ -445,9 +447,10 @@ function fitText(fit) {
 	return fit.why || __("This hour is not possible.")
 }
 
+// The colour of the mark's border and of its label: the till's clay while nothing is said yet, then green or amber
 function markClass(fit) {
-	if (!fit) return "border-blue-500 bg-blue-50/80 dark:bg-blue-400/20"
-	return fit.ok ? "border-green-600 bg-green-50/90 dark:bg-green-400/20" : "border-yellow-600 bg-yellow-50/90 dark:bg-yellow-400/20"
+	if (!fit) return "border-blue-500"
+	return fit.ok ? "border-green-600" : "border-yellow-600"
 }
 
 function stopDrag() {
