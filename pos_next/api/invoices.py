@@ -1311,22 +1311,10 @@ def _guest_payments_to_keep(invoice_doc, incoming_payments):
 
 def _guest_settled_references(invoice_name):
 	"""The references a guest's settled Payment Intents of the invoice are booked under (the provider's id, else the intent's name)."""
-	if not invoice_name or not frappe.db.table_exists("Payment Intent"):
-		return set()
-	references = set()
-	for intent in frappe.get_all(
-		"Payment Intent",
-		filters={
-			"reference_doctype": "Sales Invoice",
-			"reference_name": invoice_name,
-			"status": ["in", ["succeeded", "refunded"]],
-		},
-		fields=["name", "provider_intent_id", "metadata_json"],
-	):
-		metadata = frappe.parse_json(intent.metadata_json or "{}") or {}
-		if metadata.get("token"):
-			references.add(intent.provider_intent_id or intent.name)
-	return references
+	# //// Neoffice — the rule lives in pos_next.paid_online, which the closing reads for all the sales of a shift at once (maintenance#2485)
+	from pos_next.paid_online import guest_settled_references
+
+	return guest_settled_references([invoice_name]).get(invoice_name, set())
 
 
 # //// Neoffice — POST only: a write that commits, and a GET is not checked against CSRF, so a link followed

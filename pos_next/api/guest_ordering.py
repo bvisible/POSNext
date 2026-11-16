@@ -1676,18 +1676,24 @@ def _book_the_payment(token_doc, invoice_name, intent, tip_item):
 def _submit_the_paid_order(invoice_doc, tip_item):
 	"""Submit a guest's order the provider settled in full: the till's offers the page showed written on its lines (maintenance#2077), no payment row
 	at zero (the till's default cash row), the payment accounts set as the till sets them."""
+	from pos_next import paid_online
 	from pos_next.api.invoices import _set_payment_accounts
 
 	with _as_the_system():
 		invoice_doc = _write_the_offers(frappe.get_doc("Sales Invoice", invoice_doc.name), tip_item)
 		invoice_doc.payments = [p for p in invoice_doc.payments if flt(p.amount) > 0]
 		_set_payment_accounts(invoice_doc.payments, invoice_doc.company)
+		# //// Neoffice — the sale enters the shift open at its till, so that its closing counts it (maintenance#2485): it was submitted with the
+		# //// shift it was saved at, none for an order a guest made, and was in no closing
+		shift = paid_online.enter_the_open_shift(invoice_doc)
 		_without_repricing(invoice_doc)
 		invoice_doc.flags.ignore_permissions = True
 		invoice_doc.flags.ignore_version = True
 		frappe.flags.ignore_account_permission = True
 		invoice_doc.save()
 		invoice_doc.submit()
+		if not shift:
+			paid_online.say_it_is_in_no_closing(invoice_doc.name)
 	return invoice_doc
 
 
@@ -1763,15 +1769,20 @@ def _settle_the_takeaway_order(invoice_doc):
 			# //// Neoffice — the rounded total the provider settled (maintenance#2254): was `grand_total`
 			if flt(invoice_doc.paid_amount) < amount_due(invoice_doc):
 				frappe.throw(_("The payment of this order is not recorded yet. Please try again."))
+			from pos_next import paid_online
 			from pos_next.api.invoices import _set_payment_accounts
 
 			_set_payment_accounts(invoice_doc.payments, invoice_doc.company)
+			# //// Neoffice — the order enters the shift open at its till, so that its closing counts it (maintenance#2485)
+			shift = paid_online.enter_the_open_shift(invoice_doc)
 			_without_repricing(invoice_doc)
 			invoice_doc.flags.ignore_permissions = True
 			invoice_doc.flags.ignore_version = True
 			frappe.flags.ignore_account_permission = True
 			invoice_doc.save()
 			invoice_doc.submit()
+			if not shift:
+				paid_online.say_it_is_in_no_closing(invoice_doc.name)
 	frappe.db.commit()
 
 	ticket = _release_paid_takeaway(invoice_doc.name)

@@ -142,6 +142,8 @@ jinja = {
 		"pos_next.pos_next.utils.pos_closing_print.get_items_sold",
 		# //// Neoffice — the end-of-day print's line of what was offered (« Offert », NeoResto lot 1, task 24).
 		"pos_next.offered.get_offered_line",
+		# //// Neoffice — the end-of-day print's line of the sales paid online, which the cashier does not count (maintenance#2485).
+		"pos_next.paid_online.get_paid_online",
 	]
 }
 

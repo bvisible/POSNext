@@ -665,6 +665,33 @@
 						</div>
 					</div>
 
+					<!-- //// Neoffice — the sales a guest paid on his phone (a table from its QR code, a web takeaway order, a phone's cart in the -->
+					<!-- //// shop) are in the shift now, and their payments on a line of their own: no money of the drawer nor of the card terminal, -->
+					<!-- //// so never in the amounts the cashier counts below (maintenance#2485). -->
+					<div
+						v-if="closingData.paid_online_count > 0"
+						data-test="closing-paid-online"
+						class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm"
+					>
+						<div class="px-3 py-2.5 md:px-5 md:py-3 flex items-center justify-between gap-3">
+							<div>
+								<h3 class="text-sm md:text-base font-semibold text-gray-900">
+									{{ __("Paid online") }}
+								</h3>
+								<p class="text-xs text-gray-500 mt-0.5">
+									{{
+										__("{0} sales paid on the phone, not counted in the drawer", [
+											closingData.paid_online_count,
+										])
+									}}
+								</p>
+							</div>
+							<div class="text-base md:text-lg font-bold text-gray-900">
+								{{ formatCurrency(closingData.paid_online_total) }}
+							</div>
+						</div>
+					</div>
+
 					<!-- External Payments (invoices paid via POS but created outside) -->
 					<div
 						v-if="

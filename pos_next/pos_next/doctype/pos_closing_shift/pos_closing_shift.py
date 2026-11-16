@@ -14,6 +14,10 @@ from frappe.model.document import Document
 # //// Neoffice — added cint for rounded-total based not-collected calc (eafe8516 "fix(closing): a fully paid rounded sale no longer shows 0.01 \"not collected\"")
 from frappe.utils import cint, flt
 
+# //// Neoffice — the sales paid online, counted apart at the closing (maintenance#2485).
+from pos_next.paid_online import guest_settled_references, is_paid_online
+from pos_next.paid_online import summary as paid_online_summary
+
 
 def get_base_value(doc, fieldname, base_fieldname=None, conversion_rate=None):
 	"""Return the value for a field in company currency."""
@@ -606,8 +610,19 @@ def _aggregate_tax(taxes, account_head, rate, amount):
 # //// expected in the drawer, and the reconciliation totals cannot answer that: they also carry the
 # //// opening float and the invoices collected at the counter. The two accumulation sites below (the
 # //// payment rows, then the change_amount subtraction) are the same change (f5bffe4f, 2026-03-25).
+# //// Neoffice — `online_references` argument added (maintenance#2485): the references of the guests' payments of this
+# //// invoice (pos_next.paid_online). A payment a guest made on his phone is no money of the drawer nor of the card
+# //// terminal: it stays out of the reconciliation buckets the cashier counts, and the closing shows it on a line of its own.
 def _process_invoice(
-	invoice, invoice_field, company_currency, cash_mode, payments, taxes, summary, sales_by_mode=None
+	invoice,
+	invoice_field,
+	company_currency,
+	cash_mode,
+	payments,
+	taxes,
+	summary,
+	sales_by_mode=None,
+	online_references=None,
 ):
 	"""Process a single invoice and update aggregates."""
 	conversion_rate = invoice.get("conversion_rate")
@@ -724,7 +739,9 @@ def _process_invoice(
 		if is_return and mode not in known_modes:
 			mode = cash_mode
 
-		_aggregate_payment(payments, mode, amount)
+		# //// Neoffice — a guest's payment is not counted by the cashier; see the marker above the function (maintenance#2485).
+		if not is_paid_online(p, online_references):
+			_aggregate_payment(payments, mode, amount)
 		# //// Neoffice — sales_by_mode accumulation; see the marker above (f5bffe4f, 2026-03-25).
 		if sales_by_mode is not None:
 			sales_by_mode[mode] = sales_by_mode.get(mode, 0) + amount
@@ -810,10 +827,21 @@ def make_closing_shift_from_opening(opening_shift: str | None):
 
 	# Process invoices
 	invoices = get_pos_invoices(opening_shift.get("name"), doctype)
+	# //// Neoffice — the guests' payments of the shift's sales, read once for all (maintenance#2485, pos_next.paid_online).
+	online_references = guest_settled_references([invoice.get("name") for invoice in invoices])
 	for invoice in invoices:
-		# //// Neoffice — the extra sales_by_mode argument; see the marker above (f5bffe4f).
+		# //// Neoffice — the extra sales_by_mode argument; see the marker above (f5bffe4f). And the guests'
+		# //// payments of the invoice (maintenance#2485).
 		txn = _process_invoice(
-			invoice, invoice_field, company_currency, cash_mode, payments, taxes, summary, sales_by_mode
+			invoice,
+			invoice_field,
+			company_currency,
+			cash_mode,
+			payments,
+			taxes,
+			summary,
+			sales_by_mode,
+			online_references.get(invoice.get("name")),
 		)
 		pos_transactions.append(txn)
 
@@ -996,6 +1024,9 @@ def make_closing_shift_from_opening(opening_shift: str | None):
 	from pos_next.offered import offered_summary
 
 	result.update(offered_summary(invoices))
+	# //// Neoffice — what the shift's sales were paid online, a line the cashier does not count (maintenance#2485): paid_online,
+	# //// paid_online_total, paid_online_count.
+	result.update(paid_online_summary(invoices, online_references))
 
 	return result
 
