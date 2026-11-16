@@ -3072,6 +3072,7 @@ const layout = computed(() =>
 	tillLayout({
 		isDesktop: uiStore.isDesktop,
 		agenda: appointmentsShown.value,
+		//// Neoffice — the appointment chosen in the agenda: its sheet takes the cart's place (tillLayout, NeoSalon B', 16.11.2026)
 		selected: sheetShown.value,
 		leftPanelWidth: uiStore.leftPanelWidth,
 		mobileTab: uiStore.mobileActiveTab,
