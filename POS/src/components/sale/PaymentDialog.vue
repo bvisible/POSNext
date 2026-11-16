@@ -1703,6 +1703,7 @@
 							isCompactMode ? 'p-2 mb-2 flex items-center gap-3' : 'p-3 mb-3',
 						]"
 					>
+						<!-- //// Neoffice — the balance and its maximum, beside the amount in the compact layout (maintenance#2663) -->
 						<div
 							:class="
 								isCompactMode
@@ -1727,6 +1728,7 @@
 								{{ formatCurrency(loyaltyDetails.max_redeemable_amount) }}</span
 							>
 						</div>
+						<!-- //// Neoffice — the amount takes the rest of the row in the compact layout (maintenance#2663) -->
 						<div :class="['flex items-center gap-2', isCompactMode && 'flex-1 min-w-0']">
 							<div class="flex-1 relative">
 								<input
