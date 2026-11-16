@@ -467,9 +467,9 @@
    "description": "Item that represents a gift card purchase. When sold, creates a gift card coupon with the item's price as the gift card value."
   },
   {
-   "default": "Value voucher",
+   "default": "Service voucher",
    "depends_on": "enable_gift_cards",
-   "description": "A value voucher can be spent on anything: its sale is no supply, carries no VAT and is booked as a debt to the holder; the VAT is taken when the card is spent. A service voucher names one service: its sale is taxed.",
+   "description": "A service voucher is taxed when it is sold, like a gift card of the shop (proposed). A value voucher can be spent on anything: its sale is no supply, carries no VAT and is booked as a debt to the holder; the VAT is taken when the card is spent.",
    "fieldname": "gift_card_kind",
    "fieldtype": "Select",
    "label": "Kind of gift card",

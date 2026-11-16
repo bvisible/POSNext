@@ -1728,8 +1728,8 @@ SETTINGS = (
 		"gift_cards",
 		_lt("Kind of gift card"),
 		_lt(
-			"Value voucher (proposed): the card can be spent on anything. Its sale is no supply, carries no VAT and is booked as a debt to the holder;"
-			" the VAT is taken when the card is spent, as a payment. Service voucher: the card names one service, and its sale is taxed like that service."
+			"Service voucher (proposed): the card is taxed when it is sold, like the gift cards of the shop. Value voucher: the card can be spent on anything."
+			" Its sale is no supply, carries no VAT and is booked as a debt to the holder; the VAT is taken when the card is spent, as a payment."
 		),
 		"segmented",
 		doctype=POS_SETTINGS,

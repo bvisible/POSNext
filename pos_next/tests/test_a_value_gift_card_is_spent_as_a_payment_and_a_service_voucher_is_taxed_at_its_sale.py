@@ -25,6 +25,9 @@ from frappe.utils import flt, nowdate
 from pos_next import gift_card_vat, till_tips
 from pos_next.api import invoices
 from pos_next.api.gift_cards import create_gift_card_manual as gift_card_manual
+from pos_next.patches.gift_cards import (
+	say_service_voucher_where_a_till_never_chose_its_kind as the_kind_patch,
+)
 from pos_next.patches.gift_cards import say_the_origin_of_each_gift_card as the_patch
 from pos_next.tests.test_takeaway_tax_category import PRICE, TakeawayTill, _item, _item_tax_template
 from pos_next.tests.test_till_writes_need_the_till import TILL
@@ -347,6 +350,131 @@ class TestAValueGiftCardIsSpentAsAPayment(TakeawayTill, FrappeTestCase):
 		self.assertGreater(flt(sold.total_taxes_and_charges), 0)
 		card = frappe.get_all("Coupon Code", filters={"source_invoice": sold.name}, pluck="pos_next_origin")
 		self.assertEqual(card, [gift_card_vat.ORIGIN_SOLD_WITH_VAT])
+
+	# ------------------------------------------------------------------------------------------------ a till that never chose its kind (16.11.2026)
+	def a_till_that_never_chose(self, item_name, template=None):
+		"""A till that sells cards and never said which kind: the settings saved with no choice, then the kind blanked as an old row has it."""
+		item = _item(
+			item_name, self.dishes, self.fx.company, [{"item_tax_template": template}] if template else []
+		)
+		name = self.make_till(enable_gift_cards=1, gift_card_item=item)
+		return item, name
+
+	def test_a_till_that_never_chose_its_kind_sells_service_vouchers_like_the_shop(self):
+		item, name = self.a_till_that_never_chose("_Test Gift Card Never Chose")
+
+		saved = frappe.db.get_value(
+			"POS Settings",
+			name,
+			["gift_card_kind", "gift_card_account", "gift_card_tax_template"],
+			as_dict=True,
+		)
+
+		self.assertEqual(saved.gift_card_kind, gift_card_vat.KIND_SERVICE)
+		self.assertIsNone(
+			saved.gift_card_account, "no account is made for a card nobody chose to book as a debt"
+		)
+		self.assertIsNone(saved.gift_card_tax_template)
+		doc = frappe.get_doc("Item", item)
+		self.assertIsNone(
+			till_tips.vat_template_of(doc, self.fx.company), "the item is not switched to 0 % by saving"
+		)
+		self.assertFalse(
+			[row for row in doc.item_defaults if row.company == self.fx.company and row.income_account]
+		)
+
+	def test_a_kind_nobody_filled_in_is_a_service_voucher_and_only_a_chosen_value_voucher_is_one(self):
+		for unset in (frappe._dict(), frappe._dict(gift_card_kind=None), frappe._dict(gift_card_kind="")):
+			self.assertEqual(gift_card_vat.the_kind_of(unset), gift_card_vat.KIND_SERVICE)
+		self.assertEqual(
+			gift_card_vat.the_kind_of(frappe._dict(gift_card_kind=gift_card_vat.KIND_VALUE)),
+			gift_card_vat.KIND_VALUE,
+		)
+
+	def test_the_card_a_till_that_never_chose_sells_says_it_was_taxed(self):
+		item, name = self.a_till_that_never_chose("_Test Gift Card Never Chose 2", self.usual_template)
+		frappe.db.set_value("POS Settings", name, "gift_card_kind", None)
+		sale = self.the_card_sale(100)
+		sale["items"][0]["item_code"] = item
+
+		sold = self.submit(sale)
+
+		self.assertGreater(flt(sold.total_taxes_and_charges), 0, "the sale of the card carries its VAT")
+		cards = frappe.get_all("Coupon Code", filters={"source_invoice": sold.name}, pluck="pos_next_origin")
+		self.assertEqual(cards, [WITH_VAT])
+
+	def test_a_card_a_till_that_never_chose_sold_is_spent_as_a_discount(self):
+		self.a_till_that_never_chose("_Test Gift Card Never Chose 3", self.usual_template)
+		card = self.a_card(20, origin=WITH_VAT, code="NEVERCHOSE")
+
+		spent = self.submit(self.sale([self.food, self.alcohol]), used=20, card=card)
+
+		self.assertEqual(flt(spent.discount_amount), 20)
+		self.assertNotIn(gift_card_vat.MODE_OF_PAYMENT, [row.mode_of_payment for row in spent.payments])
+		self.assertEqual(self.balance_of(card), 0)
+
+	def the_kind_of_the_till(self, name):
+		return frappe.db.get_value("POS Settings", name, "gift_card_kind")
+
+	def test_the_patch_gives_service_voucher_to_a_till_whose_kind_was_stamped_by_the_default(self):
+		_, name = self.a_till_that_never_chose("_Test Gift Card Stamped")
+		frappe.db.set_value("POS Settings", name, "gift_card_kind", gift_card_vat.KIND_VALUE)
+		modified = frappe.db.get_value("POS Settings", name, "modified")
+
+		the_kind_patch.execute()
+
+		self.assertEqual(self.the_kind_of_the_till(name), gift_card_vat.KIND_SERVICE)
+		self.assertEqual(
+			frappe.db.get_value("POS Settings", name, "modified"),
+			modified,
+			"the date of modification is not touched",
+		)
+
+	def test_the_patch_leaves_a_value_voucher_somebody_chose(self):
+		name = self.make_the_till()
+		self.assertEqual(self.the_kind_of_the_till(name), gift_card_vat.KIND_VALUE)
+
+		the_kind_patch.execute()
+
+		self.assertEqual(self.the_kind_of_the_till(name), gift_card_vat.KIND_VALUE, "it has its account")
+		frappe.db.set_value("POS Settings", name, "gift_card_account", None)
+		the_kind_patch.execute()
+		self.assertEqual(self.the_kind_of_the_till(name), gift_card_vat.KIND_VALUE, "it has its template")
+
+	def test_the_patch_leaves_a_value_voucher_the_sales_measured(self):
+		_, name = self.a_till_that_never_chose("_Test Gift Card Measured")
+		item = frappe.db.get_value("POS Settings", name, "gift_card_item")
+		frappe.db.set_value("POS Settings", name, "gift_card_kind", gift_card_vat.KIND_VALUE)
+		the_card_item_was_sold = patch.object(the_kind_patch, "_the_item_was_sold", return_value=True)
+
+		with the_card_item_was_sold as asked:
+			the_kind_patch.execute()
+
+		asked.assert_called_with(item)
+		self.assertEqual(self.the_kind_of_the_till(name), gift_card_vat.KIND_VALUE)
+
+	def test_the_patch_can_be_run_again(self):
+		_, name = self.a_till_that_never_chose("_Test Gift Card Again")
+		frappe.db.set_value("POS Settings", name, "gift_card_kind", gift_card_vat.KIND_VALUE)
+		the_kind_patch.execute()
+
+		the_kind_patch.execute()
+
+		self.assertEqual(self.the_kind_of_the_till(name), gift_card_vat.KIND_SERVICE)
+
+	def test_a_site_without_the_column_of_the_kind_has_nothing_to_do(self):
+		# A till that WOULD be changed (stamped, nothing chosen, nothing sold) is there, and the column is said to be absent
+		_, name = self.a_till_that_never_chose("_Test Gift Card No Column")
+		frappe.db.set_value("POS Settings", name, "gift_card_kind", gift_card_vat.KIND_VALUE)
+		real = frappe.db.has_column
+		without = lambda doctype, column: False if column == "gift_card_kind" else real(doctype, column)  # noqa: E731
+		with (
+			patch.object(frappe.db, "has_column", side_effect=without),
+			patch.object(frappe.db, "set_value") as write,
+		):
+			the_kind_patch.execute()
+
+		write.assert_not_called()
 
 	# ------------------------------------------------------------------------------------------------ the spending
 	def test_a_value_card_spent_on_a_sale_is_a_payment_and_the_vat_is_taken_in_full(self):

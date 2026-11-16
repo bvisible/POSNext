@@ -26367,8 +26367,8 @@ msgstr "{0} a été payé en ligne."
 #. Description of the 'Kind of gift card' (Select) field in DocType 'POS
 #. Settings'
 #: pos_next/pos_next/doctype/pos_settings/pos_settings.json:472
-msgid "A value voucher can be spent on anything: its sale is no supply, carries no VAT and is booked as a debt to the holder; the VAT is taken when the card is spent. A service voucher names one service: its sale is taxed."
-msgstr "Le bon de valeur peut servir à tout : sa vente n'est pas une prestation, ne porte pas de TVA et est comptabilisée comme une dette envers le porteur ; la TVA est prélevée lorsque le bon est utilisé. Le bon de prestation désigne une seule prestation : sa vente est soumise à la TVA."
+msgid "A service voucher is taxed when it is sold, like a gift card of the shop (proposed). A value voucher can be spent on anything: its sale is no supply, carries no VAT and is booked as a debt to the holder; the VAT is taken when the card is spent."
+msgstr "Un bon de prestation est imposé à la vente, comme une carte cadeau de la boutique (proposé). Un bon de valeur peut être dépensé pour n'importe quel achat : sa vente ne constitue pas une livraison, ne porte pas de TVA et est comptabilisée comme une dette envers le porteur ; la TVA est perçue lorsque la carte est dépensée."
 
 #: POS/src/composables/useAppointment.js:47
 #: pos_next/public/pos/assets/POSSale-CPIklKdN.js:18
@@ -26459,8 +26459,8 @@ msgid "Value voucher"
 msgstr "Bon de valeur"
 
 #: pos_next/till_settings/registry.py:1731
-msgid "Value voucher (proposed): the card can be spent on anything. Its sale is no supply, carries no VAT and is booked as a debt to the holder; the VAT is taken when the card is spent, as a payment. Service voucher: the card names one service, and its sale is taxed like that service."
-msgstr "Bon de valeur (proposé) : la carte peut servir à tout. Sa vente n'est pas une prestation, ne porte pas de TVA et est comptabilisée comme une dette envers le porteur ; la TVA est prélevée lorsque la carte est utilisée, comme un moyen de paiement. Bon de prestation : la carte désigne une seule prestation, et sa vente est soumise à la TVA comme cette prestation."
+msgid "Service voucher (proposed): the card is taxed when it is sold, like the gift cards of the shop. Value voucher: the card can be spent on anything. Its sale is no supply, carries no VAT and is booked as a debt to the holder; the VAT is taken when the card is spent, as a payment."
+msgstr "Bon de prestation (proposé) : la carte est imposée à la vente, comme les cartes cadeaux de la boutique. Bon de valeur : la carte peut être dépensée pour n'importe quel achat. Sa vente ne constitue pas une livraison, ne porte pas de TVA et est comptabilisée comme une dette envers le porteur ; la TVA est perçue lors de l'utilisation de la carte, au moment du paiement."
 
 #. Label of a Link field in DocType 'POS Settings'
 #: pos_next/pos_next/doctype/pos_settings/pos_settings.json:491

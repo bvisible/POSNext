@@ -55,8 +55,11 @@ def settings_of(pos_profile: str | None) -> frappe._dict:
 
 
 def the_kind_of(settings) -> str:
-	"""The kind of card a till sells: a value voucher unless the client said it names a service."""
-	return KIND_SERVICE if settings.get("gift_card_kind") == KIND_SERVICE else KIND_VALUE
+	"""The kind of card a till sells: a service voucher (taxed when it is sold, the way the shop sells its cards) unless the client said it is a value voucher.
+
+	A till that never chose is a service voucher one (product owner, 16.11.2026: « il faut sortir les cartes cadeaux comme le shop »). The value voucher is the client's
+	choice, made with its fiduciary: it moves the VAT of the card from its sale to its spending, and gives its item a template at 0 %."""
+	return KIND_VALUE if settings.get("gift_card_kind") == KIND_VALUE else KIND_SERVICE
 
 
 def _company_of(pos_profile: str | None) -> str | None:
