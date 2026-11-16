@@ -441,17 +441,30 @@ class TestAValueGiftCardIsSpentAsAPayment(TakeawayTill, FrappeTestCase):
 		the_kind_patch.execute()
 		self.assertEqual(self.the_kind_of_the_till(name), gift_card_vat.KIND_VALUE, "it has its template")
 
+	def sell_the_card_item_once(self, item):
+		"""One submitted sale of the card item, as the till makes it (taxed as the item says)."""
+		sale = self.the_card_sale(100)
+		sale["items"][0]["item_code"] = item
+		return self.submit(sale)
+
 	def test_the_patch_leaves_a_value_voucher_the_sales_measured(self):
-		_, name = self.a_till_that_never_chose("_Test Gift Card Measured")
-		item = frappe.db.get_value("POS Settings", name, "gift_card_item")
+		# The item is at 0 %: its one sale carried no VAT, which is what made a value voucher
+		item, name = self.a_till_that_never_chose("_Test Gift Card Measured", self.zero)
+		self.sell_the_card_item_once(item)
 		frappe.db.set_value("POS Settings", name, "gift_card_kind", gift_card_vat.KIND_VALUE)
-		the_card_item_was_sold = patch.object(the_kind_patch, "_the_item_was_sold", return_value=True)
 
-		with the_card_item_was_sold as asked:
-			the_kind_patch.execute()
+		the_kind_patch.execute()
 
-		asked.assert_called_with(item)
 		self.assertEqual(self.the_kind_of_the_till(name), gift_card_vat.KIND_VALUE)
+
+	def test_the_patch_gives_service_voucher_to_a_till_whose_item_was_sold_taxed(self):
+		item, name = self.a_till_that_never_chose("_Test Gift Card Sold Taxed", self.usual_template)
+		self.sell_the_card_item_once(item)
+		frappe.db.set_value("POS Settings", name, "gift_card_kind", gift_card_vat.KIND_VALUE)
+
+		the_kind_patch.execute()
+
+		self.assertEqual(self.the_kind_of_the_till(name), gift_card_vat.KIND_SERVICE)
 
 	def test_the_patch_can_be_run_again(self):
 		_, name = self.a_till_that_never_chose("_Test Gift Card Again")
