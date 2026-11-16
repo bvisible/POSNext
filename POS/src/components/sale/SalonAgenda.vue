@@ -136,8 +136,13 @@
 							</span>
 							<span v-if="!row.busy" class="truncate text-gray-700 dark:text-gray-200">{{ titleOf(row) }}</span>
 							<span v-else class="truncate text-gray-500 dark:text-gray-400">{{ __("A colleague's appointment") }}</span>
-							<span v-if="!row.busy && blockHeight(row) >= 64" class="mt-auto flex">
-								<span class="rounded-full px-2 py-px text-[11px] font-medium" :class="PILLS[standsAs(row)]">{{ pillText(row) }}</span>
+							<span v-if="!row.busy && blockHeight(row) >= 64" class="mt-auto flex items-center gap-1.5">
+								<span class="flex-none rounded-full px-2 py-px text-[11px] font-medium" :class="PILLS[standsAs(row)]">{{ pillText(row) }}</span>
+								<!-- //// Neoffice — the cabin of the appointment, or « To place » for a care taken before the cabins (NeoSalon, cabins level 2, 16.11.2026) -->
+								<span v-if="cabinChip(row)" class="inline-flex min-w-0 items-center gap-1 text-[11px]" :class="cabinChip(row).needs ? 'rounded-full border border-dashed border-gray-400 px-2 py-px text-gray-600 dark:text-gray-300' : 'text-gray-600 dark:text-gray-300'" :data-test="`block-cabin-${row.key}`">
+									<span v-if="cabinChip(row).color" class="h-2 w-2 flex-none rounded-full" :style="{ background: cabinChip(row).color }" aria-hidden="true" />
+									<span dir="auto" class="truncate">{{ cabinChip(row).label }}</span>
+								</span>
 							</span>
 						</button>
 					</template>
@@ -161,7 +166,7 @@
 						<button v-else type="button" class="flex min-w-0 flex-1 flex-col gap-0.5 rounded-lg border px-3 py-2 text-start" :class="blockClass(item.row)" :disabled="item.row.busy" :data-test="`row-${item.row.key}`" @click="!item.row.busy && select(item.row)">
 							<b class="truncate text-[15px] text-gray-900 dark:text-gray-100">{{ item.row.busy ? __("Busy") : item.row.customer_name || __("Walk-in") }}</b>
 							<span class="truncate text-sm text-gray-700 dark:text-gray-200">{{ item.row.busy ? __("A colleague's appointment") : titleOf(item.row) }}</span>
-							<span v-if="!item.row.busy" class="mt-1 flex"><span class="rounded-full px-2 py-px text-xs font-medium" :class="PILLS[standsAs(item.row)]">{{ pillText(item.row) }}</span></span>
+							<span v-if="!item.row.busy" class="mt-1 flex items-center gap-2"><span class="flex-none rounded-full px-2 py-px text-xs font-medium" :class="PILLS[standsAs(item.row)]">{{ pillText(item.row) }}</span><span v-if="cabinChip(item.row)" class="inline-flex min-w-0 items-center gap-1 text-xs text-gray-600 dark:text-gray-300" :data-test="`row-cabin-${item.row.key}`"><span v-if="cabinChip(item.row).color" class="h-2 w-2 flex-none rounded-full" :style="{ background: cabinChip(item.row).color }" aria-hidden="true" /><span dir="auto" class="truncate">{{ cabinChip(item.row).label }}</span></span></span>
 						</button>
 					</li>
 					<li v-if="!phoneRows.length" class="px-4 py-6 text-sm text-gray-500">{{ __("Nothing booked.") }}</li>
@@ -185,6 +190,7 @@ import { useAppointment } from "@/composables/useAppointment"
 import { useAppointmentsStore } from "@/stores/appointments"
 import { usePOSUIStore } from "@/stores/posUI"
 import {
+	cabinOf,
 	colorOfPerson,
 	blockGeometry,
 	clockOf,
@@ -341,6 +347,13 @@ function blockClass(row) {
 		row.busy ? "cursor-default border-gray-200 text-gray-500 dark:border-gray-600" : "border-gray-300 hover:brightness-95",
 		store.selectedKey === row.key ? "ring-2 ring-blue-500" : "",
 	]
+}
+
+//// Neoffice — the cabin an appointment is in, or « To place » when it has none yet (NeoSalon, cabins level 2, 16.11.2026); nothing for a service that asks for none
+function cabinChip(row) {
+	const { cabin, needs } = cabinOf(row)
+	if (cabin) return { label: cabin.label, color: cabin.color, needs: false }
+	return needs ? { label: __("To place"), color: null, needs: true } : null
 }
 
 function pillText(row) {

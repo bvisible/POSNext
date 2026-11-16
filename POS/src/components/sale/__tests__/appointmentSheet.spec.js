@@ -2,20 +2,29 @@
 // It offers the gesture a person makes at this point as the one filled button (start, finish, collect), keeps the others as outlined ones, grays what `can` forbids,
 // hides what the site does not have, and asks the time lane only through the store's capabilities; it never shows a cost.
 // @vitest-environment jsdom
-import { mount } from "@vue/test-utils"
+import { flushPromises, mount } from "@vue/test-utils"
 import { createPinia, setActivePinia } from "pinia"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 vi.hoisted(() => {
 	globalThis.__ = (text, args = []) => (args || []).reduce((out, arg, at) => out.replace(`{${at}}`, arg), text)
 })
-const gestures = vi.hoisted(() => ({ clock: vi.fn(async () => ({ clock: { state: "running" } })) }))
+const gestures = vi.hoisted(() => ({
+	clock: vi.fn(async () => ({ clock: { state: "running" } })),
+	cabinsOf: vi.fn(async () => []),
+	changeCabin: vi.fn(async () => null),
+}))
 const till = vi.hoisted(() => ({ appointmentsAtTheAnnouncedPrice: false }))
 
 vi.mock("@/stores/posSettings", () => ({ usePOSSettingsStore: () => till }))
 vi.mock("@/stores/posShift", () => ({ usePOSShiftStore: () => ({ profileName: "Till A", profileCurrency: "CHF" }) }))
 vi.mock("@/composables/useAppointment", () => ({
-	useAppointment: () => ({ clock: gestures.clock, loadDay: vi.fn(async () => null) }),
+	useAppointment: () => ({
+		clock: gestures.clock,
+		cabinsOf: gestures.cabinsOf,
+		changeCabin: gestures.changeCabin,
+		loadDay: vi.fn(async () => null),
+	}),
 }))
 vi.mock("@/utils/offline/offlineState", () => ({ offlineState: { isOffline: false } }))
 vi.mock("@/utils/currency", () => ({ formatCurrency: (amount) => `CHF ${Number(amount).toFixed(2)}` }))
@@ -59,6 +68,8 @@ describe("the sheet of an appointment", () => {
 	beforeEach(() => {
 		setActivePinia(createPinia())
 		gestures.clock.mockClear()
+		gestures.cabinsOf.mockReset().mockResolvedValue([])
+		gestures.changeCabin.mockReset().mockResolvedValue(null)
 		till.appointmentsAtTheAnnouncedPrice = false
 		store = useAppointmentsStore()
 		store.capabilities = { clock: true, move: true, cancel: true, check_move: true, book: true }
@@ -274,5 +285,101 @@ describe("the sheet of an appointment", () => {
 
 		expect(wrapper.text().toLowerCase()).not.toContain("margin")
 		expect(wrapper.text().toLowerCase()).not.toContain("cost")
+	})
+
+	// //// Neoffice — the cabin of the appointment (NeoSalon, cabins level 2, 16.11.2026)
+	describe("its cabin", () => {
+		const cabinOne = { name: "CAB-1", label: "Cabin 1", color: "#C2723F" }
+		const room = (extra = {}) => ({
+			steps: [{ ...appointment().steps[0], cabin: cabinOne, needs_cabin: false, ...extra }],
+		})
+		const options = [
+			{ ...cabinOne, current: true, free: true, why: null },
+			{ name: "CAB-2", label: "Cabin 2", color: null, current: false, free: true, why: null },
+			{ name: "CAB-3", label: "Cabin 3", color: null, current: false, free: false, why: "taken" },
+			{ name: "CAB-4", label: "Cabin 4", color: null, current: false, free: false, why: "not_allowed" },
+		]
+
+		beforeEach(() => {
+			store.capabilities = { ...store.capabilities, cabin: true }
+			gestures.cabinsOf.mockResolvedValue(options)
+		})
+
+		it("shows nothing for a service that asks for no cabin, and asks nothing", async () => {
+			const wrapper = mountIt()
+			await flushPromises()
+
+			expect(wrapper.find("[data-test='sheet-cabin-section']").exists()).toBe(false)
+			expect(gestures.cabinsOf).not.toHaveBeenCalled()
+		})
+
+		it("says the cabin it is in, with its colour, and lists the others: the ones that are not free are disabled and say why", async () => {
+			const wrapper = mountIt(room())
+			await flushPromises()
+
+			expect(wrapper.get("[data-test='sheet-cabin-current']").text()).toBe("Cabin 1")
+			expect(gestures.cabinsOf).toHaveBeenCalledWith("BKG-1")
+			const select = wrapper.get("[data-test='sheet-cabin']")
+			expect(select.element.value).toBe("CAB-1")
+			expect(wrapper.get("[data-test='sheet-cabin-CAB-2']").attributes("disabled")).toBeUndefined()
+			expect(wrapper.get("[data-test='sheet-cabin-CAB-3']").attributes("disabled")).toBeDefined()
+			expect(wrapper.get("[data-test='sheet-cabin-CAB-3']").text()).toBe("Cabin 3 — taken")
+			expect(wrapper.get("[data-test='sheet-cabin-CAB-4']").text()).toBe("Cabin 4 — not for this person")
+		})
+
+		it("puts the appointment in the cabin that is chosen, then reads the agenda again", async () => {
+			gestures.changeCabin.mockResolvedValue({ booking: "BKG-1", from: cabinOne, to: { name: "CAB-2", label: "Cabin 2", color: null } })
+			const wrapper = mountIt(room())
+			await flushPromises()
+
+			await wrapper.get("[data-test='sheet-cabin']").setValue("CAB-2")
+			await flushPromises()
+
+			expect(gestures.changeCabin).toHaveBeenCalledWith("BKG-1", "CAB-2")
+			expect(store.refresh).toHaveBeenCalled()
+		})
+
+		it("goes back to the cabin it was in when the reservation refuses, and asks the cabins again", async () => {
+			const wrapper = mountIt(room())
+			await flushPromises()
+			gestures.cabinsOf.mockClear()
+
+			await wrapper.get("[data-test='sheet-cabin']").setValue("CAB-2")
+			await flushPromises()
+
+			expect(gestures.changeCabin).toHaveBeenCalledWith("BKG-1", "CAB-2")
+			expect(store.refresh).not.toHaveBeenCalled()
+			expect(wrapper.get("[data-test='sheet-cabin']").element.value).toBe("CAB-1")
+			expect(gestures.cabinsOf).toHaveBeenCalledTimes(1)
+		})
+
+		it("says « To place » for a care taken before the cabins and offers to choose one", async () => {
+			const wrapper = mountIt({ steps: [{ ...appointment().steps[0], cabin: null, needs_cabin: true }] })
+			gestures.cabinsOf.mockResolvedValue(options.map((option) => ({ ...option, current: false })))
+			await flushPromises()
+
+			expect(wrapper.get("[data-test='sheet-cabin-to-place']").text()).toBe("To place")
+			expect(wrapper.find("[data-test='sheet-cabin-current']").exists()).toBe(false)
+			expect(wrapper.get("[data-test='sheet-cabin']").element.value).toBe("")
+		})
+
+		it("only says the cabin where the till cannot change it: the site has no cabin gesture, the cashier may not move it, or it is paid", async () => {
+			store.capabilities = { ...store.capabilities, cabin: false }
+			const without = mountIt(room())
+			await flushPromises()
+			expect(without.get("[data-test='sheet-cabin-current']").text()).toBe("Cabin 1")
+			expect(without.find("[data-test='sheet-cabin']").exists()).toBe(false)
+
+			store.capabilities = { ...store.capabilities, cabin: true }
+			const mayNot = mountIt({ ...room(), can: { collect: true, move: false, cancel: true, clock: true } })
+			await flushPromises()
+			expect(mayNot.find("[data-test='sheet-cabin']").exists()).toBe(false)
+
+			gestures.cabinsOf.mockClear()
+			const paid = mountIt({ ...room(), state: "paid" })
+			await flushPromises()
+			expect(paid.find("[data-test='sheet-cabin']").exists()).toBe(false)
+			expect(gestures.cabinsOf).not.toHaveBeenCalled()
+		})
 	})
 })

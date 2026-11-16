@@ -649,6 +649,10 @@ pos_next_salon_day = []
 pos_next_appointment_check_move = []
 # //// Neoffice — the planning lane: the move
 pos_next_appointment_move = []
+# //// Neoffice — the planning lane: the cabins an appointment could be in, whether it could go to one, and the change (cabins level 2, 16.11.2026)
+pos_next_appointment_cabins = []
+pos_next_appointment_cabin_check = []
+pos_next_appointment_cabin_change = []
 # //// Neoffice — the money lane: where each appointment stands, what it announces, what was paid
 pos_next_appointments_of_the_day = []
 # //// Neoffice — the money lane: the draft invoice of one appointment

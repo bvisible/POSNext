@@ -415,6 +415,43 @@ describe("the gestures of the salon", () => {
 		})
 	})
 
+	// //// Neoffice — the cabin of an appointment (NeoSalon, cabins level 2, 16.11.2026)
+	it("asks the cabins an appointment could be in with the day of the agenda, and gets none for a service that asks for none, or when it cannot be asked", async () => {
+		useAppointmentsStore().day = "2026-11-10"
+		call.mockResolvedValue({ message: [{ name: "CAB-1", label: "Cabin 1", current: true, free: true }] })
+
+		const listed = await useAppointment().cabinsOf("BKG-1")
+
+		expect(listed).toHaveLength(1)
+		expect(asked("get_appointment_cabins")[0][1]).toEqual({
+			pos_profile: "Till A",
+			date: "2026-11-10",
+			booking: "BKG-1",
+		})
+
+		call.mockResolvedValue({ message: null })
+		expect(await useAppointment().cabinsOf("BKG-1")).toEqual([])
+		call.mockRejectedValue(new Error("gone"))
+		expect(await useAppointment().cabinsOf("BKG-1")).toEqual([])
+		expect(toast.showError).not.toHaveBeenCalled()
+	})
+
+	it("puts an appointment in another cabin and says which, or says the reservation's refusal", async () => {
+		call.mockResolvedValue({
+			message: { booking: "BKG-1", from: { name: "CAB-1", label: "Cabin 1" }, to: { name: "CAB-2", label: "Cabin 2" } },
+		})
+
+		const done = await useAppointment().changeCabin("BKG-1", "CAB-2")
+
+		expect(done.to.label).toBe("Cabin 2")
+		expect(asked("change_appointment_cabin")[0][1]).toMatchObject({ booking: "BKG-1", equipment: "CAB-2" })
+		expect(toast.showSuccess).toHaveBeenCalledWith("The appointment is now in Cabin 2.")
+
+		call.mockRejectedValue(new Error("That cabin is taken."))
+		expect(await useAppointment().changeCabin("BKG-1", "CAB-3")).toBeNull()
+		expect(toast.showError).toHaveBeenCalled()
+	})
+
 	it("cancels, or marks absent, with the reason asked", async () => {
 		call.mockResolvedValue({
 			message: {

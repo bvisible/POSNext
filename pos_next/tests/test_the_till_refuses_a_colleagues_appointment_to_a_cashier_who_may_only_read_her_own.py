@@ -81,6 +81,18 @@ def draft(*args):
 	return _record("draft", *args)
 
 
+def cabins(*args):
+	return _record("cabins", *args)
+
+
+def cabin_check(*args):
+	return _record("cabin_check", *args)
+
+
+def cabin_change(*args):
+	return _record("cabin_change", *args)
+
+
 def sold(*args):
 	return _record("sold", *args)
 
@@ -110,6 +122,9 @@ HOOKS = {
 	"cancel": appointments.CANCEL_HOOK,
 	"time_action": appointments.TIME_ACTION_HOOK,
 	"draft": appointments.DRAFT_HOOK,
+	"cabins": appointments.CABINS_HOOK,
+	"cabin_check": appointments.CABIN_CHECK_HOOK,
+	"cabin_change": appointments.CABIN_CHANGE_HOOK,
 	"sold": appointments.SOLD_HOOK,
 }
 
@@ -159,6 +174,9 @@ class TestTheTillRefusesAColleaguesAppointmentToACashierWhoMayOnlyReadHerOwn(Fra
 			cancel=["cancel"],
 			time_action=["time_action"],
 			draft=["draft"],
+			cabins=["cabins"],
+			cabin_check=["cabin_check"],
+			cabin_change=["cabin_change"],
 			**more,
 		)
 
@@ -188,6 +206,23 @@ class TestTheTillRefusesAColleaguesAppointmentToACashierWhoMayOnlyReadHerOwn(Fra
 				),
 			),
 			("cancel", lambda: self.as_the_cashier(appointments.cancel_appointment, booking, till, **day_of)),
+			# //// Neoffice — the cabins of an appointment are worked by the same door (NeoSalon, cabins level 2, 16.11.2026)
+			(
+				"cabins",
+				lambda: self.as_the_cashier(appointments.get_appointment_cabins, booking, till, **day_of),
+			),
+			(
+				"cabin_check",
+				lambda: self.as_the_cashier(
+					appointments.check_appointment_cabin, booking, till, "CAB-2", **day_of
+				),
+			),
+			(
+				"cabin_change",
+				lambda: self.as_the_cashier(
+					appointments.change_appointment_cabin, booking, till, "CAB-2", **day_of
+				),
+			),
 			(
 				"clock",
 				lambda: self.as_the_cashier(appointments.clock_appointment, booking, till, "start", **day_of),
@@ -218,7 +253,7 @@ class TestTheTillRefusesAColleaguesAppointmentToACashierWhoMayOnlyReadHerOwn(Fra
 
 		self.assertEqual(
 			sorted({call[0] for call in SITE["calls"]}),
-			["cancel", "check_move", "draft", "move", "time_action"],
+			["cabin_change", "cabin_check", "cabins", "cancel", "check_move", "draft", "move", "time_action"],
 		)
 		for call in SITE["calls"]:
 			self.assertIn(MINE, call)

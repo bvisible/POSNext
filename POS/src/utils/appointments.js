@@ -272,6 +272,28 @@ export function firstStepOf(appointment) {
 	return appointment?.steps?.[0] || {}
 }
 
+/**
+ * The cabin an appointment is in, and whether it still has to be placed (NeoSalon, cabins level 2, 16.11.2026): the cabin the reservation attributed to
+ * its first step that has one (`{ name, label, color }`), or none and `needs` when a service asks for a cabin and none was attributed (a care taken before
+ * the cabins: « To place »). Both are empty for a service that asks for none: the screens of the other trades read the same.
+ *
+ * @param {object} appointment - a row of the agenda
+ * @returns {{ cabin: object|null, needs: boolean }}
+ */
+export function cabinOf(appointment) {
+	const steps = appointment?.steps || []
+	const placed = steps.find((step) => step?.cabin)
+	return { cabin: placed?.cabin || null, needs: !placed && steps.some((step) => step?.needs_cabin) }
+}
+
+/** What stops a cabin from being chosen, in a few words (`why` is the reservation's: `taken`, `closed` or `not_allowed`). */
+export function whyNotCabin(why) {
+	if (why === "taken") return __("taken")
+	if (why === "closed") return __("closed")
+	if (why === "not_allowed") return __("not for this person")
+	return ""
+}
+
 /** What an appointment is about: the labels of its steps, « Coupe + brushing ». */
 export function titleOf(appointment) {
 	return (appointment?.steps || [])

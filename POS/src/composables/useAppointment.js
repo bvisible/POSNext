@@ -275,6 +275,24 @@ export function useAppointment() {
 		)
 	}
 
+	/** The cabins an appointment could be in: `[{ name, label, color, current, free, why }]` (empty for a service that asks for none). */
+	async function cabinsOf(booking) {
+		const list = await ask("get_appointment_cabins", { booking }, { quiet: true })
+		return Array.isArray(list) ? list : []
+	}
+
+	/** Put an appointment in another cabin (the reservation asks again, under its locks). @returns {Promise<object|null>} `{ booking, from, to }` */
+	async function changeCabin(booking, equipment) {
+		const done = await ask("change_appointment_cabin", { booking, equipment })
+		if (done)
+			showSuccess(
+				done.to?.label
+					? __("The appointment is now in {0}.", [done.to.label])
+					: __("The cabin of the appointment has been changed."),
+			)
+		return done
+	}
+
 	/** Move an appointment, warning the customer when `notify`. @returns {Promise<object|null>} `{ booking, from, to, provider_changed, notified }` */
 	async function move(
 		booking,
@@ -387,6 +405,8 @@ export function useAppointment() {
 		takeAppointment,
 		checkMove,
 		move,
+		cabinsOf,
+		changeCabin,
 		cancel,
 		clock,
 		services,

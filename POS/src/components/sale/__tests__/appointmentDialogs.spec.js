@@ -140,6 +140,63 @@ describe("the move dialog", () => {
 		expect(wrapper.get("[data-test='move-verdict']").text()).toBe("That time slot is no longer available.")
 	})
 
+	// //// Neoffice — what the move does to the cabin (NeoSalon, cabins level 2, 16.11.2026): said before the button
+	it("says the cabin it goes to when the hour takes it out of the one it is in", async () => {
+		vi.useFakeTimers()
+		lane.checkMove.mockResolvedValue({
+			ok: true,
+			why: "",
+			cabin: { from: { name: "CAB-1", label: "Cabin 1", color: null }, to: { name: "CAB-2", label: "Cabin 2", color: null }, changed: true },
+		})
+		const wrapper = open()
+
+		await wrapper.get("[data-test='move-time']").setValue("16:30")
+		await vi.advanceTimersByTimeAsync(350)
+		await flushPromises()
+
+		expect(wrapper.get("[data-test='move-verdict']").text()).toContain("This hour is free.")
+		expect(wrapper.get("[data-test='move-cabin']").text()).toBe("Cabin 2 instead of Cabin 1.")
+	})
+
+	it("names the cabin of an appointment that had none, and says nothing when the cabin is kept or the service asks for none", async () => {
+		vi.useFakeTimers()
+		lane.checkMove.mockResolvedValue({ ok: true, why: "", cabin: { from: null, to: { name: "CAB-2", label: "Cabin 2", color: null }, changed: true } })
+		const wrapper = open()
+		await wrapper.get("[data-test='move-time']").setValue("16:30")
+		await vi.advanceTimersByTimeAsync(350)
+		await flushPromises()
+		expect(wrapper.get("[data-test='move-cabin']").text()).toBe("It goes in Cabin 2.")
+
+		lane.checkMove.mockResolvedValue({ ok: true, why: "", cabin: { from: { name: "CAB-1", label: "Cabin 1", color: null }, to: { name: "CAB-1", label: "Cabin 1", color: null }, changed: false } })
+		await wrapper.get("[data-test='move-time']").setValue("17:00")
+		await vi.advanceTimersByTimeAsync(350)
+		await flushPromises()
+		expect(wrapper.find("[data-test='move-cabin']").exists()).toBe(false)
+
+		lane.checkMove.mockResolvedValue({ ok: true, why: "" })
+		await wrapper.get("[data-test='move-time']").setValue("17:30")
+		await vi.advanceTimersByTimeAsync(350)
+		await flushPromises()
+		expect(wrapper.find("[data-test='move-cabin']").exists()).toBe(false)
+	})
+
+	it("does not announce a cabin for an hour that is refused", async () => {
+		vi.useFakeTimers()
+		lane.checkMove.mockResolvedValue({
+			ok: false,
+			why: "No cabin is free at that hour.",
+			cabin: { from: { name: "CAB-1", label: "Cabin 1", color: null }, to: null, changed: true },
+		})
+		const wrapper = open()
+
+		await wrapper.get("[data-test='move-time']").setValue("16:30")
+		await vi.advanceTimersByTimeAsync(350)
+		await flushPromises()
+
+		expect(wrapper.get("[data-test='move-verdict']").text()).toBe("No cabin is free at that hour.")
+		expect(wrapper.find("[data-test='move-cabin']").exists()).toBe(false)
+	})
+
 	it("says the general sentence when the lane gives no reason", async () => {
 		vi.useFakeTimers()
 		lane.checkMove.mockResolvedValue({ ok: false, why: "" })

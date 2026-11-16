@@ -12,6 +12,10 @@ the day (the planning lane)
 - `pos_next_salon_day`                `(pos_profile, date=None) -> {"day", "visibility", "people", "unassigned"} | None`  who is there, and what each holds;
 - `pos_next_appointment_check_move`   `(pos_profile, booking, starts_at, sales_person=None) -> {"ok", "why"}`  can it go there;
 - `pos_next_appointment_move`         `(pos_profile, booking, starts_at, sales_person=None, notify=1) -> dict`;
+- `pos_next_appointment_cabins`       `(pos_profile, booking) -> [{"name", "label", "color", "current", "free", "why"}] | None`  the cabins (rooms, stations) an appointment
+                                      could be in, each with why not when it is not free; None for a service that asks for none;
+- `pos_next_appointment_cabin_check`  `(pos_profile, booking, equipment) -> {"ok", "why"}`  can it be put in this cabin;
+- `pos_next_appointment_cabin_change` `(pos_profile, booking, equipment) -> {"booking", "from", "to"}`  put it there;
 
 the money (the reservation lane)
 - `pos_next_appointments_of_the_day`  `(pos_profile, date=None, providers=None) -> list | None`  where each stands, what it announces and what was paid;
@@ -73,6 +77,9 @@ TEAM_HOOK = "pos_next_booking_team"
 LEGACY_HOOKS = {DAY_HOOK: "pos_next_salon_day", TEAM_HOOK: "pos_next_salon_team"}
 CHECK_MOVE_HOOK = "pos_next_appointment_check_move"
 MOVE_HOOK = "pos_next_appointment_move"
+CABINS_HOOK = "pos_next_appointment_cabins"
+CABIN_CHECK_HOOK = "pos_next_appointment_cabin_check"
+CABIN_CHANGE_HOOK = "pos_next_appointment_cabin_change"
 LIST_HOOK = "pos_next_appointments_of_the_day"
 DRAFT_HOOK = "pos_next_appointment_draft"
 SOLD_HOOK = "pos_next_appointment_sold"
@@ -99,6 +106,7 @@ MOST_GROUPS = 12
 MOST_CHOICES = 30
 MOST_IN_A_CHAIN = 10
 MOST_PERIODS = 6
+MOST_CABINS = 30
 MOST_REPEATS = 12
 MOST_WEEKS = 52
 OPTIONS_LENGTH = 5000
@@ -248,6 +256,28 @@ def _clock(value) -> dict:
 	}
 
 
+def _cabin(value) -> dict | None:
+	"""A cabin as the reservation gives it (NeoSalon, cabins level 2, 16.11.2026): `{name, label, color}`, names cut and the colour a colour and nothing else; None for no cabin."""
+	if not isinstance(value, dict) or not _text(value.get("name")):
+		return None
+	return {
+		"name": _text(value.get("name")),
+		"label": _text(value.get("label")) or _text(value.get("name")),
+		"color": _colour(value.get("color")),
+	}
+
+
+def _cabin_move(value) -> dict | None:
+	"""What a move does to the cabin, `{from, to, changed}`, or None when the site says nothing of it (a service that asks for no cabin)."""
+	if not isinstance(value, dict):
+		return None
+	return {
+		"from": _cabin(value.get("from")),
+		"to": _cabin(value.get("to")),
+		"changed": bool(cint(value.get("changed"))),
+	}
+
+
 def _step(row) -> dict | None:
 	if not isinstance(row, dict):
 		return None
@@ -264,6 +294,9 @@ def _step(row) -> dict | None:
 		# //// Neoffice — the price this step announced, options included, as the reservation states it (13.11.2026): kept with the agenda the till holds, so that
 		# //// a till set to collect the price announced at booking holds that choice without the network too. None when the reservation does not say.
 		"price": _amount_or_none(row.get("price")),
+		# //// Neoffice — the cabin of the step and whether it still has to be placed (a care taken before the cabins), as the reservation says it (16.11.2026)
+		"cabin": _cabin(row.get("cabin")),
+		"needs_cabin": bool(cint(row.get("needs_cabin"))),
 	}
 
 
@@ -326,6 +359,12 @@ def _capabilities() -> dict:
 	return {
 		"check_move": bool(frappe.get_hooks(CHECK_MOVE_HOOK)),
 		"move": bool(frappe.get_hooks(MOVE_HOOK)),
+		# //// Neoffice — the cabins: listed, checked and changed (16.11.2026); a site whose reservation knows none answers None to each
+		"cabin": bool(
+			frappe.get_hooks(CABINS_HOOK)
+			and frappe.get_hooks(CABIN_CHECK_HOOK)
+			and frappe.get_hooks(CABIN_CHANGE_HOOK)
+		),
 		"cancel": bool(frappe.get_hooks(CANCEL_HOOK)),
 		"clock": bool(frappe.get_hooks(TIME_ACTION_HOOK)),
 		"repeat": bool(frappe.get_hooks(REPEAT_HOOK)) and runs["repeat"],
@@ -982,7 +1021,14 @@ def check_appointment_move(
 	)
 	if not isinstance(answer, dict):
 		frappe.throw(_("This till does not take appointments."))
-	return {"ok": bool(cint(answer.get("ok"))), "why": _text(answer.get("why"), 300)}
+	cabin = _cabin_move(
+		answer.get("cabin")
+	)  # //// Neoffice — what the move would do to the cabin (16.11.2026)
+	return {
+		"ok": bool(cint(answer.get("ok"))),
+		"why": _text(answer.get("why"), 300),
+		**({"cabin": cabin} if cabin else {}),
+	}
 
 
 @frappe.whitelist(methods=["POST"])
@@ -1014,7 +1060,58 @@ def move_appointment(
 		"to": _moment(answer.get("to")),
 		"provider_changed": bool(cint(answer.get("provider_changed"))),
 		"notified": {"email": bool(cint(notified.get("email"))), "sms": bool(cint(notified.get("sms")))},
+		**(
+			{"cabin": cabin} if (cabin := _cabin_move(answer.get("cabin"))) else {}
+		),  # //// Neoffice — what the move did to the cabin (16.11.2026)
 	}
+
+
+# //// Neoffice — the cabins of an appointment: the list the sheet offers, the check, the change (NeoSalon, cabins level 2, 16.11.2026). The reservation decides what is free
+# //// and why not; the till shows it and asks again under the engine's locks when the cashier presses the button.
+@frappe.whitelist()
+def get_appointment_cabins(booking: str, pos_profile: str, date: str | None = None) -> list:
+	"""The cabins an appointment could be in: `[{"name", "label", "color", "current", "free", "why"}]`, `why` being `taken`, `closed` or `not_allowed`
+	for a cabin that is not free. Empty for a service that asks for no cabin, and for a site whose reservation knows none."""
+	booking = _gate(pos_profile, booking, date)
+	answer = _first_answer(CABINS_HOOK, pos_profile, booking)
+	if not isinstance(answer, list):
+		return []
+	options = []
+	for row in answer[:MOST_CABINS]:
+		cabin = _cabin(row)
+		if not cabin:
+			continue
+		why = row.get("why") if row.get("why") in ("taken", "closed", "not_allowed") else None
+		options.append(
+			{
+				**cabin,
+				"current": bool(cint(row.get("current"))),
+				"free": bool(cint(row.get("free"))),
+				"why": why,
+			}
+		)
+	return options
+
+
+@frappe.whitelist()
+def check_appointment_cabin(booking: str, pos_profile: str, equipment: str, date: str | None = None) -> dict:
+	"""Whether an appointment could be put in this cabin: `{"ok", "why"}`. Not a promise: the change asks again, under the engine's locks."""
+	booking = _gate(pos_profile, booking, date)
+	answer = _first_answer(CABIN_CHECK_HOOK, pos_profile, booking, _text(equipment))
+	if not isinstance(answer, dict):
+		frappe.throw(_("This till does not take appointments."))
+	return {"ok": bool(cint(answer.get("ok"))), "why": _text(answer.get("why"), 300)}
+
+
+@frappe.whitelist(methods=["POST"])
+def change_appointment_cabin(booking: str, pos_profile: str, equipment: str, date: str | None = None) -> dict:
+	"""Put an appointment in another cabin. The reservation refuses in its own words (a cabin that is not free) and writes nothing then; it answers
+	`{"booking", "from", "to"}`, the cabins (`{name, label, color}`) it left and went to."""
+	booking = _gate(pos_profile, booking, date)
+	answer = _first_answer(CABIN_CHANGE_HOOK, pos_profile, booking, _text(equipment))
+	if not isinstance(answer, dict):
+		frappe.throw(_("This till does not take appointments."))
+	return {"booking": booking, "from": _cabin(answer.get("from")), "to": _cabin(answer.get("to"))}
 
 
 @frappe.whitelist(methods=["POST"])

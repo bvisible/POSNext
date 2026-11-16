@@ -31,6 +31,8 @@
 
 				<p v-if="verdict" class="rounded-xl px-4 py-3 text-sm leading-snug" :class="verdict.ok ? 'bg-green-50 text-green-800 dark:bg-green-400/15 dark:text-green-100' : 'bg-yellow-50 text-yellow-800 dark:bg-yellow-400/15 dark:text-yellow-100'" data-test="move-verdict">
 					<b>{{ verdictText }}</b>
+					<!-- //// Neoffice — what the move does to the cabin (NeoSalon, cabins level 2, 16.11.2026): said before the button, never a surprise after it -->
+					<span v-if="cabinNote" class="mt-1 block" data-test="move-cabin">{{ cabinNote }}</span>
 				</p>
 
 				<label class="flex items-start gap-3 text-[15px] text-gray-900 dark:text-gray-100">
@@ -89,6 +91,13 @@ const verdictText = computed(() => {
 	return verdict.value.why || __("This hour is not possible.")
 })
 
+// What the move does to the cabin, when the reservation says it changes (the cabin is kept whenever it is free at the new hour)
+const cabinNote = computed(() => {
+	const cabin = verdict.value?.ok ? verdict.value.cabin : null
+	if (!cabin?.changed || !cabin.to) return ""
+	return cabin.from ? __("{0} instead of {1}.", [cabin.to.label, cabin.from.label]) : __("It goes in {0}.", [cabin.to.label])
+})
+
 watch(
 	() => [props.modelValue, props.appointment?.key, props.proposal],
 	([open]) => {
@@ -113,7 +122,7 @@ function askFit() {
 	if (!props.modelValue || !whenText.value || !store.capabilities.check_move) return
 	asking = setTimeout(async () => {
 		const answer = await checkMove(props.appointment.booking, whenText.value, person.value)
-		verdict.value = answer ? { ok: Boolean(answer.ok), why: answer.why || "" } : null
+		verdict.value = answer ? { ok: Boolean(answer.ok), why: answer.why || "", cabin: answer.cabin || null } : null
 	}, 300)
 }
 watch([person, day, time], askFit)

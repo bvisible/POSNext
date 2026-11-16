@@ -38,6 +38,22 @@
 				</div>
 			</div>
 
+			<!-- //// Neoffice — the cabin (NeoSalon, cabins level 2, 16.11.2026): where the care is, and the cabins it could be put in. The reservation decides what is free and why not; it asks again, under its locks, when the cashier chooses. -->
+			<div v-if="cabinInfo.cabin || cabinInfo.needs" class="flex flex-col gap-2 border-t border-gray-100 px-4 py-3 dark:border-gray-800" data-test="sheet-cabin-section">
+				<div class="text-xs font-semibold uppercase tracking-wider text-gray-500">{{ __("Cabin") }}</div>
+				<div class="flex items-center gap-3">
+					<span v-if="cabinInfo.cabin" class="inline-flex min-w-0 flex-1 items-center gap-2 text-[15px] text-gray-900 dark:text-gray-100" data-test="sheet-cabin-current">
+						<span class="h-3 w-3 flex-none rounded-full border border-gray-300 dark:border-gray-600" :style="{ background: cabinInfo.cabin.color || 'transparent' }" aria-hidden="true" />
+						<span dir="auto" class="truncate">{{ cabinInfo.cabin.label }}</span>
+					</span>
+					<span v-else class="inline-flex flex-none items-center rounded-full border border-dashed border-gray-400 px-3 py-0.5 text-[13px] text-gray-600 dark:text-gray-300" data-test="sheet-cabin-to-place">{{ __("To place") }}</span>
+					<select v-if="cabinOptions.length && can.move" :value="cabinInfo.cabin ? cabinInfo.cabin.name : ''" :disabled="cabinBusy" data-test="sheet-cabin" :aria-label="__('Cabin')" class="min-h-[44px] min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-3 text-[15px] dark:border-gray-600 dark:bg-gray-800" @change="changeTheCabin($event)">
+						<option v-if="!cabinInfo.cabin" value="" disabled>{{ __("Choose a cabin") }}</option>
+						<option v-for="option in cabinOptions" :key="option.name" :value="option.name" :disabled="!option.free && !option.current" :data-test="`sheet-cabin-${option.name}`">{{ option.label }}{{ option.free || option.current ? "" : ` — ${whyNotCabin(option.why)}` }}</option>
+					</select>
+				</div>
+			</div>
+
 			<div v-if="showsTime" class="flex flex-col gap-1 border-t border-gray-100 px-4 py-3 text-sm dark:border-gray-800" data-test="sheet-time">
 				<div class="text-xs font-semibold uppercase tracking-wider text-gray-500">{{ __("Time") }}</div>
 				<div class="flex items-baseline justify-between">
@@ -75,12 +91,12 @@
  * emits `close`, `collect` (take it over into the cart), `move` and `cancel` (the dialogs are the page's). The gestures of the time are asked here: the
  * server reads its clock, and the agenda is read again after each.
  */
-import { computed, ref } from "vue"
+import { computed, ref, watch } from "vue"
 import { useAppointment } from "@/composables/useAppointment"
 import { useAppointmentsStore } from "@/stores/appointments"
 import { usePOSSettingsStore } from "@/stores/posSettings"
 import { usePOSShiftStore } from "@/stores/posShift"
-import { activeTimeOf, colorOfStep, hourOf, initialsOf, lengthOf, minutesLongOf, standsAs } from "@/utils/appointments"
+import { activeTimeOf, cabinOf, colorOfStep, hourOf, initialsOf, lengthOf, minutesLongOf, standsAs, whyNotCabin } from "@/utils/appointments"
 import { formatCurrency } from "@/utils/currency"
 
 const props = defineProps({
@@ -92,7 +108,7 @@ const store = useAppointmentsStore()
 const shiftStore = usePOSShiftStore()
 //// Neoffice — what the till collects: the price announced at booking, or the day's (setting « Price collected »)
 const announcedPrice = computed(() => usePOSSettingsStore().appointmentsAtTheAnnouncedPrice)
-const { clock } = useAppointment()
+const { clock, cabinsOf, changeCabin } = useAppointment()
 const busy = ref(false)
 
 const PILLS = {
@@ -154,6 +170,38 @@ function optionsText(step) {
 	} catch {
 		return ""
 	}
+}
+
+//// Neoffice — the cabins this appointment could be in (NeoSalon, cabins level 2, 16.11.2026), asked when the sheet opens on an appointment that has one or has to be placed
+const cabinInfo = computed(() => cabinOf(props.appointment))
+const cabinOptions = ref([])
+const cabinBusy = ref(false)
+let cabinAsked = 0
+
+async function loadTheCabins() {
+	const asked = ++cabinAsked
+	const row = props.appointment
+	const open = store.capabilities.cabin && row.booking && !["paid", "absent"].includes(row.state) && (cabinInfo.value.cabin || cabinInfo.value.needs)
+	if (!open) {
+		cabinOptions.value = []
+		return
+	}
+	const list = await cabinsOf(row.booking)
+	// An answer that comes after the sheet moved to another appointment is of no use
+	if (asked === cabinAsked) cabinOptions.value = list
+}
+watch(() => [props.appointment.booking, props.appointment.starts_at, cabinInfo.value.cabin?.name, cabinInfo.value.needs], loadTheCabins, { immediate: true })
+
+async function changeTheCabin(event) {
+	const chosen = event.target.value
+	if (cabinBusy.value || !chosen || chosen === cabinInfo.value.cabin?.name) return
+	cabinBusy.value = true
+	const done = await changeCabin(props.appointment.booking, chosen)
+	if (done) await store.refresh()
+	else event.target.value = cabinInfo.value.cabin?.name || ""
+	// The cabins are read again whichever way it went: the one that was free a moment ago may not be any more
+	await loadTheCabins()
+	cabinBusy.value = false
 }
 
 async function timeGesture(action) {

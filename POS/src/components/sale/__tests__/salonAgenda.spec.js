@@ -134,6 +134,38 @@ describe("the agenda of the salon", () => {
 		expect(wrapper.get("[data-test='block-BKG-1']").text()).toContain("Paid")
 	})
 
+	// //// Neoffice — the cabin on the appointment (NeoSalon, cabins level 2, 16.11.2026)
+	describe("the cabin of an appointment", () => {
+		const facial = (who, cabin, needs) => [
+			{ label: "Facial", item_code: "FACIAL", sales_person: who, sales_person_name: who, cabin, needs_cabin: needs },
+		]
+		beforeEach(() => {
+			store.appointments = [
+				row("BKG-1", "Luc", "09:00", "10:30", { steps: facial("Luc", { name: "CAB-1", label: "Cabin 1", color: "#C2723F" }, false) }),
+				row("BKG-2", "Luc", "13:30", "15:30", { steps: facial("Luc", null, true) }),
+				row("BKG-5", "Maya", "11:00", "13:00"),
+			]
+		})
+
+		it("is said on the block: the cabin with its colour, « To place » for a care taken before the cabins, nothing for a service that asks for none", () => {
+			const wrapper = mountIt()
+
+			expect(wrapper.get("[data-test='block-cabin-BKG-1']").text()).toBe("Cabin 1")
+			expect(wrapper.get("[data-test='block-cabin-BKG-1'] span").attributes("style")).toContain("background")
+			expect(wrapper.get("[data-test='block-cabin-BKG-2']").text()).toBe("To place")
+			expect(wrapper.find("[data-test='block-cabin-BKG-5']").exists()).toBe(false)
+		})
+
+		it("is said on the row of a phone as well", () => {
+			ui.isDesktop = false
+			const wrapper = mountIt()
+
+			expect(wrapper.get("[data-test='row-cabin-BKG-1']").text()).toBe("Cabin 1")
+			expect(wrapper.get("[data-test='row-cabin-BKG-2']").text()).toBe("To place")
+			expect(wrapper.find("[data-test='row-cabin-BKG-5']").exists()).toBe(false)
+		})
+	})
+
 	it("shows a colleague's appointment as busy, without a name, and does not open it", async () => {
 		const wrapper = mountIt()
 
