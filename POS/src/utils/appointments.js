@@ -300,3 +300,23 @@ export function dayMoved(day, days) {
 	const moved = new Date(Date.UTC(year, (month || 1) - 1, (date || 1) + days))
 	return moved.toISOString().slice(0, 10)
 }
+
+/**
+ * The till's screen while its agenda is open (NeoSalon B', 16.11.2026, Jérémy: « masquer le panneau de droite, ça bouffe toute une partie de
+ * la partie rendez-vous »). On a desktop the agenda takes the whole width: no divider, no cart beside it, the sheet of an appointment opens
+ * over the agenda on the right (`drawer`); « Encaisser » closes the agenda and the cart comes back. On a phone one tab shows at a time and
+ * the sheet covers the agenda (`cover`). The agenda closed, the sale is as it always was.
+ * @returns {{leftWidth: string, leftGrows: boolean, divider: boolean, cart: boolean, sheet: "drawer"|"cover"|null}}
+ */
+export function tillLayout({ isDesktop, agenda, leftPanelWidth, mobileTab }) {
+	if (!isDesktop)
+		return {
+			leftWidth: "100%",
+			leftGrows: true,
+			divider: false,
+			cart: mobileTab === "cart",
+			sheet: agenda ? "cover" : null,
+		}
+	if (agenda) return { leftWidth: "100%", leftGrows: true, divider: false, cart: false, sheet: "drawer" }
+	return { leftWidth: `${leftPanelWidth}px`, leftGrows: false, divider: true, cart: true, sheet: null }
+}

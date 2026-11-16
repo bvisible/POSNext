@@ -542,15 +542,16 @@
 					</div>
 
 					<!-- Left: Items Selector (Desktop) / Tab Content (Mobile) -->
+					<!-- //// Neoffice — its width and its growth follow `layout` (tillLayout): the agenda open on a desktop takes the whole width (NeoSalon B', 16.11.2026) -->
 					<keep-alive>
 						<div
 							v-if="uiStore.isDesktop || uiStore.mobileActiveTab === 'items'"
 							:style="{
-								width: uiStore.isDesktop ? uiStore.leftPanelWidth + 'px' : '100%',
+								width: layout.leftWidth,
 							}"
 							:class="[
 								'flex flex-col bg-white overflow-hidden',
-								uiStore.isDesktop ? 'flex-shrink-0' : 'flex-1',
+								layout.leftGrows ? 'flex-1' : 'flex-shrink-0',
 							]"
 							style="contain: layout style paint"
 						>
@@ -960,10 +961,15 @@
 									@new-appointment="openNewAppointment"
 								/>
 								<!-- //// Neoffice — the sheet's "Repeat" gesture opens the repeat-booking dialog, below (c729537 "feat(appointments): « Repeat this appointment » at the till"). -->
+								<!-- //// Neoffice — the sheet opens over the agenda: a drawer on the right on a desktop (the cart is hidden while the agenda is open), the whole pane on a phone (NeoSalon B', 16.11.2026) -->
 								<AppointmentSheet
-									v-if="sheetShown && !uiStore.isDesktop"
+									v-if="sheetShown"
 									:appointment="appointmentsStore.selected"
-									class="absolute inset-0 z-20"
+									:class="
+										layout.sheet === 'drawer'
+											? 'absolute inset-y-0 right-0 z-20 w-[430px] max-w-full border-l border-gray-200 shadow-2xl'
+											: 'absolute inset-0 z-20'
+									"
 									@close="appointmentsStore.select(null)"
 									@collect="collectAppointment"
 									@move="openMoveAppointment"
@@ -977,8 +983,9 @@
 					</keep-alive>
 
 					<!-- Draggable Divider (Desktop Only) -->
+					<!-- //// Neoffice — no divider while the agenda takes the whole width (layout, NeoSalon B', 16.11.2026) -->
 					<div
-						v-if="uiStore.isDesktop"
+						v-if="uiStore.isDesktop && layout.divider"
 						ref="dividerRef"
 						role="separator"
 						aria-orientation="vertical"
@@ -1014,26 +1021,17 @@
 					<!-- //// forced 75px wider than the screen, so the prices, the coupon button and the bin were cut off at the right. A -->
 					<!-- //// desktop panel still gets its 450px (its container is wider), a phone gets the width it has. -->
 					<keep-alive>
+						<!-- //// Neoffice — the cart is hidden while the agenda is open on a desktop; « Encaisser » closes the agenda and brings it back (layout, NeoSalon B', 16.11.2026) -->
 						<div
-							v-if="uiStore.isDesktop || uiStore.mobileActiveTab === 'cart'"
+							v-if="layout.cart"
 							:class="[
 								'flex flex-col bg-gray-50 overflow-hidden',
 								uiStore.isDesktop ? 'flex-1' : 'flex-1',
 							]"
 							style="min-width: min(450px, 100%); contain: layout style paint"
 						>
-							<!-- //// Neoffice — the appointment this cart was taken from, said above the cart; and, over it, the sheet of the appointment the agenda has open (NeoSalon, step 2, lot G4). -->
+							<!-- //// Neoffice — the appointment this cart was taken from, said above the cart (NeoSalon, step 2, lot G4); the sheet of an open appointment opens over the agenda since 16.11.2026 (B'). -->
 							<AppointmentBanner />
-							<AppointmentSheet
-								v-if="sheetShown && uiStore.isDesktop"
-								:appointment="appointmentsStore.selected"
-								class="absolute inset-0 z-20"
-								@close="appointmentsStore.select(null)"
-								@collect="collectAppointment"
-								@move="openMoveAppointment"
-								@cancel="openCancelAppointment"
-								@repeat="openRepeatAppointment"
-							/>
 							<!-- //// Neoffice — two divergences inside this opening tag (no HTML comment can -->
 							<!-- //// sit between attributes, so they are listed here): -->
 							<!-- ////   :grand-total / :rounding-adjustment — CHF has a 0.05 smallest fraction, -->
@@ -2381,6 +2379,8 @@ import NewAppointmentDialog from "@/components/sale/NewAppointmentDialog.vue";
 import RepeatAppointmentDialog from "@/components/sale/RepeatAppointmentDialog.vue";
 import { useAppointment } from "@/composables/useAppointment";
 import { useAppointmentsStore } from "@/stores/appointments";
+//// Neoffice — the till's screen while its agenda is open: the whole width, no cart beside it, the sheet over the agenda (NeoSalon B', 16.11.2026)
+import { tillLayout } from "@/utils/appointments";
 //// Neoffice — the floor-plan editor and the per-table QR code: the POS starts from the room,
 //// not the catalogue (0ebfda03 2026-03-20 "Phase 2 - visual floor plan editor"; c5208ba7
 //// 2026-03-28 "QR button on table view"). The list of tables this block also imported
@@ -3058,6 +3058,15 @@ onUnmounted(() => appointmentsStore.reset());
 
 // The sheet of the appointment open in the agenda, and the dialogs of the gestures that need one
 const sheetShown = computed(() => appointmentsShown.value && Boolean(appointmentsStore.selected));
+//// Neoffice — Jérémy, 16.11.2026: « masquer le panneau de droite, ça bouffe toute une partie de la partie rendez-vous » (utils/appointments.tillLayout)
+const layout = computed(() =>
+	tillLayout({
+		isDesktop: uiStore.isDesktop,
+		agenda: appointmentsShown.value,
+		leftPanelWidth: uiStore.leftPanelWidth,
+		mobileTab: uiStore.mobileActiveTab,
+	}),
+);
 const gestureTarget = ref(null);
 const showMoveAppointment = ref(false);
 const showCancelAppointment = ref(false);
