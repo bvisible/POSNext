@@ -80,3 +80,5 @@ pos_next.patches.gift_cards.say_the_origin_of_each_gift_card
 pos_next.patches.gift_cards.say_the_origin_of_each_shop_gift_card
 # //// Neoffice — a card that says « Offered », the word that lived 13 minutes on 13.11.2026, says « Given for free », the word the field has now; nothing else of the card moves (16.11.2026, maintenance#2720)
 pos_next.patches.gift_cards.say_given_for_free_where_a_card_said_offered
+# //// Neoffice — the three print formats of the till stop forcing English (maintenance#1133): a French till printed its receipt, its end-of-day report and its shopping list in English. It runs after the doctype sync and only clears a language the format still says as `en`.
+pos_next.patches.print_formats.follow_the_language_of_the_document

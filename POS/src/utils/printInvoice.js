@@ -464,7 +464,10 @@ export async function printInvoice(invoiceData, printFormat = null, letterhead =
 			name: invoiceData.name,
 			format,
 			no_letterhead: letterhead ? 0 : 1,
-			_lang: "en",
+			//// Neoffice — no `_lang: "en"` (upstream forced English): an address that names its language wins over the
+			//// document's, the customer's and the print format's, so a French till printed an English receipt. The desk
+			//// decides without it — the document's language, its customer's, the format's own, else the cashier's
+			//// (neoffice-maintenance#1133).
 			trigger_print: 1,
 			_t: Date.now(),
 		});
