@@ -33,6 +33,10 @@ def require_till_access(pos_profile, profile_optional=False):
 	# //// lookup below (maintenance#2296).
 	if not pos_profile or not isinstance(pos_profile, str):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	# //// Neoffice — a till of a company the caller is not bound to is not his, even assigned to it: its sales would be
+	# //// posted to that company's books (maintenance#2838). Asked before the till manager's and the assignment's answers,
+	# //// which stay as they were for an account without a bound.
+	require_bound_company(frappe.db.get_value("POS Profile", pos_profile, "company"))
 	# //// Neoffice — a till manager runs every till but those a User Permission keeps him from
 	# //// (maintenance#2296): see user_permissions_leave_till.
 	if is_till_manager() and user_permissions_leave_till(pos_profile):
@@ -63,6 +67,37 @@ def user_permissions_leave_till(pos_profile):
 		if allowed and value not in allowed:
 			return False
 	return True
+
+
+# //// Neoffice — added function (no upstream equivalent). The companies the caller is bound to: his User Permissions on
+# //// « Company » that apply to the till's documents (every doctype, or Sales Invoice), read as the desk's list of Sales Invoice
+# //// reads them. None, no bound: an account of a business of one company, or the owner of several, and nothing changes for it.
+# //// The salon reads the same bound for its own documents (neoffice_theme booking.company_scope); the till reads it itself, so
+# //// that a site or a CI without the theme keeps it (maintenance#2838).
+def bound_companies(user=None):
+	from frappe.core.doctype.user_permission.user_permission import get_user_permissions
+	from frappe.permissions import filter_allowed_docs_for_doctype
+
+	permissions = get_user_permissions(user or frappe.session.user).get("Company") or []
+	companies = filter_allowed_docs_for_doctype(permissions, "Sales Invoice", with_default_doc=False)
+	return sorted(set(companies)) or None
+
+
+# //// Neoffice — added function (no upstream equivalent). Refuses a read or a gesture on a till, a document or a warehouse of a
+# //// company the caller is not bound to. A thing with no company is everybody's, as the desk's lists show it (maintenance#2838).
+def require_bound_company(company):
+	allowed = bound_companies()
+	if allowed is not None and company and company not in allowed:
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+
+# //// Neoffice — added function (no upstream equivalent). The rows (tills, warehouses) of the companies the caller is bound to,
+# //// in their order; all of them without a bound, and a row with no company is everybody's (maintenance#2838).
+def of_the_bound_companies(rows, field="company"):
+	allowed = bound_companies()
+	if allowed is None:
+		return rows
+	return [row for row in rows if not row.get(field) or row.get(field) in allowed]
 
 
 # //// Neoffice — added function (no upstream equivalent). The right every cashier holds, read on the roles:
@@ -147,6 +182,10 @@ def require_document_till(doctype, name):
 	pos_profile = None
 	if name and isinstance(name, str):
 		pos_profile = frappe.db.get_value(doctype, name, "pos_profile")
+		# //// Neoffice — a document of a company the caller is not bound to is not his, with a till or without: an invoice
+		# //// with no till fell back on require_till_user(None), that is any till user (maintenance#2838).
+		if frappe.get_meta(doctype).has_field("company"):
+			require_bound_company(frappe.db.get_value(doctype, name, "company"))
 	require_till_user(pos_profile)
 
 

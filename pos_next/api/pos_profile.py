@@ -39,6 +39,12 @@ def get_pos_profiles(mode: str | None = None):
 		as_dict=1,
 	)
 
+	# //// Neoffice — the tills of the companies the caller is bound to, if he is (maintenance#2838): a till of another
+	# //// company is refused when its shift opens (cash_entry.require_till_access), so it is not offered either.
+	from pos_next.api.cash_entry import of_the_bound_companies
+
+	pos_profiles = of_the_bound_companies(pos_profiles)
+
 	# //// Neoffice — only the tills of the door the cashier came through, each told whether it is a restaurant till
 	# //// (pos_next.restaurant.door, NeoResto lot 1, task 5); upstream answered every till of the user.
 	from pos_next.restaurant.door import offer_at_the_door
@@ -449,16 +455,16 @@ def get_wallet_payment_flags(methods):
 
 # //// Neoffice — added function (no upstream equivalent): the sales persons of the companies the cashier is bound to, for
 # //// get_sales_persons. A person is of the company of her employee file; one with none (a chair rented) is everybody's. The bound
-# //// is read by neoffice_theme (`booking.company_scope`) where it is installed; without it, or without a bound, nothing changes.
+# //// is the till's own (cash_entry.bound_companies, maintenance#2838), read without the theme so that a CI without it keeps the
+# //// rule; without a bound, nothing changes.
 def _the_sales_persons_the_cashier_sees(sales_persons):
 	employees = [row.get("employee") for row in sales_persons if row.get("employee")]
 	if not employees:
 		return sales_persons
-	try:
-		from neoffice_theme.booking import company_scope
-	except ImportError:
-		return sales_persons
-	allowed = company_scope.allowed_companies()
+	# //// Neoffice — the till's own bound, read without the theme (maintenance#2838)
+	from pos_next.api.cash_entry import bound_companies
+
+	allowed = bound_companies()
 	if allowed is None:
 		return sales_persons
 	company_of = dict(

@@ -550,6 +550,10 @@ def get_wallet_info(customer: str | None, company: str | None, pos_profile=None)
 	from pos_next.api.cash_entry import require_till_user
 
 	require_till_user(pos_profile)
+	# //// Neoffice — a company the caller is bound to, if he is (maintenance#2838)
+	from pos_next.api.cash_entry import require_bound_company
+
+	require_bound_company(company)
 	result = {
 		"wallet_enabled": False,
 		"wallet_exists": False,
@@ -665,6 +669,10 @@ def get_loyalty_details(customer: str | None, company):
 	from pos_next.api.cash_entry import require_till_user
 
 	require_till_user()
+	# //// Neoffice — a company the caller is bound to, if he is (maintenance#2838)
+	from pos_next.api.cash_entry import require_bound_company
+
+	require_bound_company(company)
 	result = {
 		"has_loyalty": False,
 		"loyalty_program": None,
@@ -733,6 +741,10 @@ def create_manual_wallet_credit(customer, company, amount, remarks=None):
 		Wallet Transaction document name
 	"""
 	frappe.has_permission("Wallet Transaction", "create", throw=True)
+	# //// Neoffice — a company the caller is bound to, if he is (maintenance#2838)
+	from pos_next.api.cash_entry import require_bound_company
+
+	require_bound_company(company)
 
 	if flt(amount) <= 0:
 		frappe.throw(_("Amount must be greater than zero"))

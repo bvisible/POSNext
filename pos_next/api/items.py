@@ -119,6 +119,10 @@ def _require_warehouse_reader(warehouse):
 		return
 	if not isinstance(warehouse, str):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	# //// Neoffice — a warehouse of a company the caller is not bound to is not read, a till's neither (maintenance#2838)
+	from pos_next.api.cash_entry import require_bound_company
+
+	require_bound_company(frappe.get_cached_value("Warehouse", warehouse, "company"))
 	user = frappe.session.user
 	allowed = [row.doc for row in get_user_permissions(user).get("Warehouse") or []]
 	if not allowed or warehouse in allowed:
@@ -2379,6 +2383,11 @@ def get_item_warehouse_availability(item_code: str | None = None, item_codes=Non
 			fields=["name", "warehouse_name", "company"],
 			order_by="warehouse_name",
 		)
+		# //// Neoffice — the warehouses of the companies the caller is bound to, if he is (maintenance#2838): a User
+		# //// Permission given for the till's documents does not reach this list of Warehouse by itself
+		from pos_next.api.cash_entry import of_the_bound_companies
+
+		warehouses = of_the_bound_companies(warehouses)
 		if not warehouses:
 			return []
 

@@ -62,8 +62,18 @@ def get_customer_balance(customer: str | None, company: str | None = None):
 	if not customer:
 		frappe.throw(_("Customer is required"))
 
+	# //// Neoffice — the balance of the companies the caller is bound to, if he is (maintenance#2838): a company he names
+	# //// outside them is refused, and with none named the invoices of the others are left out.
+	from pos_next.api.cash_entry import bound_companies, require_bound_company
+
+	require_bound_company(company)
+	bound = None if company else bound_companies()
+
 	try:
 		filters = {"customer": customer, "docstatus": 1, **({"company": company} if company else {})}
+		# //// Neoffice — see above (maintenance#2838)
+		if bound:
+			filters["company"] = ["in", bound]
 		total = ["sum(outstanding_amount) as total"]
 
 		# Positive outstanding (what customer owes)
@@ -152,6 +162,10 @@ def get_available_credit(customer: str | None, company: str | None, pos_profile=
 
 	if not company:
 		frappe.throw(_("Company is required"))
+	# //// Neoffice — a company the caller is bound to, if he is (maintenance#2838)
+	from pos_next.api.cash_entry import require_bound_company
+
+	require_bound_company(company)
 
 	total_credit = []
 
@@ -758,6 +772,10 @@ def get_credit_invoices(pos_profile: str | None, limit=100):
 
 	if not has_access and not frappe.has_permission("Sales Invoice", "read"):
 		frappe.throw(_("You don't have access to this POS Profile"))
+	# //// Neoffice — the till of a company the caller is bound to, if he is (maintenance#2838)
+	from pos_next.api.cash_entry import require_bound_company
+
+	require_bound_company(frappe.db.get_value("POS Profile", pos_profile, "company"))
 
 	# Query for credit invoices
 	invoices = frappe.db.sql(

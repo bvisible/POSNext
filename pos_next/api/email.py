@@ -23,6 +23,10 @@ def send_invoice_email(invoice_name: str | None, recipients, subject=None, messa
 	# Validate invoice exists and user has access
 	if not frappe.has_permission("Sales Invoice", doc=invoice_name, ptype="email"):
 		frappe.throw(_("You don't have permission to email this invoice"), frappe.PermissionError)
+	# //// Neoffice — an invoice of a company the caller is bound to, if he is (maintenance#2838)
+	from pos_next.api.cash_entry import require_bound_company
+
+	require_bound_company(frappe.db.get_value("Sales Invoice", invoice_name, "company"))
 
 	# Resolve print format from POS Profile if not provided
 	if not print_format:

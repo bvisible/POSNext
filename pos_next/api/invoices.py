@@ -1091,6 +1091,11 @@ def validate_return_items(original_invoice_name, return_items, doctype="Sales In
 	# //// Neoffice — the table is named by the code, not by the request: the query builder reads any table of
 	# //// that shape (maintenance#2296)
 	_require_returnable_doctype(doctype)
+	# //// Neoffice — the invoice returned is of a company the caller is bound to, if he is (maintenance#2838)
+	from pos_next.api.cash_entry import require_bound_company
+
+	if isinstance(original_invoice_name, str):
+		require_bound_company(frappe.db.get_value(doctype, original_invoice_name, "company"))
 	from frappe.query_builder.functions import Abs, Sum
 	from frappe.utils import date_diff, getdate
 

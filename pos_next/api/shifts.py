@@ -39,6 +39,11 @@ def get_opening_dialog_data():
 		frappe.session.user,
 		as_dict=1,
 	)
+	# //// Neoffice — the tills of the companies the caller is bound to, if he is (maintenance#2838): a till of another
+	# //// company is refused when its shift opens (cash_entry.require_till_access), so it is not offered either.
+	from pos_next.api.cash_entry import of_the_bound_companies
+
+	pos_profiles_data = of_the_bound_companies(pos_profiles_data)
 
 	data["pos_profiles_data"] = pos_profiles_data
 
@@ -171,9 +176,11 @@ def create_opening_shift(pos_profile: str | None, company: str | None, balance_d
 	# //// Neoffice — opening a shift (inserted and submitted with permissions off) takes the till: a desk
 	# //// account assigned to the POS Profile, or reading sales invoices as every cashier does
 	# //// (cash_entry.require_till_access).
-	from pos_next.api.cash_entry import require_till_access
+	from pos_next.api.cash_entry import require_bound_company, require_till_access
 
 	require_till_access(pos_profile)
+	# //// Neoffice — and the company the shift is posted to, which the caller names (maintenance#2838)
+	require_bound_company(company)
 	balance_details = json.loads(balance_details) if isinstance(balance_details, str) else balance_details
 
 	# Check if user already has an open shift
