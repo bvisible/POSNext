@@ -83,7 +83,13 @@ describe("the till's customer form", () => {
 			expect(FORM).toContain(`__("${words}")`)
 		}
 		expect(FORM).toContain('ref="streetField"')
-		expect(FORM).toMatch(/const useExistingCustomer = async \(match\) => \{[\s\S]*url: "frappe\.client\.get"[\s\S]*emit\("customer-created", customer\)/)
+		expect(FORM).toMatch(/const useExistingCustomer = async \(match\) => \{[\s\S]*url: "frappe\.client\.get"[\s\S]*emit\("customer-created", \{ \.\.\.customer, neo_existing: 1 \}\)/)
+	})
+
+	it("is said to be selected, not created, when the existing customer is taken", () => {
+		const SALE = readFileSync(fileURLToPath(new URL("../../pages/POSSale.vue", import.meta.url)), "utf8")
+		const handler = SALE.slice(SALE.indexOf("async function handleCustomerCreated(newCustomer) {"), SALE.indexOf("async function handleCustomerUpdated("))
+		expect(handler).toMatch(/newCustomer\.neo_existing\s*\?\s*__\("Customer \{0\} selected"/)
 	})
 
 	it("forgets the questions with the rest of the form", () => {

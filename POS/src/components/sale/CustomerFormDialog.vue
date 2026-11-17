@@ -954,7 +954,8 @@ const useExistingCustomer = async (match) => {
 			name: match.name,
 		})
 		creationQuestion.value = null
-		emit("customer-created", customer)
+		// Marked as taken, not created: the sale page says « Client X sélectionné », not « créé et sélectionné ».
+		emit("customer-created", { ...customer, neo_existing: 1 })
 		show.value = false
 	} catch (error) {
 		log.error("Error loading the existing customer", error)

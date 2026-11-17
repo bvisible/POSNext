@@ -5750,7 +5750,13 @@ async function handleCustomerCreated(newCustomer) {
 	// Add new customer to IndexedDB cache for instant search availability
 	await customerSearchStore.addCustomerToCache(newCustomer);
 
-	showSuccess(__("{0} created and selected", [newCustomer.customer_name]));
+	//// Neoffice — the customer form can hand back a customer who already existed, taken for the sale in place of a
+	//// second one (neo_existing, CustomerFormDialog.vue, maintenance#1109): it was not created, so say it was selected.
+	showSuccess(
+		newCustomer.neo_existing
+			? __("Customer {0} selected", [newCustomer.customer_name])
+			: __("{0} created and selected", [newCustomer.customer_name]),
+	);
 }
 
 async function handleCustomerUpdated(updatedCustomer) {
