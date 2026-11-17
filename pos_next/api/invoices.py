@@ -1076,7 +1076,8 @@ RETURNABLE_INVOICES_MAX = 500
 
 
 @frappe.whitelist()
-def validate_return_items(original_invoice_name, return_items, doctype="Sales Invoice"):
+# //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296, #2838).
+def validate_return_items(original_invoice_name: str | None, return_items, doctype="Sales Invoice"):
 	"""Ensure that return items do not exceed the quantity from the original invoice.
 	Also validates return time frame based on POS Settings.
 
@@ -1094,8 +1095,7 @@ def validate_return_items(original_invoice_name, return_items, doctype="Sales In
 	# //// Neoffice — the invoice returned is of a company the caller is bound to, if he is (maintenance#2838)
 	from pos_next.api.cash_entry import require_bound_company
 
-	if isinstance(original_invoice_name, str):
-		require_bound_company(frappe.db.get_value(doctype, original_invoice_name, "company"))
+	require_bound_company(frappe.db.get_value(doctype, original_invoice_name, "company"))
 	from frappe.query_builder.functions import Abs, Sum
 	from frappe.utils import date_diff, getdate
 
