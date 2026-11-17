@@ -25,6 +25,12 @@ LUC = "_Test SP Luc"
 SONIA = "_Test SP Sonia"
 LUC_FIRST_NAME = "TestSPLuc"
 SONIA_FIRST_NAME = "TestSPSonia"
+# //// Neoffice — a person of another company than the till's (neoffice-maintenance#2772): its employee file is a row, the
+# //// company need not exist
+OTHER = "_Test SP Other Company"
+OTHER_FIRST_NAME = "TestSPOtherCompany"
+OTHER_EMPLOYEE = "_TestSPOtherCompanyEmployee"
+OTHER_COMPANY = "_Test Other Company 2772"
 
 
 def an_employee(first_name, company, user_id=None):
@@ -69,12 +75,15 @@ def a_sales_person(person_name, employee, company, commission_rate=0):
 def _forget_the_people_of_the_suite():
 	"""The suite's own sales persons, employees and the user permission Frappe made for the cashier: gone before and after each test."""
 	for doctype, filters in (
-		("Sales Person", {"sales_person_name": ["in", [LUC, SONIA]]}),
-		("Employee", {"first_name": ["in", [LUC_FIRST_NAME, SONIA_FIRST_NAME]]}),
+		("Sales Person", {"sales_person_name": ["in", [LUC, SONIA, OTHER]]}),
+		("Employee", {"first_name": ["in", [LUC_FIRST_NAME, SONIA_FIRST_NAME, OTHER_FIRST_NAME]]}),
 	):
 		for name in frappe.get_all(doctype, filters=filters, pluck="name"):
 			frappe.delete_doc(doctype, name, ignore_permissions=True, force=True)
 	frappe.db.delete("User Permission", {"user": TILL, "allow": "Employee"})
+	# //// Neoffice — and the bound to its company ERPNext gives with the employee file (neoffice-maintenance#2772)
+	frappe.db.delete("User Permission", {"user": TILL, "allow": "Company"})
+	frappe.cache.hdel("user_permissions", TILL)
 
 
 class TestTheTillOffersEverySalesPersonAndMarksTheCashiersOwn(FrappeTestCase):
@@ -115,6 +124,31 @@ class TestTheTillOffersEverySalesPersonAndMarksTheCashiersOwn(FrappeTestCase):
 
 		self.assertIn(self.luc, offered)
 		self.assertIn(self.sonia, offered)
+
+	# //// Neoffice — a business of several companies (neoffice-maintenance#2772)
+	def test_a_cashier_bound_to_the_company_of_his_till_is_not_offered_a_person_of_another(self):
+		frappe.get_doc(
+			{
+				"doctype": "Employee",
+				"name": OTHER_EMPLOYEE,
+				"first_name": OTHER_FIRST_NAME,
+				"employee_name": OTHER_FIRST_NAME,
+				"company": OTHER_COMPANY,
+				"status": "Active",
+			}
+		).db_insert()
+		other = a_sales_person(OTHER, OTHER_EMPLOYEE, self.fx.company)
+		# The bound ERPNext gives every account it makes an employee file for (« create user permission »): the cashier's
+		self.assertTrue(
+			frappe.db.exists(
+				"User Permission", {"user": TILL, "allow": "Company", "for_value": self.fx.company}
+			)
+		)
+
+		offered = self.offered()
+
+		self.assertIn(self.sonia, offered)
+		self.assertNotIn(other, offered)
 
 	def test_each_row_says_whether_it_is_the_cashiers_own(self):
 		offered = self.offered()

@@ -447,6 +447,32 @@ def get_wallet_payment_flags(methods):
 	return {r["name"]: r["is_wallet_payment"] or 0 for r in results}
 
 
+# //// Neoffice — added function (no upstream equivalent): the sales persons of the companies the cashier is bound to, for
+# //// get_sales_persons. A person is of the company of her employee file; one with none (a chair rented) is everybody's. The bound
+# //// is read by neoffice_theme (`booking.company_scope`) where it is installed; without it, or without a bound, nothing changes.
+def _the_sales_persons_the_cashier_sees(sales_persons):
+	employees = [row.get("employee") for row in sales_persons if row.get("employee")]
+	if not employees:
+		return sales_persons
+	try:
+		from neoffice_theme.booking import company_scope
+	except ImportError:
+		return sales_persons
+	allowed = company_scope.allowed_companies()
+	if allowed is None:
+		return sales_persons
+	company_of = dict(
+		frappe.get_all(
+			"Employee", filters={"name": ["in", employees]}, fields=["name", "company"], as_list=True
+		)
+	)
+	return [
+		row
+		for row in sales_persons
+		if not company_of.get(row.get("employee")) or company_of[row.get("employee")] in allowed
+	]
+
+
 @frappe.whitelist()
 # //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
 def get_sales_persons(pos_profile: str | None = None):
@@ -499,6 +525,11 @@ def get_sales_persons(pos_profile: str | None = None):
 		)
 	finally:
 		frappe.flags.ignore_user_permissions_for_doctype = previous
+
+	# //// Neoffice — a cashier bound to some companies by a User Permission on « Company » (a business of several companies, the
+	# //// desk's own bound) is offered the sales persons of those companies only: the list named every person of the site, those
+	# //// of the other companies too (neoffice-maintenance#2772). The flag above lifts the bound for this query, so it is read here.
+	sales_persons = _the_sales_persons_the_cashier_sees(sales_persons)
 
 	# //// Neoffice — which one is the cashier (the Sales Person whose Employee is this user), so that the till offers him first
 	# //// instead of an empty field: « if I open the till with an employee account, the person is already chosen » (product owner,
