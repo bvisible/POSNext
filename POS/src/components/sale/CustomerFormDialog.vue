@@ -217,6 +217,7 @@
 					<!-- translations such as "Código postal" (about 130 px). -->
 					<div class="grid grid-cols-6 gap-x-4 gap-y-3">
 						<AddressAutocomplete
+							ref="streetField"
 							v-model="customerData.address_line1"
 							:placeholder="__('Street')"
 							:input-class="fieldClass"
@@ -273,8 +274,55 @@
 					</div>
 				</div>
 
+				<!-- //// Neoffice — a question before creating (maintenance#1109, #1120): a customer who may already exist, -->
+				<!-- //// or a customer without an address. A warning in the window, never a refusal: the cashier creates -->
+				<!-- //// anyway, takes the existing customer for the sale, or adds the address. -->
+				<div
+					v-if="creationQuestion"
+					class="rounded-[10px] border border-amber-200 bg-amber-50 px-3 py-3"
+					data-testid="customer-creation-question"
+				>
+					<template v-if="creationQuestion.kind === 'duplicate'">
+						<p class="text-sm font-semibold text-amber-900">{{ __("Create this customer anyway?") }}</p>
+						<p class="text-xs text-amber-800 mt-1">{{ duplicateSentence(creationQuestion.matches, __) }}</p>
+						<ul class="mt-2 flex flex-col gap-1.5">
+							<li
+								v-for="match in creationQuestion.matches"
+								:key="match.name"
+								class="flex items-center justify-between gap-2 text-sm text-[#141414]"
+							>
+								<span class="min-w-0 truncate">
+									<span class="font-medium">{{ match.customer_name }}</span>
+									<span class="text-xs text-[#6F665A]"> · {{ matchReason(match, __) }}</span>
+								</span>
+								<Button variant="outline" size="sm" @click="useExistingCustomer(match)">
+									{{ __("Use this customer") }}
+								</Button>
+							</li>
+						</ul>
+						<div class="mt-3 flex items-center justify-end gap-2">
+							<Button variant="outline" size="lg" @click="creationQuestion = null">{{ __("Cancel") }}</Button>
+							<Button variant="solid" size="lg" :loading="createCustomerResource.loading" @click="createAnyway">
+								{{ __("Create anyway") }}
+							</Button>
+						</div>
+					</template>
+					<template v-else>
+						<p class="text-sm font-semibold text-amber-900">{{ __("Create this customer without an address?") }}</p>
+						<p class="text-xs text-amber-800 mt-1">
+							{{ __("An invoice, a letter or a delivery needs one. You can add it later from the customer's record.") }}
+						</p>
+						<div class="mt-3 flex items-center justify-end gap-2">
+							<Button variant="outline" size="lg" @click="addTheAddress">{{ __("Add the address") }}</Button>
+							<Button variant="solid" size="lg" :loading="createCustomerResource.loading" @click="createWithoutAddress">
+								{{ __("Create without an address") }}
+							</Button>
+						</div>
+					</template>
+				</div>
+
 				<!-- The primary action (ink, frappe-ui solid) ends the row; Cancel stands just before it. -->
-				<div class="flex items-center justify-end gap-2">
+				<div v-else class="flex items-center justify-end gap-2">
 					<Button variant="outline" size="lg" @click="show = false">
 						{{ __("Cancel") }}
 					</Button>
@@ -322,6 +370,9 @@ import { useCountriesStore } from "@/stores/countries"
 import { usePOSSettingsStore } from "@/stores/posSettings"
 import { usePOSShiftStore } from "@/stores/posShift"
 import { logger } from "@/utils/logger"
+//// Neoffice — the questions asked before a customer is created: a customer who may already exist, a customer without
+//// an address (neoffice-maintenance#1109, #1120; the same as the desk's creation window).
+import { creationKey, duplicateSentence, matchReason, nextCreationQuestion } from "@/utils/customerCreationWarnings"
 //// Neoffice — frappe-ui's <Input> is no longer imported: the compact form uses plain
 //// inputs with placeholders instead of labelled fields (616d4102, 2026-03-25).
 import { Button, Dialog, createResource } from "frappe-ui"
@@ -850,6 +901,75 @@ const persistAddressForEdit = async () => {
 	}
 }
 
+//// Neoffice — the questions asked before creating (maintenance#1109, #1120, see the import above): the one standing,
+//// the name the cashier chose to create anyway, and whether they chose to create without an address.
+const creationQuestion = ref(null)
+const createAnywayFor = ref(null)
+const withoutAddress = ref(false)
+const streetField = ref(null)
+const findExistingResource = createResource({ url: "neoffice_theme.events.find_existing_customers", auto: false })
+
+// The question to ask before creating, or null. The customers are asked of the server with the cashier's own rights;
+// when the till cannot ask (offline, a refusal), there is nothing to ask about them.
+const questionBeforeCreating = async () => {
+	let matches = []
+	try {
+		matches = (await findExistingResource.fetch({ customer_name: fullName.value })) || []
+	} catch (error) {
+		log.warn("Could not look for an existing customer", error)
+	}
+	return nextCreationQuestion({
+		matches,
+		key: creationKey(fullName.value),
+		createAnywayFor: createAnywayFor.value,
+		addressShown: showAddressFields.value,
+		addressGiven: !!customerData.value.address_line1.trim(),
+		withoutAddress: withoutAddress.value,
+	})
+}
+
+const createAnyway = () => {
+	createAnywayFor.value = creationKey(fullName.value)
+	creationQuestion.value = null
+	return handleCreate()
+}
+
+const createWithoutAddress = () => {
+	withoutAddress.value = true
+	creationQuestion.value = null
+	return handleCreate()
+}
+
+const addTheAddress = async () => {
+	creationQuestion.value = null
+	await nextTick()
+	streetField.value?.$el?.querySelector?.("input")?.focus()
+}
+
+// The customer who already exists, for the sale, in place of a second one.
+const useExistingCustomer = async (match) => {
+	try {
+		const customer = await createResource({ url: "frappe.client.get", auto: false }).fetch({
+			doctype: "Customer",
+			name: match.name,
+		})
+		creationQuestion.value = null
+		emit("customer-created", customer)
+		show.value = false
+	} catch (error) {
+		log.error("Error loading the existing customer", error)
+		showError(error.message || __("Failed to load the customer"))
+	}
+}
+
+//// Neoffice — a question stands for the name and the street it was asked about: typing either takes it away.
+watch(
+	() => [fullName.value, customerData.value.address_line1],
+	() => {
+		creationQuestion.value = null
+	},
+)
+
 const handleCreate = async () => {
 	//// Neoffice — guards on the composed fullName, since upstream's customer_name field is
 	//// gone (616d4102, b6dd7f10).
@@ -866,6 +986,13 @@ const handleCreate = async () => {
 		//// only logging it (8bffb770 2026-02-04, b6dd7f10 2026-05-28, 4a0dd461 2026-07-09,
 		//// d7584e7b 2026-07-17 for custom_house_number).
 		await persistAddressForEdit()
+		return
+	}
+
+	//// Neoffice — a customer who may already exist, a customer without an address: asked first (maintenance#1109, #1120).
+	const question = await questionBeforeCreating()
+	if (question) {
+		creationQuestion.value = question
 		return
 	}
 
@@ -934,6 +1061,10 @@ const resetForm = () => {
 	//// Neoffice — the reset covers the fork's own state. Type toggle back to Individual
 	//// (4b36d7be, 2026-03-25).
 	customerType.value = "Individual"
+	//// Neoffice — and the questions asked before creating (maintenance#1109, #1120).
+	creationQuestion.value = null
+	createAnywayFor.value = null
+	withoutAddress.value = false
 	Object.assign(customerData.value, {
 		//// Neoffice — company/first/last instead of upstream's single customer_name (731374c1).
 		company_name: "",
