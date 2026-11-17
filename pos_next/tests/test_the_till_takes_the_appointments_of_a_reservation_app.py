@@ -281,6 +281,8 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 				"busy",
 				"clock",
 				"can",
+				# where the money of a paid appointment came in (maintenance#2798)
+				"paid_at_the_till",
 			},
 		)
 		self.assertEqual((first["state"], first["invoice"]), ("paid", "ACC-SINV-1"))
@@ -407,6 +409,33 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 			self.assertEqual(
 				(row["state"], row["can"]["cancel"], row["can"]["collect"]), ("paid", offered, False), said
 			)
+
+	def test_a_paid_appointment_says_whether_its_money_was_collected_at_the_till_or_paid_online(self):
+		"""The money lane says how much was paid, not where: a haircut paid by card at the counter read « Already paid online » (maintenance#2798).
+		The sale the till validated (a POS invoice) was collected at the till; one validated elsewhere, or money held ahead, was paid online."""
+		self.site_has(of_the_day=["the_list"])
+		at_the_till = self.a_draft_of_the_till()
+		elsewhere = self.a_draft_of_the_till(is_pos=0, pos_profile=None)
+		SITE["list"] = [
+			self.an_appointment(booking="BKG-1", state="paid", paid_amount=78, invoice=at_the_till),
+			self.an_appointment(
+				booking="BKG-2",
+				starts_at="2026-11-10 10:00:00",
+				state="paid",
+				paid_amount=78,
+				invoice=elsewhere,
+			),
+			self.an_appointment(booking="BKG-3", starts_at="2026-11-10 11:00:00", paid_amount=20),
+		]
+
+		rows = self.as_the_cashier(appointments.get_appointments, self.fx.profile, "2026-11-10")[
+			"appointments"
+		]
+
+		self.assertEqual(
+			[(row["booking"], row["paid_at_the_till"]) for row in rows],
+			[("BKG-1", True), ("BKG-2", False), ("BKG-3", False)],
+		)
 
 	def test_the_first_hook_with_an_answer_counts_and_one_with_nothing_to_say_is_passed_over(self):
 		self.site_has(of_the_day=["nothing_to_say", "the_list"])

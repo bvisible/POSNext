@@ -865,6 +865,20 @@ def after_a_sale(booking, invoice: str, pos_profile, offline: bool, date=None) -
 		frappe.log_error("The appointments hook failed", frappe.get_traceback())
 
 
+# //// Neoffice — added (maintenance#2798). `paid_at_the_till`: a paid appointment whose sale the till validated (a POS invoice, `is_pos`),
+# //// so its money was collected at the counter; a sale validated elsewhere (the booking widget, the desk) or a down payment held is money
+# //// paid ahead, online. The sheet words its « paid » line by it. Only a flag of the sale the agenda already names is read.
+def _say_where_it_was_paid(rows: list[dict]) -> None:
+	sales = sorted({row["invoice"] for row in rows if row.get("state") == "paid" and row.get("invoice")})
+	at_the_till = (
+		set(frappe.db.get_values("Sales Invoice", {"name": ["in", sales], "is_pos": 1}, "name", pluck=True))
+		if sales
+		else set()
+	)
+	for row in rows:
+		row["paid_at_the_till"] = row.get("state") == "paid" and row.get("invoice") in at_the_till
+
+
 @frappe.whitelist()
 def get_appointments(pos_profile: str, date: str | None = None, providers=None) -> dict:
 	"""The agenda of the day of the till: `{"available", "date", "visibility", "capabilities", "salon", "mine", "people", "appointments"}`
@@ -969,6 +983,9 @@ def get_appointments(pos_profile: str, date: str | None = None, providers=None) 
 	if names:
 		rows = [r for r in rows if any(s["sales_person"] in names for s in r["steps"])]
 	rows.sort(key=lambda row: row["starts_at"] or "")
+	# //// Neoffice — where the money of a paid appointment came in (maintenance#2798): the money lane says how much was paid, not where, and
+	# //// the sheet called a haircut paid by card at the counter « Already paid online ».
+	_say_where_it_was_paid(rows)
 	salon = _salon(view)
 	if salon and salon["state"] == "closed":
 		# An appointment booked on a day the salon then closes is never cancelled by itself (product owner, 10.11.2026): the till marks the ones nobody

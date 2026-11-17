@@ -66,8 +66,9 @@
 
 			<div class="flex flex-col gap-1.5 border-t border-gray-100 px-4 py-3 text-[15px] dark:border-gray-800">
 				<div class="flex justify-between"><span class="text-gray-600 dark:text-gray-300">{{ __("Announced") }}</span><b>{{ money(appointment.amount) }}</b></div>
+				<!-- //// Neoffice — where the money came in (maintenance#2798): a sale the till validated was collected at the till, the rest was paid ahead online -->
 				<div v-if="appointment.paid_amount > 0" class="flex justify-between text-green-700 dark:text-green-300" data-test="sheet-paid">
-					<span>{{ __("Already paid online") }}</span><b>− {{ money(appointment.paid_amount) }}</b>
+					<span>{{ appointment.paid_at_the_till ? __("Collected at the till") : __("Already paid online") }}</span><b>− {{ money(appointment.paid_amount) }}</b>
 				</div>
 				<div v-if="appointment.invoice && appointment.state === 'paid'" class="text-xs text-gray-500" data-test="sheet-invoice">{{ __("Invoice {0}", [appointment.invoice]) }}</div>
 				<!-- //// Neoffice — only where the till collects it: on a paid appointment there is nothing left to collect (12.11). -->

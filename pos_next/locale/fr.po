@@ -26542,3 +26542,7 @@ msgstr "La cabine du rendez-vous a été modifiée."
 #, python-brace-format
 msgid "{0} instead of {1}."
 msgstr "{0} au lieu de {1}."
+
+#: POS/src/components/sale/AppointmentSheet.vue:71
+msgid "Collected at the till"
+msgstr "Encaissé à la caisse"

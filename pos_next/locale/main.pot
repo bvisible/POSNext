@@ -29447,3 +29447,7 @@ msgstr ""
 #: POS/src/components/sale/SalonAgenda.vue
 msgid "Nobody works"
 msgstr ""
+
+#: POS/src/components/sale/AppointmentSheet.vue:71
+msgid "Collected at the till"
+msgstr ""

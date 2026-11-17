@@ -88,6 +88,18 @@ describe("the sheet of an appointment", () => {
 		expect(wrapper.get("[data-test='sheet-paid']").text()).toContain("CHF 40.00")
 	})
 
+	//// Neoffice — a haircut paid by card at the counter read « Already paid online » (maintenance#2798)
+	it("says the money of a sale the till validated was collected at the till, and calls online only what was paid ahead", () => {
+		const atTheTill = mountIt({ state: "paid", paid_amount: 78, invoice: "FA-1", paid_at_the_till: true, can: {} })
+		const ahead = mountIt({ state: "paid", paid_amount: 78, invoice: "FA-2", paid_at_the_till: false, can: {} })
+		const downPayment = mountIt()
+
+		expect(atTheTill.get("[data-test='sheet-paid']").text()).toContain("Collected at the till")
+		expect(atTheTill.get("[data-test='sheet-paid']").text()).not.toContain("online")
+		expect(ahead.get("[data-test='sheet-paid']").text()).toContain("Already paid online")
+		expect(downPayment.get("[data-test='sheet-paid']").text()).toContain("Already paid online")
+	})
+
 	it("offers to start an appointment nobody has started, with collect as an outlined gesture beside move and cancel", () => {
 		const wrapper = mountIt()
 
