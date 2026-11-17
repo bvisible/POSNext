@@ -100,6 +100,12 @@ const { isOfferedRow, nestOfferedRows } = await import("@/utils/offeredRows")
 const { nestFreeRows } = await import("@/utils/gwpSameItemFreeRows")
 const { dropGrant } = await import("@/utils/offerApproval")
 
+// //// Neoffice — every test leaves its cart with the offers to reprocess (a debounced timer of 100 ms), and that run fetches the
+// //// offers and the one-time redemptions, which log an error here: 44 such logs came after the last test of the file, and one of
+// //// them reaching vitest while it closed the worker failed the whole run with "Closing rpc while onUserConsoleLog was pending",
+// //// every test green (frontend-tests, 12.11 and 16.11, maintenance#2604). Each test now drops the work it leaves behind.
+afterEach(() => usePOSCartStore().cancelPendingOfferProcessing())
+
 const tiramisu = {
 	item_code: "TIRAMISU",
 	item_name: "Tiramisu",
