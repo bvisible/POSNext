@@ -26546,3 +26546,44 @@ msgstr "{0} au lieu de {1}."
 #: POS/src/components/sale/AppointmentSheet.vue:71
 msgid "Collected at the till"
 msgstr "Encaissé à la caisse"
+
+#: POS/src/utils/customerCreationWarnings.js
+msgid "A customer of this name already exists. A namesake is possible; otherwise take the existing customer."
+msgstr "Un client portant ce nom existe déjà. Un homonyme est possible ; sinon, utilisez le client existant."
+
+#: POS/src/utils/customerCreationWarnings.js
+msgid "A customer with this company number already exists: it is most likely the same company."
+msgstr "Un client avec ce numéro IDE existe déjà : il s'agit très probablement de la même entreprise."
+
+#: POS/src/components/sale/CustomerFormDialog.vue:961
+#: pos_next/public/pos/assets/POSSale-CR2uoxNE.js:4
+msgid "Failed to load the customer"
+msgstr "Impossible de charger le client"
+
+#: pos_next/api/gift_cards.py:1072
+msgid "Gift card already used"
+msgstr "Carte cadeau déjà utilisée"
+
+#: pos_next/api/gift_cards.py:1065
+#, python-brace-format
+msgid "Gift card {0} has already been used: {1} of {2} is left on it. The sale that created it cannot be cancelled or returned while the card holds less than it was sold for."
+msgstr "La carte cadeau {0} a déjà été utilisée : il reste {1} sur {2}. Vous ne pouvez pas annuler ni retourner la vente qui l'a créée tant que la carte détient moins que le montant vendu."
+
+#: pos_next/api/gift_cards.py:1130
+#, python-brace-format
+msgid "Given back: the credit note {0} that had voided this gift card was cancelled."
+msgstr "Restitué : l'avoir {0} qui avait annulé cette carte cadeau a été annulé."
+
+#: POS/src/components/sale/CustomerFormDialog.vue:299
+msgid "Use this customer"
+msgstr "Utiliser ce client"
+
+#: pos_next/api/gift_cards.py:1097
+#, python-brace-format
+msgid "Voided: the credit note {0} took back the sale {1} that created this gift card."
+msgstr "Annulée : l'avoir {0} a annulé la vente {1} qui avait créé cette carte cadeau."
+
+#: pos_next/api/gift_cards.py:1086
+#, python-brace-format
+msgid "Voided: the sale {0} that created this gift card was cancelled."
+msgstr "Annulée : la vente {0} qui avait créé cette carte cadeau a été annulée."

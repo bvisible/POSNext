@@ -29451,3 +29451,169 @@ msgstr ""
 #: POS/src/components/sale/AppointmentSheet.vue:71
 msgid "Collected at the till"
 msgstr ""
+
+#: POS/src/components/sale/PackageBanners.vue:72
+#: pos_next/public/pos/assets/POSSale-CR2uoxNE.js:9
+msgid "1 session left"
+msgstr ""
+
+#: pos_next/till_settings/registry.py:2047
+msgid "A draft left after its shift was closed, or by a cashier whose account is disabled, is deleted after this many days. A table's order, a takeaway order, a printed draft and a draft paid on a phone are never deleted. Empty: 30 days."
+msgstr ""
+
+#. Description of the 'Abandoned Draft Lifetime (Days)' (Int) field in DocType
+#. 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:911
+msgid "A till's draft is deleted once it has been left this many days after its shift was closed, or by a cashier whose account is disabled. A restaurant table's order, a takeaway order, a printed draft and a draft paid by a payment provider are never deleted."
+msgstr ""
+
+#. Label of a Int field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:914
+msgid "Abandoned Draft Lifetime (Days)"
+msgstr ""
+
+#: POS/src/components/sale/CustomerFormDialog.vue:316
+msgid "Add the address"
+msgstr ""
+
+#: pos_next/till_settings/registry.py:2045
+msgid "An abandoned draft is deleted after (days)"
+msgstr ""
+
+#: POS/src/components/sale/CustomerFormDialog.vue:313
+msgid "An invoice, a letter or a delivery needs one. You can add it later from the customer's record."
+msgstr ""
+
+#: POS/src/components/sale/AppointmentSheet.vue:43
+#: POS/src/components/sale/AppointmentSheet.vue:50
+msgid "Cabin"
+msgstr ""
+
+#: POS/src/components/sale/AppointmentSheet.vue:51
+msgid "Choose a cabin"
+msgstr ""
+
+#: POS/src/components/sale/CustomerFormDialog.vue:306
+msgid "Create anyway"
+msgstr ""
+
+#: POS/src/components/sale/CustomerFormDialog.vue:286
+msgid "Create this customer anyway?"
+msgstr ""
+
+#: POS/src/components/sale/CustomerFormDialog.vue:311
+msgid "Create this customer without an address?"
+msgstr ""
+
+#: POS/src/components/sale/CustomerFormDialog.vue:318
+msgid "Create without an address"
+msgstr ""
+
+#: POS/src/components/sale/CustomerFormDialog.vue:961
+#: pos_next/public/pos/assets/POSSale-CR2uoxNE.js:4
+msgid "Failed to load the customer"
+msgstr ""
+
+#: pos_next/api/gift_cards.py:1072
+msgid "Gift card already used"
+msgstr ""
+
+#: pos_next/api/gift_cards.py:1065
+#, python-brace-format
+msgid "Gift card {0} has already been used: {1} of {2} is left on it. The sale that created it cannot be cancelled or returned while the card holds less than it was sold for."
+msgstr ""
+
+#: pos_next/api/gift_cards.py:1130
+#, python-brace-format
+msgid "Given back: the credit note {0} that had voided this gift card was cancelled."
+msgstr ""
+
+#: POS/src/components/sale/MoveAppointmentDialog.vue:98
+#: pos_next/public/pos/assets/POSSale-CR2uoxNE.js:18
+#, python-brace-format
+msgid "It goes in {0}."
+msgstr ""
+
+#: POS/src/components/ShiftClosingDialog.vue:679
+msgid "Paid online"
+msgstr ""
+
+#: pos_next/paid_online.py:119
+msgid "Paid online while no till of its restaurant had a shift open: this sale is in no closing and no end-of-day report."
+msgstr ""
+
+#: pos_next/paid_online.py:174
+msgid "Paid online, not counted"
+msgstr ""
+
+#: POS/src/components/sale/PaymentDialog.vue:1291
+msgctxt "Split the bill"
+msgid "Split"
+msgstr ""
+
+#: POS/src/composables/useAppointment.js:290
+#: pos_next/public/pos/assets/POSSale-CR2uoxNE.js:18
+#, python-brace-format
+msgid "The appointment is now in {0}."
+msgstr ""
+
+#: POS/src/composables/useAppointment.js:291
+#: pos_next/public/pos/assets/POSSale-CR2uoxNE.js:18
+msgid "The cabin of the appointment has been changed."
+msgstr ""
+
+#: POS/src/components/sale/AppointmentSheet.vue:49
+#: POS/src/components/sale/SalonAgenda.vue:379
+#: pos_next/public/pos/assets/POSSale-CR2uoxNE.js:18
+msgid "To place"
+msgstr ""
+
+#: POS/src/components/sale/CustomerFormDialog.vue:299
+msgid "Use this customer"
+msgstr ""
+
+#: pos_next/api/gift_cards.py:1097
+#, python-brace-format
+msgid "Voided: the credit note {0} took back the sale {1} that created this gift card."
+msgstr ""
+
+#: pos_next/api/gift_cards.py:1086
+#, python-brace-format
+msgid "Voided: the sale {0} that created this gift card was cancelled."
+msgstr ""
+
+#: POS/src/utils/appointments.js:332
+#: pos_next/public/pos/assets/POSSale-CR2uoxNE.js:18
+msgid "closed"
+msgstr ""
+
+#: POS/src/utils/appointments.js:333
+#: pos_next/public/pos/assets/POSSale-CR2uoxNE.js:18
+msgid "not for this person"
+msgstr ""
+
+#: POS/src/components/sale/PackageBanners.vue:82
+#: pos_next/public/pos/assets/POSSale-CR2uoxNE.js:9
+#, python-brace-format
+msgid "until {0}"
+msgstr ""
+
+#: POS/src/components/sale/MoveAppointmentDialog.vue:98
+#: pos_next/public/pos/assets/POSSale-CR2uoxNE.js:18
+#, python-brace-format
+msgid "{0} instead of {1}."
+msgstr ""
+
+#: POS/src/components/sale/PackageBanners.vue:72
+#: pos_next/public/pos/assets/POSSale-CR2uoxNE.js:9
+#, python-brace-format
+msgid "{0} sessions left"
+msgstr ""
+
+#: POS/src/utils/customerCreationWarnings.js
+msgid "A customer with this company number already exists: it is most likely the same company."
+msgstr ""
+
+#: POS/src/utils/customerCreationWarnings.js
+msgid "A customer of this name already exists. A namesake is possible; otherwise take the existing customer."
+msgstr ""

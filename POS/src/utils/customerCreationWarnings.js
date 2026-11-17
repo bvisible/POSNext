@@ -33,20 +33,23 @@ export function nextCreationQuestion({ matches = [], key, createAnywayFor = null
 	return null
 }
 
-/** Why a customer found is named, in the cashier's words (`translate` is the till's __). */
-export function matchReason(match, translate) {
+// The till's translator is handed in as `__`, under that name, so that the extractor of the catalogue finds these
+// sentences (it reads `__("…")` calls only).
+
+/** Why a customer found is named, in the cashier's words. */
+export function matchReason(match, __) {
 	const why =
 		match.why === "tax_id"
-			? translate("same company number {0}", [match.tax_id])
+			? __("same company number {0}", [match.tax_id])
 			: match.why === "both"
-				? translate("same name and same company number")
-				: translate("same name")
-	return match.disabled ? `${why} · ${translate("disabled")}` : why
+				? __("same name and same company number")
+				: __("same name")
+	return match.disabled ? `${why} · ${__("disabled")}` : why
 }
 
 /** The sentence of the duplicate question: a company number already taken is most likely the same company. */
-export function duplicateSentence(matches, translate) {
+export function duplicateSentence(matches, __) {
 	return (matches || []).some((m) => m.why !== "name")
-		? translate("A customer with this company number already exists: it is most likely the same company.")
-		: translate("A customer of this name already exists. A namesake is possible; otherwise take the existing customer.")
+		? __("A customer with this company number already exists: it is most likely the same company.")
+		: __("A customer of this name already exists. A namesake is possible; otherwise take the existing customer.")
 }
