@@ -653,6 +653,8 @@ def process_gift_card_on_submit(doc, method=None):
 
 	# Handle returns (Credit Notes) - restore gift card balance
 	if getattr(invoice, 'is_return', 0) and getattr(invoice, 'return_against', None):
+		# //// Neoffice — a credit note that takes back the sale of a card takes the card back too (maintenance#2725)
+		_take_back_the_cards_of_a_return(invoice)
 		_process_gift_card_return(invoice)
 		return
 
@@ -921,6 +923,13 @@ def process_gift_card_on_cancel(doc, method=None):
 	else:
 		invoice = doc
 
+	# //// Neoffice — the cards this invoice created go with it: a cancelled sale takes them back, a cancelled
+	# //// credit note gives back the ones it had taken (maintenance#2725, see the section at the end of the file).
+	if getattr(invoice, "is_return", 0) and getattr(invoice, "return_against", None):
+		_give_back_the_cards_of_a_cancelled_return(invoice)
+	else:
+		_take_back_the_cards_of_a_cancelled_sale(invoice)
+
 	# Get coupon code from invoice
 	coupon_code = getattr(invoice, 'posa_coupon_code', None) or getattr(invoice, 'coupon_code', None)
 
@@ -968,3 +977,162 @@ def process_gift_card_on_cancel(doc, method=None):
 			"Gift Card Cancel Processing Failed",
 			f"Failed to process gift card cancel for invoice {invoice.name}: {str(e)}"
 		)
+
+
+# ==========================================
+# The cards a sale created, when the sale is undone
+# ==========================================
+
+# //// Neoffice — added section (maintenance#2725). The cards a sale creates (create_gift_card_from_invoice, on
+# //// submit) were left as they were when the sale was cancelled or taken back by a credit note: the customer
+# //// had the money back and a full card to spend. Now a card nobody has spent goes with its sale: its balance
+# //// to 0 and its pricing rule disabled, a comment on the card saying why. A card already spent, even in part,
+# //// stops the cancel or the return: part of what it held is gone, and what to give back for the rest is a
+# //// decision of the business, not of the till. A credit note that is cancelled gives its cards back. A return
+# //// the till made offline has already been paid out: it goes through, and a spent card is left for review.
+_CARD_FIELDS = ["name", "coupon_code", "gift_card_amount", "original_gift_card_amount", "pricing_rule"]
+
+
+def _cards_created_by(invoice_name):
+	"""The gift cards a sale created, each under its row's lock, with whether it was voided already."""
+	if not invoice_name:
+		return []
+	cards = []
+	for name in frappe.get_all(
+		"Coupon Code", filters={"source_invoice": invoice_name}, pluck="name", order_by="creation asc"
+	):
+		card = frappe.db.get_value("Coupon Code", name, _CARD_FIELDS, as_dict=True, for_update=True)
+		card.voided = bool(
+			card.pricing_rule and frappe.db.get_value("Pricing Rule", card.pricing_rule, "disable")
+		)
+		cards.append(card)
+	return cards
+
+
+def _value_of(card):
+	return flt(card.original_gift_card_amount) or flt(card.gift_card_amount)
+
+
+def _unspent(card):
+	return flt(card.gift_card_amount) >= _value_of(card) - 0.005
+
+
+def _the_card_item_of(invoice):
+	"""The item that sells a gift card at the till of this invoice (None when its till sells none)."""
+	pos_profile = invoice.get("pos_profile")
+	if not pos_profile and invoice.get("posa_pos_opening_shift"):
+		pos_profile = frappe.db.get_value(
+			"POS Opening Entry", invoice.get("posa_pos_opening_shift"), "pos_profile"
+		)
+	settings = get_gift_card_settings(pos_profile)
+	return settings.get("gift_card_item") if settings else None
+
+
+def _card_units_returned(credit_note, original):
+	"""The value of each card a credit note takes back, one entry per card (None: every card of the sale)."""
+	card_item = _the_card_item_of(original) or _the_card_item_of(credit_note)
+	if not card_item:
+		# A till that no longer sells cards (or an invoice made outside a till): only a return of the whole
+		# sale tells which cards it takes back, all of them
+		whole = abs(flt(credit_note.grand_total)) >= abs(flt(original.grand_total)) - 0.005
+		return None if whole else []
+	units = []
+	for row in credit_note.items:
+		if row.item_code == card_item:
+			units.extend([abs(flt(row.rate))] * int(abs(flt(row.qty))))
+	return units
+
+
+def _void(card, reason):
+	frappe.db.set_value("Coupon Code", card.name, "gift_card_amount", 0)
+	if card.pricing_rule:
+		frappe.db.set_value("Pricing Rule", card.pricing_rule, {"discount_amount": 0, "disable": 1})
+	frappe.get_doc("Coupon Code", card.name).add_comment("Info", reason)
+
+
+def _restore(card, reason):
+	value = _value_of(card)
+	frappe.db.set_value("Coupon Code", card.name, "gift_card_amount", value)
+	if card.pricing_rule:
+		frappe.db.set_value("Pricing Rule", card.pricing_rule, {"discount_amount": value, "disable": 0})
+	frappe.get_doc("Coupon Code", card.name).add_comment("Info", reason)
+
+
+def _refuse_a_spent_card(card, invoice):
+	currency = invoice.get("currency")
+	frappe.throw(
+		_(
+			"Gift card {0} has already been used: {1} of {2} is left on it. The sale that created it cannot be"
+			" cancelled or returned while the card holds less than it was sold for."
+		).format(
+			card.coupon_code or card.name,
+			frappe.utils.fmt_money(card.gift_card_amount, currency=currency),
+			frappe.utils.fmt_money(_value_of(card), currency=currency),
+		),
+		title=_("Gift card already used"),
+	)
+
+
+def _offline(invoice):
+	return bool(getattr(getattr(invoice, "flags", None), "pos_offline_sync", False))
+
+
+def _take_back_the_cards_of_a_cancelled_sale(invoice):
+	cards = [card for card in _cards_created_by(invoice.name) if not card.voided]
+	for card in cards:
+		if not _unspent(card):
+			_refuse_a_spent_card(card, invoice)
+	for card in cards:
+		_void(card, _("Voided: the sale {0} that created this gift card was cancelled.").format(invoice.name))
+
+
+def _take_back_the_cards_of_a_return(credit_note):
+	original = frappe.get_doc(credit_note.doctype, credit_note.return_against)
+	units = _card_units_returned(credit_note, original)
+	pool = [card for card in _cards_created_by(original.name) if not card.voided]
+	if not pool or units == []:
+		return
+	if units is None:
+		units = [_value_of(card) for card in pool]
+	reason = _("Voided: the credit note {0} took back the sale {1} that created this gift card.").format(
+		credit_note.name, original.name
+	)
+	for value in units:
+		same = [card for card in pool if abs(_value_of(card) - value) < 0.01] or pool
+		if not same:
+			return
+		unspent = [card for card in same if _unspent(card)]
+		if unspent:
+			card = unspent[0]
+			pool.remove(card)
+			_void(card, reason)
+			continue
+		if _offline(credit_note):
+			# Paid out at a till that was offline: it has happened, the card is left for someone to settle
+			pool.remove(same[0])
+			frappe.log_error(
+				"Gift card returned after it was used",
+				f"Credit note {credit_note.name} (made offline) took back the sale {original.name} of gift card"
+				f" {same[0].name}, which had already been used: the card was left as it is.",
+			)
+			continue
+		_refuse_a_spent_card(same[0], credit_note)
+
+
+def _give_back_the_cards_of_a_cancelled_return(credit_note):
+	original = frappe.get_doc(credit_note.doctype, credit_note.return_against)
+	units = _card_units_returned(credit_note, original)
+	pool = [card for card in _cards_created_by(original.name) if card.voided]
+	if not pool or units == []:
+		return
+	if units is None:
+		units = [_value_of(card) for card in pool]
+	reason = _("Given back: the credit note {0} that had voided this gift card was cancelled.").format(
+		credit_note.name
+	)
+	for value in units:
+		same = [card for card in pool if abs(_value_of(card) - value) < 0.01] or pool
+		if not same:
+			return
+		pool.remove(same[0])
+		_restore(same[0], reason)
