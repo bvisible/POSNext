@@ -23,6 +23,7 @@ const {
 	initialsOf,
 	isOff,
 	isToCollect,
+	gridTemplateOf,
 	lanesOf,
 	lengthOf,
 	minutesLongOf,
@@ -398,6 +399,20 @@ describe("lanesOf", () => {
 		expect([lanes.get("a").lane, lanes.get("b").lane, lanes.get("c").lane].sort()).toEqual([0, 1, 2])
 		expect(lanes.get("c").of).toBe(3)
 		expect(lanesOf([]).size).toBe(0)
+	})
+})
+
+describe("gridTemplateOf", () => {
+	const at = (key, start, end) => ({ key, starts_at: `2026-11-18 ${start}:00`, ends_at: `2026-11-18 ${end}:00` })
+
+	it("makes a column cut into lanes as wide as that many columns, so an appointment beside another keeps the width of a column", () => {
+		const columns = [
+			{ key: "Luc", appointments: [at("a", "09:00", "10:00"), at("b", "10:00", "11:00")] },
+			{ key: "unassigned", appointments: [at("c", "11:00", "12:00"), at("d", "11:00", "11:30")] },
+			{ key: "Maya", appointments: [] },
+		]
+		expect(gridTemplateOf(columns)).toBe("52px minmax(168px, 1fr) minmax(336px, 2fr) minmax(168px, 1fr)")
+		expect(gridTemplateOf([])).toBe("52px")
 	})
 })
 

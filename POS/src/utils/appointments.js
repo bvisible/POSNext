@@ -216,6 +216,19 @@ export function lanesOf(appointments) {
 	return new Map(items.map((item) => [item.key, { lane: item.lane, of }]))
 }
 
+/**
+ * The columns of the agenda's grid: the gutter of the hours, then each column as wide as its lanes, so that an appointment beside another keeps the
+ * width of a column and its name (the grid scrolls sideways when the till's screen is too narrow for them all).
+ */
+export function gridTemplateOf(columns, least = 168) {
+	const widths = (columns || []).map((column) => {
+		const lanes = lanesOf(column?.appointments)
+		const of = lanes.size ? lanes.values().next().value.of : 1
+		return `minmax(${least * of}px, ${of}fr)`
+	})
+	return ["52px", ...widths].join(" ")
+}
+
 /** Where a time of the day stands on the same grid, in pixels. */
 export function offsetOf(minutes, range, pxPerHour) {
 	return Math.round(((minutes - range.start * 60) / 60) * pxPerHour)

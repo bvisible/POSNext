@@ -63,7 +63,7 @@
 
 		<!-- Tablet and desktop: the columns -->
 		<div v-if="uiStore.isDesktop && store.loaded && store.columns.length" class="flex-1 min-h-0 overflow-auto border-t border-gray-100 dark:border-gray-800" data-test="agenda-grid">
-			<div class="grid min-w-full" :style="{ gridTemplateColumns: `52px repeat(${store.columns.length}, minmax(168px, 1fr))` }">
+			<div class="grid min-w-full" :style="{ gridTemplateColumns: gridTemplate }">
 				<div class="sticky top-0 left-0 z-30 bg-white dark:bg-gray-900" />
 				<div
 					v-for="column in store.columns"
@@ -196,6 +196,7 @@ import {
 	blockGeometry,
 	clockOf,
 	freeHoursOf,
+	gridTemplateOf,
 	hourOf,
 	initialsOf,
 	isOff,
@@ -338,6 +339,9 @@ const lanes = computed(() => {
 	for (const column of store.columns) for (const [key, lane] of lanesOf(column.appointments)) all.set(key, lane)
 	return all
 })
+
+// a column cut into lanes is as wide as that many columns
+const gridTemplate = computed(() => gridTemplateOf(store.columns))
 
 function blockStyle(row, person) {
 	const { top, height } = blockGeometry(row, store.range, PX_PER_HOUR)

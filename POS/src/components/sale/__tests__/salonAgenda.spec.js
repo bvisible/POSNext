@@ -117,6 +117,8 @@ describe("the agenda of the salon", () => {
 		expect(first.left).not.toBe(second.left)
 		// a column whose appointments do not overlap keeps its whole width
 		expect(wrapper.find('[data-test="block-BKG-1"]').element.style.width).toBe("")
+		// and the column to assign is as wide as two, so each keeps the width of a column
+		expect(wrapper.find('[data-test="agenda-grid"] > .grid').attributes("style")).toContain("minmax(336px, 2fr)")
 	})
 
 	it("has a column for each person, headed by how she stands and the hours she works", () => {
