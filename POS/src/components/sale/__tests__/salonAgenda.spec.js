@@ -156,6 +156,20 @@ describe("the agenda of the salon", () => {
 			expect(wrapper.find("[data-test='block-cabin-BKG-5']").exists()).toBe(false)
 		})
 
+		it("is said after the service on a block too short for its pill row (an hour), « To place » as well", () => {
+			store.appointments = [
+				row("BKG-7", "Luc", "14:00", "15:00", { steps: facial("Luc", { name: "CAB-1", label: "Cabin 1", color: null }, false) }),
+				row("BKG-8", "Maya", "14:00", "15:00", { steps: facial("Maya", null, true) }),
+				row("BKG-9", "Luc", "16:00", "17:00"),
+			]
+			const wrapper = mountIt()
+
+			expect(wrapper.get("[data-test='block-BKG-7']").text()).toContain("Facial · Cabin 1")
+			expect(wrapper.get("[data-test='block-BKG-8']").text()).toContain("Facial · To place")
+			expect(wrapper.get("[data-test='block-BKG-9']").text()).not.toContain("·")
+			expect(wrapper.find("[data-test='block-cabin-BKG-7']").exists()).toBe(false)
+		})
+
 		it("is said on the row of a phone as well", () => {
 			ui.isDesktop = false
 			const wrapper = mountIt()

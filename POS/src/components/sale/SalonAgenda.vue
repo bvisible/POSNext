@@ -134,7 +134,8 @@
 								</b>
 								<span class="flex-none tabular-nums text-gray-600 dark:text-gray-300">{{ hourOf(row.starts_at) }}</span>
 							</span>
-							<span v-if="!row.busy" class="truncate text-gray-700 dark:text-gray-200">{{ titleOf(row) }}</span>
+							<!-- //// Neoffice — a block too short for its pill row says its cabin after the service (NeoSalon, cabins level 2, 17.11.2026): an hour is 56 px, the pill row needs 64 -->
+							<span v-if="!row.busy" class="truncate text-gray-700 dark:text-gray-200">{{ titleOf(row) }}<template v-if="cabinChip(row) && blockHeight(row) < 64"> · {{ cabinChip(row).label }}</template></span>
 							<span v-else class="truncate text-gray-500 dark:text-gray-400">{{ __("A colleague's appointment") }}</span>
 							<span v-if="!row.busy && blockHeight(row) >= 64" class="mt-auto flex items-center gap-1.5">
 								<span class="flex-none rounded-full px-2 py-px text-[11px] font-medium" :class="PILLS[standsAs(row)]">{{ pillText(row) }}</span>
