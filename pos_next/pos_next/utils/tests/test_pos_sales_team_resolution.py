@@ -416,6 +416,17 @@ class TestCommissionTableValidation(unittest.TestCase):
 
 
 class TestGetSalesPersons(unittest.TestCase):
+	# //// Neoffice — get_sales_persons ends by leaving out the people who rent their chair (appointments.without_independents),
+	# //// and its hook reads the site: the rented workstations, then today's date, from System Settings. Under the frappe.db
+	# //// these tests stand in for, that read failed, and so did its error log. The first of them to run went red unless an
+	# //// earlier test had left the answer in frappe.local (the hook's flag, the system settings): red alone, green in a
+	# //// full run (neoffice-maintenance#2835). Who rents her chair is the subject of
+	# //// test_a_person_who_rents_her_chair_is_never_offered_as_the_seller_of_a_line, not of these tests.
+	def setUp(self):
+		hook = patch("pos_next.api.appointments.without_independents", side_effect=lambda rows: rows)
+		hook.start()
+		self.addCleanup(hook.stop)
+
 	def test_no_per_person_commission_queries(self):
 		db = MagicMock()
 		db.exists.return_value = True
