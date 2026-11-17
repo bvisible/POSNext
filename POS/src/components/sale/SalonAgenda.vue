@@ -199,6 +199,7 @@ import {
 	hourOf,
 	initialsOf,
 	isOff,
+	lanesOf,
 	lengthOf,
 	minutesLongOf,
 	minutesOf,
@@ -331,9 +332,23 @@ function blockHeight(row) {
 	return blockGeometry(row, store.range, PX_PER_HOUR).height
 }
 
+// the lanes of every column: two appointments that overlap stand side by side, in a person's column as in the one « to assign »
+const lanes = computed(() => {
+	const all = new Map()
+	for (const column of store.columns) for (const [key, lane] of lanesOf(column.appointments)) all.set(key, lane)
+	return all
+})
+
 function blockStyle(row, person) {
 	const { top, height } = blockGeometry(row, store.range, PX_PER_HOUR)
 	const style = { top: `${top + 1}px`, height: `${height}px` }
+	const lane = lanes.value.get(row.key)
+	if (lane && lane.of > 1) {
+		// as inset-x-1.5, 6px from each side of the column, and 4px between two lanes
+		style.left = `calc((100% - 8px) * ${lane.lane / lane.of} + 6px)`
+		style.width = `calc((100% - 8px) / ${lane.of} - 4px)`
+		style.right = "auto"
+	}
 	if (row.busy) style.backgroundImage = "repeating-linear-gradient(135deg, #F6F3ED 0, #F6F3ED 6px, #ECE7DE 6px, #ECE7DE 7px)"
 	else if (person) {
 		const color = colorOf(person)

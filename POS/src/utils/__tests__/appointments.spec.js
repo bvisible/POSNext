@@ -23,6 +23,7 @@ const {
 	initialsOf,
 	isOff,
 	isToCollect,
+	lanesOf,
 	lengthOf,
 	minutesLongOf,
 	minutesOf,
@@ -375,3 +376,28 @@ describe("the avatars", () => {
 		expect(avatarColorOf("Sonia")).toMatch(/^#[0-9A-F]{6}$/i)
 	})
 })
+
+describe("lanesOf", () => {
+	const at = (key, start, end) => ({ key, starts_at: `2026-11-18 ${start}:00`, ends_at: `2026-11-18 ${end}:00` })
+
+	it("puts two appointments of the same hour side by side, and one that comes after back in the first lane", () => {
+		const lanes = lanesOf([at("a", "10:00", "11:00"), at("b", "10:00", "10:30"), at("c", "11:00", "11:30")])
+		expect(lanes.get("a")).toEqual({ lane: 0, of: 2 })
+		expect(lanes.get("b")).toEqual({ lane: 1, of: 2 })
+		expect(lanes.get("c")).toEqual({ lane: 0, of: 2 })
+	})
+
+	it("keeps a column whose appointments follow each other in one lane", () => {
+		const lanes = lanesOf([at("a", "09:00", "10:00"), at("b", "10:00", "11:00")])
+		expect(lanes.get("a")).toEqual({ lane: 0, of: 1 })
+		expect(lanes.get("b")).toEqual({ lane: 0, of: 1 })
+	})
+
+	it("gives a third lane to a third appointment of the same hour, and an appointment without an end its half hour", () => {
+		const lanes = lanesOf([at("a", "10:00", "11:00"), at("b", "10:00", "11:00"), { key: "c", starts_at: "2026-11-18 10:15:00", ends_at: null }])
+		expect([lanes.get("a").lane, lanes.get("b").lane, lanes.get("c").lane].sort()).toEqual([0, 1, 2])
+		expect(lanes.get("c").of).toBe(3)
+		expect(lanesOf([]).size).toBe(0)
+	})
+})
+

@@ -189,6 +189,33 @@ export function blockGeometry(appointment, range, pxPerHour) {
 	}
 }
 
+/**
+ * Side by side when they overlap, as the planning of Activities draws a diary (neoffice_activity planning_day.js `diary`): sorted by start, the longer
+ * first, each appointment takes the first lane free at its start, and the column is cut into as many lanes as it needs. Used for every column, the one
+ * « to assign » included, where bookings made online for « whoever is free » wait for a person.
+ * @returns {Map<string, { lane: number, of: number }>} by appointment key
+ */
+export function lanesOf(appointments) {
+	const items = (appointments || []).map((appointment) => {
+		const start = minutesOf(appointment?.starts_at) ?? 0
+		const end = minutesOf(appointment?.ends_at)
+		return { key: appointment?.key, start, end: end !== null && end > start ? end : start + 30 }
+	})
+	items.sort((a, b) => a.start - b.start || b.end - a.end)
+	const ends = []
+	for (const item of items) {
+		let lane = ends.findIndex((end) => end <= item.start)
+		if (lane < 0) {
+			lane = ends.length
+			ends.push(0)
+		}
+		ends[lane] = item.end
+		item.lane = lane
+	}
+	const of = Math.max(ends.length, 1)
+	return new Map(items.map((item) => [item.key, { lane: item.lane, of }]))
+}
+
 /** Where a time of the day stands on the same grid, in pixels. */
 export function offsetOf(minutes, range, pxPerHour) {
 	return Math.round(((minutes - range.start * 60) / 60) * pxPerHour)

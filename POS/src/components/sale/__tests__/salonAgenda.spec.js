@@ -99,6 +99,26 @@ describe("the agenda of the salon", () => {
 		]
 	})
 
+	it("draws two appointments with nobody yet, at the same hour, side by side in the column to assign", () => {
+		// a booking online « whoever is free » has nobody until somebody takes it: two of them at the same hour no longer cover each other
+		store.appointments = [
+			...store.appointments,
+			row("BKG-8", null, "10:00", "11:00", { customer_name: "Mme Rey", steps: [{ label: "Coupe", item_code: "COUPE", sales_person: null }] }),
+			row("BKG-9", null, "10:00", "10:30", { customer_name: "M. Roth", steps: [{ label: "Barbe", item_code: "BARBE", sales_person: null }] }),
+		]
+		const wrapper = mountIt()
+		const first = wrapper.find('[data-test="column-unassigned"] [data-test="block-BKG-8"]').element.style
+		const second = wrapper.find('[data-test="column-unassigned"] [data-test="block-BKG-9"]').element.style
+		// each takes half the column (the browser writes the calc its own way), one beside the other
+		expect(first.width).toContain("0.5")
+		expect(second.width).toBe(first.width)
+		expect(first.left).toContain("6px")
+		expect(second.left).toContain("0.5")
+		expect(first.left).not.toBe(second.left)
+		// a column whose appointments do not overlap keeps its whole width
+		expect(wrapper.find('[data-test="block-BKG-1"]').element.style.width).toBe("")
+	})
+
 	it("has a column for each person, headed by how she stands and the hours she works", () => {
 		const wrapper = mountIt()
 
