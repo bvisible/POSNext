@@ -18,6 +18,9 @@ from frappe.query_builder import functions as fn
 from frappe.query_builder.functions import IfNull
 from frappe.utils import flt, getdate, nowdate
 
+# //// Neoffice — the rules of a Frappe list for the till's raw item searches (added file pos_next/permitted_search.py).
+from pos_next.permitted_search import restrict_to_permitted
+
 # //// Neoffice — every item the till loads carries its VAT maps, on site and to take away (NeoResto lot 1, task 11).
 from pos_next.restaurant.takeaway_tax import attach_item_tax_rates
 
@@ -990,6 +993,11 @@ def _build_item_base_conditions(
 	# //// item to hide, and the bare condition failed every catalogue query there (NeoResto lot 1, task 11).
 	if frappe.db.has_column("Item", "is_internal_item"):
 		conditions.append("IFNULL(i.is_internal_item, 0) != 1")
+	# //// Neoffice — the grid's raw SQL asks nothing of the permission engine: a cashier limited to some item groups,
+	# //// brands or items (User Permission, a doctype hook) read the whole catalogue. The rules a Frappe list adds for her
+	# //// are added here (pos_next.permitted_search); nothing is added for an account that has none.
+	if restriction := restrict_to_permitted("Item", "i", for_parameters=True):
+		conditions.append(restriction)
 	if exclude_variants:
 		conditions.append("IFNULL(i.variant_of, '') = ''")
 	if exclude_templates:

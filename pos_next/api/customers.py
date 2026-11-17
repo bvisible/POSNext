@@ -6,11 +6,19 @@ Handles customer search, creation, and management for POS operations
 import frappe
 from frappe import _
 
+# //// Neoffice — the query builder's way to hand it a ready condition (the rules of a Frappe list, see get_customers).
+from pypika.terms import LiteralValue
+
 from pos_next.integrations.registry import (
 	after_customer_insert,
 	prepare_customer_doc,
 	validate_customer_create,
 )
+
+# //// Neoffice — the rules of a Frappe list for the till's raw searches (added file pos_next/permitted_search.py).
+from pos_next.permitted_search import match_conditions
+
+
 @frappe.whitelist()
 # //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
 def get_customers(
@@ -120,9 +128,16 @@ def get_customers(
 					| Customer.mobile_no.like(like)
 					| Customer.email_id.like(like)
 				)
+			# //// Neoffice — the query builder asks nothing of the permission engine: a cashier limited to some customers
+			# //// (User Permission, a doctype hook) found every customer of the site by name. The rules a Frappe list adds
+			# //// for her are added here (pos_next.permitted_search); nothing is added for an account that has none.
+			restriction = match_conditions("Customer")
+			if restriction:
+				query = query.where(LiteralValue(restriction))
 			result = query.orderby(Customer.customer_name).limit(customer_limit).run(as_dict=True)
 		else:
-			result = frappe.get_all(
+			# //// Neoffice — get_list, not get_all: the list of customers a cashier opens follows her permissions too.
+			result = frappe.get_list(
 				"Customer",
 				filters=filters,
 				fields=fields,
@@ -132,6 +147,9 @@ def get_customers(
 		# //// Neoffice — ▲▲▲ end of the get_customers search rewrite.
 		frappe.logger().debug(f"get_customers returned {len(result)} customers")
 		return result
+	# //// Neoffice — an account that may not read customers is refused as a list refuses her, not wrapped in a validation error.
+	except frappe.PermissionError:
+		raise
 	except Exception as e:
 		frappe.logger().error(f"Error in get_customers: {e!s}")
 		frappe.logger().error(frappe.get_traceback())
