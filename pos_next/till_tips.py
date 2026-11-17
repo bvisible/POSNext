@@ -433,18 +433,53 @@ def _own_employees(user):
 	return frappe.get_all("Employee", filters={"user_id": user}, pluck="name")
 
 
+# A Restaurant Tip names no company, only its till (`pos_profile`) and its restaurant, so a User Permission on Company never reached
+# it: an account bound to one company listed the tips of the other companies' staff, in the list and in « Tips by Server »
+# (maintenance#2838). A tip of a till or a restaurant of a company outside the bound is left out; one with neither is everybody's,
+# and nothing changes for an account without a bound (cash_entry.bound_companies).
+def _bound_tip_conditions(user):
+	from pos_next.api.cash_entry import bound_companies
+
+	allowed = bound_companies(user)
+	if allowed is None:
+		return ""
+	companies = ", ".join(frappe.db.escape(company) for company in allowed)
+	return (
+		"(ifnull(`tabRestaurant Tip`.`pos_profile`, '') = '' or `tabRestaurant Tip`.`pos_profile` in "
+		f"(select `name` from `tabPOS Profile` where `company` in ({companies})))"
+		" and (ifnull(`tabRestaurant Tip`.`restaurant`, '') = '' or `tabRestaurant Tip`.`restaurant` in "
+		f"(select `name` from `tabRestaurant` where `company` in ({companies})))"
+	)
+
+
+def _tip_of_the_bound_companies(doc, user):
+	from pos_next.api.cash_entry import bound_companies
+
+	allowed = bound_companies(user)
+	if allowed is None:
+		return True
+	for doctype, field in (("POS Profile", "pos_profile"), ("Restaurant", "restaurant")):
+		company = doc.get(field) and frappe.get_cached_value(doctype, doc.get(field), "company")
+		if company and company not in allowed:
+			return False
+	return True
+
+
 def tips_query_conditions(user=None, doctype=None):
 	"""`permission_query_conditions` of Restaurant Tip: at a till set to « each their own share », a member of its staff lists the
 	tips that are his (he rang the sale up, or his employee is the person the share is for); every other tip is listed as before.
 
-	A restaurant's tips name no till and are never narrowed down here.
+	A restaurant's tips name no till and are never narrowed down by a till's choice. For every reader, an account bound to some
+	companies lists no tip of a till or a restaurant of another company (see _bound_tip_conditions).
 	"""
 	user = user or frappe.session.user
+	# The bound to the account's companies first, for every reader of the tips (see _bound_tip_conditions)
+	bound = _bound_tip_conditions(user)
 	if _sees_every_tip(user):
-		return ""
+		return bound
 	tills = _tills_where_each_sees_their_own()
 	if not tills:
-		return ""
+		return bound
 	own = [f"`tabRestaurant Tip`.`server` = {frappe.db.escape(user)}"]
 	employees = _own_employees(user)
 	if employees:
@@ -452,13 +487,18 @@ def tips_query_conditions(user=None, doctype=None):
 			"`tabRestaurant Tip`.`employee` in ({})".format(", ".join(frappe.db.escape(e) for e in employees))
 		)
 	listed = ", ".join(frappe.db.escape(till) for till in tills)
-	return f"(ifnull(`tabRestaurant Tip`.`pos_profile`, '') not in ({listed}) or {' or '.join(own)})"
+	own_share = f"(ifnull(`tabRestaurant Tip`.`pos_profile`, '') not in ({listed}) or {' or '.join(own)})"
+	# And the bound (see _bound_tip_conditions)
+	return f"{bound} and {own_share}" if bound else own_share
 
 
 def may_read_tip(doc, ptype=None, user=None, debug=False):
 	"""`has_permission` of Restaurant Tip, the same rule for one record: False refuses a tip that is not the user's, at a till set to
 	« each their own share ». It never grants anything (None lets the other rules decide)."""
 	user = user or frappe.session.user
+	# A tip of a company outside the account's bound is refused, to every reader (see _bound_tip_conditions)
+	if ptype != "create" and not _tip_of_the_bound_companies(doc, user):
+		return False
 	if ptype == "create" or _sees_every_tip(user):
 		return None
 	till = doc.get("pos_profile")

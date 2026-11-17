@@ -154,6 +154,18 @@ def get_conditions(filters):
 	if filters.get("user"):
 		conditions.append("si.owner = %(user)s")
 
+	# //// Neoffice — an offline sync names no company, only its till: raw SQL read the tills of every company for an account
+	# //// bound to one (maintenance#2838). A sync with no till is everybody's; nothing changes without a bound.
+	from pos_next.api.cash_entry import bound_companies
+
+	allowed = bound_companies()
+	if allowed is not None:
+		filters["bound_companies"] = tuple(allowed)
+		conditions.append(
+			"(ifnull(ois.pos_profile, '') = '' OR ois.pos_profile IN "
+			"(SELECT name FROM `tabPOS Profile` WHERE company IN %(bound_companies)s))"
+		)
+
 	return " AND " + " AND ".join(conditions) if conditions else ""
 
 
