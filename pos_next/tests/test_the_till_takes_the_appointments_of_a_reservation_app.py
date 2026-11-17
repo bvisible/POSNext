@@ -297,10 +297,15 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 				"sales_person",
 				"sales_person_name",
 				"price",
+				# the cabin of the step and whether it is still to be placed (51944267, 16.11.2026)
+				"cabin",
+				"needs_cabin",
 			},
 		)
 		# The price a step announced is kept with it (the till holds it offline); none when the reservation does not say
 		self.assertIsNone(first["steps"][0]["price"])
+		# a step that asks for no cabin has none and none to place (51944267, 16.11.2026)
+		self.assertEqual((first["steps"][0]["cabin"], first["steps"][0]["needs_cabin"]), (None, False))
 		self.assertEqual(answer["appointments"][1]["invoice"], None)
 
 	def test_where_each_stands_is_what_the_money_lane_says_and_a_state_it_does_not_know_is_booked(self):

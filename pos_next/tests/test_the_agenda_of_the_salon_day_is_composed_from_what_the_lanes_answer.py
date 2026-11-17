@@ -107,6 +107,18 @@ def a_package_use(*args):
 	return None
 
 
+def some_cabins(*args):
+	return []
+
+
+def a_cabin_check(*args):
+	return {"ok": True, "why": None}
+
+
+def a_cabin_change(*args):
+	return {}
+
+
 HOOKS = {
 	"day": appointments.DAY_HOOK,
 	"list": appointments.LIST_HOOK,
@@ -122,6 +134,10 @@ HOOKS = {
 	"packages": appointments.PACKAGES_HOOK,
 	"use_package": appointments.USE_PACKAGE_HOOK,
 	"runs": appointments.TILL_CAPABILITIES_HOOK,
+	# the cabins (51944267): declared here like every gesture, so that a site whose theme has them does not answer for the suite
+	"cabins": appointments.CABINS_HOOK,
+	"cabin_check": appointments.CABIN_CHECK_HOOK,
+	"cabin_change": appointments.CABIN_CHANGE_HOOK,
 }
 STUBS = {
 	"day": "the_day",
@@ -138,6 +154,9 @@ STUBS = {
 	"packages": "some_packages",
 	"use_package": "a_package_use",
 	"runs": "what_the_site_runs",
+	"cabins": "some_cabins",
+	"cabin_check": "a_cabin_check",
+	"cabin_change": "a_cabin_change",
 }
 
 
@@ -280,6 +299,7 @@ class TestTheAgendaOfTheSalonDayIsComposedFromWhatTheLanesAnswer(FrappeTestCase)
 				"user",
 				"sales_person",
 				"sales_person_name",
+				"color",
 				"status",
 				"reason",
 				"periods",
@@ -288,6 +308,8 @@ class TestTheAgendaOfTheSalonDayIsComposedFromWhatTheLanesAnswer(FrappeTestCase)
 				"checked_in",
 			},
 		)
+		# the colour the reservation gives a person (69e1db18, 16.11.2026): `#RRGGBB`, or nothing where it gives none
+		self.assertIsNone(answer["people"][2]["color"])
 
 	def test_the_cashier_knows_which_sales_person_she_is_and_what_she_may_see_of_the_salon(self):
 		self.site_has("day")
@@ -844,7 +866,10 @@ class TestTheAgendaOfTheSalonDayIsComposedFromWhatTheLanesAnswer(FrappeTestCase)
 		)
 		self.assertEqual(
 			answer["capabilities"],
-			dict.fromkeys(("check_move", "move", "cancel", "clock", "repeat", "packages", "book"), False),
+			# `cabin` (51944267, 16.11.2026): the cabins listed, checked and changed, a gesture like the others
+			dict.fromkeys(
+				("check_move", "move", "cabin", "cancel", "clock", "repeat", "packages", "book"), False
+			),
 		)
 
 	def test_the_capabilities_are_the_gestures_the_site_declares(self):
@@ -858,6 +883,8 @@ class TestTheAgendaOfTheSalonDayIsComposedFromWhatTheLanesAnswer(FrappeTestCase)
 			{
 				"check_move": True,
 				"move": True,
+				# the site declares none of the three hooks of the cabins (51944267, 16.11.2026)
+				"cabin": False,
 				"cancel": False,
 				"clock": True,
 				"repeat": True,
@@ -865,6 +892,17 @@ class TestTheAgendaOfTheSalonDayIsComposedFromWhatTheLanesAnswer(FrappeTestCase)
 				"book": True,
 			},
 		)
+
+	def test_the_cabins_are_a_gesture_when_the_site_declares_its_three_hooks(self):
+		# listed, checked and changed: the till offers the cabin of an appointment only where the site does all three (51944267)
+		self.site_has("day", "cabins", "cabin_check", "cabin_change")
+		self.a_day()
+		self.assertTrue(self.agenda()["capabilities"]["cabin"])
+
+		for missing in ("cabins", "cabin_check", "cabin_change"):
+			with self.subTest(missing=missing):
+				self.site_has("day", *({"cabins", "cabin_check", "cabin_change"} - {missing}))
+				self.assertFalse(self.agenda()["capabilities"]["cabin"])
 
 	# « Repeat » and « use a package » are offered when the site SAYS it runs them: a theme declares their hooks on every site
 
