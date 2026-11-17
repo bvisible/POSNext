@@ -73,8 +73,11 @@
 				>
 					<div class="flex items-center gap-2">
 						<span v-if="column.person" class="flex h-7 w-7 flex-none items-center justify-center rounded-full text-[10px] font-bold text-white" :style="{ background: colorOf(column.person) }" aria-hidden="true">{{ initialsOf(column.person.sales_person_name) }}</span>
-						<b class="min-w-0 flex-1 truncate text-sm text-gray-900 dark:text-gray-100">{{ column.person ? column.person.sales_person_name : __("To assign") }}</b>
-						<span v-if="standing(column.person)" class="flex-none rounded-full px-2 py-0.5 text-[11px] font-medium" :class="TONES[standing(column.person).tone]" :data-test="`column-standing-${column.key}`">{{ standing(column.person).label }}</span>
+						<!-- the name before the pill (17.11): at a counter's width « From 08:30 » took the whole line and the name was cut to nothing; the pill now goes under the name when both do not fit -->
+						<div class="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1" :data-test="`column-who-${column.key}`">
+							<b class="max-w-full truncate text-sm text-gray-900 dark:text-gray-100" :data-test="`column-name-${column.key}`">{{ column.person ? column.person.sales_person_name : __("To assign") }}</b>
+							<span v-if="standing(column.person)" class="flex-none rounded-full px-2 py-0.5 text-[11px] font-medium" :class="TONES[standing(column.person).tone]" :data-test="`column-standing-${column.key}`">{{ standing(column.person).label }}</span>
+						</div>
 					</div>
 					<div class="truncate text-xs text-gray-500 dark:text-gray-400">{{ hoursText(column.person) }}</div>
 				</div>

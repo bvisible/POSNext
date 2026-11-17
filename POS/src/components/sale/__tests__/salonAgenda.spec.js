@@ -121,6 +121,18 @@ describe("the agenda of the salon", () => {
 		expect(wrapper.find('[data-test="agenda-grid"] > .grid').attributes("style")).toContain("minmax(336px, 2fr)")
 	})
 
+	it("puts a person's name before how she stands, the pill going under it where the column is too narrow for both", () => {
+		const wrapper = mountIt()
+		const who = wrapper.get('[data-test="column-who-Luc"]')
+		// the name first, then the pill, in a line that wraps: the pill no longer takes the name's room
+		expect(who.classes()).toContain("flex-wrap")
+		expect(who.element.children[0].getAttribute("data-test")).toBe("column-name-Luc")
+		expect(who.element.children[1].getAttribute("data-test")).toBe("column-standing-Luc")
+		// the name keeps its width and is cut only past the whole column
+		expect(wrapper.get('[data-test="column-name-Luc"]').classes()).toContain("max-w-full")
+		expect(wrapper.get('[data-test="column-name-Luc"]').classes()).not.toContain("flex-1")
+	})
+
 	it("has a column for each person, headed by how she stands and the hours she works", () => {
 		const wrapper = mountIt()
 
