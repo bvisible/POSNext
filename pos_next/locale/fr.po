@@ -26686,3 +26686,19 @@ msgstr "jusqu'au {0}"
 msgid "The till could not reach the site."
 msgstr "La caisse n'a pas pu joindre le site."
 
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:50
+msgid "No repetition falls on or before that day."
+msgstr "Aucune répétition ne tombe ce jour-là ou avant."
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:50
+msgid "No date to propose."
+msgstr "Aucune date à proposer."
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:245
+msgid "The moment you chose."
+msgstr "Le moment que vous avez choisi."
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:247
+msgid "Same hour"
+msgstr "Même heure"
+

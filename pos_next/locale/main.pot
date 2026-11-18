@@ -29684,3 +29684,19 @@ msgstr ""
 msgid "The till could not reach the site."
 msgstr ""
 
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:50
+msgid "No repetition falls on or before that day."
+msgstr ""
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:50
+msgid "No date to propose."
+msgstr ""
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:245
+msgid "The moment you chose."
+msgstr ""
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:247
+msgid "Same hour"
+msgstr ""
+

@@ -41,21 +41,28 @@
 					<div>
 						<div class="mb-1 text-[14px] font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">{{ __("The dates, checked one by one") }}</div>
 						<p v-if="loading && !dates.length" class="py-3 text-base text-gray-700 dark:text-gray-300" data-test="repeat-loading">{{ __("Loading...") }}</p>
-						<p v-else-if="failed" role="alert" class="py-3 text-base text-red-700 dark:text-red-300" data-test="repeat-failed">{{ failedReason || __("The dates could not be read.") }}</p>
+						<div v-else-if="failed" role="alert" class="py-3" data-test="repeat-failed-box">
+							<p class="text-base text-red-700 dark:text-red-300" data-test="repeat-failed">{{ failedReason || __("The dates could not be read.") }}</p>
+							<!-- //// Neoffice — a refusal, a network that came back or an answer that never came asked nothing again: the cashier had to touch a chip (the audit of 18.11) -->
+							<button type="button" data-test="repeat-retry" class="mt-2 min-h-[44px] rounded-lg border border-gray-300 px-4 text-base font-semibold text-gray-800 dark:border-gray-600 dark:text-gray-100" @click="preview()">{{ __("Try again") }}</button>
+						</div>
+						<!-- //// Neoffice — a valid last day before the first repetition left an empty list and a button « Nothing to book » with no word why (the audit of 18.11) -->
+						<p v-else-if="answered && !dates.length" class="py-3 text-base text-gray-700 dark:text-gray-200" data-test="repeat-no-dates">{{ untilMode ? __("No repetition falls on or before that day.") : __("No date to propose.") }}</p>
 						<ul v-else class="max-h-72 overflow-y-auto" :class="loading ? 'opacity-60' : ''" data-test="repeat-dates">
 							<li v-for="row in dates" :key="row.index" class="grid grid-cols-[72px_minmax(0,1fr)] items-center gap-x-3 gap-y-2 border-b border-gray-100 px-1 py-3 sm:grid-cols-[88px_minmax(0,1fr)_auto] dark:border-gray-800" :data-test="`repeat-date-${row.index}`">
 								<div class="rounded-xl border border-gray-300 py-1 text-center dark:border-gray-600">
-									<div class="text-[13px] font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">{{ dayWords(row.date).top }}</div>
+									<!-- //// Neoffice — the weekday, the day, then the month and the year: three short lines that do not break at 375 px (the audit of 18.11: « JANV. JEU. » broke in two, the month came before the weekday) -->
+									<div class="whitespace-nowrap text-[14px] font-semibold text-gray-700 dark:text-gray-300">{{ dayWords(row.date).weekday }}</div>
 									<div class="text-2xl leading-tight text-gray-900 dark:text-gray-100" style="font-family: Forum, Georgia, serif">{{ dayWords(row.date).day }}</div>
-									<div class="text-[13px] text-gray-700 dark:text-gray-300">{{ dayWords(row.date).year }}</div>
+									<div class="whitespace-nowrap text-[14px] text-gray-700 dark:text-gray-300">{{ dayWords(row.date).monthYear }}</div>
 								</div>
 								<div class="min-w-0">
 									<template v-if="row.state === 'free' || row.state === 'shifted'">
 										<b class="block break-words text-base text-gray-900 dark:text-gray-100">
-											{{ hourOf(changedTo(row) || row.starts_at) }} · {{ personName }}
+											{{ hourOf(changedTo(row) || row.starts_at) }}<template v-if="personName"> · {{ personName }}</template>
 											<span v-if="row.state === 'shifted' && row.was && !changedTo(row)" class="ms-1 text-[15px] font-normal text-gray-700 line-through dark:text-gray-300">{{ row.was }}</span>
 										</b>
-										<span class="block text-[15px] text-gray-700 dark:text-gray-300">{{ row.why || (row.state === "shifted" ? __("The nearest free hour that day.") : __("Same hour, same person")) }}</span>
+										<span class="block text-[15px] text-gray-700 dark:text-gray-300">{{ row.why || underTheHour(row) }}</span>
 									</template>
 									<template v-else>
 										<b class="block text-base text-gray-900 dark:text-gray-100">{{ row.state === "beyond" ? __("Beyond the booking horizon") : row.why || __("No free slot") }}</b>
@@ -88,7 +95,7 @@
 					<div class="rounded-xl bg-green-50 px-4 py-3 text-base text-green-800 dark:bg-green-400/15 dark:text-green-100" data-test="repeat-done">
 						<b>{{ result.booked.length === 1 ? __("1 appointment booked.") : __("{0} appointments booked.", [result.booked.length]) }}</b>
 						<ul class="mt-1 text-[15px]">
-							<li v-for="row in result.booked" :key="row.booking">{{ dayOf(row.starts_at) }} · {{ hourOf(row.starts_at) }}</li>
+							<li v-for="row in result.booked" :key="row.booking">{{ dayOf(row.starts_at) }} · {{ hourOf(row.starts_at) }}<span v-if="row.state === 'shifted'"> · {{ __("Moved") }}</span></li>
 						</ul>
 					</div>
 					<div v-if="skippedRows.length" class="rounded-xl bg-yellow-50 px-4 py-3 text-[15px] text-yellow-900 dark:bg-yellow-400/15 dark:text-yellow-100" data-test="repeat-skipped">
@@ -118,9 +125,10 @@
  * The reservation says which dates are free: the preview is asked a moment after the last change, and again, by the reservation, when the button is pressed.
  */
 import { Dialog } from "frappe-ui"
-import { computed, ref, watch } from "vue"
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { useAppointment } from "@/composables/useAppointment"
 import { useAppointmentsStore } from "@/stores/appointments"
+import { offlineState } from "@/utils/offline/offlineState"
 import { firstStepOf, hourOf, lengthOf, minutesLongOf, titleOf } from "@/utils/appointments"
 
 const props = defineProps({
@@ -171,6 +179,8 @@ const editProblem = ref("")
 const dates = ref([])
 const loading = ref(false)
 const failed = ref(false)
+// The reservation has answered the question in front of the cashier (an empty list is then « nothing to propose », not « not asked yet »)
+const answered = ref(false)
 const working = ref(false)
 const result = ref(null)
 const submitProblem = ref("")
@@ -222,8 +232,19 @@ function dayOf(moment) {
 
 function dayWords(moment) {
 	const when = new Date(`${String(moment || "").slice(0, 10)}T12:00:00`)
-	if (Number.isNaN(when.getTime())) return { top: "", day: String(moment || "").slice(0, 10), year: "" }
-	return { top: when.toLocaleDateString(undefined, { weekday: "short", month: "short" }), day: String(when.getDate()).padStart(2, "0"), year: String(when.getFullYear()) }
+	if (Number.isNaN(when.getTime())) return { weekday: "", day: String(moment || "").slice(0, 10), monthYear: "" }
+	return {
+		weekday: when.toLocaleDateString(undefined, { weekday: "short" }),
+		day: String(when.getDate()).padStart(2, "0"),
+		monthYear: `${when.toLocaleDateString(undefined, { month: "short" })} ${when.getFullYear()}`,
+	}
+}
+
+/** What stands under the hour of a date the reservation gave no reason for: the moment chosen by hand, the nearest free hour, or the same hour (with the same person when one is named). */
+function underTheHour(row) {
+	if (changedTo(row)) return __("The moment you chose.")
+	if (row.state === "shifted") return __("The nearest free hour that day.")
+	return personName.value ? __("Same hour, same person") : __("Same hour")
 }
 
 /** The moment a date was changed to by hand (`YYYY-MM-DD HH:MM`), or null. */
@@ -284,6 +305,7 @@ async function preview() {
 	const mine = ++asked
 	loading.value = true
 	failed.value = false
+	answered.value = false
 	const answer = await repeat(props.appointment.booking, args(false))
 	// An answer that comes after a newer question is not the one the cashier is looking at
 	if (mine !== asked) return
@@ -294,6 +316,7 @@ async function preview() {
 		return
 	}
 	dates.value = answer.dates
+	answered.value = true
 }
 
 watch(
@@ -310,6 +333,7 @@ watch(
 		changesReset.value = false
 		closeEdit()
 		dates.value = []
+		answered.value = false
 		result.value = null
 		failed.value = false
 		submitProblem.value = ""
@@ -339,6 +363,16 @@ watch(
 	},
 	{ immediate: true },
 )
+
+// The network back: a window that could not read the dates asks again by itself
+let stopFollowingTheNetwork = null
+onMounted(() => {
+	if (typeof offlineState.subscribe === "function")
+		stopFollowingTheNetwork = offlineState.subscribe((state) => {
+			if (state?.transition === "went-online" && props.modelValue && failed.value) preview()
+		})
+})
+onBeforeUnmount(() => stopFollowingTheNetwork?.())
 
 async function submit() {
 	if (working.value || !bookable.value) return
