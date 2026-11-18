@@ -1,7 +1,7 @@
 <template>
 	<!-- //// Neoffice — added file (no upstream equivalent). « Use a package » (NeoSalon, lots G11, voie 1; the plan « Forfaits et rendez-vous réguliers »): the packages of the customer of the cart that cover the -->
 	<!-- //// line, how many sessions each has left and until when, and one button to pay the line with a session. The site decides (it is asked, it writes nothing): the dialog shows its answer, and its reason when -->
-	<!-- //// it refuses. The session is counted when the invoice is submitted, and given back if it is cancelled. The audit of 18.11 (voie 4): touch-surface sizes, the first to end on top, a package past its last day -->
+	<!-- //// it refuses. The session is counted when the invoice is submitted, and given back if it is cancelled. The audit of 18.11 (voie 4): touch-surface sizes, a package past its last day -->
 	<!-- //// out, one date format with the banner's, and « needs the network » said when the till is offline. -->
 	<Dialog v-model="show" :options="{ title: __('Use a package'), size: 'xl' }">
 		<template #body-content>
@@ -129,7 +129,7 @@ import { Dialog } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 import { covers, useCustomerPackagesStore } from "@/stores/customerPackages";
 import { offlineState } from "@/utils/offline/offlineState";
-import { dateOf, expired, inUseOrder } from "@/utils/packageTarget";
+import { dateOf, expired } from "@/utils/packageTarget";
 
 const props = defineProps({
 	modelValue: { type: Boolean, default: false },
@@ -159,11 +159,11 @@ const sessions = computed(() =>
 );
 // The till is offline: the packages are the site's, nothing was asked, and the window says so instead of « no package pays this line »
 const offline = ref(false);
-// Only the packages that cover the line and are still valid, the ones with something left first, then the first to end (the one that never ends last)
+// Only the packages that cover the line and are still valid, the ones with something left first, each group in the order the site gives (never sorted again here)
 const choices = computed(() =>
-	inUseOrder(store.packages.filter((pack) => covers(pack, props.row) && !expired(pack))).sort(
-		(a, b) => Number(b.remaining > 0) - Number(a.remaining > 0)
-	)
+	store.packages
+		.filter((pack) => covers(pack, props.row) && !expired(pack))
+		.sort((a, b) => Number(b.remaining > 0) - Number(a.remaining > 0))
 );
 
 const barOf = (pack) =>

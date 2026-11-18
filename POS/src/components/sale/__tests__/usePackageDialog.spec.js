@@ -182,24 +182,28 @@ describe("the use a package dialog, as a cashier reads it", () => {
 		expect(find(wrapper, "package-left-CPK-1").text()).toBe("1 of 10 session left");
 	});
 
-	it("puts the first to end on top, and keeps out a package past its last day", async () => {
+	it("lists the packages in the order the site gives (the first to end first), the ones with something left before the spent ones, and keeps out a package past its last day", async () => {
 		vi.useFakeTimers({ toFake: ["Date"] });
 		vi.setSystemTime(new Date(2026, 10, 18, 9, 0));
+		// The site's contract: by end date, the first to end first, the ones with no end last
 		site.call.mockResolvedValue({
 			message: {
 				available: true,
 				packages: [
-					{ ...colour, package: "NO-END", remaining: 3 },
-					{ ...brushing, package: "LATE", valid_till: "2027-06-01" },
-					{ ...brushing, package: "SOON", valid_till: "2026-12-01" },
 					{ ...brushing, package: "OLD", valid_till: "2026-11-01" },
+					{ ...brushing, package: "SOON", valid_till: "2026-12-01" },
+					{ ...brushing, package: "LATE", valid_till: "2027-06-01" },
+					{ ...colour, package: "NO-END", remaining: 3 },
+					{ ...colour, package: "SPENT", remaining: 0 },
 				],
 			},
 		});
 		const wrapper = mountIt();
 		await flushPromises();
 
-		expect(wrapper.findAll("[data-test^='package-list'] > li").map((node) => node.attributes("data-test"))).toEqual(["package-SOON", "package-LATE", "package-NO-END"]);
+		const listed = wrapper.findAll("[data-test='package-list'] > li").map((node) => node.attributes("data-test"));
+		expect(listed).toEqual(["package-SOON", "package-LATE", "package-NO-END", "package-SPENT"]);
+		expect(listed[0]).toBe("package-SOON");
 	});
 
 	it("is a window of a touch surface: the sessions left and the reasons 14 px or more", async () => {

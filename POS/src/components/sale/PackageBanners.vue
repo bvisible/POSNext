@@ -1,7 +1,7 @@
 <template>
 	<!-- //// Neoffice — added file (no upstream equivalent). The banner of each package of the customer, right under the customer (NeoSalon, lots G11, voie 1; the board « Use a package at the till »): its title,
 	<!-- //// the sessions left and until when, and a black « Use » that pays the line of the cart the package covers (the cashier's chosen line, else the first service line it covers). Greyed when
-	<!-- //// no line can be paid. One banner per package, the first to end on top and the one that never ends last. The site's words show under the banner when it refuses. -->
+	<!-- //// no line can be paid. One banner per package, in the order the site gives (the first to end on top, the ones with no end last: the site's contract, never sorted again here). The site's words show under the banner when it refuses. -->
 	<!-- //// The audit of 18.11 (voie 4): the touch surface's sizes (§ 7), the sessions the cart already takes counted, a package past its last day not offered. -->
 	<div v-if="banners.length" class="space-y-1.5 px-2 pb-2" data-test="package-banners">
 		<div
@@ -54,10 +54,10 @@
  * //// it would pay (utils/packageTarget) to the cart, which asks the site and applies the agreement.
  */
 import { computed } from "vue";
-import { dateOf, expired, inUseOrder, takenByOtherLines, targetLine } from "@/utils/packageTarget";
+import { dateOf, expired, takenByOtherLines, targetLine } from "@/utils/packageTarget";
 
 const props = defineProps({
-	// The packages of the customer (the site's answer; the till puts the first to end on top)
+	// The packages of the customer, the first to end first (the site's order: the till shows what the site gives and sorts nothing)
 	packages: { type: Array, default: () => [] },
 	// The lines of the cart, and the one the cashier chose last
 	rows: { type: Array, default: () => [] },
@@ -81,7 +81,7 @@ const left = (pack) => {
 
 // A package with nothing left is no banner (nothing to use), nor one past its last day
 const banners = computed(() =>
-	inUseOrder(props.packages)
+	props.packages
 		.filter((pack) => pack.remaining > 0 && !expired(pack))
 		.map((pack) => ({
 			pack,

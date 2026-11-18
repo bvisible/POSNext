@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("@/utils/apiWrapper", () => ({ call: vi.fn() }));
 vi.mock("@/utils/offline/offlineState", () => ({ offlineState: { isOffline: false } }));
 
-const { canPay, dateOf, expired, inUseOrder, takenByOtherLines, targetLine } = await import("../packageTarget");
+const { canPay, dateOf, expired, takenByOtherLines, targetLine } = await import("../packageTarget");
 
 const pack = { package: "CPK-1", remaining: 3, items: ["BRUSHING"], item_groups: ["Coiffure"] };
 const brushing = { item_code: "BRUSHING", quantity: 1 };
@@ -86,20 +86,5 @@ describe("a package past its last day", () => {
 		} finally {
 			vi.useRealTimers();
 		}
-	});
-});
-
-describe("the order a cashier reads the packages in", () => {
-	it("puts the first to end on top and the ones with no end last, the site's order apart", () => {
-		const list = [
-			{ package: "NONE", valid_till: null },
-			{ package: "LATE", valid_till: "2027-06-01" },
-			{ package: "SOON", valid_till: "2026-12-01" },
-			{ package: "NONE-2", valid_till: "" },
-		];
-
-		expect(inUseOrder(list).map((each) => each.package)).toEqual(["SOON", "LATE", "NONE", "NONE-2"]);
-		// the list it was given is left as it was
-		expect(list[0].package).toBe("NONE");
 	});
 });

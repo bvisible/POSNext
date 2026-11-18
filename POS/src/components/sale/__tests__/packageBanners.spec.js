@@ -103,10 +103,9 @@ describe("the banner of a package", () => {
 		expect(wrapper.emitted("use")[0][0].row.note).toBe("second");
 	});
 
-	it("shows one banner per package, the first to end on top and the one that never ends last, none for a package with nothing left", () => {
-		// The site sorts by date, so the package with no end comes first in its answer: the till puts it last
+	it("shows one banner per package in the order the site gives, none for a package with nothing left", () => {
 		const wrapper = mountIt({
-			packages: [massage, empty, brushing],
+			packages: [brushing, empty, massage],
 			rows: [line, { item_code: "MASSAGE", quantity: 1 }],
 		});
 
@@ -115,6 +114,19 @@ describe("the banner of a package", () => {
 				.findAll('[data-test^="package-banner-CPK"]')
 				.map((node) => node.attributes("data-test"))
 		).toEqual(["package-banner-CPK-1", "package-banner-CPK-2"]);
+	});
+
+	// The contract of the site (note 21, one writer: the reservation): the packages come by end date, the first to end first, the ones with no end last. The till sorts
+	// nothing: this holds the first banner to the first to end, against data in the contract's order, never against a list the test sorts itself.
+	it("puts the first package to end on top, as the contract of the site gives them", () => {
+		const soon = { ...brushing, package: "CPK-A", title: "Ends soon", valid_till: "2026-12-01" };
+		const late = { ...brushing, package: "CPK-B", title: "Ends late", valid_till: "2027-06-01" };
+		const never = { ...massage, package: "CPK-C", title: "Never ends", items: ["BRUSHING"] };
+		const wrapper = mountIt({ packages: [soon, late, never] });
+
+		const titles = wrapper.findAll('[data-test="package-banner-title"]').map((node) => node.text());
+		expect(titles).toEqual(["Ends soon", "Ends late", "Never ends"]);
+		expect(titles[0]).toBe("Ends soon");
 	});
 
 	it("shows the words of the site under the banner it refused", () => {
