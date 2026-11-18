@@ -180,16 +180,23 @@ def appointments_enabled(pos_profile: str | None) -> bool:
 	)
 
 
+# What a hook refuses, and the till passes on to the cashier as it is: a refusal the reservation words for her (`frappe.ValidationError`),
+# or a right it refuses (`frappe.PermissionError`: a service or a person of another company than the till's, maintenance#2927). A refused
+# right was taken for a hook that breaks: the free times answered « none » (200, []), the booking « could not be read » (417), and each
+# refusal wrote an Error Log row (maintenance#2938).
+REFUSALS = (frappe.ValidationError, frappe.PermissionError)
+
+
 def _first_answer(hook: str, *args):
 	"""What the first hook that answers says (a hook that has nothing to say answers None); None when no hook answers.
 
-	A refusal the reservation words for the cashier (`frappe.ValidationError`) goes up as it is. Any other failure of a hook is logged and the
-	next hook is tried: a reservation app that breaks must not break the till.
+	A refusal of the reservation (`REFUSALS`: a message worded for the cashier, a right refused) goes up as it is. Any other failure of a hook
+	is logged and the next hook is tried: a reservation app that breaks must not break the till.
 	"""
 	for path in _declared(hook):
 		try:
 			answer = frappe.get_attr(path)(*args)
-		except frappe.ValidationError:
+		except REFUSALS:
 			raise
 		except Exception:
 			frappe.log_error("The appointments hook failed", f"{path}\n{frappe.get_traceback()}")
@@ -318,7 +325,7 @@ def without_independents(sales_persons: list[dict]) -> list[dict]:
 	"""
 	try:
 		declared = _first_answer(INDEPENDENTS_HOOK)
-	except frappe.ValidationError:
+	except REFUSALS:
 		return sales_persons
 	users = (
 		{u for u in (_text(user) for user in declared) if u}
@@ -345,7 +352,7 @@ def _what_the_site_runs() -> dict:
 	nothing = {"repeat": False, "packages": False}
 	try:
 		answer = _first_answer(TILL_CAPABILITIES_HOOK)
-	except frappe.ValidationError:
+	except REFUSALS:
 		return nothing
 	if not isinstance(answer, dict):
 		return nothing
@@ -825,7 +832,7 @@ def _clocks_of(bookings: list[str], pos_profile: str) -> dict:
 		return {}
 	try:
 		answer = _first_answer(TIME_STATE_HOOK, bookings, pos_profile)
-	except frappe.ValidationError:
+	except REFUSALS:
 		return {}
 	return answer if isinstance(answer, dict) else {}
 

@@ -61,6 +61,10 @@ def a_refusing_list(pos_profile, date, providers=None):
 	frappe.throw("The salon is closed today.")
 
 
+def a_list_whose_right_is_refused(pos_profile, date, providers=None):
+	frappe.throw("This service belongs to another company than this till.", frappe.PermissionError)
+
+
 def the_draft(booking, pos_profile):
 	SITE.setdefault("calls", []).append(("the_draft", booking, pos_profile))
 	return SITE["draft"]
@@ -472,6 +476,30 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 
 		self.assertIn("The salon is closed today.", str(caught.exception))
 		self.assertNotIn("calls", SITE)
+
+	def test_a_right_the_reservation_refuses_reaches_the_cashier_as_a_refusal_and_is_not_logged(self):
+		"""A service of another company than the till's was answered « no free time » (200, []) and filled the Error Log (maintenance#2938)."""
+		self.site_has(of_the_day=["a_list_whose_right_is_refused", "the_list"])
+		SITE["list"] = [self.an_appointment()]
+
+		with patch("frappe.log_error") as logged, self.assertRaises(frappe.PermissionError) as caught:
+			self.as_the_cashier(appointments.get_appointments, self.fx.profile, "2026-11-10")
+
+		self.assertIn("another company than this till", str(caught.exception))
+		self.assertNotIn("calls", SITE)
+		logged.assert_not_called()
+
+	def test_a_refused_right_leaves_the_buttons_the_pickers_and_the_clocks_of_the_till_as_they_were(self):
+		"""What the till only reads on the side (the buttons the site runs, the independents, the clocks) never breaks on a refusal."""
+		refused = frappe.PermissionError("Not permitted")
+		rows = [{"name": "Chair", "employee": None}]
+		with (
+			patch.object(appointments, "_first_answer", side_effect=refused),
+			patch("frappe.get_hooks", return_value=["a.hook"]),
+		):
+			self.assertEqual(appointments._what_the_site_runs(), {"repeat": False, "packages": False})
+			self.assertEqual(appointments.without_independents(rows), rows)
+			self.assertEqual(appointments._clocks_of(["BKG-1"], self.fx.profile), {})
 
 	def test_an_answer_that_is_not_a_list_is_refused_and_an_empty_one_is_an_empty_agenda(self):
 		self.site_has(of_the_day=["the_list"])
