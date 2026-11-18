@@ -185,8 +185,16 @@ describe("the banner of a package and what the cart already takes", () => {
 		const wrapper = mountIt();
 		const button = wrapper.get('[data-test="package-banner-use"]');
 
-		expect(button.classes()).toEqual(expect.arrayContaining(["min-h-[44px]", "whitespace-nowrap", "text-sm"]));
-		expect(wrapper.get('[data-test="package-banner-title"]').classes()).toContain("text-sm");
-		expect(wrapper.get('[data-test="package-banner-left"]').classes()).toContain("text-sm");
+		expect(button.classes()).toEqual(expect.arrayContaining(["min-h-[44px]", "whitespace-nowrap", "text-[14px]"]));
+		// frappe-ui's text-sm is 13 px, under the touch surface's minimum: the size is written
+		expect(wrapper.get('[data-test="package-banner-title"]').classes()).toContain("text-[14px]");
+		expect(wrapper.get('[data-test="package-banner-left"]').classes()).toContain("text-[14px]");
+	});
+
+	it("never cuts the end date across two lines: it stands in a span that does not break", () => {
+		const wrapper = mountIt({ rows: [{ item_code: "BRUSHING", quantity: 1, customer_package: "CPK-1" }, line] });
+
+		expect(wrapper.get('[data-test="package-banner-left"] span.whitespace-nowrap').text()).toBe("10-11-2027");
+		expect(wrapper.get('[data-test="package-banner-left"]').text()).toBe("6 sessions left after this cart · until 10-11-2027");
 	});
 });

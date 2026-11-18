@@ -10,7 +10,7 @@ vi.hoisted(() => {
 	globalThis.__ = (text, args = []) => (args || []).reduce((out, arg, at) => out.replace(`{${at}}`, arg), text)
 })
 const ui = vi.hoisted(() => ({ isDesktop: true }))
-const network = vi.hoisted(() => ({ isOffline: false }))
+const network = vi.hoisted(() => ({ isOffline: false, listeners: [], subscribe(listener) { network.listeners.push(listener); return () => {} } }))
 const load = vi.hoisted(() => vi.fn(async () => null))
 
 vi.mock("@/stores/posUI", () => ({ usePOSUIStore: () => ui }))
@@ -283,6 +283,23 @@ describe("the agenda of the salon", () => {
 		const wrapper = mountIt()
 
 		expect(wrapper.get("[data-test='agenda-offline']").text()).toContain("No network")
+	})
+
+	it("says no network when the till loses it after the agenda was shown, and never « nobody is booked » for a day it could not read", async () => {
+		store.loaded = true
+		store.available = true
+		store.appointments = []
+		network.isOffline = false
+		const wrapper = mountIt()
+		expect(wrapper.find("[data-test='agenda-no-network']").exists()).toBe(false)
+
+		network.isOffline = true
+		for (const listener of network.listeners) listener({ isOffline: true, transition: "went-offline" })
+		await wrapper.vm.$nextTick()
+
+		expect(wrapper.find("[data-test='agenda-no-network']").exists()).toBe(true)
+		expect(wrapper.find("[data-test='agenda-empty']").exists()).toBe(false)
+		network.isOffline = false
 	})
 
 	it("says that nothing can be shown when the till has no network and kept nothing, and when the agenda cannot be read", () => {

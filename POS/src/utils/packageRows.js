@@ -21,3 +21,13 @@ export function withoutFixedRows(invoiceData) {
 	if (!invoiceData || !Array.isArray(invoiceData.items)) return invoiceData;
 	return { ...invoiceData, items: invoiceData.items.filter((item) => !isFixedRow(item)) };
 }
+
+/**
+ * What a line is worth in a summary: its own amount, a 0.00 included (a line a package pays, an offered one). `item.amount || qty × rate` read that zero as « missing » and showed the
+ * full price of a line the sale does not charge (the audit of 18.11: « CHF 80.00 » in the payment window for a line at 0.00, in a total of 0.00).
+ */
+export function lineAmountOf(item) {
+	const amount = item?.amount;
+	if (amount !== null && amount !== undefined && amount !== "") return Number(amount) || 0;
+	return (Number(item?.qty ?? item?.quantity) || 0) * (Number(item?.rate || item?.price_list_rate) || 0);
+}

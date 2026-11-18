@@ -22,7 +22,7 @@
 
 				<p
 					v-if="store.loading && !choices.length"
-					class="py-3 text-base text-gray-600 dark:text-gray-300"
+					class="py-3 text-base text-gray-700 dark:text-gray-300"
 					data-test="package-loading"
 				>
 					{{ __("Loading...") }}
@@ -57,13 +57,13 @@
 									>{{ pack.title }}</b
 								>
 								<span
-									class="text-sm text-gray-600 dark:text-gray-300"
+									class="text-[14px] text-gray-700 dark:text-gray-300"
 									:data-test="`package-valid-${pack.package}`"
 									>{{ validText(pack) }}</span
 								>
 							</div>
 							<span
-								class="shrink-0 text-sm font-semibold text-gray-900 dark:text-gray-100"
+								class="shrink-0 text-[14px] font-semibold text-gray-900 dark:text-gray-100"
 								:data-test="`package-left-${pack.package}`"
 								>{{
 									pack.remaining === 1
@@ -93,7 +93,7 @@
 							type="button"
 							:data-test="`package-use-${pack.package}`"
 							class="mt-3 min-h-[48px] w-full rounded-xl bg-gray-900 px-4 text-base font-semibold text-white disabled:opacity-50 dark:bg-gray-100 dark:text-gray-900"
-							:disabled="busy || pack.remaining < sessionsNeeded"
+							:disabled="busy || pack.remaining < sessionsNeeded || isGone(pack)"
 							@click="use(pack)"
 						>
 							{{
@@ -150,6 +150,9 @@ const show = computed({
 const busy = ref(false);
 // The reason the site gave for a package, by package
 const refusals = ref({});
+// The packages the site refused, as the list showed them: after a refusal the packages are read again, and one the site no longer lists (emptied between the list and the
+// click) would take its reason with it. It stays on the list, greyed, with the words of the site (the audit of 18.11)
+const refused = ref({});
 
 const sessionsNeeded = computed(() =>
 	Math.max(1, Math.trunc(Number(props.row?.quantity ?? props.row?.qty) || 1))
@@ -160,11 +163,14 @@ const sessions = computed(() =>
 // The till is offline: the packages are the site's, nothing was asked, and the window says so instead of « no package pays this line »
 const offline = ref(false);
 // Only the packages that cover the line and are still valid, the ones with something left first, each group in the order the site gives (never sorted again here)
-const choices = computed(() =>
-	store.packages
+const choices = computed(() => {
+	const listed = store.packages
 		.filter((pack) => covers(pack, props.row) && !expired(pack))
-		.sort((a, b) => Number(b.remaining > 0) - Number(a.remaining > 0))
-);
+		.sort((a, b) => Number(b.remaining > 0) - Number(a.remaining > 0));
+	const gone = Object.values(refused.value).filter((pack) => !store.packages.some((each) => each.package === pack.package));
+	return [...listed, ...gone];
+});
+const isGone = (pack) => !store.packages.some((each) => each.package === pack.package);
 
 const barOf = (pack) =>
 	`${pack.total > 0 ? Math.round((Math.max(0, pack.remaining) / pack.total) * 100) : 0}%`;
@@ -184,6 +190,7 @@ watch(
 	async (open) => {
 		if (!open) return;
 		refusals.value = {};
+		refused.value = {};
 		offline.value = Boolean(offlineState.isOffline);
 		// The sessions left are the site's, and may have moved since the cart was opened
 		await store.load(props.posProfile, props.customerId);
@@ -203,6 +210,7 @@ async function use(pack) {
 				...refusals.value,
 				[pack.package]: answer.why || __("This package cannot pay this line."),
 			};
+			refused.value = { ...refused.value, [pack.package]: pack };
 		}
 	} finally {
 		busy.value = false;

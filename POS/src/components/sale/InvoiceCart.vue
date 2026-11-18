@@ -3881,6 +3881,14 @@ async function applyPackage({ pack, answer }) {
 //// Neoffice — « Use » on the banner of a package: the site is asked about the line the banner chose, and its answer applied to that line (or its words shown under the banner).
 const bannerBusy = ref("");
 const bannerRefusals = ref({});
+//// Neoffice — a refusal under a banner is about the packages as they were read: when they are read again (the till came back online, the customer changed) it goes (the audit of 18.11:
+//// « Failed to fetch » stayed under the banner after the network was back).
+watch(
+	() => packagesStore.packages,
+	() => {
+		bannerRefusals.value = {};
+	},
+);
 async function useFromBanner({ pack, row }) {
 	if (!row || bannerBusy.value) return;
 	bannerBusy.value = pack.package;

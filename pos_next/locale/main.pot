@@ -29680,3 +29680,7 @@ msgstr ""
 msgid "Locked (paid by a package)"
 msgstr ""
 
+#: POS/src/stores/customerPackages.js:150
+msgid "The till could not reach the site."
+msgstr ""
+

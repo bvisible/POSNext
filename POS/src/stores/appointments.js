@@ -148,6 +148,9 @@ export const useAppointmentsStore = defineStore("appointments", () => {
 		const shift = usePOSShiftStore()
 		now.value = minutesNow()
 		if (offlineState.isOffline) {
+			//// Neoffice — the band of the week is the site's reading, not kept: offline it says nothing rather than « 8 h libres » for every day (the audit of 18.11)
+			week.value = []
+			weekOf = ""
 			const kept = readCache(shift.profileName)
 			if (kept && kept.answer?.date === date.value)
 				take(kept.answer, { cached: true, savedAt: kept.savedAt })

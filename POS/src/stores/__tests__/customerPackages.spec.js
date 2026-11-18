@@ -247,4 +247,29 @@ describe("what the till does with a slow, a refusing or a returning site", () =>
 
 		expect(site.call).toHaveBeenCalledTimes(1);
 	});
+
+	it("offers nothing while the till is offline, and asks again when it is back", async () => {
+		site.call.mockResolvedValue({ message: { available: true, packages: [brushing] } });
+		await store.load("Till", "CUST-1");
+		expect(store.usable).toBe(true);
+
+		for (const listener of site.listeners) listener({ isOffline: true, transition: "went-offline" });
+		expect(store.usable).toBe(false);
+		expect(store.packages).toEqual([]);
+
+		site.offline = false;
+		for (const listener of site.listeners) listener({ isOffline: false, transition: "went-online" });
+		await vi.waitFor(() => expect(store.usable).toBe(true));
+	});
+
+	it("says the till could not reach the site, in its own words, when the request never got there", async () => {
+		site.call.mockResolvedValue({ message: { available: true, packages: [brushing] } });
+		await store.load("Till", "CUST-1");
+		site.call.mockReset();
+		site.call.mockRejectedValue(new TypeError("Failed to fetch"));
+
+		const answer = await store.check("Till", brushing, { item_code: "BRUSHING" });
+
+		expect(answer).toEqual({ ok: false, why: "The till could not reach the site." });
+	});
 });

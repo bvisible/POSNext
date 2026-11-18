@@ -672,15 +672,14 @@
 											{{ formatCurrency(item.rate || item.price_list_rate) }}
 											× {{ item.qty || item.quantity }}
 										</div>
+										<!-- //// Neoffice — the words of the package that settles the line (G11, the audit of 18.11) -->
+										<div v-if="item.customer_package" class="text-xs font-semibold text-emerald-700" data-test="payment-line-package">
+											{{ item.package_label || __("Settled by the package") }}
+										</div>
 									</div>
+									<!-- //// Neoffice — its own amount, 0.00 included: the old `or` fallback read that zero as missing and showed the full price of a line a package pays (the audit of 18.11) -->
 									<div class="text-sm font-semibold text-gray-900 text-end">
-										{{
-											formatCurrency(
-												item.amount ||
-													(item.qty || item.quantity) *
-														(item.rate || item.price_list_rate)
-											)
-										}}
+										{{ formatCurrency(lineAmountOf(item)) }}
 									</div>
 								</div>
 
@@ -2662,6 +2661,8 @@ import { usePaymentDriver } from "@/composables/usePaymentDriver";
 import { pushPaymentQR, clearPaymentQR } from "@/composables/useCustomerDisplaySync";
 import CardPresentDialog from "@/components/payments/CardPresentDialog.vue";
 import QRPaymentDialog from "@/components/payments/QRPaymentDialog.vue";
+//// Neoffice — a line a package pays is worth 0.00 in the summary, and says by what it is settled (G11, the audit of 18.11).
+import { lineAmountOf } from "@/utils/packageRows";
 
 const log = logger.create("PaymentDialog");
 const settingsStore = usePOSSettingsStore();

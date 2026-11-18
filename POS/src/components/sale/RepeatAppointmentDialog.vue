@@ -13,7 +13,7 @@
 
 				<template v-if="!result">
 					<div>
-						<div class="mb-2 text-sm font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300">{{ __("Every") }}</div>
+						<div class="mb-2 text-[14px] font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">{{ __("Every") }}</div>
 						<div class="flex flex-wrap items-center gap-2">
 							<button v-for="weeks in RHYTHMS" :key="weeks" type="button" :data-test="`repeat-every-${weeks}`" class="min-h-[48px] rounded-full border px-4 text-base font-semibold" :class="chipClass(!otherRhythm && everyWeeks === weeks)" @click="pickRhythm(weeks)">{{ __("{0} weeks", [weeks]) }}</button>
 							<button type="button" data-test="repeat-every-other" class="min-h-[48px] rounded-full border px-4 text-base font-semibold" :class="chipClass(otherRhythm)" @click="pickOtherRhythm()">{{ __("Other") }}</button>
@@ -22,44 +22,44 @@
 								{{ __("weeks") }}
 							</label>
 						</div>
-						<p v-if="otherProblem" role="alert" class="mt-2 text-sm text-red-700 dark:text-red-300" data-test="repeat-every-problem">{{ otherProblem }}</p>
+						<p v-if="otherProblem" role="alert" class="mt-2 text-[14px] text-red-700 dark:text-red-300" data-test="repeat-every-problem">{{ otherProblem }}</p>
 					</div>
 
 					<div>
-						<div class="mb-2 text-sm font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300">{{ __("How many times") }}</div>
+						<div class="mb-2 text-[14px] font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">{{ __("How many times") }}</div>
 						<div class="flex flex-wrap items-center gap-2">
 							<button v-for="times in COUNTS" :key="times" type="button" :data-test="`repeat-count-${times}`" class="min-h-[48px] min-w-[48px] rounded-full border px-4 text-base font-semibold" :class="chipClass(!untilMode && count === times)" @click="count = times; untilMode = false">{{ times }}</button>
 							<button type="button" data-test="repeat-count-until" class="min-h-[48px] rounded-full border px-4 text-base font-semibold" :class="chipClass(untilMode)" @click="untilMode = true">{{ __("Until…") }}</button>
 							<input v-if="untilMode" v-model="until" type="date" :min="firstDay" data-test="repeat-until" :aria-invalid="Boolean(untilProblem)" class="min-h-[48px] rounded-lg border bg-white px-3 text-base dark:bg-gray-800" :class="untilProblem ? 'border-red-600 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'" />
 						</div>
-						<p v-if="untilMode && !until" class="mt-2 text-sm text-gray-600 dark:text-gray-300" data-test="repeat-until-hint">{{ __("Choose the last day.") }}</p>
-						<p v-else-if="untilProblem" role="alert" class="mt-2 text-sm text-red-700 dark:text-red-300" data-test="repeat-until-problem">{{ untilProblem }}</p>
+						<p v-if="untilMode && !until" class="mt-2 text-[14px] text-gray-700 dark:text-gray-300" data-test="repeat-until-hint">{{ __("Choose the last day.") }}</p>
+						<p v-else-if="untilProblem" role="alert" class="mt-2 text-[14px] text-red-700 dark:text-red-300" data-test="repeat-until-problem">{{ untilProblem }}</p>
 					</div>
 
-					<p v-if="changesReset" class="rounded-lg bg-yellow-50 px-3 py-2 text-sm text-yellow-900 dark:bg-yellow-400/15 dark:text-yellow-100" data-test="repeat-changes-reset">{{ __("The rhythm changed: the dates changed by hand were put back.") }}</p>
+					<p v-if="changesReset" class="rounded-lg bg-yellow-50 px-3 py-2 text-[14px] text-yellow-900 dark:bg-yellow-400/15 dark:text-yellow-100" data-test="repeat-changes-reset">{{ __("The rhythm changed: the dates changed by hand were put back.") }}</p>
 
 					<div>
-						<div class="mb-1 text-sm font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300">{{ __("The dates, checked one by one") }}</div>
-						<p v-if="loading && !dates.length" class="py-3 text-base text-gray-600 dark:text-gray-300" data-test="repeat-loading">{{ __("Loading...") }}</p>
+						<div class="mb-1 text-[14px] font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">{{ __("The dates, checked one by one") }}</div>
+						<p v-if="loading && !dates.length" class="py-3 text-base text-gray-700 dark:text-gray-300" data-test="repeat-loading">{{ __("Loading...") }}</p>
 						<p v-else-if="failed" role="alert" class="py-3 text-base text-red-700 dark:text-red-300" data-test="repeat-failed">{{ failedReason || __("The dates could not be read.") }}</p>
 						<ul v-else class="max-h-72 overflow-y-auto" :class="loading ? 'opacity-60' : ''" data-test="repeat-dates">
 							<li v-for="row in dates" :key="row.index" class="grid grid-cols-[72px_minmax(0,1fr)] items-center gap-x-3 gap-y-2 border-b border-gray-100 px-1 py-3 sm:grid-cols-[88px_minmax(0,1fr)_auto] dark:border-gray-800" :data-test="`repeat-date-${row.index}`">
 								<div class="rounded-xl border border-gray-300 py-1 text-center dark:border-gray-600">
-									<div class="text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300">{{ dayWords(row.date).top }}</div>
+									<div class="text-[13px] font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">{{ dayWords(row.date).top }}</div>
 									<div class="text-2xl leading-tight text-gray-900 dark:text-gray-100" style="font-family: Forum, Georgia, serif">{{ dayWords(row.date).day }}</div>
-									<div class="text-xs text-gray-600 dark:text-gray-300">{{ dayWords(row.date).year }}</div>
+									<div class="text-[13px] text-gray-700 dark:text-gray-300">{{ dayWords(row.date).year }}</div>
 								</div>
 								<div class="min-w-0">
 									<template v-if="row.state === 'free' || row.state === 'shifted'">
 										<b class="block break-words text-base text-gray-900 dark:text-gray-100">
 											{{ hourOf(changedTo(row) || row.starts_at) }} · {{ personName }}
-											<span v-if="row.state === 'shifted' && row.was && !changedTo(row)" class="ms-1 text-[15px] font-normal text-gray-600 line-through dark:text-gray-300">{{ row.was }}</span>
+											<span v-if="row.state === 'shifted' && row.was && !changedTo(row)" class="ms-1 text-[15px] font-normal text-gray-700 line-through dark:text-gray-300">{{ row.was }}</span>
 										</b>
-										<span class="block text-[15px] text-gray-600 dark:text-gray-300">{{ row.why || (row.state === "shifted" ? __("The nearest free hour that day.") : __("Same hour, same person")) }}</span>
+										<span class="block text-[15px] text-gray-700 dark:text-gray-300">{{ row.why || (row.state === "shifted" ? __("The nearest free hour that day.") : __("Same hour, same person")) }}</span>
 									</template>
 									<template v-else>
 										<b class="block text-base text-gray-900 dark:text-gray-100">{{ row.state === "beyond" ? __("Beyond the booking horizon") : row.why || __("No free slot") }}</b>
-										<span class="block text-[15px] text-gray-600 dark:text-gray-300">{{ row.state === "beyond" ? row.why || __("This date is not proposed.") : __("This date is skipped.") }}</span>
+										<span class="block text-[15px] text-gray-700 dark:text-gray-300">{{ row.state === "beyond" ? row.why || __("This date is not proposed.") : __("This date is skipped.") }}</span>
 									</template>
 									<div v-if="row.state !== 'beyond' && editing === row.index" class="mt-2">
 										<div class="flex flex-wrap items-center gap-2">
@@ -67,11 +67,11 @@
 											<button type="button" :data-test="`repeat-edit-ok-${row.index}`" class="min-h-[48px] rounded-lg bg-gray-900 px-4 text-base font-semibold text-white dark:bg-gray-100 dark:text-gray-900" @click="applyEdit(row)">{{ __("Check") }}</button>
 											<button type="button" class="min-h-[48px] rounded-lg px-3 text-base text-gray-700 dark:text-gray-200" @click="closeEdit()">{{ __("Cancel") }}</button>
 										</div>
-										<p v-if="editProblem" role="alert" class="mt-2 text-sm text-red-700 dark:text-red-300" data-test="repeat-edit-problem">{{ editProblem }}</p>
+										<p v-if="editProblem" role="alert" class="mt-2 text-[14px] text-red-700 dark:text-red-300" data-test="repeat-edit-problem">{{ editProblem }}</p>
 									</div>
 									<button v-else-if="row.state !== 'beyond'" type="button" :data-test="`repeat-edit-open-${row.index}`" class="mt-1 min-h-[44px] text-base font-semibold text-orange-800 dark:text-orange-300" @click="openEdit(row)">{{ changedTo(row) ? __("Changed by hand") : __("Change this date") }}</button>
 								</div>
-								<span class="col-start-2 inline-flex items-center gap-2 justify-self-start rounded-full px-3 py-1 text-sm font-medium sm:col-start-auto" :class="PILLS[row.state]" :data-test="`repeat-state-${row.index}`"><span class="h-2 w-2 shrink-0 rounded-full" :class="DOTS[row.state]" aria-hidden="true" />{{ STATE_WORDS[row.state]() }}</span>
+								<span class="col-start-2 inline-flex items-center gap-2 justify-self-start rounded-full px-3 py-1 text-[14px] font-medium sm:col-start-auto" :class="PILLS[row.state]" :data-test="`repeat-state-${row.index}`"><span class="h-2 w-2 shrink-0 rounded-full" :class="DOTS[row.state]" aria-hidden="true" />{{ STATE_WORDS[row.state]() }}</span>
 							</li>
 						</ul>
 					</div>

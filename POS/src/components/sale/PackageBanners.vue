@@ -15,19 +15,19 @@
 				<div class="min-w-0 flex-1">
 					<b
 						dir="auto"
-						class="block break-words text-sm leading-tight text-green-900 dark:text-green-100"
+						class="block break-words text-[14px] leading-tight text-green-900 dark:text-green-100"
 						data-test="package-banner-title"
 						>{{ banner.pack.title }}</b
 					>
 					<span
-						class="block text-sm leading-tight text-green-800 dark:text-green-200"
+						class="block text-[14px] leading-tight text-green-800 dark:text-green-200"
 						data-test="package-banner-left"
-						>{{ banner.text }}</span
+						>{{ banner.left }}<template v-if="banner.until">{{ banner.until[0] }}<span class="whitespace-nowrap">{{ banner.until[1] }}</span>{{ banner.until[2] }}</template></span
 					>
 				</div>
 				<button
 					type="button"
-					class="min-h-[44px] shrink-0 whitespace-nowrap rounded-lg bg-gray-900 px-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40 dark:bg-gray-100 dark:text-gray-900"
+					class="min-h-[44px] shrink-0 whitespace-nowrap rounded-lg bg-gray-900 px-3 text-[14px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40 dark:bg-gray-100 dark:text-gray-900"
 					data-test="package-banner-use"
 					:disabled="!banner.row || busy === banner.pack.package"
 					:title="banner.row ? '' : __('No line of the cart is paid by this package.')"
@@ -38,7 +38,7 @@
 			</div>
 			<p
 				v-if="refusals[banner.pack.package]"
-				class="mt-1 px-1 text-sm text-red-700 dark:text-red-300"
+				class="mt-1 px-1 text-[14px] text-red-700 dark:text-red-300"
 				role="alert"
 				data-test="package-banner-why"
 			>
@@ -79,6 +79,12 @@ const left = (pack) => {
 	return pack.remaining === 1 ? __("1 session left") : __("{0} sessions left", [pack.remaining]);
 };
 
+const untilPieces = (date) => {
+	const marker = "\u0000";
+	const [before, after] = __("until {0}", [marker]).split(marker);
+	return [` · ${before}`, date, after ?? ""];
+};
+
 // A package with nothing left is no banner (nothing to use), nor one past its last day
 const banners = computed(() =>
 	props.packages
@@ -86,9 +92,9 @@ const banners = computed(() =>
 		.map((pack) => ({
 			pack,
 			row: targetLine(pack, props.rows, props.chosen, props.isOffered),
-			text: pack.valid_till
-				? `${left(pack)} · ${__("until {0}", [dateOf(pack.valid_till)])}`
-				: left(pack),
+			left: left(pack),
+			// « · until 28-11-2026 » in three pieces, the date alone in a span that never breaks (a date cut at its hyphen read as two numbers)
+			until: pack.valid_till ? untilPieces(dateOf(pack.valid_till)) : null,
 		}))
 );
 </script>

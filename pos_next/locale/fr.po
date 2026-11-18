@@ -26682,3 +26682,7 @@ msgstr "{0} séances restantes"
 msgid "until {0}"
 msgstr "jusqu'au {0}"
 
+#: POS/src/stores/customerPackages.js:150
+msgid "The till could not reach the site."
+msgstr "La caisse n'a pas pu joindre le site."
+

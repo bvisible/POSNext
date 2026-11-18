@@ -179,7 +179,8 @@
 		</div>
 
 		<p v-else-if="store.loaded && !store.available" data-test="agenda-unavailable" class="px-4 py-6 text-sm text-gray-500">{{ __("The agenda is not available at this till.") }}</p>
-		<p v-else-if="store.loaded" data-test="agenda-empty" class="px-4 py-6 text-sm text-gray-500">{{ __("Nobody is booked and the team is not set up for this day.") }}</p>
+		<!-- //// Neoffice — never « nobody is booked » for a day the till could not read: offline with no agenda kept, the notice above says so (the audit of 18.11) -->
+		<p v-else-if="store.loaded && (!offline || store.fromCache)" data-test="agenda-empty" class="px-4 py-6 text-sm text-gray-500">{{ __("Nobody is booked and the team is not set up for this day.") }}</p>
 	</section>
 </template>
 
@@ -189,7 +190,7 @@
  *
  * emits `new-appointment` `{ person, from }` (a free hour, or the « New » button) and `selected` (an appointment's sheet should open).
  */
-import { computed, onBeforeUnmount, ref } from "vue"
+import { computed, onBeforeUnmount, onMounted, ref } from "vue"
 import { useAppointment } from "@/composables/useAppointment"
 import { useAppointmentsStore } from "@/stores/appointments"
 import { usePOSUIStore } from "@/stores/posUI"
@@ -249,7 +250,14 @@ const PILLS = {
 //// Neoffice — the hour lines in the till's own line colour, which follows its dark theme (a fixed #EFEAE1 drew bright white lines across the dark agenda, 16.11)
 const lines = "linear-gradient(to bottom, var(--pos-line) 0, var(--pos-line) 1px, transparent 1px)"
 
-const offline = computed(() => offlineState.isOffline)
+//// Neoffice — the till's network state, followed: it was read once, so an agenda opened online that lost its network kept saying nothing about it, and drew « nobody is booked » for a day
+//// it could not read (the audit of 18.11).
+const offline = ref(Boolean(offlineState.isOffline))
+let stopFollowingTheNetwork = null
+onMounted(() => {
+	offline.value = Boolean(offlineState.isOffline)
+	if (typeof offlineState.subscribe === "function") stopFollowingTheNetwork = offlineState.subscribe((state) => (offline.value = Boolean(state?.isOffline)))
+})
 const gridHeight = computed(() => (store.range.end - store.range.start) * PX_PER_HOUR)
 const hours = computed(() => Array.from({ length: store.range.end - store.range.start + 1 }, (_, at) => store.range.start + at))
 const nowOffset = computed(() => {
@@ -509,6 +517,7 @@ function endDrag() {
 }
 
 onBeforeUnmount(stopDrag)
+onBeforeUnmount(() => stopFollowingTheNetwork?.())
 
 function select(row) {
 	store.select(row.key)

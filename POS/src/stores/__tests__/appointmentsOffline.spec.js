@@ -66,4 +66,16 @@ describe("the agenda of the till without the network", () => {
 
 		expect(store.appointments.map((each) => each.key)).toEqual(["BKG-9"])
 	})
+
+	it("says nothing of the week offline: the band of the week is the site's reading, never kept", async () => {
+		lane.loadDay.mockResolvedValue(agenda("2026-11-18", [row("BKG-1", "2026-11-18 15:00:00")]))
+		lane.loadWeek.mockResolvedValue({ available: true, days: [{ date: "2026-11-18", working: true, worked_minutes: 480, free_minutes: 480 }] })
+		await store.refresh()
+		await vi.waitFor(() => expect(store.week).toHaveLength(1))
+		network.isOffline = true
+
+		await store.refresh()
+
+		expect(store.week).toEqual([])
+	})
 })

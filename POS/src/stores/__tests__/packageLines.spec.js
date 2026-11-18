@@ -95,6 +95,7 @@ vi.mock("@/utils/logger", () => ({
 const { usePOSCartStore } = await import("../posCart");
 const { useOfferedItemsStore } = await import("../offeredItems");
 const { canOfferRow, isOfferedRow, nestOfferedRows } = await import("@/utils/offeredRows");
+const { usePOSOffersStore } = await import("../posOffers");
 const { nestFreeRows } = await import("@/utils/gwpSameItemFreeRows");
 const { dropGrant } = await import("@/utils/offerApproval");
 
@@ -342,5 +343,97 @@ describe("a line paid by a package, and everything else that prices a cart", () 
 
 		expect(canOfferRow(cart.invoiceItems[0])).toBe(false);
 		expect(canOfferRow(cart.invoiceItems[1])).toBe(true);
+	});
+});
+
+//// Neoffice — the second passage of the audit (18.11): under a price rule that had priced the line, the package's 100 % was put back to the full price by the offers' own « reset every rate »
+//// (a cart of package lines only leaves every applied offer with nothing to apply to), the line still saying « Settled by the package », and the sale was refused by the site.
+describe("a line a package pays, under a rule of price that had priced it", () => {
+	let cart;
+
+	beforeEach(() => {
+		setActivePinia(createPinia());
+		vi.useFakeTimers();
+		Object.assign(settings, { allowItemDiscount: true });
+		Object.assign(auth, { required: false, grant: null, calls: [] });
+		Object.assign(net, { offline: false });
+		Object.assign(server, { sent: [], promotion: 10 });
+		cart = usePOSCartStore();
+		cart.setPosProfile("Till");
+		cart.customer = "Mme Dupont";
+		const offers = usePOSOffersStore();
+		offers.hasFetched = true;
+		// The rule of price the site applies on its own to that item (an automatic offer of the till)
+		offers.availableOffers = [
+			{
+				name: "PROMO10",
+				title: "Promo 10 %",
+				auto: 1,
+				apply_on: "Item Code",
+				eligible_items: ["TIRAMISU"],
+				discount_type: "Discount Percentage",
+				discount_percentage: 10,
+				promotion_type: "Auto Discount",
+			},
+		];
+		cart.addItem(tiramisu, 1);
+	});
+	afterEach(() => vi.useRealTimers());
+
+	const settle = () => vi.advanceTimersByTimeAsync(1500);
+	const state = () => cart.invoiceItems.map((row) => [row.discount_percentage, row.amount, row.customer_package || null]);
+	const payTiramisu = () =>
+		cart.updateItemDetails(
+			"TIRAMISU",
+			{ customer_package: pack.package, package_label: pack.label, package_remaining: pack.remaining_after, discount_percentage: 100 },
+			null,
+			cart.invoiceItems[0]
+		);
+
+	it("stays at 0.00 and at 100 % once the offers have read the cart again, with no rule left on it", async () => {
+		await settle();
+		expect(state()).toEqual([[10, 8.55, null]]);
+
+		await payTiramisu();
+		await settle();
+
+		expect(state()).toEqual([[100, 0, "CPK-1"]]);
+		expect(cart.invoiceItems[0].pricing_rules || []).toEqual([]);
+		expect(cart.grandTotal).toBe(0);
+	});
+
+	// Whatever left a rule on the line (a cart brought back, a stale row): the offers have nothing to apply to in a cart of package lines only, and reset every rate they hold a rule for
+	it("is not reset when the applied offers are validated again, even with a rule still named on it", async () => {
+		await settle();
+		await payTiramisu();
+		cart.invoiceItems[0].pricing_rules = ["PROMO10"];
+
+		await cart.reapplyOffer({ customer: "Mme Dupont" });
+
+		expect(state()).toEqual([[100, 0, "CPK-1"]]);
+	});
+
+	it("is not reset when the offers pass over the cart again, even with a rule still named on it", async () => {
+		await settle();
+		await payTiramisu();
+		cart.invoiceItems[0].pricing_rules = ["PROMO10"];
+
+		cart.forceRefreshOffers();
+		await settle();
+
+		expect(state()).toEqual([[100, 0, "CPK-1"]]);
+		expect(cart.grandTotal).toBe(0);
+	});
+
+	it("gets the rule back with the session, without waiting for another change of the cart", async () => {
+		await settle();
+		await payTiramisu();
+		await settle();
+
+		await cart.updateItemDetails("TIRAMISU", { customer_package: null, discount_percentage: 0 }, null, cart.invoiceItems[0]);
+		await settle();
+
+		expect(state()).toEqual([[10, 8.55, null]]);
+		expect(cart.grandTotal).toBe(8.55);
 	});
 });

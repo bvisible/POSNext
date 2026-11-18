@@ -210,8 +210,27 @@ describe("the use a package dialog, as a cashier reads it", () => {
 		const wrapper = mountIt();
 		await flushPromises();
 
-		expect(find(wrapper, "package-left-CPK-1").classes()).toContain("text-sm");
-		expect(find(wrapper, "package-valid-CPK-1").classes()).toContain("text-sm");
+		// frappe-ui's text-sm is 13 px and its gray-600 reads 4.17:1: the size is written and the secondary text is a tone darker
+		expect(find(wrapper, "package-left-CPK-1").classes()).toContain("text-[14px]");
+		expect(find(wrapper, "package-valid-CPK-1").classes()).toEqual(expect.arrayContaining(["text-[14px]", "text-gray-700"]));
 		expect(find(wrapper, "package-use-CPK-1").classes()).toContain("min-h-[48px]");
+	});
+
+	it("keeps on the list a package emptied between the list and the click, with the words of the site, greyed", async () => {
+		const wrapper = mountIt();
+		await flushPromises();
+		// The site refuses, and no longer lists the package when the till reads them again
+		site.call.mockImplementation(async (method) =>
+			method.endsWith("check_package_use")
+				? { message: { ok: false, why: "Ce forfait n'a plus aucune séance restante." } }
+				: { message: { available: true, packages: [other] } }
+		);
+
+		await find(wrapper, "package-use-CPK-1").trigger("click");
+		await flushPromises();
+
+		expect(find(wrapper, "package-why-CPK-1").text()).toBe("Ce forfait n'a plus aucune séance restante.");
+		expect(find(wrapper, "package-use-CPK-1").attributes("disabled")).toBeDefined();
+		expect(find(wrapper, "package-none").exists()).toBe(false);
 	});
 });

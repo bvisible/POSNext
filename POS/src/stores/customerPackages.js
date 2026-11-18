@@ -102,10 +102,14 @@ export const useCustomerPackagesStore = defineStore("customerPackages", () => {
 		}
 	}
 
-	// Back online: nothing was asked while the till was cut off, so the banners ask again for the customer the cart is for (once, when the till came back)
+	// The packages are the site's: nothing is offered while the till is cut off (the banners go, and a press on one no longer ends in « Failed to fetch »), and back online
+	// they ask again for the customer the cart is for (once, when the till came back)
 	if (typeof offlineState.subscribe === "function") {
 		offlineState.subscribe((state) => {
-			if (state?.transition === "went-online" && wanted.who && !available.value) {
+			if (state?.transition === "went-offline") {
+				ticket++;
+				clear();
+			} else if (state?.transition === "went-online" && wanted.who && !available.value) {
 				load(wanted.profile, wanted.who);
 			}
 		});
@@ -140,7 +144,10 @@ export const useCustomerPackagesStore = defineStore("customerPackages", () => {
 			if (answer?.ok === true) return answer;
 			refused = { ok: false, why: answer?.why || "" };
 		} catch (error) {
-			refused = { ok: false, why: String(error?.message || "") };
+			//// Neoffice — a request that never reached the site says so in the till's words, not the browser's (« Failed to fetch ») (the audit of 18.11)
+			const message = String(error?.message || "");
+			const unreachable = error instanceof TypeError || /failed to fetch|networkerror|load failed/i.test(message);
+			refused = { ok: false, why: unreachable ? __("The till could not reach the site.") : message };
 			// A slow site is not asked a second question on top of the first
 			if (error?.timedOut) return refused;
 		}

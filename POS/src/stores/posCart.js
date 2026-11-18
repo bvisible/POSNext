@@ -1867,6 +1867,9 @@ export const usePOSCartStore = defineStore("posCart", () => {
 					// Reset all item rates to original (remove discounts)
 					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					invoiceItems.value.forEach((item) => {
+						//// Neoffice — a line a package pays is not the offers' to reset: it is at its 100 %, whatever a rule once said (G11, the audit of 18.11: a cart of package lines only
+						//// leaves every applied offer with nothing to apply to, and this loop put the line back at its full price, still « Settled by the package »).
+						if (isFixedRow(item)) return;
 						if (dropPromotionUnderCoupon(item)) return;
 						if (item.pricing_rules && item.pricing_rules.length > 0) {
 							item.discount_percentage = 0;
@@ -2674,6 +2677,14 @@ export const usePOSCartStore = defineStore("posCart", () => {
 				// The discount is the package's (100 %, worth 0.00) or nothing: its amount is worked out again from the percentage
 				cartItem.discount_amount = 0;
 				if (!updates.customer_package && updates.discount_percentage === undefined) cartItem.discount_percentage = 0;
+				//// Neoffice — a line a package pays holds no rule of price or offer (the invoice then carries none for it): the rule that had priced it comes back with the session, through the
+				//// offers' own pass over the cart, which reads the line again once it is given back (G11, the audit of 18.11: it stayed at the full price until the next change).
+				if (updates.customer_package) {
+					cartItem.pricing_rules = [];
+					cartItem.is_already_discounted = 0;
+					cartItem.is_accumulative_discount = 0;
+					cartItem.discount_source = "";
+				}
 			}
 			//// Neoffice — a line a package pays keeps its 100 % and its price: an ordinary edit of the discount or the rate does not reach it (G11, the audit of
 			//// 18.11: a cashier's 50 % and a rule's 10 % left it at CHF 63.00 under « Settled by the package »). The way out is « Give the session back »,
@@ -2972,6 +2983,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 				//// The arrow-param parens on the next line are the Biome pass.
 				ruleHeaderDiscount.value = 0; // clear any transaction-rule header discount
 				invoiceItems.value.forEach((item) => {
+					//// Neoffice — the same: a line a package pays is not the offers' to reset (G11, the audit of 18.11).
+					if (isFixedRow(item)) return;
 					if (dropPromotionUnderCoupon(item)) return;
 					if (item.pricing_rules && item.pricing_rules.length > 0) {
 						item.discount_percentage = 0;
