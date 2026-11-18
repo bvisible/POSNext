@@ -73,6 +73,8 @@ export const useAppointmentsStore = defineStore("appointments", () => {
 	// The agenda shown is the one kept in the browser (the till has no network), and since when
 	const fromCache = ref(false)
 	const cachedAt = ref(null)
+	//// Neoffice — the day the agenda held belongs to (its answer's `date`): offline, an agenda of another day is never left under the date shown (maintenance#2929, the audit of 18.11).
+	const heldDate = ref("")
 	// The appointment whose sheet is open (its key: its booking)
 	const selectedKey = ref(null)
 	// Only the cashier's own column (the « Me only » switch)
@@ -128,6 +130,7 @@ export const useAppointmentsStore = defineStore("appointments", () => {
 		mine.value = answer?.mine || []
 		people.value = answer?.people || []
 		appointments.value = answer?.appointments || []
+		heldDate.value = String(answer?.date || "")
 		fromCache.value = cached
 		cachedAt.value = savedAt
 		loaded.value = true
@@ -148,7 +151,18 @@ export const useAppointmentsStore = defineStore("appointments", () => {
 			const kept = readCache(shift.profileName)
 			if (kept && kept.answer?.date === date.value)
 				take(kept.answer, { cached: true, savedAt: kept.savedAt })
-			else failed.value = !loaded.value
+			else if (loaded.value && heldDate.value && heldDate.value !== date.value) {
+				//// Neoffice — no agenda kept for the day shown, and the one held is another day's: it stays under ITS date, never under this one. The agenda says « no network and no agenda
+				//// kept » (SalonAgenda) with nothing of another day behind it. The audit saw another day's appointments under today's date on a sheet, offline.
+				appointments.value = []
+				people.value = []
+				mine.value = []
+				salon.value = null
+				selectedKey.value = null
+				fromCache.value = false
+				cachedAt.value = null
+				heldDate.value = ""
+			} else failed.value = !loaded.value
 			return
 		}
 		loading.value = true
@@ -214,6 +228,7 @@ export const useAppointmentsStore = defineStore("appointments", () => {
 		mine.value = []
 		people.value = []
 		appointments.value = []
+		heldDate.value = ""
 		loading.value = false
 		loaded.value = false
 		failed.value = false

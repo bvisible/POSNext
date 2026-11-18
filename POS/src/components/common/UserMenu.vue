@@ -375,7 +375,9 @@ onMounted(() => {
 	// adopt the saved colour mode on startup so the till follows the product theme
 	//// Neoffice — read through the shared helper (task 38a-2, ruling 131)
 	colorMode.value = readColorMode();
-	applyColorMode(colorMode.value);
+	//// Neoffice — adopting the saved mode at start only paints it: it wrote the user's `User.desk_theme` (an ORM write, on_update and a Version) at EVERY load of the till, for a value
+	//// the user had not just chosen, and wrote over the desk's own choice with the till's device mode (maintenance#2929, the audit of 18.11). A choice made in this menu still writes it.
+	sharedApplyColorMode(colorMode.value, { persistDeskTheme: false });
 	document.addEventListener("click", handleClickOutside);
 });
 

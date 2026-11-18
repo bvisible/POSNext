@@ -1,3 +1,6 @@
+//// Neoffice — the first calls of a page wait for its token (below); a visitor with no session has none to wait for (maintenance#1975, utils/visitorPage.js).
+import { isAVisitorWithoutSession } from "./visitorPage";
+
 const CSRF_COOKIE = "csrf_token";
 const CSRF_PLACEHOLDER = "{{ csrf_token }}";
 const CSRF_TOKEN_ENDPOINT = "/api/method/pos_next.api.utilities.get_csrf_token";
@@ -114,6 +117,18 @@ async function fetchCSRFToken() {
 function extractTokenFromResponse(data) {
 	// Frappe API response structure: { message: { csrf_token: "..." } }
 	return normalizeToken(data?.message?.csrf_token);
+}
+
+//// Neoffice — the token, awaited once before the first call of a page (maintenance#2929, the audit of 18.11). Frappe puts none in the till's page, so the calls that start with
+//// it (the user, the dictionary's stamp, the colour mode) went out without one, were refused (400, « CSRFTokenError ») and sent again after a refresh: two refusals in the
+//// browser's log on every load of /pos, and three requests doubled. The wrappers below wait for the token the app asks for in parallel anyway. Asked once per page, the answer
+//// kept, so a page that has no session (the customer display) is not asked again at every call.
+let tokenBeforeFirstCall = null;
+export function awaitFirstToken() {
+	if (typeof window !== "undefined" && normalizeToken(window.csrf_token)) return Promise.resolve(true);
+	if (isAVisitorWithoutSession()) return Promise.resolve(false);
+	tokenBeforeFirstCall ||= ensureCSRFToken({ silent: true }).catch(() => false);
+	return tokenBeforeFirstCall;
 }
 
 export async function ensureCSRFToken({ forceRefresh = false, silent = false } = {}) {
@@ -253,6 +268,8 @@ export function createCSRFAwareRequest(originalRequest, { silent = false } = {})
 			// ignore — fall back to normal (session) auth
 		}
 
+		//// Neoffice — the page's token first, so the first request is not refused and sent again (maintenance#2929).
+		await awaitFirstToken();
 		try {
 			return await originalRequest.apply(this, args);
 		} catch (error) {

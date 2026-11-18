@@ -2,10 +2,12 @@
 //// refusal with its status (maintenance#1975, utils/frappeRequest.js)
 import { call as frappeCall } from "./frappeRequest";
 
-import { forceRefreshCSRFToken, isCSRFApiError } from "./csrf";
+import { awaitFirstToken, forceRefreshCSRFToken, isCSRFApiError } from "./csrf";
 
 // Wrapped call function with CSRF auto-refresh
 export async function call(method, params) {
+	//// Neoffice — the page's token first: without it the first calls of a load were refused (400) and sent again (maintenance#2929, utils/csrf.js).
+	await awaitFirstToken();
 	try {
 		return await frappeCall(method, params);
 	} catch (error) {
