@@ -8,12 +8,16 @@ vi.hoisted(() => {
 	globalThis.__ = (text, args = []) =>
 		(args || []).reduce((out, arg, at) => out.replace(`{${at}}`, arg), text);
 });
-const site = vi.hoisted(() => ({ call: vi.fn(), offline: false }));
+const site = vi.hoisted(() => ({ call: vi.fn(), offline: false, listeners: [] }));
 vi.mock("@/utils/apiWrapper", () => ({ call: (...args) => site.call(...args) }));
 vi.mock("@/utils/offline/offlineState", () => ({
 	offlineState: {
 		get isOffline() {
 			return site.offline;
+		},
+		subscribe(listener) {
+			site.listeners.push(listener);
+			return () => {};
 		},
 	},
 }));
@@ -156,5 +160,91 @@ describe("whether a line may be paid by a session", () => {
 			ok: false,
 			why: "Not permitted",
 		});
+	});
+});
+
+//// Neoffice — the audit of 18.11 (NeoSalon lots G11, voie 4)
+describe("what the till does with a slow, a refusing or a returning site", () => {
+	it("asks again when the till is back online, for the customer the cart is for, and not before", async () => {
+		site.offline = true;
+		await store.load("Till", "CUST-1");
+		expect(store.usable).toBe(false);
+
+		site.offline = false;
+		site.call.mockResolvedValue({ message: { available: true, packages: [brushing] } });
+		for (const listener of site.listeners) listener({ isOffline: false, transition: null });
+		await Promise.resolve();
+		expect(site.call).not.toHaveBeenCalled();
+
+		for (const listener of site.listeners) listener({ isOffline: false, transition: "went-online" });
+		await vi.waitFor(() => expect(store.packages).toHaveLength(1));
+		expect(site.call).toHaveBeenCalledWith("pos_next.api.packages.get_customer_packages", {
+			pos_profile: "Till",
+			customer: "CUST-1",
+		});
+		expect(store.usable).toBe(true);
+	});
+
+	it("shows a title the site sent escaped as it is written", async () => {
+		site.call.mockResolvedValue({
+			message: {
+				available: true,
+				packages: [{ ...brushing, title: "Coupe &amp; Brushing &#233;t&eacute; &lt;3 &quot;x&quot;" }],
+			},
+		});
+		await store.load("Till", "CUST-1");
+
+		expect(store.packages[0].title).toBe('Coupe & Brushing été <3 "x"');
+	});
+
+	it("stops waiting for the site after a while: a question that gets no answer is a refusal that says so", async () => {
+		vi.useFakeTimers();
+		try {
+			site.call.mockResolvedValue({ message: { available: true, packages: [brushing] } });
+			await store.load("Till", "CUST-1");
+			site.call.mockImplementation(() => new Promise(() => {}));
+
+			const answer = store.check("Till", brushing, { item_code: "BRUSHING" });
+			await vi.advanceTimersByTimeAsync(16000);
+
+			expect(await answer).toEqual({ ok: false, why: "The till did not get an answer in time." });
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it("reads the packages again after a refusal (the sessions or the validity may have moved), and keeps what it had when that fails", async () => {
+		site.call.mockResolvedValue({ message: { available: true, packages: [brushing] } });
+		await store.load("Till", "CUST-1");
+		site.call.mockReset();
+		site.call.mockImplementation(async (method) =>
+			method.endsWith("check_package_use")
+				? { message: { ok: false, why: "This package has no session left." } }
+				: { message: { available: true, packages: [{ ...brushing, remaining: 0 }] } }
+		);
+
+		const answer = await store.check("Till", brushing, { item_code: "BRUSHING" });
+
+		expect(answer.ok).toBe(false);
+		expect(store.packages[0].remaining).toBe(0);
+
+		site.call.mockImplementation(async (method) => {
+			if (method.endsWith("check_package_use")) return { message: { ok: false, why: "No." } };
+			throw new Error("gone");
+		});
+		await store.check("Till", brushing, { item_code: "BRUSHING" });
+		expect(store.packages).toHaveLength(1);
+		expect(store.usable).toBe(true);
+	});
+
+	it("does not read again after a yes", async () => {
+		site.call.mockResolvedValue({ message: { available: true, packages: [brushing] } });
+		await store.load("Till", "CUST-1");
+		site.call.mockReset();
+		site.call.mockResolvedValue({ message: { ok: true, label: "Settled by the package · 1 session", remaining_after: 6 } });
+
+		await store.check("Till", brushing, { item_code: "BRUSHING" });
+
+		expect(site.call).toHaveBeenCalledTimes(1);
 	});
 });

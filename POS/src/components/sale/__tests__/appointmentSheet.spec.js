@@ -240,6 +240,15 @@ describe("the sheet of an appointment", () => {
 			expect(wrapper.emitted("repeat")[0][0].booking).toBe("BKG-1")
 		})
 
+		// //// Neoffice — the audit of 18.11 (voie 4): the reservation repeats an appointment of a customer; for a walk-in (nobody to give the next visits to) it only refuses
+		it("keeps it off the appointment of a walk-in: nobody to book the next visits for", () => {
+			store.capabilities = { ...store.capabilities, repeat: true }
+
+			expect(mountIt({ customer: null, customer_name: "" }).find("[data-test='sheet-repeat']").exists()).toBe(false)
+			expect(mountIt({ customer: "", customer_name: "Passage" }).find("[data-test='sheet-repeat']").exists()).toBe(false)
+			expect(mountIt().find("[data-test='sheet-repeat']").exists()).toBe(true)
+		})
+
 		it("keeps it off the sheet where the site does not repeat", () => {
 			expect(mountIt().find("[data-test='sheet-repeat']").exists()).toBe(false)
 		})

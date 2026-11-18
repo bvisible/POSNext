@@ -3,7 +3,7 @@
 // @vitest-environment jsdom
 import { flushPromises, mount } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.hoisted(() => {
 	globalThis.__ = (text, args = []) =>
@@ -21,6 +21,7 @@ vi.mock("@/utils/apiWrapper", () => ({ call: (...args) => site.call(...args) }))
 vi.mock("@/utils/offline/offlineState", () => ({ offlineState: { isOffline: false } }));
 
 const { useCustomerPackagesStore } = await import("@/stores/customerPackages");
+const { offlineState } = await import("@/utils/offline/offlineState");
 const { default: UsePackageDialog } = await import("../UsePackageDialog.vue");
 
 const brushing = {
@@ -83,7 +84,7 @@ describe("the use a package dialog", () => {
 		expect(find(wrapper, "package-subject").text()).toBe("Camille R.");
 		expect(find(wrapper, "package-CPK-1").exists()).toBe(true);
 		expect(find(wrapper, "package-left-CPK-1").text()).toBe("7 of 10 sessions left");
-		expect(find(wrapper, "package-valid-CPK-1").text()).toBe("Valid until 10.11.2027");
+		expect(find(wrapper, "package-valid-CPK-1").text()).toBe("Valid until 10-11-2027");
 		expect(find(wrapper, "package-valid-CPK-3").text()).toBe("No end date");
 		// A package of another service does not pay this line
 		expect(find(wrapper, "package-CPK-4").exists()).toBe(false);
@@ -141,7 +142,8 @@ describe("the use a package dialog", () => {
 		await find(wrapper, "package-use-CPK-1").trigger("click");
 		await flushPromises();
 
-		expect(site.call).toHaveBeenLastCalledWith(
+		// (the packages are read again after a refusal, so it is not the last call)
+		expect(site.call).toHaveBeenCalledWith(
 			"pos_next.api.packages.check_package_use",
 			expect.objectContaining({ in_cart: 2 })
 		);
@@ -153,5 +155,59 @@ describe("the use a package dialog", () => {
 
 		expect(find(wrapper, "package-none").exists()).toBe(true);
 		expect(useCustomerPackagesStore().packages.length).toBe(3);
+	});
+});
+
+//// Neoffice — the audit of 18.11 (NeoSalon lots G11, voie 4)
+describe("the use a package dialog, as a cashier reads it", () => {
+	afterEach(() => {
+		offlineState.isOffline = false;
+		vi.useRealTimers();
+	});
+
+	it("says it needs the network when it is opened offline, not that no package pays the line", async () => {
+		offlineState.isOffline = true;
+		const wrapper = mountIt();
+		await flushPromises();
+
+		expect(find(wrapper, "package-offline").text()).toBe("The packages are read from the site: they need the network.");
+		expect(find(wrapper, "package-none").exists()).toBe(false);
+	});
+
+	it("says one session left in the singular", async () => {
+		site.call.mockResolvedValue({ message: { available: true, packages: [{ ...brushing, remaining: 1 }] } });
+		const wrapper = mountIt();
+		await flushPromises();
+
+		expect(find(wrapper, "package-left-CPK-1").text()).toBe("1 of 10 session left");
+	});
+
+	it("puts the first to end on top, and keeps out a package past its last day", async () => {
+		vi.useFakeTimers({ toFake: ["Date"] });
+		vi.setSystemTime(new Date(2026, 10, 18, 9, 0));
+		site.call.mockResolvedValue({
+			message: {
+				available: true,
+				packages: [
+					{ ...colour, package: "NO-END", remaining: 3 },
+					{ ...brushing, package: "LATE", valid_till: "2027-06-01" },
+					{ ...brushing, package: "SOON", valid_till: "2026-12-01" },
+					{ ...brushing, package: "OLD", valid_till: "2026-11-01" },
+				],
+			},
+		});
+		const wrapper = mountIt();
+		await flushPromises();
+
+		expect(wrapper.findAll("[data-test^='package-list'] > li").map((node) => node.attributes("data-test"))).toEqual(["package-SOON", "package-LATE", "package-NO-END"]);
+	});
+
+	it("is a window of a touch surface: the sessions left and the reasons 14 px or more", async () => {
+		const wrapper = mountIt();
+		await flushPromises();
+
+		expect(find(wrapper, "package-left-CPK-1").classes()).toContain("text-sm");
+		expect(find(wrapper, "package-valid-CPK-1").classes()).toContain("text-sm");
+		expect(find(wrapper, "package-use-CPK-1").classes()).toContain("min-h-[48px]");
 	});
 });

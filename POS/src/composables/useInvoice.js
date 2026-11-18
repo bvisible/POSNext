@@ -26,7 +26,9 @@ import { hasLeftForTheKitchen } from "@/utils/lineKitchenState";
 import { carriedPriceTerms, samePriceTerms } from "@/utils/linePriceTerms";
 //// Neoffice — « Offert » (NeoResto lot 1, task 24): an offered row is a row of its own, flagged, 100 % off
 //// (utils/offeredRows.js); the payment carries the manager's approval when a rule asks for one (utils/offerApproval.js).
-import { isOfferedRow, offeredLineFields, withoutOfferedRows } from "@/utils/offeredRows";
+import { isOfferedRow, offeredLineFields } from "@/utils/offeredRows";
+//// Neoffice — the offers engine never sees a line a package pays either (G11, the audit of 18.11).
+import { withoutFixedRows } from "@/utils/packageRows";
 import { authorizationFieldsFor } from "@/utils/offerApproval";
 //// Neoffice — the covers of a table ride with the ticket to submit_invoice, only when a number is set (NeoResto lot 1, covers).
 import { coversPayload } from "@/utils/coverCounts";
@@ -155,7 +157,7 @@ export function useInvoice() {
 			const params = {
 				//// Neoffice — the offers engine never sees an offered row (task 24): it neither prices nor counts it;
 				//// posCart.applyDiscountsFromServer reads the answer against the other rows.
-				invoice_data: JSON.stringify(withoutOfferedRows(invoice_data)),
+				invoice_data: JSON.stringify(withoutFixedRows(invoice_data)),
 			};
 
 			if (selected_offers && selected_offers.length) {

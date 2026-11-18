@@ -65,7 +65,8 @@ export function offeredSourceFields(serverRow) {
 /** Whether a line of the cart may be offered: a sold line (not a promotion's gift, not offered already), not empty,
  * without serial numbers (which serial would be the offered one is not the till's to guess). */
 export function canOfferRow(row) {
-	if (!row || row.is_free_item || row._isStandaloneFreeRow || isOfferedRow(row))
+	//// Neoffice — nor a line a package of sessions pays (G11, the audit of 18.11): it is already at zero.
+	if (!row || row.is_free_item || row._isStandaloneFreeRow || isOfferedRow(row) || row.customer_package)
 		return false
 	if (row.has_serial_no && row.serial_no) return false
 	return quantityOf(row) > 0

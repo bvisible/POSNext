@@ -1,34 +1,42 @@
 <template>
 	<!-- //// Neoffice — added file (no upstream equivalent). « Use a package » (NeoSalon, lots G11, voie 1; the plan « Forfaits et rendez-vous réguliers »): the packages of the customer of the cart that cover the -->
 	<!-- //// line, how many sessions each has left and until when, and one button to pay the line with a session. The site decides (it is asked, it writes nothing): the dialog shows its answer, and its reason when -->
-	<!-- //// it refuses. The session is counted when the invoice is submitted, and given back if it is cancelled. -->
+	<!-- //// it refuses. The session is counted when the invoice is submitted, and given back if it is cancelled. The audit of 18.11 (voie 4): touch-surface sizes, the first to end on top, a package past its last day -->
+	<!-- //// out, one date format with the banner's, and « needs the network » said when the till is offline. -->
 	<Dialog v-model="show" :options="{ title: __('Use a package'), size: 'xl' }">
 		<template #body-content>
 			<div class="space-y-4" data-test="package-dialog">
 				<div
-					class="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm leading-snug dark:border-gray-700 dark:bg-gray-800"
+					class="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 leading-snug dark:border-gray-700 dark:bg-gray-800"
 				>
 					<b
 						dir="auto"
-						class="block truncate text-[15px] text-gray-900 dark:text-gray-100"
+						class="block break-words text-base text-gray-900 dark:text-gray-100"
 						data-test="package-subject"
 						>{{ customerName }}</b
 					>
-					<span class="text-gray-600 dark:text-gray-300" dir="auto"
+					<span class="text-[15px] text-gray-700 dark:text-gray-300" dir="auto"
 						>{{ row?.item_name || row?.item_code }} · {{ sessions }}</span
 					>
 				</div>
 
 				<p
 					v-if="store.loading && !choices.length"
-					class="py-3 text-sm text-gray-500"
+					class="py-3 text-base text-gray-600 dark:text-gray-300"
 					data-test="package-loading"
 				>
 					{{ __("Loading...") }}
 				</p>
 				<p
+					v-else-if="offline"
+					class="py-3 text-base text-gray-700 dark:text-gray-200"
+					data-test="package-offline"
+				>
+					{{ __("The packages are read from the site: they need the network.") }}
+				</p>
+				<p
 					v-else-if="!choices.length"
-					class="py-3 text-sm text-gray-600 dark:text-gray-300"
+					class="py-3 text-base text-gray-700 dark:text-gray-200"
 					data-test="package-none"
 				>
 					{{ __("No package of this customer pays this line.") }}
@@ -45,11 +53,11 @@
 							<div class="min-w-0 flex-1 basis-48">
 								<b
 									dir="auto"
-									class="block break-words text-[15px] text-gray-900 dark:text-gray-100"
+									class="block break-words text-base text-gray-900 dark:text-gray-100"
 									>{{ pack.title }}</b
 								>
 								<span
-									class="text-sm text-gray-500 dark:text-gray-400"
+									class="text-sm text-gray-600 dark:text-gray-300"
 									:data-test="`package-valid-${pack.package}`"
 									>{{ validText(pack) }}</span
 								>
@@ -58,7 +66,9 @@
 								class="shrink-0 text-sm font-semibold text-gray-900 dark:text-gray-100"
 								:data-test="`package-left-${pack.package}`"
 								>{{
-									__("{0} of {1} sessions left", [pack.remaining, pack.total])
+									pack.remaining === 1
+										? __("1 of {0} session left", [pack.total])
+										: __("{0} of {1} sessions left", [pack.remaining, pack.total])
 								}}</span
 							>
 						</div>
@@ -73,7 +83,7 @@
 						</div>
 						<p
 							v-if="refusals[pack.package]"
-							class="mt-3 text-sm text-red-700 dark:text-red-300"
+							class="mt-3 text-[15px] text-red-700 dark:text-red-300"
 							role="alert"
 							:data-test="`package-why-${pack.package}`"
 						>
@@ -82,7 +92,7 @@
 						<button
 							type="button"
 							:data-test="`package-use-${pack.package}`"
-							class="mt-3 min-h-[48px] w-full rounded-xl bg-gray-900 px-4 text-[15px] font-semibold text-white disabled:opacity-50 dark:bg-gray-100 dark:text-gray-900"
+							class="mt-3 min-h-[48px] w-full rounded-xl bg-gray-900 px-4 text-base font-semibold text-white disabled:opacity-50 dark:bg-gray-100 dark:text-gray-900"
 							:disabled="busy || pack.remaining < sessionsNeeded"
 							@click="use(pack)"
 						>
@@ -99,7 +109,7 @@
 					<button
 						type="button"
 						data-test="package-close"
-						class="min-h-[48px] rounded-xl px-4 text-[15px] font-semibold text-gray-700 dark:text-gray-200"
+						class="min-h-[48px] rounded-xl px-4 text-base font-semibold text-gray-700 dark:text-gray-200"
 						@click="show = false"
 					>
 						{{ __("Close") }}
@@ -118,6 +128,8 @@
 import { Dialog } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 import { covers, useCustomerPackagesStore } from "@/stores/customerPackages";
+import { offlineState } from "@/utils/offline/offlineState";
+import { dateOf, expired, inUseOrder } from "@/utils/packageTarget";
 
 const props = defineProps({
 	modelValue: { type: Boolean, default: false },
@@ -145,19 +157,21 @@ const sessionsNeeded = computed(() =>
 const sessions = computed(() =>
 	sessionsNeeded.value === 1 ? __("1 session") : __("{0} sessions", [sessionsNeeded.value])
 );
-// Only the packages that cover the line, the ones with something left first
+// The till is offline: the packages are the site's, nothing was asked, and the window says so instead of « no package pays this line »
+const offline = ref(false);
+// Only the packages that cover the line and are still valid, the ones with something left first, then the first to end (the one that never ends last)
 const choices = computed(() =>
-	store.packages
-		.filter((pack) => covers(pack, props.row))
-		.sort((a, b) => Number(b.remaining > 0) - Number(a.remaining > 0))
+	inUseOrder(store.packages.filter((pack) => covers(pack, props.row) && !expired(pack))).sort(
+		(a, b) => Number(b.remaining > 0) - Number(a.remaining > 0)
+	)
 );
 
 const barOf = (pack) =>
 	`${pack.total > 0 ? Math.round((Math.max(0, pack.remaining) / pack.total) * 100) : 0}%`;
+// The end is written as the banner writes it (day-month-year), so one package never reads in two ways
 const validText = (pack) => {
 	if (!pack.valid_till) return __("No end date");
-	const [year, month, day] = String(pack.valid_till).split("-");
-	return __("Valid until {0}", [`${day}.${month}.${year}`]);
+	return __("Valid until {0}", [dateOf(pack.valid_till)]);
 };
 // The sessions of this package that the other lines of the cart take already
 const takenElsewhere = (pack) =>
@@ -170,6 +184,7 @@ watch(
 	async (open) => {
 		if (!open) return;
 		refusals.value = {};
+		offline.value = Boolean(offlineState.isOffline);
 		// The sessions left are the site's, and may have moved since the cart was opened
 		await store.load(props.posProfile, props.customerId);
 	},

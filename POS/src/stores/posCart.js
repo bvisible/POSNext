@@ -37,6 +37,8 @@ import {
 import { offlineState } from "@/utils/offline/offlineState";
 //// Neoffice — « Offert » (NeoResto lot 1, task 24): an offered row is never a paid line the cart addresses by item code.
 import { isOfferedRow } from "@/utils/offeredRows";
+//// Neoffice — a line a package pays is left alone by the offers engine like an offered row (NeoSalon lots G11, voie 1; the audit of 18.11).
+import { isFixedRow, isPackageRow } from "@/utils/packageRows";
 //// Neoffice — the covers of a table: a valid number or none, and what the order payload carries for it (NeoResto lot 1, covers).
 import { coversPayload, normalizeCovers } from "@/utils/coverCounts";
 //// Neoffice — the notes of a table (.1, .2): the rank, the name and the payload keys, in one pure module (NeoResto lot 1, notes).
@@ -274,8 +276,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	 */
 	function offerCartSignature() {
 		const paid = withCarvedQtyRestored(invoiceItems.value)
-			//// Neoffice — an offered row decides no offer (task 24).
-			.filter((i) => !i.is_free_item && !isOfferedRow(i))
+			//// Neoffice — an offered row decides no offer (task 24), nor a line a package pays (G11).
+			.filter((i) => !i.is_free_item && !isFixedRow(i))
 			.map((i) => `${i.item_code}:${i.quantity}:${i.uom || ""}:${i.price_list_rate || i.rate || 0}`)
 			.join("|");
 		return `${paid}::${customer.value?.name || customer.value || "none"}`;
@@ -1051,7 +1053,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			const item = invoiceItems.value[update.line_key];
 			// Cart changed while the request was in flight; the revalidation watcher catches up.
 			//// Neoffice — a coupon never lands on an offered row: it stays at 100 % (task 24).
-			if (!item || item.item_code !== update.item_code || isOfferedRow(item)) continue;
+			if (!item || item.item_code !== update.item_code || isFixedRow(item)) continue;
 			const percentage = Number.parseFloat(update.discount_percentage) || 0;
 			const fixedAmount = percentage > 0 ? 0 : Number.parseFloat(update.discount_amount) || 0;
 			// A stacked line's discount includes what it already had, so the coupon % is no cap for it.
@@ -1271,6 +1273,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 					is_free_item: item.is_free_item || 0,
 					//// Neoffice — the table's draft saved from this payload (Valider) keeps its offered rows flagged (task 24).
 					posa_is_offered: isOfferedRow(item) ? 1 : 0,
+					//// Neoffice — the offers engine never sees a line a package pays (utils/packageRows.js, G11).
+					customer_package: item.customer_package || null,
 				};
 			}),
 		};
@@ -1348,7 +1352,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 		//// Neoffice — the server was asked without the offered rows (useInvoice's applyOffersResource, task 24): its
 		//// answer, in the same order, is read against the other rows, and an offered row keeps its 100 %.
-		invoiceItems.value.filter((item) => !isOfferedRow(item)).forEach((item, index) => {
+		//// Neoffice — nor a line a package pays: the payload left it out too (G11, the audit of 18.11).
+		invoiceItems.value.filter((item) => !isFixedRow(item)).forEach((item, index) => {
 			const serverItem = serverItems[index] || {};
 			const discountPct = Number.parseFloat(serverItem.discount_percentage) || 0;
 			const discountAmt = Number.parseFloat(serverItem.discount_amount) || 0;
@@ -2005,8 +2010,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 					// Transaction-level discount applies to all items
 					eligibleItems = invoiceItems.value;
 				}
-				//// Neoffice — an offered row is never discounted nor counted by an offer (task 24).
-				eligibleItems = eligibleItems.filter((item) => !isOfferedRow(item));
+				//// Neoffice — an offered row is never discounted nor counted by an offer (task 24), nor a line a package pays (G11).
+				eligibleItems = eligibleItems.filter((item) => !isFixedRow(item));
 
 				if (eligibleItems.length === 0) continue;
 
@@ -2322,8 +2327,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	 * Paid lines only — free gifts must not inflate min_qty/max_qty/min_amt checks.
 	 */
 	function buildCartSnapshot() {
-		//// Neoffice — nor offered rows: they qualify for no offer (task 24).
-		const items = withCarvedQtyRestored(invoiceItems.value).filter((item) => !item.is_free_item && !isOfferedRow(item));
+		//// Neoffice — nor offered rows: they qualify for no offer (task 24), nor a line a package pays (G11).
+		const items = withCarvedQtyRestored(invoiceItems.value).filter((item) => !item.is_free_item && !isFixedRow(item));
 		const totalQty = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
 		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		const itemCodes = items.map((item) => item.item_code);
@@ -2670,11 +2675,17 @@ export const usePOSCartStore = defineStore("posCart", () => {
 				cartItem.discount_amount = 0;
 				if (!updates.customer_package && updates.discount_percentage === undefined) cartItem.discount_percentage = 0;
 			}
-			if (updates.discount_percentage !== undefined)
+			//// Neoffice — a line a package pays keeps its 100 % and its price: an ordinary edit of the discount or the rate does not reach it (G11, the audit of
+			//// 18.11: a cashier's 50 % and a rule's 10 % left it at CHF 63.00 under « Settled by the package »). The way out is « Give the session back »,
+			//// which is the package's own change (customer_package given above).
+			const packageKeeps = isPackageRow(cartItem) && updates.customer_package === undefined;
+			if (updates.discount_percentage !== undefined && !packageKeeps)
 				cartItem.discount_percentage = updates.discount_percentage;
-			if (updates.discount_amount !== undefined)
+			//// Neoffice — the amount and the price the same way (G11, the audit of 18.11).
+			if (updates.discount_amount !== undefined && !packageKeeps)
 				cartItem.discount_amount = updates.discount_amount;
-			if (updates.rate !== undefined) cartItem.rate = updates.rate;
+			//// Neoffice — idem: a line a package pays keeps its price.
+			if (updates.rate !== undefined && !packageKeeps) cartItem.rate = updates.rate;
 			//// Neoffice — a gift card is sold as a zero-price line whose amount the cashier types in, so
 			//// the cart must accept a rate on a line whose price_list_rate is 0 and mirror it there, or
 			//// the edit was recalculated straight back to zero (fd901f84, 2026-01-14 "allow rate update
@@ -2683,7 +2694,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			//// allow rate update for zero-price items in cart store — fd901f8 + 458d81a
 			if (updates.price_list_rate !== undefined)
 				cartItem.price_list_rate = updates.price_list_rate;
-			if (updates.rate !== undefined) {
+			if (updates.rate !== undefined && !packageKeeps) {
 				// Update rate (for zero-price items like gift cards)
 				cartItem.rate = updates.rate;
 				// Also update price_list_rate to keep consistency
@@ -2746,8 +2757,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		if (subtotal.value !== undefined && invoiceItems.value) {
 			// Paid lines only — free gifts must not inflate min_qty/max_qty checks
 			const paidItems = withCarvedQtyRestored(invoiceItems.value).filter(
-				//// Neoffice — nor offered rows (task 24).
-				(item) => !item.is_free_item && !isOfferedRow(item)
+				//// Neoffice — nor offered rows (task 24), nor a line a package pays (G11).
+				(item) => !item.is_free_item && !isFixedRow(item)
 			);
 
 			// Create hash for paid item codes and quantities to detect actual changes.
@@ -3222,8 +3233,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 	// An emptied cart drops its whole-cart coupon, which would otherwise push the total below zero
 	watch(
-		//// Neoffice — a cart left with offered rows only has nothing paid either (task 24).
-		() => invoiceItems.value.some((item) => !item.is_free_item && !isOfferedRow(item)),
+		//// Neoffice — a cart left with offered rows only has nothing paid either (task 24), nor one left with lines a package pays (G11).
+		() => invoiceItems.value.some((item) => !item.is_free_item && !isFixedRow(item)),
 		(hasPaidItems) => {
 			if (hasPaidItems || !appliedCoupon.value || isLineLevelCoupon(appliedCoupon.value)) return;
 			removeDiscount();

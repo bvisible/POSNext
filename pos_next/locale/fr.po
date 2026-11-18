@@ -26440,7 +26440,7 @@ msgstr "Utiliser {0} séances"
 #: POS/src/components/sale/UsePackageDialog.vue
 #, python-brace-format
 msgid "{0} of {1} sessions left"
-msgstr "{0} séance(s) restante(s) sur {1}"
+msgstr "{0} séances restantes sur {1}"
 
 #: POS/src/components/sale/PackageBanners.vue:32
 msgid "No line of the cart is paid by this package."
@@ -26587,3 +26587,98 @@ msgstr "Annulée : l'avoir {0} a annulé la vente {1} qui avait créé cette car
 #, python-brace-format
 msgid "Voided: the sale {0} that created this gift card was cancelled."
 msgstr "Annulée : la vente {0} qui avait créé cette carte cadeau a été annulée."
+
+#: POS/src/components/sale/UsePackageDialog.vue:35
+msgid "The packages are read from the site: they need the network."
+msgstr "Les forfaits sont lus depuis le site : ils ont besoin du réseau."
+
+#: POS/src/components/sale/UsePackageDialog.vue:70
+#, python-brace-format
+msgid "1 of {0} session left"
+msgstr "1 séance restante sur {0}"
+
+#: POS/src/components/sale/PackageBanners.vue:77
+msgid "1 session left after this cart"
+msgstr "1 séance restante après ce panier"
+
+#: POS/src/components/sale/PackageBanners.vue:77
+#, python-brace-format
+msgid "{0} sessions left after this cart"
+msgstr "{0} séances restantes après ce panier"
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:35
+msgid "Choose the last day."
+msgstr "Choisissez le dernier jour."
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:39
+msgid "The rhythm changed: the dates changed by hand were put back."
+msgstr "Le rythme a changé : les dates changées à la main ont été rétablies."
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:58
+msgid "The nearest free hour that day."
+msgstr "L'heure libre la plus proche, ce jour-là."
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:101
+msgid "Not proposed, beyond the booking horizon:"
+msgstr "Non proposées, au-delà de l'horizon de réservation :"
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:198
+msgid "Choose a whole number of weeks, from 1 to 52."
+msgstr "Choisissez un nombre entier de semaines, de 1 à 52."
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:199
+msgid "The last day must come after the appointment."
+msgstr "Le dernier jour doit être après le rendez-vous."
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:248
+msgid "Choose a day and an hour."
+msgstr "Choisissez un jour et une heure."
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:249
+msgid "Choose a moment after the appointment."
+msgstr "Choisissez un moment après le rendez-vous."
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:351
+msgid "No answer came. The agenda was read again: check which appointments exist before trying again."
+msgstr "Aucune réponse n'est arrivée. L'agenda a été relu : vérifiez quels rendez-vous existent avant de réessayer."
+
+#: POS/src/composables/useAppointment.js:112
+msgid "The till did not get an answer in time."
+msgstr "La caisse n'a pas reçu de réponse à temps."
+
+#: POS/src/components/sale/EditItemDialog.vue:240
+msgid "Locked (paid by a package)"
+msgstr "Verrouillé (réglé par le forfait)"
+
+#: POS/src/components/sale/UsePackageDialog.vue:158
+msgid "1 session"
+msgstr "1 séance"
+
+#: POS/src/components/sale/UsePackageDialog.vue:158
+#, python-brace-format
+msgid "{0} sessions"
+msgstr "{0} séances"
+
+#: POS/src/components/sale/UsePackageDialog.vue:173
+msgid "No end date"
+msgstr "Sans date de fin"
+
+#: POS/src/components/sale/UsePackageDialog.vue:174
+#, python-brace-format
+msgid "Valid until {0}"
+msgstr "Valable jusqu'au {0}"
+
+#: POS/src/components/sale/PackageBanners.vue:79
+msgid "1 session left"
+msgstr "1 séance restante"
+
+#: POS/src/components/sale/PackageBanners.vue:79
+#, python-brace-format
+msgid "{0} sessions left"
+msgstr "{0} séances restantes"
+
+#: POS/src/components/sale/PackageBanners.vue:90
+#, python-brace-format
+msgid "until {0}"
+msgstr "jusqu'au {0}"
+

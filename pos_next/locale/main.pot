@@ -29617,3 +29617,66 @@ msgstr ""
 #: POS/src/utils/customerCreationWarnings.js
 msgid "A customer of this name already exists. A namesake is possible; otherwise take the existing customer."
 msgstr ""
+
+#: POS/src/components/sale/UsePackageDialog.vue:35
+msgid "The packages are read from the site: they need the network."
+msgstr ""
+
+#: POS/src/components/sale/UsePackageDialog.vue:70
+#, python-brace-format
+msgid "1 of {0} session left"
+msgstr ""
+
+#: POS/src/components/sale/PackageBanners.vue:77
+msgid "1 session left after this cart"
+msgstr ""
+
+#: POS/src/components/sale/PackageBanners.vue:77
+#, python-brace-format
+msgid "{0} sessions left after this cart"
+msgstr ""
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:35
+msgid "Choose the last day."
+msgstr ""
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:39
+msgid "The rhythm changed: the dates changed by hand were put back."
+msgstr ""
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:58
+msgid "The nearest free hour that day."
+msgstr ""
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:101
+msgid "Not proposed, beyond the booking horizon:"
+msgstr ""
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:198
+msgid "Choose a whole number of weeks, from 1 to 52."
+msgstr ""
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:199
+msgid "The last day must come after the appointment."
+msgstr ""
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:248
+msgid "Choose a day and an hour."
+msgstr ""
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:249
+msgid "Choose a moment after the appointment."
+msgstr ""
+
+#: POS/src/components/sale/RepeatAppointmentDialog.vue:351
+msgid "No answer came. The agenda was read again: check which appointments exist before trying again."
+msgstr ""
+
+#: POS/src/composables/useAppointment.js:112
+msgid "The till did not get an answer in time."
+msgstr ""
+
+#: POS/src/components/sale/EditItemDialog.vue:240
+msgid "Locked (paid by a package)"
+msgstr ""
+

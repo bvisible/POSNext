@@ -225,6 +225,7 @@
 															/>
 														</div>
 														<!-- Compact warning when rate editing disabled due to pricing rules -->
+														<!-- //// Neoffice — says it is the package that locks a line it pays, not a promotion (NeoSalon lots G11, the audit of 18.11). -->
 														<p
 															v-if="
 																hasPricingRules &&
@@ -236,7 +237,8 @@
 																name="lock"
 																class="w-3 h-3"
 															/>
-															{{ __("Locked (promotional offer)") }}
+															<!-- //// Neoffice — the package's words, not a promotion's, on a line a package pays (G11, the audit of 18.11). -->
+															{{ isPaidByPackage ? __("Locked (paid by a package)") : __("Locked (promotional offer)") }}
 														</p>
 													</div>
 												</div>
@@ -491,6 +493,7 @@
 													</div>
 												</div>
 												<!-- Compact warning when discount editing disabled due to pricing rules -->
+												<!-- //// Neoffice — the same, under the discount (NeoSalon lots G11, the audit of 18.11). -->
 												<p
 													v-if="hasPricingRules"
 													class="mt-2 text-xs text-amber-600 flex items-center gap-1"
@@ -499,7 +502,8 @@
 														name="lock"
 														class="w-3 h-3"
 													/>
-													{{ __("Locked (promotional offer)") }}
+													<!-- //// Neoffice — the package's words, not a promotion's, on a line a package pays (G11, the audit of 18.11). -->
+													{{ isPaidByPackage ? __("Locked (paid by a package)") : __("Locked (promotional offer)") }}
 												</p>
 											</div>
 
@@ -915,8 +919,14 @@ const currencySymbol = computed(() => getCurrencySymbol(props.currency));
 // (e.g. qty 2–5 for Buy 2–5 Get 1). Qty 1 or 6+ stays editable.
 const isLockedFreeItem = computed(() => Boolean(localItem.value?.is_free_item));
 
+//// Neoffice — a line a package of sessions pays is worth 0.00 at the package's 100 %: its price and its discount are locked, like a line a promotion prices, and the one way out is « Give the session back »
+//// (NeoSalon lots G11, the audit of 18.11, voie 4: a price rule's 10 % and a cashier's 50 % had left such a line at CHF 63.00 under « Settled by the package »).
+const isPaidByPackage = computed(() => Boolean(props.paidByPackage || localItem.value?.customer_package));
+
 const hasPricingRules = computed(() => {
 	if (!localItem.value) return false;
+	//// Neoffice — a line a package pays is locked like a promoted one (G11, the audit of 18.11).
+	if (isPaidByPackage.value) return true;
 	if (localItem.value.is_free_item) return true;
 	if (itemHasActivePromotion.value) return true;
 	return isItemCoveredByOffer(
@@ -966,6 +976,9 @@ const rateEditDisabledReason = computed(() => {
 		//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 		return __("Rate editing is disabled");
 	}
+	if (isPaidByPackage.value) {
+		return __("Locked (paid by a package)");
+	}
 	if (hasPricingRules.value) {
 		return __("Locked (promotional offer)");
 	}
@@ -973,6 +986,10 @@ const rateEditDisabledReason = computed(() => {
 });
 
 const discountEditDisabledReason = computed(() => {
+	//// Neoffice — the reason under the discount of a line a package pays (G11, the audit of 18.11).
+	if (isPaidByPackage.value) {
+		return __("Locked (paid by a package)");
+	}
 	if (hasPricingRules.value) {
 		return __("Cannot add item discount while a promotional offer applies to this item");
 	}

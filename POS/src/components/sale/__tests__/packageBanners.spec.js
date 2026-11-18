@@ -2,7 +2,7 @@
 //// sessions left and until when, a « Use » that hands the package and its line to the cart, greyed with no line, one banner per package in the site's order, none for an empty package.
 // @vitest-environment jsdom
 import { mount } from "@vue/test-utils";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.hoisted(() => {
 	globalThis.__ = (text, args = []) =>
@@ -103,7 +103,8 @@ describe("the banner of a package", () => {
 		expect(wrapper.emitted("use")[0][0].row.note).toBe("second");
 	});
 
-	it("shows one banner per package in the order the site gave, none for a package with nothing left", () => {
+	it("shows one banner per package, the first to end on top and the one that never ends last, none for a package with nothing left", () => {
+		// The site sorts by date, so the package with no end comes first in its answer: the till puts it last
 		const wrapper = mountIt({
 			packages: [massage, empty, brushing],
 			rows: [line, { item_code: "MASSAGE", quantity: 1 }],
@@ -113,7 +114,7 @@ describe("the banner of a package", () => {
 			wrapper
 				.findAll('[data-test^="package-banner-CPK"]')
 				.map((node) => node.attributes("data-test"))
-		).toEqual(["package-banner-CPK-2", "package-banner-CPK-1"]);
+		).toEqual(["package-banner-CPK-1", "package-banner-CPK-2"]);
 	});
 
 	it("shows the words of the site under the banner it refused", () => {
@@ -128,5 +129,52 @@ describe("the banner of a package", () => {
 		expect(mountIt({ packages: [] }).find('[data-test="package-banners"]').exists()).toBe(
 			false
 		);
+	});
+});
+
+//// Neoffice — the audit of 18.11 (NeoSalon lots G11, voie 4)
+describe("the banner of a package and what the cart already takes", () => {
+	afterEach(() => vi.useRealTimers());
+
+	it("counts the sessions the lines of the cart already take", () => {
+		const paid = { item_code: "BRUSHING", quantity: 1, customer_package: "CPK-1" };
+		const wrapper = mountIt({ rows: [paid, line] });
+
+		expect(wrapper.get('[data-test="package-banner-left"]').text()).toBe(
+			"6 sessions left after this cart · until 10-11-2027"
+		);
+	});
+
+	it("says one session left after the cart in the singular, and keeps « Use » greyed when the cart takes them all", () => {
+		const twoLeft = { ...brushing, remaining: 2 };
+		const paid = { item_code: "BRUSHING", quantity: 1, customer_package: "CPK-1" };
+		expect(
+			mountIt({ packages: [twoLeft], rows: [paid, line] })
+				.get('[data-test="package-banner-left"]')
+				.text()
+		).toContain("1 session left after this cart");
+
+		const allTaken = mountIt({ packages: [twoLeft], rows: [{ ...paid, quantity: 2 }, line] });
+		expect(allTaken.get('[data-test="package-banner-left"]').text()).toContain(
+			"0 sessions left after this cart"
+		);
+		expect(allTaken.get('[data-test="package-banner-use"]').attributes("disabled")).toBeDefined();
+	});
+
+	it("shows no banner for a package past its last day, and one on its last day", () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date(2026, 10, 18, 9, 0));
+
+		expect(mountIt({ packages: [{ ...brushing, valid_till: "2026-11-17" }] }).find('[data-test="package-banners"]').exists()).toBe(false);
+		expect(mountIt({ packages: [{ ...brushing, valid_till: "2026-11-18" }] }).find('[data-test="package-banners"]').exists()).toBe(true);
+	});
+
+	it("is drawn for a touch surface: the button 44 px high on one line, the words 14 px or more", () => {
+		const wrapper = mountIt();
+		const button = wrapper.get('[data-test="package-banner-use"]');
+
+		expect(button.classes()).toEqual(expect.arrayContaining(["min-h-[44px]", "whitespace-nowrap", "text-sm"]));
+		expect(wrapper.get('[data-test="package-banner-title"]').classes()).toContain("text-sm");
+		expect(wrapper.get('[data-test="package-banner-left"]').classes()).toContain("text-sm");
 	});
 });

@@ -94,7 +94,7 @@ vi.mock("@/utils/logger", () => ({
 
 const { usePOSCartStore } = await import("../posCart");
 const { useOfferedItemsStore } = await import("../offeredItems");
-const { isOfferedRow, nestOfferedRows } = await import("@/utils/offeredRows");
+const { canOfferRow, isOfferedRow, nestOfferedRows } = await import("@/utils/offeredRows");
 const { nestFreeRows } = await import("@/utils/gwpSameItemFreeRows");
 const { dropGrant } = await import("@/utils/offerApproval");
 
@@ -239,5 +239,108 @@ describe("a line paid by a session of a package", () => {
 
 		const back = cart.invoiceItems.find((row) => row.item_code === "ESPRESSO");
 		expect(back).toMatchObject({ customer_package: "CPK-2", discount_percentage: 100 });
+	});
+});
+
+//// Neoffice — the audit of 18.11 (NeoSalon lots G11, voie 4): a line a package pays is the package's, at 100 % and its price, whatever else touches the cart. A rule's 10 % and a cashier's
+//// 50 % had left it at CHF 63.00 under « Settled by the package », and the sale had left with both.
+describe("a line paid by a package, and everything else that prices a cart", () => {
+	let cart;
+
+	beforeEach(() => {
+		setActivePinia(createPinia());
+		Object.assign(settings, { allowItemDiscount: true });
+		Object.assign(auth, { required: false, grant: null, calls: [] });
+		Object.assign(net, { offline: false });
+		Object.assign(server, { sent: [], promotion: 10 });
+		cart = usePOSCartStore();
+		cart.setPosProfile("Till");
+		cart.customer = "Mme Dupont";
+		cart.addItem(tiramisu, 1);
+		cart.addItem(espresso, 2);
+	});
+
+	const payTiramisu = () =>
+		cart.updateItemDetails(
+			"TIRAMISU",
+			{
+				customer_package: pack.package,
+				package_label: pack.label,
+				package_remaining: pack.remaining_after,
+				discount_percentage: 100,
+			},
+			null,
+			cart.invoiceItems[0]
+		);
+
+	it("is never sent to the offers engine, and a promotion the engine answers never changes its 100 %", async () => {
+		await payTiramisu();
+		await cart.applyOffer(
+			{ name: "PROMO10", title: "Promo 10 %" },
+			{ name: "Till", customer: "Mme Dupont" }
+		);
+
+		expect(server.sent.at(-1).items.map((row) => row.item_code)).toEqual(["ESPRESSO"]);
+		expect(
+			cart.invoiceItems.map((row) => [row.item_code, row.discount_percentage])
+		).toEqual([
+			["TIRAMISU", 100],
+			["ESPRESSO", 10],
+		]);
+		expect(cart.invoiceItems[0].customer_package).toBe("CPK-1");
+		expect(cart.grandTotal).toBe(7.56);
+	});
+
+	it("takes no discount nor price typed on it: only giving the session back changes it", async () => {
+		await payTiramisu();
+		await cart.updateItemDetails(
+			"TIRAMISU",
+			{ discount_percentage: 50, rate: 4 },
+			null,
+			cart.invoiceItems[0]
+		);
+
+		expect(cart.invoiceItems[0]).toMatchObject({
+			customer_package: "CPK-1",
+			discount_percentage: 100,
+			rate: 9.5,
+		});
+		expect(cart.grandTotal).toBe(8.4);
+
+		await cart.updateItemDetails(
+			"TIRAMISU",
+			{ customer_package: null, discount_percentage: 0 },
+			null,
+			cart.invoiceItems[0]
+		);
+		expect(cart.invoiceItems[0].customer_package).toBeNull();
+		expect(cart.grandTotal).toBe(17.9);
+	});
+
+	it("takes no coupon line discount", async () => {
+		await payTiramisu();
+		cart.applyDiscountToCart({
+			name: "WELCOME20",
+			code: "WELCOME20",
+			line_level: true,
+			line_updates: [
+				{ line_key: 0, item_code: "TIRAMISU", discount_percentage: 20 },
+				{ line_key: 1, item_code: "ESPRESSO", discount_percentage: 20 },
+			],
+		});
+
+		expect(
+			cart.invoiceItems.map((row) => [row.item_code, row.discount_percentage])
+		).toEqual([
+			["TIRAMISU", 100],
+			["ESPRESSO", 20],
+		]);
+	});
+
+	it("is not offered: it is already worth nothing", async () => {
+		await payTiramisu();
+
+		expect(canOfferRow(cart.invoiceItems[0])).toBe(false);
+		expect(canOfferRow(cart.invoiceItems[1])).toBe(true);
 	});
 });

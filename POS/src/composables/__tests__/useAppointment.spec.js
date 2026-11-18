@@ -510,7 +510,45 @@ describe("the gestures of the salon", () => {
 		network.isOffline = true
 		expect(await gestures.repeat("BKG-1", { everyWeeks: 6, count: 4 })).toBeNull()
 		expect(call).not.toHaveBeenCalled()
+		// The window says it in its own words (the reason is kept for it); the toast is for the booking, the gesture the cashier made
+		expect(gestures.refusal.value).toBe("Repeating an appointment needs the network.")
+		expect(toast.showWarning).not.toHaveBeenCalled()
+		expect(await gestures.repeat("BKG-1", { everyWeeks: 6, count: 4, confirm: true })).toBeNull()
 		expect(toast.showWarning).toHaveBeenCalled()
+	})
+
+	// //// Neoffice — the audit of 18.11 (NeoSalon lots G14, voie 4): what the reservation refuses is said where the cashier is looking
+	it("keeps the reservation's reason for the window when it refuses the dates, with no toast on top, and says it in a toast when it refuses the booking", async () => {
+		call.mockRejectedValue(new Error("This appointment is already part of a series."))
+		const gestures = useAppointment()
+
+		expect(await gestures.repeat("BKG-1", { everyWeeks: 6, count: 4 })).toBeNull()
+		expect(gestures.refusal.value).toBe("This appointment is already part of a series.")
+		expect(toast.showError).not.toHaveBeenCalled()
+
+		expect(await gestures.repeat("BKG-1", { everyWeeks: 6, count: 4, confirm: true })).toBeNull()
+		expect(gestures.refusal.value).toBe("This appointment is already part of a series.")
+		expect(toast.showError).toHaveBeenCalledWith("This appointment is already part of a series.")
+
+		// the next question starts without the last reason
+		call.mockResolvedValue({ message: { mode: "preview", every_weeks: 6, max: 12, dates: [] } })
+		await gestures.repeat("BKG-1", { everyWeeks: 6, count: 4 })
+		expect(gestures.refusal.value).toBe("")
+	})
+
+	it("stops waiting for the reservation after a while and says so, instead of leaving the window working for ever", async () => {
+		vi.useFakeTimers()
+		try {
+			call.mockImplementation(() => new Promise(() => {}))
+			const gestures = useAppointment()
+			const answer = gestures.repeat("BKG-1", { everyWeeks: 6, count: 4, confirm: true })
+			await vi.advanceTimersByTimeAsync(31000)
+
+			expect(await answer).toBeNull()
+			expect(gestures.refusal.value).toBe("The till did not get an answer in time.")
+		} finally {
+			vi.useRealTimers()
+		}
 	})
 
 	it("lists what can be booked and the free slots, and books with the chain as the site reads it", async () => {

@@ -1852,8 +1852,9 @@
 								<!-- Saving: its own full-size line with the offer name -->
 								<!-- Saving: what the customer gets and keeps; the offer's name on its own line -->
 								<!-- //// Neoffice — compact cart line, the offer line spans the whole card (NeoResto lot 1, product owner, 05.11.2026) -->
+								<!-- //// Neoffice — a line a package of sessions pays says its package's words on the line (data-test="line-package"), never « 100 % off · You save »: a session is not an offer's saving (NeoSalon lots G11, the audit of 18.11). -->
 								<div
-										v-if="lineSaving(item) > 0"
+										v-if="lineSaving(item) > 0 && !item.customer_package"
 										data-cart-saving
 										class="mt-1.5 rounded-md bg-[#e9f5ef] px-2 py-1 text-sm text-[#0f7a4a]"
 									>

@@ -227,9 +227,10 @@ const primary = computed(() => {
 	}
 	return can.value.collect ? collect.value : null
 })
-/** Coming back: any appointment the site can repeat, a paid one too (the customer's next visit), never an absent one. */
+/** Coming back: any appointment of a customer the site can repeat, a paid one too (the customer's next visit), never an absent one. */
 const repeating = computed(() => ({ key: "repeat", label: __("Repeat"), run: () => emit("repeat", props.appointment) }))
-const canRepeat = computed(() => Boolean(store.capabilities.repeat) && Boolean(props.appointment.booking) && props.appointment.state !== "absent")
+//// Neoffice — never for a walk-in: the reservation books the next visits for a customer and refuses an appointment of nobody (the audit of 18.11, voie 4).
+const canRepeat = computed(() => Boolean(store.capabilities.repeat) && Boolean(props.appointment.booking) && Boolean(props.appointment.customer) && props.appointment.state !== "absent")
 const secondary = computed(() => {
 	const row = props.appointment
 	//// Neoffice — paid online and not served yet, the reservation app lets it be cancelled or marked absent at the till (everything

@@ -5,9 +5,27 @@ import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import { call } from "@/utils/apiWrapper";
 import { offlineState } from "@/utils/offline/offlineState";
+//// Neoffice — the title of a package arrives escaped for a page (the audit of 18.11, voie 4).
+import { plainText } from "@/utils/plainText";
 
 const API = "pos_next.api.packages";
 const answerOf = (answer) => answer?.message ?? answer;
+//// Neoffice — a question to the site that is not answered after this long is given up and said so: a button never works for ever (the audit of 18.11, voie 4).
+const WAIT_MS = 15000;
+function within(asking, ms = WAIT_MS) {
+	let timer = null;
+	return Promise.race([
+		asking,
+		new Promise((_, reject) => {
+			timer = setTimeout(() => {
+				const error = new Error(__("The till did not get an answer in time."));
+				error.timedOut = true;
+				reject(error);
+			}, ms);
+		}),
+	]).finally(() => clearTimeout(timer));
+}
+const tidy = (list) => list.map((pack) => ({ ...pack, title: plainText(pack?.title) }));
 
 /** Whether a package covers a line of the cart: the line's item is one of the package's, or the line's group is one of its groups. */
 export function covers(pack, row) {
@@ -26,27 +44,32 @@ export const useCustomerPackagesStore = defineStore("customerPackages", () => {
 	const loading = ref(false);
 	// A late answer for a customer the cashier has left is dropped
 	let ticket = 0;
+	// What the cart last asked for, kept while offline: the packages come back by themselves when the till does
+	let wanted = { profile: "", who: "" };
 
 	/** The packages of the customer the cart is for: none for no customer (the cash customer has none), none offline. */
 	async function load(profile, named) {
-		const wanted = String(named || "").trim();
+		const who = String(named || "").trim();
 		const mine = ++ticket;
-		if (!wanted || !profile || offlineState.isOffline) {
+		wanted = { profile, who };
+		if (!who || !profile || offlineState.isOffline) {
 			clear();
 			return;
 		}
-		customer.value = wanted;
+		customer.value = who;
 		loading.value = true;
 		try {
 			const answer = answerOf(
-				await call(`${API}.get_customer_packages`, {
-					pos_profile: profile,
-					customer: wanted,
-				})
+				await within(
+					call(`${API}.get_customer_packages`, {
+						pos_profile: profile,
+						customer: who,
+					})
+				)
 			);
 			if (mine !== ticket) return;
 			available.value = Boolean(answer?.available);
-			packages.value = Array.isArray(answer?.packages) ? answer.packages : [];
+			packages.value = Array.isArray(answer?.packages) ? tidy(answer.packages) : [];
 		} catch {
 			if (mine === ticket) {
 				available.value = false;
@@ -55,6 +78,37 @@ export const useCustomerPackagesStore = defineStore("customerPackages", () => {
 		} finally {
 			if (mine === ticket) loading.value = false;
 		}
+	}
+
+	/**
+	 * The packages of the same customer again, after a refusal: the sessions or the validity the site just refused on may have moved since the last reading. What the till
+	 * had stays when this fails or answers something else (a refusal is no reason to empty the banners).
+	 */
+	async function refresh(profile) {
+		if (!customer.value || !profile || offlineState.isOffline) return;
+		const mine = ticket;
+		try {
+			const answer = answerOf(
+				await within(
+					call(`${API}.get_customer_packages`, { pos_profile: profile, customer: customer.value }),
+					5000
+				)
+			);
+			if (mine !== ticket || !Array.isArray(answer?.packages)) return;
+			available.value = Boolean(answer.available);
+			packages.value = tidy(answer.packages);
+		} catch {
+			// kept as it was
+		}
+	}
+
+	// Back online: nothing was asked while the till was cut off, so the banners ask again for the customer the cart is for (once, when the till came back)
+	if (typeof offlineState.subscribe === "function") {
+		offlineState.subscribe((state) => {
+			if (state?.transition === "went-online" && wanted.who && !available.value) {
+				load(wanted.profile, wanted.who);
+			}
+		});
 	}
 
 	function clear() {
@@ -69,21 +123,30 @@ export const useCustomerPackagesStore = defineStore("customerPackages", () => {
 	 * @returns {Promise<{ok: boolean, line?: object, remaining_after?: number, label?: string, why?: string}>}
 	 */
 	async function check(profile, pack, row, inCart = 0) {
+		let refused = { ok: false, why: "" };
 		try {
 			const answer = answerOf(
-				await call(`${API}.check_package_use`, {
-					pos_profile: profile,
-					customer: customer.value,
-					package: pack.package,
-					item_code: row.item_code,
-					qty: Number(row.quantity ?? row.qty) || 1,
-					in_cart: inCart,
-				})
+				await within(
+					call(`${API}.check_package_use`, {
+						pos_profile: profile,
+						customer: customer.value,
+						package: pack.package,
+						item_code: row.item_code,
+						qty: Number(row.quantity ?? row.qty) || 1,
+						in_cart: inCart,
+					})
+				)
 			);
-			return answer?.ok === true ? answer : { ok: false, why: answer?.why || "" };
+			if (answer?.ok === true) return answer;
+			refused = { ok: false, why: answer?.why || "" };
 		} catch (error) {
-			return { ok: false, why: String(error?.message || "") };
+			refused = { ok: false, why: String(error?.message || "") };
+			// A slow site is not asked a second question on top of the first
+			if (error?.timedOut) return refused;
 		}
+		// A refusal says the packages moved, or may have: read them again before the cashier tries another
+		await refresh(profile);
+		return refused;
 	}
 
 	/** Whether any package of the customer covers the line (the till offers « Use a package » only for such a line). */
@@ -91,5 +154,5 @@ export const useCustomerPackagesStore = defineStore("customerPackages", () => {
 		packages.value.some((pack) => pack.remaining > 0 && covers(pack, row));
 	const usable = computed(() => available.value && packages.value.length > 0);
 
-	return { available, customer, packages, loading, usable, load, clear, check, anyCovers };
+	return { available, customer, packages, loading, usable, load, refresh, clear, check, anyCovers };
 });

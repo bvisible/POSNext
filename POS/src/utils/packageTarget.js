@@ -12,9 +12,26 @@ export function takenByOtherLines(pack, rows, except = null) {
 		.reduce((sum, row) => sum + (Number(row.quantity ?? row.qty) || 0), 0);
 }
 
-/** Whether the package could pay the line: it covers it, nothing pays it yet, it is not offered, and the package has the sessions left. */
+/** A package whose last day has passed: the till's own day decides, the last day itself still counts. The site is asked all the same, and its word is the one that stands. */
+export function expired(pack, today = new Date()) {
+	const end = String(pack?.valid_till || "").slice(0, 10);
+	if (!end) return false;
+	const day = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+	return end < day;
+}
+
+/**
+ * The packages in the order a cashier reads them: the first to end on top, the ones that never end last. The site sorts the other way round (an empty end comes first
+ * in a sort by date), which put the package that never expires above the one that ends next month (the audit of 18.11).
+ */
+export function inUseOrder(packs) {
+	const key = (pack) => String(pack?.valid_till || "").slice(0, 10) || "9999-12-31";
+	return [...(packs || [])].sort((a, b) => key(a).localeCompare(key(b)));
+}
+
+/** Whether the package could pay the line: it covers it, nothing pays it yet, it is not offered, it has not expired, and the package has the sessions left. */
 export function canPay(pack, row, rows, isOffered = () => false) {
-	if (!pack || !row || !(pack.remaining > 0)) return false;
+	if (!pack || !row || !(pack.remaining > 0) || expired(pack)) return false;
 	if (row.customer_package || isOffered(row) || !covers(pack, row)) return false;
 	return sessionsOf(row) <= pack.remaining - takenByOtherLines(pack, rows, row);
 }

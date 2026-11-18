@@ -1,7 +1,8 @@
 <template>
 	<!-- //// Neoffice — added file (no upstream equivalent). The banner of each package of the customer, right under the customer (NeoSalon, lots G11, voie 1; the board « Use a package at the till »): its title,
 	<!-- //// the sessions left and until when, and a black « Use » that pays the line of the cart the package covers (the cashier's chosen line, else the first service line it covers). Greyed when
-	<!-- //// no line can be paid. One banner per package, the first to end on top (the order the site gives). The site's words show under the banner when it refuses. -->
+	<!-- //// no line can be paid. One banner per package, the first to end on top and the one that never ends last. The site's words show under the banner when it refuses. -->
+	<!-- //// The audit of 18.11 (voie 4): the touch surface's sizes (§ 7), the sessions the cart already takes counted, a package past its last day not offered. -->
 	<div v-if="banners.length" class="space-y-1.5 px-2 pb-2" data-test="package-banners">
 		<div
 			v-for="banner in banners"
@@ -9,24 +10,24 @@
 			:data-test="`package-banner-${banner.pack.package}`"
 		>
 			<div
-				class="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-2.5 py-1.5 dark:border-green-800 dark:bg-green-900/30"
+				class="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-2.5 py-2 dark:border-green-800 dark:bg-green-900/30"
 			>
 				<div class="min-w-0 flex-1">
 					<b
 						dir="auto"
-						class="block break-words text-xs leading-tight text-green-900 dark:text-green-200"
+						class="block break-words text-sm leading-tight text-green-900 dark:text-green-100"
 						data-test="package-banner-title"
 						>{{ banner.pack.title }}</b
 					>
 					<span
-						class="block text-[11px] leading-tight text-green-800 dark:text-green-300"
+						class="block text-sm leading-tight text-green-800 dark:text-green-200"
 						data-test="package-banner-left"
 						>{{ banner.text }}</span
 					>
 				</div>
 				<button
 					type="button"
-					class="min-h-[36px] shrink-0 rounded-lg bg-gray-900 px-3 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40 dark:bg-gray-100 dark:text-gray-900"
+					class="min-h-[44px] shrink-0 whitespace-nowrap rounded-lg bg-gray-900 px-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40 dark:bg-gray-100 dark:text-gray-900"
 					data-test="package-banner-use"
 					:disabled="!banner.row || busy === banner.pack.package"
 					:title="banner.row ? '' : __('No line of the cart is paid by this package.')"
@@ -37,7 +38,7 @@
 			</div>
 			<p
 				v-if="refusals[banner.pack.package]"
-				class="mt-1 px-1 text-[11px] text-red-700 dark:text-red-300"
+				class="mt-1 px-1 text-sm text-red-700 dark:text-red-300"
 				role="alert"
 				data-test="package-banner-why"
 			>
@@ -53,10 +54,10 @@
  * //// it would pay (utils/packageTarget) to the cart, which asks the site and applies the agreement.
  */
 import { computed } from "vue";
-import { dateOf, targetLine } from "@/utils/packageTarget";
+import { dateOf, expired, inUseOrder, takenByOtherLines, targetLine } from "@/utils/packageTarget";
 
 const props = defineProps({
-	// The packages of the customer, the first to end first (the site's order)
+	// The packages of the customer (the site's answer; the till puts the first to end on top)
 	packages: { type: Array, default: () => [] },
 	// The lines of the cart, and the one the cashier chose last
 	rows: { type: Array, default: () => [] },
@@ -68,13 +69,20 @@ const props = defineProps({
 });
 const emit = defineEmits(["use"]);
 
-const left = (pack) =>
-	pack.remaining === 1 ? __("1 session left") : __("{0} sessions left", [pack.remaining]);
+// What is left, counting what the cart already takes of it (« 6 sessions left after this cart »): the banner never says 7 when the cart has used one
+const left = (pack) => {
+	const taken = takenByOtherLines(pack, props.rows);
+	if (taken > 0) {
+		const after = Math.max(0, pack.remaining - taken);
+		return after === 1 ? __("1 session left after this cart") : __("{0} sessions left after this cart", [after]);
+	}
+	return pack.remaining === 1 ? __("1 session left") : __("{0} sessions left", [pack.remaining]);
+};
 
-// A package with nothing left is no banner: nothing to use
+// A package with nothing left is no banner (nothing to use), nor one past its last day
 const banners = computed(() =>
-	props.packages
-		.filter((pack) => pack.remaining > 0)
+	inUseOrder(props.packages)
+		.filter((pack) => pack.remaining > 0 && !expired(pack))
 		.map((pack) => ({
 			pack,
 			row: targetLine(pack, props.rows, props.chosen, props.isOffered),

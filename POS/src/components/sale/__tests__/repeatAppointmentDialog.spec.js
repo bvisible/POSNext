@@ -10,7 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 vi.hoisted(() => {
 	globalThis.__ = (text, args = []) => (args || []).reduce((out, arg, at) => out.replace(`{${at}}`, arg), text)
 })
-const lane = vi.hoisted(() => ({ repeat: vi.fn(async () => null), loadDay: vi.fn(async () => null) }))
+const lane = vi.hoisted(() => ({ repeat: vi.fn(async () => null), loadDay: vi.fn(async () => null), refusal: { value: "" } }))
 
 vi.mock("frappe-ui", () => ({
 	Dialog: { props: ["modelValue", "options"], template: '<div v-if="modelValue"><h2>{{ options.title }}</h2><slot name="body-content" /></div>' },
@@ -51,6 +51,7 @@ beforeEach(() => {
 	setActivePinia(createPinia())
 	lane.repeat.mockReset()
 	lane.repeat.mockResolvedValue(preview(dates))
+	lane.refusal.value = ""
 	store = useAppointmentsStore()
 	store.day = "2026-11-18"
 	vi.spyOn(store, "refresh").mockResolvedValue()
@@ -121,16 +122,26 @@ describe("the repeat dialog", () => {
 		expect(lane.repeat).toHaveBeenCalledWith("BKG-1", { everyWeeks: 4, count: 6, until: null, changes: {}, confirm: false })
 	})
 
-	it("takes another rhythm by number, kept between 1 and 52 weeks", async () => {
+	it("takes another rhythm by number, and says when it is not a whole number of weeks from 1 to 52, asking nothing", async () => {
 		const wrapper = mountIt()
 		await settle()
 		lane.repeat.mockClear()
 
 		await wrapper.get("[data-test='repeat-every-other']").trigger("click")
+		for (const typed of [90, 0, -3, 1.5, "abc", ""]) {
+			await wrapper.get("[data-test='repeat-every-number']").setValue(typed)
+			await settle()
+			expect(wrapper.get("[data-test='repeat-every-problem']").text()).toBe("Choose a whole number of weeks, from 1 to 52.")
+		}
+		expect(lane.repeat).not.toHaveBeenCalled()
+		// what was typed stays in the field: nothing is corrected behind the cashier's back
 		await wrapper.get("[data-test='repeat-every-number']").setValue(90)
-		await settle()
+		expect(wrapper.get("[data-test='repeat-every-number']").element.value).toBe("90")
 
-		expect(lane.repeat.mock.calls.at(-1)[1].everyWeeks).toBe(52)
+		await wrapper.get("[data-test='repeat-every-number']").setValue(12)
+		await settle()
+		expect(wrapper.find("[data-test='repeat-every-problem']").exists()).toBe(false)
+		expect(lane.repeat.mock.calls.at(-1)[1].everyWeeks).toBe(12)
 	})
 
 	it("asks until a day instead of how many times", async () => {
@@ -220,6 +231,153 @@ describe("the repeat dialog", () => {
 
 		expect(wrapper.get("[data-test='repeat-date-1']").text()).toContain("16")
 		expect(wrapper.text()).not.toContain("2099")
+	})
+
+	// //// Neoffice — the audit of 18.11 (NeoSalon lots G14, voie 4)
+	it("puts the dates changed by hand back when the rhythm, the number or the last day changes, and says so", async () => {
+		const wrapper = mountIt()
+		await settle()
+		await wrapper.get("[data-test='repeat-edit-open-2']").trigger("click")
+		await wrapper.get("[data-test='repeat-edit-2']").setValue("2027-02-10T14:00")
+		await wrapper.get("[data-test='repeat-edit-ok-2']").trigger("click")
+		await settle()
+		expect(wrapper.get("[data-test='repeat-date-2']").text()).toContain("Changed by hand")
+		lane.repeat.mockClear()
+
+		await wrapper.get("[data-test='repeat-every-8']").trigger("click")
+		await settle()
+
+		expect(lane.repeat).toHaveBeenCalledTimes(1)
+		expect(lane.repeat).toHaveBeenCalledWith("BKG-1", { everyWeeks: 8, count: 4, until: null, changes: {}, confirm: false })
+		expect(wrapper.get("[data-test='repeat-date-2']").text()).not.toContain("Changed by hand")
+		expect(wrapper.get("[data-test='repeat-changes-reset']").text()).toContain("changed by hand")
+
+		// the same for the number of times
+		await wrapper.get("[data-test='repeat-edit-open-2']").trigger("click")
+		await wrapper.get("[data-test='repeat-edit-2']").setValue("2027-02-10T14:00")
+		await wrapper.get("[data-test='repeat-edit-ok-2']").trigger("click")
+		await settle()
+		lane.repeat.mockClear()
+		await wrapper.get("[data-test='repeat-count-6']").trigger("click")
+		await settle()
+		expect(lane.repeat.mock.calls.at(-1)[1].changes).toEqual({})
+	})
+
+	it("says a moved date by what happened to it when the reservation gave no reason, never « same hour »", async () => {
+		lane.repeat.mockResolvedValue(preview([{ index: 1, date: "2026-12-30", starts_at: "2026-12-30 11:00", was: "10:30", state: "shifted", why: null }]))
+		const wrapper = mountIt()
+		await settle()
+
+		expect(wrapper.get("[data-test='repeat-date-1']").text()).toContain("The nearest free hour that day.")
+		expect(wrapper.get("[data-test='repeat-date-1']").text()).not.toContain("Same hour, same person")
+	})
+
+	it("says what is missing for « Until… »: the day, then a day after the appointment, asking nothing meanwhile", async () => {
+		const wrapper = mountIt()
+		await settle()
+		lane.repeat.mockClear()
+
+		await wrapper.get("[data-test='repeat-count-until']").trigger("click")
+		await settle()
+		expect(wrapper.get("[data-test='repeat-until-hint']").text()).toBe("Choose the last day.")
+
+		await wrapper.get("[data-test='repeat-until']").setValue("2026-11-10")
+		await settle()
+		expect(wrapper.get("[data-test='repeat-until-problem']").text()).toBe("The last day must come after the appointment.")
+		expect(lane.repeat).not.toHaveBeenCalled()
+
+		await wrapper.get("[data-test='repeat-until']").setValue("2027-06-30")
+		await settle()
+		expect(wrapper.find("[data-test='repeat-until-problem']").exists()).toBe(false)
+		expect(lane.repeat).toHaveBeenCalledTimes(1)
+	})
+
+	it("refuses a date changed by hand that is not a whole moment after the appointment, and keeps the field open with the reason", async () => {
+		const wrapper = mountIt()
+		await settle()
+		lane.repeat.mockClear()
+
+		await wrapper.get("[data-test='repeat-edit-open-2']").trigger("click")
+		for (const typed of ["", "2027-02-10", "2026-11-17T09:00"]) {
+			await wrapper.get("[data-test='repeat-edit-2']").setValue(typed)
+			await wrapper.get("[data-test='repeat-edit-ok-2']").trigger("click")
+			expect(wrapper.find("[data-test='repeat-edit-2']").exists()).toBe(true)
+			expect(wrapper.get("[data-test='repeat-edit-problem']").text()).toMatch(/^Choose a (day and an hour|moment after the appointment)\.$/)
+		}
+		await settle()
+		expect(lane.repeat).not.toHaveBeenCalled()
+		expect(wrapper.get("[data-test='repeat-date-2']").text()).not.toContain("Changed by hand")
+	})
+
+	it("says why the reservation refused the dates, in its own words", async () => {
+		lane.repeat.mockImplementation(async () => {
+			lane.refusal.value = "This appointment is already part of a series."
+			return null
+		})
+		const wrapper = mountIt()
+		await settle()
+
+		expect(wrapper.get("[data-test='repeat-failed']").text()).toBe("This appointment is already part of a series.")
+		expect(wrapper.get("[data-test='repeat-confirm']").attributes("disabled")).toBeDefined()
+	})
+
+	it("reads the agenda again and says so when the booking got no answer, instead of closing on nothing", async () => {
+		const wrapper = mountIt()
+		await settle()
+		lane.repeat.mockResolvedValue(null)
+		store.refresh.mockClear()
+
+		await wrapper.get("[data-test='repeat-confirm']").trigger("click")
+		await flushPromises()
+
+		expect(store.refresh).toHaveBeenCalledTimes(1)
+		expect(wrapper.get("[data-test='repeat-submit-problem']").text()).toContain("No answer came")
+		expect(wrapper.get("[data-test='repeat-confirm']").attributes("disabled")).toBeUndefined()
+		expect(wrapper.find("[data-test='repeat-done']").exists()).toBe(false)
+	})
+
+	it("says the reason of a refused booking instead of the general words", async () => {
+		const wrapper = mountIt()
+		await settle()
+		lane.repeat.mockImplementation(async () => {
+			lane.refusal.value = "Sonia is away on every date."
+			return null
+		})
+
+		await wrapper.get("[data-test='repeat-confirm']").trigger("click")
+		await flushPromises()
+
+		expect(wrapper.get("[data-test='repeat-submit-problem']").text()).toBe("Sonia is away on every date.")
+	})
+
+	it("keeps a date beyond the booking horizon apart from the skipped ones in the report", async () => {
+		const wrapper = mountIt()
+		await settle()
+		lane.repeat.mockResolvedValue({
+			mode: "booked",
+			series: "BSR-1",
+			booked: [{ index: 1, booking: "BKG-2", starts_at: "2026-12-30 10:30", state: "free" }],
+			skipped: [
+				{ index: 3, date: "2027-03-24", why: "Sonia is away that day." },
+				{ index: 4, date: "2027-05-05", why: "" },
+			],
+		})
+
+		await wrapper.get("[data-test='repeat-confirm']").trigger("click")
+		await flushPromises()
+
+		expect(wrapper.get("[data-test='repeat-skipped']").text()).toContain("Sonia is away that day.")
+		expect(wrapper.get("[data-test='repeat-skipped']").text()).not.toContain("05")
+		expect(wrapper.get("[data-test='repeat-beyond']").text()).toContain("Not proposed, beyond the booking horizon:")
+		expect(wrapper.get("[data-test='repeat-beyond']").text()).toContain("05")
+	})
+
+	it("writes every date the same way, the year included", async () => {
+		const wrapper = mountIt()
+		await settle()
+
+		expect(wrapper.get("[data-test='repeat-date-1']").text()).toContain("2026")
+		expect(wrapper.get("[data-test='repeat-date-2']").text()).toContain("2027")
 	})
 
 	it("starts again from the usual rhythm each time it opens, and forgets what was booked", async () => {

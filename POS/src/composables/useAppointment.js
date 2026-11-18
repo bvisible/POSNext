@@ -5,6 +5,7 @@
 //// it, PRICED AGAIN at the day's prices (its offers apply, the salon's decision of 10.11), and its payment submits THAT draft (useInvoice.shopCartInvoice),
 //// never a second invoice. Offline the cart is made from the agenda the till kept, the sale carries the number of the appointment, and the site
 //// replaces the draft when it is synchronised.
+import { ref } from "vue"
 import { customerOfTheOrder } from "@/composables/useOpenTable"
 import { useToast } from "@/composables/useToast"
 import { useAppointmentsStore } from "@/stores/appointments"
@@ -89,6 +90,8 @@ export function announcedPriceOfStep(step, appointment) {
 
 export function useAppointment() {
 	const { showSuccess, showWarning, showError } = useToast()
+	//// Neoffice — the reason the site gave to the last question that asked for it (`reason`), for the window that is open to say it where the cashier is looking, instead of a toast that goes (the audit of 18.11, voie 4).
+	const refusal = ref("")
 
 	const profile = () => usePOSShiftStore().profileName
 
@@ -96,15 +99,28 @@ export function useAppointment() {
 	 * Ask the site, and say what it refuses in its own words; null when it did. A gesture on an appointment tells the site the day of the agenda it
 	 * was touched on: the cashier's right to the appointment is read in the day view of that day.
 	 */
-	async function ask(method, args, { quiet = false } = {}) {
+	async function ask(method, args, { quiet = false, remember = false, timeout = 0 } = {}) {
 		const day = args.booking ? { date: useAppointmentsStore().date } : {}
+		//// Neoffice — a question that can stay unanswered (a slow link) gives up after `timeout` ms and says so: the window never stays « working » for ever (the audit of 18.11, voie 4).
+		let timer = null
 		try {
-			return answerOf(
-				await call(`${API}.${method}`, { pos_profile: profile(), ...day, ...args }),
-			)
+			const asking = call(`${API}.${method}`, { pos_profile: profile(), ...day, ...args })
+			const waited = timeout
+				? Promise.race([
+						asking,
+						new Promise((_, reject) => {
+							timer = setTimeout(() => reject(new Error(__("The till did not get an answer in time."))), timeout)
+						}),
+					])
+				: asking
+			return answerOf(await waited)
 		} catch (error) {
-			if (!quiet) showError(parseError(error).message)
+			const message = parseError(error).message
+			if (remember) refusal.value = message
+			if (!quiet) showError(message)
 			return null
+		} finally {
+			clearTimeout(timer)
 		}
 	}
 
@@ -384,18 +400,26 @@ export function useAppointment() {
 		booking,
 		{ everyWeeks, count = null, until = null, changes = null, confirm = false } = {},
 	) {
+		refusal.value = ""
 		if (offlineState.isOffline) {
-			showWarning(__("Repeating an appointment needs the network."))
+			//// Neoffice — the window says it where it is open; a toast only for the booking, the gesture the cashier made.
+			refusal.value = __("Repeating an appointment needs the network.")
+			if (confirm) showWarning(refusal.value)
 			return null
 		}
-		const done = await ask("repeat_appointment", {
-			booking,
-			every_weeks: everyWeeks,
-			count,
-			until,
-			changes: changes && Object.keys(changes).length ? JSON.stringify(changes) : null,
-			confirm: confirm ? 1 : 0,
-		})
+		//// Neoffice — the dates asked are said by the window (`refusal`), the booking also by a toast; both stop waiting (15 s for the dates, 30 s for the booking: the reservation checks each date).
+		const done = await ask(
+			"repeat_appointment",
+			{
+				booking,
+				every_weeks: everyWeeks,
+				count,
+				until,
+				changes: changes && Object.keys(changes).length ? JSON.stringify(changes) : null,
+				confirm: confirm ? 1 : 0,
+			},
+			{ quiet: !confirm, remember: true, timeout: confirm ? 30000 : 15000 },
+		)
 		return done
 	}
 
@@ -413,5 +437,6 @@ export function useAppointment() {
 		slots,
 		book,
 		repeat,
+		refusal,
 	}
 }
