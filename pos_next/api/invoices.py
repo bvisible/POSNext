@@ -2328,6 +2328,15 @@ def _work_the_totals_out_within_the_advances(invoice_doc):
 	invoice_doc.calculate_taxes_and_totals()
 
 
+# //// Neoffice — added (no upstream equivalent): what a sale owes, as the answer of submit_invoice says it to the till. The customer credit it spent (redeem_customer_credit, an advance
+# //// set against the invoice in the ledger) lowers it AFTER the document in memory was read: the dialog of the sale said « Remaining: 10.00 » for a sale the ledger had settled
+# //// (the tester, voie 4, 19.11.2026). With a credit spent it is read again from the database; the document itself is not reloaded (its flags carry the outcome of an online surplus).
+def _what_the_sale_owes(invoice_doc, credit_spent):
+	if credit_spent:
+		return flt(frappe.db.get_value("Sales Invoice", invoice_doc.name, "outstanding_amount"))
+	return getattr(invoice_doc, "outstanding_amount", 0)
+
+
 def _require_a_paid_sale(invoice_doc, credit):
 	if not cint(invoice_doc.get("is_pos")) or cint(invoice_doc.get("is_return")):
 		return
@@ -3080,7 +3089,8 @@ def submit_invoice(invoice=None, data=None):
 			"grand_total": invoice_doc.grand_total,
 			"total": invoice_doc.total,
 			"net_total": invoice_doc.net_total,
-			"outstanding_amount": getattr(invoice_doc, "outstanding_amount", 0),
+			# //// Neoffice — what it owes once the customer credit it spent is set against it (see _what_the_sale_owes above)
+			"outstanding_amount": _what_the_sale_owes(invoice_doc, bool(redeemed_customer_credit and customer_credit_dict)),
 			"paid_amount": getattr(invoice_doc, "paid_amount", 0),
 			"change_amount": getattr(invoice_doc, "change_amount", 0),
 		}
