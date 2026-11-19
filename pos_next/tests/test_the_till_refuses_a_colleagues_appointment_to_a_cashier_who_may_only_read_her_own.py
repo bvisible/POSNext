@@ -346,6 +346,6 @@ class TestTheTillRefusesAColleaguesAppointmentToACashierWhoMayOnlyReadHerOwn(Fra
 			SITE["calls"],
 			[
 				("sold", MINE, "ACC-SINV-1", self.fx.profile),
-				("time_action", MINE, "close_unmeasured", self.fx.profile, None),
+				("time_action", MINE, "close", self.fx.profile, None),
 			],
 		)

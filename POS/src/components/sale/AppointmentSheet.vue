@@ -71,13 +71,28 @@
 			<div v-if="showsTime" class="flex flex-col gap-1 border-t border-gray-100 px-4 py-3 text-sm dark:border-gray-800" data-test="sheet-time">
 				<div class="text-xs font-semibold uppercase tracking-wider text-gray-500">{{ __("Time") }}</div>
 				<div class="flex items-baseline justify-between">
-					<span class="text-gray-600 dark:text-gray-300">{{ clockText }}</span>
+					<span class="text-gray-600 dark:text-gray-300" data-test="sheet-time-text">{{ manySteps ? stepsDoneText : clockText }}</span>
 					<b class="text-xl tabular-nums text-gray-900 dark:text-gray-100" data-test="sheet-active-time">{{ activeTimeOf(appointment.clock.active_seconds) }}</b>
 				</div>
 				<!-- //// Neoffice — a clock nobody stopped (the time lane stops it at closing time, at the planned length): the length above is an estimate, and the sheet says so (voie 4, 19.11.2026) -->
-				<div v-if="appointment.clock.estimated" class="text-xs text-gray-500" data-test="sheet-estimated"><b>{{ __("Duration estimated") }}</b> · {{ __("Nobody stopped the clock: this is the planned length, not a measure.") }}</div>
+				<div v-if="!manySteps && appointment.clock.estimated" class="text-xs text-gray-500" data-test="sheet-estimated"><b>{{ __("Duration estimated") }}</b> · {{ __("Nobody stopped the clock: this is the planned length, not a measure.") }}</div>
 				<!-- Only when another appointment of the same person took the time (the clock says which): a pause pressed on this one has nothing to explain -->
-				<div v-if="appointment.clock.state === 'paused' && appointment.clock.paused_by" class="text-xs text-gray-500" data-test="sheet-paused-by">{{ __("In pause: the time runs on the other appointment.") }}</div>
+				<div v-if="!manySteps && appointment.clock.state === 'paused' && appointment.clock.paused_by" class="text-xs text-gray-500" data-test="sheet-paused-by">{{ __("In pause: the time runs on the other appointment.") }}</div>
+				<!-- //// Neoffice — an appointment done in several times has a clock per step (NeoSalon, voie 4, 19.11.2026): each step says where it stands, how long it has really run, and carries the gestures of its own that THIS cashier may make (the site decides: `can_time`). The pose, where nobody works, has no clock. -->
+				<div v-if="manySteps" class="mt-1 flex flex-col gap-2" data-test="sheet-step-times">
+					<template v-for="(step, at) in appointment.steps" :key="at">
+					<div class="flex items-center gap-3" :data-test="`sheet-step-time-${at}`">
+						<span class="min-w-0 flex-1">
+							<span dir="auto" class="block truncate text-[15px] text-gray-900 dark:text-gray-100">{{ step.label || step.item_code }}</span>
+							<span class="block text-xs text-gray-500" :data-test="`sheet-step-clock-${at}`">{{ stepClockText(step) }}</span>
+						</span>
+						<b class="flex-none text-base tabular-nums text-gray-900 dark:text-gray-100" :data-test="`sheet-step-active-time-${at}`">{{ activeTimeOf(step.clock?.active_seconds) }}</b>
+						<button v-for="gesture in stepGestures(step)" :key="gesture.key" type="button" :data-test="`sheet-step-${gesture.key}-${at}`" class="min-h-[44px] flex-none rounded-xl border border-gray-300 px-3 text-[15px] font-medium text-gray-900 disabled:opacity-50 dark:border-gray-500 dark:text-gray-100" :disabled="busy || waitsForTheNetwork(gesture.key)" @click="timeGesture(gesture.key, step.booking)">{{ gesture.label }}</button>
+					</div>
+					<!-- The wait between two steps (a colour that sets: nobody works on it and the person is free): said, with no clock -->
+					<div v-if="waitAfter(at)" class="text-xs text-gray-500" :data-test="`sheet-wait-${at}`">{{ waitAfter(at) }}</div>
+					</template>
+				</div>
 			</div>
 
 			<div class="flex flex-col gap-1.5 border-t border-gray-100 px-4 py-3 text-[15px] dark:border-gray-800">
@@ -116,7 +131,7 @@ import { useTheNetwork } from "@/composables/useTheNetwork"
 import { useAppointmentsStore } from "@/stores/appointments"
 import { usePOSSettingsStore } from "@/stores/posSettings"
 import { usePOSShiftStore } from "@/stores/posShift"
-import { activeTimeOf, cabinOf, colorOfStep, dayText, hourOf, initialsOf, lengthOf, minutesLongOf, standsAs, whyNotCabin } from "@/utils/appointments"
+import { activeTimeOf, cabinOf, colorOfStep, dayText, hourOf, initialsOf, lengthOf, minutesLongOf, minutesOf, standsAs, whyNotCabin } from "@/utils/appointments"
 import { formatCurrency } from "@/utils/currency"
 
 const props = defineProps({
@@ -178,6 +193,47 @@ const clockText = computed(() => {
 	if (clockState.state === "idle") return __("Not started")
 	return __("Started at {0}", [hourOf(clockState.started_at)])
 })
+
+//// Neoffice — an appointment done in several times has a clock per step (NeoSalon, voie 4, 19.11.2026). One of several steps shows each step's own clock and gestures;
+//// its clock above is the sum of them, and the gestures of the time are not offered twice (the bottom buttons would only reach its first step).
+const manySteps = computed(() => (props.appointment.steps || []).length > 1)
+const stepsDoneText = computed(() => {
+	const steps = props.appointment.steps || []
+	return __("{0} of {1} steps finished", [steps.filter((step) => step.clock?.state === "done").length, steps.length])
+})
+function stepClockText(step) {
+	const clockState = step.clock || {}
+	if (clockState.state === "done") {
+		const text = __("Finished at {0}", [hourOf(clockState.ended_at)])
+		return clockState.estimated ? `${text} · ${__("Duration estimated")}` : text
+	}
+	if (clockState.state === "running") return __("Started at {0}", [hourOf(clockState.started_at)])
+	if (clockState.state === "paused") return __("In pause")
+	return __("Not started")
+}
+/** The wait between a step and the next one (a colour that sets: nobody works on it, the person is free), « Wait · 30 min »; "" when there is none. */
+function waitAfter(at) {
+	const steps = props.appointment.steps || []
+	const gap = (minutesOf(steps[at + 1]?.starts_at) ?? Number.NaN) - (minutesOf(steps[at]?.ends_at) ?? Number.NaN)
+	return Number.isFinite(gap) && gap >= 1 ? __("Wait · {0}", [lengthOf(gap)]) : ""
+}
+/** What a person may do with the time of one step, by where it stands: the site says whether THIS cashier may time it at all (`can_time`). */
+function stepGestures(step) {
+	if (!step.can_time || !step.booking) return []
+	switch (step.clock?.state) {
+		case "running":
+			return [
+				{ key: "pause", label: __("Pause") },
+				{ key: "finish", label: __("Finish") },
+			]
+		case "paused":
+			return [{ key: "start", label: __("Resume the time") }]
+		case "done":
+			return []
+		default:
+			return [{ key: "start", label: __("Start") }]
+	}
+}
 
 /** The options a line carries, « Length: Mid, Level: 7 », from the JSON the line holds. */
 function optionsText(step) {
@@ -267,10 +323,10 @@ async function changeTheCabin(event) {
 	cabinBusy.value = false
 }
 
-async function timeGesture(action) {
+async function timeGesture(action, booking = props.appointment.booking) {
 	if (busy.value) return
 	busy.value = true
-	const done = await clock(props.appointment.booking, action)
+	const done = await clock(booking, action)
 	busy.value = false
 	if (done) await store.refresh()
 }
@@ -282,7 +338,7 @@ const primary = computed(() => {
 	if (row.state === "paid" || row.state === "absent") return null
 	// The salon is closed that day: what the cashier does first is move it (or, when it can no longer be moved, cancel it below)
 	if (stands.value === "to_handle" && store.capabilities.move && can.value.move) return { key: "move", label: __("Move"), run: () => emit("move", row) }
-	if (store.capabilities.clock && can.value.clock) {
+	if (store.capabilities.clock && can.value.clock && !manySteps.value) {
 		if (state.value === "idle") return { key: "start", label: __("Start"), run: () => timeGesture("start") }
 		if (state.value === "running") return { key: "finish", label: __("Finish"), run: () => timeGesture("finish") }
 		if (state.value === "paused") return { key: "start", label: __("Resume the time"), run: () => timeGesture("start") }
@@ -306,7 +362,7 @@ const secondary = computed(() => {
 	if (row.state === "absent") return []
 	const list = []
 	if (primary.value && primary.value.key !== "collect" && can.value.collect) list.push(collect.value)
-	if (store.capabilities.clock && can.value.clock && state.value === "running") list.push({ key: "pause", label: __("Pause"), run: () => timeGesture("pause") })
+	if (store.capabilities.clock && can.value.clock && !manySteps.value && state.value === "running") list.push({ key: "pause", label: __("Pause"), run: () => timeGesture("pause") })
 	if (store.capabilities.move && primary.value?.key !== "move") list.push({ key: "move", label: __("Move"), off: !can.value.move, run: () => emit("move", row) })
 	if (store.capabilities.cancel) list.push({ key: "cancel", label: __("Cancel"), danger: true, off: !can.value.cancel, run: () => emit("cancel", row) })
 	if (canRepeat.value) list.push(repeating.value)

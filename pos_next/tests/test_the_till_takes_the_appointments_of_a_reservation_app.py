@@ -306,6 +306,10 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 				# the cabin of the step and whether it is still to be placed (51944267, 16.11.2026)
 				"cabin",
 				"needs_cabin",
+				# the booking of the step, its own clock and whether this cashier may time it (voie 4, 19.11.2026)
+				"booking",
+				"clock",
+				"can_time",
 			},
 		)
 		# The price a step announced is kept with it (the till holds it offline); none when the reservation does not say

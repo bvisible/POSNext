@@ -311,6 +311,9 @@ def _step(row) -> dict | None:
 		"ends_at": _moment(row.get("ends_at")),
 		"sales_person": _text(row.get("sales_person")),
 		"sales_person_name": _text(row.get("sales_person_name")),
+		# //// Neoffice — the booking of the step (NeoSalon, voie 4, 19.11.2026): an appointment done in several times has a clock per step, and the till times
+		# //// a step by its booking. None when the reservation does not say: that step then has no clock of its own.
+		"booking": _text(row.get("booking")),
 		# //// Neoffice — the price this step announced, options included, as the reservation states it (13.11.2026): kept with the agenda the till holds, so that
 		# //// a till set to collect the price announced at booking holds that choice without the network too. None when the reservation does not say.
 		"price": _amount_or_none(row.get("price")),
@@ -594,6 +597,7 @@ def _appointment(row, listed, clock, may, capabilities, key) -> dict | None:
 	steps = listed.get("steps") or [
 		_step(
 			{
+				"booking": booking,
 				"label": row.get("label"),
 				"item_code": row.get("item_code"),
 				"starts_at": row.get("starts_at"),
@@ -892,8 +896,8 @@ def after_a_sale(booking, invoice: str, pos_profile, offline: bool, date=None) -
 	"""Tell the site that the sale of an appointment is booked.
 
 	A sale replayed from a till that was offline REPLACES the appointment's draft (`pos_next_appointment_sold`: the reservation deletes the draft,
-	points at the sale and does what a validation does). The time of the appointment is closed with the sale: one nobody started is closed as
-	« unmeasured » by the time lane (so that its margin is known to be unknown), one still running or in pause is finished. Never raises: the sale
+	points at the sale and does what a validation does). The time of the appointment is closed with the sale, every step of it (`_close_the_time`):
+	one nobody started is closed as « unmeasured » by the time lane (so that its margin is known to be unknown), one still running or in pause is finished. Never raises: the sale
 	is submitted, and a site that fails to hear of it must not turn it into an error. An appointment the cashier may not work (a colleague's, for a cashier
 	who may only read her own; `date` is its day, today by default) is left alone, and said in the error log.
 	"""
@@ -915,12 +919,100 @@ def after_a_sale(booking, invoice: str, pos_profile, offline: bool, date=None) -
 		frappe.log_error("The appointments hook failed", frappe.get_traceback())
 	try:
 		if frappe.get_hooks(TIME_ACTION_HOOK):
-			state = _clock(_clocks_of([booking], pos_profile).get(booking))["state"]
-			action = {"idle": "close_unmeasured", "running": "finish", "paused": "finish"}.get(state)
-			if action:
-				_first_answer(TIME_ACTION_HOOK, booking, action, pos_profile, None)
+			_close_the_time(booking, pos_profile)
 	except Exception:
 		frappe.log_error("The appointments hook failed", frappe.get_traceback())
+
+
+# //// Neoffice — the time of an appointment is closed with its sale, EVERY step of it (NeoSalon, voie 4, 19.11.2026): an appointment done in several times
+# //// has a time per step, and the sale used to close the first step only (one never started kept no record, one still running was left to the forgotten-
+# //// chrono job, which marks its length as an estimate). `close` is the time lane's gesture for it, whatever the first step says. A time lane that does not
+# //// know it yet (a reservation app not updated: it refuses with a message) is told the older way, from where the first step stands. To drop the fallback
+# //// once every reservation app of the fleet knows `close`.
+def _close_the_time(booking: str, pos_profile: str) -> None:
+	try:
+		_first_answer(TIME_ACTION_HOOK, booking, "close", pos_profile, None)
+		return
+	except frappe.ValidationError:
+		frappe.clear_last_message()
+	state = _clock(_clocks_of([booking], pos_profile).get(booking))["state"]
+	action = {"idle": "close_unmeasured", "running": "finish", "paused": "finish"}.get(state)
+	if action:
+		_first_answer(TIME_ACTION_HOOK, booking, action, pos_profile, None)
+
+
+# //// Neoffice — the clock of each step of an appointment done in several times, and the appointment's own clock as the sum of them (NeoSalon, voie 4,
+# //// 19.11.2026). The time lane keeps a time per booking, and a step is a booking: the money lane names the step's booking, the till asks the time lane where
+# //// each stands (once, with the bookings of the day view) and says it step by step. What stands of the appointment (started, finished) comes from the sum,
+# //// never from its first step alone: a first step done does not make a colour finished. Nothing but the clock of the lane: no cost, no margin.
+def _the_clock_of_all(clocks: list[dict]) -> dict:
+	"""The clock of an appointment from the clock of each of its steps: running when one runs, else in pause when one is, done when all are, else idle."""
+	states = [clock["state"] for clock in clocks]
+	if "running" in states:
+		state = "running"
+	elif "paused" in states:
+		state = "paused"
+	elif states and all(each == "done" for each in states):
+		state = "done"
+	else:
+		state = "idle"
+	started = sorted(clock["started_at"] for clock in clocks if clock["started_at"])
+	ended = sorted(clock["ended_at"] for clock in clocks if clock["ended_at"])
+	return {
+		"state": state,
+		"started_at": started[0] if started else None,
+		"ended_at": ended[-1] if state == "done" and ended else None,
+		"active_seconds": sum(clock["active_seconds"] for clock in clocks),
+		"paused_by": None,
+		"estimated": any(clock["estimated"] for clock in clocks),
+	}
+
+
+def _clocks_of_the_day(bookings: list[str], listed: dict, pos_profile: str) -> dict:
+	"""The clocks of the bookings the day view lists, and of the steps of the appointments done in several times that it does not (one question)."""
+	steps = sorted(
+		{
+			step["booking"]
+			for row in listed.values()
+			if len(row["steps"]) > 1
+			for step in row["steps"]
+			if step["booking"]
+		}
+		- set(bookings)
+	)
+	return _clocks_of(bookings + steps, pos_profile)
+
+
+def _clock_of_the_appointment(listed: dict | None, own: dict, clocks: dict) -> dict:
+	"""The clock of an appointment: its own (the booking the agenda reads) when it has one step, else the sum of its steps, so that what stands
+	of an appointment never rests on its first step alone (a first step done does not make a colour finished)."""
+	steps = (listed or {}).get("steps") or []
+	if len(steps) < 2:
+		return own
+	return _the_clock_of_all([_clock(clocks.get(step["booking"])) for step in steps])
+
+
+def _time_the_steps(rows, clocks, capabilities, visibility, mine, day) -> None:
+	"""Give each step of the agenda's appointments its `clock` and whether this cashier may time it (`can_time`).
+
+	An appointment of one step shares its clock with its step; one of several steps takes each step's from the time lane. A step can be timed while
+	the appointment allows it (not paid, finished or absent) on a till that has a time lane, when the step names its booking, is of the day of the agenda,
+	and is of a person this cashier may work (all of them, or her own).
+	"""
+	for row in rows:
+		if row["busy"]:
+			continue
+		several = len(row["steps"]) > 1
+		for step in row["steps"]:
+			step["clock"] = _clock(clocks.get(step["booking"])) if several else row["clock"]
+		allowed = bool(capabilities.get("clock")) and bool(row["can"]["clock"])
+		for step in row["steps"]:
+			step["can_time"] = (
+				allowed
+				and bool(step["booking"])
+				and (step["starts_at"] or "")[:10] == str(day)
+				and (visibility == "all" or step["sales_person"] in mine)
+			)
 
 
 # //// Neoffice — added (maintenance#2798). `paid_at_the_till`: a paid appointment whose sale the till validated (a POS invoice, `is_pos`),
@@ -982,6 +1074,7 @@ def get_appointments(pos_profile: str, date: str | None = None, providers=None) 
 	rows, people = [], []
 	if view is None:
 		visibility = "all"
+		clocks = _clocks_of_the_day([], listed, pos_profile)
 		for row in listed.values():
 			first = row["steps"][0] if row["steps"] else {}
 			rows.append(
@@ -999,7 +1092,7 @@ def get_appointments(pos_profile: str, date: str | None = None, providers=None) 
 						"invoice": row["invoice"],
 					},
 					row,
-					_clock(None),
+					_clock_of_the_appointment(row, _clock(None), clocks),
 					True,
 					capabilities,
 					row["booking"],
@@ -1020,8 +1113,10 @@ def get_appointments(pos_profile: str, date: str | None = None, providers=None) 
 				taken.extend(a for a in (person.get("appointments") or []) if isinstance(a, dict))
 		taken.extend(a for a in unassigned if isinstance(a, dict))
 		taken = taken[:MOST_APPOINTMENTS]
-		clocks = _clocks_of(
-			[b for b in (_text(a.get("booking")) for a in taken if not cint(a.get("busy"))) if b], pos_profile
+		clocks = _clocks_of_the_day(
+			[b for b in (_text(a.get("booking")) for a in taken if not cint(a.get("busy"))) if b],
+			listed,
+			pos_profile,
 		)
 		for n, appointment in enumerate(taken):
 			booking = _text(appointment.get("booking"))
@@ -1031,7 +1126,7 @@ def get_appointments(pos_profile: str, date: str | None = None, providers=None) 
 				_appointment(
 					appointment,
 					listed.get(booking),
-					_clock(clocks.get(booking)),
+					_clock_of_the_appointment(listed.get(booking), _clock(clocks.get(booking)), clocks),
 					may,
 					capabilities,
 					booking if booking and not cint(appointment.get("busy")) else f"busy-{n}",
@@ -1041,6 +1136,7 @@ def get_appointments(pos_profile: str, date: str | None = None, providers=None) 
 	if names:
 		rows = [r for r in rows if any(s["sales_person"] in names for s in r["steps"])]
 	rows.sort(key=lambda row: row["starts_at"] or "")
+	_time_the_steps(rows, clocks, capabilities, visibility, mine, day)
 	# //// Neoffice — where the money of a paid appointment came in (maintenance#2798): the money lane says how much was paid, not where, and
 	# //// the sheet called a haircut paid by card at the counter « Already paid online ».
 	_say_where_it_was_paid(rows)
@@ -1386,7 +1482,8 @@ def clock_appointment(
 ) -> dict:
 	"""Start, pause or finish the time of an appointment (a person has one running at a time: starting another puts hers in pause by itself).
 	The till never sends an hour: the server reads its clock. `sales_person` only when the person timed is not the appointment's own one
-	(the front desk that starts it for a colleague). Answers the state of the clock afterwards."""
+	(the front desk that starts it for a colleague). Answers the state of the clock afterwards.
+	`booking` is the booking of the step to time: an appointment done in several times has a clock per step (voie 4, 19.11.2026)."""
 	_gate(pos_profile)
 	person = _a_person(sales_person)
 	booking = _gate(pos_profile, booking, date, person)

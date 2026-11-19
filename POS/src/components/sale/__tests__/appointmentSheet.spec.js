@@ -258,6 +258,142 @@ describe("the sheet of an appointment", () => {
 		expect(wrapper.get("[data-test='sheet-move']").attributes("disabled")).toBeDefined()
 	})
 
+	//// Neoffice — a clock per step (voie 4, 19.11.2026): a colour in several times is not one chrono
+	describe("an appointment done in several times has a clock per step", () => {
+		const step = (rank, label, person, clockState, extra = {}) => ({
+			step: rank,
+			booking: `COL-${rank}`,
+			label,
+			item_code: `SRV-${rank}`,
+			starts_at: `2026-11-10 ${["09:00", "10:00", "10:45"][rank - 1]}:00`,
+			ends_at: `2026-11-10 ${["09:30", "10:45", "11:00"][rank - 1]}:00`,
+			sales_person: person,
+			sales_person_name: person,
+			clock: { state: clockState, active_seconds: 0, started_at: null, ended_at: null, estimated: false, paused_by: null, ...extra.clock },
+			can_time: true,
+			...extra.step,
+		})
+		const colour = (clocks = ["done", "running", "idle"], extra = {}) => ({
+			booking: "COL-1",
+			state: "started",
+			clock: { state: "running", active_seconds: 2400, started_at: "2026-11-10 09:00:00" },
+			steps: [
+				step(1, "Application", "Luc", clocks[0], { clock: { active_seconds: 1800, started_at: "2026-11-10 09:00:00", ended_at: "2026-11-10 09:30:00" } }),
+				step(2, "Rinse and cut", "Sonia", clocks[1], { clock: { active_seconds: 600, started_at: "2026-11-10 10:00:00" } }),
+				step(3, "Finish", "Luc", clocks[2]),
+			],
+			...extra,
+		})
+
+		it("says where each step stands and how long it has really run, and the appointment's time is the sum with the steps done counted", () => {
+			const wrapper = mountIt(colour())
+
+			expect(wrapper.get("[data-test='sheet-step-clock-0']").text()).toBe("Finished at 09:30")
+			expect(wrapper.get("[data-test='sheet-step-active-time-0']").text()).toBe("0:30")
+			expect(wrapper.get("[data-test='sheet-step-clock-1']").text()).toBe("Started at 10:00")
+			expect(wrapper.get("[data-test='sheet-step-active-time-1']").text()).toBe("0:10")
+			expect(wrapper.get("[data-test='sheet-step-clock-2']").text()).toBe("Not started")
+			expect(wrapper.get("[data-test='sheet-active-time']").text()).toBe("0:40")
+			expect(wrapper.get("[data-test='sheet-time-text']").text()).toBe("1 of 3 steps finished")
+		})
+
+		it("says the wait between two steps, with no clock and no gesture, and nothing where the next step follows at once", () => {
+			const wrapper = mountIt(colour())
+
+			expect(wrapper.get("[data-test='sheet-wait-0']").text()).toBe("Wait · 30 min")
+			expect(wrapper.find("[data-test='sheet-wait-1']").exists()).toBe(false)
+			expect(wrapper.find("[data-test='sheet-wait-2']").exists()).toBe(false)
+			expect(wrapper.get("[data-test='sheet-wait-0']").findAll("button")).toHaveLength(0)
+		})
+
+		it("offers each step the gestures of where it stands, and none for a step done", () => {
+			const wrapper = mountIt(colour(["done", "running", "idle"]))
+
+			const gesturesOf = (at) =>
+				wrapper
+					.findAll("button")
+					.map((node) => node.attributes("data-test"))
+					.filter((name) => new RegExp(`^sheet-step-(start|pause|finish)-${at}$`).test(name))
+			expect(gesturesOf(0)).toEqual([])
+			expect(gesturesOf(1)).toEqual(["sheet-step-pause-1", "sheet-step-finish-1"])
+			expect(gesturesOf(2)).toEqual(["sheet-step-start-2"])
+			const paused = mountIt(colour(["done", "paused", "idle"]))
+			expect(paused.get("[data-test='sheet-step-start-1']").text()).toBe("Resume the time")
+			expect(paused.get("[data-test='sheet-step-clock-1']").text()).toBe("In pause")
+		})
+
+		it("times the step that is pressed, by its own booking, never the first one, then reads the agenda again", async () => {
+			const wrapper = mountIt(colour(["done", "running", "idle"]))
+
+			await wrapper.get("[data-test='sheet-step-start-2']").trigger("click")
+			expect(gestures.clock).toHaveBeenLastCalledWith("COL-3", "start")
+			await wrapper.get("[data-test='sheet-step-finish-1']").trigger("click")
+			expect(gestures.clock).toHaveBeenLastCalledWith("COL-2", "finish")
+			await wrapper.get("[data-test='sheet-step-pause-1']").trigger("click")
+			expect(gestures.clock).toHaveBeenLastCalledWith("COL-2", "pause")
+			expect(store.refresh).toHaveBeenCalledTimes(3)
+		})
+
+		it("offers no gesture on a step this cashier may not time, nor where the site has no time lane, and still says where it stands", () => {
+			const colleague = colour(["idle", "idle", "idle"])
+			colleague.steps[1].can_time = false
+			// A step that names no booking has nothing to be timed by, whatever the site says of the cashier
+			delete colleague.steps[2].booking
+			const wrapper = mountIt(colleague)
+			expect(wrapper.find("[data-test='sheet-step-start-0']").exists()).toBe(true)
+			expect(wrapper.find("[data-test='sheet-step-start-1']").exists()).toBe(false)
+			expect(wrapper.find("[data-test='sheet-step-start-2']").exists()).toBe(false)
+			expect(wrapper.get("[data-test='sheet-step-clock-1']").text()).toBe("Not started")
+
+			store.capabilities = { ...store.capabilities, clock: false }
+			const none = mountIt(colour(["idle", "idle", "idle"]))
+			expect(none.find("[data-test^='sheet-step-start-']").exists()).toBe(false)
+		})
+
+		it("does not offer the time twice: the bottom buttons collect, since they would only reach the first step", () => {
+			const wrapper = mountIt(colour(["idle", "idle", "idle"], { state: "booked", clock: { state: "idle", active_seconds: 0 } }))
+
+			expect(wrapper.find("[data-test='sheet-start']").exists()).toBe(false)
+			expect(wrapper.find("[data-test='sheet-pause']").exists()).toBe(false)
+			expect(wrapper.get("[data-test='sheet-collect']").text()).toBe("Collect")
+			const running = mountIt(colour())
+			expect(running.find("[data-test='sheet-finish']").exists()).toBe(false)
+			expect(running.find("[data-test='sheet-pause']").exists()).toBe(false)
+		})
+
+		it("says which steps are estimates, step by step, and not once for the whole", () => {
+			const forgotten = colour(["done", "done", "done"], { state: "finished", clock: { state: "done", active_seconds: 4000, estimated: true, ended_at: "2026-11-10 11:00:00" }, can: {} })
+			forgotten.steps[1].clock = { ...forgotten.steps[1].clock, ended_at: "2026-11-10 10:45:00", estimated: true }
+
+			const wrapper = mountIt(forgotten)
+
+			expect(wrapper.get("[data-test='sheet-step-clock-1']").text()).toBe("Finished at 10:45 · Duration estimated")
+			expect(wrapper.get("[data-test='sheet-step-clock-0']").text()).toBe("Finished at 09:30")
+			expect(wrapper.find("[data-test='sheet-estimated']").exists()).toBe(false)
+			expect(wrapper.get("[data-test='sheet-time-text']").text()).toBe("3 of 3 steps finished")
+		})
+
+		it("keeps an appointment of one step as it was: one clock, its own gestures at the bottom, no list of steps", () => {
+			const wrapper = mountIt()
+
+			expect(wrapper.find("[data-test='sheet-step-times']").exists()).toBe(false)
+			expect(wrapper.get("[data-test='sheet-start']").text()).toBe("Start")
+			expect(wrapper.get("[data-test='sheet-time-text']").text()).toBe("Not started")
+		})
+
+		it("waits for the network to time a step", async () => {
+			const wrapper = mountIt(colour(["done", "running", "idle"]))
+			network.go(true)
+			await flushPromises()
+
+			expect(wrapper.get("[data-test='sheet-step-start-2']").attributes("disabled")).toBeDefined()
+			expect(wrapper.get("[data-test='sheet-step-finish-1']").attributes("disabled")).toBeDefined()
+			network.go(false)
+			await flushPromises()
+			expect(wrapper.get("[data-test='sheet-step-start-2']").attributes("disabled")).toBeUndefined()
+		})
+	})
+
 	describe("repeating an appointment", () => {
 		it("offers « Repeat » beside the other gestures when the site repeats, and emits it for the page to open its dialog", async () => {
 			store.capabilities = { ...store.capabilities, repeat: true }

@@ -223,37 +223,21 @@ class TestASaleMadeOfflineReplacesTheDraftOfItsAppointment(FrappeTestCase):
 
 	# The time
 
-	def test_an_appointment_nobody_started_is_closed_as_unmeasured_with_its_sale(self):
+	# //// Neoffice — the sale tells the time lane to `close` the whole appointment, whatever its first step said before (voie 4, 19.11.2026): a step
+	# //// nobody started is closed as unmeasured, one running or in pause is finished, one already finished is left alone, EVERY step of an
+	# //// appointment done in several times; the lane does it (its own suite proves it), the till no longer reads the clock to choose.
+	def test_the_time_of_an_appointment_is_closed_with_its_sale_whatever_its_clock_said_and_the_clock_is_not_read(
+		self,
+	):
 		self.site_has(clocks=["the_clocks"], time_action=["time_action"])
-		SITE["clocks"] = {"BKG-1": {"status": "Not started"}}
-
-		self.paid_online(appointment="BKG-1")
-
-		self.assertEqual(
-			SITE["calls"],
-			[("clocks", ["BKG-1"]), ("time_action", "BKG-1", "close_unmeasured", self.fx.profile, None)],
-		)
-
-	def test_an_appointment_that_is_running_or_in_pause_is_finished_with_its_sale(self):
-		self.site_has(clocks=["the_clocks"], time_action=["time_action"])
-		for status in ("In progress", "Paused"):
+		for status in ("Not started", "In progress", "Paused", "Finished"):
 			with self.subTest(status=status):
 				SITE.clear()
 				SITE["clocks"] = {"BKG-1": {"status": status}}
 
 				self.paid_online(appointment="BKG-1")
 
-				self.assertEqual(
-					self.calls("time_action"), [("time_action", "BKG-1", "finish", self.fx.profile, None)]
-				)
-
-	def test_an_appointment_already_finished_is_left_alone(self):
-		self.site_has(clocks=["the_clocks"], time_action=["time_action"])
-		SITE["clocks"] = {"BKG-1": {"status": "Finished"}}
-
-		self.paid_online(appointment="BKG-1")
-
-		self.assertEqual(self.calls("time_action"), [])
+				self.assertEqual(SITE["calls"], [("time_action", "BKG-1", "close", self.fx.profile, None)])
 
 	def test_a_site_with_no_time_lane_is_asked_nothing_about_time(self):
 		self.site_has(sold=["sold"])
@@ -268,7 +252,7 @@ class TestASaleMadeOfflineReplacesTheDraftOfItsAppointment(FrappeTestCase):
 
 		synced = self.replay(self.the_offline_sale())
 
-		self.assertEqual([call[0] for call in SITE["calls"]], ["sold", "clocks", "time_action"])
+		self.assertEqual([call[0] for call in SITE["calls"]], ["sold", "time_action"])
 		self.assertEqual(SITE["calls"][0][2], synced["name"])
 
 	# A site that fails
