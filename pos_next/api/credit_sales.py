@@ -24,6 +24,76 @@ CUSTOMER_CREDIT_OR_FILTERS = {
 }
 
 
+# //// Neoffice — added (no upstream equivalent): the advances of a customer that the SITE lets the till spend as her credit (NeoSalon, voie 4, 19.11.2026). A customer who
+# //// asked to keep, as a credit, what she paid online beyond her sale has it on her account as an unallocated payment; the till never offered an advance (its balance counts
+# //// invoices only) and offers credit only where a setting is on. The site names the Payment Entries it offers (`pos_next_customer_credit_offered(customer, company,
+# //// pos_profile)`); the till reads what is left of each, and refuses any that is not hers, not of this company or no longer unallocated. Nothing else changes: a customer the
+# //// site names nothing for sees her till as before.
+CREDIT_OFFERED_HOOK = "pos_next_customer_credit_offered"
+MOST_OFFERED = 20
+
+
+def _credit_offered(customer, company, pos_profile=None) -> list:
+	"""The advances (Payment Entries) the site offers for this customer in this company, as the rows `get_available_credit` gives for an advance; [] when none."""
+	if not customer or not company:
+		return []
+	names = []
+	for path in frappe.get_hooks(CREDIT_OFFERED_HOOK) or []:
+		try:
+			answer = frappe.get_attr(path)(customer, company, pos_profile)
+		except Exception:
+			frappe.log_error("The customer credit hook failed", f"{path}\n{frappe.get_traceback()}")
+			continue
+		if isinstance(answer, list | tuple):
+			names += [name for name in answer if isinstance(name, str) and name and name not in names]
+	return _advances_named(names[:MOST_OFFERED], customer, company) if names else []
+
+
+def _advances_named(names, customer, company) -> list:
+	return frappe.get_all(
+		"Payment Entry",
+		filters={
+			"name": ["in", names],
+			"party": customer,
+			"company": company,
+			"docstatus": 1,
+			"payment_type": "Receive",
+			"unallocated_amount": [">", 0],
+		},
+		fields=["name", "unallocated_amount", "posting_date", "paid_amount", "mode_of_payment", "modified"],
+		order_by="posting_date desc",
+	)
+
+
+def _advance_source(row) -> dict:
+	"""An unallocated advance as a credit source of the till."""
+	return {
+		"type": "Advance",
+		"credit_origin": row.name,
+		"total_credit": flt(row.unallocated_amount),
+		"available_credit": flt(row.unallocated_amount),
+		"source_type": "Payment Entry",
+		"posting_date": row.posting_date,
+		"reference_amount": row.paid_amount,
+		"mode_of_payment": row.mode_of_payment,
+		"credit_to_redeem": 0,  # User will set this
+		"modified": row.modified,  # For optimistic locking
+	}
+
+
+def _till_takes_customer_credit(pos_profile) -> bool:
+	"""Whether the till spends customer credit (a credit sale or the credit of a customer is allowed on its POS Settings); True when no till is named, as before."""
+	if not pos_profile:
+		return True
+	settings = frappe.db.get_value(
+		"POS Settings",
+		{"pos_profile": pos_profile},
+		["allow_credit_sale", "allow_customer_credit_payment"],
+		as_dict=True,
+	)
+	return bool(settings and (cint(settings.allow_credit_sale) or cint(settings.allow_customer_credit_payment)))
+
+
 @frappe.whitelist()
 # //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
 def get_customer_balance(customer: str | None, company: str | None = None):
@@ -94,6 +164,10 @@ def get_customer_balance(customer: str | None, company: str | None = None):
 			)
 		)
 
+		# //// Neoffice — what the site offers the till of her advances counts as her credit (see CREDIT_OFFERED_HOOK above); only for a company named
+		offered_credit = sum(flt(row.unallocated_amount) for row in _credit_offered(customer, company))
+		total_credit += offered_credit
+
 		# Net balance: positive = owes, negative = has credit
 		net_balance = total_outstanding - total_credit
 
@@ -101,6 +175,8 @@ def get_customer_balance(customer: str | None, company: str | None = None):
 			"total_outstanding": total_outstanding,
 			"total_credit": total_credit,
 			"net_balance": net_balance,
+			# //// Neoffice — the part of that credit the site offers the till of her advances: the payment window shows the credit block for it even where the till's setting is off
+			"offered_credit": offered_credit,
 		}
 
 	except Exception as e:
@@ -167,6 +243,10 @@ def get_available_credit(customer: str | None, company: str | None, pos_profile=
 
 	require_bound_company(company)
 
+	# //// Neoffice — a till that takes no customer credit spends only what the site offers it of her advances (see CREDIT_OFFERED_HOOK above); the others are as before
+	if not _till_takes_customer_credit(pos_profile):
+		return [_advance_source(row) for row in _credit_offered(customer, company, pos_profile)]
+
 	total_credit = []
 
 	# Get invoices with negative outstanding (customer credit)
@@ -216,21 +296,9 @@ def get_available_credit(customer: str | None, company: str | None, pos_profile=
 		order_by="posting_date desc",
 	)
 
+	# //// Neoffice — the row of an advance is built by _advance_source, shared with what the site offers (see CREDIT_OFFERED_HOOK above)
 	for row in advances:
-		total_credit.append(
-			{
-				"type": "Advance",
-				"credit_origin": row.name,
-				"total_credit": flt(row.unallocated_amount),
-				"available_credit": flt(row.unallocated_amount),
-				"source_type": "Payment Entry",
-				"posting_date": row.posting_date,
-				"reference_amount": row.paid_amount,
-				"mode_of_payment": row.mode_of_payment,
-				"credit_to_redeem": 0,  # User will set this
-				"modified": row.modified,  # For optimistic locking
-			}
-		)
+		total_credit.append(_advance_source(row))
 
 	return total_credit
 

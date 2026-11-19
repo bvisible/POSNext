@@ -52,6 +52,11 @@ describe("the payment window and what was paid online beyond the sale", () => {
 		const sale = (await import("../../../pages/POSSale.vue?raw")).default
 		const store = (await import("../../../stores/posCart.js?raw")).default
 		const invoice = (await import("../../../composables/useInvoice.js?raw")).default
+		// what became of the surplus is said in the page's own currency (the bare function defaults to dollars) and in the dialog of the sale, not in a toast the next one replaces
+		expect(sale).toContain('(amount) => formatSiteCurrency(Number(amount) || 0, shiftStore.currency || "CHF")')
+		expect(sale).not.toMatch(/surplusOutcomeMessage\(\s*result\.online_surplus \?\? result\.message\?\.online_surplus,\s*formatSiteCurrency\s*\)/)
+		expect(sale).toContain('data-test="success-online-surplus"')
+		expect(sale).toContain("lastOnlineSurplusSaid.value = surplusOutcomeMessage(")
 		expect(sale).toContain("keepOnlineSurplusAsCredit: Boolean(paymentData.keep_online_surplus_as_credit),")
 		expect(sale).toContain("keep_online_surplus_as_credit: paymentData.keep_online_surplus_as_credit ? 1 : 0,")
 		expect(store).toContain("Boolean(options.keepOnlineSurplusAsCredit)")

@@ -1956,6 +1956,17 @@
 						>
 							{{ __("Change given: {0}", [formatCurrency(uiStore.lastChangeAmount)]) }}
 						</p>
+						<!-- //// Neoffice — what became of what the customer had paid online beyond the sale: said where the cashier reads what she tells her, not in a toast the next one replaces (voie 4, 19.11.2026). -->
+						<p
+							v-if="lastOnlineSurplusSaid"
+							data-test="success-online-surplus"
+							:class="[
+								'mt-1 text-sm font-medium',
+								lastOnlineSurplusSaid.type === 'warning' ? 'text-amber-700' : 'text-gray-700',
+							]"
+						>
+							{{ lastOnlineSurplusSaid.text }}
+						</p>
 						<!-- //// Neoffice — on a credit or partial sale, what the customer still owes. -->
 						<p v-if="uiStore.lastDueAmount > 0" class="mt-1 text-sm font-medium text-amber-700">
 							{{ __("Remaining: {0}", [formatCurrency(uiStore.lastDueAmount)]) }}
@@ -2597,6 +2608,8 @@ import { kitchenFollowers, offeredSourceFields } from "@/utils/offeredRows";
 const cartStore = usePOSCartStore();
 const shiftStore = usePOSShiftStore();
 const uiStore = usePOSUIStore();
+//// Neoffice — what became of what the customer had paid online beyond her sale, for the dialog of the sale just booked ({ type, text } or null; voie 4, 19.11.2026)
+const lastOnlineSurplusSaid = ref(null);
 const offlineStore = usePOSSyncStore();
 const draftsStore = usePOSDraftsStore();
 const posSettingsStore = usePOSSettingsStore();
@@ -5203,14 +5216,12 @@ async function handlePaymentCompleted(paymentData) {
 				const dueAmount =
 					Number(result.outstanding_amount ?? result.message?.outstanding_amount) || 0;
 				//// Neoffice — what became of what the customer had paid online beyond the sale (back on her card, kept as her credit, or to give back by hand), said once the sale is booked (voie 4, 19.11.2026)
-				const surplusSaid = surplusOutcomeMessage(
+				lastOnlineSurplusSaid.value = surplusOutcomeMessage(
 					result.online_surplus ?? result.message?.online_surplus,
-					formatSiteCurrency
+					(amount) => formatSiteCurrency(Number(amount) || 0, shiftStore.currency || "CHF")
 				);
-				if (surplusSaid) {
-					if (surplusSaid.type === "warning") showWarning(surplusSaid.text);
-					else showSuccess(surplusSaid.text);
-				}
+				//// Neoffice — a refusal of the card is a warning the cashier must not miss: it is also said at once (the dialog of the sale shows it too)
+				if (lastOnlineSurplusSaid.value?.type === "warning") showWarning(lastOnlineSurplusSaid.value.text);
 
 				//// Neoffice — upstream closed the payment dialog HERE, after submission returned. It is
 				//// now closed before the call, together with raising the processing overlay, so the

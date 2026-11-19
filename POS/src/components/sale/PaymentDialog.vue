@@ -3254,6 +3254,8 @@ const customerCreditResource = createResource({
 	},
 });
 
+//// Neoffice — a customer whose advance the site offers the till as her credit (what she asked to keep of a down payment paid online beyond her sale, NeoSalon voie 4,
+//// 19.11.2026) is offered it even where the till's credit setting is off: the balance says `offered_credit`, and her credit sources are read before the block shows.
 const customerBalanceResource = createResource({
 	url: "pos_next.api.credit_sales.get_customer_balance",
 	makeParams() {
@@ -3267,13 +3269,22 @@ const customerBalanceResource = createResource({
 	auto: false,
 	onSuccess(data) {
 		log.debug("[PaymentDialog] Customer balance loaded:", data);
-		customerBalance.value = data || {
-			total_outstanding: 0,
-			total_credit: 0,
-			net_balance: 0,
+		//// Neoffice — settled once the credit sources are listed, when the site offers this customer some (see above)
+		const settle = () => {
+			customerBalance.value = data || {
+				total_outstanding: 0,
+				total_credit: 0,
+				net_balance: 0,
+			};
+			log.debug("[PaymentDialog] Net balance:", customerBalance.value.net_balance);
+			loadingCredit.value = false;
 		};
-		log.debug("[PaymentDialog] Net balance:", customerBalance.value.net_balance);
-		loadingCredit.value = false;
+		//// Neoffice — see above: the credit offered by the site is listed before the block appears, never an empty list behind a button
+		if (Number(data?.offered_credit) > 0 && !(props.allowCreditSale || props.allowCustomerCreditPayment)) {
+			customerCreditResource.fetch().then(settle, settle);
+		} else {
+			settle();
+		}
 	},
 	onError(error) {
 		log.error("[PaymentDialog] Error loading customer balance:", error);
@@ -3766,7 +3777,8 @@ const totalPaid = computed(() => {
 // - allowCreditSale is enabled (allows going into debt AND using credit)
 // - allowCustomerCreditPayment is enabled (only allows using positive credit)
 const customerCreditEnabled = computed(() => {
-	return props.allowCreditSale || props.allowCustomerCreditPayment;
+	//// Neoffice — or the site offers this customer an advance of hers (see customerBalanceResource above)
+	return props.allowCreditSale || props.allowCustomerCreditPayment || Number(customerBalance.value.offered_credit) > 0;
 });
 
 const totalAvailableCredit = computed(() => {
@@ -4153,10 +4165,15 @@ watch(
 	() => [props.customer, props.company, props.allowCreditSale, props.allowCustomerCreditPayment],
 	([customer, company, allowCreditSale, allowCustomerCreditPayment]) => {
 		const creditEnabled = allowCreditSale || allowCustomerCreditPayment;
-		if (creditEnabled && customer && company) {
+		//// Neoffice — the balance is read for every customer: the site may offer her an advance of hers (see customerBalanceResource); her credit sources only where the till takes credit
+		//// Neoffice — never another customer's credit while hers is read (the balance of the one before would offer her an advance that is not hers)
+		customerBalance.value = { total_outstanding: 0, total_credit: 0, net_balance: 0 };
+		customerCredit.value = [];
+		if (customer && company) {
 			log.debug("[PaymentDialog] Pre-fetching customer balance for:", customer);
 			customerBalanceResource.fetch();
-			customerCreditResource.fetch();
+			//// Neoffice — her credit sources only where the till takes credit (see the balance above)
+			if (creditEnabled) customerCreditResource.fetch();
 		}
 	},
 	{ immediate: true }
@@ -4191,9 +4208,10 @@ watch(show, async (newVal) => {
 		// customerBalance is also refetched so the displayed balance reflects
 		// any redemptions made by other cashiers since the last open.
 		const creditEnabled = props.allowCreditSale || props.allowCustomerCreditPayment;
-		if (creditEnabled && props.customer && props.company) {
+		//// Neoffice — see the pre-fetch above: the balance is read for every customer, her credit sources where the till takes credit (or the site offers her some)
+		if (props.customer && props.company) {
 			customerBalanceResource.fetch();
-			customerCreditResource.fetch();
+			if (creditEnabled) customerCreditResource.fetch();
 		}
 		selectedSalesPersons.value = [];
 		salesPersonSearch.value = "";
