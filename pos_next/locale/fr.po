@@ -26723,3 +26723,66 @@ msgstr "La vente ne peut pas être encaissée tant que le client a payé en lign
 msgid "Overpaid online: {0}"
 msgstr "Trop-payé en ligne : {0}"
 
+#: POS/src/composables/useAppointmentDoor.js:69
+#, python-brace-format
+msgid "The appointment {0} is not on the agenda of {1}."
+msgstr "Le rendez-vous {0} ne figure pas à l'agenda du {1}."
+
+#: POS/src/components/sale/AppointmentSheet.vue:43
+msgid "Customer file"
+msgstr "Fiche client"
+
+#: POS/src/components/sale/AppointmentSheet.vue:45
+msgid "Last formula"
+msgstr "Dernière formule"
+
+#: POS/src/components/sale/AppointmentSheet.vue:50
+msgid "No colour formula on file."
+msgstr "Aucune formule de couleur enregistrée."
+
+#: POS/src/components/sale/AppointmentSheet.vue:233
+msgid "No allergy test on file."
+msgstr "Aucun test d'allergie enregistré."
+
+#: POS/src/components/sale/AppointmentSheet.vue:234
+#, python-brace-format
+msgid "Allergy test to do again (done on {0})."
+msgstr "Test d'allergie à refaire (fait le {0})."
+
+#: POS/src/components/sale/AppointmentSheet.vue:235
+#, python-brace-format
+msgid "Allergy test done again before each colouring (last on {0})."
+msgstr "Test d'allergie refait avant chaque coloration (dernier le {0})."
+
+#: POS/src/components/sale/AppointmentSheet.vue:236
+#, python-brace-format
+msgid "Allergy test done on {0}, valid until {1}."
+msgstr "Test d'allergie fait le {0}, valable jusqu'au {1}."
+
+#: POS/src/components/sale/AppointmentSheet.vue:236
+#, python-brace-format
+msgid "Allergy test done on {0}."
+msgstr "Test d'allergie fait le {0}."
+
+#: POS/src/components/sale/AppointmentSheet.vue:241
+#, python-brace-format
+msgid "Agreement for health data given on {0}."
+msgstr "Accord pour les données de santé donné le {0}."
+
+#: POS/src/components/sale/AppointmentSheet.vue:241
+msgid "Agreement for health data given."
+msgstr "Accord pour les données de santé donné."
+
+#: POS/src/components/sale/AppointmentSheet.vue:242
+#, python-brace-format
+msgid "Agreement for health data withdrawn on {0}."
+msgstr "Accord pour les données de santé retiré le {0}."
+
+#: POS/src/components/sale/AppointmentSheet.vue:242
+msgid "Agreement for health data withdrawn."
+msgstr "Accord pour les données de santé retiré."
+
+#: POS/src/components/sale/AppointmentSheet.vue:243
+msgid "No agreement for health data on file."
+msgstr "Aucun accord pour les données de santé enregistré."
+

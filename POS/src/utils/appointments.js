@@ -21,6 +21,13 @@ export function hourOf(moment) {
 	return minutes === null ? "" : clockOf(minutes)
 }
 
+/** A day (`YYYY-MM-DD`) as the cashier reads it (« 2 Oct 2026 »), in the language of the till; "" for anything else. */
+export function dayText(day) {
+	const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(day || "")
+	if (!match) return ""
+	return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })
+}
+
 /** A length of time for the screen: 45 → « 45 min », 90 → « 1 h 30 », 120 → « 2 h ». */
 export function lengthOf(minutes) {
 	const total = Math.max(0, Math.round(Number(minutes) || 0))

@@ -38,6 +38,20 @@
 				</div>
 			</div>
 
+			<!-- //// Neoffice — the customer's file, read only (voie 4, 19.11.2026): her last colour formula, her allergy test and her agreement for health data; never the health remarks, the photos or what a test found -->
+			<div v-if="customerFile" class="flex flex-col gap-1 border-t border-gray-100 px-4 py-3 text-sm dark:border-gray-800" data-test="sheet-file">
+				<div class="text-xs font-semibold uppercase tracking-wider text-gray-500">{{ __("Customer file") }}</div>
+				<div v-if="customerFile.formula" class="flex flex-col gap-0.5" data-test="sheet-file-formula">
+					<div class="text-gray-900 dark:text-gray-100"><b dir="auto">{{ customerFile.formula.service || __("Last formula") }}</b><span v-if="customerFile.formula.applied_on" class="text-gray-500"> · {{ dayText(customerFile.formula.applied_on) }}</span></div>
+					<div v-if="customerFile.formula.formula" dir="auto" class="whitespace-pre-line text-gray-700 dark:text-gray-200">{{ customerFile.formula.formula }}</div>
+					<div v-if="formulaMeta" class="text-xs text-gray-500">{{ formulaMeta }}</div>
+					<div v-if="customerFile.formula.remark" dir="auto" class="text-xs text-gray-500">{{ customerFile.formula.remark }}</div>
+				</div>
+				<div v-else-if="customerFile.allergy" class="text-gray-500" data-test="sheet-file-no-formula">{{ __("No colour formula on file.") }}</div>
+				<div v-if="allergyText" :class="customerFile.allergy.state === 'due' || customerFile.allergy.state === 'none' ? 'font-semibold text-amber-700 dark:text-amber-300' : 'text-gray-700 dark:text-gray-200'" data-test="sheet-file-allergy">{{ allergyText }}</div>
+				<div :class="customerFile.agreement.state === 'given' ? 'text-gray-700 dark:text-gray-200' : 'text-gray-500'" data-test="sheet-file-agreement">{{ agreementText }}</div>
+			</div>
+
 			<!-- //// Neoffice — the cabin (NeoSalon, cabins level 2, 16.11.2026): where the care is, and the cabins it could be put in. The reservation decides what is free and why not; it asks again, under its locks, when the cashier chooses. -->
 			<div v-if="cabinInfo.cabin || cabinInfo.needs" class="flex flex-col gap-2 border-t border-gray-100 px-4 py-3 dark:border-gray-800" data-test="sheet-cabin-section">
 				<div class="text-xs font-semibold uppercase tracking-wider text-gray-500">{{ __("Cabin") }}</div>
@@ -99,7 +113,7 @@ import { useAppointment } from "@/composables/useAppointment"
 import { useAppointmentsStore } from "@/stores/appointments"
 import { usePOSSettingsStore } from "@/stores/posSettings"
 import { usePOSShiftStore } from "@/stores/posShift"
-import { activeTimeOf, cabinOf, colorOfStep, hourOf, initialsOf, lengthOf, minutesLongOf, standsAs, whyNotCabin } from "@/utils/appointments"
+import { activeTimeOf, cabinOf, colorOfStep, dayText, hourOf, initialsOf, lengthOf, minutesLongOf, standsAs, whyNotCabin } from "@/utils/appointments"
 import { formatCurrency } from "@/utils/currency"
 
 const props = defineProps({
@@ -111,7 +125,7 @@ const store = useAppointmentsStore()
 const shiftStore = usePOSShiftStore()
 //// Neoffice — what the till collects: the price announced at booking, or the day's (setting « Price collected »)
 const announcedPrice = computed(() => usePOSSettingsStore().appointmentsAtTheAnnouncedPrice)
-const { clock, cabinsOf, changeCabin } = useAppointment()
+const { clock, cabinsOf, changeCabin, fileOf } = useAppointment()
 const busy = ref(false)
 
 const PILLS = {
@@ -194,6 +208,45 @@ async function loadTheCabins() {
 	if (asked === cabinAsked) cabinOptions.value = list
 }
 watch(() => [props.appointment.booking, props.appointment.starts_at, cabinInfo.value.cabin?.name, cabinInfo.value.needs], loadTheCabins, { immediate: true })
+
+//// Neoffice — the customer's file, read only (NeoSalon, voie 4, 19.11.2026): her last colour formula, where her allergy test stands and her agreement for health data, asked when the sheet opens on an appointment.
+//// Never the health remarks, the photos or what a test found. A site that keeps no customer record, or a till that cannot ask (offline), shows nothing.
+const customerFile = ref(null)
+let fileAsked = 0
+
+async function loadTheFile() {
+	const asked = ++fileAsked
+	const row = props.appointment
+	if (!store.capabilities.file || !row.booking) {
+		customerFile.value = null
+		return
+	}
+	const file = await fileOf(row.booking)
+	// An answer that comes after the sheet moved to another appointment is of no use
+	if (asked === fileAsked) customerFile.value = file
+}
+watch(() => props.appointment.booking, loadTheFile, { immediate: true })
+
+const allergyText = computed(() => {
+	const test = customerFile.value?.allergy
+	if (!test) return ""
+	if (test.state === "none") return __("No allergy test on file.")
+	if (test.state === "due") return __("Allergy test to do again (done on {0}).", [dayText(test.tested_on)])
+	if (test.state === "before_each") return __("Allergy test done again before each colouring (last on {0}).", [dayText(test.tested_on)])
+	return test.valid_until ? __("Allergy test done on {0}, valid until {1}.", [dayText(test.tested_on), dayText(test.valid_until)]) : __("Allergy test done on {0}.", [dayText(test.tested_on)])
+})
+const agreementText = computed(() => {
+	const agreement = customerFile.value?.agreement
+	if (!agreement) return ""
+	if (agreement.state === "given") return agreement.on ? __("Agreement for health data given on {0}.", [dayText(agreement.on)]) : __("Agreement for health data given.")
+	if (agreement.state === "withdrawn") return agreement.on ? __("Agreement for health data withdrawn on {0}.", [dayText(agreement.on)]) : __("Agreement for health data withdrawn.")
+	return __("No agreement for health data on file.")
+})
+const formulaMeta = computed(() => {
+	const formula = customerFile.value?.formula
+	if (!formula) return ""
+	return [formula.developer, formula.minutes ? __("{0} min", [formula.minutes]) : ""].filter(Boolean).join(" · ")
+})
 
 async function changeTheCabin(event) {
 	const chosen = event.target.value

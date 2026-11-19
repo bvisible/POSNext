@@ -2387,6 +2387,8 @@ import NewAppointmentDialog from "@/components/sale/NewAppointmentDialog.vue";
 //// Neoffice — dialog for the "Repeat this appointment" gesture at the till (c729537 "feat(appointments): « Repeat this appointment » at the till").
 import RepeatAppointmentDialog from "@/components/sale/RepeatAppointmentDialog.vue";
 import { useAppointment } from "@/composables/useAppointment";
+//// Neoffice — the door of an appointment (`/pos?appointment=`, voie 4, 19.11.2026; added file).
+import { useAppointmentDoor } from "@/composables/useAppointmentDoor";
 import { useAppointmentsStore } from "@/stores/appointments";
 //// Neoffice — the till's screen while its agenda is open: the whole width, no cart beside it, the sheet over the agenda (NeoSalon B', 16.11.2026)
 import { tillLayout } from "@/utils/appointments";
@@ -3064,6 +3066,8 @@ watch(
 	{ immediate: true },
 );
 onUnmounted(() => appointmentsStore.reset());
+//// Neoffice — the door of an appointment: `/pos?appointment=<booking>&date=<day>` opens the agenda on that day with the appointment's sheet open (voie 4, 19.11.2026)
+useAppointmentDoor({ store: appointmentsStore, offered: appointmentsOffered, show: showAppointments });
 
 // The sheet of the appointment open in the agenda, and the dialogs of the gestures that need one
 const sheetShown = computed(() => appointmentsShown.value && Boolean(appointmentsStore.selected));

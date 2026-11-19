@@ -297,6 +297,13 @@ export function useAppointment() {
 		return Array.isArray(list) ? list : []
 	}
 
+	/**
+	 * The customer's file of an appointment, read only: `{ has_record, agreement: { state, on }, formula, allergy }`, or null (the site keeps none, or it could not be read). Never the health remarks.
+	 */
+	async function fileOf(booking) {
+		return ask("get_appointment_file", { booking }, { quiet: true })
+	}
+
 	/** Put an appointment in another cabin (the reservation asks again, under its locks). @returns {Promise<object|null>} `{ booking, from, to }` */
 	async function changeCabin(booking, equipment) {
 		const done = await ask("change_appointment_cabin", { booking, equipment })
@@ -430,6 +437,7 @@ export function useAppointment() {
 		checkMove,
 		move,
 		cabinsOf,
+		fileOf,
 		changeCabin,
 		cancel,
 		clock,

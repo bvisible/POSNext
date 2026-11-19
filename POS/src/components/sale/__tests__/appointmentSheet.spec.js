@@ -2,6 +2,8 @@
 // It offers the gesture a person makes at this point as the one filled button (start, finish, collect), keeps the others as outlined ones, grays what `can` forbids,
 // hides what the site does not have, and asks the time lane only through the store's capabilities; it never shows a cost.
 // @vitest-environment jsdom
+import fs from "node:fs"
+import path from "node:path"
 import { flushPromises, mount } from "@vue/test-utils"
 import { createPinia, setActivePinia } from "pinia"
 import { beforeEach, describe, expect, it, vi } from "vitest"
@@ -13,6 +15,7 @@ const gestures = vi.hoisted(() => ({
 	clock: vi.fn(async () => ({ clock: { state: "running" } })),
 	cabinsOf: vi.fn(async () => []),
 	changeCabin: vi.fn(async () => null),
+	fileOf: vi.fn(async () => null),
 }))
 const till = vi.hoisted(() => ({ appointmentsAtTheAnnouncedPrice: false }))
 
@@ -23,6 +26,7 @@ vi.mock("@/composables/useAppointment", () => ({
 		clock: gestures.clock,
 		cabinsOf: gestures.cabinsOf,
 		changeCabin: gestures.changeCabin,
+		fileOf: gestures.fileOf,
 		loadDay: vi.fn(async () => null),
 	}),
 }))
@@ -413,5 +417,116 @@ describe("the sheet of an appointment", () => {
 			expect(paid.find("[data-test='sheet-cabin']").exists()).toBe(false)
 			expect(gestures.cabinsOf).not.toHaveBeenCalled()
 		})
+	})
+})
+
+describe("the customer's file on the sheet of an appointment", () => {
+	let store
+	const file = (extra = {}) => ({
+		has_record: true,
+		agreement: { state: "given", on: "2026-10-02" },
+		formula: { service: "Balayage", applied_on: "2026-10-02", formula: "6.1 + 7.3 (30 g)", developer: "Oxydant 6 %", minutes: 35, remark: "Racines plus claires" },
+		allergy: { state: "current", tested_on: "2026-10-01", valid_until: "2027-04-01", rule: "After a number of months" },
+		...extra,
+	})
+	const mountIt = (extra = {}) => mount(AppointmentSheet, { props: { appointment: appointment(extra) }, global: { mocks: { __: globalThis.__ } } })
+
+	beforeEach(() => {
+		setActivePinia(createPinia())
+		gestures.fileOf.mockReset()
+		gestures.fileOf.mockResolvedValue(file())
+		store = useAppointmentsStore()
+		store.capabilities = { file: true, clock: true, move: true, cancel: true, check_move: true, book: true }
+	})
+
+	it("reads the file of the customer when the sheet opens, and shows her last formula, her allergy test and her agreement", async () => {
+		const wrapper = mountIt()
+		await flushPromises()
+
+		expect(gestures.fileOf).toHaveBeenCalledWith("BKG-1")
+		const text = wrapper.get("[data-test='sheet-file']").text()
+		expect(text).toContain("Customer file")
+		expect(text).toContain("Balayage")
+		expect(text).toContain("6.1 + 7.3 (30 g)")
+		expect(text).toContain("Oxydant 6 % · 35 min")
+		expect(text).toContain("Racines plus claires")
+		expect(wrapper.get("[data-test='sheet-file-allergy']").text()).toMatch(/Allergy test done on .*2026, valid until .*2027\./)
+		expect(wrapper.get("[data-test='sheet-file-agreement']").text()).toMatch(/Agreement for health data given on .*2026\./)
+	})
+
+	it("says where the allergy test stands in each case, and warns when it is to be done again or was never done", async () => {
+		const cases = [
+			[{ state: "none", tested_on: null, valid_until: null }, "No allergy test on file.", true],
+			[{ state: "due", tested_on: "2026-01-05", valid_until: "2026-07-05" }, "Allergy test to do again", true],
+			[{ state: "before_each", tested_on: "2026-10-01", valid_until: null }, "Allergy test done again before each colouring", false],
+			[{ state: "current", tested_on: "2026-10-01", valid_until: null }, "Allergy test done on", false],
+		]
+		for (const [allergy, wanted, warns] of cases) {
+			gestures.fileOf.mockResolvedValue(file({ allergy: { rule: "x", ...allergy } }))
+			const wrapper = mountIt()
+			await flushPromises()
+			const line = wrapper.get("[data-test='sheet-file-allergy']")
+			expect(line.text()).toContain(wanted)
+			expect(line.classes().some((name) => name.includes("amber"))).toBe(warns)
+		}
+	})
+
+	it("says what the agreement is: given, withdrawn or not on file", async () => {
+		for (const [agreement, wanted] of [
+			[{ state: "withdrawn", on: "2026-11-02" }, "Agreement for health data withdrawn on"],
+			[{ state: "none", on: null }, "No agreement for health data on file."],
+		]) {
+			gestures.fileOf.mockResolvedValue(file({ agreement }))
+			const wrapper = mountIt()
+			await flushPromises()
+			expect(wrapper.get("[data-test='sheet-file-agreement']").text()).toContain(wanted)
+		}
+	})
+
+	it("says that no colour formula is on file, and shows nothing of the formula's own lines then", async () => {
+		gestures.fileOf.mockResolvedValue(file({ formula: null }))
+		const wrapper = mountIt()
+		await flushPromises()
+
+		expect(wrapper.get("[data-test='sheet-file-no-formula']").text()).toBe("No colour formula on file.")
+		expect(wrapper.find("[data-test='sheet-file-formula']").exists()).toBe(false)
+	})
+
+	it("asks nothing and shows nothing where the site does not let the till read the file", async () => {
+		store.capabilities = { ...store.capabilities, file: false }
+		const wrapper = mountIt()
+		await flushPromises()
+
+		expect(gestures.fileOf).not.toHaveBeenCalled()
+		expect(wrapper.find("[data-test='sheet-file']").exists()).toBe(false)
+	})
+
+	it("shows nothing when the file could not be read (no record kept, a slow link, offline)", async () => {
+		gestures.fileOf.mockResolvedValue(null)
+		const wrapper = mountIt()
+		await flushPromises()
+
+		expect(gestures.fileOf).toHaveBeenCalled()
+		expect(wrapper.find("[data-test='sheet-file']").exists()).toBe(false)
+	})
+
+	it("ignores an answer that comes after the sheet moved to another appointment", async () => {
+		let release
+		gestures.fileOf.mockImplementationOnce(() => new Promise((resolve) => (release = resolve)))
+		gestures.fileOf.mockResolvedValueOnce(file({ formula: { service: "Brushing", applied_on: "2026-09-01", formula: "no colour", developer: null, minutes: null, remark: null } }))
+		const wrapper = mountIt()
+		await wrapper.setProps({ appointment: appointment({ booking: "BKG-2", key: "BKG-2" }) })
+		await flushPromises()
+		release(file({ formula: { service: "Old customer", applied_on: "2026-01-01", formula: "stale", developer: null, minutes: null, remark: null } }))
+		await flushPromises()
+
+		const text = wrapper.get("[data-test='sheet-file']").text()
+		expect(text).toContain("Brushing")
+		expect(text).not.toContain("Old customer")
+	})
+
+	it("never draws a health remark or a photo: the sheet has no place for them", () => {
+		const source = fs.readFileSync(path.resolve(__dirname, "../AppointmentSheet.vue"), "utf-8")
+		expect(source).not.toMatch(/health_notes|customerFile\.(health|photo)/i)
 	})
 })

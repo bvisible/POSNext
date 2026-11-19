@@ -17,6 +17,7 @@ const {
 	columnsOf,
 	dayMoved,
 	dayRange,
+	dayText,
 	firstStepOf,
 	freeHoursOf,
 	hourOf,
@@ -416,3 +417,18 @@ describe("gridTemplateOf", () => {
 	})
 })
 
+describe("a day as the cashier reads it", () => {
+	it("is written by the till's language and keeps the day it was given (no shift by the time zone)", () => {
+		const text = dayText("2026-10-02")
+		expect(text).toContain("2026")
+		expect(text).toMatch(/\b2\b/)
+		// the first and the last day of a year are not moved into the neighbouring one
+		expect(dayText("2026-01-01")).toContain("2026")
+		expect(dayText("2026-12-31")).toContain("31")
+	})
+
+	it("reads the day of a date and time too, and says nothing for anything else", () => {
+		expect(dayText("2026-10-02 14:30:00")).toBe(dayText("2026-10-02"))
+		for (const odd of ["", null, undefined, "yesterday", "02.10.2026"]) expect(dayText(odd)).toBe("")
+	})
+})

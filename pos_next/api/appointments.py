@@ -94,6 +94,8 @@ REPEAT_HOOK = "pos_next_appointment_repeat"
 PACKAGES_HOOK = "pos_next_customer_packages"
 USE_PACKAGE_HOOK = "pos_next_use_package"
 TILL_CAPABILITIES_HOOK = "pos_next_till_capabilities"
+# //// Neoffice — the customer's file, read only, from the appointment's sheet (NeoSalon, voie 4, 19.11.2026): the last colour formula, the allergy test and the agreement for health data
+FILE_HOOK = "pos_next_appointment_customer_file"
 
 # More than a salon books in a day, and than one appointment holds lines: a hook that answers more is cut, never trusted
 MOST_APPOINTMENTS = 300
@@ -347,12 +349,13 @@ def without_independents(sales_persons: list[dict]) -> list[dict]:
 
 
 def _what_the_site_runs() -> dict:
-	"""`{"repeat": bool, "packages": bool}`: what the site says it runs today (hook `pos_next_till_capabilities`).
+	"""`{"repeat": bool, "packages": bool, "file": bool}`: what the site says it runs today (hook `pos_next_till_capabilities`).
 
 	A theme declares its hooks on every site, so the presence of a hook says nothing about whether the feature is on: a button shown for a feature that is off
 	ends in a refusal. No hook, a hook that fails or that answers anything but a mapping says that nothing runs. It must never break the agenda.
 	"""
-	nothing = {"repeat": False, "packages": False}
+	# //// Neoffice — `file`: the site keeps customer records and lets the till read them (19.11.2026)
+	nothing = {"repeat": False, "packages": False, "file": False}
 	try:
 		answer = _first_answer(TILL_CAPABILITIES_HOOK)
 	except REFUSALS:
@@ -380,6 +383,8 @@ def _capabilities() -> dict:
 		"repeat": bool(frappe.get_hooks(REPEAT_HOOK)) and runs["repeat"],
 		"packages": bool(frappe.get_hooks(PACKAGES_HOOK) and frappe.get_hooks(USE_PACKAGE_HOOK))
 		and runs["packages"],
+		# //// Neoffice — the customer's file on the sheet (19.11.2026)
+		"file": bool(frappe.get_hooks(FILE_HOOK)) and runs["file"],
 		"book": bool(
 			frappe.get_hooks(BOOK_HOOK) and frappe.get_hooks(SERVICES_HOOK) and frappe.get_hooks(SLOTS_HOOK)
 		),
@@ -1118,6 +1123,67 @@ def get_appointment_cabins(booking: str, pos_profile: str, date: str | None = No
 			}
 		)
 	return options
+
+
+# //// Neoffice — the customer's file of an appointment, read only (NeoSalon, voie 4, 19.11.2026). The site decides what the till may read of it and says nothing of the health
+# //// remarks, the photos or what an allergy test found: this only cleans what it gives (fixed shape, short texts, days as days) and cuts what is not in the contract.
+FILE_AGREEMENTS = ("given", "withdrawn", "none")
+FILE_ALLERGY_STATES = ("none", "current", "due", "before_each")
+_DAY = re.compile(r"^\d{4}-\d{2}-\d{2}")
+
+
+def _day(value) -> str | None:
+	"""A day as the site writes it (`YYYY-MM-DD`), or None."""
+	text = _text(str(value) if value is not None else None, 10)
+	return text if text and _DAY.match(text) else None
+
+
+def _file(value) -> dict | None:
+	"""The customer's file as the till shows it: `{has_record, agreement: {state, on}, formula: {...} | None, allergy: {state, tested_on, valid_until, rule} | None}`; None for anything else."""
+	if not isinstance(value, dict):
+		return None
+	agreement = value.get("agreement") if isinstance(value.get("agreement"), dict) else {}
+	formula = value.get("formula") if isinstance(value.get("formula"), dict) else None
+	allergy = value.get("allergy") if isinstance(value.get("allergy"), dict) else None
+	state = agreement.get("state")
+	return {
+		"has_record": bool(cint(value.get("has_record"))),
+		"agreement": {
+			"state": state if state in FILE_AGREEMENTS else "none",
+			"on": _day(agreement.get("on")),
+		},
+		"formula": (
+			{
+				"service": _text(formula.get("service")),
+				"applied_on": _day(formula.get("applied_on")),
+				"formula": _text(formula.get("formula"), 600),
+				"developer": _text(formula.get("developer"), 80),
+				"minutes": cint(formula.get("minutes")) or None,
+				"remark": _text(formula.get("remark"), 300),
+			}
+			if formula
+			else None
+		),
+		"allergy": (
+			{
+				"state": allergy.get("state") if allergy.get("state") in FILE_ALLERGY_STATES else "none",
+				"tested_on": _day(allergy.get("tested_on")),
+				"valid_until": _day(allergy.get("valid_until")),
+				"rule": _text(allergy.get("rule"), 60),
+			}
+			if allergy
+			else None
+		),
+	}
+
+
+@frappe.whitelist()
+def get_appointment_file(booking: str, pos_profile: str, date: str | None = None) -> dict | None:
+	"""The file of the customer of an appointment, read only: where she stands on her colour formula, her allergy test and her agreement for health data.
+
+	None where the site keeps no customer record. Never the health remarks, the photos or what a test found: the site does not give them, and this would not pass them on."""
+	booking = _gate(pos_profile, booking, date)
+	return _file(_first_answer(FILE_HOOK, pos_profile, booking))
 
 
 @frappe.whitelist()
