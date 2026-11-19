@@ -26807,3 +26807,14 @@ msgstr "Absence de {0}"
 msgid "No network: a new appointment, and a new customer, wait for it."
 msgstr "Pas de réseau : un nouveau rendez-vous et un nouveau client attendent le réseau."
 
+#: POS/src/components/sale/AppointmentSheet.vue:218
+#: pos_next/public/pos/assets/POSSale-CV2BY1TU.js:18
+#, python-brace-format
+msgid "Wait · {0}"
+msgstr "Attente · {0}"
+
+#: POS/src/components/sale/AppointmentSheet.vue:202
+#: pos_next/public/pos/assets/POSSale-CV2BY1TU.js:18
+#, python-brace-format
+msgid "{0} of {1} steps finished"
+msgstr "{0} sur {1} étapes terminées"

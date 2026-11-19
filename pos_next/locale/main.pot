@@ -29805,3 +29805,14 @@ msgstr ""
 msgid "No network: a new appointment, and a new customer, wait for it."
 msgstr ""
 
+#: POS/src/components/sale/AppointmentSheet.vue:218
+#: pos_next/public/pos/assets/POSSale-CV2BY1TU.js:18
+#, python-brace-format
+msgid "Wait · {0}"
+msgstr ""
+
+#: POS/src/components/sale/AppointmentSheet.vue:202
+#: pos_next/public/pos/assets/POSSale-CV2BY1TU.js:18
+#, python-brace-format
+msgid "{0} of {1} steps finished"
+msgstr ""
