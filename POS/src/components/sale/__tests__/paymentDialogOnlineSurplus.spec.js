@@ -33,8 +33,29 @@ describe("the payment window and what was paid online beyond the sale", () => {
 		expect(finalises.slice(0, 1500)).not.toContain("Overpaid online")
 	})
 
-	it("says the credit kindly (information, not a refusal)", () => {
-		expect(dialogSource).toContain("the difference stays on her account as a credit")
+	it("says that the difference goes back on her card by default, and offers to keep it as her credit when she asks (information, not a refusal)", () => {
+		expect(dialogSource).toContain("the difference goes back to her on the card that paid")
+		expect(dialogSource).toContain("at her request, the difference stays on her account as a credit")
+		expect(dialogSource).toContain('data-test="payment-online-surplus-keep"')
+		expect(dialogSource).toContain('v-model="keepOnlineSurplusAsCredit"')
 		expect(dialogSource).not.toContain("The sale cannot be collected while")
+	})
+
+	it("keeps the choice off by default, forgets it with the surplus and at each opening, and sends it only with a surplus", () => {
+		expect(dialogSource).toContain("const keepOnlineSurplusAsCredit = ref(false);")
+		expect(dialogSource).toMatch(/watch\(onlineSurplus, \(surplus\) => \{\n\tif \(surplus <= 0\) keepOnlineSurplusAsCredit\.value = false;/)
+		expect(dialogSource).toContain("lockedTerminalPayments.value = [];\n\t\t//// Neoffice — the choice for an online surplus is the sale's, never the next one's")
+		expect(dialogSource).toContain("keep_online_surplus_as_credit: onlineSurplus.value > 0 && keepOnlineSurplusAsCredit.value ? 1 : 0,")
+	})
+
+	it("carries the choice from the dialog to the server, online and offline", async () => {
+		const sale = (await import("../../../pages/POSSale.vue?raw")).default
+		const store = (await import("../../../stores/posCart.js?raw")).default
+		const invoice = (await import("../../../composables/useInvoice.js?raw")).default
+		expect(sale).toContain("keepOnlineSurplusAsCredit: Boolean(paymentData.keep_online_surplus_as_credit),")
+		expect(sale).toContain("keep_online_surplus_as_credit: paymentData.keep_online_surplus_as_credit ? 1 : 0,")
+		expect(store).toContain("Boolean(options.keepOnlineSurplusAsCredit)")
+		expect(invoice).toContain("keepOnlineSurplusAsCredit = false")
+		expect(invoice).toContain("submitData.keep_online_surplus_as_credit = 1;")
 	})
 })

@@ -1,6 +1,10 @@
 //// Neoffice — added file (no upstream equivalent). What a customer paid online beyond the sale is not cash change (NeoSalon, voie 4, 19.11.2026).
-import { describe, expect, it } from "vitest"
-import { cashChangeOf, coversTheSale, onlineSurplusOf } from "../onlineSurplus"
+import { describe, expect, it, vi } from "vitest"
+import { cashChangeOf, coversTheSale, onlineSurplusOf, surplusOutcomeMessage } from "../onlineSurplus"
+
+vi.hoisted(() => {
+	globalThis.__ = (text, args) => (args ? text.replace(/{(\d+)}/g, (_, n) => args[n] ?? _) : text)
+})
 
 describe("the online money beyond a sale", () => {
 	it("is nothing while the sale needs all of it", () => {
@@ -59,5 +63,34 @@ describe("a sale that what was paid ahead online covers", () => {
 		expect(coversTheSale(undefined, 40)).toBe(false)
 		expect(coversTheSale("x", 40)).toBe(false)
 		expect(coversTheSale(null, null)).toBe(false)
+	})
+})
+
+describe("what the till says of an online surplus once the sale is booked", () => {
+	const format = (amount) => `CHF ${Number(amount).toFixed(2)}`
+
+	it("says that it went back on the card, with the amount", () => {
+		const said = surplusOutcomeMessage({ amount: 10, refunded: 10, kept: 0, to_refund: 0 }, format)
+		expect(said.type).toBe("success")
+		expect(said.text).toBe("CHF 10.00 refunded to the customer's card")
+	})
+
+	it("says that it stays her credit when the cashier kept it", () => {
+		const said = surplusOutcomeMessage({ amount: 10, refunded: 0, kept: 10, to_refund: 0 }, format)
+		expect(said.type).toBe("success")
+		expect(said.text).toBe("CHF 10.00 kept on the customer's account as a credit")
+	})
+
+	it("warns when the card refused, as the amount is then to give back by hand", () => {
+		const said = surplusOutcomeMessage({ amount: 10, refunded: 0, kept: 0, to_refund: 10 }, format)
+		expect(said.type).toBe("warning")
+		expect(said.text).toContain("refused the refund of CHF 10.00")
+	})
+
+	it("says nothing when the site said nothing, or a surplus of nothing", () => {
+		expect(surplusOutcomeMessage(undefined, format)).toBeNull()
+		expect(surplusOutcomeMessage(null, format)).toBeNull()
+		expect(surplusOutcomeMessage("odd", format)).toBeNull()
+		expect(surplusOutcomeMessage({ amount: 0, refunded: 0, kept: 0, to_refund: 0 }, format)).toBeNull()
 	})
 })

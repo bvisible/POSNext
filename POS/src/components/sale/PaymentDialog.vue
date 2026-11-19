@@ -1038,10 +1038,22 @@
 									>
 										{{ formatCurrency(onlineSurplus) }}
 									</div>
-									<!-- //// Neoffice — what becomes of it: her credit, never cash change. -->
-									<div class="mt-1 text-[11px] text-blue-700">
-										{{ __("She paid more online than the sale is worth: the difference stays on her account as a credit, it is not change to hand back in cash.") }}
+									<!-- //// Neoffice — what becomes of it (the salon's choice, 19.11.2026): it goes back on the card that paid; the cashier keeps it as her credit only when she asks; never cash change. -->
+									<div class="mt-1 text-[11px] text-blue-700" data-test="payment-online-surplus-text">
+										{{ keepOnlineSurplusAsCredit
+											? __("She paid more online than the sale is worth: at her request, the difference stays on her account as a credit.")
+											: __("She paid more online than the sale is worth: the difference goes back to her on the card that paid. It is not change to hand back in cash.") }}
 									</div>
+									<!-- //// Neoffice — the choice: back on her card (by default), or kept as a credit when she asks. -->
+									<label class="mt-1.5 flex items-center justify-center gap-2 text-[11px] text-blue-800">
+										<input
+											type="checkbox"
+											data-test="payment-online-surplus-keep"
+											v-model="keepOnlineSurplusAsCredit"
+											class="rounded border-blue-400"
+										/>
+										{{ __("She asks to keep it as a credit") }}
+									</label>
 								</div>
 								<!-- //// Neoffice — restaurant tips. Upstream POSNext is a retail POS: any overpayment -->
 								<!-- //// is change to hand back. In a restaurant the overpayment is usually a tip, so -->
@@ -3805,6 +3817,12 @@ const onlineSurplus = computed(() =>
 
 //// Neoffice — an appointment whose money came ahead, online, in full (a down payment as big as the sale, or a sale that shrank under it) has nothing left to
 //// collect: it is booked with no payment line of the till, the money being on the invoice already (voie 4, 19.11.2026). A restaurant keeps its own reading.
+//// Neoffice — the cashier's choice for what was paid online beyond the sale: back on the card that paid (by default), or kept as the customer's credit when she asks.
+const keepOnlineSurplusAsCredit = ref(false);
+watch(onlineSurplus, (surplus) => {
+	if (surplus <= 0) keepOnlineSurplusAsCredit.value = false;
+});
+
 const paidAheadInFull = computed(
 	() => !restaurantStore?.isEnabled && coversTheSale(props.guestPaidAmount, effectiveGrandTotal.value)
 );
@@ -4185,6 +4203,8 @@ watch(show, async (newVal) => {
 		//// entry the cashier cannot edit must never be inherited by the next one (bd9e2f30,
 		//// 2026-05-14 "replace Wallee terminal integration with unified Stripe Terminal driver").
 		lockedTerminalPayments.value = [];
+		//// Neoffice — the choice for an online surplus is the sale's, never the next one's (voie 4, 19.11.2026).
+		keepOnlineSurplusAsCredit.value = false;
 		applyWriteOff.value = false; // Reset write-off state
 		//// Neoffice — reset the loyalty redemption on open, so points offered to one customer
 		//// are not silently applied to the next (104959e6 + 64604eda, 2026-03-19).
@@ -5355,6 +5375,8 @@ function finalizePayment(isPartial) {
 		// the allow_credit_sale gate).
 		receivable_account: receivableAccount,
 		is_credit_sale: !!receivableAccount && paymentEntries.value.length === 0,
+		//// Neoffice — the cashier keeps the online surplus as the customer's credit because she asked; otherwise it goes back on her card (voie 4, 19.11.2026).
+		keep_online_surplus_as_credit: onlineSurplus.value > 0 && keepOnlineSurplusAsCredit.value ? 1 : 0,
 	};
 
 	log.debug("[PaymentDialog] Emitting payment-completed:", paymentData);

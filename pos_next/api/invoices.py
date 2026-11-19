@@ -1772,7 +1772,8 @@ def update_invoice(data):
 			copy_taxes_of_the_returned_sale(invoice_doc)
 
 		# Calculate totals and apply discounts (with rounding disabled)
-		invoice_doc.calculate_taxes_and_totals()
+		# //// Neoffice — within the advances the invoice carries (see _work_the_totals_out_within_the_advances above, voie 4, 19.11.2026)
+		_work_the_totals_out_within_the_advances(invoice_doc)
 		# //// debug: add more logging to trace discount persistence — 833ef3d
 
 		if invoice_doc.grand_total is None:
@@ -2283,6 +2284,13 @@ def _credit_named_by(customer_credit_dict):
 SALE_PAID_MARGIN = 0.05
 
 
+# //// Neoffice — added (no upstream equivalent): whether the cashier keeps what the customer paid online beyond the sale as her credit, because she asked (voie 4,
+# //// 19.11.2026). The site decides what becomes of that surplus (the reservation app gives it back on her card by default) and tells the till through the flags of the
+# //// invoice: `pos_next_keep_online_surplus_as_credit` in (this choice), `pos_next_online_surplus` out (`{amount, refunded, kept, to_refund}`, answered to the till).
+def _keeps_the_online_surplus_as_a_credit(data, invoice):
+	return bool(cint((data or {}).get("keep_online_surplus_as_credit") or (invoice or {}).get("keep_online_surplus_as_credit")))
+
+
 # //// Neoffice — added (no upstream equivalent): a POS sale that an ADVANCE of the invoice covers (the down payment of an appointment, paid online, NeoSalon voie 4,
 # //// 19.11.2026) has nothing to collect at the till, but ERPNext still wants one mode of payment on a POS invoice at submit (« At least one mode of payment is required »).
 # //// It gets one line of the profile's default mode, of nothing: no money moves through it. Any other sale is left as it is.
@@ -2299,6 +2307,25 @@ def _a_line_for_a_sale_its_advances_cover(invoice_doc, pos_profile=None):
 	)
 	if mode:
 		invoice_doc.append("payments", {"mode_of_payment": mode, "amount": 0})
+
+
+# //// Neoffice — added (no upstream equivalent): the totals of a sale that carries advance rows (the down payment of an appointment, paid online, NeoSalon voie 4,
+# //// 19.11.2026). A sale at the till can shrink under what was paid ahead (a line taken off, a discount): ERPNext's totals then refuse the advance (« Advance amount cannot be
+# //// greater than »), and the till could not save the sale. The advance rows are taken at nothing while the totals are worked out, then given back in their order at what the
+# //// sale is worth, never more: what the sale does not take stays unallocated on the payment, which is the customer's account (the site decides what becomes of it).
+def _work_the_totals_out_within_the_advances(invoice_doc):
+	rows = [row for row in invoice_doc.get("advances") or [] if flt(row.get("allocated_amount")) > 0]
+	wanted = [(row, flt(row.allocated_amount)) for row in rows]
+	for row in rows:
+		row.allocated_amount = 0
+	invoice_doc.calculate_taxes_and_totals()
+	if not wanted:
+		return
+	left = flt(invoice_doc.get("rounded_total") or invoice_doc.get("grand_total"))
+	for row, amount in wanted:
+		row.allocated_amount = flt(min(amount, max(left, 0.0)), row.precision("allocated_amount"))
+		left -= flt(row.allocated_amount)
+	invoice_doc.calculate_taxes_and_totals()
 
 
 def _require_a_paid_sale(invoice_doc, credit):
@@ -2863,6 +2890,8 @@ def submit_invoice(invoice=None, data=None):
 		# //// POS sale being submitted (cloudprnt prints its receipt and opens the cash drawer) does not
 		# //// act long after the customer has left (maintenance#1935).
 		invoice_doc.flags.pos_next_offline_sync = bool(offline_id)
+		# //// Neoffice — the choice for an online surplus travels on the invoice to the site (see _keeps_the_online_surplus_as_a_credit above).
+		invoice_doc.flags.pos_next_keep_online_surplus_as_credit = _keeps_the_online_surplus_as_a_credit(data, invoice)
 
 		from pos_next.authorization.gate import TOKEN_FLAG
 
@@ -3070,6 +3099,10 @@ def submit_invoice(invoice=None, data=None):
 		# Include offline_id in response for client-side tracking
 		if offline_id:
 			result["offline_id"] = offline_id
+
+		# //// Neoffice — what the site did with what the customer had paid online beyond the sale, for the till to say (see _keeps_the_online_surplus_as_a_credit above).
+		if invoice_doc.flags.get("pos_next_online_surplus"):
+			result["online_surplus"] = invoice_doc.flags.pos_next_online_surplus
 
 		return result
 

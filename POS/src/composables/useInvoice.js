@@ -1410,7 +1410,9 @@ export function useInvoice() {
 		//// was made offline, replaces the appointment's draft (NeoSalon, step 2, lot G4; pos_next.api.appointments.after_a_sale).
 		appointment = null,
 		//// Neoffice — the day of that appointment: the server reads the cashier's right to it in the day view of that day
-		appointmentDate = null
+		appointmentDate = null,
+		//// Neoffice — the cashier keeps what the customer paid online beyond the sale as her credit, because she asked: otherwise the gateway gives it back on her card (voie 4, 19.11.2026)
+		keepOnlineSurplusAsCredit = false
 	) {
 		/**
 		 * Two-step submission process with mutex protection:
@@ -1551,6 +1553,10 @@ export function useInvoice() {
 				Object.assign(submitData, authorizationFieldsFor(rawItems));
 				if (isCreditSale && invoicePayments.length === 0) {
 					submitData.is_credit_sale = 1;
+				}
+				//// Neoffice — see the parameter above (voie 4, 19.11.2026)
+				if (keepOnlineSurplusAsCredit) {
+					submitData.keep_online_surplus_as_credit = 1;
 				}
 
 				try {

@@ -870,7 +870,9 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			options.receivableAccount || null,
 			//// Neoffice — the appointment of a salon this sale collects (NeoSalon, step 2, lot G4)
 			appointment.value?.booking || null,
-			appointment.value?.starts_at?.slice(0, 10) || null
+			appointment.value?.starts_at?.slice(0, 10) || null,
+			//// Neoffice — the cashier keeps the online surplus as the customer's credit because she asked (voie 4, 19.11.2026)
+			Boolean(options.keepOnlineSurplusAsCredit)
 		);
 		// Reset write-off amount and loyalty after successful submission
 		if (result) {

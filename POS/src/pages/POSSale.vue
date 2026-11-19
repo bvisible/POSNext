@@ -2545,6 +2545,8 @@ import { call } from "@/utils/apiWrapper";
 import { ensureCashRounding } from "@/utils/cashRounding";
 //// Neoffice — amounts in the site's number format (formatCurrency / formatCleaningPrice below).
 import { formatCurrency as formatSiteCurrency, formatCurrencyNumber } from "@/utils/currency";
+//// Neoffice — what became of an online surplus, said after the sale (voie 4, 19.11.2026)
+import { surplusOutcomeMessage } from "@/utils/onlineSurplus";
 //// Neoffice — nextTick added to the vue import: several of our flows have to wait for
 //// the cart to render before reaching into it — auto-opening the price numpad on a
 //// zero-price item (5dddc528, 2026-01-14) and the modifiers dialog on a dish just added
@@ -4962,6 +4964,8 @@ async function handlePaymentCompleted(paymentData) {
 				change_amount: paymentData.change_amount || 0,
 				is_credit_sale: paymentData.is_credit_sale ? 1 : 0,
 				receivable_account: paymentData.receivable_account || null,
+				//// Neoffice — the cashier keeps what was paid online beyond the sale as the customer's credit when she asks; it goes back on her card otherwise (voie 4, 19.11.2026)
+				keep_online_surplus_as_credit: paymentData.keep_online_surplus_as_credit ? 1 : 0,
 				edited_from: editingOfflineContext?.originalOfflineId || null,
 				//// Neoffice — the appointment of a salon this sale collects: when the queue replays it, the server tells the reservation, which replaces the appointment's draft (NeoSalon, lot G4)
 				appointment: cartStore.appointment?.booking || null,
@@ -5158,6 +5162,8 @@ async function handlePaymentCompleted(paymentData) {
 			const result = await cartStore.submitInvoice({
 				isCreditSale: Boolean(paymentData.is_credit_sale),
 				receivableAccount: paymentData.receivable_account || null,
+				//// Neoffice — see the offline payload above: the online surplus goes back on her card unless she asked to keep it
+				keepOnlineSurplusAsCredit: Boolean(paymentData.keep_online_surplus_as_credit),
 			});
 			//// Neoffice — submit timing probe kept from the payment-latency work (2584aa58,
 			//// 2026-03-24 "performance timing logs").
@@ -5196,6 +5202,15 @@ async function handlePaymentCompleted(paymentData) {
 				//// Neoffice — what is still owed, from the server (0 for a paid sale, rounding included).
 				const dueAmount =
 					Number(result.outstanding_amount ?? result.message?.outstanding_amount) || 0;
+				//// Neoffice — what became of what the customer had paid online beyond the sale (back on her card, kept as her credit, or to give back by hand), said once the sale is booked (voie 4, 19.11.2026)
+				const surplusSaid = surplusOutcomeMessage(
+					result.online_surplus ?? result.message?.online_surplus,
+					formatSiteCurrency
+				);
+				if (surplusSaid) {
+					if (surplusSaid.type === "warning") showWarning(surplusSaid.text);
+					else showSuccess(surplusSaid.text);
+				}
 
 				//// Neoffice — upstream closed the payment dialog HERE, after submission returned. It is
 				//// now closed before the call, together with raising the processing overlay, so the

@@ -26823,3 +26823,30 @@ msgstr "{0} sur {1} étapes terminées"
 msgid "She paid more online than the sale is worth: the difference stays on her account as a credit, it is not change to hand back in cash."
 msgstr "Elle a payé en ligne plus que le montant de la vente : la différence reste sur son compte sous forme d'avoir, elle n'est pas à rendre en espèces."
 
+#: POS/src/components/sale/PaymentDialog.vue:1044
+msgid "She paid more online than the sale is worth: at her request, the difference stays on her account as a credit."
+msgstr "Elle a payé en ligne plus que la valeur de la vente : à sa demande, la différence reste sur son compte en avoir."
+
+#: POS/src/components/sale/PaymentDialog.vue:1045
+msgid "She paid more online than the sale is worth: the difference goes back to her on the card that paid. It is not change to hand back in cash."
+msgstr "Elle a payé en ligne plus que la valeur de la vente : la différence lui est remboursée sur la carte qui a payé. Ce n'est pas une monnaie à rendre en espèces."
+
+#: POS/src/components/sale/PaymentDialog.vue:1055
+msgid "She asks to keep it as a credit"
+msgstr "Elle demande à garder ce montant en avoir."
+
+#: POS/src/utils/onlineSurplus.js:29
+#, python-brace-format
+msgid "{0} refunded to the customer's card"
+msgstr "{0} remboursé sur la carte de la cliente"
+
+#: POS/src/utils/onlineSurplus.js:34
+#, python-brace-format
+msgid "The card refused the refund of {0}: it stays on her account, to give back by hand"
+msgstr "La carte a refusé le remboursement de {0} : le montant reste sur son compte, à rembourser à la main."
+
+#: POS/src/utils/onlineSurplus.js:38
+#, python-brace-format
+msgid "{0} kept on the customer's account as a credit"
+msgstr "{0} conservé en avoir sur le compte de la cliente"
+

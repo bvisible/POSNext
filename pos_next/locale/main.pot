@@ -29821,3 +29821,30 @@ msgstr ""
 msgid "She paid more online than the sale is worth: the difference stays on her account as a credit, it is not change to hand back in cash."
 msgstr ""
 
+#: POS/src/components/sale/PaymentDialog.vue:1044
+msgid "She paid more online than the sale is worth: at her request, the difference stays on her account as a credit."
+msgstr ""
+
+#: POS/src/components/sale/PaymentDialog.vue:1045
+msgid "She paid more online than the sale is worth: the difference goes back to her on the card that paid. It is not change to hand back in cash."
+msgstr ""
+
+#: POS/src/components/sale/PaymentDialog.vue:1055
+msgid "She asks to keep it as a credit"
+msgstr ""
+
+#: POS/src/utils/onlineSurplus.js:29
+#, python-brace-format
+msgid "{0} refunded to the customer's card"
+msgstr ""
+
+#: POS/src/utils/onlineSurplus.js:34
+#, python-brace-format
+msgid "The card refused the refund of {0}: it stays on her account, to give back by hand"
+msgstr ""
+
+#: POS/src/utils/onlineSurplus.js:38
+#, python-brace-format
+msgid "{0} kept on the customer's account as a credit"
+msgstr ""
+

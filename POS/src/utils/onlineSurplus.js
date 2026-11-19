@@ -21,3 +21,22 @@ export function coversTheSale(paidOnline, due) {
 	const paid = roundCurrency(Number(paidOnline) || 0);
 	return paid > 0 && paid >= roundCurrency(Number(due) || 0);
 }
+
+/** What the till says once the sale is booked, from what the site answered (`online_surplus`: `{amount, refunded, kept, to_refund}`): `{ type, text }`, or null when there is nothing to say. @param format how an amount is written */
+export function surplusOutcomeMessage(outcome, format) {
+	if (!outcome || typeof outcome !== "object") return null;
+	if (Number(outcome.refunded) > 0) {
+		return { type: "success", text: __("{0} refunded to the customer's card", [format(outcome.refunded)]) };
+	}
+	if (Number(outcome.to_refund) > 0) {
+		return {
+			type: "warning",
+			text: __("The card refused the refund of {0}: it stays on her account, to give back by hand", [format(outcome.to_refund)]),
+		};
+	}
+	if (Number(outcome.kept) > 0) {
+		return { type: "success", text: __("{0} kept on the customer's account as a credit", [format(outcome.kept)]) };
+	}
+	return null;
+}
+
