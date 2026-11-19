@@ -15,6 +15,7 @@ const lane = vi.hoisted(() => ({
 	cancel: vi.fn(async () => ({ booking: "BKG-1", state: "cancelled", refunded: 0, to_refund: 0 })),
 	services: vi.fn(async () => []),
 	slots: vi.fn(async () => []),
+	calendarOf: vi.fn(async () => null),
 	book: vi.fn(async () => ({ booking: "BKG-9" })),
 	loadDay: vi.fn(async () => null),
 	call: vi.fn(async () => []),
@@ -39,7 +40,8 @@ vi.mock("../CustomerFormDialog.vue", () => ({
 	},
 }))
 vi.mock("@/utils/apiWrapper", () => ({ call: lane.call }))
-vi.mock("@/utils/offline/offlineState", () => ({ offlineState: { isOffline: false } }))
+const network = vi.hoisted(() => ({ isOffline: false }))
+vi.mock("@/utils/offline/offlineState", () => ({ offlineState: network }))
 vi.mock("@/utils/currency", () => ({ formatCurrency: (amount) => `CHF ${Number(amount).toFixed(2)}` }))
 
 const { useAppointmentsStore } = await import("@/stores/appointments")
@@ -253,6 +255,152 @@ describe("the move dialog", () => {
 
 		expect(wrapper.emitted("update:modelValue")).toBeUndefined()
 		expect(store.refresh).not.toHaveBeenCalled()
+	})
+})
+
+describe("the days of the business in the move dialog", () => {
+	const open = (extra = {}) => mountWith(MoveAppointmentDialog, { modelValue: true, appointment: appointment(), ...extra })
+	const calendar = {
+		available: true,
+		days: [
+			{ day: "2026-11-11", state: "closed", reason: "holiday", label: "Public holiday of the canton", periods: [] },
+			{ day: "2026-11-12", state: "special", reason: "special_hours", label: null, periods: [["10:00", "14:00"]] },
+		],
+		absences: [
+			{ sales_person: "Maya", sales_person_name: "Maya", from: "2026-11-13", to: "2026-11-14", kind: "leave", reason: "Annual leave" },
+			{ sales_person: "Luc", sales_person_name: "Luc", from: "2026-11-15", to: "2026-11-15", kind: "leave", reason: null },
+		],
+	}
+
+	beforeEach(() => {
+		store.capabilities = { ...store.capabilities, calendar: true }
+		lane.calendarOf.mockReset()
+		lane.calendarOf.mockResolvedValue(calendar)
+	})
+
+	it("shows fourteen days from the appointment's own, asked once for that period", async () => {
+		const wrapper = open()
+		await flushPromises()
+
+		expect(lane.calendarOf).toHaveBeenCalledWith("2026-11-10", "2026-11-23")
+		const days = wrapper.findAll("[data-test^='move-day-']").map((node) => node.attributes("data-test"))
+		expect(days).toHaveLength(14)
+		expect(days[0]).toBe("move-day-2026-11-10")
+		expect(days[13]).toBe("move-day-2026-11-23")
+		expect(wrapper.get("[data-test='move-day-2026-11-10']").attributes("aria-pressed")).toBe("true")
+	})
+
+	it("cannot press a day the business is closed, and says why", async () => {
+		const wrapper = open()
+		await flushPromises()
+
+		const closed = wrapper.get("[data-test='move-day-2026-11-11']")
+		expect(closed.attributes("disabled")).toBeDefined()
+		expect(closed.attributes("title")).toBe("Closed that day · Public holiday of the canton")
+		await closed.trigger("click")
+		expect(wrapper.get("[data-test='move-day']").element.value).toBe("2026-11-10")
+	})
+
+	it("marks a day with other hours and says the hours", async () => {
+		const wrapper = open()
+		await flushPromises()
+
+		const special = wrapper.get("[data-test='move-day-2026-11-12']")
+		expect(special.attributes("disabled")).toBeUndefined()
+		expect(special.attributes("title")).toBe("Special hours · 10:00–14:00 · Special hours")
+		expect(special.classes().join(" ")).toContain("border-dashed")
+	})
+
+	it("marks the days the person of the appointment is away, and no other person's", async () => {
+		const wrapper = open()
+		await flushPromises()
+
+		expect(wrapper.find("[data-test='move-away-2026-11-13']").exists()).toBe(true)
+		expect(wrapper.find("[data-test='move-away-2026-11-14']").exists()).toBe(true)
+		expect(wrapper.find("[data-test='move-away-2026-11-15']").exists()).toBe(false)
+		expect(wrapper.get("[data-test='move-day-2026-11-13']").attributes("title")).toContain("Maya is away")
+	})
+
+	it("follows the person chosen: another person's absence is the one marked", async () => {
+		const wrapper = open()
+		await flushPromises()
+
+		await wrapper.get("[data-test='move-person']").setValue("Luc")
+
+		expect(wrapper.find("[data-test='move-away-2026-11-15']").exists()).toBe(true)
+		expect(wrapper.find("[data-test='move-away-2026-11-13']").exists()).toBe(false)
+	})
+
+	it("takes the day pressed as the day of the move and asks whether it fits", async () => {
+		vi.useFakeTimers()
+		const wrapper = open()
+		await vi.advanceTimersByTimeAsync(0)
+		await flushPromises()
+
+		await wrapper.get("[data-test='move-day-2026-11-16']").trigger("click")
+		await vi.advanceTimersByTimeAsync(350)
+
+		expect(wrapper.get("[data-test='move-day']").element.value).toBe("2026-11-16")
+		expect(lane.checkMove).toHaveBeenLastCalledWith("BKG-1", "2026-11-16 14:00:00", "Maya")
+	})
+
+	it("moves a week at a time, and asks the calendar again for the days it shows", async () => {
+		const wrapper = open()
+		await flushPromises()
+
+		await wrapper.get("[data-test='move-strip-next']").trigger("click")
+		await flushPromises()
+		expect(lane.calendarOf).toHaveBeenLastCalledWith("2026-11-17", "2026-11-30")
+		expect(wrapper.findAll("[data-test^='move-day-']")[0].attributes("data-test")).toBe("move-day-2026-11-17")
+
+		await wrapper.get("[data-test='move-strip-back']").trigger("click")
+		await flushPromises()
+		expect(lane.calendarOf).toHaveBeenLastCalledWith("2026-11-10", "2026-11-23")
+	})
+
+	it("brings the strip to a day typed in the field when it is out of its range", async () => {
+		const wrapper = open()
+		await flushPromises()
+
+		await wrapper.get("[data-test='move-day']").setValue("2026-12-20")
+		await flushPromises()
+
+		expect(lane.calendarOf).toHaveBeenLastCalledWith("2026-12-20", "2027-01-02")
+	})
+
+	it("shows no strip and asks nothing where the site has no calendar, or the calendar could not be read", async () => {
+		store.capabilities = { ...store.capabilities, calendar: false }
+		const without = open()
+		await flushPromises()
+		expect(lane.calendarOf).not.toHaveBeenCalled()
+		expect(without.find("[data-test='move-strip']").exists()).toBe(false)
+
+		store.capabilities = { ...store.capabilities, calendar: true }
+		lane.calendarOf.mockResolvedValue(null)
+		const unreadable = open()
+		await flushPromises()
+		expect(unreadable.find("[data-test='move-strip']").exists()).toBe(false)
+		lane.calendarOf.mockResolvedValue({ available: false, days: [], absences: [] })
+		const unavailable = open()
+		await flushPromises()
+		expect(unavailable.find("[data-test='move-strip']").exists()).toBe(false)
+	})
+
+	it("ignores an answer that comes after the strip moved again", async () => {
+		const wrapper = open()
+		await flushPromises()
+		let release
+		lane.calendarOf.mockImplementationOnce(() => new Promise((resolve) => (release = resolve)))
+		await wrapper.get("[data-test='move-strip-next']").trigger("click")
+		lane.calendarOf.mockResolvedValue({ available: true, days: [{ day: "2026-11-12", state: "closed", reason: null, label: "Right window", periods: [] }], absences: [] })
+		await wrapper.get("[data-test='move-strip-back']").trigger("click")
+		await flushPromises()
+		release({ available: true, days: [{ day: "2026-11-12", state: "closed", reason: null, label: "Stale window", periods: [] }], absences: [] })
+		await flushPromises()
+
+		expect(wrapper.findAll("[data-test^='move-day-']")[0].attributes("data-test")).toBe("move-day-2026-11-10")
+		expect(wrapper.get("[data-test='move-day-2026-11-12']").attributes("title")).toContain("Right window")
+		expect(wrapper.get("[data-test='move-day-2026-11-12']").attributes("title")).not.toContain("Stale")
 	})
 })
 
@@ -515,6 +663,21 @@ describe("the new appointment dialog", () => {
 			expect(lane.toast.showSuccess).toHaveBeenCalledWith("Customer Mme Neuve selected")
 		})
 
+		it("forgets the name it was opened on when it closes, so the same text typed again fills it again", async () => {
+			const wrapper = open()
+			await flushPromises()
+			await wrapper.get("[data-test='new-customer-search']").setValue("Neuve Claire")
+			await wrapper.get("[data-test='new-customer-create']").trigger("click")
+			expect(form(wrapper).props("initialName")).toBe("Neuve Claire")
+
+			form(wrapper).vm.$emit("update:modelValue", false)
+			await flushPromises()
+			expect(form(wrapper).props("initialName")).toBe("")
+
+			await wrapper.get("[data-test='new-customer-create']").trigger("click")
+			expect(form(wrapper).props("initialName")).toBe("Neuve Claire")
+		})
+
 		it("leaves the form closed when the dialog opens again", async () => {
 			const wrapper = open()
 			await flushPromises()
@@ -528,6 +691,27 @@ describe("the new appointment dialog", () => {
 			expect(wrapper.find("[data-test='customer-form']").exists()).toBe(false)
 			expect(wrapper.find("[data-test='new-customer-chosen']").exists()).toBe(false)
 		})
+	})
+
+	it("says that a new appointment, and a new customer, wait for the network", async () => {
+		network.isOffline = true
+		try {
+			const wrapper = open()
+			await flushPromises()
+
+			expect(wrapper.get("[data-test='new-offline']").text()).toContain("No network")
+			expect(wrapper.get("[data-test='new-customer-create']").attributes("disabled")).toBeDefined()
+		} finally {
+			network.isOffline = false
+		}
+	})
+
+	it("shows no such note while the network is there", async () => {
+		const wrapper = open()
+		await flushPromises()
+
+		expect(wrapper.find("[data-test='new-offline']").exists()).toBe(false)
+		expect(wrapper.get("[data-test='new-customer-create']").attributes("disabled")).toBeUndefined()
 	})
 
 	it("says that there is no free slot that day", async () => {

@@ -29,6 +29,20 @@
 					</label>
 				</div>
 
+				<!-- //// Neoffice — the days of the business around the one chosen (NeoSalon, voie 4, 19.11.2026): a day the business is closed cannot be pressed, a day with other hours says so, and a dot says the
+				     person is away that day. The reservation says it (the calendar of the till); the planning lane still says whether the hour fits. -->
+				<div v-if="strip.length" class="flex items-center gap-1" data-test="move-strip">
+					<button type="button" class="flex h-[44px] w-8 flex-none items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800" :aria-label="__('Earlier days')" data-test="move-strip-back" @click="shiftStrip(-7)">‹</button>
+					<div class="flex min-w-0 flex-1 gap-1 overflow-x-auto" role="group" :aria-label="__('Days')">
+						<button v-for="entry in strip" :key="entry.day" type="button" :data-test="`move-day-${entry.day}`" :disabled="entry.state === 'closed'" :aria-pressed="entry.day === day" :title="stripTitle(entry)" class="relative flex min-h-[48px] min-w-[48px] flex-none flex-col items-center justify-center rounded-lg border px-1 text-xs leading-tight" :class="stripClass(entry)" @click="day = entry.day">
+							<span class="uppercase">{{ weekdayOf(entry.day) }}</span>
+							<b class="text-[15px] tabular-nums">{{ dayNumberOf(entry.day) }}</b>
+							<span v-if="entry.away" class="absolute end-1 top-1 h-2 w-2 rounded-full bg-orange-500" :data-test="`move-away-${entry.day}`" aria-hidden="true" />
+						</button>
+					</div>
+					<button type="button" class="flex h-[44px] w-8 flex-none items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800" :aria-label="__('Later days')" data-test="move-strip-next" @click="shiftStrip(7)">›</button>
+				</div>
+
 				<p v-if="verdict" class="rounded-xl px-4 py-3 text-sm leading-snug" :class="verdict.ok ? 'bg-green-50 text-green-800 dark:bg-green-400/15 dark:text-green-100' : 'bg-yellow-50 text-yellow-800 dark:bg-yellow-400/15 dark:text-yellow-100'" data-test="move-verdict">
 					<b>{{ verdictText }}</b>
 					<!-- //// Neoffice — what the move does to the cabin (NeoSalon, cabins level 2, 16.11.2026): said before the button, never a surprise after it -->
@@ -57,7 +71,7 @@ import { Dialog } from "frappe-ui"
 import { computed, ref, watch } from "vue"
 import { useAppointment } from "@/composables/useAppointment"
 import { useAppointmentsStore } from "@/stores/appointments"
-import { firstStepOf, hourOf, isOff, lengthOf, minutesLongOf, titleOf } from "@/utils/appointments"
+import { dayMoved, firstStepOf, hourOf, isOff, lengthOf, minutesLongOf, stripOfDays, titleOf } from "@/utils/appointments"
 
 const props = defineProps({
 	modelValue: { type: Boolean, default: false },
@@ -68,7 +82,7 @@ const props = defineProps({
 const emit = defineEmits(["update:modelValue", "moved"])
 
 const store = useAppointmentsStore()
-const { checkMove, move } = useAppointment()
+const { checkMove, move, calendarOf } = useAppointment()
 
 const show = computed({ get: () => props.modelValue, set: (value) => emit("update:modelValue", value) })
 const person = ref(null)
@@ -78,6 +92,12 @@ const notify = ref(true)
 const verdict = ref(null)
 const working = ref(false)
 let asking = null
+//// Neoffice — the strip of days (see below): its state lives up here, the window's opening reads it at once
+const STRIP_DAYS = 14
+const calendar = ref(null)
+const stripStart = ref("")
+const strip = computed(() => (calendar.value ? stripOfDays(stripStart.value, calendar.value, person.value, STRIP_DAYS) : []))
+let calendarAsked = 0
 
 // The people she may be moved to: those who work that day, and the one she is with
 const movable = computed(() => store.people.filter((option) => option.sales_person && (!isOff(option) || option.sales_person === person.value)))
@@ -109,11 +129,58 @@ watch(
 		time.value = proposed.time || hourOf(props.appointment.starts_at)
 		notify.value = true
 		verdict.value = null
+		loadStrip(day.value)
 		// a drop proposes another hour: whether it fits is asked at once, as for a change made here
 		if (props.proposal) askFit()
 	},
 	{ immediate: true },
 )
+
+//// Neoffice — the days around the one chosen, from the calendar of the business (NeoSalon, voie 4, 19.11.2026). Asked when the window opens and when the strip moves; nothing without the network
+//// or where the site has no calendar: the strip is then simply not there and the day is chosen in the field above, as before.
+async function loadStrip(from) {
+	const asked = ++calendarAsked
+	stripStart.value = from
+	if (!store.capabilities.calendar || !from) {
+		calendar.value = null
+		return
+	}
+	const answer = await calendarOf(from, dayMoved(from, STRIP_DAYS - 1))
+	// An answer that comes after the strip moved again is of no use
+	if (asked === calendarAsked) calendar.value = answer?.available ? answer : null
+}
+function shiftStrip(days) {
+	loadStrip(dayMoved(stripStart.value, days))
+}
+// The strip follows a day chosen in the field when it is out of its range
+watch(day, (chosen) => {
+	if (!chosen || !calendar.value) return
+	if (chosen < stripStart.value || chosen > dayMoved(stripStart.value, STRIP_DAYS - 1)) loadStrip(chosen)
+})
+const dayOf = (iso) => new Date(`${iso}T12:00:00`)
+const weekdayOf = (iso) => dayOf(iso).toLocaleDateString(undefined, { weekday: "short" })
+const dayNumberOf = (iso) => dayOf(iso).getDate()
+const REASONS = {
+	holiday: () => __("Public holiday"),
+	closure: () => __("Closure"),
+	weekly_off: () => __("Weekly day off"),
+	special_hours: () => __("Special hours"),
+	no_hours: () => __("No opening hours"),
+}
+function stripTitle(entry) {
+	const parts = []
+	if (entry.state === "closed") parts.push(__("Closed that day"))
+	if (entry.state === "special") parts.push(__("Special hours"), (entry.periods || []).map(([from, to]) => `${from}–${to}`).join(" · "))
+	parts.push(entry.label || (REASONS[entry.reason] ? REASONS[entry.reason]() : ""))
+	if (entry.away) parts.push(__("{0} is away", [entry.away.sales_person_name]))
+	return parts.filter(Boolean).join(" · ")
+}
+function stripClass(entry) {
+	if (entry.day === day.value) return "border-gray-900 bg-gray-900 text-white dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900"
+	if (entry.state === "closed") return "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400 line-through dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500"
+	if (entry.state === "special") return "border-dashed border-yellow-500 bg-yellow-50 text-yellow-800 dark:bg-yellow-400/15 dark:text-yellow-100"
+	return "border-gray-300 bg-white text-gray-900 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+}
 
 // Whether it fits is asked a moment after the last change, and said before the button is pressed
 function askFit() {

@@ -497,7 +497,9 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 			patch.object(appointments, "_first_answer", side_effect=refused),
 			patch("frappe.get_hooks", return_value=["a.hook"]),
 		):
-			self.assertEqual(appointments._what_the_site_runs(), {"repeat": False, "packages": False})
+			self.assertEqual(
+				appointments._what_the_site_runs(), {"repeat": False, "packages": False, "file": False}
+			)
 			self.assertEqual(appointments.without_independents(rows), rows)
 			self.assertEqual(appointments._clocks_of(["BKG-1"], self.fx.profile), {})
 
@@ -540,6 +542,83 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 		self.assertEqual(draft["currency"], doc.currency)
 		self.assertEqual(draft["grand_total"], doc.grand_total)
 		self.assertEqual(SITE["calls"], [("the_draft", "BKG-1", self.fx.profile)])
+
+	# What was paid ahead online (voie 4, 19.11.2026): the reservation holds it as an advance on the draft, not as a payment line of the till
+	def test_a_down_payment_the_site_holds_for_the_appointment_is_what_the_customer_has_already_paid(self):
+		self.site_has(draft=["the_draft"])
+		invoice = self.a_draft_of_the_till()
+		SITE["draft"] = self.a_draft_answer(
+			invoice,
+			paid_amount=30,
+			payments=[
+				{"mode_of_payment": "Down payment", "amount": 30, "payment_entry": "ACC-PAY-1", "locked": 1}
+			],
+		)
+
+		draft = self.as_the_cashier(appointments.take_appointment, "BKG-1", self.fx.profile)
+
+		self.assertEqual(draft["paid_amount"], 30.0)
+		self.assertEqual(
+			draft["payments"],
+			[
+				{
+					"mode_of_payment": "Down payment",
+					"amount": 30.0,
+					"reference_no": "ACC-PAY-1",
+					"account": None,
+				}
+			],
+		)
+
+	def test_the_down_payment_comes_after_what_the_invoice_already_holds_and_both_count(self):
+		self.site_has(draft=["the_draft"])
+		invoice = self.a_draft_of_the_till(payments=[{"mode_of_payment": self.fx.mode, "amount": 25}])
+		SITE["draft"] = self.a_draft_answer(
+			invoice,
+			payments=[{"mode_of_payment": "Down payment", "amount": 30, "payment_entry": "ACC-PAY-1"}],
+		)
+
+		draft = self.as_the_cashier(appointments.take_appointment, "BKG-1", self.fx.profile)
+
+		self.assertEqual(
+			[(p["mode_of_payment"], p["amount"]) for p in draft["payments"]],
+			[(self.fx.mode, 25.0), ("Down payment", 30.0)],
+		)
+		self.assertEqual(draft["paid_amount"], 55.0)
+
+	def test_a_down_payment_is_never_more_than_the_draft_is_worth_and_odd_rows_count_for_nothing(self):
+		self.site_has(draft=["the_draft"])
+		invoice = self.a_draft_of_the_till()
+		worth = frappe.db.get_value("Sales Invoice", invoice, "grand_total")
+		SITE["draft"] = self.a_draft_answer(
+			invoice,
+			payments=[
+				# odd rows first: they must count for nothing whatever room is left
+				{"mode_of_payment": "Negative", "amount": -10, "payment_entry": "ACC-PAY-0"},
+				{"mode_of_payment": "No amount"},
+				"not a row",
+				None,
+				{"mode_of_payment": "Down payment", "amount": worth + 500, "payment_entry": "ACC-PAY-1"},
+				{"mode_of_payment": "Second", "amount": 40, "payment_entry": "ACC-PAY-2"},
+			],
+		)
+
+		draft = self.as_the_cashier(appointments.take_appointment, "BKG-1", self.fx.profile)
+
+		self.assertEqual(draft["paid_amount"], worth)
+		self.assertEqual([p["mode_of_payment"] for p in draft["payments"]], ["Down payment"])
+		self.assertEqual(draft["payments"][0]["amount"], worth)
+
+	def test_a_draft_with_no_down_payment_says_no_advance_whatever_the_answer_claims_alone(self):
+		self.site_has(draft=["the_draft"])
+		invoice = self.a_draft_of_the_till()
+		# A figure with no row behind it is nobody's money: the till counts the rows
+		SITE["draft"] = self.a_draft_answer(invoice, paid_amount=80)
+
+		draft = self.as_the_cashier(appointments.take_appointment, "BKG-1", self.fx.profile)
+
+		self.assertEqual(draft["paid_amount"], 0.0)
+		self.assertEqual(draft["payments"], [])
 
 	def test_the_steps_and_the_hours_come_from_the_hook_for_the_lines_it_names(self):
 		self.site_has(draft=["the_draft"])

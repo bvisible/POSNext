@@ -29784,3 +29784,24 @@ msgstr ""
 msgid "No agreement for health data on file."
 msgstr ""
 
+#: POS/src/components/sale/AppointmentSheet.vue:97
+msgid "No network: the appointment can be collected, the other gestures wait for it."
+msgstr ""
+
+#: POS/src/components/sale/MoveAppointmentDialog.vue:35
+msgid "Earlier days"
+msgstr ""
+
+#: POS/src/components/sale/MoveAppointmentDialog.vue:43
+msgid "Later days"
+msgstr ""
+
+#: POS/src/components/sale/MoveAppointmentDialog.vue:175
+#, python-brace-format
+msgid "{0} is away"
+msgstr ""
+
+#: POS/src/components/sale/NewAppointmentDialog.vue:8
+msgid "No network: a new appointment, and a new customer, wait for it."
+msgstr ""
+

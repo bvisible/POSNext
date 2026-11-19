@@ -4,6 +4,8 @@
 	<Dialog v-model="show" :options="{ title: __('New appointment'), size: '2xl' }">
 		<template #body-content>
 			<div class="space-y-4" data-test="new-dialog">
+				<!-- //// Neoffice — a new appointment is the site's: offline the window says so instead of « No service can be booked at this till » and a confirmation that fails (the tester, 19.11.2026) -->
+				<p v-if="offline" class="rounded-xl bg-yellow-50 px-4 py-3 text-sm text-yellow-800 dark:bg-yellow-400/15 dark:text-yellow-100" data-test="new-offline">{{ __("No network: a new appointment, and a new customer, wait for it.") }}</p>
 				<div class="space-y-1.5">
 					<label class="text-sm font-semibold text-gray-800 dark:text-gray-100" for="new-customer">{{ __("Customer") }}</label>
 					<div v-if="customer" class="flex items-center gap-3 rounded-xl border border-gray-300 bg-white px-3 py-2 dark:border-gray-600 dark:bg-gray-800" data-test="new-customer-chosen">
@@ -23,7 +25,7 @@
 						</ul>
 						<!-- //// Neoffice — a customer who is not in the book yet is made from here, by the till's own customer form (duplicates and address
 						     included, maintenance#1109, #1120): the appointment goes on with her, nothing is typed twice. -->
-						<button type="button" data-test="new-customer-create" class="min-h-[44px] rounded-lg border border-dashed border-gray-400 px-3 text-start text-[15px] font-semibold text-gray-900 hover:bg-gray-50 dark:border-gray-500 dark:text-gray-100 dark:hover:bg-gray-800" @click="createCustomer">+ {{ __("New Customer") }}<span v-if="query.trim().length >= 2" class="font-normal text-gray-500"> · {{ query.trim() }}</span></button>
+						<button type="button" data-test="new-customer-create" class="min-h-[44px] rounded-lg border border-dashed border-gray-400 px-3 text-start text-[15px] font-semibold text-gray-900 hover:bg-gray-50 dark:border-gray-500 dark:text-gray-100 dark:hover:bg-gray-800" @click="createCustomer" :disabled="offline">+ {{ __("New Customer") }}<span v-if="query.trim().length >= 2" class="font-normal text-gray-500"> · {{ query.trim() }}</span></button>
 					</template>
 				</div>
 
@@ -79,7 +81,7 @@
 
 				<div class="flex items-center justify-end gap-3 pt-1">
 					<button type="button" class="min-h-[48px] rounded-xl px-4 text-[15px] font-semibold text-red-700 dark:text-red-300" @click="show = false">{{ __("Cancel") }}</button>
-					<button type="button" data-test="new-confirm" class="min-h-[48px] rounded-xl bg-gray-900 px-5 text-[15px] font-semibold text-white disabled:opacity-50 dark:bg-gray-100 dark:text-gray-900" :disabled="working || !ready" @click="submit">{{ working ? __("Loading...") : confirmText }}</button>
+					<button type="button" data-test="new-confirm" class="min-h-[48px] rounded-xl bg-gray-900 px-5 text-[15px] font-semibold text-white disabled:opacity-50 dark:bg-gray-100 dark:text-gray-900" :disabled="working || !ready || offline" @click="submit">{{ working ? __("Loading...") : confirmText }}</button>
 				</div>
 			</div>
 		</template>
@@ -95,6 +97,7 @@
 import { Dialog } from "frappe-ui"
 import { computed, reactive, ref, watch } from "vue"
 import { useAppointment } from "@/composables/useAppointment"
+import { useTheNetwork } from "@/composables/useTheNetwork"
 import { useToast } from "@/composables/useToast"
 import { useAppointmentsStore } from "@/stores/appointments"
 import { useCustomerSearchStore } from "@/stores/customerSearch"
@@ -111,6 +114,8 @@ const props = defineProps({
 const emit = defineEmits(["update:modelValue", "booked"])
 
 const store = useAppointmentsStore()
+//// Neoffice — the network, followed (19.11.2026): see the note above the customer
+const offline = useTheNetwork()
 const shiftStore = usePOSShiftStore()
 const appointment = useAppointment()
 const customerSearchStore = useCustomerSearchStore()
@@ -205,6 +210,10 @@ function createCustomer() {
 	creatingName.value = query.value.trim()
 	creating.value = true
 }
+//// Neoffice — the form fills its name when `initialName` CHANGES: the same text typed again would find it empty (the tester, 19.11.2026), so the name is forgotten when the form closes
+watch(creating, (open) => {
+	if (!open) creatingName.value = ""
+})
 
 /** The customer the form made, or the one who already existed and was taken in place of a second one (`neo_existing`): she is the appointment's customer. */
 async function onCustomerCreated(made) {

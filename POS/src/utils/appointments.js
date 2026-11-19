@@ -415,3 +415,32 @@ export function dropTime(offsetY, range, pxPerHour, step = 15) {
 	const clamped = Math.min(Math.max(snapped, range.start * 60), range.end * 60 - step)
 	return `${String(Math.floor(clamped / 60)).padStart(2, "0")}:${String(clamped % 60).padStart(2, "0")}`
 }
+
+/**
+ * The strip of days of the window that moves an appointment (NeoSalon, voie 4, 19.11.2026): `count` days from `start`, each with what the business says of it (`open`, `closed`,
+ * `special`) and whether the person asked for is away that day. A day the calendar does not hold is an open day (the lane of the planning will still say if it does not fit).
+ *
+ * @param {string} start - `YYYY-MM-DD`
+ * @param {{days?: object[], absences?: object[]}|null} calendar - the till's `get_calendar`
+ * @param {string|null} person - the person the appointment would be with
+ * @returns {{ day: string, state: string, reason: string|null, label: string|null, periods: string[][], away: object|null }[]}
+ */
+export function stripOfDays(start, calendar, person, count = 14) {
+	if (!/^\d{4}-\d{2}-\d{2}$/.test(start || "")) return []
+	const held = new Map((calendar?.days || []).map((row) => [row.day, row]))
+	const absences = (calendar?.absences || []).filter((row) => person && row.sales_person === person)
+	const days = []
+	for (let at = 0; at < count; at += 1) {
+		const day = dayMoved(start, at)
+		const row = held.get(day)
+		days.push({
+			day,
+			state: row?.state || "open",
+			reason: row?.reason || null,
+			label: row?.label || null,
+			periods: row?.periods || [],
+			away: absences.find((absence) => absence.from <= day && day <= absence.to) || null,
+		})
+	}
+	return days
+}

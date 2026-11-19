@@ -30,7 +30,21 @@ vi.mock("@/composables/useAppointment", () => ({
 		loadDay: vi.fn(async () => null),
 	}),
 }))
-vi.mock("@/utils/offline/offlineState", () => ({ offlineState: { isOffline: false } }))
+const network = vi.hoisted(() => {
+	const listeners = []
+	return {
+		isOffline: false,
+		subscribe(callback) {
+			listeners.push(callback)
+			return () => listeners.splice(listeners.indexOf(callback), 1)
+		},
+		go(offline) {
+			this.isOffline = offline
+			for (const callback of [...listeners]) callback({ isOffline: offline })
+		},
+	}
+})
+vi.mock("@/utils/offline/offlineState", () => ({ offlineState: network }))
 vi.mock("@/utils/currency", () => ({ formatCurrency: (amount) => `CHF ${Number(amount).toFixed(2)}` }))
 
 const { useAppointmentsStore } = await import("@/stores/appointments")
@@ -528,5 +542,48 @@ describe("the customer's file on the sheet of an appointment", () => {
 	it("never draws a health remark or a photo: the sheet has no place for them", () => {
 		const source = fs.readFileSync(path.resolve(__dirname, "../AppointmentSheet.vue"), "utf-8")
 		expect(source).not.toMatch(/health_notes|customerFile\.(health|photo)/i)
+	})
+})
+
+describe("the sheet of an appointment without the network", () => {
+	let store
+	const mountIt = (extra = {}) => mount(AppointmentSheet, { props: { appointment: appointment(extra) }, global: { mocks: { __: globalThis.__ } } })
+	beforeEach(() => {
+		setActivePinia(createPinia())
+		network.go(false)
+		store = useAppointmentsStore()
+		store.capabilities = { clock: true, move: true, cancel: true, repeat: true, check_move: true, book: true }
+	})
+
+	it("waits for the network to move, cancel, repeat or time an appointment, and says so, and still lets it be collected", async () => {
+		network.go(true)
+		const wrapper = mountIt({ state: "finished", clock: { state: "done", active_seconds: 600 } })
+		await flushPromises()
+
+		for (const key of ["move", "cancel", "repeat"]) expect(wrapper.get(`[data-test='sheet-${key}']`).attributes("disabled")).toBeDefined()
+		expect(wrapper.get("[data-test='sheet-collect']").attributes("disabled")).toBeUndefined()
+		expect(wrapper.get("[data-test='sheet-needs-network']").text()).toContain("No network")
+	})
+
+	it("waits for the network to start the time too", async () => {
+		network.go(true)
+		const wrapper = mountIt({ state: "booked" })
+		await flushPromises()
+
+		expect(wrapper.get("[data-test='sheet-start']").attributes("disabled")).toBeDefined()
+	})
+
+	it("follows the network: back online the gestures are there again and the note goes", async () => {
+		network.go(true)
+		const wrapper = mountIt({ state: "finished", clock: { state: "done", active_seconds: 600 } })
+		await flushPromises()
+		expect(wrapper.find("[data-test='sheet-needs-network']").exists()).toBe(true)
+
+		network.go(false)
+		await flushPromises()
+
+		expect(wrapper.find("[data-test='sheet-needs-network']").exists()).toBe(false)
+		expect(wrapper.get("[data-test='sheet-move']").attributes("disabled")).toBeUndefined()
+		expect(wrapper.get("[data-test='sheet-cancel']").attributes("disabled")).toBeUndefined()
 	})
 })

@@ -4994,7 +4994,8 @@ async function addCustomPayment(method, amount) {
 	if (allowsOverpayment.value && isCashPaymentMethod(method)) {
 		const grandTotal = roundCurrency(props.grandTotal);
 		const newTotal = roundCurrency(totalPaid.value + amt);
-		const overpay = newTotal - grandTotal;
+		//// Neoffice — the change a customer would be given back in cash: what was paid online beyond the sale is no change (voie 4, 19.11.2026; the tester saw « change CHF 26 » for 16 online + 10 cash)
+		const overpay = cashChangeOf(newTotal, grandTotal, onlineSurplus.value);
 		if (grandTotal > 0 && overpay > 0 && overpay > grandTotal) {
 			const confirmed = await showOverpayConfirm({
 				title: __("Large Overpayment"),

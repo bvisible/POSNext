@@ -34,6 +34,7 @@ const {
 	remainingOf,
 	standingOf,
 	standsAs,
+	stripOfDays,
 	titleOf,
 	toCollectCount,
 } = await import("../appointments")
@@ -430,5 +431,53 @@ describe("a day as the cashier reads it", () => {
 	it("reads the day of a date and time too, and says nothing for anything else", () => {
 		expect(dayText("2026-10-02 14:30:00")).toBe(dayText("2026-10-02"))
 		for (const odd of ["", null, undefined, "yesterday", "02.10.2026"]) expect(dayText(odd)).toBe("")
+	})
+})
+
+describe("the strip of days of the move window", () => {
+	const calendar = {
+		days: [
+			{ day: "2026-12-25", state: "closed", reason: "holiday", label: null, periods: [] },
+			{ day: "2026-12-26", state: "special", reason: "special_hours", label: "Boxing day", periods: [["10:00", "14:00"]] },
+		],
+		absences: [
+			{ sales_person: "Luc", sales_person_name: "Luc", from: "2026-12-27", to: "2026-12-28", kind: "leave" },
+			{ sales_person: "Maya", sales_person_name: "Maya", from: "2026-12-29", to: "2026-12-29", kind: "holiday" },
+		],
+	}
+
+	it("runs for fourteen days from the start, across the end of a month and of a year", () => {
+		const days = stripOfDays("2026-12-24", calendar, "Luc")
+
+		expect(days).toHaveLength(14)
+		expect(days[0].day).toBe("2026-12-24")
+		expect(days[8].day).toBe("2027-01-01")
+		expect(days[13].day).toBe("2027-01-06")
+	})
+
+	it("says what the business is each day, an open day where the calendar says nothing", () => {
+		const days = stripOfDays("2026-12-24", calendar, "Luc")
+		const by = Object.fromEntries(days.map((day) => [day.day, day]))
+
+		expect(by["2026-12-24"].state).toBe("open")
+		expect(by["2026-12-25"]).toMatchObject({ state: "closed", reason: "holiday" })
+		expect(by["2026-12-26"]).toMatchObject({ state: "special", label: "Boxing day", periods: [["10:00", "14:00"]] })
+	})
+
+	it("marks the days the person is away, the first and the last day of the run included, and nobody else's", () => {
+		const luc = Object.fromEntries(stripOfDays("2026-12-24", calendar, "Luc").map((day) => [day.day, day.away]))
+		expect(luc["2026-12-26"]).toBeNull()
+		expect(luc["2026-12-27"].sales_person).toBe("Luc")
+		expect(luc["2026-12-28"].sales_person).toBe("Luc")
+		expect(luc["2026-12-29"]).toBeNull()
+
+		const maya = Object.fromEntries(stripOfDays("2026-12-24", calendar, "Maya").map((day) => [day.day, day.away]))
+		expect(maya["2026-12-29"].sales_person).toBe("Maya")
+		expect(maya["2026-12-27"]).toBeNull()
+		expect(stripOfDays("2026-12-24", calendar, null).every((day) => day.away === null)).toBe(true)
+	})
+
+	it("is nothing without a start day", () => {
+		for (const start of ["", null, undefined, "soon"]) expect(stripOfDays(start, calendar, "Luc")).toEqual([])
 	})
 })

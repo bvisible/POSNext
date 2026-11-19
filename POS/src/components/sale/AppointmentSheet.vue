@@ -93,9 +93,11 @@
 		</div>
 
 		<div class="flex flex-col gap-2 border-t border-gray-100 px-4 py-3 dark:border-gray-800" data-test="sheet-gestures">
-			<button v-if="primary" type="button" :data-test="`sheet-${primary.key}`" class="min-h-[52px] rounded-xl bg-gray-900 text-base font-semibold text-white disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900" :disabled="busy || primary.off" @click="primary.run()">{{ primary.label }}</button>
+			<!-- //// Neoffice — offline, what needs the site waits and says so (the tester's replay of the offline till, 19.11.2026): collecting still works, the sale replaces the draft when the network is back -->
+			<p v-if="offline && (primary || secondary.length)" class="text-sm text-gray-600 dark:text-gray-300" data-test="sheet-needs-network">{{ __("No network: the appointment can be collected, the other gestures wait for it.") }}</p>
+			<button v-if="primary" type="button" :data-test="`sheet-${primary.key}`" class="min-h-[52px] rounded-xl bg-gray-900 text-base font-semibold text-white disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900" :disabled="busy || primary.off || waitsForTheNetwork(primary.key)" @click="primary.run()">{{ primary.label }}</button>
 			<div class="grid gap-2" :style="{ gridTemplateColumns: `repeat(${secondary.length || 1}, minmax(0, 1fr))` }">
-				<button v-for="gesture in secondary" :key="gesture.key" type="button" :data-test="`sheet-${gesture.key}`" class="min-h-[48px] rounded-xl border px-2 text-[15px] font-medium disabled:opacity-50" :class="gesture.danger ? 'border-red-200 text-red-700 dark:border-red-400/40 dark:text-red-300' : 'border-gray-300 text-gray-900 dark:border-gray-500 dark:text-gray-100'" :disabled="busy || gesture.off" @click="gesture.run()">{{ gesture.label }}</button>
+				<button v-for="gesture in secondary" :key="gesture.key" type="button" :data-test="`sheet-${gesture.key}`" class="min-h-[48px] rounded-xl border px-2 text-[15px] font-medium disabled:opacity-50" :class="gesture.danger ? 'border-red-200 text-red-700 dark:border-red-400/40 dark:text-red-300' : 'border-gray-300 text-gray-900 dark:border-gray-500 dark:text-gray-100'" :disabled="busy || gesture.off || waitsForTheNetwork(gesture.key)" @click="gesture.run()">{{ gesture.label }}</button>
 			</div>
 		</div>
 	</aside>
@@ -110,6 +112,7 @@
  */
 import { computed, ref, watch } from "vue"
 import { useAppointment } from "@/composables/useAppointment"
+import { useTheNetwork } from "@/composables/useTheNetwork"
 import { useAppointmentsStore } from "@/stores/appointments"
 import { usePOSSettingsStore } from "@/stores/posSettings"
 import { usePOSShiftStore } from "@/stores/posShift"
@@ -126,6 +129,10 @@ const shiftStore = usePOSShiftStore()
 //// Neoffice — what the till collects: the price announced at booking, or the day's (setting « Price collected »)
 const announcedPrice = computed(() => usePOSSettingsStore().appointmentsAtTheAnnouncedPrice)
 const { clock, cabinsOf, changeCabin, fileOf } = useAppointment()
+//// Neoffice — the gestures that ask the site (the time, move, cancel, repeat) wait for the network; collecting does not (voie 4, 19.11.2026)
+const offline = useTheNetwork()
+const NEEDS_THE_NETWORK = ["start", "pause", "finish", "move", "cancel", "repeat"]
+const waitsForTheNetwork = (key) => offline.value && NEEDS_THE_NETWORK.includes(key)
 const busy = ref(false)
 
 const PILLS = {

@@ -9,6 +9,11 @@ describe("the payment window and what was paid online beyond the sale", () => {
 		expect(dialogSource).not.toMatch(/const change = totalPaid\.value - effectiveGrandTotal\.value;/)
 	})
 
+	it("warns of a large overpayment by the cash change alone, never by what was paid online", () => {
+		expect(dialogSource).toContain("const overpay = cashChangeOf(newTotal, grandTotal, onlineSurplus.value);")
+		expect(dialogSource).not.toMatch(/const overpay = newTotal - grandTotal;/)
+	})
+
 	it("leaves a restaurant its reading: a guest who pays more on a phone leaves a tip", () => {
 		expect(dialogSource).toMatch(/restaurantStore\?\.isEnabled \? 0 : onlineSurplusOf\(props\.guestPaidAmount, effectiveGrandTotal\.value\)/)
 	})

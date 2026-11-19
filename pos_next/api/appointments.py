@@ -74,7 +74,13 @@ from frappe.utils import cint, flt, get_datetime, getdate, nowdate
 DAY_HOOK = "pos_next_booking_day"
 # //// Neoffice — who works each day and how much of it is booked, for the band of the week (NeoSalon B', 16.11.2026)
 TEAM_HOOK = "pos_next_booking_team"
-LEGACY_HOOKS = {DAY_HOOK: "pos_next_salon_day", TEAM_HOOK: "pos_next_salon_team"}
+# //// Neoffice — what each day of a period is for the business, and who is away (NeoSalon, voie 4, 19.11.2026): the strip of days of the window « Move the appointment »
+CALENDAR_HOOK = "pos_next_booking_calendar"
+LEGACY_HOOKS = {
+	DAY_HOOK: "pos_next_salon_day",
+	TEAM_HOOK: "pos_next_salon_team",
+	CALENDAR_HOOK: "pos_next_salon_calendar",
+}
 CHECK_MOVE_HOOK = "pos_next_appointment_check_move"
 MOVE_HOOK = "pos_next_appointment_move"
 CABINS_HOOK = "pos_next_appointment_cabins"
@@ -109,6 +115,8 @@ MOST_CHOICES = 30
 MOST_IN_A_CHAIN = 10
 MOST_PERIODS = 6
 MOST_CABINS = 30
+MOST_CALENDAR_DAYS = 62
+MOST_ABSENCES = 300
 MOST_REPEATS = 12
 MOST_WEEKS = 52
 OPTIONS_LENGTH = 5000
@@ -379,6 +387,8 @@ def _capabilities() -> dict:
 			and frappe.get_hooks(CABIN_CHANGE_HOOK)
 		),
 		"cancel": bool(frappe.get_hooks(CANCEL_HOOK)),
+		# //// Neoffice — the days and the absences, for the window that moves an appointment (19.11.2026)
+		"calendar": bool(_declared(CALENDAR_HOOK)),
 		"clock": bool(frappe.get_hooks(TIME_ACTION_HOOK)),
 		"repeat": bool(frappe.get_hooks(REPEAT_HOOK)) and runs["repeat"],
 		"packages": bool(frappe.get_hooks(PACKAGES_HOOK) and frappe.get_hooks(USE_PACKAGE_HOOK))
@@ -685,6 +695,36 @@ def _draft_of_the_till(invoice: str | None, pos_profile: str):
 	return frappe.get_doc("Sales Invoice", invoice)
 
 
+MOST_PAID_AHEAD = 10
+
+
+def _paid_ahead(answer, limit: float) -> list[dict]:
+	"""What the customer paid ahead and the reservation holds as an advance on the draft (a down payment taken online), as payment lines the till shows locked.
+
+	//// Neoffice — the draft's payment lines are the till's own; a down payment is not one (the reservation writes it as an ADVANCE of the invoice, the money
+	//// being on the customer's account), so a till that read only the lines asked the customer for the whole sale again and she paid twice (voie 4, 19.11.2026).
+	Only the rows the answer gives count (a bare figure is nobody's money), each of a positive amount, and never more in all than the draft is worth."""
+	rows = answer.get("payments") if isinstance(answer, dict) else None
+	if not isinstance(rows, list):
+		return []
+	ahead, left = [], max(flt(limit), 0.0)
+	for row in rows[:MOST_PAID_AHEAD]:
+		amount = flt(row.get("amount")) if isinstance(row, dict) else 0.0
+		if amount <= 0 or left <= 0:
+			continue
+		amount = min(amount, left)
+		left -= amount
+		ahead.append(
+			{
+				"mode_of_payment": _text(row.get("mode_of_payment"), 60),
+				"amount": flt(amount, 2),
+				"reference_no": _text(row.get("payment_entry") or row.get("reference_no")),
+				"account": _text(row.get("account")),
+			}
+		)
+	return ahead
+
+
 def _draft(answer, booking: str, pos_profile: str) -> dict:
 	"""The draft of an appointment as the till takes it, read from the invoice the hook names: refused when it is not a draft of THIS till,
 	or says it is another appointment's."""
@@ -699,6 +739,18 @@ def _draft(answer, booking: str, pos_profile: str) -> dict:
 		frappe.throw(_("This appointment has nothing to collect."))
 	hints = _hints(answer)
 	names = _person_names(row.get("sales_person") for row in rows)
+	# What the invoice's own payment lines hold, then what was paid ahead and the reservation holds as an advance
+	paid = [
+		{
+			"mode_of_payment": row.mode_of_payment,
+			"amount": flt(row.amount),
+			"reference_no": _text(row.get("reference_no")),
+			"account": _text(row.get("account")),
+		}
+		for row in doc.payments
+		if flt(row.amount) > 0
+	]
+	ahead = _paid_ahead(answer, flt(doc.grand_total) - sum(row["amount"] for row in paid))
 	return {
 		"booking": booking,
 		"invoice": doc.name,
@@ -711,18 +763,9 @@ def _draft(answer, booking: str, pos_profile: str) -> dict:
 		"discount_amount": flt(doc.discount_amount),
 		"apply_discount_on": doc.apply_discount_on,
 		"grand_total": flt(doc.grand_total),
-		"paid_amount": flt(doc.paid_amount),
+		"paid_amount": flt(doc.paid_amount) + sum(row["amount"] for row in ahead),
 		# What the customer has already paid (online, a deposit): the till shows it as a locked payment, the amount acquired
-		"payments": [
-			{
-				"mode_of_payment": row.mode_of_payment,
-				"amount": flt(row.amount),
-				"reference_no": _text(row.get("reference_no")),
-				"account": _text(row.get("account")),
-			}
-			for row in doc.payments
-			if flt(row.amount) > 0
-		],
+		"payments": paid + ahead,
 		"currency": doc.currency,
 	}
 
@@ -1431,6 +1474,64 @@ def get_week(pos_profile: str, date: str | None = None) -> dict:
 		team = _first_answer(TEAM_HOOK, pos_profile, str(one))
 		days.append({"date": str(one), **_free_of_the_day(team if isinstance(team, list) else [])})
 	return {"available": True, "days": days}
+
+
+# //// Neoffice — the calendar of the business at the till (NeoSalon, voie 4, 19.11.2026): what each day is for it (open, closed and why, other hours) and who is away, so that
+# //// the window that moves an appointment shows the days where it cannot go before the cashier tries one. The reservation says it; the till cleans it and cuts it.
+ABSENCE_KINDS = ("leave", "holiday")
+
+
+def _calendar_day(row) -> dict | None:
+	"""One day of the calendar as the till shows it: `{day, state, reason, label, periods}`; None for a row that is not a day or says no known state."""
+	if not isinstance(row, dict) or row.get("state") not in SALON_STATES or not _day(row.get("day")):
+		return None
+	return {
+		"day": _day(row.get("day")),
+		"state": row["state"],
+		"reason": row.get("reason") if row.get("reason") in SALON_REASONS else None,
+		"label": _text(row.get("label")),
+		"periods": _periods(row.get("periods")),
+	}
+
+
+def _absence(row) -> dict | None:
+	"""A run of days a person is away: `{sales_person, sales_person_name, from, to, kind, reason}`; None for a row without a person or without its days."""
+	if not isinstance(row, dict) or not _day(row.get("from")) or not _day(row.get("to")):
+		return None
+	person = _text(row.get("sales_person"))
+	if not person:
+		return None
+	return {
+		"sales_person": person,
+		"sales_person_name": _text(row.get("sales_person_name")) or person,
+		"from": _day(row.get("from")),
+		"to": _day(row.get("to")),
+		"kind": row.get("kind") if row.get("kind") in ABSENCE_KINDS else "leave",
+		"reason": _text(row.get("reason"), 60),
+	}
+
+
+@frappe.whitelist()
+def get_calendar(pos_profile: str, start: str | None = None, end: str | None = None) -> dict:
+	"""What each day from `start` to `end` is for the business, and who is away: `{"available", "days": [{day, state, reason, label, periods}], "absences": [...]}`.
+
+	Fourteen days from `start` (today) when no end is given, never more than two months. Not available where the site has no calendar."""
+	from pos_next.api.cash_entry import require_till_access
+
+	require_till_access(pos_profile)
+	if not appointments_enabled(pos_profile) or not _declared(CALENDAR_HOOK):
+		return {"available": False, "days": [], "absences": []}
+	first = getdate(start or nowdate())
+	last = getdate(end) if end else first + datetime.timedelta(days=13)
+	if last < first:
+		frappe.throw(_("The end of the period is before its start."))
+	last = min(last, first + datetime.timedelta(days=MOST_CALENDAR_DAYS - 1))
+	answer = _first_answer(CALENDAR_HOOK, pos_profile, str(first), str(last))
+	if not isinstance(answer, dict):
+		return {"available": False, "days": [], "absences": []}
+	days = [d for d in (_calendar_day(row) for row in (answer.get("days") or [])[:MOST_CALENDAR_DAYS]) if d]
+	absences = [a for a in (_absence(row) for row in (answer.get("absences") or [])[:MOST_ABSENCES]) if a]
+	return {"available": True, "days": days, "absences": absences}
 
 
 @frappe.whitelist()

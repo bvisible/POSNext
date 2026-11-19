@@ -298,6 +298,14 @@ export function useAppointment() {
 	}
 
 	/**
+	 * What each day from `start` to `end` is for the business, and who is away (NeoSalon, voie 4, 19.11.2026): `{ available, days, absences }`, or null when it could not be read.
+	 */
+	async function calendarOf(start, end) {
+		if (offlineState.isOffline) return null
+		return ask("get_calendar", { start, end }, { quiet: true })
+	}
+
+	/**
 	 * The customer's file of an appointment, read only: `{ has_record, agreement: { state, on }, formula, allergy }`, or null (the site keeps none, or it could not be read). Never the health remarks.
 	 */
 	async function fileOf(booking) {
@@ -438,6 +446,7 @@ export function useAppointment() {
 		move,
 		cabinsOf,
 		fileOf,
+		calendarOf,
 		changeCabin,
 		cancel,
 		clock,

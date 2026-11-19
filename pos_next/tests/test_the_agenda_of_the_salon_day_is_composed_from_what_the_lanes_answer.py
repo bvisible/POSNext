@@ -184,6 +184,8 @@ class TestTheAgendaOfTheSalonDayIsComposedFromWhatTheLanesAnswer(FrappeTestCase)
 		table = {hook: [f"{ME}.{STUBS[name]}"] if name in names else [] for name, hook in HOOKS.items()}
 		# The old names of the extension points are empty too: the lanes of the work site do not answer for the suite
 		table.update({hook: [] for hook in appointments.LEGACY_HOOKS.values()})
+		# the customer's file and the calendar of the business are no gesture of this suite: the work site's own answers are empty too (voie 4, 19.11.2026)
+		table.update({appointments.FILE_HOOK: [], appointments.CALENDAR_HOOK: []})
 		real = frappe.get_hooks
 
 		def get_hooks(hook=None, *args, **kwargs):
@@ -460,7 +462,9 @@ class TestTheAgendaOfTheSalonDayIsComposedFromWhatTheLanesAnswer(FrappeTestCase)
 
 		clock = self.agenda()["appointments"][0]["clock"]
 
-		self.assertEqual(set(clock), {"state", "started_at", "ended_at", "active_seconds", "paused_by", "estimated"})
+		self.assertEqual(
+			set(clock), {"state", "started_at", "ended_at", "active_seconds", "paused_by", "estimated"}
+		)
 
 	def test_the_clock_says_whether_its_length_is_an_estimate_and_only_that(self):
 		self.site_has("day", "clocks")
@@ -527,6 +531,8 @@ class TestTheAgendaOfTheSalonDayIsComposedFromWhatTheLanesAnswer(FrappeTestCase)
 		}
 		# The old names of the extension points are empty too: the lanes of the work site do not answer for the suite
 		table.update({hook: [] for hook in appointments.LEGACY_HOOKS.values()})
+		# the customer's file and the calendar of the business are no gesture of this suite: the work site's own answers are empty too (voie 4, 19.11.2026)
+		table.update({appointments.FILE_HOOK: [], appointments.CALENDAR_HOOK: []})
 		real = frappe.get_hooks
 		with patch(
 			"frappe.get_hooks",
@@ -897,7 +903,19 @@ class TestTheAgendaOfTheSalonDayIsComposedFromWhatTheLanesAnswer(FrappeTestCase)
 			answer["capabilities"],
 			# `cabin` (51944267, 16.11.2026): the cabins listed, checked and changed, a gesture like the others
 			dict.fromkeys(
-				("check_move", "move", "cabin", "cancel", "clock", "repeat", "packages", "book"), False
+				(
+					"check_move",
+					"move",
+					"cabin",
+					"calendar",
+					"cancel",
+					"clock",
+					"repeat",
+					"packages",
+					"file",
+					"book",
+				),
+				False,
 			),
 		)
 
@@ -914,10 +932,13 @@ class TestTheAgendaOfTheSalonDayIsComposedFromWhatTheLanesAnswer(FrappeTestCase)
 				"move": True,
 				# the site declares none of the three hooks of the cabins (51944267, 16.11.2026)
 				"cabin": False,
+				# the customer's file and the calendar of the business: the site declares neither hook (voie 4, 19.11.2026)
+				"calendar": False,
 				"cancel": False,
 				"clock": True,
 				"repeat": True,
 				"packages": False,
+				"file": False,
 				"book": True,
 			},
 		)

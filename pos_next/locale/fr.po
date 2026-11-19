@@ -26786,3 +26786,24 @@ msgstr "Accord pour les données de santé retiré."
 msgid "No agreement for health data on file."
 msgstr "Aucun accord pour les données de santé enregistré."
 
+#: POS/src/components/sale/AppointmentSheet.vue:97
+msgid "No network: the appointment can be collected, the other gestures wait for it."
+msgstr "Pas de réseau : le rendez-vous peut être encaissé, les autres actions attendent le réseau."
+
+#: POS/src/components/sale/MoveAppointmentDialog.vue:35
+msgid "Earlier days"
+msgstr "Jours précédents"
+
+#: POS/src/components/sale/MoveAppointmentDialog.vue:43
+msgid "Later days"
+msgstr "Jours suivants"
+
+#: POS/src/components/sale/MoveAppointmentDialog.vue:175
+#, python-brace-format
+msgid "{0} is away"
+msgstr "Absence de {0}"
+
+#: POS/src/components/sale/NewAppointmentDialog.vue:8
+msgid "No network: a new appointment, and a new customer, wait for it."
+msgstr "Pas de réseau : un nouveau rendez-vous et un nouveau client attendent le réseau."
+
