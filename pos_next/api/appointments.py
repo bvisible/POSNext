@@ -1495,7 +1495,10 @@ def _calendar_day(row) -> dict | None:
 
 
 def _absence(row) -> dict | None:
-	"""A run of days a person is away: `{sales_person, sales_person_name, from, to, kind, reason}`; None for a row without a person or without its days."""
+	"""A run of days a person is away: `{sales_person, sales_person_name, from, to, kind}`; None for a row without a person or without its days.
+
+	Never why: a leave type is the HR's, not the till's (the tester read another company's leave reasons at a till, 19.11.2026). Whatever
+	the site sends under `reason` stops here, so a lane that forgets to withhold it does not reach a cashier's screen; the screen only says who is away."""
 	if not isinstance(row, dict) or not _day(row.get("from")) or not _day(row.get("to")):
 		return None
 	person = _text(row.get("sales_person"))
@@ -1507,7 +1510,6 @@ def _absence(row) -> dict | None:
 		"from": _day(row.get("from")),
 		"to": _day(row.get("to")),
 		"kind": row.get("kind") if row.get("kind") in ABSENCE_KINDS else "leave",
-		"reason": _text(row.get("reason"), 60),
 	}
 
 

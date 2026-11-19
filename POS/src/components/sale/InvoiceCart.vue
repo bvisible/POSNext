@@ -2010,7 +2010,8 @@
 				>
 					<div class="flex items-center justify-between">
 						<span class="text-xs font-semibold text-green-700">
-							{{ __("Already paid (guest)") }}
+							<!-- //// Neoffice — what a salon's customer paid ahead on the booking page is not a table's guest share: the cart of an appointment says « online » (the tester, 19.11.2026) -->
+							{{ cartStore.appointment ? __("Already paid online") : __("Already paid (guest)") }}
 						</span>
 						<span class="text-sm font-bold text-green-600">
 							{{ formatCurrency(cartStore.guestPaidAmount) }}

@@ -198,12 +198,12 @@ class TestTheTillReadsTheCalendarOfTheBusiness(FrappeTestCase):
 		self.assertEqual(open_day["periods"], [["08:30", "17:30"]])
 		self.assertEqual(len(answer["absences"]), 2)
 		luc, maya = answer["absences"]
-		self.assertEqual(set(luc), {"sales_person", "sales_person_name", "from", "to", "kind", "reason"})
+		self.assertEqual(set(luc), {"sales_person", "sales_person_name", "from", "to", "kind"})
 		self.assertEqual(
 			(luc["sales_person_name"], luc["from"], luc["to"], luc["kind"]),
 			("Luc Martin", "2026-12-28", "2026-12-31", "leave"),
 		)
-		self.assertEqual(len(luc["reason"]), 60)
+		self.assertNotIn("Annual leave", repr(answer), "why a person is away is the HR's, never the till's")
 		self.assertEqual(
 			(maya["sales_person_name"], maya["kind"]),
 			("Maya", "leave"),

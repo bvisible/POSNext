@@ -706,6 +706,20 @@ describe("the new appointment dialog", () => {
 		}
 	})
 
+	it("does not say that nothing can be booked when the services could not be read for lack of a network", async () => {
+		network.isOffline = true
+		lane.services.mockResolvedValue([])
+		try {
+			const wrapper = open()
+			await flushPromises()
+
+			expect(wrapper.get("[data-test='new-offline']").exists()).toBe(true)
+			expect(wrapper.find("[data-test='new-no-services']").exists()).toBe(false)
+		} finally {
+			network.isOffline = false
+		}
+	})
+
 	it("shows no such note while the network is there", async () => {
 		const wrapper = open()
 		await flushPromises()

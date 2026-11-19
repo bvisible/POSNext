@@ -32,8 +32,9 @@
 				<div class="space-y-1.5">
 					<div class="text-sm font-semibold text-gray-800 dark:text-gray-100">{{ __("Services") }}</div>
 					<p v-if="loadingServices" class="text-sm text-gray-500">{{ __("Loading...") }}</p>
-					<p v-else-if="!services.length" class="text-sm text-gray-500" data-test="new-no-services">{{ __("No service can be booked at this till.") }}</p>
-					<div v-else class="flex flex-wrap gap-2" role="group">
+					<!-- //// Neoffice — offline the services cannot be read, which is not « nothing can be booked »: the note above already says why (the tester, 19.11.2026) -->
+					<p v-else-if="!services.length && !offline" class="text-sm text-gray-500" data-test="new-no-services">{{ __("No service can be booked at this till.") }}</p>
+					<div v-else-if="services.length" class="flex flex-wrap gap-2" role="group">
 						<button v-for="service in services" :key="service.item_code" type="button" :data-test="`new-service-${service.item_code}`" class="inline-flex min-h-[44px] items-center gap-2 rounded-[10px] border px-3 text-[15px]" :class="chosen(service) ? 'border-blue-500 bg-blue-50 text-blue-800 dark:bg-blue-400/15 dark:text-blue-100' : 'border-gray-300 bg-white text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100'" @click="toggle(service)">
 							{{ service.label }} <span class="text-xs text-gray-500">{{ money(service.price) }}</span>
 						</button>
