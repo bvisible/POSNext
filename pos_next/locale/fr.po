@@ -26702,3 +26702,24 @@ msgstr "Le moment que vous avez choisi."
 msgid "Same hour"
 msgstr "Même heure"
 
+#: POS/src/components/sale/AppointmentSheet.vue:64
+msgid "Duration estimated"
+msgstr "Durée estimée"
+
+#: POS/src/components/sale/AppointmentSheet.vue:64
+msgid "Nobody stopped the clock: this is the planned length, not a measure."
+msgstr "Personne n'a arrêté le chrono : c'est la durée prévue, pas une mesure."
+
+#: POS/src/components/sale/PaymentDialog.vue:1032
+msgid "Overpaid online"
+msgstr "Trop-payé en ligne"
+
+#: POS/src/components/sale/PaymentDialog.vue:1040
+msgid "The sale cannot be collected while the customer has paid more online than it is worth: this is not change to hand back in cash."
+msgstr "La vente ne peut pas être encaissée tant que le client a payé en ligne plus que son montant : ce n'est pas de la monnaie à rendre en espèces."
+
+#: POS/src/components/sale/PaymentDialog.vue:5297
+#, python-brace-format
+msgid "Overpaid online: {0}"
+msgstr "Trop-payé en ligne : {0}"
+

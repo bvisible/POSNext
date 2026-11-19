@@ -260,6 +260,9 @@ def _clock(value) -> dict:
 		"ended_at": _moment(value.get("ended_at")),
 		"active_seconds": max(cint(value.get("active_seconds")), 0),
 		"paused_by": _text(value.get("paused_by")),
+		# //// Neoffice — the clock was forgotten and the time lane stopped it at closing time, at the planned length (`estimated`): the till says that
+		# //// the length it shows is an estimate, not a measure. A flag and nothing else: still no cost, no margin (NeoSalon, voie 4, 19.11.2026).
+		"estimated": bool(cint(value.get("estimated"))),
 	}
 
 

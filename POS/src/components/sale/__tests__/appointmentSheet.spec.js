@@ -153,6 +153,17 @@ describe("the sheet of an appointment", () => {
 		expect(wrapper.text()).toContain("Finished at 14:58")
 	})
 
+	it("says that the time of a forgotten clock is an estimate, and says nothing for a measured one", () => {
+		const forgotten = mountIt({ state: "finished", clock: { state: "done", active_seconds: 5400, ended_at: "2026-11-10 19:00:00", estimated: true } })
+		expect(forgotten.get("[data-test='sheet-estimated']").text()).toContain("Duration estimated")
+		expect(forgotten.get("[data-test='sheet-estimated']").text()).toContain("planned length")
+
+		const measured = mountIt({ state: "finished", clock: { state: "done", active_seconds: 3300, ended_at: "2026-11-10 14:58:00", estimated: false } })
+		expect(measured.find("[data-test='sheet-estimated']").exists()).toBe(false)
+		const older = mountIt({ state: "finished", clock: { state: "done", active_seconds: 3300 } })
+		expect(older.find("[data-test='sheet-estimated']").exists()).toBe(false)
+	})
+
 	it("offers to resume the appointment already in a till", () => {
 		const wrapper = mountIt({ in_the_till: true, state: "finished", clock: { state: "done" } })
 

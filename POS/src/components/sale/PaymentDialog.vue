@@ -1017,6 +1017,29 @@
 										{{ formatCurrency(writeOffAmount) }}
 									</div>
 								</div>
+								<!-- //// Neoffice — what the customer paid online beyond the sale: said as it is, never offered as change (voie 4, 19.11.2026). -->
+								<div
+									v-else-if="onlineSurplus > 0"
+									data-test="payment-online-surplus"
+									:class="[
+										'bg-red-50 text-center',
+										isCompactMode ? 'p-2' : 'p-3',
+									]"
+								>
+									<div
+										class="text-xs font-medium text-red-600 uppercase tracking-wide mb-1"
+									>
+										{{ __("Overpaid online") }}
+									</div>
+									<div
+										:class="['font-bold text-red-600', dynamicTextSize.amount]"
+									>
+										{{ formatCurrency(onlineSurplus) }}
+									</div>
+									<div class="mt-1 text-[11px] text-red-700">
+										{{ __("The sale cannot be collected while the customer has paid more online than it is worth: this is not change to hand back in cash.") }}
+									</div>
+								</div>
 								<!-- //// Neoffice — restaurant tips. Upstream POSNext is a retail POS: any overpayment -->
 								<!-- //// is change to hand back. In a restaurant the overpayment is usually a tip, so -->
 								<!-- //// when tips are enabled we show it as a tip (with a way to decline) instead of -->
@@ -2597,6 +2620,8 @@ import { usePOSSettingsStore } from "@/stores/posSettings";
 //// per-ticket override of an automatic transaction-rule discount — feature b
 import { usePOSCartStore } from "@/stores/posCart";
 import { useRestaurantStore } from "@/stores/restaurant";
+//// Neoffice — what the customer paid online beyond the sale is not change (voie 4, 19.11.2026; utils/onlineSurplus.js).
+import { cashChangeOf, onlineSurplusOf } from "@/utils/onlineSurplus";
 import {
 	DEFAULT_CURRENCY,
 	formatCurrency as formatCurrencyUtil,
@@ -3767,11 +3792,18 @@ const remainingAmount = computed(() => {
 	return remaining > 0 ? roundCurrency(remaining) : 0;
 });
 
+//// Neoffice — an appointment paid ahead online whose sale then shrank: the online money beyond the sale (`guestPaidAmount`) is not in the drawer, so it is
+//// NOT change (it was handed back in cash on paper while the card kept the money). The till says it, and does not book the sale (canComplete, finalizePayment).
+//// A restaurant keeps upstream's reading: a guest who pays more on a phone leaves a tip (voie 4, 19.11.2026).
+const onlineSurplus = computed(() =>
+	restaurantStore?.isEnabled ? 0 : onlineSurplusOf(props.guestPaidAmount, effectiveGrandTotal.value)
+);
+
 const changeAmount = computed(() => {
 	//// Neoffice — change is measured against effectiveGrandTotal too: otherwise redeemed
 	//// points would be handed back to the customer as cash (104959e6, 2026-03-19).
-	const change = totalPaid.value - effectiveGrandTotal.value;
-	return change > 0 ? roundCurrency(change) : 0;
+	//// And what was paid online beyond the sale is apart: it is no cash change (onlineSurplus above).
+	return cashChangeOf(totalPaid.value, effectiveGrandTotal.value, onlineSurplus.value);
 });
 
 //// Neoffice — in a restaurant an overpayment is a tip far more often than change, so
@@ -3969,6 +4001,11 @@ const isExactAmountValid = computed(() => {
 });
 
 const canComplete = computed(() => {
+	//// Neoffice — a sale that hides what the customer overpaid online is not booked (onlineSurplus above).
+	if (onlineSurplus.value > 0) {
+		return false;
+	}
+
 	// Check sales person validation first (mandatory when enabled)
 	if (!isSalesPersonValid.value) {
 		return false;
@@ -5252,6 +5289,12 @@ function finalizePayment(isPartial) {
 		})
 	) {
 		log.warn("[PaymentDialog] Not finalizing - a terminal payment is in progress");
+		return;
+	}
+
+	//// Neoffice — every way to book the sale ends here: none books one that hides an online overpayment.
+	if (onlineSurplus.value > 0) {
+		showWarning(__("Overpaid online: {0}", [formatCurrency(onlineSurplus.value)]));
 		return;
 	}
 	//// Neoffice — completePayment is split in two here (see above), so the two values upstream

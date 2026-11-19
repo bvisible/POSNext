@@ -579,6 +579,7 @@ class TestTheTillMovesCancelsClocksAndBooksAppointments(FrappeTestCase):
 					"ended_at": None,
 					"active_seconds": 120,
 					"paused_by": "BKG-9",
+					"estimated": False,
 				},
 			},
 		)

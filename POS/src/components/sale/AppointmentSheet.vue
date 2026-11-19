@@ -60,6 +60,8 @@
 					<span class="text-gray-600 dark:text-gray-300">{{ clockText }}</span>
 					<b class="text-xl tabular-nums text-gray-900 dark:text-gray-100" data-test="sheet-active-time">{{ activeTimeOf(appointment.clock.active_seconds) }}</b>
 				</div>
+				<!-- //// Neoffice — a clock nobody stopped (the time lane stops it at closing time, at the planned length): the length above is an estimate, and the sheet says so (voie 4, 19.11.2026) -->
+				<div v-if="appointment.clock.estimated" class="text-xs text-gray-500" data-test="sheet-estimated"><b>{{ __("Duration estimated") }}</b> · {{ __("Nobody stopped the clock: this is the planned length, not a measure.") }}</div>
 				<!-- Only when another appointment of the same person took the time (the clock says which): a pause pressed on this one has nothing to explain -->
 				<div v-if="appointment.clock.state === 'paused' && appointment.clock.paused_by" class="text-xs text-gray-500" data-test="sheet-paused-by">{{ __("In pause: the time runs on the other appointment.") }}</div>
 			</div>

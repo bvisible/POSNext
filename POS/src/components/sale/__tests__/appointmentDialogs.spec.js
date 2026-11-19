@@ -18,6 +18,7 @@ const lane = vi.hoisted(() => ({
 	book: vi.fn(async () => ({ booking: "BKG-9" })),
 	loadDay: vi.fn(async () => null),
 	call: vi.fn(async () => []),
+	addToCache: vi.fn(async () => undefined),
 	toast: { showInfo: vi.fn(), showWarning: vi.fn(), showSuccess: vi.fn(), showError: vi.fn() },
 }))
 
@@ -27,6 +28,16 @@ vi.mock("frappe-ui", () => ({
 vi.mock("@/stores/posShift", () => ({ usePOSShiftStore: () => ({ profileName: "Till A", profileCurrency: "CHF" }) }))
 vi.mock("@/composables/useAppointment", () => ({ useAppointment: () => lane }))
 vi.mock("@/composables/useToast", () => ({ useToast: () => lane.toast }))
+vi.mock("@/stores/customerSearch", () => ({ useCustomerSearchStore: () => ({ addCustomerToCache: lane.addToCache }) }))
+// The till's customer form is tested by its own specs: here it is a stand-in that shows what it was opened with and hands back a customer
+vi.mock("../CustomerFormDialog.vue", () => ({
+	default: {
+		name: "CustomerFormDialog",
+		props: ["modelValue", "posProfile", "initialName", "customer"],
+		emits: ["update:modelValue", "customer-created"],
+		template: '<div v-if="modelValue" data-test="customer-form"><span data-test="customer-form-name">{{ initialName }}</span><span data-test="customer-form-till">{{ posProfile }}</span></div>',
+	},
+}))
 vi.mock("@/utils/apiWrapper", () => ({ call: lane.call }))
 vi.mock("@/utils/offline/offlineState", () => ({ offlineState: { isOffline: false } }))
 vi.mock("@/utils/currency", () => ({ formatCurrency: (amount) => `CHF ${Number(amount).toFixed(2)}` }))
@@ -449,6 +460,74 @@ describe("the new appointment dialog", () => {
 		await flushPromises()
 		expect(wrapper.get("[data-test='new-confirm']").attributes("disabled")).toBeDefined()
 		expect(lane.book).not.toHaveBeenCalled()
+	})
+
+	describe("a customer who is not in the book yet", () => {
+		const made = { name: "CUST-9", customer_name: "Mme Neuve", mobile_no: "079 111 22 33" }
+		const form = (wrapper) => wrapper.findComponent({ name: "CustomerFormDialog" })
+
+		it("is made from the dialog, by the till's own customer form, opened on what was typed and on this till", async () => {
+			vi.useFakeTimers()
+			const wrapper = open()
+			await flushPromises()
+			expect(wrapper.find("[data-test='customer-form']").exists()).toBe(false)
+
+			await wrapper.get("[data-test='new-customer-search']").setValue("Neuve Claire")
+			await wrapper.get("[data-test='new-customer-create']").trigger("click")
+
+			expect(wrapper.get("[data-test='customer-form-name']").text()).toBe("Neuve Claire")
+			expect(wrapper.get("[data-test='customer-form-till']").text()).toBe("Till A")
+			// The way is there before anything is typed too
+			const bare = open()
+			await flushPromises()
+			expect(bare.get("[data-test='new-customer-create']").text()).toContain("New Customer")
+		})
+
+		it("goes on with the customer the form made: she is chosen, cached for the search, and the booking is hers", async () => {
+			const wrapper = open()
+			await flushPromises()
+			await wrapper.get("[data-test='new-customer-create']").trigger("click")
+
+			form(wrapper).vm.$emit("customer-created", made)
+			await flushPromises()
+
+			expect(wrapper.get("[data-test='new-customer-chosen']").text()).toContain("Mme Neuve")
+			expect(wrapper.find("[data-test='new-customer-search']").exists()).toBe(false)
+			expect(lane.addToCache).toHaveBeenCalledWith(made)
+			expect(lane.toast.showSuccess).toHaveBeenCalledWith("Mme Neuve created and selected")
+
+			await wrapper.get("[data-test='new-service-COUPE']").trigger("click")
+			await flushPromises()
+			await wrapper.get("[data-test='new-confirm']").trigger("click")
+			await flushPromises()
+			expect(lane.book).toHaveBeenCalledWith("CUST-9", [{ item_code: "COUPE", options: null }], "2026-11-10 15:30:00", { salesPerson: "Luc", notify: true })
+		})
+
+		it("says she was selected, not created, when the form found her already in the book", async () => {
+			const wrapper = open()
+			await flushPromises()
+			await wrapper.get("[data-test='new-customer-create']").trigger("click")
+
+			form(wrapper).vm.$emit("customer-created", { ...made, neo_existing: 1 })
+			await flushPromises()
+
+			expect(wrapper.get("[data-test='new-customer-chosen']").text()).toContain("Mme Neuve")
+			expect(lane.toast.showSuccess).toHaveBeenCalledWith("Customer Mme Neuve selected")
+		})
+
+		it("leaves the form closed when the dialog opens again", async () => {
+			const wrapper = open()
+			await flushPromises()
+			await wrapper.get("[data-test='new-customer-create']").trigger("click")
+			expect(wrapper.find("[data-test='customer-form']").exists()).toBe(true)
+
+			await wrapper.setProps({ modelValue: false })
+			await wrapper.setProps({ modelValue: true })
+			await flushPromises()
+
+			expect(wrapper.find("[data-test='customer-form']").exists()).toBe(false)
+			expect(wrapper.find("[data-test='new-customer-chosen']").exists()).toBe(false)
+		})
 	})
 
 	it("says that there is no free slot that day", async () => {

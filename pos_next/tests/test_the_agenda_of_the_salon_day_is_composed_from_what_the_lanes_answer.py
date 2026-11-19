@@ -460,7 +460,36 @@ class TestTheAgendaOfTheSalonDayIsComposedFromWhatTheLanesAnswer(FrappeTestCase)
 
 		clock = self.agenda()["appointments"][0]["clock"]
 
-		self.assertEqual(set(clock), {"state", "started_at", "ended_at", "active_seconds", "paused_by"})
+		self.assertEqual(set(clock), {"state", "started_at", "ended_at", "active_seconds", "paused_by", "estimated"})
+
+	def test_the_clock_says_whether_its_length_is_an_estimate_and_only_that(self):
+		self.site_has("day", "clocks")
+		self.a_day(
+			people=[
+				self.person(
+					LUC,
+					appointments=[
+						self.row("BKG-1", LUC),
+						self.row("BKG-2", LUC),
+						self.row("BKG-3", LUC),
+					],
+				)
+			]
+		)
+		SITE["clocks"] = {
+			# forgotten: the time lane stopped it at closing time, at the planned length
+			"BKG-1": {"status": "Finished", "active_seconds": 5400, "estimated": 1},
+			"BKG-2": {"status": "Finished", "active_seconds": 3300, "estimated": 0},
+			# an older time lane says nothing of it
+			"BKG-3": {"status": "Finished", "active_seconds": 3300},
+		}
+
+		rows = {r["booking"]: r["clock"] for r in self.agenda()["appointments"]}
+
+		self.assertIs(rows["BKG-1"]["estimated"], True)
+		self.assertIs(rows["BKG-2"]["estimated"], False)
+		self.assertIs(rows["BKG-3"]["estimated"], False)
+		self.assertEqual(rows["BKG-1"]["active_seconds"], 5400)
 
 	def test_the_time_lane_is_asked_for_the_bookings_of_the_day_and_not_for_a_busy_one(self):
 		self.site_has("day", "clocks")

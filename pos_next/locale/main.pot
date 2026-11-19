@@ -29700,3 +29700,24 @@ msgstr ""
 msgid "Same hour"
 msgstr ""
 
+#: POS/src/components/sale/AppointmentSheet.vue:64
+msgid "Duration estimated"
+msgstr ""
+
+#: POS/src/components/sale/AppointmentSheet.vue:64
+msgid "Nobody stopped the clock: this is the planned length, not a measure."
+msgstr ""
+
+#: POS/src/components/sale/PaymentDialog.vue:1032
+msgid "Overpaid online"
+msgstr ""
+
+#: POS/src/components/sale/PaymentDialog.vue:1040
+msgid "The sale cannot be collected while the customer has paid more online than it is worth: this is not change to hand back in cash."
+msgstr ""
+
+#: POS/src/components/sale/PaymentDialog.vue:5297
+#, python-brace-format
+msgid "Overpaid online: {0}"
+msgstr ""
+

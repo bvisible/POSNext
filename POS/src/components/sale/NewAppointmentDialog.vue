@@ -21,6 +21,9 @@
 								</button>
 							</li>
 						</ul>
+						<!-- //// Neoffice — a customer who is not in the book yet is made from here, by the till's own customer form (duplicates and address
+						     included, maintenance#1109, #1120): the appointment goes on with her, nothing is typed twice. -->
+						<button type="button" data-test="new-customer-create" class="min-h-[44px] rounded-lg border border-dashed border-gray-400 px-3 text-start text-[15px] font-semibold text-gray-900 hover:bg-gray-50 dark:border-gray-500 dark:text-gray-100 dark:hover:bg-gray-800" @click="createCustomer">+ {{ __("New Customer") }}<span v-if="query.trim().length >= 2" class="font-normal text-gray-500"> · {{ query.trim() }}</span></button>
 					</template>
 				</div>
 
@@ -81,6 +84,8 @@
 			</div>
 		</template>
 	</Dialog>
+	<!-- //// Neoffice — the till's customer form (CustomerFormDialog.vue): the same one as the sale's, so a customer made here is made as there. -->
+	<CustomerFormDialog v-model="creating" :pos-profile="shiftStore.profileName" :initial-name="creatingName" @customer-created="onCustomerCreated" />
 </template>
 
 <script setup>
@@ -90,11 +95,14 @@
 import { Dialog } from "frappe-ui"
 import { computed, reactive, ref, watch } from "vue"
 import { useAppointment } from "@/composables/useAppointment"
+import { useToast } from "@/composables/useToast"
 import { useAppointmentsStore } from "@/stores/appointments"
+import { useCustomerSearchStore } from "@/stores/customerSearch"
 import { usePOSShiftStore } from "@/stores/posShift"
 import { call } from "@/utils/apiWrapper"
 import { clockOf, hourOf, isOff } from "@/utils/appointments"
 import { formatCurrency } from "@/utils/currency"
+import CustomerFormDialog from "./CustomerFormDialog.vue"
 
 const props = defineProps({
 	modelValue: { type: Boolean, default: false },
@@ -105,6 +113,8 @@ const emit = defineEmits(["update:modelValue", "booked"])
 const store = useAppointmentsStore()
 const shiftStore = usePOSShiftStore()
 const appointment = useAppointment()
+const customerSearchStore = useCustomerSearchStore()
+const { showSuccess } = useToast()
 
 const show = computed({ get: () => props.modelValue, set: (value) => emit("update:modelValue", value) })
 const money = (amount) => formatCurrency(amount, shiftStore.profileCurrency || undefined)
@@ -123,6 +133,9 @@ const slotChosen = ref(null)
 const loadingSlots = ref(false)
 const notify = ref(true)
 const working = ref(false)
+// The till's customer form, opened on what the cashier typed in the search
+const creating = ref(false)
+const creatingName = ref("")
 let searching = null
 let asking = 0
 
@@ -152,6 +165,7 @@ watch(
 		query.value = ""
 		choices.value = []
 		customer.value = null
+		creating.value = false
 		picks.value = []
 		slots.value = []
 		slotChosen.value = null
@@ -185,6 +199,20 @@ watch(query, (text) => {
 function pickCustomer(row) {
 	customer.value = row
 	choices.value = []
+}
+
+function createCustomer() {
+	creatingName.value = query.value.trim()
+	creating.value = true
+}
+
+/** The customer the form made, or the one who already existed and was taken in place of a second one (`neo_existing`): she is the appointment's customer. */
+async function onCustomerCreated(made) {
+	customer.value = made
+	choices.value = []
+	query.value = ""
+	await customerSearchStore.addCustomerToCache(made)
+	showSuccess(made.neo_existing ? __("Customer {0} selected", [made.customer_name]) : __("{0} created and selected", [made.customer_name]))
 }
 
 function toggle(service) {
