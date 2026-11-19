@@ -319,6 +319,24 @@ describe("the till works an appointment", () => {
 		expect(cart.guestPaidAmount).toBe(0)
 	})
 
+	//// Neoffice — the card of a step after the first holds its own step; the offline cart takes every step of the appointment (voie 4, 19.11.2026)
+	it("makes the offline cart of the WHOLE appointment from the card of one of its later steps", async () => {
+		network.isOffline = true
+		cached.items = {
+			COUPE: { price_list_rate: 66 },
+			COULEUR: { price_list_rate: 79 },
+		}
+
+		const taken = await useAppointment().takeAppointment({ ...row, booking: "BKG-2", steps: [row.steps[1]], chain: row.steps })
+
+		expect(taken).toBe(true)
+		expect(lines().map((item) => [item.item_code, item.sales_person])).toEqual([
+			["COUPE", "Sonia"],
+			["COULEUR", "Luc"],
+		])
+		expect(cart.appointment).toMatchObject({ booking: "BKG-2" })
+	})
+
 	it("refuses to make an offline cart from an appointment that carries no service", async () => {
 		network.isOffline = true
 
@@ -737,5 +755,13 @@ describe("the announced price of a step, as the agenda the till holds says it", 
 
 	it("knows a price of zero when the reservation says zero (a gift)", () => {
 		expect(announcedPriceOfStep(step({ price: 0 }), { steps: [step()], amount: 50 })).toBe(0)
+	})
+
+	//// Neoffice — the card of a step after the first holds its own step, the amount is the whole appointment's (voie 4, 19.11.2026)
+	it("never gives the whole amount of an appointment to the one step its card holds", () => {
+		const own = step({ booking: "COL-2" })
+		const appointment = { steps: [own], chain: [step({ booking: "COL-1" }), own, step({ booking: "COL-3" })], amount: 150 }
+
+		expect(announcedPriceOfStep(own, appointment)).toBeNull()
 	})
 })

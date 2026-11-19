@@ -34,6 +34,7 @@ const {
 	remainingOf,
 	standingOf,
 	standsAs,
+	stepsOfTheAppointment,
 	stripOfDays,
 	titleOf,
 	toCollectCount,
@@ -479,5 +480,27 @@ describe("the strip of days of the move window", () => {
 
 	it("is nothing without a start day", () => {
 		for (const start of ["", null, undefined, "soon"]) expect(stripOfDays(start, calendar, "Luc")).toEqual([])
+	})
+})
+
+//// Neoffice — the card of a step after the first keeps its own step and carries the whole (voie 4, 19.11.2026)
+describe("the steps of the whole appointment", () => {
+	const own = { booking: "COL-2", label: "Rinse and cut", sales_person: "Sonia" }
+	const whole = [{ booking: "COL-1", label: "Application", sales_person: "Luc" }, own]
+
+	it("are the chain a card of a later step carries, and the steps of any other card", () => {
+		expect(stepsOfTheAppointment({ steps: [own], chain: whole })).toEqual(whole)
+		expect(stepsOfTheAppointment({ steps: whole, chain: null })).toEqual(whole)
+		expect(stepsOfTheAppointment({ steps: whole })).toEqual(whole)
+	})
+
+	it("are none for nothing", () => {
+		expect(stepsOfTheAppointment(null)).toEqual([])
+		expect(stepsOfTheAppointment({})).toEqual([])
+	})
+
+	it("leave the card in the column of its own person, whatever the whole holds", () => {
+		expect(personOf({ steps: [own], chain: whole })).toBe("Sonia")
+		expect(titleOf({ steps: [own], chain: whole })).toBe("Rinse and cut")
 	})
 })

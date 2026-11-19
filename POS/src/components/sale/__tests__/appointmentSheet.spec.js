@@ -381,6 +381,31 @@ describe("the sheet of an appointment", () => {
 			expect(wrapper.get("[data-test='sheet-time-text']").text()).toBe("Not started")
 		})
 
+		//// Neoffice — the card of a step after the first, in its person's column: its own step in `steps`, the whole in `chain`
+		it("reads the whole appointment on the card of a later step, and times a step by its own booking", async () => {
+			const whole = colour(["done", "running", "idle"])
+			const wrapper = mountIt({ ...whole, booking: "COL-2", steps: [whole.steps[1]], chain: whole.steps })
+
+			expect(wrapper.findAll("[data-test^='sheet-step-time-']")).toHaveLength(3)
+			expect(wrapper.get("[data-test='sheet-time-text']").text()).toBe("1 of 3 steps finished")
+			expect(wrapper.get("[data-test='sheet-step-0']").text()).toContain("Application")
+			expect(wrapper.get("[data-test='sheet-step-2']").text()).toContain("Finish")
+			expect(wrapper.get("[data-test='sheet-wait-0']").text()).toBe("Wait · 30 min")
+			await wrapper.get("[data-test='sheet-step-finish-1']").trigger("click")
+			expect(gestures.clock).toHaveBeenLastCalledWith("COL-2", "finish")
+			await wrapper.get("[data-test='sheet-step-start-2']").trigger("click")
+			expect(gestures.clock).toHaveBeenLastCalledWith("COL-3", "start")
+		})
+
+		it("collects, not times, at the bottom of the card of a later step, and announces the whole appointment", () => {
+			const whole = colour(["idle", "idle", "idle"], { state: "booked", clock: { state: "idle", active_seconds: 0 } })
+			const wrapper = mountIt({ ...whole, booking: "COL-2", steps: [whole.steps[1]], chain: whole.steps, amount: 150 })
+
+			expect(wrapper.find("[data-test='sheet-start']").exists()).toBe(false)
+			expect(wrapper.get("[data-test='sheet-collect']").text()).toBe("Collect")
+			expect(wrapper.text()).toContain("CHF 150.00")
+		})
+
 		it("waits for the network to time a step", async () => {
 			const wrapper = mountIt(colour(["done", "running", "idle"]))
 			network.go(true)

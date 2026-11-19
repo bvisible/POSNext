@@ -523,10 +523,14 @@ def _people_of(appointments: list[dict]) -> list[dict]:
 	return list(seen.values())
 
 
-def _appointment(row, listed, clock, may, capabilities, key) -> dict | None:
+def _appointment(row, listed, clock, may, capabilities, key, whole=None) -> dict | None:
 	"""An appointment of the agenda, as the till reads it, from the day view (who, when, where it stands) and the money lane's list (what it
 	announces, what was paid): only its own keys. A « busy » appointment (a colleague's, for a cashier who may not read it) carries only its
-	hours and its person, whatever the hooks said besides."""
+	hours and its person, whatever the hooks said besides.
+
+	`whole` is the money lane's row of the appointment this card is a LATER step of (a colour's rinse and cut, in its person's column): the card keeps
+	its own step (it is placed in the column of its person and says her service), and reads from the whole what the appointment announces, what was
+	paid, where it stands and what may be done with it, and carries all its steps as `chain` for the sheet (NeoSalon, voie 4, 19.11.2026)."""
 	if not isinstance(row, dict):
 		return None
 	person, person_name = _text(row.get("sales_person")), _text(row.get("sales_person_name"))
@@ -564,11 +568,13 @@ def _appointment(row, listed, clock, may, capabilities, key) -> dict | None:
 			"busy": True,
 			"clock": _clock(None),
 			"can": _can("booked", True, False, capabilities),
+			"chain": None,
 		}
 	booking = _text(row.get("booking"))
 	if not booking:
 		return None
-	listed = listed or {}
+	follows = bool(whole) and not listed
+	listed = listed or whole or {}
 	stands = listed.get("state")
 	# Where the time stands is the time lane's word; the money lane's list says it too (from the same records) where the time lane says nothing
 	worked = (
@@ -594,19 +600,18 @@ def _appointment(row, listed, clock, may, capabilities, key) -> dict | None:
 		# (everything happens at the till, 10.11). Paid at the till, or an app that says nothing: nothing, as before.
 		if state == "paid" and listed["can"]["cancel"] and capabilities["cancel"] and may:
 			can["cancel"] = True
-	steps = listed.get("steps") or [
-		_step(
-			{
-				"booking": booking,
-				"label": row.get("label"),
-				"item_code": row.get("item_code"),
-				"starts_at": row.get("starts_at"),
-				"ends_at": row.get("ends_at"),
-				"sales_person": person,
-				"sales_person_name": person_name,
-			}
-		)
-	]
+	own = _step(
+		{
+			"booking": booking,
+			"label": row.get("label"),
+			"item_code": row.get("item_code"),
+			"starts_at": row.get("starts_at"),
+			"ends_at": row.get("ends_at"),
+			"sales_person": person,
+			"sales_person_name": person_name,
+		}
+	)
+	steps = [own] if follows else (listed.get("steps") or [own])
 	return {
 		"key": key,
 		"booking": booking,
@@ -632,6 +637,8 @@ def _appointment(row, listed, clock, may, capabilities, key) -> dict | None:
 		"busy": False,
 		"clock": clock,
 		"can": can,
+		# The steps of the whole appointment, when this card is the card of one step after the first (copies: each card says what its cashier may time)
+		"chain": [dict(step) for step in listed.get("steps") or []] if follows else None,
 	}
 
 
@@ -992,21 +999,31 @@ def _clock_of_the_appointment(listed: dict | None, own: dict, clocks: dict) -> d
 	return _the_clock_of_all([_clock(clocks.get(step["booking"])) for step in steps])
 
 
+def _later_steps(listed: dict) -> dict:
+	"""{booking of a step after the first: the money lane's row of the appointment it belongs to}, for the cards the day view makes of them."""
+	return {
+		step["booking"]: row
+		for row in listed.values()
+		for step in row["steps"][1:]
+		if step["booking"] and step["booking"] != row["booking"]
+	}
+
+
 def _time_the_steps(rows, clocks, capabilities, visibility, mine, day) -> None:
 	"""Give each step of the agenda's appointments its `clock` and whether this cashier may time it (`can_time`).
 
-	An appointment of one step shares its clock with its step; one of several steps takes each step's from the time lane. A step can be timed while
-	the appointment allows it (not paid, finished or absent) on a till that has a time lane, when the step names its booking, is of the day of the agenda,
-	and is of a person this cashier may work (all of them, or her own).
+	An appointment of one step shares its clock with its step; one of several steps (its own, or those of the whole appointment a card of a later
+	step carries as `chain`) takes each step's from the time lane. A step can be timed while the appointment allows it (not paid, finished or absent)
+	on a till that has a time lane, when the step names its booking, is of the day of the agenda, and is of a person this cashier may work (all of
+	them, or her own).
 	"""
 	for row in rows:
 		if row["busy"]:
 			continue
-		several = len(row["steps"]) > 1
-		for step in row["steps"]:
-			step["clock"] = _clock(clocks.get(step["booking"])) if several else row["clock"]
+		several = len(row["chain"] or row["steps"]) > 1
 		allowed = bool(capabilities.get("clock")) and bool(row["can"]["clock"])
-		for step in row["steps"]:
+		for step in [*row["steps"], *(row["chain"] or [])]:
+			step["clock"] = _clock(clocks.get(step["booking"])) if several else row["clock"]
 			step["can_time"] = (
 				allowed
 				and bool(step["booking"])
@@ -1118,18 +1135,23 @@ def get_appointments(pos_profile: str, date: str | None = None, providers=None) 
 			listed,
 			pos_profile,
 		)
+		later = _later_steps(listed)
 		for n, appointment in enumerate(taken):
 			booking = _text(appointment.get("booking"))
 			person = _text(appointment.get("sales_person"))
 			may = visibility == "all" or (person is not None and person in mine)
+			whole = later.get(booking)
 			rows.append(
 				_appointment(
 					appointment,
 					listed.get(booking),
-					_clock_of_the_appointment(listed.get(booking), _clock(clocks.get(booking)), clocks),
+					_clock_of_the_appointment(
+						listed.get(booking) or whole, _clock(clocks.get(booking)), clocks
+					),
 					may,
 					capabilities,
 					booking if booking and not cint(appointment.get("busy")) else f"busy-{n}",
+					whole,
 				)
 			)
 	rows = [r for r in rows if r]
@@ -1476,6 +1498,22 @@ def repeat_appointment(
 	}
 
 
+# //// Neoffice — the door holds what the screen hides (NeoSalon, voie 4, 19.11.2026): the sheet shows no time button on a paid, finished or absent
+# //// appointment, and a cashier (or anything holding her session) can still call the gesture without the button: played on osiris, the start of an absent
+# //// customer's appointment answered 200 and wrote a time in progress. The money lane's list of the day says what may be done with each appointment
+# //// (`can.clock`, from where it stands): a start the sheet would not offer is refused. Pausing and finishing stay possible, to stop a clock that runs.
+def _refuse_a_clock_the_sheet_hides(pos_profile: str, booking: str, date) -> None:
+	listing = _first_answer(LIST_HOOK, pos_profile, str(getdate(date or nowdate())), None)
+	for row in (listing if isinstance(listing, list) else [])[:MOST_APPOINTMENTS]:
+		listed = _listed(row)
+		if not listed or booking not in [listed["booking"], *(step["booking"] for step in listed["steps"])]:
+			continue
+		may_not = listed["can"] is not None and not listed["can"]["clock"]
+		if may_not or listed["state"] in ("paid", "absent", "finished"):
+			frappe.throw(_("Not permitted"), frappe.PermissionError)
+		return
+
+
 @frappe.whitelist(methods=["POST"])
 def clock_appointment(
 	booking: str, pos_profile: str, action: str, sales_person: str | None = None, date: str | None = None
@@ -1489,6 +1527,8 @@ def clock_appointment(
 	booking = _gate(pos_profile, booking, date, person)
 	if action not in CLOCK_ACTIONS:
 		frappe.throw(_("This action is not known."))
+	if action == "start":
+		_refuse_a_clock_the_sheet_hides(pos_profile, booking, date)
 	answer = _first_answer(TIME_ACTION_HOOK, booking, action, pos_profile, _employee_of(person))
 	if not isinstance(answer, dict):
 		frappe.throw(_("This till does not take appointments."))

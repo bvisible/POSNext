@@ -13,6 +13,7 @@ import { usePOSCartStore } from "@/stores/posCart"
 import { usePOSSettingsStore } from "@/stores/posSettings"
 import { usePOSShiftStore } from "@/stores/posShift"
 import { call } from "@/utils/apiWrapper"
+import { stepsOfTheAppointment } from "@/utils/appointments"
 import { parseError } from "@/utils/errorHandler"
 import { modifiersPriceAdjustment } from "@/utils/modifiersPrice"
 import { getCachedItem } from "@/utils/offline"
@@ -80,7 +81,7 @@ export function cartLineOfAppointment(line, dayRate = null, announced = false) {
 export function announcedPriceOfStep(step, appointment) {
 	const own = step?.price
 	if (own !== null && own !== undefined && Number.isFinite(Number(own))) return Number(own)
-	const steps = (appointment?.steps || []).filter((each) => each?.item_code)
+	const steps = stepsOfTheAppointment(appointment).filter((each) => each?.item_code)
 	const amount = Number(appointment?.amount)
 	if (steps.length === 1 && Number.isFinite(amount) && amount > 0) {
 		return Math.round((amount / (Number(step?.qty) || 1)) * 1e6) / 1e6
@@ -238,7 +239,7 @@ export function useAppointment() {
 	/** The cart of an appointment made from what the till kept of the agenda, for a till with no network: there is no draft to pay, there is a sale to make. */
 	async function takeOffline(appointment) {
 		const cartStore = usePOSCartStore()
-		const steps = (appointment.steps || []).filter((step) => step?.item_code)
+		const steps = stepsOfTheAppointment(appointment).filter((step) => step?.item_code)
 		if (!steps.length) {
 			showWarning(__("This appointment cannot be taken without the network."))
 			return false

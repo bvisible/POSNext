@@ -6,12 +6,11 @@ gesture `clock_appointment` is the door the buttons call, and a cashier (or anyt
 with a cashier's own session, the start of an appointment marked « No Show » answered 200 and wrote a time record in progress (the time lane
 only asks that the booking be confirmed). The screen's rule must also be the door's.
 
-`test_the_clock_of_an_absent_appointment_is_refused` is marked as an expected failure while the door does not hold it (neoffice-maintenance, the
-tester's report of the pass): the day it is fixed, this test « unexpectedly succeeds », which fails the run and says to remove the mark.
-The control beside it (an appointment that allows its clock reaches the time lane) holds today, so the refusal cannot be a door shut for everyone.
+`test_the_clock_of_an_absent_appointment_is_refused` was marked as an expected failure while the door did not hold it (the tester's report of the
+pass); the door now asks the money lane what may be done with the appointment (`_refuse_a_clock_the_sheet_hides`) and the mark is gone. The control
+beside it (an appointment that allows its clock reaches the time lane) holds, so the refusal cannot be a door shut for everyone.
 """
 
-import unittest
 from unittest.mock import patch
 
 import frappe
@@ -130,7 +129,6 @@ class TestTheServerRefusesTheClockOfAnAppointmentTheScreenOffersNoClockOn(Frappe
 		self.assertEqual(SITE["actions"], [("ABS-1", "start", self.fx.profile, None)])
 		self.assertEqual(answer["clock"]["state"], "running")
 
-	@unittest.expectedFailure
 	def test_the_clock_of_an_absent_appointment_is_refused(self):
 		SITE["list"] = [
 			an_appointment(state="absent", can={"collect": 0, "move": 0, "cancel": 0, "clock": 0})

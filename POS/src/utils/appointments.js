@@ -341,6 +341,14 @@ export function whyNotCabin(why) {
 	return ""
 }
 
+/**
+ * The steps of the WHOLE appointment: a card of a step after the first (a colour's rinse and cut, in the column of its person) keeps its own step in
+ * `steps`, to be placed and titled, and carries the whole as `chain`; any other card says them all in `steps` (NeoSalon, voie 4, 19.11.2026).
+ */
+export function stepsOfTheAppointment(appointment) {
+	return appointment?.chain || appointment?.steps || []
+}
+
 /** What an appointment is about: the labels of its steps, « Coupe + brushing ». */
 export function titleOf(appointment) {
 	return (appointment?.steps || [])

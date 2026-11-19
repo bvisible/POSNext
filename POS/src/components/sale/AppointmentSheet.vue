@@ -24,7 +24,7 @@
 
 			<div class="flex flex-col gap-2 border-t border-gray-100 px-4 py-3 dark:border-gray-800">
 				<div class="text-xs font-semibold uppercase tracking-wider text-gray-500">{{ __("Services") }}</div>
-				<div v-for="(step, at) in appointment.steps" :key="at" class="flex items-center gap-3 text-[15px]" :data-test="`sheet-step-${at}`">
+				<div v-for="(step, at) in wholeSteps" :key="at" class="flex items-center gap-3 text-[15px]" :data-test="`sheet-step-${at}`">
 					<span class="w-11 flex-none text-xs tabular-nums text-gray-500">{{ hourOf(step.starts_at) }}</span>
 					<span class="min-w-0 flex-1">
 						<span dir="auto" class="block truncate text-gray-900 dark:text-gray-100">{{ step.label || step.item_code }}</span>
@@ -80,10 +80,10 @@
 				<div v-if="!manySteps && appointment.clock.state === 'paused' && appointment.clock.paused_by" class="text-xs text-gray-500" data-test="sheet-paused-by">{{ __("In pause: the time runs on the other appointment.") }}</div>
 				<!-- //// Neoffice — an appointment done in several times has a clock per step (NeoSalon, voie 4, 19.11.2026): each step says where it stands, how long it has really run, and carries the gestures of its own that THIS cashier may make (the site decides: `can_time`). The pose, where nobody works, has no clock. -->
 				<div v-if="manySteps" class="mt-1 flex flex-col gap-2" data-test="sheet-step-times">
-					<template v-for="(step, at) in appointment.steps" :key="at">
-					<div class="flex items-center gap-3" :data-test="`sheet-step-time-${at}`">
-						<span class="min-w-0 flex-1">
-							<span dir="auto" class="block truncate text-[15px] text-gray-900 dark:text-gray-100">{{ step.label || step.item_code }}</span>
+					<template v-for="(step, at) in wholeSteps" :key="at">
+					<div class="flex flex-wrap items-center gap-x-3 gap-y-2" :data-test="`sheet-step-time-${at}`">
+						<span class="min-w-[9rem] flex-1">
+							<span dir="auto" class="block break-words text-[15px] text-gray-900 dark:text-gray-100">{{ step.label || step.item_code }}</span>
 							<span class="block text-xs text-gray-500" :data-test="`sheet-step-clock-${at}`">{{ stepClockText(step) }}</span>
 						</span>
 						<b class="flex-none text-base tabular-nums text-gray-900 dark:text-gray-100" :data-test="`sheet-step-active-time-${at}`">{{ activeTimeOf(step.clock?.active_seconds) }}</b>
@@ -111,7 +111,7 @@
 			<!-- //// Neoffice — offline, what needs the site waits and says so (the tester's replay of the offline till, 19.11.2026): collecting still works, the sale replaces the draft when the network is back -->
 			<p v-if="offline && (primary || secondary.length)" class="text-sm text-gray-600 dark:text-gray-300" data-test="sheet-needs-network">{{ __("No network: the appointment can be collected, the other gestures wait for it.") }}</p>
 			<button v-if="primary" type="button" :data-test="`sheet-${primary.key}`" class="min-h-[52px] rounded-xl bg-gray-900 text-base font-semibold text-white disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900" :disabled="busy || primary.off || waitsForTheNetwork(primary.key)" @click="primary.run()">{{ primary.label }}</button>
-			<div class="grid gap-2" :style="{ gridTemplateColumns: `repeat(${secondary.length || 1}, minmax(0, 1fr))` }">
+			<div class="grid gap-2" :style="{ gridTemplateColumns: `repeat(auto-fit, minmax(7.5rem, 1fr))` }">
 				<button v-for="gesture in secondary" :key="gesture.key" type="button" :data-test="`sheet-${gesture.key}`" class="min-h-[48px] rounded-xl border px-2 text-[15px] font-medium disabled:opacity-50" :class="gesture.danger ? 'border-red-200 text-red-700 dark:border-red-400/40 dark:text-red-300' : 'border-gray-300 text-gray-900 dark:border-gray-500 dark:text-gray-100'" :disabled="busy || gesture.off || waitsForTheNetwork(gesture.key)" @click="gesture.run()">{{ gesture.label }}</button>
 			</div>
 		</div>
@@ -131,7 +131,7 @@ import { useTheNetwork } from "@/composables/useTheNetwork"
 import { useAppointmentsStore } from "@/stores/appointments"
 import { usePOSSettingsStore } from "@/stores/posSettings"
 import { usePOSShiftStore } from "@/stores/posShift"
-import { activeTimeOf, cabinOf, colorOfStep, dayText, hourOf, initialsOf, lengthOf, minutesLongOf, minutesOf, standsAs, whyNotCabin } from "@/utils/appointments"
+import { activeTimeOf, cabinOf, colorOfStep, dayText, hourOf, initialsOf, lengthOf, minutesLongOf, minutesOf, standsAs, stepsOfTheAppointment, whyNotCabin } from "@/utils/appointments"
 import { formatCurrency } from "@/utils/currency"
 
 const props = defineProps({
@@ -196,9 +196,10 @@ const clockText = computed(() => {
 
 //// Neoffice — an appointment done in several times has a clock per step (NeoSalon, voie 4, 19.11.2026). One of several steps shows each step's own clock and gestures;
 //// its clock above is the sum of them, and the gestures of the time are not offered twice (the bottom buttons would only reach its first step).
-const manySteps = computed(() => (props.appointment.steps || []).length > 1)
+const wholeSteps = computed(() => stepsOfTheAppointment(props.appointment))
+const manySteps = computed(() => wholeSteps.value.length > 1)
 const stepsDoneText = computed(() => {
-	const steps = props.appointment.steps || []
+	const steps = wholeSteps.value
 	return __("{0} of {1} steps finished", [steps.filter((step) => step.clock?.state === "done").length, steps.length])
 })
 function stepClockText(step) {
@@ -213,7 +214,7 @@ function stepClockText(step) {
 }
 /** The wait between a step and the next one (a colour that sets: nobody works on it, the person is free), « Wait · 30 min »; "" when there is none. */
 function waitAfter(at) {
-	const steps = props.appointment.steps || []
+	const steps = wholeSteps.value
 	const gap = (minutesOf(steps[at + 1]?.starts_at) ?? Number.NaN) - (minutesOf(steps[at]?.ends_at) ?? Number.NaN)
 	return Number.isFinite(gap) && gap >= 1 ? __("Wait · {0}", [lengthOf(gap)]) : ""
 }

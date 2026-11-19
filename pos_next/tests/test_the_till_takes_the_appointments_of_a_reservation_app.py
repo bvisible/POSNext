@@ -287,6 +287,8 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 				"can",
 				# where the money of a paid appointment came in (maintenance#2798)
 				"paid_at_the_till",
+				# the steps of the whole appointment, for the card of a step after the first (voie 4, 19.11.2026)
+				"chain",
 			},
 		)
 		self.assertEqual((first["state"], first["invoice"]), ("paid", "ACC-SINV-1"))

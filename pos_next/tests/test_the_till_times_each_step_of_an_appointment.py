@@ -14,6 +14,7 @@ gesture yet (a reservation app not updated) is told the older way. The suite pla
 - that a sale closes every step through `close`, falls back to the older gesture when the lane refuses `close`, and never raises.
 """
 
+import json
 from unittest.mock import patch
 
 import frappe
@@ -293,6 +294,172 @@ class TestTheTillTimesEachStepOfAnAppointment(FrappeTestCase):
 				colour = next(row for row in self.the_agenda()["appointments"] if row["booking"] == "COL-1")
 
 				self.assertEqual(colour["state"], expected)
+
+	# The card of a step after the first (a colour's rinse and cut, in the column of its own person)
+
+	def a_colour_of_two_people(self, **changes):
+		colour = self.a_colour(**changes)
+		for step, person in zip(colour["steps"], (self.luc, self.sonia, self.luc), strict=True):
+			step["sales_person"] = step["sales_person_name"] = person
+		return colour
+
+	def the_cards_of_a_colour(self, visibility="all", **changes):
+		self.site_has(
+			of_the_day=["the_list"], day=["the_day"], time_state=["the_state"], time_action=["time_action"]
+		)
+		SITE["list"] = [
+			self.a_colour_of_two_people(
+				state="started",
+				amount=150.0,
+				paid_amount=40.0,
+				invoice="ACC-SINV-9",
+				in_the_till=True,
+				**changes,
+			)
+		]
+		done = a_state("Finished", 600, started_at=f"{DAY} 09:00:00", ended_at=f"{DAY} 09:10:00")
+		SITE["state"] = {"COL-1": done, "COL-2": done, "COL-3": a_state("Not started")}
+		SITE["day"] = self.a_day_where(
+			("COL-1", self.luc, "09:00", "09:30"),
+			("COL-2", self.sonia, "10:00", "10:45"),
+			("COL-3", self.luc, "10:45", "11:00"),
+			visibility=visibility,
+		)
+		return {row["key"]: row for row in self.the_agenda()["appointments"]}
+
+	def test_the_card_of_a_later_step_keeps_its_own_step_and_carries_the_whole_appointment(self):
+		cards = self.the_cards_of_a_colour()
+
+		head, later = cards["COL-1"], cards["COL-2"]
+
+		self.assertEqual(
+			[s["booking"] for s in later["steps"]], ["COL-2"], "it stays in the column of her person"
+		)
+		self.assertEqual(later["steps"][0]["sales_person"], self.sonia)
+		self.assertEqual([s["booking"] for s in later["chain"]], ["COL-1", "COL-2", "COL-3"])
+		self.assertIsNone(head["chain"])
+		self.assertEqual(later["booking"], "COL-2", "the till times and asks by the booking of the card")
+		self.assertEqual((later["starts_at"], later["ends_at"]), (f"{DAY} 10:00:00", f"{DAY} 10:45:00"))
+
+	def test_the_card_of_a_later_step_says_what_the_whole_appointment_announces_and_where_it_stands(self):
+		cards = self.the_cards_of_a_colour()
+
+		head, later = cards["COL-1"], cards["COL-2"]
+
+		self.assertEqual(
+			(later["amount"], later["paid_amount"], later["invoice"], later["in_the_till"]),
+			(head["amount"], head["paid_amount"], head["invoice"], head["in_the_till"]),
+		)
+		self.assertEqual((later["amount"], later["paid_amount"]), (150.0, 40.0))
+		self.assertEqual(
+			(later["state"], head["state"]),
+			("started", "started"),
+			"her step is done, the colour is not: the pill does not say « to collect »",
+		)
+		self.assertEqual((later["clock"]["state"], later["clock"]["active_seconds"]), ("idle", 1200))
+		self.assertEqual([c["clock"]["state"] for c in later["chain"]], ["done", "done", "idle"])
+
+	def test_each_card_says_what_its_cashier_may_time_on_steps_of_its_own(self):
+		# She only reads her own appointments (Luc's): Sonia's card is not hers, Luc's is
+		cards = self.the_cards_of_a_colour(visibility="own")
+
+		head, later = cards["COL-1"], cards["COL-2"]
+
+		self.assertEqual([s["can_time"] for s in head["chain"] or head["steps"]], [True, False, True])
+		self.assertEqual([s["can_time"] for s in later["chain"]], [False, False, False])
+		self.assertEqual([s["can_time"] for s in later["steps"]], [False])
+
+	def test_a_filter_by_person_keeps_a_card_of_a_later_step_for_its_own_person_only(self):
+		self.the_cards_of_a_colour()
+		for person, expected in (
+			(self.sonia, {"COL-1", "COL-2"}),
+			(self.luc, {"COL-1", "COL-3"}),
+		):
+			with self.subTest(person):
+				frappe.set_user(TILL)
+				try:
+					agenda = appointments.get_appointments(self.fx.profile, DAY, json.dumps([person]))
+				finally:
+					frappe.set_user("Administrator")
+
+				self.assertEqual({row["key"] for row in agenda["appointments"]}, expected)
+
+	# The door of the clock holds what the sheet hides
+
+	def start_through(self, booking, action="start"):
+		frappe.set_user(TILL)
+		try:
+			return appointments.clock_appointment(booking, self.fx.profile, action, date=DAY)
+		finally:
+			frappe.set_user("Administrator")
+
+	def the_door_of(self, **changes):
+		self.site_has(of_the_day=["the_list"], day=["the_day"], time_action=["time_action"])
+		SITE["list"] = [self.a_colour_of_two_people(**changes)]
+		SITE["day"] = self.a_day_where(
+			("COL-1", self.luc, "09:00", "09:30"), ("COL-2", self.sonia, "10:00", "10:45")
+		)
+
+	def test_no_clock_is_started_through_any_step_of_an_appointment_that_is_finished_absent_or_paid(self):
+		nothing = {"collect": 0, "move": 0, "cancel": 0, "clock": 0}
+		for state in ("finished", "absent", "paid"):
+			for booking in ("COL-1", "COL-2"):
+				with self.subTest(state=state, booking=booking):
+					SITE.pop("actions", None)
+					self.the_door_of(state=state, can=nothing)
+
+					with self.assertRaises(frappe.PermissionError):
+						self.start_through(booking)
+
+					self.assertNotIn("actions", SITE)
+
+	def test_where_the_appointment_stands_alone_closes_the_door_when_the_lane_says_nothing_of_what_may_be_done(
+		self,
+	):
+		for state in ("finished", "absent", "paid"):
+			with self.subTest(state=state):
+				SITE.pop("actions", None)
+				self.the_door_of(state=state)
+				del SITE["list"][0]["can"]
+
+				with self.assertRaises(frappe.PermissionError):
+					self.start_through("COL-1")
+
+				self.assertNotIn("actions", SITE)
+
+	def test_a_start_the_money_lane_forbids_is_refused_even_when_its_state_says_nothing_against_it(self):
+		self.the_door_of(can={"collect": 1, "move": 1, "cancel": 1, "clock": 0})
+
+		with self.assertRaises(frappe.PermissionError):
+			self.start_through("COL-2")
+
+	def test_a_start_through_a_step_of_an_appointment_that_allows_it_reaches_the_time_lane(self):
+		self.the_door_of()
+
+		answer = self.start_through("COL-2")
+
+		self.assertEqual(SITE["actions"], [("COL-2", "start", self.fx.profile, None)])
+		self.assertEqual(answer["booking"], "COL-2")
+
+	def test_a_clock_that_runs_on_an_absent_appointment_can_still_be_stopped(self):
+		self.the_door_of(state="absent", can={"collect": 0, "move": 0, "cancel": 0, "clock": 0})
+
+		for action in ("pause", "finish"):
+			with self.subTest(action):
+				SITE.pop("actions", None)
+
+				self.start_through("COL-1", action)
+
+				self.assertEqual(SITE["actions"], [("COL-1", action, self.fx.profile, None)])
+
+	def test_a_money_lane_that_says_nothing_of_the_appointment_does_not_close_the_door(self):
+		self.the_door_of()
+		SITE["list"] = [self.a_colour_of_two_people(booking="ELSEWHERE")]
+		SITE["list"][0]["steps"] = []
+
+		self.start_through("COL-1")
+
+		self.assertEqual(SITE["actions"], [("COL-1", "start", self.fx.profile, None)])
 
 	def test_an_appointment_of_one_step_keeps_its_clock_and_asks_the_time_lane_nothing_more(self):
 		self.site_has(
