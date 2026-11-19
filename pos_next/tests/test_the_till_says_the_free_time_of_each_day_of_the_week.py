@@ -84,7 +84,7 @@ class TestTheWeekAtTheTill(FrappeTestCase):
 			{
 				"days": [
 					{"day": "2026-11-16", "state": "closed", "reason": "closure", "label": "Inventory"},
-					{"day": "2026-11-22", "state": "closed", "reason": "weekly_off", "label": None},
+					{"day": "2026-11-22", "state": "closed", "reason": "weekly_off", "label": "Sunday"},
 				]
 			}
 		)
@@ -118,6 +118,10 @@ class TestTheWeekAtTheTill(FrappeTestCase):
 				week["days"][6]["free_minutes"],
 			),
 			("2026-11-22", True, "weekly_off", 0),
+		)
+		self.assertIsNone(
+			week["days"][6]["label"],
+			"the holiday list names a weekly day off after the weekday: the reason says it",
 		)
 
 	def test_a_day_of_other_hours_is_not_closed(self):

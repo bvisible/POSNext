@@ -464,16 +464,23 @@ def _periods(value) -> list[list[str]]:
 	return periods
 
 
+# //// Neoffice — the note of a closed day, said by the till (voie 4, 19.11.2026, neoffice-maintenance#3160): a weekly day off has none. The holiday list names those rows after the weekday, in
+# //// its own language (« Sunday » under a French till, 104 of them on a copy of osiris), and the reason says it better (« Weekly day off »).
+def _note_of_the_day(reason, label) -> str | None:
+	return None if reason == "weekly_off" else _text(label)
+
+
 def _salon(view) -> dict | None:
 	"""How the salon stands on the day (the planning lane's `salon` block): open, closed (a holiday, a closure, a weekly day off) or with other
 	hours; None when the lane does not say (a site without the planning lane, or a lane that has not delivered it yet)."""
 	block = view.get("salon") if isinstance(view, dict) else None
 	if not isinstance(block, dict) or block.get("state") not in SALON_STATES:
 		return None
+	reason = block.get("reason") if block.get("reason") in SALON_REASONS else None
 	return {
 		"state": block["state"],
-		"reason": block.get("reason") if block.get("reason") in SALON_REASONS else None,
-		"label": _text(block.get("label")),
+		"reason": reason,
+		"label": _note_of_the_day(reason, block.get("label")),
 		"periods": _periods(block.get("periods")),
 	}
 
@@ -1653,11 +1660,12 @@ def _calendar_day(row) -> dict | None:
 	"""One day of the calendar as the till shows it: `{day, state, reason, label, periods}`; None for a row that is not a day or says no known state."""
 	if not isinstance(row, dict) or row.get("state") not in SALON_STATES or not _day(row.get("day")):
 		return None
+	reason = row.get("reason") if row.get("reason") in SALON_REASONS else None
 	return {
 		"day": _day(row.get("day")),
 		"state": row["state"],
-		"reason": row.get("reason") if row.get("reason") in SALON_REASONS else None,
-		"label": _text(row.get("label")),
+		"reason": reason,
+		"label": _note_of_the_day(reason, row.get("label")),
 		"periods": _periods(row.get("periods")),
 	}
 
