@@ -626,24 +626,24 @@ def _create_payment_entry_from_advance(invoice_doc, payment_entry_name, amount):
 	if payment_entry.unallocated_amount < amount:
 		frappe.throw(_("Payment Entry {0} has insufficient unallocated amount").format(payment_entry_name))
 
-	# Add reference to invoice
-	payment_entry.append(
-		"references",
+	# //// Neoffice — the advance is set against the SUBMITTED invoice by ERPNext's own reconciliation (the one the sale's down payment and the Payment Reconciliation tool use).
+	# //// Upstream added a reference row to the submitted Payment Entry and saved it: that never reposted the ledger, so the advance was consumed on the payment while the invoice
+	# //// still owed the money (the tester saw « Partly Paid » with the credit spent, voie 4, 19.11.2026, neoffice-maintenance#3138).
+	invoice = frappe.get_doc("Sales Invoice", invoice_doc.name)
+	invoice.append(
+		"advances",
 		{
-			"reference_doctype": "Sales Invoice",
-			"reference_name": invoice_doc.name,
-			"total_amount": invoice_doc.grand_total,
-			"outstanding_amount": invoice_doc.outstanding_amount,
+			# //// Neoffice — the advance row, as the sale's down payment writes it (theme booking/deposit.py): the payment, what is left on it, what is spent
+			"reference_type": "Payment Entry",
+			"reference_name": payment_entry.name,
+			"advance_amount": flt(payment_entry.unallocated_amount),
 			"allocated_amount": amount,
+			# //// Neoffice — a payment in the company's currency
+			"ref_exchange_rate": 1,
 		},
 	)
-
-	# Recalculate unallocated amount
-	payment_entry.set_amounts()
-
-	payment_entry.flags.ignore_permissions = True
-	payment_entry.flags.ignore_validate_update_after_submit = True
-	payment_entry.save()
+	# //// Neoffice — links the payment to the invoice in the ledger and lowers what the invoice owes
+	invoice.update_against_document_in_jv()
 
 	frappe.msgprint(_("Payment Entry {0} allocated to invoice").format(payment_entry.name), alert=True)
 

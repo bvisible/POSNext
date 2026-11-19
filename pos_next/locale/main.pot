@@ -29848,3 +29848,7 @@ msgstr ""
 msgid "{0} kept on the customer's account as a credit"
 msgstr ""
 
+#: POS/src/components/sale/PaymentEntries.vue:15
+msgid "Customer Credit"
+msgstr ""
+
