@@ -1,6 +1,6 @@
 //// Neoffice — added file (no upstream equivalent). What a customer paid online beyond the sale is not cash change (NeoSalon, voie 4, 19.11.2026).
 import { describe, expect, it } from "vitest"
-import { cashChangeOf, onlineSurplusOf } from "../onlineSurplus"
+import { cashChangeOf, coversTheSale, onlineSurplusOf } from "../onlineSurplus"
 
 describe("the online money beyond a sale", () => {
 	it("is nothing while the sale needs all of it", () => {
@@ -39,5 +39,25 @@ describe("the cash change of a sale partly paid online", () => {
 	it("is still change for the cash that exceeds what remained after the online part", () => {
 		// 20 online, 40 due, 30 in cash: 10 back
 		expect(cashChangeOf(50, 40, onlineSurplusOf(20, 40))).toBe(10)
+	})
+})
+
+describe("a sale that what was paid ahead online covers", () => {
+	it("is covered when the online money reaches the sale, or goes beyond it", () => {
+		expect(coversTheSale(40, 40)).toBe(true)
+		expect(coversTheSale(50, 40)).toBe(true)
+		expect(coversTheSale(33.3, 33.3)).toBe(true)
+	})
+
+	it("is not covered while the sale needs more than was paid", () => {
+		expect(coversTheSale(30, 40)).toBe(false)
+		expect(coversTheSale(39.99, 40)).toBe(false)
+	})
+
+	it("is never covered by nothing, nor by an odd amount", () => {
+		expect(coversTheSale(0, 0)).toBe(false)
+		expect(coversTheSale(undefined, 40)).toBe(false)
+		expect(coversTheSale("x", 40)).toBe(false)
+		expect(coversTheSale(null, null)).toBe(false)
 	})
 })

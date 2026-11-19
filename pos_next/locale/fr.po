@@ -26818,3 +26818,8 @@ msgstr "Attente · {0}"
 #, python-brace-format
 msgid "{0} of {1} steps finished"
 msgstr "{0} sur {1} étapes terminées"
+
+#: POS/src/components/sale/PaymentDialog.vue:1040
+msgid "She paid more online than the sale is worth: the difference stays on her account as a credit, it is not change to hand back in cash."
+msgstr "Elle a payé en ligne plus que le montant de la vente : la différence reste sur son compte sous forme d'avoir, elle n'est pas à rendre en espèces."
+

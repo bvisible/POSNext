@@ -2283,6 +2283,24 @@ def _credit_named_by(customer_credit_dict):
 SALE_PAID_MARGIN = 0.05
 
 
+# //// Neoffice — added (no upstream equivalent): a POS sale that an ADVANCE of the invoice covers (the down payment of an appointment, paid online, NeoSalon voie 4,
+# //// 19.11.2026) has nothing to collect at the till, but ERPNext still wants one mode of payment on a POS invoice at submit (« At least one mode of payment is required »).
+# //// It gets one line of the profile's default mode, of nothing: no money moves through it. Any other sale is left as it is.
+def _a_line_for_a_sale_its_advances_cover(invoice_doc, pos_profile=None):
+	if not cint(invoice_doc.get("is_pos")) or cint(invoice_doc.get("is_return")) or invoice_doc.get("payments"):
+		return
+	if not any(flt(row.get("allocated_amount")) > 0 for row in invoice_doc.get("advances") or []):
+		return
+	profile = invoice_doc.get("pos_profile") or pos_profile
+	rows = (frappe.get_cached_doc("POS Profile", profile).get("payments") or []) if profile else []
+	rows = [row for row in rows if row.get("mode_of_payment")]
+	mode = next((row.mode_of_payment for row in rows if cint(row.get("default"))), None) or (
+		rows[0].mode_of_payment if rows else None
+	)
+	if mode:
+		invoice_doc.append("payments", {"mode_of_payment": mode, "amount": 0})
+
+
 def _require_a_paid_sale(invoice_doc, credit):
 	if not cint(invoice_doc.get("is_pos")) or cint(invoice_doc.get("is_return")):
 		return
@@ -2822,6 +2840,9 @@ def submit_invoice(invoice=None, data=None):
 		# ERPNext's force_item_fields always overwrites pricing_rules, which
 		# causes calculate_item_values() to skip discounts when ignore_pricing_rule=1.
 		_patch_set_missing_item_details(invoice_doc)
+		# //// Neoffice — a sale its advances cover gets its line of nothing (_a_line_for_a_sale_its_advances_cover above, voie 4, 19.11.2026).
+		if doctype == "Sales Invoice":
+			_a_line_for_a_sale_its_advances_cover(invoice_doc, pos_profile)
 
 		import time as _time
 

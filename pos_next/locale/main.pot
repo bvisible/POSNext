@@ -29816,3 +29816,8 @@ msgstr ""
 #, python-brace-format
 msgid "{0} of {1} steps finished"
 msgstr ""
+
+#: POS/src/components/sale/PaymentDialog.vue:1040
+msgid "She paid more online than the sale is worth: the difference stays on her account as a credit, it is not change to hand back in cash."
+msgstr ""
+
