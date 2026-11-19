@@ -269,8 +269,9 @@ const weekDays = computed(() =>
 	(store.week || []).map((d) => {
 		const when = new Date(`${d.date}T12:00:00`)
 		const label = Number.isNaN(when.getTime()) ? d.date : when.toLocaleDateString(undefined, { weekday: "short", day: "numeric" })
-		const free = !d.working ? __("Nobody works") : d.free_minutes > 0 ? __("{0} free", [lengthOf(d.free_minutes)], "free time") : __("Full")
-		const tone = !d.working ? "text-gray-400" : d.free_minutes > 0 ? "text-green-700 dark:text-green-300" : "text-red-700 dark:text-red-300"
+		//// Neoffice — a day the site says is closed has no free hour: the band says « Closed », as the banner of the day does (neoffice-maintenance#3161)
+		const free = d.closed ? __("Closed") : !d.working ? __("Nobody works") : d.free_minutes > 0 ? __("{0} free", [lengthOf(d.free_minutes)], "free time") : __("Full")
+		const tone = d.closed || !d.working ? "text-gray-400" : d.free_minutes > 0 ? "text-green-700 dark:text-green-300" : "text-red-700 dark:text-red-300"
 		return { date: d.date, label, free, tone, selected: d.date === store.date }
 	}),
 )

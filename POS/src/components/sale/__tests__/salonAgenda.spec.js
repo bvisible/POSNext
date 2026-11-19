@@ -501,6 +501,16 @@ describe("the agenda of the salon", () => {
 			expect(days[6].text()).toContain("Nobody works")
 		})
 
+		it("says « Closed » for a day the site says is closed, never a free time (neoffice-maintenance#3161)", () => {
+			store.week = week.map((d, at) => (at === 0 ? { ...d, working: 0, worked_minutes: 0, free_minutes: 0, closed: true, reason: "closure", label: null } : d))
+			const days = mountIt().findAll("[data-test='agenda-week'] button")
+
+			expect(days[0].text()).toContain("Closed")
+			expect(days[0].text()).not.toContain("free")
+			expect(days[0].text()).not.toContain("Nobody works")
+			expect(days[3].text()).toContain("1 h 30")
+		})
+
 		it("goes to the day touched", async () => {
 			store.week = week
 			const wrapper = mountIt()

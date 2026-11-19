@@ -1593,11 +1593,28 @@ def _free_of_the_day(team) -> dict:
 	return {"working": working, "worked_minutes": worked, "free_minutes": free}
 
 
+# //// Neoffice — the band of the week reads the site's CALENDAR for the days the site says are closed, the one the banner of the day reads: a closed day has no free hour, whatever the
+# //// team's hours of that day say (the tester read « 8 h libres » on a closed Monday under a banner that said « Fermé ce jour-là », voie 4, 19.11.2026, neoffice-maintenance#3161).
+def _closed_days_of(pos_profile: str, first, last) -> dict:
+	"""The days of the period the site's calendar says are closed, `{day: {"reason", "label"}}`; empty where the site has no calendar or says nothing."""
+	if not _declared(CALENDAR_HOOK):
+		return {}
+	answer = _first_answer(CALENDAR_HOOK, pos_profile, str(first), str(last))
+	if not isinstance(answer, dict):
+		return {}
+	rows = (answer.get("days") or [])[:MOST_CALENDAR_DAYS]
+	shut = (_calendar_day(row) for row in rows)
+	return {
+		d["day"]: {"reason": d["reason"], "label": d["label"]} for d in shut if d and d["state"] == "closed"
+	}
+
+
 @frappe.whitelist()
 def get_week(pos_profile: str, date: str | None = None) -> dict:
 	"""The week of the day at a glance, Monday to Sunday (NeoSalon B', 16.11.2026: « vous avez de la place jeudi ? » answered in a second):
 	`{"available", "days": [{"date", "working", "worked_minutes", "free_minutes"}]}`, each day's free time the team's (`_free_of_the_day`),
-	read through the reservation's team of the day, the hours as the reservation reads them. Not available where the agenda is not."""
+	read through the reservation's team of the day, the hours as the reservation reads them. A day the site's calendar says is closed has no free time:
+	`closed: True`, with its `reason` and `label` (the banner of the agenda says the same). Not available where the agenda is not."""
 	from pos_next.api.cash_entry import require_till_access
 
 	require_till_access(pos_profile)
@@ -1605,9 +1622,23 @@ def get_week(pos_profile: str, date: str | None = None) -> dict:
 	if not appointments_enabled(pos_profile) or not site_has_appointments():
 		return {"available": False, "days": []}
 	monday = day - datetime.timedelta(days=day.weekday())
+	# //// Neoffice — the days the site says are closed (see _closed_days_of above)
+	closed = _closed_days_of(pos_profile, monday, monday + datetime.timedelta(days=6))
 	days = []
 	for offset in range(7):
 		one = monday + datetime.timedelta(days=offset)
+		if str(one) in closed:
+			days.append(
+				{
+					"date": str(one),
+					"working": 0,
+					"worked_minutes": 0,
+					"free_minutes": 0,
+					"closed": True,
+					**closed[str(one)],
+				}
+			)
+			continue
 		team = _first_answer(TEAM_HOOK, pos_profile, str(one))
 		days.append({"date": str(one), **_free_of_the_day(team if isinstance(team, list) else [])})
 	return {"available": True, "days": days}
