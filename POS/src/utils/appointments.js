@@ -369,6 +369,12 @@ export function remainingOf(total, paid) {
 	return Math.round(((Number(total) || 0) - (Number(paid) || 0)) * 100) / 100
 }
 
+/** Today as the till's device reads it, `YYYY-MM-DD` (the agenda's « Today », the days of the strip that are already past). */
+export function todayOf() {
+	const now = new Date()
+	return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
+}
+
 /** A day as the site writes it, `YYYY-MM-DD`, moved by `days` (the agenda's arrows). */
 export function dayMoved(day, days) {
 	const [year, month, date] = String(day || "")
@@ -431,9 +437,11 @@ export function dropTime(offsetY, range, pxPerHour, step = 15) {
  * @param {string} start - `YYYY-MM-DD`
  * @param {{days?: object[], absences?: object[]}|null} calendar - the till's `get_calendar`
  * @param {string|null} person - the person the appointment would be with
- * @returns {{ day: string, state: string, reason: string|null, label: string|null, periods: string[][], away: object|null }[]}
+ * @param {number} count - how many days
+ * @param {string} today - `YYYY-MM-DD`: the days before it are `past` (an appointment is never moved to a day that is gone); none when empty
+ * @returns {{ day: string, state: string, past: boolean, reason: string|null, label: string|null, periods: string[][], away: object|null }[]}
  */
-export function stripOfDays(start, calendar, person, count = 14) {
+export function stripOfDays(start, calendar, person, count = 14, today = "") {
 	if (!/^\d{4}-\d{2}-\d{2}$/.test(start || "")) return []
 	const held = new Map((calendar?.days || []).map((row) => [row.day, row]))
 	const absences = (calendar?.absences || []).filter((row) => person && row.sales_person === person)
@@ -444,6 +452,7 @@ export function stripOfDays(start, calendar, person, count = 14) {
 		days.push({
 			day,
 			state: row?.state || "open",
+			past: Boolean(today) && day < today,
 			reason: row?.reason || null,
 			label: row?.label || null,
 			periods: row?.periods || [],

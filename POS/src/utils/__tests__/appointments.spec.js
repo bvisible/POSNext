@@ -1,7 +1,7 @@
 //// Neoffice — added file (no upstream equivalent). The agenda of a salon at its till (NeoSalon, step 2, lot G4; product owner, 10.11.2026).
 // The rules of the screen: which column an appointment belongs to, where a block stands on the grid, which hours are free, what waits for its payment,
 // how a person stands. No component here: the rules alone.
-import { beforeAll, describe, expect, it } from "vitest"
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 
 beforeAll(() => {
 	globalThis.__ = (text, args = []) =>
@@ -36,6 +36,7 @@ const {
 	standsAs,
 	stepsOfTheAppointment,
 	stripOfDays,
+	todayOf,
 	titleOf,
 	toCollectCount,
 } = await import("../appointments")
@@ -480,6 +481,27 @@ describe("the strip of days of the move window", () => {
 
 	it("is nothing without a start day", () => {
 		for (const start of ["", null, undefined, "soon"]) expect(stripOfDays(start, calendar, "Luc")).toEqual([])
+	})
+
+	it("says the days before today are past, never today itself, and none when it does not know today (neoffice-maintenance#3160)", () => {
+		const past = stripOfDays("2026-12-24", calendar, "Luc", 14, "2026-12-26").map((day) => [day.day, day.past])
+
+		expect(past.filter(([, gone]) => gone).map(([day]) => day)).toEqual(["2026-12-24", "2026-12-25"])
+		expect(past.find(([day]) => day === "2026-12-26")[1]).toBe(false)
+		expect(stripOfDays("2026-12-24", calendar, "Luc").every((day) => day.past === false)).toBe(true)
+		expect(stripOfDays("2026-12-24", calendar, "Luc", 14, "").every((day) => day.past === false)).toBe(true)
+	})
+})
+
+describe("today as the device says it", () => {
+	afterEach(() => vi.useRealTimers())
+
+	it("is the device's own date, written YYYY-MM-DD, zero-padded (neoffice-maintenance#3160)", () => {
+		vi.useFakeTimers()
+		vi.setSystemTime(new Date(2026, 0, 5, 23, 59))
+		expect(todayOf()).toBe("2026-01-05")
+		vi.setSystemTime(new Date(2026, 10, 19, 0, 1))
+		expect(todayOf()).toBe("2026-11-19")
 	})
 })
 

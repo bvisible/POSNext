@@ -32,18 +32,18 @@
 				<!-- //// Neoffice — the days of the business around the one chosen (NeoSalon, voie 4, 19.11.2026): a day the business is closed cannot be pressed, a day with other hours says so, and a dot says the
 				     person is away that day. The reservation says it (the calendar of the till); the planning lane still says whether the hour fits. -->
 				<div v-if="strip.length" class="flex items-center gap-1" data-test="move-strip">
-					<button type="button" class="flex h-[44px] w-8 flex-none items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800" :aria-label="__('Earlier days')" data-test="move-strip-back" @click="shiftStrip(-7)">‹</button>
-					<div class="flex min-w-0 flex-1 gap-1 overflow-x-auto" role="group" :aria-label="__('Days')">
-						<button v-for="entry in strip" :key="entry.day" type="button" :data-test="`move-day-${entry.day}`" :disabled="entry.state === 'closed'" :aria-pressed="entry.day === day" :title="stripTitle(entry)" class="relative flex min-h-[48px] min-w-[48px] flex-none flex-col items-center justify-center rounded-lg border px-1 text-xs leading-tight" :class="stripClass(entry)" @click="day = entry.day">
+					<button type="button" class="flex h-[44px] w-11 flex-none items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800" :aria-label="__('Earlier days')" data-test="move-strip-back" @click="shiftStrip(-7)">‹</button>
+					<div ref="stripBox" class="flex min-w-0 flex-1 gap-1 overflow-x-auto" role="group" :aria-label="__('Days')" data-test="move-strip-days">
+						<button v-for="entry in strip" :key="entry.day" type="button" :data-test="`move-day-${entry.day}`" :disabled="entry.state === 'closed' || entry.past" :aria-pressed="entry.day === day" :title="stripTitle(entry)" class="relative flex min-h-[48px] min-w-[48px] flex-none flex-col items-center justify-center rounded-lg border px-1 text-xs leading-tight" :class="stripClass(entry)" @click="day = entry.day">
 							<span class="uppercase">{{ weekdayOf(entry.day) }}</span>
 							<b class="text-[15px] tabular-nums">{{ dayNumberOf(entry.day) }}</b>
 							<span v-if="entry.away" class="absolute end-1 top-1 h-2 w-2 rounded-full bg-orange-500" :data-test="`move-away-${entry.day}`" aria-hidden="true" />
 						</button>
 					</div>
-					<button type="button" class="flex h-[44px] w-8 flex-none items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800" :aria-label="__('Later days')" data-test="move-strip-next" @click="shiftStrip(7)">›</button>
+					<button type="button" class="flex h-[44px] w-11 flex-none items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800" :aria-label="__('Later days')" data-test="move-strip-next" @click="shiftStrip(7)">›</button>
 				</div>
 
-				<p v-if="verdict" class="rounded-xl px-4 py-3 text-sm leading-snug" :class="verdict.ok ? 'bg-green-50 text-green-800 dark:bg-green-400/15 dark:text-green-100' : 'bg-yellow-50 text-yellow-800 dark:bg-yellow-400/15 dark:text-yellow-100'" data-test="move-verdict">
+				<p v-if="shownVerdict" class="rounded-xl px-4 py-3 text-sm leading-snug" :class="shownVerdict.ok ? 'bg-green-50 text-green-800 dark:bg-green-400/15 dark:text-green-100' : 'bg-yellow-50 text-yellow-800 dark:bg-yellow-400/15 dark:text-yellow-100'" data-test="move-verdict">
 					<b>{{ verdictText }}</b>
 					<!-- //// Neoffice — what the move does to the cabin (NeoSalon, cabins level 2, 16.11.2026): said before the button, never a surprise after it -->
 					<span v-if="cabinNote" class="mt-1 block" data-test="move-cabin">{{ cabinNote }}</span>
@@ -71,7 +71,7 @@ import { Dialog } from "frappe-ui"
 import { computed, ref, watch } from "vue"
 import { useAppointment } from "@/composables/useAppointment"
 import { useAppointmentsStore } from "@/stores/appointments"
-import { dayMoved, firstStepOf, hourOf, isOff, lengthOf, minutesLongOf, stripOfDays, titleOf } from "@/utils/appointments"
+import { dayMoved, firstStepOf, hourOf, isOff, lengthOf, minutesLongOf, stripOfDays, titleOf, todayOf } from "@/utils/appointments"
 
 const props = defineProps({
 	modelValue: { type: Boolean, default: false },
@@ -96,24 +96,41 @@ let asking = null
 const STRIP_DAYS = 14
 const calendar = ref(null)
 const stripStart = ref("")
-const strip = computed(() => (calendar.value ? stripOfDays(stripStart.value, calendar.value, person.value, STRIP_DAYS) : []))
+//// Neoffice — the days already gone are not offered (NeoSalon, voie 4, 19.11.2026, neoffice-maintenance#3160): read when the window opens, as the device says it
+const today = ref(todayOf())
+const stripBox = ref(null)
+const strip = computed(() => (calendar.value ? stripOfDays(stripStart.value, calendar.value, person.value, STRIP_DAYS, today.value) : []))
 let calendarAsked = 0
+// Where the strip goes when it changes: to the day chosen (a day pressed or typed), or back to its first day (an arrow)
+let stripGoesTo = "chosen"
 
 // The people she may be moved to: those who work that day, and the one she is with
 const movable = computed(() => store.people.filter((option) => option.sales_person && (!isOff(option) || option.sales_person === person.value)))
 const whenText = computed(() => (day.value && time.value ? `${day.value} ${time.value}:00` : ""))
-const canMove = computed(() => Boolean(whenText.value) && verdict.value?.ok !== false)
+//// Neoffice — the refusal says why (neoffice-maintenance#3160): the day chosen is closed, or the hour is outside its other hours. The business says it (the calendar of the till) before the lane's own
+//// phrase, which only said « That time slot is no longer available. » for both.
+const chosenEntry = computed(() => strip.value.find((entry) => entry.day === day.value) || null)
+const businessWhy = computed(() => {
+	const entry = chosenEntry.value
+	if (!entry) return ""
+	if (entry.state === "closed") return stripTitle(entry)
+	const inside = (entry.periods || []).some(([from, to]) => time.value >= from && time.value < to)
+	if (entry.state === "special" && time.value && !inside) return stripTitle(entry)
+	return ""
+})
+const shownVerdict = computed(() => (businessWhy.value ? { ok: false, why: businessWhy.value, cabin: null } : verdict.value))
+const canMove = computed(() => Boolean(whenText.value) && shownVerdict.value?.ok !== false)
 // One sentence: the lane's own reason when it refuses (« That time slot is no longer available. »), the general one only when it gives none.
 // Both side by side said the same thing twice, and the template compiler dropped the space between them (16.11)
 const verdictText = computed(() => {
-	if (!verdict.value) return ""
-	if (verdict.value.ok) return __("This hour is free.")
-	return verdict.value.why || __("This hour is not possible.")
+	if (!shownVerdict.value) return ""
+	if (shownVerdict.value.ok) return __("This hour is free.")
+	return shownVerdict.value.why || __("This hour is not possible.")
 })
 
 // What the move does to the cabin, when the reservation says it changes (the cabin is kept whenever it is free at the new hour)
 const cabinNote = computed(() => {
-	const cabin = verdict.value?.ok ? verdict.value.cabin : null
+	const cabin = shownVerdict.value?.ok ? shownVerdict.value.cabin : null
 	if (!cabin?.changed || !cabin.to) return ""
 	return cabin.from ? __("{0} instead of {1}.", [cabin.to.label, cabin.from.label]) : __("It goes in {0}.", [cabin.to.label])
 })
@@ -129,6 +146,8 @@ watch(
 		time.value = proposed.time || hourOf(props.appointment.starts_at)
 		notify.value = true
 		verdict.value = null
+		today.value = todayOf()
+		stripGoesTo = "chosen"
 		loadStrip(day.value)
 		// a drop proposes another hour: whether it fits is asked at once, as for a change made here
 		if (props.proposal) askFit()
@@ -150,8 +169,22 @@ async function loadStrip(from) {
 	if (asked === calendarAsked) calendar.value = answer?.available ? answer : null
 }
 function shiftStrip(days) {
+	stripGoesTo = "start"
 	loadStrip(dayMoved(stripStart.value, days))
 }
+//// Neoffice — the strip is twice as wide as its box: the day chosen is brought into view each time it changes or the strip is read again (neoffice-maintenance#3160: a day typed stayed out of sight)
+function bringIntoView() {
+	const box = stripBox.value
+	if (!box) return
+	const chosen = stripGoesTo === "chosen" ? box.querySelector(`[data-test="move-day-${day.value}"]`) : null
+	stripGoesTo = "chosen"
+	// Already wholly in view: the strip stays where it is
+	if (chosen && chosen.offsetLeft >= box.scrollLeft && chosen.offsetLeft + chosen.offsetWidth <= box.scrollLeft + box.clientWidth) return
+	const left = chosen ? Math.max(0, chosen.offsetLeft - (box.clientWidth - chosen.offsetWidth) / 2) : 0
+	if (typeof box.scrollTo === "function") box.scrollTo({ left })
+	else box.scrollLeft = left
+}
+watch([day, () => strip.value[0]?.day], bringIntoView, { flush: "post" })
 // The strip follows a day chosen in the field when it is out of its range
 watch(day, (chosen) => {
 	if (!chosen || !calendar.value) return
@@ -169,14 +202,22 @@ const REASONS = {
 }
 function stripTitle(entry) {
 	const parts = []
+	if (entry.past) parts.push(__("Past day"))
 	if (entry.state === "closed") parts.push(__("Closed that day"))
 	if (entry.state === "special") parts.push(__("Special hours"), (entry.periods || []).map(([from, to]) => `${from}–${to}`).join(" · "))
-	parts.push(entry.label || (REASONS[entry.reason] ? REASONS[entry.reason]() : ""))
+	// The reason only when it adds something: « Special hours · 09:00–12:00 · Special hours » said it twice (neoffice-maintenance#3160)
+	const reason = entry.label || (REASONS[entry.reason] ? REASONS[entry.reason]() : "")
+	if (!parts.includes(reason)) parts.push(reason)
 	if (entry.away) parts.push(__("{0} is away", [entry.away.sales_person_name]))
 	return parts.filter(Boolean).join(" · ")
 }
 function stripClass(entry) {
-	if (entry.day === day.value) return "border-gray-900 bg-gray-900 text-white dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900"
+	// The day chosen keeps what is wrong with it: a closed one is struck and ringed (it showed as plain black, neoffice-maintenance#3160)
+	if (entry.day === day.value) {
+		const chosen = "border-gray-900 bg-gray-900 text-white dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900"
+		return entry.state === "closed" ? `${chosen} line-through ring-2 ring-red-600 ring-offset-1` : chosen
+	}
+	if (entry.past) return "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-600"
 	if (entry.state === "closed") return "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400 line-through dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500"
 	if (entry.state === "special") return "border-dashed border-yellow-500 bg-yellow-50 text-yellow-800 dark:bg-yellow-400/15 dark:text-yellow-100"
 	return "border-gray-300 bg-white text-gray-900 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"

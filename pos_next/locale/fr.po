@@ -26854,3 +26854,7 @@ msgstr "{0} conservé en avoir sur le compte de la cliente"
 msgid "Customer Credit"
 msgstr "Solde créditeur"
 
+#: POS/src/components/sale/MoveAppointmentDialog.vue:205
+msgid "Past day"
+msgstr "Jour passé"
+

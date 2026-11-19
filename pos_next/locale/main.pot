@@ -29852,3 +29852,7 @@ msgstr ""
 msgid "Customer Credit"
 msgstr ""
 
+#: POS/src/components/sale/MoveAppointmentDialog.vue:205
+msgid "Past day"
+msgstr ""
+

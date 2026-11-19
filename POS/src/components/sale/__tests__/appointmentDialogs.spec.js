@@ -40,6 +40,9 @@ vi.mock("../CustomerFormDialog.vue", () => ({
 	},
 }))
 vi.mock("@/utils/apiWrapper", () => ({ call: lane.call }))
+// The day « today » is the 10th of November 2026 for these specs (the days of the strip that are gone are not offered, neoffice-maintenance#3160): the real clock would move them
+const clock = vi.hoisted(() => ({ today: "2026-11-10" }))
+vi.mock("@/utils/appointments", async (original) => ({ ...(await original()), todayOf: () => clock.today }))
 const network = vi.hoisted(() => ({ isOffline: false }))
 vi.mock("@/utils/offline/offlineState", () => ({ offlineState: network }))
 vi.mock("@/utils/currency", () => ({ formatCurrency: (amount) => `CHF ${Number(amount).toFixed(2)}` }))
@@ -65,6 +68,7 @@ const mountWith = (component, props) => mount(component, { props, global: { mock
 
 let store
 beforeEach(() => {
+	clock.today = "2026-11-10"
 	setActivePinia(createPinia())
 	Object.values(lane).forEach((fn) => fn.mockClear?.())
 	Object.values(lane.toast).forEach((fn) => fn.mockClear())
@@ -307,7 +311,8 @@ describe("the days of the business in the move dialog", () => {
 
 		const special = wrapper.get("[data-test='move-day-2026-11-12']")
 		expect(special.attributes("disabled")).toBeUndefined()
-		expect(special.attributes("title")).toBe("Special hours · 10:00–14:00 · Special hours")
+		// the reason is not said twice when the day has no note of its own (« Special hours · 10:00–14:00 · Special hours », neoffice-maintenance#3160)
+		expect(special.attributes("title")).toBe("Special hours · 10:00–14:00")
 		expect(special.classes().join(" ")).toContain("border-dashed")
 	})
 
@@ -358,6 +363,24 @@ describe("the days of the business in the move dialog", () => {
 		expect(lane.calendarOf).toHaveBeenLastCalledWith("2026-11-10", "2026-11-23")
 	})
 
+	it("keeps a note of its own on a day with other hours", async () => {
+		lane.calendarOf.mockResolvedValue({ ...calendar, days: [{ day: "2026-11-12", state: "special", reason: "special_hours", label: "Late opening", periods: [["10:00", "14:00"]] }] })
+		const wrapper = open()
+		await flushPromises()
+
+		expect(wrapper.get("[data-test='move-day-2026-11-12']").attributes("title")).toBe("Special hours · 10:00–14:00 · Late opening")
+	})
+
+	it("has arrows as wide as a touch target, 44 px", async () => {
+		const wrapper = open()
+		await flushPromises()
+
+		for (const arrow of ["move-strip-back", "move-strip-next"]) {
+			expect(wrapper.get(`[data-test='${arrow}']`).classes()).toContain("w-11")
+			expect(wrapper.get(`[data-test='${arrow}']`).classes()).not.toContain("w-8")
+		}
+	})
+
 	it("brings the strip to a day typed in the field when it is out of its range", async () => {
 		const wrapper = open()
 		await flushPromises()
@@ -401,6 +424,203 @@ describe("the days of the business in the move dialog", () => {
 		expect(wrapper.findAll("[data-test^='move-day-']")[0].attributes("data-test")).toBe("move-day-2026-11-10")
 		expect(wrapper.get("[data-test='move-day-2026-11-12']").attributes("title")).toContain("Right window")
 		expect(wrapper.get("[data-test='move-day-2026-11-12']").attributes("title")).not.toContain("Stale")
+	})
+})
+
+describe("what the move dialog says of the day chosen (neoffice-maintenance#3160)", () => {
+	const open = (extra = {}) => mountWith(MoveAppointmentDialog, { modelValue: true, appointment: appointment(), ...extra })
+	const calendar = {
+		available: true,
+		days: [
+			{ day: "2026-11-11", state: "closed", reason: "closure", label: null, periods: [] },
+			{ day: "2026-11-12", state: "special", reason: "special_hours", label: null, periods: [["09:00", "12:00"]] },
+			{ day: "2026-11-13", state: "closed", reason: "holiday", label: null, periods: [] },
+			{ day: "2026-11-14", state: "closed", reason: "weekly_off", label: null, periods: [] },
+		],
+		absences: [],
+	}
+	const choose = async (wrapper, dayText, timeText) => {
+		await wrapper.get("[data-test='move-day']").setValue(dayText)
+		if (timeText) await wrapper.get("[data-test='move-time']").setValue(timeText)
+		await flushPromises()
+	}
+
+	beforeEach(() => {
+		store.capabilities = { ...store.capabilities, calendar: true }
+		lane.calendarOf.mockReset()
+		lane.calendarOf.mockResolvedValue(calendar)
+		// the lane's own phrase when it refuses: the one that said nothing of the reason
+		lane.checkMove.mockResolvedValue({ ok: false, why: "That time slot is no longer available." })
+	})
+
+	it("says a closed day is closed, and why, not the lane's phrase, and the button cannot be pressed", async () => {
+		vi.useFakeTimers()
+		const wrapper = open()
+		await vi.advanceTimersByTimeAsync(0)
+		await flushPromises()
+
+		await wrapper.get("[data-test='move-day']").setValue("2026-11-11")
+		await vi.advanceTimersByTimeAsync(400)
+		await flushPromises()
+
+		expect(wrapper.get("[data-test='move-verdict']").text()).toBe("Closed that day · Closure")
+		expect(wrapper.get("[data-test='move-confirm']").attributes("disabled")).toBeDefined()
+	})
+
+	it("says it for a public holiday and for a weekly day off", async () => {
+		const wrapper = open()
+		await flushPromises()
+
+		await choose(wrapper, "2026-11-13")
+		expect(wrapper.get("[data-test='move-verdict']").text()).toBe("Closed that day · Public holiday")
+		await choose(wrapper, "2026-11-14")
+		expect(wrapper.get("[data-test='move-verdict']").text()).toBe("Closed that day · Weekly day off")
+	})
+
+	it("says the other hours of the day when the hour chosen is outside them, and says nothing of them when it is inside", async () => {
+		vi.useFakeTimers()
+		lane.checkMove.mockResolvedValue({ ok: true, why: "" })
+		const wrapper = open()
+		await vi.advanceTimersByTimeAsync(0)
+		await flushPromises()
+
+		await wrapper.get("[data-test='move-day']").setValue("2026-11-12")
+		await wrapper.get("[data-test='move-time']").setValue("14:00")
+		await vi.advanceTimersByTimeAsync(400)
+		await flushPromises()
+		expect(wrapper.get("[data-test='move-verdict']").text()).toBe("Special hours · 09:00–12:00")
+		expect(wrapper.get("[data-test='move-confirm']").attributes("disabled")).toBeDefined()
+
+		await wrapper.get("[data-test='move-time']").setValue("10:30")
+		await vi.advanceTimersByTimeAsync(400)
+		await flushPromises()
+		expect(wrapper.get("[data-test='move-verdict']").text()).toBe("This hour is free.")
+		expect(wrapper.get("[data-test='move-confirm']").attributes("disabled")).toBeUndefined()
+	})
+
+	it("leaves the lane's own words to an open day it refuses", async () => {
+		vi.useFakeTimers()
+		const wrapper = open()
+		await vi.advanceTimersByTimeAsync(0)
+		await flushPromises()
+
+		await wrapper.get("[data-test='move-time']").setValue("16:00")
+		await vi.advanceTimersByTimeAsync(400)
+		await flushPromises()
+
+		expect(wrapper.get("[data-test='move-verdict']").text()).toBe("That time slot is no longer available.")
+	})
+
+	it("keeps a closed day typed in the field struck and ringed, not plain black", async () => {
+		const wrapper = open()
+		await flushPromises()
+
+		await choose(wrapper, "2026-11-11")
+
+		const chosen = wrapper.get("[data-test='move-day-2026-11-11']")
+		expect(chosen.attributes("aria-pressed")).toBe("true")
+		expect(chosen.classes()).toContain("line-through")
+		expect(chosen.classes()).toContain("ring-red-600")
+		const open_ = wrapper.get("[data-test='move-day-2026-11-15']")
+		expect(open_.classes()).not.toContain("line-through")
+	})
+
+	it("does not offer the days already gone: greyed, cannot be pressed, and says it", async () => {
+		clock.today = "2026-11-12"
+		const wrapper = open()
+		await flushPromises()
+
+		for (const gone of ["2026-11-10", "2026-11-11"]) {
+			const button = wrapper.get(`[data-test='move-day-${gone}']`)
+			expect(button.attributes("disabled")).toBeDefined()
+			expect(button.attributes("title")).toContain("Past day")
+		}
+		const today = wrapper.get("[data-test='move-day-2026-11-12']")
+		expect(today.attributes("disabled")).toBeUndefined()
+		expect(today.attributes("title") || "").not.toContain("Past day")
+		await wrapper.get("[data-test='move-day-2026-11-11']").trigger("click")
+		expect(wrapper.get("[data-test='move-day']").element.value).toBe("2026-11-10")
+		await wrapper.get("[data-test='move-day-2026-11-15']").trigger("click")
+		expect(wrapper.get("[data-test='move-day']").element.value).toBe("2026-11-15")
+	})
+})
+
+describe("the strip goes to the day chosen (neoffice-maintenance#3160)", () => {
+	const open = () => mountWith(MoveAppointmentDialog, { modelValue: true, appointment: appointment(), attachTo: document.body })
+	const prototype = HTMLElement.prototype
+	let scrolled
+	let scrollLeft
+
+	beforeEach(() => {
+		store.capabilities = { ...store.capabilities, calendar: true }
+		lane.calendarOf.mockReset()
+		lane.calendarOf.mockResolvedValue({ available: true, days: [], absences: [] })
+		scrolled = vi.fn()
+		scrollLeft = 0
+		// jsdom lays nothing out: a box 300 px wide, days 48 px wide and 52 px apart, the first one of the strip at 0
+		Object.defineProperty(prototype, "offsetLeft", {
+			configurable: true,
+			get() {
+				return /^move-day-\d{4}-\d{2}-\d{2}$/.test(this.dataset?.test || "") ? Array.from(this.parentElement.children).indexOf(this) * 52 : 0
+			},
+		})
+		Object.defineProperty(prototype, "offsetWidth", { configurable: true, get: () => 48 })
+		Object.defineProperty(prototype, "clientWidth", { configurable: true, get: () => 300 })
+		Object.defineProperty(prototype, "scrollLeft", { configurable: true, get: () => scrollLeft, set(value) { scrollLeft = value } })
+		prototype.scrollTo = scrolled
+	})
+	afterEach(() => {
+		for (const name of ["offsetLeft", "offsetWidth", "clientWidth", "scrollLeft", "scrollTo"]) Reflect.deleteProperty(prototype, name)
+		document.body.innerHTML = ""
+	})
+
+	it("brings a day typed in the field into view when it is in the strip but out of sight", async () => {
+		const wrapper = open()
+		await flushPromises()
+		scrolled.mockClear()
+
+		await wrapper.get("[data-test='move-day']").setValue("2026-11-20")
+		await flushPromises()
+
+		// the 20th is the eleventh day of a strip that starts on the 10th: 10 * 52 = 520, centred in a box of 300 (520 - (300 - 48) / 2)
+		expect(scrolled).toHaveBeenLastCalledWith({ left: 520 - 126 })
+	})
+
+	it("does not move a strip whose chosen day is already in view", async () => {
+		const wrapper = open()
+		await flushPromises()
+		scrolled.mockClear()
+
+		await wrapper.get("[data-test='move-day-2026-11-11']").trigger("click")
+		await flushPromises()
+
+		expect(wrapper.get("[data-test='move-day']").element.value).toBe("2026-11-11")
+		expect(scrolled).not.toHaveBeenCalled()
+	})
+
+	it("shows the day typed far away at the start of the strip it is read again from, whatever the strip was scrolled to", async () => {
+		const wrapper = open()
+		await flushPromises()
+		scrollLeft = 400
+		scrolled.mockClear()
+
+		await wrapper.get("[data-test='move-day']").setValue("2026-12-20")
+		await flushPromises()
+
+		// the strip starts on the day chosen, now at 0: out of the box that was scrolled to [400, 700]
+		expect(scrolled).toHaveBeenLastCalledWith({ left: 0 })
+	})
+
+	it("an arrow shows the first day of the week it moves to, not where the strip was scrolled", async () => {
+		const wrapper = open()
+		await flushPromises()
+		scrollLeft = 400
+		scrolled.mockClear()
+
+		await wrapper.get("[data-test='move-strip-next']").trigger("click")
+		await flushPromises()
+
+		expect(scrolled).toHaveBeenCalledWith({ left: 0 })
 	})
 })
 

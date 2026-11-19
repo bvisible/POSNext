@@ -10,6 +10,7 @@ import {
 	columnsOf,
 	dayMoved,
 	dayRange,
+	todayOf,
 	toCollectCount as countToCollect,
 } from "@/utils/appointments"
 import { offlineState } from "@/utils/offline/offlineState"
@@ -20,10 +21,6 @@ export const REFRESH_EVERY_MS = 60 * 1000
 export const WEEK_EVERY_MS = 5 * 60 * 1000
 const CACHE_KEY = "pos_next_salon_agenda"
 
-const todayOf = () => {
-	const now = new Date()
-	return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
-}
 const minutesNow = () => {
 	const now = new Date()
 	return now.getHours() * 60 + now.getMinutes()
