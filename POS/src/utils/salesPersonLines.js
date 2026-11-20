@@ -44,6 +44,35 @@ export function everyLineHasItsPerson(lines, options) {
 	return linesWithoutTheirPerson(lines, options).length === 0
 }
 
+/**
+ * Whether nobody can be chosen: the list the till offers was read (online, answered) and holds nobody. A list not read yet, or whose read failed,
+ * says nothing: the person is still asked for, as the server asks for it where somebody is offered.
+ * @param {{ listRead: boolean, offered: number }} list
+ */
+export function nobodyCanBeChosen({ listRead = false, offered = 0 } = {}) {
+	return Boolean(listRead) && Number(offered) === 0
+}
+
+/**
+ * Whether the payment window asks for a sales person of the whole sale (the red star, the blocked button): the till follows sales persons, it is online
+ * (a sale kept offline is not blocked: the list cannot be read), some line asks for a person and not every one of them has hers, and somebody can be
+ * chosen. Where the list the till offers is empty the server asks for nobody either (neoffice-maintenance#3109): a required field that nobody can fill
+ * blocks a sale for nothing.
+ * @param {{ enabled: boolean, offline: boolean, lines: object[], productsTracked: boolean, listRead: boolean, offered: number }} sale
+ */
+export function salesPersonIsRequired({
+	enabled,
+	offline = false,
+	lines,
+	productsTracked = false,
+	listRead = false,
+	offered = 0,
+}) {
+	if (!enabled || offline) return false
+	if (everyLineHasItsPerson(lines, { productsTracked })) return false
+	return !nobodyCanBeChosen({ listRead, offered })
+}
+
 /** Two lines merge only when they name the same person: two « Cut » of two hairdressers are two lines, each with its own commission. */
 export function sameLinePerson(a, b) {
 	return (a?.sales_person || null) === (b?.sales_person || null)

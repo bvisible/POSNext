@@ -476,6 +476,13 @@ class TestLineNetAmount(unittest.TestCase):
 
 
 class TestValidateCoverage(unittest.TestCase):
+	# //// Neoffice — the requirement stands where somebody can be chosen (neoffice-maintenance#3109): these tests are of a till that
+	# //// offers one person; the case of a till that offers none is the last test of the class.
+	def setUp(self):
+		offered = patch("pos_next.api.pos_profile.the_sellers_a_till_offers", return_value=[{"name": "SP-A"}])
+		self.offered = offered.start()
+		self.addCleanup(offered.stop)
+
 	@patch.object(spc, "sales_persons_enabled", return_value=True)
 	@patch(
 		"pos_next.pos_next.utils.sales_person_commission.frappe.throw",
@@ -568,6 +575,25 @@ class TestValidateCoverage(unittest.TestCase):
 			pos_profile="POS-1",
 		)
 		spc.validate_sales_person_coverage(invoice, "POS-1")
+
+	# //// Neoffice — added test (neoffice-maintenance#3109): nobody to choose, nobody asked for
+	@patch.object(spc, "sales_persons_enabled", return_value=True)
+	@patch(
+		"pos_next.pos_next.utils.sales_person_commission.frappe.throw",
+		side_effect=RuntimeError("required"),
+	)
+	def test_not_asked_when_the_till_offers_nobody(self, _throw, _enabled):
+		self.offered.return_value = []
+		invoice = SimpleNamespace(
+			items=[_item(sales_person=None)],
+			sales_team=[],
+			pos_profile="POS-1",
+		)
+
+		spc.validate_sales_person_coverage(invoice, "POS-1", invoice_level_team=[])
+
+		_throw.assert_not_called()
+		self.offered.assert_called_once_with("POS-1")
 
 
 class TestLegacyInvoiceLevelRecovery(unittest.TestCase):

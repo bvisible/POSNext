@@ -8,11 +8,17 @@ with or without the « include payment » flag, is valid with no sales person wh
 optional table. The suite pins both, so that a merge of upstream that moves the rule into the document is seen.
 """
 
+from unittest.mock import patch
+
 import frappe
 from frappe.utils import nowdate
 
 from pos_next.api import invoices
 from pos_next.tests.test_service_families import ServiceCase
+from pos_next.tests.test_the_till_offers_every_sales_person_and_marks_the_cashiers_own import (
+	a_sales_person,
+	an_employee,
+)
 
 
 class TestTheSalesPersonIsAskedByTheTillOnly(ServiceCase):
@@ -40,12 +46,33 @@ class TestTheSalesPersonIsAskedByTheTillOnly(ServiceCase):
 		self.assertTrue(sales_persons_enabled(self.fx.profile))
 
 	def test_the_till_asks_for_a_sales_person_on_every_line(self):
+		# //// Neoffice — where somebody can be chosen (neoffice-maintenance#3109): the till of this company has a person to offer
+		a_sales_person("_Test SP Asked Luc", an_employee("TestSPAskedLuc", self.fx.company), self.fx.company)
+		self.addCleanup(self.forget_the_person)
 		sale = self.desk_invoice(pos_profile=self.fx.profile)
 
 		with self.assertRaises(frappe.ValidationError) as caught:
 			invoices._apply_pos_sales_team(sale, None, self.fx.profile)
 
 		self.assertIn("Sales Person is required", str(caught.exception))
+
+	def forget_the_person(self):
+		for doctype, filters in (
+			("Sales Person", {"sales_person_name": "_Test SP Asked Luc"}),
+			("Employee", {"first_name": "TestSPAskedLuc"}),
+		):
+			for name in frappe.get_all(doctype, filters=filters, pluck="name"):
+				frappe.delete_doc(doctype, name, ignore_permissions=True, force=True)
+
+	# //// Neoffice — added test (neoffice-maintenance#3109): nobody to choose, nobody asked for
+	def test_the_till_asks_for_none_where_it_offers_none(self):
+		# What the till offers is stood in for (a site's own people would make a list that is not empty on a copy of a real site)
+		sale = self.desk_invoice(pos_profile=self.fx.profile)
+
+		with patch("pos_next.api.pos_profile.the_sellers_a_till_offers", return_value=[]):
+			invoices._apply_pos_sales_team(sale, None, self.fx.profile)
+
+		self.assertFalse([row for row in sale.items if row.get("sales_person")])
 
 	def test_a_sale_of_the_desk_asks_for_none(self):
 		sale = self.desk_invoice().insert(ignore_permissions=True)

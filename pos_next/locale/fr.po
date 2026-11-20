@@ -26858,3 +26858,7 @@ msgstr "Solde créditeur"
 msgid "Past day"
 msgstr "Jour passé"
 
+#: POS/src/components/sale/PaymentDialog.vue:104
+msgid "No sales person to choose: this sale does not ask for one."
+msgstr "Aucun vendeur à choisir : cette vente n'en demande pas."
+

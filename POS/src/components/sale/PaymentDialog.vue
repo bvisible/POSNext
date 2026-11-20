@@ -95,6 +95,14 @@
 								: 'bg-purple-50 border border-purple-200',
 						]"
 					>
+						<!-- //// Neoffice — nobody to choose, so nobody is asked (neoffice-maintenance#3109) -->
+						<p
+							v-if="nobodyToChoose && linesThatAskForAPerson.length > 0"
+							data-test="no-sales-person-to-choose"
+							class="text-xs text-purple-700 mb-1.5"
+						>
+							{{ __("No sales person to choose: this sale does not ask for one.") }}
+						</p>
 						<p
 							v-if="allItemsHaveSalesPerson"
 							class="text-xs text-purple-700 mb-1.5"
@@ -173,7 +181,7 @@
 									</svg>
 									<!-- //// Neoffice — the question in the words of what was done (NeoSalon, lot G1) -->
 									{{ salesPersonLabel }}
-									<span class="text-red-500">*</span>
+									<span v-if="salesPersonRequired" class="text-red-500">*</span>
 									<!-- Refresh: re-fetch sales persons from server -->
 									<button
 										@click.prevent="refreshSalesPersons"
@@ -306,7 +314,8 @@
 										/>
 									</svg>
 									{{ __("Sales Persons") }}
-									<span class="text-red-500">*</span>
+									<!-- //// Neoffice — starred only where the sale asks for a person (neoffice-maintenance#3109) -->
+									<span v-if="salesPersonRequired" class="text-red-500">*</span>
 									<!-- Refresh: re-fetch sales persons from server -->
 									<button
 										@click.prevent="refreshSalesPersons"
@@ -2663,7 +2672,13 @@ import { mySalesPerson } from "@/utils/mySalesPerson";
 //// Neoffice — which lines ask for a person, and in which words; the person who serves (NeoSalon, lot G1, product owner, 09.11.2026).
 import { useWhoServesStore } from "@/stores/whoServes";
 import { loadItemKinds } from "@/utils/itemKinds";
-import { kindOfLines, lineAsksForAPerson, whoLabel } from "@/utils/salesPersonLines";
+import {
+	kindOfLines,
+	lineAsksForAPerson,
+	nobodyCanBeChosen,
+	salesPersonIsRequired,
+	whoLabel,
+} from "@/utils/salesPersonLines";
 //// Neoffice — which tip settings the dialog follows, a restaurant till's or a shop till's (tips at a shop till, 09.11.2026)
 import { tipRules } from "@/utils/tillTips";
 //// Neoffice — the method of the « exact » button (see the file's header).
@@ -3495,6 +3510,8 @@ const salesPersons = ref([]);
 const selectedSalesPersons = ref([]);
 const salesPersonSearch = ref("");
 const loadingSalesPersons = ref(false);
+//// Neoffice — whether the list of the till was read (answered by the server, online): an empty list that was read says nobody can be chosen, an empty list that was not says nothing (neoffice-maintenance#3109)
+const salesPersonsRead = ref(false);
 const salesPersonDropdownOpen = ref(false);
 const salesPersonDropdownRef = ref(null);
 
@@ -3510,6 +3527,7 @@ const salesPersonsResource = createResource({
 		log.debug("[PaymentDialog] Sales persons loaded:", data);
 		const persons = data?.message || data || [];
 		salesPersons.value = persons;
+		salesPersonsRead.value = true; //// Neoffice — the list was read, whatever it holds (neoffice-maintenance#3109)
 		loadingSalesPersons.value = false;
 		// Cache for offline use
 		if (persons.length > 0 && props.posProfile) {
@@ -3527,6 +3545,7 @@ const salesPersonsResource = createResource({
 	onError(error) {
 		log.error("[PaymentDialog] Error loading sales persons:", error);
 		salesPersons.value = [];
+		salesPersonsRead.value = false; //// Neoffice — a failed read says nothing of who can be chosen (neoffice-maintenance#3109)
 		loadingSalesPersons.value = false;
 	},
 });
@@ -3575,22 +3594,25 @@ const allItemsHaveSalesPerson = computed(() => {
 //// Neoffice — the question in the words of what was done (« Who did the work? » of a service, « Who sold it? » of a product) where the site tells the kinds.
 const salesPersonLabel = computed(() => whoLabel(kindOfLines(props.items)));
 
+//// Neoffice — nobody can be chosen: the list was read and holds nobody (a company with no sales person yet, one whose people all rent their chair). The server asks for nobody there either, so the field is neither starred nor blocking (neoffice-maintenance#3109)
+const nobodyToChoose = computed(() =>
+	nobodyCanBeChosen({ listRead: salesPersonsRead.value, offered: salesPersons.value.length })
+);
+//// Neoffice — whether the sale asks for a person at all: the rule is in utils/salesPersonLines.js (offline, no line that asks, every line covered, nobody to choose: no)
+const salesPersonRequired = computed(() =>
+	salesPersonIsRequired({
+		enabled: settingsStore.enableSalesPersons,
+		offline: props.isOffline,
+		lines: props.items,
+		productsTracked: settingsStore.trackProductSalesByPerson,
+		listRead: salesPersonsRead.value,
+		offered: salesPersons.value.length,
+	})
+);
+
 const isSalesPersonValid = computed(() => {
-	// If sales persons feature is disabled, always valid
-	if (!settingsStore.enableSalesPersons) {
-		return true;
-	}
-	// Skip validation when offline — sales persons can't be fetched,
-	// don't block the sale. Team data is omitted from offline invoices.
-	if (props.isOffline) {
-		return true;
-	}
-	//// Neoffice — no line asks for a person (a product alone, the till not following the products): nobody is required
-	if (linesThatAskForAPerson.value.length === 0) {
-		return true;
-	}
-	// All lines covered by item-level SP → invoice-level SP not required
-	if (allItemsHaveSalesPerson.value) {
+	//// Neoffice — not asked for (feature disabled, offline, no line asks, every line covered, nobody to choose): always valid
+	if (!salesPersonRequired.value) {
 		return true;
 	}
 	// At least one sales person must be selected at invoice level
@@ -4131,6 +4153,14 @@ function isQuickAmountDisabled(amount) {
 		amount !== roundCurrency(remainingAmount.value)
 	);
 }
+
+//// Neoffice — another till's list says nothing of this one's: the list of the new profile is not read yet (neoffice-maintenance#3109)
+watch(
+	() => props.posProfile,
+	() => {
+		salesPersonsRead.value = false;
+	}
+);
 
 // Preload payment methods and sales persons when posProfile is set.
 // Watches both posProfile AND enableSalesPersons to fix a race condition:

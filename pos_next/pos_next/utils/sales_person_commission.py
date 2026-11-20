@@ -495,6 +495,14 @@ def validate_sales_person_coverage(
 		if asks_for_a_person(_line_item_code(item), products_tracked=products_tracked, pos_profile=profile)
 	]
 	if uncovered and not has_invoice_team:
+		# //// Neoffice — a person is asked for only where somebody can be chosen (neoffice-maintenance#3109): a till that asks for sellers and
+		# //// offers none (a company with no sales person yet, one whose people all rent their chair, a list the cashier may not see) refused
+		# //// every sale with « Sales Person is required » and no name to give. What the till offers is what it asks for: the same list.
+		# //// Remove if upstream stops requiring a person when the profile offers none.
+		from pos_next.api.pos_profile import the_sellers_a_till_offers
+
+		if not the_sellers_a_till_offers(profile):
+			return
 		frappe.throw(
 			_(
 				"Sales Person is required. Select a Sales Person on the payment screen, "

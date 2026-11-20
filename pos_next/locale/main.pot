@@ -29856,3 +29856,7 @@ msgstr ""
 msgid "Past day"
 msgstr ""
 
+#: POS/src/components/sale/PaymentDialog.vue:104
+msgid "No sales person to choose: this sale does not ask for one."
+msgstr ""
+
