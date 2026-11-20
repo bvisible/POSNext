@@ -156,6 +156,33 @@ def get_customers(
 		frappe.throw(_("Error fetching customers: {0}").format(str(e)))
 
 
+# //// Neoffice — added (no upstream equivalent; neoffice-maintenance#3108). The group a new customer of this till starts in, when the cashier chooses none: the group the POS Profile
+# //// carries when the site's version has such a field, else the one of the site's selling settings, and only a group customers can be filed in (not a node of the tree).
+# //// None when there is none: the form then asks the cashier to choose, it never takes the first group of the list (the group carries price lists and pricing rules, so a customer
+# //// filed among the resellers at random pays another price). Read here, by the till, because a cashier holds no right on the selling settings.
+def _the_customer_group_of_the_profile(pos_profile):
+	"""The group the till's POS Profile carries, on a version of the doctype that has such a field (this one does not): None otherwise."""
+	if isinstance(pos_profile, str) and frappe.get_meta("POS Profile").has_field("customer_group"):
+		return frappe.db.get_value("POS Profile", pos_profile, "customer_group")
+	return None
+
+
+@frappe.whitelist()
+def get_default_customer_group(pos_profile: str | None = None):
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user(pos_profile if isinstance(pos_profile, str) else None)
+	candidates = (
+		_the_customer_group_of_the_profile(pos_profile),
+		frappe.db.get_single_value("Selling Settings", "customer_group"),
+	)
+	for name in candidates:
+		is_group = frappe.db.get_value("Customer Group", name, "is_group") if name else None
+		if is_group is not None and not int(is_group or 0):
+			return name
+	return None
+
+
 # //// Neoffice — ▼▼▼ create_customer made survivable on a localized site. Upstream hardcoded
 # //// customer_type="Individual", customer_group=... or "Individual" and territory=... or
 # //// "All Territories" — English document names that do not exist on a French site, so

@@ -78,7 +78,7 @@
 						<!-- //// follow the type toggle (53d87890 2026-05-28); it sits beside that toggle. -->
 						<!-- Customer Group -->
 						<select v-model="customerGroup" :class="selectClass">
-							<option value="" disabled>{{ __("Customer Group") }}</option>
+							<option value="" disabled>{{ __("Customer Group") + " *" }}</option>
 							<option v-for="group in customerGroups" :key="group" :value="group">
 								{{ group }}
 							</option>
@@ -373,6 +373,8 @@ import { logger } from "@/utils/logger"
 //// Neoffice — the questions asked before a customer is created: a customer who may already exist, a customer without
 //// an address (neoffice-maintenance#1109, #1120; the same as the desk's creation window).
 import { creationKey, duplicateSentence, matchReason, nextCreationQuestion } from "@/utils/customerCreationWarnings"
+//// Neoffice — which group a new customer starts in, and whether the cashier still has to choose one (neoffice-maintenance#3108)
+import { customerGroupIsMissing, preferredCustomerGroup } from "@/utils/customerGroups"
 //// Neoffice — frappe-ui's <Input> is no longer imported: the compact form uses plain
 //// inputs with placeholders instead of labelled fields (616d4102, 2026-03-25).
 import { Button, Dialog, createResource } from "frappe-ui"
@@ -446,7 +448,8 @@ const customerType = ref("Individual")
 
 // Internal state
 const customerGroup = ref("")
-const defaultCustomerGroup = ref("Individual")
+//// Neoffice — the group the site says (the till's profile or the selling settings), read by the till: "" until it answers or where there is none (neoffice-maintenance#3108)
+const defaultCustomerGroup = ref("")
 const territory = ref("All Territories")
 const territories = ref(["All Territories"])
 const customerGroups = ref([])
@@ -505,6 +508,8 @@ const fullName = computed(() => {
 //// edit mode must not require phone/email — legacy customers may lack them,
 // which otherwise makes the Save button permanently disabled when editing.
 const isFormValid = computed(() => {
+	//// Neoffice — a group is chosen where there is a choice: the form no longer files a customer in a group taken at random (neoffice-maintenance#3108)
+	if (customerGroupIsMissing({ groups: customerGroups.value, chosen: customerGroup.value })) return false
 	if (isCompany.value) {
 		return !!customerData.value.company_name.trim()
 	}
@@ -753,19 +758,33 @@ const createListResource = (doctype, onSuccess) =>
 // Localised swiss POS UX convention: Individuel for Individual, Commercial for Company.
 // Falls back to the English default name, then to the first available group. With no group
 // at all, the server's create_customer applies the Selling Settings default itself.
+//// Neoffice — never the first group of the list (neoffice-maintenance#3108): the group of the type, else the site's, else none and the cashier chooses (rule: utils/customerGroups.js).
 function preferredGroupFor(type) {
-	const preferred = type === "Company" ? "Commercial" : "Individuel"
-	if (customerGroups.value.includes(preferred)) return preferred
-	if (defaultCustomerGroup.value && customerGroups.value.includes(defaultCustomerGroup.value)) {
-		return defaultCustomerGroup.value
-	}
-	return customerGroups.value[0] || ""
+	return preferredCustomerGroup({
+		type,
+		groups: customerGroups.value,
+		siteDefault: defaultCustomerGroup.value,
+	})
 }
 
 const customerGroupsResource = createListResource("Customer Group", (names) => {
 	customerGroups.value = names
 	// Auto-select the customer-type-aware default (Individuel / Commercial).
 	customerGroup.value = preferredGroupFor(customerType.value)
+})
+//// Neoffice — the group the site says a new customer of this till starts in (the till's profile, else the selling settings), read by the till: the cashier holds no right on the selling settings (neoffice-maintenance#3108)
+const defaultCustomerGroupResource = createResource({
+	url: "pos_next.api.customers.get_default_customer_group",
+	makeParams: () => ({ pos_profile: props.posProfile }),
+	auto: false,
+	onSuccess: (name) => {
+		defaultCustomerGroup.value = name || ""
+		// the list may have come first and found nothing to start in: the cashier has chosen nothing yet, so the site's group fills the field
+		if (!customerGroup.value && customerGroups.value.length) {
+			customerGroup.value = preferredGroupFor(customerType.value)
+		}
+	},
+	onError: (err) => log.error("Error loading the default customer group", err),
 })
 const territoriesResource = createListResource(
 	"Territory",
@@ -804,6 +823,7 @@ const loadDialogData = async () => {
 	// Load form options in parallel
 	territoriesResource.reload()
 	customerGroupsResource.reload()
+	defaultCustomerGroupResource.reload()
 	checkPermissions()
 
 	// Set country from POS Profile
