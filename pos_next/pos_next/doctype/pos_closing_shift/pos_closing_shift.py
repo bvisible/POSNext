@@ -719,8 +719,15 @@ def _process_invoice(
 	# GL in full when the invoice is submitted regardless of what the customer
 	# paid, so scaling it here would make this table impossible to reconcile
 	# against the VAT accounts.
+	# //// Neoffice — the VAT the invoice posted to the GL is the one AFTER the discount of the whole sale (a coupon, a gift card, a manual amount):
+	# //// `tax_amount` is the VAT before it. A sale of 76.60 covered in full by a gift card reported 5.74 of VAT where the GL has none, and the
+	# //// closing said « Taxes collectées 17.22 » for 1.99 of real VAT (maintenance#3201). A row without the after-discount fields keeps its tax_amount.
+	after_discount = ("tax_amount_after_discount_amount", "base_tax_amount_after_discount_amount")
 	for t in invoice.taxes:
-		tax_amount = get_base_value(t, "tax_amount", "base_tax_amount", conversion_rate)
+		if any(t.get(fieldname) not in (None, "") for fieldname in after_discount):
+			tax_amount = get_base_value(t, *after_discount, conversion_rate)
+		else:
+			tax_amount = get_base_value(t, "tax_amount", "base_tax_amount", conversion_rate)
 		_aggregate_tax(taxes, t.account_head, t.rate, tax_amount)
 
 	# Process payments

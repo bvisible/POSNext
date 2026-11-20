@@ -310,6 +310,82 @@ class TestPOSClosingShift(unittest.TestCase):
 		self.assertEqual(vat.amount, 1)
 		self.assertEqual(summary["net_total"] + vat.amount, summary["grand_total"])
 
+	# //// Neoffice — the VAT the closing reports is the VAT the invoice posted to the GL, AFTER the discount of the whole sale
+	# //// (a coupon, a gift card, a manual amount). `tax_amount` is the VAT before that discount: a sale of 76.60 paid in full by a
+	# //// gift card reported 5.74 of VAT (the GL has none), and the closing said « Taxes collectées 17.22 » for 1.99 of real VAT
+	# //// (maintenance#3201).
+	def test_taxes_are_the_ones_posted_after_the_discount_of_the_sale(self):
+		"""A discount of the whole sale lowers the VAT the closing reports, as it lowers the VAT of the GL."""
+		summary = _empty_summary()
+		payments, taxes = [], []
+
+		# 76.60 VAT included, covered in full by a gift card: nothing is posted to the GL
+		covered = _invoice(
+			"INV-GC-FULL",
+			grand_total=0,
+			paid_amount=0,
+			net_total=0,
+			taxes=[
+				frappe._dict(
+					{
+						"account_head": "VAT - T",
+						"rate": 8.1,
+						"tax_amount": 5.74,
+						"base_tax_amount": 5.74,
+						"tax_amount_after_discount_amount": 0,
+						"base_tax_amount_after_discount_amount": 0,
+					}
+				)
+			],
+		)
+		_process_invoice(covered, "sales_invoice", "USD", "Cash", payments, taxes, summary)
+
+		# The same sale, 50 of it covered by the card: 1.99 of VAT is posted
+		partly = _invoice(
+			"INV-GC-PART",
+			grand_total=26.6,
+			paid_amount=26.6,
+			net_total=24.61,
+			payments=[frappe._dict({"mode_of_payment": "Cash", "amount": 26.6, "base_amount": 26.6})],
+			taxes=[
+				frappe._dict(
+					{
+						"account_head": "VAT - T",
+						"rate": 8.1,
+						"tax_amount": 5.74,
+						"base_tax_amount": 5.74,
+						"tax_amount_after_discount_amount": 1.99,
+						"base_tax_amount_after_discount_amount": 1.99,
+					}
+				)
+			],
+		)
+		_process_invoice(partly, "sales_invoice", "USD", "Cash", payments, taxes, summary)
+
+		vat = next(t for t in taxes if t.account_head == "VAT - T")
+		self.assertAlmostEqual(vat.amount, 1.99, places=2)
+		self.assertAlmostEqual(summary["net_total"] + vat.amount, summary["grand_total"], places=2)
+
+	def test_a_tax_row_without_the_discounted_amount_keeps_its_tax_amount(self):
+		"""A row that does not carry the after-discount fields (an old one) reports its tax amount, as before."""
+		summary = _empty_summary()
+		payments, taxes = [], []
+
+		old = _invoice(
+			"INV-OLD",
+			grand_total=110,
+			paid_amount=110,
+			net_total=100,
+			payments=[frappe._dict({"mode_of_payment": "Cash", "amount": 110, "base_amount": 110})],
+			taxes=[
+				frappe._dict({"account_head": "VAT - T", "rate": 10, "tax_amount": 10, "base_tax_amount": 10})
+			],
+		)
+		_process_invoice(old, "sales_invoice", "USD", "Cash", payments, taxes, summary)
+
+		vat = next(t for t in taxes if t.account_head == "VAT - T")
+		self.assertEqual(vat.amount, 10)
+
 
 class TestClosingShiftExpenseAggregation(FrappeTestCase):
 	"""T4 — expenses meet payment_reconciliation and total_pos_expenses.
