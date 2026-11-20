@@ -139,14 +139,26 @@ def _the_tills_back_office(retail_tabs):
 		if not tab:
 			continue
 		if key == "reports":
-			tab = dict(tab, groups=[*(tab.get("groups") or []), restaurant_reports()])
+			group = restaurant_reports()
+			tab = dict(tab, groups=[*(tab.get("groups") or []), *([group] if group["reports"] else [])])
 		found.append(_ours(tab))
 	return found
 
 
 def restaurant_reports():
-	"""The reports of the restaurant itself, which the point of sale has no use for."""
-	return {"label": _("Restaurant"), "reports": [TIPS_REPORT]}
+	"""The reports of the restaurant itself, which the point of sale has no use for. The tips' report goes with the tips: a
+	restaurant that answered in the welcome of its space that its customers leave none does not see it (the theme's
+	space_welcome, lot 7 of the space's welcome)."""
+	return {"label": _("Restaurant"), "reports": [] if _no_tips() else [TIPS_REPORT]}
+
+
+def _no_tips():
+	"""Whether the company said it takes no tips, in the theme's welcome (nothing said, or no theme: it shows them)."""
+	try:
+		from neoffice_theme.space_welcome.spaces import resto
+	except ImportError:
+		return False
+	return resto.tips_said_no()
 
 
 def workspace_more():
