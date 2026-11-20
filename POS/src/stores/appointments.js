@@ -10,6 +10,7 @@ import {
 	columnsOf,
 	dayMoved,
 	dayRange,
+	isAWholeDate,
 	todayOf,
 	toCollectCount as countToCollect,
 } from "@/utils/appointments"
@@ -139,9 +140,15 @@ export const useAppointmentsStore = defineStore("appointments", () => {
 			selectedKey.value = null
 	}
 
+	//// Neoffice — the last read asked for (neoffice-maintenance#3164): a day typed by hand, or two clicks on the band, ask for another day while the first read is still on its way. The old
+	//// guard (`if loading: return`) dropped the second read, then the first answer took the place of the day shown: the header said the 29th, the grid drew another day. A read is dropped
+	//// only when it asks for the day already being read; and an answer is taken only if no later read was asked for.
+	let readSeq = 0
+	let readOf = ""
+
 	/** Read the agenda of the day shown (the network's, or the one kept when there is none). */
 	async function refresh() {
-		if (loading.value) return
+		if (loading.value && readOf === date.value) return
 		const shift = usePOSShiftStore()
 		now.value = minutesNow()
 		if (offlineState.isOffline) {
@@ -165,8 +172,13 @@ export const useAppointmentsStore = defineStore("appointments", () => {
 			} else failed.value = !loaded.value
 			return
 		}
+		const thisRead = ++readSeq
+		const asked = date.value
+		readOf = asked
 		loading.value = true
-		const answer = await useAppointment().loadDay(date.value)
+		const answer = await useAppointment().loadDay(asked)
+		// //// Neoffice — a later read took over: this answer is of a day no longer asked for, and the later read tells what the grid shows (neoffice-maintenance#3164)
+		if (thisRead !== readSeq) return
 		loading.value = false
 		if (!answer) {
 			failed.value = true
@@ -179,13 +191,19 @@ export const useAppointmentsStore = defineStore("appointments", () => {
 
 	/** Read the band of the week of the day shown, when its week changed or the last reading is older than five minutes. */
 	async function refreshWeek(force = false) {
-		const monday = dayMoved(date.value, -((new Date(`${date.value}T12:00:00`).getDay() + 6) % 7))
+		const mondayOf = (day) => dayMoved(day, -((new Date(`${day}T12:00:00`).getDay() + 6) % 7))
+		const monday = mondayOf(date.value)
 		if (!force && monday === weekOf && Date.now() - weekAt < WEEK_EVERY_MS) return
 		const lane = useAppointment()
 		if (!lane.loadWeek) return
 		weekOf = monday
 		weekAt = Date.now()
 		const answer = await lane.loadWeek(date.value)
+		// //// Neoffice — the day moved to another week while the band was being read: that band is not the week shown, and it is read again with the day (neoffice-maintenance#3164)
+		if (mondayOf(date.value) !== monday) {
+			weekOf = ""
+			return
+		}
 		week.value = answer?.available ? answer.days || [] : []
 	}
 
@@ -194,6 +212,8 @@ export const useAppointmentsStore = defineStore("appointments", () => {
 	}
 
 	function setDay(next) {
+		// //// Neoffice — nothing is read for what is not a whole date (neoffice-maintenance#3164)
+		if (!isAWholeDate(next)) return Promise.resolve()
 		day.value = next === todayOf() ? "" : next
 		selectedKey.value = null
 		return refresh()
@@ -217,6 +237,9 @@ export const useAppointmentsStore = defineStore("appointments", () => {
 	/** Sign-out or a change of till: nothing of the day before stays. */
 	function reset() {
 		stop()
+		// //// Neoffice — a read still on its way when the till changes belongs to the till before (neoffice-maintenance#3164)
+		readSeq++
+		readOf = ""
 		day.value = ""
 		week.value = []
 		weekOf = ""

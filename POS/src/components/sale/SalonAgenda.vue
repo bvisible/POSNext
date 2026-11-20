@@ -16,7 +16,7 @@
 				</button>
 			</div>
 			<!-- //// Neoffice — any date, beyond the band of the week (NeoSalon B', 16.11.2026) -->
-			<input type="date" data-test="agenda-date" class="h-11 rounded-lg border border-gray-200 bg-white px-2 text-sm text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200" :value="store.date" :aria-label="__('Choose a date')" @change="chooseDate" />
+			<input type="date" data-test="agenda-date" class="h-11 rounded-lg border border-gray-200 bg-white px-2 text-sm text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200" :value="store.date" :aria-label="__('Choose a date')" @change="chooseDate" @blur="applyTypedDate" @keydown.enter="applyTypedDate" />
 			<h2 class="flex-1 min-w-0 truncate text-2xl leading-tight text-gray-900 dark:text-gray-100" style="font-family: Forum, Georgia, serif" data-test="agenda-title">{{ dayTitle }}</h2>
 			<div v-if="store.mine.length" class="inline-flex rounded-lg bg-gray-100 p-0.5 text-sm dark:bg-gray-800" role="group" :aria-label="__('Columns')">
 				<button type="button" data-test="agenda-all" class="min-h-[40px] rounded-md px-3" :class="!store.onlyMine ? 'bg-white font-semibold shadow-sm dark:bg-gray-700' : 'text-gray-600 dark:text-gray-300'" @click="store.onlyMine = false">{{ __("All") }}</button>
@@ -203,6 +203,7 @@ import {
 	gridTemplateOf,
 	hourOf,
 	initialsOf,
+	isAWholeDate,
 	isOff,
 	lanesOf,
 	lengthOf,
@@ -276,10 +277,28 @@ const weekDays = computed(() =>
 	}),
 )
 // a date chosen beyond the week; a date half typed is nothing yet
-const chooseDate = (event) => {
-	const value = event?.target?.value
-	if (/^\d{4}-\d{2}-\d{2}$/.test(value || "")) store.setDay(value)
+//// Neoffice — a date typed by hand makes the field say « change » at every value it passes through (« 0002-11-19 » on the way to « 2026-11-19 », the day typed by its first digit): one reading
+//// is asked, for the date that was left alone for a moment (or confirmed by Enter, or by leaving the field), and never for a text that is not a whole date (neoffice-maintenance#3164)
+const TYPED_DATE_PAUSE_MS = 450
+let typedDate = null
+let typedDateTimer = null
+const stopWaitingForTheTypedDate = () => {
+	clearTimeout(typedDateTimer)
+	typedDateTimer = null
 }
+const applyTypedDate = () => {
+	stopWaitingForTheTypedDate()
+	const value = typedDate
+	typedDate = null
+	if (isAWholeDate(value) && value !== store.date) store.setDay(value)
+}
+const chooseDate = (event) => {
+	stopWaitingForTheTypedDate()
+	typedDate = event?.target?.value
+	if (!isAWholeDate(typedDate)) return
+	typedDateTimer = setTimeout(applyTypedDate, TYPED_DATE_PAUSE_MS)
+}
+onBeforeUnmount(stopWaitingForTheTypedDate)
 const dayTitle = computed(() => {
 	const when = new Date(`${store.date}T12:00:00`)
 	if (Number.isNaN(when.getTime())) return store.date

@@ -375,6 +375,18 @@ export function todayOf() {
 	return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
 }
 
+/**
+ * Whether a text is a whole date the agenda can read: `YYYY-MM-DD`, a day that exists, in the years a till works in. A date field offers « 0002-11-19 » and
+ * « 0202-11-19 » on the way to « 2026-11-19 » while the year is typed: those are no dates yet, and nothing is read for them (neoffice-maintenance#3164).
+ */
+export function isAWholeDate(value) {
+	if (!/^\d{4}-\d{2}-\d{2}$/.test(value || "")) return false
+	const [year, month, date] = value.split("-").map(Number)
+	if (year < 2000 || year > 2100) return false
+	const when = new Date(Date.UTC(year, month - 1, date))
+	return when.getUTCFullYear() === year && when.getUTCMonth() === month - 1 && when.getUTCDate() === date
+}
+
 /** A day as the site writes it, `YYYY-MM-DD`, moved by `days` (the agenda's arrows). */
 export function dayMoved(day, days) {
 	const [year, month, date] = String(day || "")

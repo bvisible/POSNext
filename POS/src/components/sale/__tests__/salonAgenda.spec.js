@@ -521,11 +521,16 @@ describe("the agenda of the salon", () => {
 			expect(load).toHaveBeenCalledWith("2026-11-12")
 		})
 
-		it("goes to any date chosen beyond the week", async () => {
+		it("goes to any date chosen beyond the week, once the field is left alone for a moment", async () => {
+			//// Neoffice — a typed date is read after a pause, not at every value the field passes through (neoffice-maintenance#3164): the test lets it pass
+			vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] })
 			const wrapper = mountIt()
 
 			await wrapper.get("[data-test='agenda-date']").setValue("2026-12-03")
 			await wrapper.get("[data-test='agenda-date']").trigger("change")
+			vi.advanceTimersByTime(600)
+			await flushPromises()
+			vi.useRealTimers()
 
 			expect(store.date).toBe("2026-12-03")
 		})
