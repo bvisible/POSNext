@@ -26862,3 +26862,23 @@ msgstr "Jour passé"
 msgid "No sales person to choose: this sale does not ask for one."
 msgstr "Aucun vendeur à choisir : cette vente n'en demande pas."
 
+#: POS/src/utils/salesPersonLines.js:125
+msgid "Every line keeps its sales person."
+msgstr "Chaque ligne garde son vendeur."
+
+#: POS/src/utils/salesPersonLines.js:126
+msgid "The lines that have a sales person keep it."
+msgstr "Les lignes qui ont déjà un vendeur le gardent."
+
+#: POS/src/utils/salesPersonLines.js:129
+msgid "The items keep the person who sold them."
+msgstr "Les articles gardent la personne qui les a vendus."
+
+#: POS/src/utils/salesPersonLines.js:130
+msgid "The services keep the person who did them."
+msgstr "Les prestations gardent la personne qui les a faites."
+
+#: POS/src/components/sale/PaymentDialog.vue:113
+msgid "This choice applies to the lines without a sales person."
+msgstr "Ce choix ne s'applique qu'aux lignes sans vendeur."
+

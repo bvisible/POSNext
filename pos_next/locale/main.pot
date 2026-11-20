@@ -29860,3 +29860,23 @@ msgstr ""
 msgid "No sales person to choose: this sale does not ask for one."
 msgstr ""
 
+#: POS/src/utils/salesPersonLines.js:125
+msgid "Every line keeps its sales person."
+msgstr ""
+
+#: POS/src/utils/salesPersonLines.js:126
+msgid "The lines that have a sales person keep it."
+msgstr ""
+
+#: POS/src/utils/salesPersonLines.js:129
+msgid "The items keep the person who sold them."
+msgstr ""
+
+#: POS/src/utils/salesPersonLines.js:130
+msgid "The services keep the person who did them."
+msgstr ""
+
+#: POS/src/components/sale/PaymentDialog.vue:113
+msgid "This choice applies to the lines without a sales person."
+msgstr ""
+

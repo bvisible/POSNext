@@ -97,24 +97,39 @@
 					>
 						<!-- //// Neoffice — nobody to choose, so nobody is asked (neoffice-maintenance#3109) -->
 						<p
-							v-if="nobodyToChoose && linesThatAskForAPerson.length > 0"
+							v-if="nobodyToChoose && linesThatAskForAPerson.length > 0 && !everyLineKeepsItsPerson"
 							data-test="no-sales-person-to-choose"
 							class="text-xs text-purple-700 mb-1.5"
 						>
 							{{ __("No sales person to choose: this sale does not ask for one.") }}
 						</p>
+						<!-- //// Neoffice — the lines that name their person keep it; the choice of the whole sale only reaches the others (neoffice-maintenance#3184) -->
 						<p
-							v-if="allItemsHaveSalesPerson"
+							v-if="someLinesKeepTheirPerson"
+							data-test="lines-keep-their-person-note"
 							class="text-xs text-purple-700 mb-1.5"
 						>
-							{{
-								__(
-									"All items have a Sales Person — invoice-level selection is optional."
-								)
-							}}
+							<!-- //// Neoffice — what the lines keep, then what the choice of the sale reaches (neoffice-maintenance#3184) -->
+							{{ keptPersonLabel }}
+							{{ __("This choice applies to the lines without a sales person.") }}
 						</p>
+						<!-- //// Neoffice — every line names its person: there is nothing to choose, so the people are shown and no picker is offered (neoffice-maintenance#3184) -->
+						<div v-if="everyLineKeepsItsPerson" data-test="lines-keep-their-person">
+							<p class="text-xs text-purple-700 mb-1.5">{{ keptPersonLabel }}</p>
+							<div class="flex flex-wrap gap-1">
+								<span
+									v-for="person in personsOfTheLinesList"
+									:key="person.sales_person"
+									data-test="line-person"
+									class="inline-flex items-center px-2 py-1 bg-purple-100 border border-purple-300 rounded text-xs font-medium text-gray-900 truncate max-w-[160px]"
+								>
+									{{ person.sales_person_name }}
+								</span>
+							</div>
+						</div>
 						<!-- Single Mode: Show selected person or dropdown -->
-						<template v-if="settingsStore.isSingleSalesPerson">
+						<!-- //// Neoffice — v-else-if: the picker is offered only where some line has no person (neoffice-maintenance#3184) -->
+						<template v-else-if="settingsStore.isSingleSalesPerson">
 							<!-- Show selected person as a nice display -->
 							<div
 								v-if="selectedSalesPersons.length > 0"
@@ -2679,6 +2694,14 @@ import {
 	salesPersonIsRequired,
 	whoLabel,
 } from "@/utils/salesPersonLines";
+//// Neoffice — the lines that name their person keep it, and the choice of the whole sale reaches the others only (neoffice-maintenance#3184)
+import {
+	everyLineKeepsItsPerson as everyLineNamesItsPerson,
+	personsOfTheLines,
+	salesTeamOfTheSale,
+	someLinesKeepTheirPerson as someLinesNameTheirPerson,
+	whoKeepsLabel,
+} from "@/utils/salesPersonLines";
 //// Neoffice — which tip settings the dialog follows, a restaurant till's or a shop till's (tips at a shop till, 09.11.2026)
 import { tipRules } from "@/utils/tillTips";
 //// Neoffice — the method of the « exact » button (see the file's header).
@@ -3586,11 +3609,17 @@ const linesThatAskForAPerson = computed(() =>
 		lineAsksForAPerson(item, { productsTracked: settingsStore.trackProductSalesByPerson })
 	)
 );
-//// Neoffice — every line that ASKS for a person has one (the lines above), not every line that is not a gift
-const allItemsHaveSalesPerson = computed(() => {
-	const cartItems = linesThatAskForAPerson.value;
-	return cartItems.length > 0 && cartItems.every((item) => item?.sales_person);
-});
+//// Neoffice — every billable line names its person: the choice of the whole sale has nothing to reach, so the window shows the people and sends no team of its own (neoffice-maintenance#3184)
+const everyLineKeepsItsPerson = computed(() => everyLineNamesItsPerson(props.items));
+const someLinesKeepTheirPerson = computed(() => someLinesNameTheirPerson(props.items));
+const personsOfTheLinesList = computed(() => personsOfTheLines(props.items));
+const keptPersonLabel = computed(() =>
+	whoKeepsLabel(kindOfLines(props.items), everyLineKeepsItsPerson.value)
+);
+//// Neoffice — what the sale sends as its own team (none where every line names its person: the lines carry the people)
+const salesTeamOfTheInvoice = computed(() =>
+	salesTeamOfTheSale({ lines: props.items, selected: selectedSalesPersons.value })
+);
 //// Neoffice — the question in the words of what was done (« Who did the work? » of a service, « Who sold it? » of a product) where the site tells the kinds.
 const salesPersonLabel = computed(() => whoLabel(kindOfLines(props.items)));
 
@@ -5257,7 +5286,8 @@ function addCreditAccountPayment() {
 		is_credit_sale: true, // Mark as credit sale
 		paid_amount: 0,
 		outstanding_amount: props.grandTotal,
-		sales_team: selectedSalesPersons.value.length > 0 ? selectedSalesPersons.value : null,
+		//// Neoffice — the team the sale sends as its own: none where every line names its person (neoffice-maintenance#3184)
+		sales_team: salesTeamOfTheInvoice.value.length > 0 ? salesTeamOfTheInvoice.value : null,
 		delivery_date: isSalesOrder.value ? deliveryDate.value : null,
 	};
 
@@ -5389,7 +5419,8 @@ function finalizePayment(isPartial) {
 		is_partial_payment: isPartial,
 		paid_amount: totalPaid.value,
 		outstanding_amount: outstanding,
-		sales_team: selectedSalesPersons.value.length > 0 ? selectedSalesPersons.value : null,
+		//// Neoffice — the team the sale sends as its own: none where every line names its person (neoffice-maintenance#3184)
+		sales_team: salesTeamOfTheInvoice.value.length > 0 ? salesTeamOfTheInvoice.value : null,
 		delivery_date: isSalesOrder.value ? deliveryDate.value : null,
 		//// Neoffice — the tip travels with the payment so the server can add the TIP line and
 		//// the Restaurant Tip record. Swiss accounting: it lands on a transit account, not

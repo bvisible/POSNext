@@ -73,6 +73,63 @@ export function salesPersonIsRequired({
 	return !nobodyCanBeChosen({ listRead, offered })
 }
 
+//// Neoffice — the lines that name their person keep it, and the choice of the whole sale only reaches the others (neoffice-maintenance#3184). The server shares the
+//// invoice's choice among the lines that have no person (`build_sales_team_from_items`): when every line has one the choice has nothing to apply to, and a picker that
+//// takes a name and drops it silently is worse than no picker. These rules say which lines the choice reaches, so the window shows the people instead of a picker that does nothing.
+
+/** The lines the choice of the whole sale could reach: those worth something (a free line shares no commission). */
+export function billableLines(lines) {
+	return (lines || []).filter((line) => !lineIsWorthNothing(line))
+}
+
+/** Every billable line names its person: the choice of the whole sale would reach none of them. */
+export function everyLineKeepsItsPerson(lines) {
+	const billable = billableLines(lines)
+	return billable.length > 0 && billable.every((line) => Boolean(line.sales_person))
+}
+
+/** Some billable lines name their person and some do not: the choice of the whole sale reaches the others only. */
+export function someLinesKeepTheirPerson(lines) {
+	const billable = billableLines(lines)
+	return billable.some((line) => line.sales_person) && billable.some((line) => !line.sales_person)
+}
+
+/** The people the billable lines name, each once, in the order of the cart. */
+export function personsOfTheLines(lines) {
+	const seen = new Map()
+	for (const line of billableLines(lines)) {
+		if (line.sales_person && !seen.has(line.sales_person)) {
+			seen.set(line.sales_person, {
+				sales_person: line.sales_person,
+				sales_person_name: line.sales_person_name || line.sales_person,
+			})
+		}
+	}
+	return [...seen.values()]
+}
+
+/** The team the sale sends as its own: none where every line names its person (nothing to apply it to), what was chosen otherwise. */
+export function salesTeamOfTheSale({ lines, selected }) {
+	return everyLineKeepsItsPerson(lines) ? [] : selected || []
+}
+
+/**
+ * What the window says of the people the lines name. A site that tells services from products speaks of the work or the sale, a site that does not, of the lines.
+ * @param {string} kind - "service", "product" (see `kindOfLines`)
+ * @param {boolean} every - every line names its person (false: only some do)
+ * @param {boolean} [told] - whether the site tells the kinds (default: it is read from the kinds loaded)
+ */
+export function whoKeepsLabel(kind, every, told = siteTellsTheKinds()) {
+	if (!told) {
+		return every
+			? __("Every line keeps its sales person.")
+			: __("The lines that have a sales person keep it.")
+	}
+	return kind === PRODUCT
+		? __("The items keep the person who sold them.")
+		: __("The services keep the person who did them.")
+}
+
 /** Two lines merge only when they name the same person: two « Cut » of two hairdressers are two lines, each with its own commission. */
 export function sameLinePerson(a, b) {
 	return (a?.sales_person || null) === (b?.sales_person || null)
