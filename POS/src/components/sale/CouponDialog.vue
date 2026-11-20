@@ -306,7 +306,8 @@
 
 <script setup>
 import { isPromotionsAppInstalled, promoApi } from "@/utils/promoApi";
-import { DEFAULT_CURRENCY, formatCurrency as formatCurrencyUtil } from "@/utils/currency";
+//// Neoffice — roundCurrency: the amount a gift card may cover is rounded to the cent (a subtraction left trailing digits in the discount field).
+import { DEFAULT_CURRENCY, formatCurrency as formatCurrencyUtil, roundCurrency } from "@/utils/currency";
 import { Button, Dialog, Input, call, createResource } from "frappe-ui";
 import { ref, watch } from "vue";
 import { useInvoice } from "@/composables/useInvoice";
@@ -339,6 +340,12 @@ const props = defineProps({
 		note: __(
 			"Net total AFTER pricing rules but BEFORE additional discount - used for gift card calculations"
 		),
+	},
+	//// Neoffice — what the customer owes BEFORE the coupon, VAT included (the cart's amountDueBeforeAdditionalDiscount): the amount a
+	//// gift card may cover. netTotal stands for it when a caller does not give it (the old behaviour).
+	dueBeforeDiscount: {
+		type: Number,
+		default: null,
 	},
 	taxAmount: {
 		type: Number,
@@ -503,14 +510,22 @@ async function applyCoupon() {
 		let remainingBalance = 0;
 		let capped = false;
 
+		//// Neoffice — what a card may cover is what the customer owes WITH the VAT: the card is money already paid. It was capped on
+		//// netTotal, and then clamped again by the cart on the grand total minus the tax (base_amount below), so a card worth more
+		//// than the sale left the VAT of the sale to pay (a 150.00 card on a 76.60 sale left 5.75, the VAT rounded to the 0.05).
+		const giftCardCeiling = Number.isFinite(props.dueBeforeDiscount)
+			? roundCurrency(props.dueBeforeDiscount)
+			: props.netTotal;
+
 		if (isGiftCard) {
-			// Gift card: use balance as discount, cap at netTotal (after pricing rules)
+			// Gift card: use balance as discount, cap at what the customer owes (after pricing rules, VAT included)
 			// This is critical: gift card discount must be based on the ACTUAL amount to pay
 			// after pricing rules have been applied, not the original subtotal
 			availableBalance =
 				coupon.balance || coupon.gift_card_amount || coupon.discount_amount || 0;
-			discountAmount = Math.min(availableBalance, props.netTotal);
-			remainingBalance = availableBalance - discountAmount;
+			//// Neoffice — capped on what the customer owes with the VAT (giftCardCeiling above), not on netTotal; the surplus stays on the card.
+			discountAmount = Math.min(availableBalance, giftCardCeiling);
+			remainingBalance = roundCurrency(availableBalance - discountAmount);
 		} else {
 			// Regular coupon: calculate based on discount type (uses original subtotal)
 			const discountObj = {
@@ -535,7 +550,8 @@ async function applyCoupon() {
 		// Clamp discount to the appropriate total based on coupon type
 		// Gift cards: clamp to netTotal (after pricing rules)
 		// Regular coupons: clamp to baseAmount (respects apply_on setting)
-		const maxDiscount = isGiftCard ? props.netTotal : baseAmount;
+		//// Neoffice — a gift card clamps to what the customer owes with the VAT (giftCardCeiling), no longer to netTotal.
+		const maxDiscount = isGiftCard ? giftCardCeiling : baseAmount;
 		discountAmount = Math.min(discountAmount, maxDiscount);
 
 		appliedDiscount.value = {
@@ -554,7 +570,9 @@ async function applyCoupon() {
 			isGiftCard: isGiftCard,
 			availableBalance: isGiftCard ? availableBalance : null,
 			remainingBalance: isGiftCard ? remainingBalance : null,
-			base_amount: baseAmount,
+			//// Neoffice — the cart clamps the discount to this base (useInvoice.applyDiscount): a card's is what it may cover, not
+			//// the grand total minus the tax that a promotional coupon is read against.
+			base_amount: isGiftCard ? giftCardCeiling : baseAmount,
 		};
 
 		emit("discount-applied", appliedDiscount.value);

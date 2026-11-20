@@ -1329,10 +1329,14 @@
 			<!-- //// server refused the invoice (8e06bb9c, 2026-01-16 "calculate discount on -->
 			<!-- //// net total after pricing rules"). The total is the CHF-rounded one -->
 			<!-- //// (4fdb5df4, 2026-04-04). -->
+			<!-- //// Neoffice — :due-before-discount: what a card may cover is what the customer owes WITH the VAT; capped on -->
+			<!-- //// the total without it, a card worth more than the sale left the VAT of the sale to pay (5.75 on a 76.60 -->
+			<!-- //// sale). The cart's amount due before the coupon, in the POS Profile's discount base. -->
 			<CouponDialog
 				v-model="uiStore.showCouponDialog"
 				:subtotal="cartStore.subtotal"
 				:net-total="cartStore.netTotalBeforeAdditionalDiscount"
+				:due-before-discount="cartStore.amountDueBeforeAdditionalDiscount"
 				:tax-amount="cartStore.totalTax"
 				:grand-total="cartStore.roundedGrandTotal"
 				:items="cartStore.invoiceItems"

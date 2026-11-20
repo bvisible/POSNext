@@ -154,6 +154,9 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		//// "calculate discount on net total after pricing rules").
 		//// calculate discount on net total after pricing rules — 8e06bb9
 		netTotalBeforeAdditionalDiscount,
+		//// Neoffice — what a gift card may cover, VAT included: handed to the coupon dialog, which capped a card on the total
+		//// without the VAT and left the VAT of the sale to pay.
+		amountDueBeforeAdditionalDiscount,
 		posProfile,
 		posOpeningShift,
 		payments,
@@ -3321,6 +3324,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		roundedGrandTotal,
 		roundingAdjustment,
 		netTotalBeforeAdditionalDiscount,
+		//// Neoffice — what a gift card may cover, VAT included (see the destructuring above): the coupon dialog caps a card on it.
+		amountDueBeforeAdditionalDiscount,
 		posProfile,
 		posOpeningShift,
 		payments,
