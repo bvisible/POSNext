@@ -5133,6 +5133,26 @@ def _evaluate_transaction_offers(
 	}
 
 
+# //// Neoffice — added (no upstream equivalent; neoffice-maintenance#3187). The root of the site's Customer Group tree, whatever it is called (« All Customer Groups » on an English
+# //// site, another name on a site set up in another language); None on a site with no group at all.
+def _the_root_customer_group():
+	roots = frappe.get_all(
+		"Customer Group",
+		filters={"is_group": 1, "parent_customer_group": ["is", "not set"]},
+		pluck="name",
+		order_by="lft",
+		limit=1,
+	)
+	return roots[0] if roots else None
+
+
+# //// Neoffice — added (no upstream equivalent; neoffice-maintenance#3187). The group a sale is priced in: the one asked for when the site has it, the root of its tree otherwise.
+def _customer_group_the_engine_knows(customer_group):
+	if customer_group and frappe.db.exists("Customer Group", customer_group):
+		return customer_group
+	return _the_root_customer_group()
+
+
 # permission-check: ok prices the cart the caller sends
 # //// Neoffice — invoice_data type is now explicit (str | dict) to match get_cached_doc's contract (08667542 "fix(security): apply_offers says what its payload is").
 @frappe.whitelist()
@@ -5283,9 +5303,13 @@ def apply_offers(invoice_data: str | dict, selected_offers=None):
 				# Customer lookup failed, will use defaults
 				frappe.log_error(f"Failed to fetch customer data for {customer}: {e}", "Customer Data Lookup")
 
-		# If still no customer_group, use default
-		if not customer_group:
-			customer_group = "All Customer Groups"
+		# //// Neoffice — a group the site does not have is no group (neoffice-maintenance#3187). Upstream priced a sale with no customer in the group named « All Customer Groups »: the
+		# //// name of the root on an English site. The engine refuses a group that does not exist (« Invalid <name> »), so a till whose site has its root named otherwise
+		# //// (« Tous les Groupes Client ») answered 417 to every sale with no customer. The default is the root of the site's own tree, whatever it is called.
+		# //// A group or a territory the payload names and the site does not have is read the same way: as none. Remove if upstream stops naming the root.
+		customer_group = _customer_group_the_engine_knows(customer_group)
+		if territory and not frappe.db.exists("Territory", territory):
+			territory = None
 
 		pricing_args = frappe._dict(
 			{
