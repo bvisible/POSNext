@@ -83,6 +83,8 @@ LEGACY_HOOKS = {
 }
 CHECK_MOVE_HOOK = "pos_next_appointment_check_move"
 MOVE_HOOK = "pos_next_appointment_move"
+# //// Neoffice — an appointment nobody has is taken by the cashier who gives the service: `(pos_profile, booking) -> {booking, steps, sales_person, sales_person_name} | None` (20.11.2026, neoffice-maintenance#3185)
+CLAIM_HOOK = "pos_next_appointment_claim"
 CABINS_HOOK = "pos_next_appointment_cabins"
 CABIN_CHECK_HOOK = "pos_next_appointment_cabin_check"
 CABIN_CHANGE_HOOK = "pos_next_appointment_cabin_change"
@@ -390,6 +392,8 @@ def _capabilities() -> dict:
 			and frappe.get_hooks(CABIN_CHANGE_HOOK)
 		),
 		"cancel": bool(frappe.get_hooks(CANCEL_HOOK)),
+		# //// Neoffice — the cashier takes an appointment nobody has (20.11.2026, neoffice-maintenance#3185)
+		"claim": bool(frappe.get_hooks(CLAIM_HOOK)),
 		# //// Neoffice — the days and the absences, for the window that moves an appointment (19.11.2026)
 		"calendar": bool(_declared(CALENDAR_HOOK)),
 		"clock": bool(frappe.get_hooks(TIME_ACTION_HOOK)),
@@ -530,7 +534,7 @@ def _people_of(appointments: list[dict]) -> list[dict]:
 	return list(seen.values())
 
 
-def _appointment(row, listed, clock, may, capabilities, key, whole=None) -> dict | None:
+def _appointment(row, listed, clock, may, capabilities, key, whole=None, claimant=False) -> dict | None:
 	"""An appointment of the agenda, as the till reads it, from the day view (who, when, where it stands) and the money lane's list (what it
 	announces, what was paid): only its own keys. A « busy » appointment (a colleague's, for a cashier who may not read it) carries only its
 	hours and its person, whatever the hooks said besides.
@@ -573,6 +577,7 @@ def _appointment(row, listed, clock, may, capabilities, key, whole=None) -> dict
 			"in_the_till": False,
 			"to_handle": None,
 			"busy": True,
+			"claimable": False,
 			"clock": _clock(None),
 			"can": _can("booked", True, False, capabilities),
 			# //// Neoffice — whether the cashier may work this appointment (neoffice-maintenance#3176): the door of every gesture says no to a colleague's, so the sheet does not ask for the customer's file
@@ -621,6 +626,17 @@ def _appointment(row, listed, clock, may, capabilities, key, whole=None) -> dict
 		}
 	)
 	steps = [own] if follows else (listed.get("steps") or [own])
+	# //// Neoffice — nobody has it (no person on the row nor on any step): the cashier who is one of the people of the salon (`claimant`: she has a sales person of her own) may take
+	# //// it (neoffice-maintenance#3185). Not a gesture of `can` (that is what she may DO with an appointment she works): she does not work it before she has taken it. The site's own
+	# //// refusal (she does not give the service, she is busy then) comes when she asks.
+	claimable = bool(
+		claimant
+		and capabilities.get("claim")
+		and state == "booked"
+		and not listed.get("in_the_till")
+		and not person
+		and not any(step.get("sales_person") for step in steps)
+	)
 	return {
 		"key": key,
 		"booking": booking,
@@ -646,6 +662,7 @@ def _appointment(row, listed, clock, may, capabilities, key, whole=None) -> dict
 		"busy": False,
 		"clock": clock,
 		"can": can,
+		"claimable": claimable,
 		# //// Neoffice — whether the cashier may work this appointment (neoffice-maintenance#3176): her own, or any when she sees the whole salon. The door of every gesture, the customer's file included, refuses the others (`_gate`),
 		# //// and a state of the appointment (paid, absent) takes gestures away without taking the file: `can` cannot say it, this does.
 		"may": bool(may),
@@ -1125,6 +1142,7 @@ def get_appointments(pos_profile: str, date: str | None = None, providers=None) 
 					True,
 					capabilities,
 					row["booking"],
+					claimant=bool(mine),
 				)
 			)
 		people = _people_of([r for r in rows if r])
@@ -1164,6 +1182,7 @@ def get_appointments(pos_profile: str, date: str | None = None, providers=None) 
 					capabilities,
 					booking if booking and not cint(appointment.get("busy")) else f"busy-{n}",
 					whole,
+					claimant=bool(mine),
 				)
 			)
 	rows = [r for r in rows if r]
@@ -1209,6 +1228,55 @@ def take_appointment(booking: str, pos_profile: str, date: str | None = None) ->
 	if answer is None:
 		frappe.throw(_("This till does not take appointments."))
 	return _draft(answer, booking, pos_profile)
+
+
+# //// Neoffice — added (no upstream equivalent; neoffice-maintenance#3185, Jérémy 20.11.2026: « Oui, elle le prend »). A cashier who only reads her own appointments sees one nobody
+# //// has, and takes it: it becomes hers alone and every step of it carries her name. It is no gesture of the appointment (the door `_gate` refuses an appointment she may not work): it is
+# //// the one gesture she may make on an appointment that is nobody's, and it needs no right of her role. The door is here: she is one of the people of the salon (a sales person of her
+# //// own), and the planning lane's day view of that day shows the appointment, in full, as nobody's. The rest (somebody has it since, she does not give the service, she is away or busy,
+# //// another company) is the site's, under its own lock, and its message reaches her as it is said.
+def _nobody_has(pos_profile: str, booking: str, date=None) -> bool:
+	"""Whether the day view of that day shows this booking in full as an appointment nobody has."""
+	view = _first_answer(DAY_HOOK, pos_profile, str(getdate(date or nowdate())))
+	if not isinstance(view, dict):
+		return False
+	for appointment in view.get("unassigned") or []:
+		if (
+			isinstance(appointment, dict)
+			and not cint(appointment.get("busy"))
+			and _text(appointment.get("booking")) == booking
+			and not _text(appointment.get("sales_person"))
+		):
+			return True
+	return False
+
+
+@frappe.whitelist(methods=["POST"])
+def claim_appointment(booking: str, pos_profile: str, date: str | None = None) -> dict:
+	"""The cashier takes an appointment nobody has: `{"booking", "sales_person", "sales_person_name"}`. `date` is the day of the agenda it was touched on."""
+	from pos_next.api.cash_entry import require_till_access
+
+	require_till_access(pos_profile)
+	if not isinstance(booking, str) or not booking.strip():
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	booking = booking.strip()
+	if not appointments_enabled(pos_profile) or not frappe.get_hooks(CLAIM_HOOK):
+		frappe.throw(_("This till does not take appointments."))
+	if not _my_sales_people():
+		frappe.throw(_("You are not one of the people of the salon: only a person who gives services takes an appointment."))
+	if not _nobody_has(pos_profile, booking, date):
+		# Somebody has it since (a colleague who took it between the agenda and the click), or it is not an appointment of this day: the same words, which tell nothing about a booking she may not see
+		frappe.throw(_("This appointment is not free to take any more: somebody else has it."))
+	answer = _first_answer(CLAIM_HOOK, pos_profile, booking)
+	if answer is None:
+		frappe.throw(_("This till does not take appointments."))
+	if not isinstance(answer, dict):
+		frappe.throw(_("The appointment could not be taken."))
+	return {
+		"booking": booking,
+		"sales_person": _text(answer.get("sales_person")),
+		"sales_person_name": _text(answer.get("sales_person_name")),
+	}
 
 
 @frappe.whitelist()

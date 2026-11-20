@@ -953,6 +953,7 @@ class TestTheAgendaOfTheSalonDayIsComposedFromWhatTheLanesAnswer(FrappeTestCase)
 		self.assertEqual(
 			answer["capabilities"],
 			# `cabin` (51944267, 16.11.2026): the cabins listed, checked and changed, a gesture like the others
+			# `claim` (20.11.2026): taking an appointment nobody has, the site's own gesture like the others
 			dict.fromkeys(
 				(
 					"check_move",
@@ -965,6 +966,7 @@ class TestTheAgendaOfTheSalonDayIsComposedFromWhatTheLanesAnswer(FrappeTestCase)
 					"packages",
 					"file",
 					"book",
+					"claim",
 				),
 				False,
 			),
@@ -991,6 +993,8 @@ class TestTheAgendaOfTheSalonDayIsComposedFromWhatTheLanesAnswer(FrappeTestCase)
 				"packages": False,
 				"file": False,
 				"book": True,
+				# the site declares no hook to take an appointment nobody has (20.11.2026)
+				"claim": False,
 			},
 		)
 

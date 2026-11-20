@@ -109,7 +109,10 @@
 
 		<div class="flex flex-col gap-2 border-t border-gray-100 px-4 py-3 dark:border-gray-800" data-test="sheet-gestures">
 			<!-- //// Neoffice — offline, what needs the site waits and says so (the tester's replay of the offline till, 19.11.2026): collecting still works, the sale replaces the draft when the network is back -->
-			<p v-if="offline && (primary || secondary.length)" class="text-sm text-gray-600 dark:text-gray-300" data-test="sheet-needs-network">{{ __("No network: the appointment can be collected, the other gestures wait for it.") }}</p>
+			<p v-if="offline && claimable" class="text-sm text-gray-600 dark:text-gray-300" data-test="sheet-claim-needs-network">{{ __("Taking an appointment needs the network.") }}</p>
+			<p v-else-if="offline && (primary || secondary.length)" class="text-sm text-gray-600 dark:text-gray-300" data-test="sheet-needs-network">{{ __("No network: the appointment can be collected, the other gestures wait for it.") }}</p>
+			<!-- //// Neoffice — nobody has this appointment: what taking it does, said before the button (neoffice-maintenance#3185) -->
+			<p v-if="claimable" class="text-sm text-gray-600 dark:text-gray-300" data-test="sheet-claim-note">{{ __("Nobody has this appointment yet. Take it to work on it: it becomes yours alone.") }}</p>
 			<button v-if="primary" type="button" :data-test="`sheet-${primary.key}`" class="min-h-[52px] rounded-xl bg-gray-900 text-base font-semibold text-white disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900" :disabled="busy || primary.off || waitsForTheNetwork(primary.key)" @click="primary.run()">{{ primary.label }}</button>
 			<div class="grid gap-2" :style="{ gridTemplateColumns: `repeat(auto-fit, minmax(7.5rem, 1fr))` }">
 				<button v-for="gesture in secondary" :key="gesture.key" type="button" :data-test="`sheet-${gesture.key}`" class="min-h-[48px] rounded-xl border px-2 text-[15px] font-medium disabled:opacity-50" :class="gesture.danger ? 'border-red-200 text-red-700 dark:border-red-400/40 dark:text-red-300' : 'border-gray-300 text-gray-900 dark:border-gray-500 dark:text-gray-100'" :disabled="busy || gesture.off || waitsForTheNetwork(gesture.key)" @click="gesture.run()">{{ gesture.label }}</button>
@@ -143,10 +146,10 @@ const store = useAppointmentsStore()
 const shiftStore = usePOSShiftStore()
 //// Neoffice — what the till collects: the price announced at booking, or the day's (setting « Price collected »)
 const announcedPrice = computed(() => usePOSSettingsStore().appointmentsAtTheAnnouncedPrice)
-const { clock, cabinsOf, changeCabin, fileOf } = useAppointment()
+const { clock, claim, cabinsOf, changeCabin, fileOf } = useAppointment()
 //// Neoffice — the gestures that ask the site (the time, move, cancel, repeat) wait for the network; collecting does not (voie 4, 19.11.2026)
 const offline = useTheNetwork()
-const NEEDS_THE_NETWORK = ["start", "pause", "finish", "move", "cancel", "repeat"]
+const NEEDS_THE_NETWORK = ["start", "pause", "finish", "move", "cancel", "repeat", "claim"]
 const waitsForTheNetwork = (key) => offline.value && NEEDS_THE_NETWORK.includes(key)
 const busy = ref(false)
 
@@ -333,10 +336,21 @@ async function timeGesture(action, booking = props.appointment.booking) {
 	if (done) await store.refresh()
 }
 
+//// Neoffice — an appointment nobody has: the cashier who is one of the people of the salon takes it (`can.claim`, the site has the gesture); until she has, it is not hers to work and the sheet offers nothing else. It becomes hers, alone, and the agenda read again gives the gestures (neoffice-maintenance#3185, Jérémy, 20.11.2026)
+const claimable = computed(() => Boolean(store.capabilities.claim) && Boolean(props.appointment.claimable))
+async function takeIt() {
+	busy.value = true
+	await claim(props.appointment.booking)
+	busy.value = false
+	// whoever has it now, she or the colleague who was first, the agenda says
+	await store.refresh()
+}
+
 /** The gestures, by where the appointment stands: one filled button, the others with an outline, the dangerous one in red. */
 const collect = computed(() => ({ key: "collect", label: stands.value === "in_the_till" ? __("Resume") : __("Collect"), off: !can.value.collect, run: () => emit("collect", props.appointment) }))
 const primary = computed(() => {
 	const row = props.appointment
+	if (claimable.value) return { key: "claim", label: __("I take it"), run: takeIt }
 	if (row.state === "paid" || row.state === "absent") return null
 	// The salon is closed that day: what the cashier does first is move it (or, when it can no longer be moved, cancel it below)
 	if (stands.value === "to_handle" && store.capabilities.move && can.value.move) return { key: "move", label: __("Move"), run: () => emit("move", row) }
@@ -353,6 +367,7 @@ const repeating = computed(() => ({ key: "repeat", label: __("Repeat"), run: () 
 const canRepeat = computed(() => Boolean(store.capabilities.repeat) && Boolean(props.appointment.booking) && Boolean(props.appointment.customer) && props.appointment.state !== "absent")
 const secondary = computed(() => {
 	const row = props.appointment
+	if (claimable.value) return []
 	//// Neoffice — paid online and not served yet, the reservation app lets it be cancelled or marked absent at the till (everything
 	//// happens at the till, 10.11); paid at the till, it says no: the way back is a refund there.
 	if (row.state === "paid") {

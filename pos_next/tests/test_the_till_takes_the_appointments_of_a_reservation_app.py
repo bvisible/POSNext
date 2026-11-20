@@ -287,6 +287,8 @@ class TestTheTillTakesTheAppointmentsOfAReservationApp(FrappeTestCase):
 				"can",
 				# whether the cashier may work it: the sheet asks for the customer's file only if so (maintenance#3176)
 				"may",
+				# whether the cashier may take it: nobody has it and she is one of the people of the salon (maintenance#3185)
+				"claimable",
 				# where the money of a paid appointment came in (maintenance#2798)
 				"paid_at_the_till",
 				# the steps of the whole appointment, for the card of a step after the first (voie 4, 19.11.2026)

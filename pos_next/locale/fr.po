@@ -26890,3 +26890,31 @@ msgstr "Un rendez-vous sans personne"
 msgid "Failed to load campaigns"
 msgstr "Impossible de charger les campagnes"
 
+#: POS/src/composables/useAppointment.js:349
+msgid "Taking an appointment needs the network."
+msgstr "Prendre un rendez-vous nécessite le réseau."
+
+#: POS/src/composables/useAppointment.js:353
+msgid "The appointment is yours."
+msgstr "Ce rendez-vous est à vous."
+
+#: pos_next/api/appointments.py:1266
+msgid "You are not one of the people of the salon: only a person who gives services takes an appointment."
+msgstr "Vous ne faites pas partie des personnes du salon : seule une personne qui fait des prestations prend un rendez-vous."
+
+#: pos_next/api/appointments.py:1269
+msgid "This appointment is not free to take any more: somebody else has it."
+msgstr "Ce rendez-vous n'est plus libre : quelqu'un d'autre l'a pris."
+
+#: pos_next/api/appointments.py:1274
+msgid "The appointment could not be taken."
+msgstr "Le rendez-vous n'a pas pu être pris."
+
+#: POS/src/components/sale/AppointmentSheet.vue:353
+msgid "I take it"
+msgstr "Je le prends"
+
+#: POS/src/components/sale/AppointmentSheet.vue:115
+msgid "Nobody has this appointment yet. Take it to work on it: it becomes yours alone."
+msgstr "Personne n'a encore ce rendez-vous. Prenez-le pour y travailler : il ne sera qu'à vous."
+

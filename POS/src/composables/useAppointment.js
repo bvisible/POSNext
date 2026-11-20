@@ -341,6 +341,19 @@ export function useAppointment() {
 		return done
 	}
 
+	//// Neoffice — the cashier takes an appointment nobody has: it becomes hers, alone (neoffice-maintenance#3185, Jérémy, 20.11.2026: « Oui, elle le prend »). Needs the network: the site decides, under its own lock,
+	//// and says in words why not (somebody has it since, she does not give the service, she is busy then).
+	/** Take an appointment nobody has. @returns {Promise<object|null>} `{ booking, sales_person, sales_person_name }` */
+	async function claim(booking) {
+		if (offlineState.isOffline) {
+			showWarning(__("Taking an appointment needs the network."))
+			return null
+		}
+		const done = await ask("claim_appointment", { booking })
+		if (done) showSuccess(__("The appointment is yours."))
+		return done
+	}
+
 	/** Cancel an appointment, or mark it absent (`reason`: `cancelled` | `no_show`). @returns {Promise<object|null>} `{ booking, state, refunded, to_refund }` */
 	async function cancel(booking, { reason = "cancelled", notify = true } = {}) {
 		const done = await ask("cancel_appointment", {
@@ -445,6 +458,7 @@ export function useAppointment() {
 		takeAppointment,
 		checkMove,
 		move,
+		claim,
 		cabinsOf,
 		fileOf,
 		calendarOf,

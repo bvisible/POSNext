@@ -29888,3 +29888,31 @@ msgstr ""
 msgid "Failed to load campaigns"
 msgstr ""
 
+#: POS/src/composables/useAppointment.js:349
+msgid "Taking an appointment needs the network."
+msgstr ""
+
+#: POS/src/composables/useAppointment.js:353
+msgid "The appointment is yours."
+msgstr ""
+
+#: pos_next/api/appointments.py:1266
+msgid "You are not one of the people of the salon: only a person who gives services takes an appointment."
+msgstr ""
+
+#: pos_next/api/appointments.py:1269
+msgid "This appointment is not free to take any more: somebody else has it."
+msgstr ""
+
+#: pos_next/api/appointments.py:1274
+msgid "The appointment could not be taken."
+msgstr ""
+
+#: POS/src/components/sale/AppointmentSheet.vue:353
+msgid "I take it"
+msgstr ""
+
+#: POS/src/components/sale/AppointmentSheet.vue:115
+msgid "Nobody has this appointment yet. Take it to work on it: it becomes yours alone."
+msgstr ""
+

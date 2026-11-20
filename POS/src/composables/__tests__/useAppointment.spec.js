@@ -491,6 +491,36 @@ describe("the gestures of the salon", () => {
 		])
 	})
 
+	//// Neoffice — the cashier takes an appointment nobody has (neoffice-maintenance#3185, Jérémy, 20.11.2026: « Oui, elle le prend »)
+	it("takes an appointment nobody has by the booking alone, on the day of the agenda, and says it is hers", async () => {
+		call.mockResolvedValue({ message: { booking: "BKG-1", sales_person: "Luc", sales_person_name: "Luc" } })
+
+		const done = await useAppointment().claim("BKG-1")
+
+		expect(done).toEqual({ booking: "BKG-1", sales_person: "Luc", sales_person_name: "Luc" })
+		expect(asked("claim_appointment")[0][1]).toEqual({ pos_profile: "Till A", date: "2026-11-10", booking: "BKG-1" })
+		expect(toast.showSuccess).toHaveBeenCalledWith("The appointment is yours.")
+	})
+
+	it("says the site's words when it refuses (a colleague was first) and answers nothing", async () => {
+		call.mockRejectedValue(new Error("This appointment is not free to take any more: somebody else has it."))
+
+		const done = await useAppointment().claim("BKG-1")
+
+		expect(done).toBeNull()
+		expect(toast.showError).toHaveBeenCalledWith(expect.stringContaining("not free to take any more"))
+		expect(toast.showSuccess).not.toHaveBeenCalled()
+	})
+
+	it("is not taken without the network: nothing is asked and the cashier is told", async () => {
+		network.isOffline = true
+
+		expect(await useAppointment().claim("BKG-1")).toBeNull()
+
+		expect(call).not.toHaveBeenCalled()
+		expect(toast.showWarning).toHaveBeenCalledWith("Taking an appointment needs the network.")
+	})
+
 	it("times an appointment by the gesture alone, never an hour, and only with the network", async () => {
 		call.mockResolvedValue({
 			message: { booking: "BKG-1", clock: { state: "running" } },

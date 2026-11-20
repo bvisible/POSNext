@@ -13,6 +13,7 @@ vi.hoisted(() => {
 })
 const gestures = vi.hoisted(() => ({
 	clock: vi.fn(async () => ({ clock: { state: "running" } })),
+	claim: vi.fn(async () => ({ booking: "BKG-1", sales_person: "Luc", sales_person_name: "Luc" })),
 	cabinsOf: vi.fn(async () => []),
 	changeCabin: vi.fn(async () => null),
 	fileOf: vi.fn(async () => null),
@@ -24,6 +25,7 @@ vi.mock("@/stores/posShift", () => ({ usePOSShiftStore: () => ({ profileName: "T
 vi.mock("@/composables/useAppointment", () => ({
 	useAppointment: () => ({
 		clock: gestures.clock,
+		claim: gestures.claim,
 		cabinsOf: gestures.cabinsOf,
 		changeCabin: gestures.changeCabin,
 		fileOf: gestures.fileOf,
@@ -86,6 +88,7 @@ describe("the sheet of an appointment", () => {
 	beforeEach(() => {
 		setActivePinia(createPinia())
 		gestures.clock.mockClear()
+		gestures.claim.mockClear()
 		gestures.cabinsOf.mockReset().mockResolvedValue([])
 		gestures.changeCabin.mockReset().mockResolvedValue(null)
 		till.appointmentsAtTheAnnouncedPrice = false
@@ -134,6 +137,78 @@ describe("the sheet of an appointment", () => {
 
 		expect(gestures.clock).toHaveBeenCalledWith("BKG-1", "start")
 		expect(store.refresh).toHaveBeenCalled()
+	})
+
+	//// Neoffice — an appointment nobody has is taken by the cashier who gives the service (neoffice-maintenance#3185, Jérémy, 20.11.2026: « Oui, elle le prend »)
+	describe("an appointment nobody has", () => {
+		const nobodys = (extra = {}) =>
+			mountIt({
+				steps: [{ label: "Coupe", item_code: "COUPE", starts_at: "2026-11-10 13:30:00", sales_person: null, sales_person_name: null }],
+				can: { collect: false, move: false, cancel: false, clock: false },
+				claimable: true,
+				...extra,
+			})
+
+		beforeEach(() => {
+			store.capabilities = { ...store.capabilities, claim: true }
+		})
+
+		it("offers one button, « I take it », and says what it does: nothing else is offered before she has it", () => {
+			const wrapper = nobodys()
+
+			expect(wrapper.get("[data-test='sheet-claim']").text()).toBe("I take it")
+			expect(wrapper.get("[data-test='sheet-claim-note']").text()).toContain("it becomes yours alone")
+			expect(wrapper.findAll("[data-test='sheet-gestures'] button").map((node) => node.attributes("data-test"))).toEqual(["sheet-claim"])
+			expect(wrapper.get("[data-test='sheet-step-0']").text()).toContain("To assign")
+		})
+
+		it("asks the site to give it to her, then reads the agenda again (it shows whose it is now)", async () => {
+			const wrapper = nobodys()
+
+			await wrapper.get("[data-test='sheet-claim']").trigger("click")
+			await flushPromises()
+
+			expect(gestures.claim).toHaveBeenCalledWith("BKG-1")
+			expect(store.refresh).toHaveBeenCalled()
+		})
+
+		it("reads the agenda again when the site refused (a colleague was first): the sheet then shows who has it", async () => {
+			gestures.claim.mockResolvedValueOnce(null)
+			const wrapper = nobodys()
+
+			await wrapper.get("[data-test='sheet-claim']").trigger("click")
+			await flushPromises()
+
+			expect(store.refresh).toHaveBeenCalled()
+		})
+
+		it("offers nothing to take where the site has not the gesture or the cashier may not (it is a colleague's, or hers already)", () => {
+			store.capabilities = { ...store.capabilities, claim: false }
+			expect(nobodys().find("[data-test='sheet-claim']").exists()).toBe(false)
+
+			store.capabilities = { ...store.capabilities, claim: true }
+			const notHers = nobodys({ claimable: false })
+			expect(notHers.find("[data-test='sheet-claim']").exists()).toBe(false)
+			expect(notHers.find("[data-test='sheet-claim-note']").exists()).toBe(false)
+		})
+
+		it("waits for the network and says so, and does not say the appointment can be collected", async () => {
+			network.go(true)
+			const wrapper = nobodys()
+			await flushPromises()
+
+			expect(wrapper.get("[data-test='sheet-claim']").attributes("disabled")).toBeDefined()
+			expect(wrapper.get("[data-test='sheet-claim-needs-network']").text()).toBe("Taking an appointment needs the network.")
+			expect(wrapper.find("[data-test='sheet-needs-network']").exists()).toBe(false)
+			network.go(false)
+		})
+
+		it("once it is hers the gestures are hers: the row the agenda gives next is no longer claimable", () => {
+			const wrapper = mountIt({ claimable: false })
+
+			expect(wrapper.find("[data-test='sheet-claim']").exists()).toBe(false)
+			expect(wrapper.get("[data-test='sheet-start']").text()).toBe("Start")
+		})
 	})
 
 	it("offers to finish a running appointment, to pause it, and still to collect it", async () => {
