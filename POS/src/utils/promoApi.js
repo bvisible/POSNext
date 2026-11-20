@@ -86,6 +86,8 @@ export const promoApi = {
 		promoOrPos("posnext_promotions.api.promotions.get_item_groups", "pos_next.api.promotions.get_item_groups"),
 	getBrands: () =>
 		promoOrPos("posnext_promotions.api.promotions.get_brands", "pos_next.api.promotions.get_brands"),
+	//// Neoffice — the campaigns of the coupon form are read by the till, by the module's own rule, as the item groups and the brands are (neoffice-maintenance#3186). The optional promotions app has no such call.
+	getCampaigns: () => "pos_next.api.promotions.get_campaigns",
 	getCoupons: () =>
 		promoOrPos("posnext_promotions.api.promotions.get_coupons", "pos_next.api.promotions.get_coupons"),
 	getCouponDetails: () =>

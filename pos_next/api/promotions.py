@@ -574,6 +574,17 @@ def get_brands():
 	return frappe.get_all("Brand", fields=["name"], order_by="name")
 
 
+# //// Neoffice — added (no upstream equivalent; neoffice-maintenance#3186). The coupon form lists the campaigns a coupon can belong to. The screen read the doctype
+# //// itself (`frappe.client.get_list` on Campaign, filtered on a `disabled` field that Campaign does not have), which answered 417 to everybody and, for a cashier who
+# //// holds no right on Campaign, 403 at best. Like the item groups and the brands next to it, the campaigns are a catalogue of the promotion screen: read by the till after
+# //// the module's own rule, the names only, and no right is given to the role.
+@frappe.whitelist()
+def get_campaigns():
+	"""Get the names of the campaigns a coupon can be tied to."""
+	_require_promotion_reader()
+	return frappe.get_all("Campaign", fields=["name"], order_by="name", limit_page_length=999)
+
+
 @frappe.whitelist()
 # //// Neoffice — a name is a text: a list from a JSON body would be read as a filter (maintenance#2296).
 def search_items(search_term, pos_profile: str | None = None, limit=20):

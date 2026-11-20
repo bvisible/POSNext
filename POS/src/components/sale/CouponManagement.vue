@@ -1134,19 +1134,18 @@ const couponDetailsResource = createResource({
 	},
 });
 
+//// Neoffice — the campaigns come from the till's own call, after the module's rule (neoffice-maintenance#3186). The screen read the doctype itself, filtered on a `disabled` field
+//// that Campaign does not have: 417 for everybody, and an exception nobody caught. A failed read says why and leaves the field empty (a coupon needs no campaign).
 const campaignsResource = createResource({
-	url: "frappe.client.get_list",
-	makeParams() {
-		return {
-			doctype: "Campaign",
-			fields: ["name"],
-			filters: { disabled: 0 },
-			limit_page_length: 999,
-		};
-	},
+	url: promoApi.getCampaigns(),
 	auto: false,
 	onSuccess(data) {
 		campaigns.value = data || [];
+	},
+	//// Neoffice — a failed read says why and leaves the field empty instead of an exception nobody catches (neoffice-maintenance#3186)
+	onError(error) {
+		campaigns.value = [];
+		handleError(error, __("Failed to load campaigns"));
 	},
 });
 

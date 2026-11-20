@@ -19,6 +19,14 @@ describe("promoApi install detection", () => {
 		expect(promoApi.applyOffers()).toBe("posnext_promotions.api.offers.apply_offers");
 	});
 
+	//// Neoffice — the campaigns of the coupon form are the till's own call (neoffice-maintenance#3186)
+	it("reads the campaigns from the till's own call, with the promotions app or without (neoffice-maintenance#3186)", () => {
+		vi.stubGlobal("window", {});
+		expect(promoApi.getCampaigns()).toBe("pos_next.api.promotions.get_campaigns");
+		vi.stubGlobal("window", { posnext_app_flags: { posnext_promotions: 1 } });
+		expect(promoApi.getCampaigns()).toBe("pos_next.api.promotions.get_campaigns");
+	});
+
 	it("still reads Desk boot flags (frappe.boot)", () => {
 		vi.stubGlobal("window", {
 			frappe: { boot: { posnext_promotions: 1, magento_integration: 1 } },

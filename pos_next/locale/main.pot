@@ -29884,3 +29884,7 @@ msgstr ""
 msgid "An appointment without a person"
 msgstr ""
 
+#: POS/src/components/sale/CouponManagement.vue:1147
+msgid "Failed to load campaigns"
+msgstr ""
+
