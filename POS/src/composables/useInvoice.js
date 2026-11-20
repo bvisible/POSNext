@@ -873,6 +873,24 @@ export function useInvoice() {
 		})
 	);
 
+	//// Neoffice — what a gift card may cover: the amount due BEFORE the coupon or the manual discount, VAT included. A card is
+	//// money already paid, so it pays the VAT of the sale as well; the coupon dialog capped it on the grand total minus the tax,
+	//// and a card worth more than the sale left the VAT of the sale to pay (a 150.00 card on a 76.60 sale left 5.75, the VAT
+	//// rounded to the 0.05). A rule's header discount stays in the figure (it comes first, and a coupon is not combined with
+	//// it). ERPNext cannot take a discount above the base it is applied on: a POS Profile that applies it on the net total
+	//// keeps the card under the net total. Not rounded to the 0.05 of the cash: the card pays the invoice's grand total to the
+	//// cent and nothing stays to collect.
+	const amountDueBeforeAdditionalDiscount = computed(() => {
+		const totals = calculateTaxesAndTotals({
+			items: invoiceItems.value.map(invoiceRowOf),
+			taxes: invoiceTaxRows.value,
+			discountAmount: bypassRuleDiscount.value ? 0 : ruleHeaderDiscount.value || 0,
+			applyDiscountOn: applyDiscountOn.value,
+			roundRowWiseTax: getPrecision().round_row_wise_tax,
+		});
+		return roundCurrency(applyDiscountOn.value === "Net Total" ? totals.net_total : totals.grand_total);
+	});
+
 	//// Neoffice — one line alone through the same computation: its amount, net and VAT, which the line shows. The cart's
 	//// totals are invoiceTotals', where the header discount is spread and each tax row rounded once.
 	function lineTotals(item) {
@@ -1907,6 +1925,7 @@ export function useInvoice() {
 		//// worth more than the price left after pricing rules failed validation. This exposes
 		//// the net total after item-level discounts as the correct cap (8e06bb9c, 2026-01-16).
 		netTotalBeforeAdditionalDiscount,
+		amountDueBeforeAdditionalDiscount,
 
 		// Actions
 		addItem,
