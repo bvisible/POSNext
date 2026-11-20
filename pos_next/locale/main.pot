@@ -29880,3 +29880,7 @@ msgstr ""
 msgid "This choice applies to the lines without a sales person."
 msgstr ""
 
+#: POS/src/utils/appointments.js:121
+msgid "An appointment without a person"
+msgstr ""
+

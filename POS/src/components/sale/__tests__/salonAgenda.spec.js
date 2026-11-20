@@ -227,6 +227,24 @@ describe("the agenda of the salon", () => {
 		expect(wrapper.emitted("selected")).toBeUndefined()
 	})
 
+	it("says « To assign », not « Busy », of an appointment nobody has, and still does not open it (neoffice-maintenance#3185)", async () => {
+		store.appointments = [...store.appointments, busy("busy-9", null, "11:00", "12:00")]
+		const wrapper = mountIt()
+
+		const block = wrapper.get("[data-test='column-unassigned'] [data-test='block-busy-9']")
+		await block.trigger("click")
+
+		expect(block.text()).toContain("To assign")
+		expect(block.text()).toContain("An appointment without a person")
+		expect(block.text()).not.toContain("Busy")
+		expect(block.text()).not.toContain("A colleague's appointment")
+		expect(block.attributes("aria-label")).toBe("To assign")
+		expect(block.attributes("disabled")).toBeDefined()
+		expect(store.selectedKey).toBeNull()
+		// a colleague's appointment in the same agenda keeps its words
+		expect(wrapper.get("[data-test='block-busy-2']").text()).toContain("A colleague's appointment")
+	})
+
 	it("opens the sheet of the appointment touched", async () => {
 		const wrapper = mountIt()
 
@@ -456,6 +474,19 @@ describe("the agenda of the salon", () => {
 
 			await wrapper.get("[data-test='agenda-chip-all']").trigger("click")
 			expect(wrapper.findAll("[data-test^='row-']")).toHaveLength(4)
+		})
+
+		it("lists an appointment nobody has as to assign, not as a colleague's (neoffice-maintenance#3185)", async () => {
+			store.appointments = [...store.appointments, busy("busy-9", null, "11:00", "12:00")]
+			const wrapper = mountIt()
+
+			await wrapper.get("[data-test='agenda-chip-all']").trigger("click")
+			const text = wrapper.get("[data-test='row-busy-9']").text()
+
+			expect(text).toContain("To assign")
+			expect(text).toContain("An appointment without a person")
+			expect(text).not.toContain("Busy")
+			expect(wrapper.get("[data-test='row-busy-2']").text()).toContain("A colleague's appointment")
 		})
 
 		it("calls a free hour free, and not a button that books, where the site cannot book", () => {

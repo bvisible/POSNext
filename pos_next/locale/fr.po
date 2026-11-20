@@ -26882,3 +26882,7 @@ msgstr "Les prestations gardent la personne qui les a faites."
 msgid "This choice applies to the lines without a sales person."
 msgstr "Ce choix ne s'applique qu'aux lignes sans vendeur."
 
+#: POS/src/utils/appointments.js:121
+msgid "An appointment without a person"
+msgstr "Un rendez-vous sans personne"
+

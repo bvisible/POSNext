@@ -112,6 +112,15 @@ export function personOf(appointment) {
 	)
 }
 
+//// Neoffice — the words of a « busy » block (neoffice-maintenance#3185). The block of an appointment the cashier may not read said « Busy — A colleague's appointment » even where
+//// the appointment has no person: it belongs to nobody, and says so now, as the column « to assign » does. Only the words: who may take it is a decision of the product owner.
+/** @returns {{ title: string, note: string }} what a busy block says: its title and the line under it */
+export function busyWordsOf(appointment) {
+	return personOf(appointment)
+		? { title: __("Busy"), note: __("A colleague's appointment") }
+		: { title: __("To assign"), note: __("An appointment without a person") }
+}
+
 /**
  * The columns of the agenda: one per person of the team, in her order, and a column « to assign » at the end when an appointment has nobody.
  * @returns {Array<{ key: string, person: object|null, appointments: Array }>}

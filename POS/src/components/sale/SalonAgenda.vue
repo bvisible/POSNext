@@ -123,7 +123,7 @@
 							:class="blockClass(row)"
 							:style="blockStyle(row, column.person)"
 							:disabled="row.busy"
-							:aria-label="row.busy ? __('Busy') : `${row.customer_name || ''} ${hourOf(row.starts_at)}`"
+							:aria-label="row.busy ? busyWordsOf(row).title : `${row.customer_name || ''} ${hourOf(row.starts_at)}`"
 							:data-test="`block-${row.key}`"
 							@pointerdown="startDrag($event, row)"
 							@touchmove="holdStill"
@@ -133,13 +133,14 @@
 							<span class="flex items-center justify-between gap-1">
 								<b class="flex min-w-0 items-center gap-1.5 truncate text-[13px] text-gray-900 dark:text-gray-100">
 									<span v-if="!row.busy" class="h-2 w-2 flex-none rounded-full" :class="DOTS[standsAs(row)]" aria-hidden="true" />
-									<span class="truncate">{{ row.busy ? __("Busy") : row.customer_name || __("Walk-in") }}</span>
+									<span class="truncate">{{ row.busy ? busyWordsOf(row).title : row.customer_name || __("Walk-in") }}</span>
 								</b>
 								<span class="flex-none tabular-nums text-gray-600 dark:text-gray-300">{{ hourOf(row.starts_at) }}</span>
 							</span>
 							<!-- //// Neoffice — a block too short for its pill row says its cabin after the service (NeoSalon, cabins level 2, 17.11.2026): an hour is 56 px, the pill row needs 64 -->
 							<span v-if="!row.busy" class="truncate text-gray-700 dark:text-gray-200">{{ titleOf(row) }}<template v-if="cabinChip(row) && blockHeight(row) < 64"> · {{ cabinChip(row).label }}</template></span>
-							<span v-else class="truncate text-gray-500 dark:text-gray-400">{{ __("A colleague's appointment") }}</span>
+							<!-- //// Neoffice — a busy block of an appointment with nobody says so (neoffice-maintenance#3185) -->
+							<span v-else class="truncate text-gray-500 dark:text-gray-400" data-test="busy-note">{{ busyWordsOf(row).note }}</span>
 							<span v-if="!row.busy && blockHeight(row) >= 64" class="mt-auto flex items-center gap-1.5">
 								<span class="flex-none rounded-full px-2 py-px text-[11px] font-medium" :class="PILLS[standsAs(row)]">{{ pillText(row) }}</span>
 								<!-- //// Neoffice — the cabin of the appointment, or « To place » for a care taken before the cabins (NeoSalon, cabins level 2, 16.11.2026) -->
@@ -168,8 +169,8 @@
 						<div class="w-12 flex-none text-[15px] font-bold tabular-nums text-gray-900 dark:text-gray-100">{{ item.free ? clockOf(item.free.from) : hourOf(item.row.starts_at) }}<span class="block text-xs font-normal text-gray-500">{{ item.free ? lengthOf(item.free.to - item.free.from) : lengthOf(minutesLongOf(item.row)) }}</span></div>
 						<button v-if="item.free" type="button" class="flex-1 rounded-lg border-[1.5px] border-dashed border-gray-300 px-3 py-2.5 text-start text-sm text-gray-500 dark:border-gray-600" :disabled="!store.capabilities.book" :data-test="`free-${item.free.from}`" @click="emit('new-appointment', { person: phonePerson, from: item.free.from })"><!-- //// Neoffice — a site that cannot book shows the hour as free, not as a button that does nothing -->{{ store.capabilities.book ? `+ ${__("Book an appointment")}` : __("Free hour") }}</button>
 						<button v-else type="button" class="flex min-w-0 flex-1 flex-col gap-0.5 rounded-lg border px-3 py-2 text-start" :class="blockClass(item.row)" :disabled="item.row.busy" :data-test="`row-${item.row.key}`" @click="!item.row.busy && select(item.row)">
-							<b class="truncate text-[15px] text-gray-900 dark:text-gray-100">{{ item.row.busy ? __("Busy") : item.row.customer_name || __("Walk-in") }}</b>
-							<span class="truncate text-sm text-gray-700 dark:text-gray-200">{{ item.row.busy ? __("A colleague's appointment") : titleOf(item.row) }}</span>
+							<b class="truncate text-[15px] text-gray-900 dark:text-gray-100">{{ item.row.busy ? busyWordsOf(item.row).title : item.row.customer_name || __("Walk-in") }}</b>
+							<span class="truncate text-sm text-gray-700 dark:text-gray-200">{{ item.row.busy ? busyWordsOf(item.row).note : titleOf(item.row) }}</span>
 							<span v-if="!item.row.busy" class="mt-1 flex items-center gap-2"><span class="flex-none rounded-full px-2 py-px text-xs font-medium" :class="PILLS[standsAs(item.row)]">{{ pillText(item.row) }}</span><span v-if="cabinChip(item.row)" class="inline-flex min-w-0 items-center gap-1 text-xs text-gray-600 dark:text-gray-300" :data-test="`row-cabin-${item.row.key}`"><span v-if="cabinChip(item.row).color" class="h-2 w-2 flex-none rounded-full" :style="{ background: cabinChip(item.row).color }" aria-hidden="true" /><span dir="auto" class="truncate">{{ cabinChip(item.row).label }}</span></span></span>
 						</button>
 					</li>
@@ -198,6 +199,7 @@ import {
 	cabinOf,
 	colorOfPerson,
 	blockGeometry,
+	busyWordsOf,
 	clockOf,
 	freeHoursOf,
 	gridTemplateOf,
