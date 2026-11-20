@@ -5695,7 +5695,9 @@ async function handleLoadDraft(draft) {
 		// Restore items via addItem to ensure proper reactivity
 		if (draftData.items && draftData.items.length > 0) {
 			for (const item of draftData.items) {
-				cartStore.addItem(item, item.quantity || item.qty || 1);
+				//// Neoffice — a line read back from a held cart keeps its person, « nobody » included (neoffice-maintenance#3202): addItem is the way of a NEW line, which is
+				//// given the person of « Who did the work? » unless it keeps its own, so a service chosen as « Personne » came back as the cashier's.
+				cartStore.addItem({ ...item, keeps_its_person: true }, item.quantity || item.qty || 1);
 			}
 		}
 		cartStore.setCustomer(draftData.customer);

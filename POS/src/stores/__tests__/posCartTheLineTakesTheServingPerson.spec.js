@@ -189,6 +189,24 @@ describe("the cart gives each line the person who serves", () => {
 		expect(lines()[0].sales_person_posed).toBe(false)
 	})
 
+	//// Neoffice — a line read back from a held cart keeps its person, « nobody » included (neoffice-maintenance#3202). The page puts a held cart back line by line through addItem with
+	//// `keeps_its_person`; without it the way of a NEW line gave a service chosen as « Personne » to the cashier who serves.
+	it("gives the person who serves to a line read back from a held cart that did not say it keeps its own: the defect of #3202", () => {
+		cart.addItem({ ...cut, sales_person: null, sales_person_name: null })
+		expect(lines()[0].sales_person).toBe("Luc")
+	})
+
+	it("keeps a line read back from a held cart as it was held: no person stays no person", () => {
+		cart.addItem({ ...cut, sales_person: null, sales_person_name: null, keeps_its_person: true })
+		expect(lines()[0].sales_person).toBeNull()
+		expect(lines()[0].sales_person_name).toBeNull()
+	})
+
+	it("keeps the person a held line had, whoever serves now", () => {
+		cart.addItem({ ...cut, ...sonia, keeps_its_person: true })
+		expect(lines()[0].sales_person).toBe("Sonia")
+	})
+
 	it("starts the next sale with the account's own person again", async () => {
 		who.persons = [
 			{ name: "Luc", sales_person_name: "Luc", is_mine: 1 },
