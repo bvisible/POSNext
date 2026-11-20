@@ -16,6 +16,7 @@ booking (take it, check a move, move it, cancel it, time it) reads the planning 
 from unittest.mock import patch
 
 import frappe
+from frappe.tests.roles import as_role, make_persona
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import nowdate
 
@@ -97,6 +98,17 @@ def sold(*args):
 	return _record("sold", *args)
 
 
+def a_customers_file(*args):
+	SITE.setdefault("calls", []).append(("file", *args))
+	return {
+		"customer": "CUST-1",
+		"has_record": True,
+		"agreement": {"state": "none", "on": None},
+		"formula": None,
+		"allergy": None,
+	}
+
+
 def a_view(visibility):
 	"""The day as the planning lane gives it: Luc's appointment, Sonia's, a busy row of Sonia's, and one that is no one's."""
 	return {
@@ -116,6 +128,7 @@ def a_view(visibility):
 
 
 HOOKS = {
+	"file": appointments.FILE_HOOK,
 	"day": appointments.DAY_HOOK,
 	"check_move": appointments.CHECK_MOVE_HOOK,
 	"move": appointments.MOVE_HOOK,
@@ -257,6 +270,79 @@ class TestTheTillRefusesAColleaguesAppointmentToACashierWhoMayOnlyReadHerOwn(Fra
 		)
 		for call in SITE["calls"]:
 			self.assertIn(MINE, call)
+
+	# //// Neoffice — added test (neoffice-maintenance#3176): the sheet asked for the customer's file of every appointment it opened and a colleague's was refused (a 403 at every opening)
+	def test_the_row_of_an_appointment_says_whether_the_door_lets_the_customers_file_through_to_a_cashier_alone(
+		self,
+	):
+		"""Played by the real role of the till and no other (the persona `cashier`): for each appointment her agenda lists, `may` is what the door says of the file."""
+		self.the_whole_site("own", file=["a_customers_file"])
+		her = make_persona("cashier")
+		profile = frappe.get_doc("POS Profile", self.fx.profile)
+		profile.append("applicable_for_users", {"user": her})
+		profile.save(ignore_permissions=True)
+		# she is Luc now: the employee behind the sales person Luc is her
+		frappe.db.set_value("Employee", self.luc_employee, "user_id", her)
+		day = "2026-11-10"
+
+		def listed(booking, person, starts):
+			return {
+				"booking": booking,
+				"item_code": "SRV-COUPE",
+				"label": "Coupe",
+				"starts_at": f"{day} {starts}",
+				"ends_at": f"{day} {starts[:2]}:59:00",
+				"status": "Confirmed",
+				"payment_status": "Unpaid",
+				"attendance": "Booked",
+				"attendees": 1,
+				"customer": "CUST-1",
+				"customer_name": "Mme Dupont",
+				"provider": "x@example.com",
+				"sales_person": person,
+				"sales_person_name": person,
+				"invoice": None,
+			}
+
+		SITE["view"] = {
+			"day": day,
+			"visibility": "own",
+			"people": [
+				{
+					"sales_person": LUC,
+					"sales_person_name": LUC,
+					"state": "present",
+					"periods": [["09:00", "18:00"]],
+					"appointments": [listed(MINE, LUC, "09:00")],
+				},
+				{
+					"sales_person": SONIA,
+					"sales_person_name": SONIA,
+					"state": "present",
+					"periods": [["09:00", "18:00"]],
+					"appointments": [listed(HERS, SONIA, "11:00")],
+				},
+			],
+			"unassigned": [listed(NOONE, None, "12:00")],
+		}
+
+		with as_role("cashier"):
+			rows = {
+				row["booking"]: row
+				for row in appointments.get_appointments(self.fx.profile, day)["appointments"]
+			}
+			self.assertEqual(set(rows), {MINE, HERS, NOONE})
+			for booking, row in rows.items():
+				with self.subTest(booking=booking):
+					if row["may"]:
+						self.assertIsNotNone(appointments.get_appointment_file(booking, self.fx.profile, day))
+					else:
+						with self.assertRaises(frappe.PermissionError):
+							appointments.get_appointment_file(booking, self.fx.profile, day)
+
+		self.assertEqual(
+			{booking: row["may"] for booking, row in rows.items()}, {MINE: True, HERS: False, NOONE: False}
+		)
 
 	def test_a_cashier_who_reads_the_whole_salon_works_a_colleagues_but_never_a_busy_row_or_one_that_is_not_there(
 		self,

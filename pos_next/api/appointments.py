@@ -575,6 +575,8 @@ def _appointment(row, listed, clock, may, capabilities, key, whole=None) -> dict
 			"busy": True,
 			"clock": _clock(None),
 			"can": _can("booked", True, False, capabilities),
+			# //// Neoffice — whether the cashier may work this appointment (neoffice-maintenance#3176): the door of every gesture says no to a colleague's, so the sheet does not ask for the customer's file
+			"may": False,
 			"chain": None,
 		}
 	booking = _text(row.get("booking"))
@@ -644,6 +646,9 @@ def _appointment(row, listed, clock, may, capabilities, key, whole=None) -> dict
 		"busy": False,
 		"clock": clock,
 		"can": can,
+		# //// Neoffice — whether the cashier may work this appointment (neoffice-maintenance#3176): her own, or any when she sees the whole salon. The door of every gesture, the customer's file included, refuses the others (`_gate`),
+		# //// and a state of the appointment (paid, absent) takes gestures away without taking the file: `can` cannot say it, this does.
+		"may": bool(may),
 		# The steps of the whole appointment, when this card is the card of one step after the first (copies: each card says what its cashier may time)
 		"chain": [dict(step) for step in listed.get("steps") or []] if follows else None,
 	}

@@ -889,6 +889,57 @@ class TestTheAgendaOfTheSalonDayIsComposedFromWhatTheLanesAnswer(FrappeTestCase)
 		self.assertFalse(any(rows["BKG-2"].values()))
 		self.assertFalse(any(rows["BKG-3"].values()))
 
+	# //// Neoffice — added test (neoffice-maintenance#3176): the sheet asks for the customer's file only for an appointment the cashier may work
+	def test_each_row_says_whether_the_cashier_may_work_it_whatever_its_state_lets_her_do(self):
+		self.site_has("day", "move", "cancel", "time_action")
+		self.a_day(
+			visibility="own",
+			people=[
+				self.person(
+					LUC,
+					appointments=[
+						self.row("BKG-1", LUC),
+						self.row("BKG-4", LUC, starts="2026-11-10 13:00:00", payment_status="Paid"),
+					],
+				),
+				self.person(
+					SONIA,
+					appointments=[
+						self.row("BKG-2", SONIA, starts="2026-11-10 11:00:00"),
+						self.busy(SONIA, starts="2026-11-10 14:00:00"),
+					],
+				),
+			],
+			unassigned=[self.row("BKG-3", None, starts="2026-11-10 12:00:00")],
+		)
+
+		rows = {r["booking"] or r["key"]: r for r in self.agenda()["appointments"]}
+
+		self.assertTrue(rows["BKG-1"]["may"], "her own")
+		# her own, paid: a state takes the gestures away, not the right to see the file: `can` cannot say it, `may` does
+		self.assertTrue(rows["BKG-4"]["may"])
+		self.assertFalse(any(rows["BKG-4"]["can"].values()))
+		for booking in ("BKG-2", "BKG-3"):
+			with self.subTest(booking=booking):
+				self.assertFalse(rows[booking]["may"], "a colleague's, or nobody's yet")
+		busy = next(r for r in self.agenda()["appointments"] if r["busy"])
+		self.assertFalse(busy["may"])
+
+	def test_a_cashier_who_sees_the_whole_salon_may_work_every_row_that_is_not_busy(self):
+		self.site_has("day")
+		self.a_day(
+			people=[
+				self.person(LUC, appointments=[self.row("BKG-1", LUC)]),
+				self.person(SONIA, appointments=[self.row("BKG-2", SONIA, starts="2026-11-10 11:00:00")]),
+			],
+			unassigned=[self.row("BKG-3", None, starts="2026-11-10 12:00:00")],
+		)
+
+		self.assertEqual(
+			{r["booking"]: r["may"] for r in self.agenda()["appointments"]},
+			dict.fromkeys(("BKG-1", "BKG-2", "BKG-3"), True),
+		)
+
 	def test_a_gesture_the_site_does_not_have_is_not_allowed_on_any_appointment(self):
 		self.site_has("day")
 		self.a_day(people=[self.person(LUC, appointments=[self.row("BKG-1", LUC)])])

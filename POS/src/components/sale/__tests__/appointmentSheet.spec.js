@@ -676,6 +676,27 @@ describe("the customer's file on the sheet of an appointment", () => {
 		expect(wrapper.find("[data-test='sheet-file']").exists()).toBe(false)
 	})
 
+	//// Neoffice — added tests (neoffice-maintenance#3176): the file is asked for an appointment the cashier may work only, so a cashier who reads her own is not refused at every opening of a colleague's
+	it("asks nothing for an appointment the cashier may not work (a colleague's, or nobody's yet): the door would refuse it", async () => {
+		const wrapper = mountIt({ may: false })
+		await flushPromises()
+
+		expect(gestures.fileOf).not.toHaveBeenCalled()
+		expect(wrapper.find("[data-test='sheet-file']").exists()).toBe(false)
+	})
+
+	it("asks for the file of an appointment she may work, paid or not, and of an answer that does not say", async () => {
+		for (const extra of [{ may: true }, { may: true, state: "paid", can: { collect: false, move: false, cancel: false, clock: false } }, {}]) {
+			gestures.fileOf.mockClear()
+			const wrapper = mountIt(extra)
+			await flushPromises()
+
+			expect(gestures.fileOf).toHaveBeenCalledWith("BKG-1")
+			expect(wrapper.find("[data-test='sheet-file']").exists()).toBe(true)
+			wrapper.unmount()
+		}
+	})
+
 	it("shows nothing when the file could not be read (no record kept, a slow link, offline)", async () => {
 		gestures.fileOf.mockResolvedValue(null)
 		const wrapper = mountIt()

@@ -281,7 +281,8 @@ let fileAsked = 0
 async function loadTheFile() {
 	const asked = ++fileAsked
 	const row = props.appointment
-	if (!store.capabilities.file || !row.booking) {
+	//// Neoffice — the file is asked for an appointment the cashier may work only (neoffice-maintenance#3176): the door of the gestures refuses a colleague's or one nobody holds, to a cashier who reads only her own, and the till asked anyway (a refusal at every opening of the sheet). An answer that does not say (`may` absent) is asked as before.
+	if (!store.capabilities.file || !row.booking || row.may === false) {
 		customerFile.value = null
 		return
 	}
