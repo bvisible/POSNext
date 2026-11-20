@@ -457,7 +457,7 @@ def get_wallet_payment_flags(methods):
 # //// get_sales_persons. A person is of the company of her employee file; one with none (a chair rented) is everybody's. The bound
 # //// is the till's own (cash_entry.bound_companies, maintenance#2838), read without the theme so that a CI without it keeps the
 # //// rule; without a bound, nothing changes.
-def _the_sales_persons_the_cashier_sees(sales_persons):
+def _the_sales_persons_the_cashier_sees(sales_persons, till_company=None):
 	employees = [row.get("employee") for row in sales_persons if row.get("employee")]
 	if not employees:
 		return sales_persons
@@ -465,7 +465,14 @@ def _the_sales_persons_the_cashier_sees(sales_persons):
 	from pos_next.api.cash_entry import bound_companies
 
 	allowed = bound_companies()
-	if allowed is None:
+	# //// Neoffice — and the company of the till itself (neoffice-maintenance#3165): the list is read without the cashier's right on
+	# //// Sales Person, so nothing else says whose people it holds; a site whose Sales Person has no company field (ours) says it through
+	# //// the employee file only. A till of one company never offers the people of another, bound or not.
+	if till_company:
+		allowed = (
+			[till_company] if allowed is None else [company for company in allowed if company == till_company]
+		)
+	elif allowed is None:
 		return sales_persons
 	company_of = dict(
 		frappe.get_all(
@@ -477,6 +484,48 @@ def _the_sales_persons_the_cashier_sees(sales_persons):
 		for row in sales_persons
 		if not company_of.get(row.get("employee")) or company_of[row.get("employee")] in allowed
 	]
+
+
+# //// Neoffice — added function (no upstream equivalent): the sales persons a till offers, as get_sales_persons gives them before it
+# //// marks which one is the cashier, so that what the till asks for and what it offers are one list (neoffice-maintenance#3109): a till
+# //// that asks for a person asks for one only where somebody can be chosen. Read without the cashier's rights, see below.
+def the_sellers_a_till_offers(pos_profile: str, with_rates: bool = False) -> list[dict]:
+	filters = {
+		"enabled": 1,
+		"is_group": 0,  # Only get individual sales persons, not group nodes
+	}
+
+	company = frappe.db.get_value("POS Profile", pos_profile, "company")
+	if frappe.db.has_column("Sales Person", "company") and company:
+		filters["company"] = company
+
+	# //// Neoffice — a till lists the sales persons of its company, not the ones the cashier is linked to. Frappe puts a User
+	# //// Permission on the Employee of every user it creates one for (« create user permission », on by default), and a Sales Person is
+	# //// linked to an Employee: the list then held the cashier's own card alone, so a hairdresser could never name the colleague who did
+	# //// the work. And a cashier who holds the till role alone has no right to read Sales Person at all: every opening of a till that
+	# //// uses sellers answered her a 403 (neoffice-maintenance#3165). The list is read here without those rights, after the access to
+	# //// the POS Profile (checked by the callers), the picker fields only, the persons of the company of the till only (below), and the
+	# //// rates only for whoever may read them: no right is given to the role. Remove if upstream stops reading this list with the cashier's rights.
+	sales_persons = frappe.get_all(
+		"Sales Person",
+		filters=filters,
+		fields=["name", "sales_person_name", "employee"] + (["commission_rate"] if with_rates else []),
+		order_by="sales_person_name",
+		limit_page_length=0,
+	)
+
+	# //// Neoffice — a cashier bound to some companies by a User Permission on « Company » (a business of several companies, the
+	# //// desk's own bound) is offered the sales persons of those companies only: the list named every person of the site, those
+	# //// of the other companies too (neoffice-maintenance#2772). The bound is read here, and the till's own company is the other
+	# //// bound (neoffice-maintenance#3165).
+	sales_persons = _the_sales_persons_the_cashier_sees(sales_persons, till_company=company)
+
+	# //// Neoffice — a person who rents her chair (an account the salon's planning declares independent, NeoSalon lot G13) is never offered as the
+	# //// seller of a line: what she does is hers, not the salon's (product owner, 10.11.2026). The site declares them through a hook; a site that
+	# //// declares none changes nothing. Remove if the salon mode leaves the till.
+	from pos_next.api.appointments import without_independents
+
+	return without_independents(sales_persons)
 
 
 @frappe.whitelist()
@@ -495,47 +544,22 @@ def get_sales_persons(pos_profile: str | None = None):
 	if not has_access:
 		frappe.throw(_("You don't have access to this POS Profile"))
 
-	# //// Neoffice — the till preloads the sales persons at every load, whether or not the profile uses them, and the
-	# //// list below is permission-checked: a cashier role without read on Sales Person got a 403 on each load and a
-	# //// "PermissionError" in the console (neoffice-maintenance#2087). A profile that does not use sales persons has
-	# //// nothing to list. A profile that does still needs read on Sales Person for its till role (unchanged, no
-	# //// ignore_permissions here). Remove if upstream stops preloading the list for a profile that disables sales persons.
+	# //// Neoffice — the till preloads the sales persons at every load, whether or not the profile uses them: a profile that does
+	# //// not use sales persons has nothing to list (neoffice-maintenance#2087). Remove if upstream stops preloading the list for a
+	# //// profile that disables sales persons.
 	from pos_next.pos_next.utils.sales_person_commission import sales_persons_enabled
 
 	if not sales_persons_enabled(pos_profile):
 		return []
 
-	filters = {
-		"enabled": 1,
-		"is_group": 0,  # Only get individual sales persons, not group nodes
-	}
+	# //// Neoffice — what a colleague earns is not for a cashier to read: the picker showed « 10 % comm. » beside each name, and in a
+	# //// salon a hairdresser would read the pay terms of the others (product owner, 09.11.2026: « oui, le cacher »). The rate is
+	# //// kept for the till managers; the till never needs it (the server resolves every rate itself when the invoice is saved), so it
+	# //// is not even read for anyone else.
+	from pos_next.api.cash_entry import is_till_manager
 
-	company = frappe.db.get_value("POS Profile", pos_profile, "company")
-	if frappe.db.has_column("Sales Person", "company") and company:
-		filters["company"] = company
-
-	# //// Neoffice — a till lists the sales persons of its company, not the ones the cashier is linked to. Frappe puts a User
-	# //// Permission on the Employee of every user it creates one for (« create user permission », on by default), and a
-	# //// Sales Person is linked to an Employee: the list then held the cashier's own card alone, so a hairdresser could never
-	# //// name the colleague who did the work. The flag below lifts that filter for this one query; the role check on Sales
-	# //// Person (read) and the access to the POS Profile (above) stay. Remove if upstream stops filtering this list by user.
-	previous = frappe.flags.get("ignore_user_permissions_for_doctype")
-	frappe.flags.ignore_user_permissions_for_doctype = "Sales Person"
-	try:
-		sales_persons = frappe.get_list(
-			"Sales Person",
-			filters=filters,
-			fields=["name", "sales_person_name", "commission_rate", "employee"],
-			order_by="sales_person_name",
-			limit_page_length=0,
-		)
-	finally:
-		frappe.flags.ignore_user_permissions_for_doctype = previous
-
-	# //// Neoffice — a cashier bound to some companies by a User Permission on « Company » (a business of several companies, the
-	# //// desk's own bound) is offered the sales persons of those companies only: the list named every person of the site, those
-	# //// of the other companies too (neoffice-maintenance#2772). The flag above lifts the bound for this query, so it is read here.
-	sales_persons = _the_sales_persons_the_cashier_sees(sales_persons)
+	may_read_the_rates = is_till_manager()
+	sales_persons = the_sellers_a_till_offers(pos_profile, with_rates=may_read_the_rates)
 
 	# //// Neoffice — which one is the cashier (the Sales Person whose Employee is this user), so that the till offers him first
 	# //// instead of an empty field: « if I open the till with an employee account, the person is already chosen » (product owner,
@@ -543,24 +567,14 @@ def get_sales_persons(pos_profile: str | None = None):
 	mine = set(
 		frappe.get_all("Employee", filters={"user_id": frappe.session.user, "status": "Active"}, pluck="name")
 	)
-	# //// Neoffice — what a colleague earns is not for a cashier to read: the picker showed « 10 % comm. » beside each name, and in a
-	# //// salon a hairdresser would read the pay terms of the others (product owner, 09.11.2026: « oui, le cacher »). The rate is
-	# //// kept for the till managers; the till never needs it (the server resolves every rate itself when the invoice is saved).
-	from pos_next.api.cash_entry import is_till_manager
-
-	may_read_the_rates = is_till_manager()
 	# //// Neoffice — the flag is added to every row (see above), and the rate withheld from whoever may not read it
 	for row in sales_persons:
 		row["is_mine"] = 1 if row.get("employee") and row["employee"] in mine else 0
 		if not may_read_the_rates:
 			row["commission_rate"] = None
 
-	# //// Neoffice — a person who rents her chair (an account the salon's planning declares independent, NeoSalon lot G13) is never offered as the
-	# //// seller of a line: what she does is hers, not the salon's (product owner, 10.11.2026). The site declares them through a hook; a site that
-	# //// declares none changes nothing. Remove if the salon mode leaves the till.
-	from pos_next.api.appointments import without_independents
-
-	return without_independents(sales_persons)
+	# //// Neoffice — the list is the one the till offers (the_sellers_a_till_offers), marked and with the rates withheld (neoffice-maintenance#3165)
+	return sales_persons
 
 
 @frappe.whitelist()
