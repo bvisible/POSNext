@@ -15,7 +15,7 @@ is still refused.
 from unittest.mock import patch
 
 import frappe
-from frappe.tests.roles import as_role, make_persona
+from frappe.tests.roles import as_role, make_persona, without_right
 from frappe.tests.utils import FrappeTestCase
 
 from pos_next.api import pos_profile
@@ -87,13 +87,17 @@ class TestACashierWithOnlyTheTillRoleReadsTheSellersOfHerTill(FrappeTestCase):
 		frappe.clear_cache(user=self.cashier)
 
 	def offered(self):
-		"""What the till loads, asked for by the cashier as she is."""
-		with as_role("cashier"):
+		"""What the till loads, asked for by the cashier as she is: the role of the till and no right to read Sales Person."""
+		with as_role("cashier"), without_right("Sales Person", "read"):
 			return {row["name"]: row for row in pos_profile.get_sales_persons(self.fx.profile)}
 
 	def test_the_cashier_of_the_suite_cannot_read_sales_person_herself(self):
-		"""The situation the other suites hide (the role `Sales User` reads it): the fix must leave it as it is, no right is given."""
-		with as_role("cashier"):
+		"""The situation the other suites hide (the role `Sales User` reads it): the fix leaves it as it is, no right is given.
+
+		The theme's access model gives `POSNext Cashier` read on Sales Person on a site that has migrated since 09.11 (osiris has the row), so the
+		suite masks that right for her instead of relying on the site: it plays on a copy of such a site, on a site that has not got the row, and in CI.
+		"""
+		with as_role("cashier"), without_right("Sales Person", "read"):
 			self.assertFalse(frappe.has_permission("Sales Person", "read"))
 			with self.assertRaises(frappe.PermissionError):
 				frappe.get_list("Sales Person", limit_page_length=1)
