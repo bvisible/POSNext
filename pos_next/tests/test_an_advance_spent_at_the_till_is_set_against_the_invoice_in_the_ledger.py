@@ -13,7 +13,6 @@ import frappe
 from frappe.tests.roles import as_role
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import flt, nowdate
-
 from pos_next.api import credit_sales
 from pos_next.tests.test_till_writes_need_the_till import (
 	CASHIER_ROLE,
@@ -41,6 +40,22 @@ class TestAnAdvanceSpentAtTheTillIsSetAgainstTheInvoiceInTheLedger(FrappeTestCas
 		self.before = flt(self.invoice.outstanding_amount)
 		self.advance = self.an_advance(25)
 
+	def a_price_list_in(self, currency):
+		"""A selling price list in the company's currency, the test's own: the site's default list may be in another one, and so may the list of the till."""
+		name = f"_PNXT advance test {currency}"
+		if not frappe.db.exists("Price List", name):
+			frappe.get_doc(
+				{
+					"doctype": "Price List",
+					"price_list_name": name,
+					"currency": currency,
+					"selling": 1,
+					"enabled": 1,
+				}
+			).insert(ignore_permissions=True)
+			self.addCleanup(frappe.delete_doc, "Price List", name, force=True, ignore_permissions=True)
+		return name
+
 	def a_submitted_invoice(self, amount):
 		"""A submitted invoice of the customer; what it owes is read as ERPNext priced it (the item's price list may not be the amount asked)."""
 		invoice = frappe.get_doc(
@@ -48,9 +63,16 @@ class TestAnAdvanceSpentAtTheTillIsSetAgainstTheInvoiceInTheLedger(FrappeTestCas
 				"doctype": "Sales Invoice",
 				"company": self.company,
 				"customer": self.customer,
+				# //// Neoffice — the invoice is in the currency of the company's receivable account (neoffice-maintenance#3138): left to the site's defaults it took theirs, and for a
+				# //// customer with no ledger history yet (the CI's site: always) ERPNext refuses a document currency that is not the account's: « Party Account … currency (INR) and
+				# //// document currency (USD) should be same ». The copy of a site where the customer already has entries never saw it.
+				"currency": self.fx.currency,
+				"selling_price_list": self.a_price_list_in(self.fx.currency),
 				"posting_date": nowdate(),
 				"due_date": nowdate(),
-				"items": [{"item_code": _item(self.company), "qty": 1, "rate": amount}],
+				"items": [
+					{"item_code": _item(self.company), "qty": 1, "rate": amount, "price_list_rate": amount}
+				],
 			}
 		)
 		with as_role("accountant"):
