@@ -1206,6 +1206,30 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		{ immediate: true, flush: "post" }
 	);
 
+	//// Neoffice — the discount of a coupon, a gift card or a manual amount follows the cart. It was capped only when it was applied: take
+	//// lines off, or let an offer lower the price, and the discount stayed above what is owed — a negative total, and a payment window stuck on
+	//// a « paid online » surplus that never was (a card of 150.00 on a cart of 76.60, then two lines removed: Total -46.60; maintenance#3201).
+	//// It only goes down, never up: the amount the cashier chose is hers. A cart with no line is left alone: a restored draft sets the cart in
+	//// two steps, and an empty cart has nothing to be capped on.
+	watch([amountDueBeforeAdditionalDiscount, () => invoiceItems.value.length], ([due, lineCount]) => {
+		if (!lineCount || isLineLevelCoupon(appliedCoupon.value)) return;
+		const ceiling = Math.max(roundCurrency(due), 0);
+		if (additionalDiscount.value <= ceiling) return;
+		const coupon = appliedCoupon.value;
+		if (coupon) {
+			appliedCoupon.value = {
+				...coupon,
+				amount: ceiling,
+				base_amount: ceiling,
+				...(coupon.isGiftCard
+					? { remainingBalance: roundCurrency((coupon.availableBalance || 0) - ceiling) }
+					: {}),
+			};
+		}
+		additionalDiscount.value = ceiling;
+		rebuildIncrementalCache();
+	});
+
 	//// Neoffice — `keepUndecided`: a line the waiter has not decided (no kitchen status) goes to the server as it is, so that the
 	//// server decides it by the rule of the service families; otherwise it goes as Pending, as it always did (NeoResto lot 1).
 	function buildOfferEvaluationPayload(currentProfile, { keepUndecided = false } = {}) {
