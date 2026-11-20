@@ -420,7 +420,8 @@ export function tillLayout({ isDesktop, agenda, selected, leftPanelWidth, mobile
 			leftGrows: true,
 			divider: false,
 			cart: mobileTab === "cart",
-			sheet: agenda ? "cover" : null,
+			//// Neoffice — the sheet covers the agenda only once an appointment is chosen, as on a desktop: mounted with none it read the customer of nothing (neoffice-maintenance#3203)
+			sheet: agenda && selected ? "cover" : null,
 		}
 	if (agenda)
 		return selected

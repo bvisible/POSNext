@@ -35,6 +35,14 @@ describe("the till's layout", () => {
 		})
 		expect(tillLayout({ isDesktop: false, agenda: false, leftPanelWidth: 720, mobileTab: "cart" }).cart).toBe(true)
 	})
+
+	//// Neoffice — the sheet of an appointment is mounted only with an appointment, on a phone as on a desktop (neoffice-maintenance#3203)
+	it("on a phone mounts no sheet while no appointment is chosen: it would read the customer of nothing", () => {
+		const layout = tillLayout({ isDesktop: false, agenda: true, selected: false, leftPanelWidth: 720, mobileTab: "items" })
+
+		expect(layout.sheet).toBeNull()
+		expect(tillLayout({ isDesktop: false, agenda: false, selected: false, leftPanelWidth: 720, mobileTab: "items" }).sheet).toBeNull()
+	})
 })
 
 describe("the colour of a person at the till", () => {
