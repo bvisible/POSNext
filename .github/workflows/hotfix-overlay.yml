@@ -3,7 +3,8 @@
 # (neoffice-maintenance#3237). A client far behind cannot take the branch in a wave; this is the way of one fix, with the guards of
 # the hub (copy tried, approval, restart under maintenance, way back). Started by hand with the base, the commits and an opaque
 # identifier; never a name of an instance or of a client (this repository is public). The mechanics, the checks and the tests:
-# bvisible/neoffice-ci hotfix-overlay.yml and scripts/hotfix_overlay.py.
+# bvisible/neoffice-ci hotfix-overlay.yml and scripts/hotfix_overlay.py, at the commit pinned below; a change here or there is a change of what the hub
+# believes (neoffice_devops/cloud/hotfix/trust.py).
 name: hotfix-overlay
 
 on:
@@ -28,8 +29,10 @@ jobs:
     if: ${{ github.ref == 'refs/heads/version-15' }}
     permissions:
       contents: write
-    uses: bvisible/neoffice-ci/.github/workflows/hotfix-overlay.yml@main
+    uses: bvisible/neoffice-ci/.github/workflows/hotfix-overlay.yml@06fa34947c3a06ce827a249a341f359bfefac365
     with:
+      # the workflow and its script are pinned to ONE neoffice-ci commit: the hub believes a run only if the files that ran are versions it knows
+      ci_ref: 06fa34947c3a06ce827a249a341f359bfefac365
       app: pos_next
       base: ${{ inputs.base }}
       commits: ${{ inputs.commits }}
