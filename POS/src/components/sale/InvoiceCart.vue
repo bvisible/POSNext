@@ -1469,7 +1469,7 @@
 									:class="
 										item.custom_color && !isLightColor(item.custom_color)
 											? 'text-white'
-											: 'text-gray-600'
+											: 'text-[#524B41]' /* //// Neoffice — the thumbnail is light in the dark theme too (inline style): a colour the dark remap of the greys does not turn light (neoffice-maintenance#3222) */
 									"
 								>
 									{{ (item.item_name || "").substring(0, 8) }}

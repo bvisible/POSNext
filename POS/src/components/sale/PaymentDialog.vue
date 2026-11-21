@@ -743,9 +743,10 @@
 								</div>
 							</div>
 						</div>
+						<!-- //// Neoffice — gray 600, was gray 400 at 1.6:1 (neoffice-maintenance#3222) -->
 						<div
 							v-else
-							class="flex-1 px-3 py-4 text-center text-gray-400 text-sm flex items-center justify-center"
+							class="flex-1 px-3 py-4 text-center text-gray-600 text-sm flex items-center justify-center"
 						>
 							{{ __("No items") }}
 						</div>
@@ -1207,7 +1208,8 @@
 									class="text-xs font-medium text-gray-500 uppercase tracking-wider"
 									>{{ __("Write Off") }}</span
 								>
-								<span class="text-xs text-gray-400"
+								<!-- //// Neoffice — gray 600 (the design system's secondary text), not gray 400 at 1.6:1, on the informative texts of the window (neoffice-maintenance#3222) -->
+								<span class="text-xs text-gray-600"
 									>{{ __("Max") }}: {{ formatCurrency(writeOffLimit) }}</span
 								>
 							</div>
@@ -1723,9 +1725,10 @@
 										>/ {{ __("person") }}</span
 									>
 								</div>
+								<!-- //// Neoffice — gray 600, was gray 400 at 1.6:1 (neoffice-maintenance#3222) -->
 								<button
 									@click="deactivateSplit"
-									class="text-xs text-gray-400 hover:text-red-500 transition-colors"
+									class="text-xs text-gray-600 hover:text-red-500 transition-colors"
 								>
 									<svg
 										class="w-4 h-4"
@@ -1937,7 +1940,7 @@
 											isExactAmountModeActive &&
 											!isCashPaymentMethod(lastSelectedMethod)
 												? 'text-gray-300'
-												: 'text-gray-400',
+												: 'text-gray-600' /* //// Neoffice — the currency of the custom amount reads: gray 600, was 400 at 1.6:1 (neoffice-maintenance#3222) */,
 										]"
 										>{{ currencySymbol }}</span
 									>
@@ -2035,7 +2038,8 @@
 								<button
 									@click="addCustomPayment(lastSelectedMethod, remainingAmount)"
 									:class="[
-										'font-bold rounded-neo-md bg-green-500 text-white active:bg-green-600 flex items-center justify-center',
+										/* //// Neoffice — white on green 700, was 500 at 2.6:1 (neoffice-maintenance#3222) */
+										'font-bold rounded-neo-md bg-green-700 text-white active:bg-green-800 flex items-center justify-center',
 										mobileButtonSize.height,
 										mobileButtonSize.text,
 										mobileButtonSize.gap,
@@ -2130,7 +2134,7 @@
 									'w-full font-bold rounded-neo-md flex items-center justify-center',
 									isSubmitting
 										? 'bg-green-300 text-white cursor-not-allowed'
-										: 'bg-green-500 text-white active:bg-green-600',
+										: 'bg-green-700 text-white active:bg-green-800' /* //// Neoffice — white on green 700, was 500 at 2.6:1 (neoffice-maintenance#3222) */,
 									mobileButtonSize.height,
 									mobileButtonSize.text,
 									mobileButtonSize.gap,
@@ -2468,7 +2472,7 @@
 							v-if="allowCreditSale && paymentEntries.length === 0"
 							@click="confirmCreditSale"
 							:disabled="isSubmitting || !isSalesPersonValid"
-							class="text-xs text-gray-400 hover:text-gray-600 transition-colors py-1 text-center"
+							class="text-xs text-gray-600 hover:text-gray-800 transition-colors py-1 text-center"
 						>
 							{{ creditConfirming ? __("Click again to confirm") : __("Pay on Account") }}
 						</button>

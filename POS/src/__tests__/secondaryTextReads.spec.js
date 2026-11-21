@@ -91,6 +91,11 @@ describe("the secondary text of the till in the light theme: the design system's
 		expect(css).toMatch(/\.placeholder\\:text-gray-500::placeholder\s*\{[^}]*rgb\(82 75 65/)
 	})
 
+	it("draws a placeholder of the light theme as the sand-500 of the design system (5.1:1 on white), under the class of a placeholder that says its own", () => {
+		expect(indexCss).toMatch(/\ninput::placeholder,\s*\ntextarea::placeholder \{ color: #6F665A; \}/)
+		for (const surface of ["#FFFFFF", "#F8F8F8"]) expect(contrast("#6F665A", surface), surface).toBeGreaterThanOrEqual(4.5)
+	})
+
 	it("gives the till's own muted ink the same colour in the light theme", () => {
 		expect(indexCss).toMatch(/--pos-ink-muted:\s*#524B41;/)
 	})
@@ -135,7 +140,37 @@ describe("the elements of the till's screens that the scan found under 4.5:1 and
 		expect(cart).not.toContain('class="text-[10px] font-bold text-blue-600"')
 		expect(cart).toContain('class="text-[9px] text-gray-600 truncate flex items-center gap-0.5"')
 		expect(cart).not.toContain('class="text-[9px] text-gray-400 truncate flex items-center gap-0.5"')
-		expect(cart).toMatch(/\? 'text-white'\s*: 'text-gray-600'/)
+		// the thumbnail is light in the dark theme too (inline style): a colour the dark remap of the greys does not turn light
+		expect(cart).toMatch(/\? 'text-white'\s*: 'text-\[#524B41\]'/)
+		expect(cart).not.toMatch(/\? 'text-white'\s*: 'text-gray-(400|500|600)'/)
+	})
+
+	it("draws the captions of the list thumbnails of the items the same way", () => {
+		const items = source("src/components/sale/ItemsSelector.vue")
+		expect(items.match(/: 'text-\[#524B41\]'/g)).toHaveLength(2)
+		expect(items).not.toMatch(/\? 'text-white'\s*: 'text-gray-500'/)
+	})
+
+	it("draws the pay button as white on green 700 (2.6:1 on 500), the dimmed « submitting » state apart", () => {
+		const dialog = source("src/components/sale/PaymentDialog.vue")
+		expect(dialog.match(/bg-green-700 text-white active:bg-green-800/g)).toHaveLength(2)
+		expect(dialog).not.toContain("bg-green-500 text-white")
+		expect(dialog).toContain("bg-green-300 text-white cursor-not-allowed") // a disabled state stays grey on purpose
+	})
+
+	it("draws the informative texts of the payment window in gray 600, never the gray 400 of 1.6:1 (a disabled state keeps its grey)", () => {
+		const dialog = source("src/components/sale/PaymentDialog.vue")
+		expect(dialog).toContain('<span class="text-xs text-gray-600"\n\t\t\t\t\t\t\t\t\t>{{ __("Max") }}')
+		expect(dialog).toContain("'text-gray-600' /* //// Neoffice — the currency of the custom amount reads")
+		expect(dialog).toContain('class="text-xs text-gray-600 hover:text-red-500 transition-colors"')
+		expect(dialog).toContain('class="text-xs text-gray-600 hover:text-gray-800 transition-colors py-1 text-center"')
+		expect(dialog).toContain("cursor-not-allowed opacity-60") // a disabled button keeps its grey on purpose
+	})
+
+	it("draws the count of the cart as white on red 700 (3.8:1 on 500)", () => {
+		const sale = source("src/pages/POSSale.vue")
+		expect(sale).toContain("absolute -top-2 -end-2 bg-red-700 text-white")
+		expect(sale).not.toContain("absolute -top-2 -end-2 bg-red-500 text-white")
 	})
 
 	it("draws the selected discount-type toggles of the payment window (« % » and « CHF ») as white on orange 700 (3.2:1 on 500)", () => {

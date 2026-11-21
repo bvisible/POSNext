@@ -830,7 +830,7 @@
 													item.custom_color &&
 													!isLightColor(item.custom_color)
 														? 'text-white'
-														: 'text-gray-500'
+														: 'text-[#524B41]' /* //// Neoffice — on the light inline tile in both themes: not a grey the dark remap turns light (neoffice-maintenance#3222) */
 												"
 											>
 												<!-- //// Neoffice — feat: add image and color support for items in POS restaurant (26f5a3f1, 2026-03-25). -->
@@ -845,7 +845,7 @@
 										:class="
 											item.custom_color && !isLightColor(item.custom_color)
 												? 'text-white'
-												: 'text-gray-500'
+												: 'text-[#524B41]' /* //// Neoffice — on the light inline tile in both themes: not a grey the dark remap turns light (neoffice-maintenance#3222) */
 										"
 									>
 										<!-- //// Neoffice — feat: add image and color support for items in POS restaurant (26f5a3f1, 2026-03-25). -->

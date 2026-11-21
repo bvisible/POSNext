@@ -454,6 +454,10 @@ button.active\:scale-95:active,
 	color: #e6e8eb !important;
 	border-color: rgba(255, 255, 255, 0.12) !important;
 }
+/* //// Neoffice — the placeholder of the light theme: the preset's #999999 (2.9:1) is the sand-500 of the design system (#6F665A, 5.1:1 on white), lighter than the typed text
+   //// (#524B41) so that an empty field still looks empty (neoffice-maintenance#3222). An element-level rule: a `placeholder:text-…` class keeps winning. */
+input::placeholder,
+textarea::placeholder { color: #6F665A; }
 /* //// Neoffice — the dark placeholder is the same grey as the secondary text: #828b99 was 4.35:1 on an input (neoffice-maintenance#3222) */
 [data-theme='dark'] input::placeholder,
 .dark input::placeholder { color: #9aa3b2 !important; }

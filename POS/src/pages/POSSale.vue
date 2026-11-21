@@ -1136,8 +1136,9 @@
 									d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
 								/>
 							</svg>
+							<!-- //// Neoffice — the count of the cart: white on red 700, was 500 at 3.8:1 (neoffice-maintenance#3222) -->
 							<span
-								class="absolute -top-2 -end-2 bg-red-500 text-white text-xs font-bold rounded-full min-w-[22px] h-[22px] px-1 flex items-center justify-center shadow-lg animate-pulse"
+								class="absolute -top-2 -end-2 bg-red-700 text-white text-xs font-bold rounded-full min-w-[22px] h-[22px] px-1 flex items-center justify-center shadow-lg animate-pulse"
 							>
 								{{ cartStore.itemCount }}
 							</span>
