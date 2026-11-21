@@ -29,10 +29,10 @@ jobs:
     if: ${{ github.ref == 'refs/heads/version-15' }}
     permissions:
       contents: write
-    uses: bvisible/neoffice-ci/.github/workflows/hotfix-overlay.yml@06fa34947c3a06ce827a249a341f359bfefac365
+    uses: bvisible/neoffice-ci/.github/workflows/hotfix-overlay.yml@dc412ec43b8b9f93aa7f104991fe5c913a9afde4
     with:
       # the workflow and its script are pinned to ONE neoffice-ci commit: the hub believes a run only if the files that ran are versions it knows
-      ci_ref: 06fa34947c3a06ce827a249a341f359bfefac365
+      ci_ref: dc412ec43b8b9f93aa7f104991fe5c913a9afde4
       app: pos_next
       base: ${{ inputs.base }}
       commits: ${{ inputs.commits }}
