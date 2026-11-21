@@ -867,7 +867,7 @@
   "docstatus": 0,
   "doctype": "Custom Field",
   "dt": "Coupon Code",
-  "fetch_from": "pricing_rule.discount_amount",
+  "fetch_from": null,
   "fetch_if_empty": 0,
   "fieldname": "gift_card_amount",
   "fieldtype": "Currency",

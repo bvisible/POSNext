@@ -292,6 +292,11 @@ override_doctype_class = {"Sales Invoice": "pos_next.overrides.sales_invoice.Cus
 
 # //// wallet functionality with loyalty points conversion — 77e7448
 doc_events = {
+	# //// Neoffice — added entry (no upstream equivalent): a gift card made without a balance takes its Pricing Rule's once, at its
+	# //// birth; the balance field no longer fetches it at every save (neoffice-maintenance#3239).
+	"Coupon Code": {
+		"before_insert": "pos_next.api.gift_cards.give_a_new_card_its_balance",
+	},
 	# //// Neoffice — added entry (no upstream equivalent): keep the end-of-day report as a PDF
 	# //// attached to the closing shift, and e-mailed when the profile asks for it, both in the
 	# //// background after the commit so closing stays fast (neoffice-maintenance#1235).

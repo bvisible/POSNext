@@ -728,6 +728,35 @@ def process_gift_card_on_submit(doc, method=None):
 		_update_gift_card_balance(coupon.name, 0, coupon.pricing_rule)
 
 
+# //// Neoffice — added section (maintenance#3239). The balance of a card is the card's own row. It used to be fetched
+# //// from the card's Pricing Rule at every save (`fetch_from = pricing_rule.discount_amount`) and written back into that
+# //// rule at every spend, return and cancel. The cards the shop sells share ONE rule per amount, so a card spent
+# //// rewrote the balance of all its sisters at their next save: refused (« no longer holds »), lowered without a word,
+# //// or raised above what a spent card held. The fetch is gone (patches/gift_cards/the_balance_of_a_gift_card_is_its_own);
+# //// the rule is written only when the card is the one card that names it, as the cards of the till are (one rule each).
+def _owns_its_rule(card_name, pricing_rule):
+	"""True when no other Coupon Code names this Pricing Rule."""
+	if not pricing_rule:
+		return False
+	return not frappe.db.exists("Coupon Code", {"pricing_rule": pricing_rule, "name": ["!=", card_name]})
+
+
+def _the_rule_follows_the_balance(card_name, pricing_rule, balance):
+	"""Say the balance on the rule of a card that is its only user; leave a rule that sisters share as it is."""
+	if _owns_its_rule(card_name, pricing_rule):
+		frappe.db.set_value("Pricing Rule", pricing_rule, "discount_amount", flt(balance))
+
+
+# //// Neoffice — a document hook (hooks.py doc_events of Coupon Code), run in-process as whoever creates the card:
+# //// not a web endpoint, so not whitelisted. `fetch_from` used to give a card made without a balance the amount of its
+# //// rule (a card typed at the desk). It does that once now, at the birth of the card, and never again.
+def give_a_new_card_its_balance(doc, method=None):
+	"""A gift card made without a balance holds the amount of its Pricing Rule; a balance given is kept as it is."""
+	if not is_gift_card(doc) or flt(doc.get("gift_card_amount")) > 0 or not doc.get("pricing_rule"):
+		return
+	doc.gift_card_amount = flt(frappe.db.get_value("Pricing Rule", doc.pricing_rule, "discount_amount"))
+
+
 def _update_gift_card_balance(coupon_name, new_balance, pricing_rule=None):
 	"""
 	Update gift card balance in Coupon Code and Pricing Rule.
@@ -753,13 +782,8 @@ def _update_gift_card_balance(coupon_name, new_balance, pricing_rule=None):
 		)
 
 		# Update Pricing Rule
-		if pricing_rule:
-			frappe.db.set_value(
-				"Pricing Rule",
-				pricing_rule,
-				"discount_amount",
-				flt(new_balance)
-			)
+		# //// Neoffice — only a rule that this card alone names follows its balance (maintenance#3239)
+		_the_rule_follows_the_balance(coupon_name, pricing_rule, new_balance)
 
 	except Exception as e:
 		frappe.log_error(
@@ -849,13 +873,8 @@ def _process_gift_card_return(return_invoice):
 		)
 
 		# Update Pricing Rule
-		if coupon.pricing_rule:
-			frappe.db.set_value(
-				"Pricing Rule",
-				coupon.pricing_rule,
-				"discount_amount",
-				flt(new_balance)
-			)
+		# //// Neoffice — only a rule that this card alone names follows its balance (maintenance#3239)
+		_the_rule_follows_the_balance(coupon.name, coupon.pricing_rule, new_balance)
 
 	except Exception as e:
 		frappe.log_error(
@@ -1045,7 +1064,8 @@ def _card_units_returned(credit_note, original):
 
 def _void(card, reason):
 	frappe.db.set_value("Coupon Code", card.name, "gift_card_amount", 0)
-	if card.pricing_rule:
+	# //// Neoffice — never a rule that another card names too: disabling it would take their rule away (maintenance#3239)
+	if card.pricing_rule and _owns_its_rule(card.name, card.pricing_rule):
 		frappe.db.set_value("Pricing Rule", card.pricing_rule, {"discount_amount": 0, "disable": 1})
 	frappe.get_doc("Coupon Code", card.name).add_comment("Info", reason)
 
@@ -1053,7 +1073,8 @@ def _void(card, reason):
 def _restore(card, reason):
 	value = _value_of(card)
 	frappe.db.set_value("Coupon Code", card.name, "gift_card_amount", value)
-	if card.pricing_rule:
+	# //// Neoffice — same as _void (maintenance#3239)
+	if card.pricing_rule and _owns_its_rule(card.name, card.pricing_rule):
 		frappe.db.set_value("Pricing Rule", card.pricing_rule, {"discount_amount": value, "disable": 0})
 	frappe.get_doc("Coupon Code", card.name).add_comment("Info", reason)
 

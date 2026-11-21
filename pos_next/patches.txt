@@ -82,3 +82,5 @@ pos_next.patches.gift_cards.say_the_origin_of_each_shop_gift_card
 pos_next.patches.gift_cards.say_given_for_free_where_a_card_said_offered
 # //// Neoffice — the three print formats of the till stop forcing English (maintenance#1133): a French till printed its receipt, its end-of-day report and its shopping list in English. It runs after the doctype sync and only clears a language the format still says as `en`.
 pos_next.patches.print_formats.follow_the_language_of_the_document
+# //// Neoffice — the balance of a gift card stops being fetched from its Pricing Rule: the shop's cards of one amount share a rule, and a card spent rewrote the balance of its sisters (21.11.2026, maintenance#3239). It runs after the doctype sync and clears one Custom Field row.
+pos_next.patches.gift_cards.the_balance_of_a_gift_card_is_its_own
