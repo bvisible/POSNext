@@ -1,0 +1,51 @@
+# //// Neoffice — added file (no upstream equivalent). Lays ONE fix, already on version-15 and tried, on the base a client's instance
+# already runs, builds the till on it and publishes the result as a tag `hotfix/pos_next/<base7>-<n>`, never a branch
+# (neoffice-maintenance#3237). A client far behind cannot take the branch in a wave; this is the way of one fix, with the guards of
+# the hub (copy tried, approval, restart under maintenance, way back). Started by hand with the base, the commits and an opaque
+# identifier; never a name of an instance or of a client (this repository is public). The mechanics, the checks and the tests:
+# bvisible/neoffice-ci hotfix-overlay.yml and scripts/hotfix_overlay.py.
+name: hotfix-overlay
+
+on:
+  workflow_dispatch:
+    inputs:
+      base:
+        description: "Full hash of the commit the instance runs"
+        required: true
+      commits:
+        description: "Full hashes of the commits of the fix, oldest first, separated by blanks"
+        required: true
+      hotfix_id:
+        description: "Identifier of the overlay, HF-0001"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  overlay:
+    # the commits are on version-15: the workflow is the one of that branch, never of another
+    if: ${{ github.ref == 'refs/heads/version-15' }}
+    permissions:
+      contents: write
+    uses: bvisible/neoffice-ci/.github/workflows/hotfix-overlay.yml@main
+    with:
+      app: pos_next
+      base: ${{ inputs.base }}
+      commits: ${{ inputs.commits }}
+      hotfix_id: ${{ inputs.hotfix_id }}
+      branch: version-15
+      # the recipe of the till, as build-frontend.yml builds it: Node 20, the frozen lock file, the root `yarn build` forced
+      node_version: "20"
+      front_sources: |
+        POS/src/
+        POS/public/
+        POS/index.html
+      artifact_paths: |
+        pos_next/public/pos/
+        pos_next/www/pos.html
+        pos_next/www/pos-sw.js
+      install_command: cd POS && yarn install --frozen-lockfile
+      # POS_NEXT_BUILD_VERSION: the build holds no time (version.json would differ on every run); BUILD_VERSION is set by the workflow
+      build_command: FORCE_REBUILD=1 POS_NEXT_BUILD_VERSION="$BUILD_VERSION" yarn build
+      specs_command: cd POS && yarn vitest run
