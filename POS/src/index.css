@@ -437,6 +437,11 @@ button.active\:scale-95:active,
    //// button keeps its colour (neoffice-maintenance#3222). */
 [data-theme='dark'] .text-pos-action,
 .dark .text-pos-action { color: #dda479; }
+/* //// Neoffice — a disabled button reads as disabled in the dark theme too (neoffice-maintenance#3234). The disabled state is written `bg-gray-100 text-gray-400` (about thirty places): the
+   //// remap above turns the background dark but not the text, which stayed #C7C7C7, light on dark: « Payment » on an empty cart and « Add » at 0 looked active. In the light theme the
+   //// same classes are pale on pale. Faded to the opacity the till's own `disabled:opacity-…` classes use (0.5 to 0.6), here for every disabled button of the dark theme. */
+[data-theme='dark'] button:disabled,
+.dark button:disabled { opacity: 0.55; }
 [data-theme='dark'] .border-gray-100,
 .dark .border-gray-100 { border-color: rgba(255, 255, 255, 0.06) !important; }
 [data-theme='dark'] .border-gray-200,

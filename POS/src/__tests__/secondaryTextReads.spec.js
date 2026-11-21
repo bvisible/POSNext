@@ -118,6 +118,10 @@ describe("the secondary text of the till in the dark theme: the remap holds on e
 		expect(indexCss).toMatch(/\[data-theme='dark'\] input::placeholder,\s*\.dark input::placeholder \{ color: #9aa3b2 !important; \}/)
 	})
 
+	it("fades a disabled button of the dark theme, which looked active (« Payment » on an empty cart, « Add » at 0: neoffice-maintenance#3234)", () => {
+		expect(indexCss).toMatch(/\[data-theme='dark'\] button:disabled,\s*\.dark button:disabled \{ opacity: 0\.55; \}/)
+	})
+
 	it("draws text-pos-action on a dark surface lighter than the clay 600 of the buttons (2.5:1 on the active pill)", () => {
 		const colour = indexCss.match(/\[data-theme='dark'\] \.text-pos-action,\s*\.dark \.text-pos-action \{ color: (#[0-9a-fA-F]{6}); \}/)?.[1]
 		expect(colour).toBe("#dda479")
