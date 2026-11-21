@@ -34,7 +34,8 @@
 	   saving marks discounts and gifts, caution marks low stock, near expiry and credit,
 	   danger is for destructive actions and real errors. Tailwind: text-pos-ink, bg-pos-action, ... */
 	--pos-ink: #1d2433;
-	--pos-ink-muted: #5b6475;
+	/* //// Neoffice — the design system's `--text-secondary` (sand-600) in the light theme (neoffice-maintenance#3222); the dark theme keeps #9aa3b2 below */
+	--pos-ink-muted: #524B41;
 	--pos-surface: #ffffff;
 	--pos-panel: #f3f5f8;
 	--pos-line: #dde2ea;
@@ -427,8 +428,15 @@ button.active\:scale-95:active,
 .dark .text-gray-700 { color: #c2c8d0 !important; }
 [data-theme='dark'] .text-gray-600,
 .dark .text-gray-600 { color: #9aa3b2 !important; }
+/* //// Neoffice — #828b99 was 3.9:1 on a tile (#2b2f38) and 4.0 on the agenda's free hours (#2c2d32): the secondary text of the dark theme is the one of
+   //// text-gray-600 (#9aa3b2, 5.4:1 or more on every dark surface of the till). The !important stays: it is what wins over any `dark:text-gray-…` class (neoffice-maintenance#3222). */
 [data-theme='dark'] .text-gray-500,
-.dark .text-gray-500 { color: #828b99 !important; }
+.dark .text-gray-500 { color: #9aa3b2 !important; }
+/* //// Neoffice — `text-pos-action` is the till's action colour as a TEXT (the active category pill, a link): clay 600 (#a15a2e) in the dark theme too, which was 2.5:1 on the
+   //// soft clay tint of the active pill and under 3:1 on a dark panel. As a text it is the lighter clay of the dark theme (#dda479, 5.7:1 on the tint); a `bg-pos-action`
+   //// button keeps its colour (neoffice-maintenance#3222). */
+[data-theme='dark'] .text-pos-action,
+.dark .text-pos-action { color: #dda479; }
 [data-theme='dark'] .border-gray-100,
 .dark .border-gray-100 { border-color: rgba(255, 255, 255, 0.06) !important; }
 [data-theme='dark'] .border-gray-200,
@@ -446,8 +454,9 @@ button.active\:scale-95:active,
 	color: #e6e8eb !important;
 	border-color: rgba(255, 255, 255, 0.12) !important;
 }
+/* //// Neoffice — the dark placeholder is the same grey as the secondary text: #828b99 was 4.35:1 on an input (neoffice-maintenance#3222) */
 [data-theme='dark'] input::placeholder,
-.dark input::placeholder { color: #828b99 !important; }
+.dark input::placeholder { color: #9aa3b2 !important; }
 /* light TINT backgrounds (status pills, active tabs, header clock/session pills,
    disabled buttons) — POS uses bg-{color}-50/100 + bg-gray-300 which stayed
    light in dark mode. Remap to dark hue-tints / dark surface. */

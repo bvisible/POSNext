@@ -247,7 +247,7 @@ function wellStyle(item) {
 function nameClasses(item) {
 	const base = "font-bold line-clamp-3"
 	if (item.custom_color) {
-		return `${base} ${isLightColor(item.custom_color) ? "text-gray-800" : "text-white"} text-sm sm:text-base`
+		return `${base} ${isLightColor(item.custom_color) ? "text-[#141414]" : "text-white"} text-sm sm:text-base`
 	}
 	if (tileColor(item)) return `${base} text-gray-800 text-sm sm:text-base`
 	return `${base} text-gray-500 text-xs sm:text-sm`

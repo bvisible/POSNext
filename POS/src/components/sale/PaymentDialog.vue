@@ -899,7 +899,7 @@
 										:class="[
 											'h-9 rounded-lg text-sm font-bold transition-colors',
 											additionalDiscountType === 'percentage'
-												? 'bg-orange-500 text-white'
+												? 'bg-orange-700 text-white' /* //// Neoffice — white on orange 700, was 500 at 3.2:1 (neoffice-maintenance#3222) */
 												: 'bg-white text-orange-600 border border-orange-300 hover:bg-orange-50',
 										]"
 									>
@@ -914,7 +914,7 @@
 										:class="[
 											'h-9 rounded-lg text-sm font-bold transition-colors',
 											additionalDiscountType === 'amount'
-												? 'bg-orange-500 text-white'
+												? 'bg-orange-700 text-white' /* //// Neoffice — white on orange 700, was 500 at 3.2:1 (neoffice-maintenance#3222) */
 												: 'bg-white text-orange-600 border border-orange-300 hover:bg-orange-50',
 										]"
 									>

@@ -20,11 +20,19 @@ export const ITEM_COLOR_PALETTE = [
 	{ hex: "#EC4899", name: "Pink" },
 ]
 
-// Returns true if color is light enough to need dark text (BT.601 luminance)
+//// Neoffice — the label of a tile reads on the colour the manager picked (neoffice-maintenance#3222, follow-up). The BT.601 test above said « light » only over 0.6, so a
+//// mid-tone colour (red 500, #EF4444) kept a white label at 3.8:1. The test is the contrast itself now: the ink of the design system (#141414) where it reads at
+//// least as well as white does, white where white reads better: every swatch of the palette reaches 4.5:1 that way (a colour of another hue the manager types in may not: the better of the two is still the one).
+// Returns true if the dark ink reads at least as well as white on this colour (WCAG contrast of each)
+const INK_LUMINANCE = 0.007 // #141414, the design system's ink
 export function isLightColor(hex) {
 	if (!hex || hex.length < 7) return true
-	const r = Number.parseInt(hex.slice(1, 3), 16)
-	const g = Number.parseInt(hex.slice(3, 5), 16)
-	const b = Number.parseInt(hex.slice(5, 7), 16)
-	return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6
+	const channel = (at) => {
+		const v = Number.parseInt(hex.slice(at, at + 2), 16) / 255
+		return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4
+	}
+	const luminance = 0.2126 * channel(1) + 0.7152 * channel(3) + 0.0722 * channel(5)
+	const withInk = (luminance + 0.05) / (INK_LUMINANCE + 0.05)
+	const withWhite = 1.05 / (luminance + 0.05)
+	return withInk >= withWhite
 }

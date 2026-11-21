@@ -590,7 +590,8 @@
 									name="phone"
 									class="w-3 h-3 text-blue-600"
 								/>
-								<span v-else class="text-[10px] font-bold text-blue-600">{{
+								<!-- //// Neoffice — the monogram reads on its clay tint: 700, not 600 (4.0:1; neoffice-maintenance#3222) -->
+								<span v-else class="text-[10px] font-bold text-blue-700">{{
 									getInitials(cust.customer_name)
 								}}</span>
 							</div>
@@ -616,9 +617,10 @@
 									</span>
 									<span v-if="cust.email_id">{{ cust.email_id }}</span>
 								</p>
+								<!-- //// Neoffice — the address reads: gray 600 (the design system's secondary text), not gray 400 (1.7:1; neoffice-maintenance#3222) -->
 								<p
 									v-if="addressSnippet(cust)"
-									class="text-[9px] text-gray-400 truncate flex items-center gap-0.5"
+									class="text-[9px] text-gray-600 truncate flex items-center gap-0.5"
 								>
 									<svg
 										class="w-2.5 h-2.5 flex-shrink-0"
@@ -1467,7 +1469,7 @@
 									:class="
 										item.custom_color && !isLightColor(item.custom_color)
 											? 'text-white'
-											: 'text-gray-400'
+											: 'text-gray-600'
 									"
 								>
 									{{ (item.item_name || "").substring(0, 8) }}

@@ -1078,7 +1078,8 @@ function getCardBackgroundStyle(item, skipImage = false) {
 function getCardTextClasses(item) {
 	const base = "font-bold line-clamp-3";
 	if (item.custom_color) {
-		const textColor = isLightColor(item.custom_color) ? "text-gray-800" : "text-white";
+		//// Neoffice — the ink of the design system (#141414), not a grey: on a mid-tone colour (red 500) a grey 800 was 3.6:1 (neoffice-maintenance#3222).
+		const textColor = isLightColor(item.custom_color) ? "text-[#141414]" : "text-white";
 		return `${base} ${textColor} text-sm sm:text-base`;
 	}
 	return `${base} text-gray-500 text-xs sm:text-sm`;

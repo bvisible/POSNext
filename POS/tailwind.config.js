@@ -70,6 +70,16 @@ export default {
 					},
 				};
 			})(),
+			//// Neoffice — the secondary text of the till reads (neoffice-maintenance#3222, follow-up). The till writes its secondary text as `text-gray-500` and
+			//// `text-gray-600` (about 960 uses), which the preset draws #999999 and #7C7C7C: 2.9:1 and 4.2:1 on white, less on a tile. Both are the design system's
+			//// `--text-secondary` (sand-600, #524B41: 7.8:1 on white, 7.0:1 on the sand stripe) in the light theme, for the TEXT only (a gray-500 border or fill is
+			//// unchanged: `textColor`, not `colors`); the dark theme is index.css's remap of the same two classes. The orange and amber 600 of a text (3.2 to 4.0:1 on
+			//// white or a tint) are the 700 of the same ramps. A `placeholder:text-gray-500` is a text colour too.
+			textColor: {
+				gray: { 500: "#524B41", 600: "#524B41" },
+				orange: { 600: "#C2410C" },
+				amber: { 600: "#B45309" },
+			},
 			borderRadius: {
 				"neo-sm": "8px",
 				"neo-md": "14px",

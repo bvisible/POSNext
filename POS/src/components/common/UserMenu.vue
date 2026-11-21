@@ -239,7 +239,8 @@ const Avatar = (props) => {
 	//// lines during the whole-source formatter pass (458d81a9, 2026-03-20 "remove BrainWise
 	//// branding, add restaurant mode, and code formatting"). The Avatar itself is upstream's.
 	const sizeClass = props.size === "sm" ? "w-9 h-9" : "w-10 h-10";
-	const bgClass = props.image ? "bg-gray-200" : "bg-gradient-to-br from-blue-500 to-blue-600";
+	//// Neoffice — white initials on the clay 500..600 gradient were 3.6:1; clay 600..700 hold 5.2:1 or more (neoffice-maintenance#3222).
+	const bgClass = props.image ? "bg-gray-200" : "bg-gradient-to-br from-blue-600 to-blue-700";
 
 	return h(
 		"div",
