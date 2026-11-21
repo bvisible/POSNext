@@ -194,16 +194,16 @@ describe("the agenda of the salon", () => {
 		})
 
 		// neoffice-maintenance#3222: the note and the hour of a busy block were the grey of the till (rgb 153 and 124) on the sand hatch: 2.3 to 2.6:1 and 3.4 to 3.8:1 in the light theme
-		it("draws the note and the hour of a busy block in the text colour of the design system that holds 4.5:1 on the sand hatch, and leaves the dark theme as it was", () => {
+		it("draws the note and the hour of a busy block in the text colour of the design system that holds 4.5:1 on the sand hatch, and gives the dark theme the colours it had (what the till's dark remap made of its grey classes)", () => {
 			const block = mountIt().get("[data-test='block-busy-2']")
 
 			const note = block.get("[data-test='busy-note']")
 			expect(note.classes()).toContain("text-[#524B41]")
-			expect(note.classes()).toContain("dark:text-gray-400")
+			expect(note.classes()).toContain("dark:text-[#828B99]")
 			expect(note.classes()).not.toContain("text-gray-500")
 			const hour = block.get(".tabular-nums")
 			expect(hour.classes()).toContain("text-[#524B41]")
-			expect(hour.classes()).toContain("dark:text-gray-300")
+			expect(hour.classes()).toContain("dark:text-[#9AA3B2]")
 			expect(hour.classes()).not.toContain("text-gray-600")
 		})
 

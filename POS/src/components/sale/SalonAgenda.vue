@@ -135,14 +135,14 @@
 									<span v-if="!row.busy" class="h-2 w-2 flex-none rounded-full" :class="DOTS[standsAs(row)]" aria-hidden="true" />
 									<span class="truncate">{{ row.busy ? busyWordsOf(row).title : row.customer_name || __("Walk-in") }}</span>
 								</b>
-								<!-- //// Neoffice — the hour of a busy block reads on its sand hatch in the light theme: the system's `--text-secondary` (neoffice-maintenance#3222) -->
-								<span class="flex-none tabular-nums" :class="row.busy ? 'text-[#524B41] dark:text-gray-300' : 'text-gray-600 dark:text-gray-300'">{{ hourOf(row.starts_at) }}</span>
+								<!-- //// Neoffice — the hour of a busy block reads on its sand hatch in the light theme: the system's `--text-secondary` (neoffice-maintenance#3222). The dark colour is the one the till's dark remap gave `text-gray-600` (#9AA3B2): written out, since the grey class is gone and its remap with it -->
+								<span class="flex-none tabular-nums" :class="row.busy ? 'text-[#524B41] dark:text-[#9AA3B2]' : 'text-gray-600 dark:text-gray-300'">{{ hourOf(row.starts_at) }}</span>
 							</span>
 							<!-- //// Neoffice — a block too short for its pill row says its cabin after the service (NeoSalon, cabins level 2, 17.11.2026): an hour is 56 px, the pill row needs 64 -->
 							<span v-if="!row.busy" class="truncate text-gray-700 dark:text-gray-200">{{ titleOf(row) }}<template v-if="cabinChip(row) && blockHeight(row) < 64"> · {{ cabinChip(row).label }}</template></span>
 							<!-- //// Neoffice — a busy block of an appointment with nobody says so (neoffice-maintenance#3185) -->
-							<!-- //// Neoffice — its note too: the grey of the till (rgb 153) was 2.3 to 2.6:1 on the hatch; `--text-secondary` of the design system, #524B41 (sand-600), is 7:1 (neoffice-maintenance#3222) -->
-							<span v-else class="truncate text-[#524B41] dark:text-gray-400" data-test="busy-note">{{ busyWordsOf(row).note }}</span>
+							<!-- //// Neoffice — its note too: the grey of the till (rgb 153) was 2.3 to 2.6:1 on the hatch; `--text-secondary` of the design system, #524B41 (sand-600), is 7:1 (neoffice-maintenance#3222). Dark: the colour the till's dark remap gave `text-gray-500` (#828B99), written out since the grey class is gone and its remap with it -->
+							<span v-else class="truncate text-[#524B41] dark:text-[#828B99]" data-test="busy-note">{{ busyWordsOf(row).note }}</span>
 							<span v-if="!row.busy && blockHeight(row) >= 64" class="mt-auto flex items-center gap-1.5">
 								<span class="flex-none rounded-full px-2 py-px text-[11px] font-medium" :class="PILLS[standsAs(row)]">{{ pillText(row) }}</span>
 								<!-- //// Neoffice — the cabin of the appointment, or « To place » for a care taken before the cabins (NeoSalon, cabins level 2, 16.11.2026) -->
