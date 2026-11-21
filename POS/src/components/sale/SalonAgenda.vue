@@ -95,7 +95,7 @@
 						<span v-if="drag.mark.fit" class="absolute inset-x-0 top-full mt-1 rounded-md border border-s-4 bg-pos-surface px-2 py-1 text-[11px] font-semibold leading-snug text-pos-ink shadow-sm" :class="markClass(drag.mark.fit)" data-test="agenda-drop-fit">{{ fitText(drag.mark.fit) }}</span>
 					</div>
 					<!-- Not working that day: hatched, and said. Her appointments stay drawn: they were booked before, and are « to handle » (never cancelled by themselves). -->
-					<div v-if="column.person && isOff(column.person)" class="absolute inset-0" :style="{ backgroundImage: HATCH }">
+					<div v-if="column.person && isOff(column.person)" class="absolute inset-0" :class="OFF_HATCH" data-test="column-off-hatch">
 						<div class="absolute inset-x-3 top-2 rounded-lg border border-gray-200 bg-white px-3 py-3 text-center text-xs leading-snug text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" :data-test="`column-off-${column.key}`">
 							<b class="text-sm text-gray-800 dark:text-gray-100">{{ standing(column.person).label }}</b>
 							<div v-if="column.person.reason" class="mt-0.5">{{ column.person.reason }}</div>
@@ -120,7 +120,7 @@
 							:key="row.key"
 							type="button"
 							class="absolute inset-x-1.5 flex flex-col gap-px overflow-hidden rounded-lg border px-2 py-1 text-start text-xs leading-tight transition"
-							:class="blockClass(row)"
+							:class="[blockClass(row), row.busy ? BUSY_HATCH : '']"
 							:style="blockStyle(row, column.person)"
 							:disabled="row.busy"
 							:aria-label="row.busy ? busyWordsOf(row).title : `${row.customer_name || ''} ${hourOf(row.starts_at)}`"
@@ -226,7 +226,13 @@ const uiStore = usePOSUIStore()
 const { checkMove } = useAppointment()
 
 const PX_PER_HOUR = 56
-const HATCH = "repeating-linear-gradient(135deg, #F6F3ED 0, #F6F3ED 8px, #ECE7DE 8px, #ECE7DE 9px)"
+//// Neoffice — the two hatches follow the theme (neoffice-maintenance#3216). They were an inline style, the sand pair of the design system (`--sand-50` / `--sand-100`) in BOTH themes: in the dark
+//// theme a colleague's « Busy » block drew its light text (`dark:text-gray-100`) on that light hatch, and the word could not be read. They are classes now (Tailwind reads whole class names, so each one is
+//// written out): the sand pair on paper, the dark pair of the system (`--surface-card` / `--surface-raised`, tokens/colors.css, dark scope) in the dark theme. A busy block hatches 6px + 1px, a day off 8px + 1px.
+const BUSY_HATCH =
+	"[background-image:repeating-linear-gradient(135deg,#F6F3ED_0,#F6F3ED_6px,#ECE7DE_6px,#ECE7DE_7px)] dark:[background-image:repeating-linear-gradient(135deg,#1B1611_0,#1B1611_6px,#221C16_6px,#221C16_7px)]"
+const OFF_HATCH =
+	"[background-image:repeating-linear-gradient(135deg,#F6F3ED_0,#F6F3ED_8px,#ECE7DE_8px,#ECE7DE_9px)] dark:[background-image:repeating-linear-gradient(135deg,#1B1611_0,#1B1611_8px,#221C16_8px,#221C16_9px)]"
 const TONES = {
 	ok: "bg-green-100 text-green-800 dark:bg-green-400/20 dark:text-green-100",
 	warn: "bg-yellow-100 text-yellow-800 dark:bg-yellow-400/20 dark:text-yellow-100",
@@ -386,8 +392,8 @@ function blockStyle(row, person) {
 		style.width = `calc((100% - 8px) / ${lane.of} - 4px)`
 		style.right = "auto"
 	}
-	if (row.busy) style.backgroundImage = "repeating-linear-gradient(135deg, #F6F3ED 0, #F6F3ED 6px, #ECE7DE 6px, #ECE7DE 7px)"
-	else if (person) {
+	// a busy block is hatched by its class (BUSY_HATCH), which follows the theme; only a person's own colour is a style
+	if (!row.busy && person) {
 		const color = colorOf(person)
 		style.background = `${color}1F`
 		style.borderColor = `${color}66`

@@ -157,6 +157,52 @@ describe("the agenda of the salon", () => {
 		expect(wrapper.find("[data-test='column-Sonia'] [data-test^='free-']").exists()).toBe(false)
 	})
 
+	// neoffice-maintenance#3216: the hatches were an inline style, light in BOTH themes: in the dark theme a colleague's « Busy » block drew its light text on a light hatch and the word could not be read
+	describe("the hatches follow the theme", () => {
+		const BUSY_LIGHT = "[background-image:repeating-linear-gradient(135deg,#F6F3ED_0,#F6F3ED_6px,#ECE7DE_6px,#ECE7DE_7px)]"
+		const BUSY_DARK = "dark:[background-image:repeating-linear-gradient(135deg,#1B1611_0,#1B1611_6px,#221C16_6px,#221C16_7px)]"
+		const OFF_LIGHT = "[background-image:repeating-linear-gradient(135deg,#F6F3ED_0,#F6F3ED_8px,#ECE7DE_8px,#ECE7DE_9px)]"
+		const OFF_DARK = "dark:[background-image:repeating-linear-gradient(135deg,#1B1611_0,#1B1611_8px,#221C16_8px,#221C16_9px)]"
+
+		it("hatches a colleague's busy block by classes of both themes, the sand pair of the design system on paper and its dark pair in the dark theme", () => {
+			const block = mountIt().get("[data-test='block-busy-2']")
+
+			expect(block.classes()).toContain(BUSY_LIGHT)
+			expect(block.classes()).toContain(BUSY_DARK)
+			// not an inline style: that one stays light whatever the theme
+			expect(block.element.style.backgroundImage).toBe("")
+		})
+
+		it("hatches a block nobody has the same way, and a block that is somebody's not at all", () => {
+			store.appointments = [...store.appointments, busy("busy-9", null, "11:00", "12:00")]
+			const wrapper = mountIt()
+
+			const nobodys = wrapper.get("[data-test='column-unassigned'] [data-test='block-busy-9']")
+			expect(nobodys.classes()).toContain(BUSY_LIGHT)
+			expect(nobodys.classes()).toContain(BUSY_DARK)
+			const hers = wrapper.get("[data-test='block-BKG-1']")
+			expect(hers.classes().some((name) => name.includes("background-image"))).toBe(false)
+			expect(hers.element.style.backgroundImage).toBe("")
+		})
+
+		it("hatches the column of a person who is off by classes of both themes too", () => {
+			const off = mountIt().get("[data-test='column-off-hatch']")
+
+			expect(off.classes()).toContain(OFF_LIGHT)
+			expect(off.classes()).toContain(OFF_DARK)
+			expect(off.element.style.backgroundImage).toBe("")
+		})
+
+		it("does not hatch the row of a busy hour in the list of a phone (it never did)", async () => {
+			ui.isDesktop = false
+			const wrapper = mountIt()
+			await wrapper.get("[data-test='agenda-chip-Maya']").trigger("click")
+
+			const busyRow = wrapper.get("[data-test='row-busy-2']")
+			expect(busyRow.classes().some((name) => name.includes("background-image"))).toBe(false)
+		})
+	})
+
 	it("shows an appointment with its customer, its service and where it stands", () => {
 		const wrapper = mountIt()
 
