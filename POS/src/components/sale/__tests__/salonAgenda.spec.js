@@ -193,6 +193,33 @@ describe("the agenda of the salon", () => {
 			expect(off.element.style.backgroundImage).toBe("")
 		})
 
+		// neoffice-maintenance#3222: the note and the hour of a busy block were the grey of the till (rgb 153 and 124) on the sand hatch: 2.3 to 2.6:1 and 3.4 to 3.8:1 in the light theme
+		it("draws the note and the hour of a busy block in the text colour of the design system that holds 4.5:1 on the sand hatch, and leaves the dark theme as it was", () => {
+			const block = mountIt().get("[data-test='block-busy-2']")
+
+			const note = block.get("[data-test='busy-note']")
+			expect(note.classes()).toContain("text-[#524B41]")
+			expect(note.classes()).toContain("dark:text-gray-400")
+			expect(note.classes()).not.toContain("text-gray-500")
+			const hour = block.get(".tabular-nums")
+			expect(hour.classes()).toContain("text-[#524B41]")
+			expect(hour.classes()).toContain("dark:text-gray-300")
+			expect(hour.classes()).not.toContain("text-gray-600")
+		})
+
+		it("does the same for a block nobody has, and leaves the hour of a block that is somebody's as it was", () => {
+			store.appointments = [...store.appointments, busy("busy-9", null, "11:00", "12:00")]
+			const wrapper = mountIt()
+
+			const nobodys = wrapper.get("[data-test='column-unassigned'] [data-test='block-busy-9']")
+			expect(nobodys.get("[data-test='busy-note']").classes()).toContain("text-[#524B41]")
+			expect(nobodys.get(".tabular-nums").classes()).toContain("text-[#524B41]")
+			const hers = wrapper.get("[data-test='block-BKG-1']").get(".tabular-nums")
+			expect(hers.classes()).toContain("text-gray-600")
+			expect(hers.classes()).toContain("dark:text-gray-300")
+			expect(hers.classes()).not.toContain("text-[#524B41]")
+		})
+
 		it("does not hatch the row of a busy hour in the list of a phone (it never did)", async () => {
 			ui.isDesktop = false
 			const wrapper = mountIt()
