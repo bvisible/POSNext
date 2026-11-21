@@ -167,6 +167,14 @@ describe("the elements of the till's screens that the scan found under 4.5:1 and
 		expect(dialog).toContain("cursor-not-allowed opacity-60") // a disabled button keeps its grey on purpose
 	})
 
+	it("leaves the currency of the custom amount the room it needs in front of the amount (« CHF » over « Personnalisé » on a phone)", () => {
+		const dialog = source("src/components/sale/PaymentDialog.vue")
+		expect(dialog).toContain("? 'h-7 ps-8 pe-1.5 text-xs'")
+		expect(dialog).toContain(": 'h-8 ps-9 pe-2 text-sm'")
+		expect(dialog).not.toContain("'h-7 ps-5 pe-1.5 text-xs'")
+		expect(dialog).not.toContain("'h-8 ps-6 pe-2 text-sm'")
+	})
+
 	it("draws the count of the cart as white on red 700 (3.8:1 on 500)", () => {
 		const sale = source("src/pages/POSSale.vue")
 		expect(sale).toContain("absolute -top-2 -end-2 bg-red-700 text-white")

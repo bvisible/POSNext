@@ -1962,9 +1962,10 @@
 										"
 										:class="[
 											'w-full border rounded focus:outline-none font-semibold',
+											/* //// Neoffice — the room of the currency in front of the amount: « CHF » is about 25px at text-xs, the field left 20 and 24 (« CHPersonnalisé », neoffice-maintenance#3222) */
 											isSmallMobile
-												? 'h-7 ps-5 pe-1.5 text-xs'
-												: 'h-8 ps-6 pe-2 text-sm',
+												? 'h-7 ps-8 pe-1.5 text-xs'
+												: 'h-8 ps-9 pe-2 text-sm',
 											isExactAmountModeActive &&
 											!isCashPaymentMethod(lastSelectedMethod)
 												? 'bg-gray-50 border-gray-100 text-gray-300 cursor-not-allowed'
