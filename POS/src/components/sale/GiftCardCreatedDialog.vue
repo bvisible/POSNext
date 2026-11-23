@@ -76,7 +76,8 @@ function copyToClipboard(code) {
 					class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
 				>
 					<!-- Header -->
-					<div class="bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-4 text-white">
+					<!-- //// Neoffice — the till's saving green (--pos-saving): `from-emerald-500` is not in the compiled stylesheet, which left the title, the icon and the cross white on white in the light theme (screen test of 23.11.2026) -->
+					<div class="bg-pos-saving px-6 py-4 text-white">
 						<div class="flex items-center justify-between">
 							<div class="flex items-center gap-3">
 								<div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
@@ -123,7 +124,7 @@ function copyToClipboard(code) {
 							v-for="(giftCard, index) in giftCards"
 							:key="giftCard.coupon_code"
 							:class="[
-								'rounded-xl border-2 border-dashed border-emerald-200 bg-emerald-50/50 p-4',
+								'rounded-xl border-2 border-dashed border-pos-line bg-pos-panel p-4',
 								index > 0 ? 'mt-4' : ''
 							]"
 						>
@@ -133,15 +134,15 @@ function copyToClipboard(code) {
 									{{ __('Code') }}
 								</p>
 								<div class="flex items-center justify-center gap-2">
-									<span class="text-2xl font-mono font-bold text-emerald-700 tracking-wider">
+									<span class="text-2xl font-mono font-bold text-pos-saving tracking-wider">
 										{{ giftCard.coupon_code }}
 									</span>
 									<button
-										class="p-1.5 rounded-md hover:bg-emerald-100 transition-colors"
+										class="p-1.5 rounded-md hover:bg-pos-action-soft transition-colors"
 										:title="__('Copy to clipboard')"
 										@click="copyToClipboard(giftCard.coupon_code)"
 									>
-										<svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<svg class="w-4 h-4 text-pos-saving" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
 										</svg>
 									</button>

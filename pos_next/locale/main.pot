@@ -29916,3 +29916,19 @@ msgstr ""
 msgid "Nobody has this appointment yet. Take it to work on it: it becomes yours alone."
 msgstr ""
 
+
+#. Custom Field label (fixtures/custom_field.json): the extractor does not read fixtures
+msgid "Neopos Gift Card"
+msgstr ""
+
+#. Custom Field description (fixtures/custom_field.json)
+msgid "This gift card is managed by Neopos"
+msgstr ""
+
+#. Custom Field description (fixtures/custom_field.json)
+msgid "Invoice that created this gift card (Sales Invoice or POS Invoice)"
+msgstr ""
+
+#: POS/src/components/sale/ReturnInvoiceDialog.vue:1043
+msgid "Discount of the sale:"
+msgstr ""

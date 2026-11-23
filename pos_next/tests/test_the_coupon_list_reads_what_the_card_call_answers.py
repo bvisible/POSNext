@@ -8,7 +8,6 @@ key, so the manager read « Valeur : undefined » and « un solde de (1) ».
 - the call answers it: the amount of the card, written the way the site writes money.
 """
 
-import unittest
 from pathlib import Path
 
 import frappe
@@ -26,9 +25,6 @@ class TestTheCouponListReadsWhatTheCardCallAnswers(FrappeTestCase):
 		self.assertIn("r.message.formatted_amount", source)
 		self.assertIn("gift_card.formatted_amount", source)
 
-	# The two lines above read a key the server does not send yet: expected to fail until it does, and the day it does
-	# this decorator must go (an unexpected success is a failure, so nobody forgets it).
-	@unittest.expectedFailure
 	def test_the_card_made_by_hand_answers_its_value_written_as_money(self):
 		company = frappe.db.get_single_value("Global Defaults", "default_company")
 		with as_role("till_manager"):

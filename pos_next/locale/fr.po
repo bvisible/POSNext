@@ -26918,3 +26918,19 @@ msgstr "Je le prends"
 msgid "Nobody has this appointment yet. Take it to work on it: it becomes yours alone."
 msgstr "Personne n'a encore ce rendez-vous. Prenez-le pour y travailler : il ne sera qu'à vous."
 
+
+#. Custom Field label (fixtures/custom_field.json): the extractor does not read fixtures
+msgid "Neopos Gift Card"
+msgstr "Carte cadeau Neopos"
+
+#. Custom Field description (fixtures/custom_field.json)
+msgid "This gift card is managed by Neopos"
+msgstr "Cette carte cadeau est gérée par Neopos"
+
+#. Custom Field description (fixtures/custom_field.json)
+msgid "Invoice that created this gift card (Sales Invoice or POS Invoice)"
+msgstr "Facture qui a créé cette carte cadeau (Sales Invoice ou POS Invoice)"
+
+#: POS/src/components/sale/ReturnInvoiceDialog.vue:1043
+msgid "Discount of the sale:"
+msgstr "Remise sur la vente :"

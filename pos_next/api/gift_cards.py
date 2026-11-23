@@ -22,7 +22,7 @@ Handles:
 
 import frappe
 from frappe import _
-from frappe.utils import flt, nowdate, add_months, getdate
+from frappe.utils import flt, fmt_money, nowdate, add_months, getdate
 import random
 import string
 
@@ -419,6 +419,8 @@ def create_gift_card_manual(amount, company, customer=None, validity_months=12):
 			"name": coupon.name,
 			"coupon_code": code,
 			"amount": flt(amount),
+			# //// Neoffice — the dialog of the Coupon Code list reads `formatted_amount` (« Valeur : … », « un solde de … »): the call answered no such key and the manager read « Valeur : undefined »
+			"formatted_amount": fmt_money(flt(amount), currency=frappe.get_cached_value("Company", company, "default_currency")),
 			"valid_from": valid_from,
 			"valid_upto": valid_upto
 		}
