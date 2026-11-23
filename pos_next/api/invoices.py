@@ -1770,6 +1770,11 @@ def update_invoice(data):
 			from pos_next.restaurant.takeaway_tax import copy_taxes_of_the_returned_sale
 
 			copy_taxes_of_the_returned_sale(invoice_doc)
+			# //// Neoffice — a return takes back its sale's discount in proportion to its lines: the till's dialog sent none, and a sale
+			# //// paid 20.00 for goods of 21.62 (a gift card spent as a discount) was returned for 21.62, the card credited again.
+			from pos_next.return_discount import carry_the_discount_of_the_returned_sale
+
+			carry_the_discount_of_the_returned_sale(invoice_doc)
 
 		# Calculate totals and apply discounts (with rounding disabled)
 		# //// Neoffice — within the advances the invoice carries (see _work_the_totals_out_within_the_advances above, voie 4, 19.11.2026)
@@ -4715,6 +4720,10 @@ def prepare_return_invoice(invoice_name, pos_opening_shift: str | None = None):
 		for item in return_dict.get("items", [])
 		if (processed := process_return_item(item)) is not None
 	]
+	# //// Neoffice — each line carries the part of the sale's discount it takes back, so that the dialog offers the refund the credit note makes
+	from pos_next.return_discount import attach_the_discount_per_unit
+
+	attach_the_discount_per_unit(return_dict)
 
 	# Check if all items have been fully returned
 	if not return_dict["items"]:

@@ -1035,6 +1035,16 @@
 								>{{ selectedItems.length }}</span
 							>
 						</div>
+						<!-- //// Neoffice — the discount of the sale the lines took back with them (see returnDiscount) -->
+						<div
+							v-if="returnDiscount > 0"
+							class="flex justify-between items-center text-sm pt-2 border-t border-red-200"
+						>
+							<span class="text-gray-600">{{ __("Discount of the sale:") }}</span>
+							<span class="font-medium text-gray-700"
+								>-{{ formatCurrency(returnDiscount) }}</span
+							>
+						</div>
 						<!-- Breakdown for partially paid invoices -->
 						<template v-if="showPartialBreakdown">
 							<div
@@ -1660,13 +1670,28 @@ const posSettingsStore = usePOSSettingsStore();
 
 // Use rate_with_tax (includes tax) for accurate refund calculation
 //// Neoffice — a block body now, to round the total below (see the note above).
+//// Neoffice — the refund is what the sale cost, not the price of its goods: a sale that spent a gift card (or took any discount
+//// on the invoice) was paid less than its goods, and its return gives back the same. Each line carries its part of that
+//// discount (`invoice_discount_per_unit`, worked out by the server with the rule the credit note applies, return_discount.py);
+//// the credit note takes it by itself, so that nothing is sent. Without it the till refunded the whole goods in cash and the
+//// card was credited again.
+const returnDiscount = computed(() =>
+	roundCurrency(
+		selectedItems.value.reduce(
+			(sum, item) => sum + item.return_qty * (item.invoice_discount_per_unit || 0),
+			0
+		)
+	)
+);
+
 const returnTotal = computed(() => {
 	const total = roundCurrency(
 		selectedItems.value.reduce(
 			(sum, item) =>
 				sum + roundCurrency(item.return_qty * (item.rate_with_tax || item.rate)),
 			0
-		)
+			//// Neoffice — less the part of the sale's discount these lines carry (returnDiscount above)
+		) - returnDiscount.value
 	);
 	//// Neoffice — the till's cash rounding, as on the sale (see the note above returnTotal).
 	return posSettingsStore.disableRoundedTotal ? total : roundCurrency(roundTotal(total));
