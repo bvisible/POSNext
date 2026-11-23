@@ -17,6 +17,8 @@ vi.hoisted(() => {
 
 vi.mock("frappe-ui", () => ({ FeatherIcon: { template: "<i />" } }))
 vi.mock("@/stores/restaurant", () => ({ useRestaurantStore: () => restaurantStore }))
+// //// Neoffice — the rail reads the till's settings too: whether the company runs promotions (lot 10 of #2961)
+vi.mock("@/stores/posSettings", () => ({ usePOSSettingsStore: () => ({ settings: {} }) }))
 
 const { default: ManagementSlider } = await import("../ManagementSlider.vue")
 

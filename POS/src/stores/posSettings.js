@@ -106,6 +106,10 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		//// Neoffice — what the user may manage of that restaurant, sent with the settings (NeoResto lot 1, task 3):
 		//// nothing until the server says so.
 		restaurant_can: {},
+		//// Neoffice — whether the company said in the welcome of its spaces that it runs no promotions (neoffice_theme,
+		//// lot 10 of neoffice-maintenance#2961): the management rail and its window leave them out. Off until the
+		//// server says so.
+		promotions_said_no: false,
 		//// Neoffice — whether the site runs NeoResto, sent with the settings (NeoResto lot 1, task 4): off until the
 		//// server says so. enable_restaurant_mode above is already the EFFECTIVE mode (the till's own tick, counted only
 		//// where NeoResto runs and for a till that names its restaurant), so nothing here works it out again.
@@ -460,6 +464,8 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 			restaurant: "",
 			restaurant_name: "",
 			restaurant_can: {},
+			//// Neoffice — and what the company said of its promotions, told again for the next till (lot 10 of #2961)
+			promotions_said_no: false,
 			//// Neoffice — and whether the site runs NeoResto (NeoResto lot 1, task 4), told again to the next user.
 			neoresto_active: false,
 			default_restaurant_area: "",

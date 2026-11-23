@@ -60,7 +60,10 @@
 					<!-- Tabs -->
 					<div class="border-b bg-white px-6">
 						<div class="flex gap-1">
+							<!-- //// Neoffice — no promotions tab where the company said in the welcome of its spaces that it runs -->
+							<!-- //// none (lot 10 of neoffice-maintenance#2961): the window opens on its coupons. -->
 							<button
+								v-if="!promotionsSaidNo"
 								@click="activeTab = 'promotions'"
 								:class="[
 									'px-4 py-3 text-sm font-medium border-b-2 transition-colors',
@@ -94,7 +97,8 @@
 					<!-- Content: Split Layout -->
 					<div class="flex-1 flex overflow-hidden">
 						<!-- PROMOTIONS TAB -->
-						<template v-if="activeTab === 'promotions'">
+						<!-- //// Neoffice — and no promotions where the company said it runs none (lot 10 of #2961) -->
+						<template v-if="activeTab === 'promotions' && !promotionsSaidNo">
 							<!-- LEFT SIDE: Promotion List & Navigation -->
 							<div class="w-80 flex-shrink-0 border-e bg-gray-50 flex flex-col">
 								<!-- Search & Filter -->
@@ -1250,6 +1254,8 @@ import { isPromotionsAppInstalled, promoApi } from "@/utils/promoApi";
 import { usePOSPermissions } from "@/composables/usePermissions";
 import { useToast } from "@/composables/useToast";
 import { useItemSearchStore } from "@/stores/itemSearch";
+//// Neoffice — the till's settings say whether the company runs promotions (lot 10 of neoffice-maintenance#2961)
+import { usePOSSettingsStore } from "@/stores/posSettings";
 import { DEFAULT_CURRENCY, DEFAULT_LOCALE } from "@/utils/currency";
 import { __ } from "@/utils/translation";
 import CouponManagement from "./CouponManagement.vue";
@@ -1292,6 +1298,18 @@ const selectedPromotion = ref(null);
 const showDeleteConfirm = ref(false);
 const promotionToDelete = ref(null);
 const activeTab = ref("promotions"); // Tab state: 'promotions' or 'coupons'
+//// Neoffice — the company said « No » to « Do you run promotions? » in the welcome of its spaces (neoffice_theme, lot
+//// 10 of neoffice-maintenance#2961), as the server tells the till (`promotions_said_no`): the window shows its coupons
+//// alone, and opens on them; « Yes » brings the promotions back.
+const posSettingsStore = usePOSSettingsStore();
+const promotionsSaidNo = computed(() => Boolean(posSettingsStore.settings?.promotions_said_no));
+watch(
+	promotionsSaidNo,
+	(said) => {
+		if (said) activeTab.value = "coupons";
+	},
+	{ immediate: true }
+);
 
 // List view state
 const promotions = ref([]);

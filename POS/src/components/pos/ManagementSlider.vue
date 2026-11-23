@@ -15,6 +15,10 @@
 		class="hidden lg:flex w-16 flex-shrink-0 bg-white border-e border-gray-200 flex-col items-center py-4 flex flex-col gap-2"
 	>
 		<!-- Promotions -->
+		<!-- //// Neoffice — a company that said in the welcome of its spaces that it runs no promotions (neoffice_theme, -->
+		<!-- //// « Do you run promotions? », lot 10 of neoffice-maintenance#2961) loses the « Promotions » entry; the same -->
+		<!-- //// window keeps the coupons and gift cards, so the entry is theirs, under their own name, and « Yes » brings -->
+		<!-- //// the promotions back (`promotions_said_no` of the till's settings). -->
 		<button
 			@click="handleMenuClick('promotions')"
 			:class="[
@@ -23,13 +27,15 @@
 					? 'bg-green-100 text-green-600'
 					: 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
 			]"
-			:title="__('Promotions')"
+			:title="promotionsSaidNo ? __('Coupons') : __('Promotions')"
 		>
-			<FeatherIcon name="tag" class="w-5 h-5" />
+			<!-- //// Neoffice — the coupons' icon where the company runs no promotions (lot 10 of #2961) -->
+			<FeatherIcon :name="promotionsSaidNo ? 'gift' : 'tag'" class="w-5 h-5" />
 			<div
 				class="absolute start-full ms-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50"
 			>
-				{{ __("Promotions") }}
+				<!-- //// Neoffice — and their name (lot 10 of #2961) -->
+				{{ promotionsSaidNo ? __("Coupons") : __("Promotions") }}
 			</div>
 		</button>
 
@@ -292,6 +298,8 @@ import { FeatherIcon } from "frappe-ui";
 //// Product Options, Workflows"). Upstream only needs ref here.
 import { ref, computed } from "vue";
 import { useRestaurantStore } from "@/stores/restaurant";
+//// Neoffice — the till's settings say whether the company runs promotions (lot 10 of neoffice-maintenance#2961)
+import { usePOSSettingsStore } from "@/stores/posSettings";
 
 //// Neoffice — restaurant store, which drives the visibility of the entries added above
 //// (60d432a2, 2026-03-23). Upstream POSNext has no restaurant mode.
@@ -319,6 +327,11 @@ const isTipsEnabled = computed(() => restaurantStore.tipsEnabled);
 //// Neoffice — what the user may manage of the restaurant, as the server told the till (NeoResto lot 1, task 3): an
 //// entry he may not use is not shown, and the server refuses its writes whatever the till shows.
 const restaurantCan = computed(() => restaurantStore.can || {});
+//// Neoffice — the company said « No » to « Do you run promotions? » in the welcome of its spaces (neoffice_theme,
+//// lot 10 of neoffice-maintenance#2961, product owner 23.11: « Oui, aussi à la caisse »), as the server tells the
+//// till: nothing said, the key of the welcome off, or no answer yet, and the entry is upstream's.
+const posSettingsStore = usePOSSettingsStore();
+const promotionsSaidNo = computed(() => Boolean(posSettingsStore.settings?.promotions_said_no));
 //// Neoffice — who opens the till's settings: its manager, and on a restaurant till whoever may write ITS restaurant
 //// (the server shows him the restaurant's tabs only, NeoResto lot 1, task 13). Both are the server's rights for
 //// this till (manage_till_settings, manage_restaurant_settings): a right on some restaurant is not this one's.

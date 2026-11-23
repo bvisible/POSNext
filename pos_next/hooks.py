@@ -682,6 +682,9 @@ pos_next_appointment_time_state = []
 # //// its own so that no other hook failing can leave the stored tick in its place, and the last of the app's, so that no
 # //// hook of the app rewrites the effective mode after it. Added to upstream's empty list, which stays as upstream ships it.
 pos_next_bootstrap_settings += [
+	# //// Neoffice — whether the company said in the welcome of its spaces (neoffice_theme) that it runs no promotions:
+	# //// the till's « Promotions » entry follows it (lot 10 of neoffice-maintenance#2961, pos_next.till_welcome)
+	"pos_next.till_welcome.extend_bootstrap_settings",
 	"pos_next.restaurant.scope.extend_bootstrap_settings",
 	"pos_next.restaurant.bootstrap.extend_bootstrap_settings",
 	"pos_next.restaurant.mode.extend_bootstrap_settings",
