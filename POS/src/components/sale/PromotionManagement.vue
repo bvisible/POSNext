@@ -35,9 +35,11 @@
 									id="promotion-management-title"
 									class="text-lg mb-1 font-semibold text-gray-900"
 								>
-									{{ __("Promotion & Coupon Management") }}
+									<!-- //// Neoffice — the window of the coupons alone where the company runs no promotions (lot 10 of #2961) -->
+									{{ promotionsSaidNo ? __("Coupons") : __("Promotion & Coupon Management") }}
 								</h2>
-								<p class="text-sm text-gray-600">
+								<!-- //// Neoffice — its subtitle speaks of promotional schemes: left out with them (lot 10 of #2961) -->
+								<p v-if="!promotionsSaidNo" class="text-sm text-gray-600">
 									{{ __("Manage promotional schemes and coupons") }}
 								</p>
 							</div>

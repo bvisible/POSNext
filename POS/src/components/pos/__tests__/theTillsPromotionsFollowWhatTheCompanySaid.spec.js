@@ -108,12 +108,17 @@ describe("the window of that entry follows it too", () => {
 	it("opens on the promotions, with both tabs, while nothing was said", async () => {
 		await open({});
 		expect(wrapper.text()).toContain("Promotional Schemes");
+		expect(wrapper.text()).toContain("Promotion & Coupon Management");
 		expect(wrapper.find("[data-coupons]").exists()).toBe(false);
 	});
 
 	it("after a « No », has no promotions tab and opens on the coupons", async () => {
 		await open({ promotions_said_no: true });
 		expect(wrapper.text()).not.toContain("Promotional Schemes");
+		// nor a title or a subtitle that speaks of them
+		expect(wrapper.text()).not.toContain("Promotion & Coupon Management");
+		expect(wrapper.text()).not.toContain("Manage promotional schemes and coupons");
+		expect(wrapper.find("#promotion-management-title").text()).toBe("Coupons");
 		expect(wrapper.find("[data-coupons]").exists()).toBe(true);
 	});
 });
