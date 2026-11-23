@@ -279,10 +279,18 @@ export function useInvoice() {
 	// otherwise a transaction-rule discount wins when present, else coupon/manual.
 	// When no rule fired and no bypass, this equals additionalDiscount → identical
 	// to the previous behaviour (no regression for coupon/manual/gift-card).
+	//// Neoffice — and it never takes more than the cart owes, whoever wrote it (the cashier, a card, a rule): a rule's FIXED amount stayed
+	//// above what was left when lines were taken off, a card of 73.40 on a cart of 126.60 with its 76.60 line removed gave a total of
+	//// -23.40 and a payment window that said « paid online » while its button did nothing (maintenance#3201). Not written back: the
+	//// line comes back, the amount with it. A cart with no line is left alone (a restored draft sets the cart in two steps).
 	const effectiveHeaderDiscount = computed(() => {
-		if (bypassRuleDiscount.value) return additionalDiscount.value || 0;
-		const rule = ruleHeaderDiscount.value || 0;
-		return rule > 0 ? rule : additionalDiscount.value || 0;
+		const wanted = (() => {
+			if (bypassRuleDiscount.value) return additionalDiscount.value || 0;
+			const rule = ruleHeaderDiscount.value || 0;
+			return rule > 0 ? rule : additionalDiscount.value || 0;
+		})();
+		if (!invoiceItems.value.length) return wanted;
+		return Math.min(wanted, Math.max(amountDueBeforeAnyHeaderDiscount.value, 0));
 	});
 	//// Neoffice — totalDiscount now nets the EFFECTIVE header discount (transaction-rule amount,
 	//// else coupon/manual) instead of additionalDiscount alone (44ea4e9a, 2026-07-09), and the
@@ -887,6 +895,19 @@ export function useInvoice() {
 			items: invoiceItems.value.map(invoiceRowOf),
 			taxes: invoiceTaxRows.value,
 			discountAmount: bypassRuleDiscount.value ? 0 : ruleHeaderDiscount.value || 0,
+			applyDiscountOn: applyDiscountOn.value,
+			roundRowWiseTax: getPrecision().round_row_wise_tax,
+		});
+		return roundCurrency(applyDiscountOn.value === "Net Total" ? totals.net_total : totals.grand_total);
+	});
+
+	//// Neoffice — what the cart owes before any header discount (a rule's, a card's, the cashier's), on the base the discount is
+	//// applied on: the most a header discount can take (effectiveHeaderDiscount).
+	const amountDueBeforeAnyHeaderDiscount = computed(() => {
+		const totals = calculateTaxesAndTotals({
+			items: invoiceItems.value.map(invoiceRowOf),
+			taxes: invoiceTaxRows.value,
+			discountAmount: 0,
 			applyDiscountOn: applyDiscountOn.value,
 			roundRowWiseTax: getPrecision().round_row_wise_tax,
 		});
