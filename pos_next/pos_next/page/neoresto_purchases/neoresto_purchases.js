@@ -62,6 +62,9 @@
 		this.page = page;
 		this.state = { search: "", supplier: "", family: "", scope: "" };
 		this.data = { rows: [], families: [], suppliers: [], total: 0 };
+		// Writing an article or a packaging is the buyer's (the ERP's rights on Item): whoever runs the restaurant reads the
+		// purchases, and a button that ends on a refusal is not offered (neoffice-maintenance#3283).
+		this.may_add = frappe.model.can_create("Item");
 		this.make();
 	}
 
@@ -70,9 +73,11 @@
 		if (!document.getElementById(STYLE_ID)) {
 			$('<style id="' + STYLE_ID + '">' + CSS + "</style>").appendTo(document.head);
 		}
-		this.page.set_primary_action(__("Add an article to buy"), function () {
-			self.add_item();
-		});
+		if (this.may_add) {
+			this.page.set_primary_action(__("Add an article to buy"), function () {
+				self.add_item();
+			});
+		}
 		this.$root = $('<div class="npp"></div>').appendTo(this.page.main);
 		this.$root.on(
 			"input",
@@ -193,9 +198,12 @@
 			? this.data.rows.map(this.row_html, this).join("")
 			: '<div class="npp-empty">' +
 			  esc(__("No article yet. Add the first one you buy.")) +
-			  '<div style="margin-top:12px"><button type="button" class="npp-btn" data-create>' +
-			  esc(__("Add an article to buy")) +
-			  "</button></div></div>";
+			  (this.may_add
+					? '<div style="margin-top:12px"><button type="button" class="npp-btn" data-create>' +
+					  esc(__("Add an article to buy")) +
+					  "</button></div>"
+					: "") +
+			  "</div>";
 		this.$root.html(
 			'<div class="npp-bar"><input class="npp-search" type="search" value="' +
 				esc(s.search) +
@@ -282,11 +290,14 @@
 			"<div>" +
 			packs +
 			"</div>" +
-			'<div><button type="button" class="npp-btn" data-add-pack="' +
-			esc(row.item) +
-			'">' +
-			esc(__("Add a packaging")) +
-			"</button></div></div>"
+			(this.may_add
+				? '<div><button type="button" class="npp-btn" data-add-pack="' +
+				  esc(row.item) +
+				  '">' +
+				  esc(__("Add a packaging")) +
+				  "</button></div>"
+				: "") +
+			"</div>"
 		);
 	};
 
