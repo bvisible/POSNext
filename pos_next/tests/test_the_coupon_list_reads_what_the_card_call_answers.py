@@ -27,7 +27,7 @@ class TestTheCouponListReadsWhatTheCardCallAnswers(FrappeTestCase):
 
 	def test_the_card_made_by_hand_answers_its_value_written_as_money(self):
 		company = frappe.db.get_single_value("Global Defaults", "default_company")
-		with as_role("till_manager"):
+		with as_role("head_accountant"):
 			made = create_gift_card_manual(amount=12.5, company=company)
 		self.addCleanup(self.remove, made)
 		self.assertTrue(made.get("success"), made)
