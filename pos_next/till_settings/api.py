@@ -559,7 +559,11 @@ def _people_of_the_till(till):
 	from pos_next.api.cash_entry import TILL_MANAGER_ROLES
 	from pos_next.restaurant.permissions import CASHIER_ROLE
 
-	till_roles = {CASHIER_ROLE, "Restaurant Manager", *TILL_MANAGER_ROLES}
+	# //// Neoffice — `Restaurant Manager` is not a role of the till (neoffice-maintenance#3283). It runs the dining room: it holds no
+	# //// rule on a sale, an item or a customer, and the till's gate (cash_entry.require_till_access) knows the cashier, who reads the
+	# //// sales, and the till managers (TILL_MANAGER_ROLES). Counted here, the page said « can open » of a person whose till then
+	# //// showed no item, no customer, and refused the sale, and it hid the button that gives the cashier role.
+	till_roles = {CASHIER_ROLE, *TILL_MANAGER_ROLES}
 	people = []
 	for row in till.profile.get("applicable_for_users") or []:
 		user = frappe.db.get_value(
