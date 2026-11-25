@@ -328,7 +328,10 @@
 		this.page.add_menu_item(__("Discard the changes"), function () {
 			self.load(self.profile);
 		});
-		this.page.add_menu_item(__("Delete this till"), function () {
+		//// Neoffice — « Delete this till » is shown to whoever may delete the till's POS Profile, once the server said so
+		//// (`show_actions`, neoffice-maintenance#3283): a till manager or a restaurant's manager, who may not, was offered it and
+		//// refused, the latter sent to « Getting started », a tab they do not have
+		this.$delete_till = this.page.add_menu_item(__("Delete this till"), function () {
 			self.delete_till();
 		});
 		//// Neoffice — the ERP's own forms are offered to whoever may read them (neoffice-maintenance#3283): a till manager or a
@@ -503,6 +506,11 @@
 				})
 			);
 		if (this.page.btn_secondary) this.page.btn_secondary.toggle(Boolean(this.may_create));
+		//// Neoffice — « Delete this till » follows the server's word on deleting the till (see where the menu is made)
+		if (this.$delete_till)
+			this.$delete_till
+				.closest("li")
+				.toggle(Boolean(this.screen && this.screen.can && this.screen.can.delete));
 	};
 
 	// Give a listed person the role of a cashier (asked first: it changes who may open the till); the people and the chips are read again

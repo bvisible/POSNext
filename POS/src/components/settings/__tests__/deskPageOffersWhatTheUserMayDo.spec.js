@@ -5,7 +5,8 @@
  * //// Frappe's own list of POS Profiles, which refuses both (neither holds a rule on POS Profile, and neither needs one). It now asks its
  * //// own server method (pos_next.till_settings.api.get_desk_tills, whose rights the Python suite plays with one-role accounts), and its
  * //// header shows « New till » only when the server says the user may make one, « Save » only while a setting is his to change, and the
- * //// ERP's forms only to whoever may read them.
+ * //// ERP's forms only to whoever may read them. Seen again on 25.11: both managers were offered « Delete this till » and refused;
+ * //// it is shown once the server said the user may delete the till.
  * @vitest-environment node
  */
 import { readFileSync } from "node:fs";
@@ -30,6 +31,7 @@ function element() {
 		return el;
 	};
 	el.find = () => element();
+	el.closest = () => el;
 	el.toggle = (shown) => {
 		el.shown = Boolean(shown);
 		return el;
@@ -50,13 +52,18 @@ const SETTINGS = {
 function mount({ tills = [], create = false, readable = [], settings = SETTINGS } = {}) {
 	let route = ["till-settings"];
 	const menu = [];
+	const items = {};
 	const page = {
 		main: element(),
 		btn_primary: element(),
 		btn_secondary: element(),
 		set_primary_action() {},
 		set_secondary_action() {},
-		add_menu_item: (label) => menu.push(label),
+		add_menu_item: (label) => {
+			menu.push(label);
+			items[label] = element();
+			return items[label];
+		},
 	};
 	const answers = {
 		get_desk_tills: () => ({ tills, can: { create } }),
@@ -91,7 +98,7 @@ function mount({ tills = [], create = false, readable = [], settings = SETTINGS 
 	const shown = wrapper.till_settings;
 	// The settings themselves are drawn with the desk's controls: not here
 	shown.render = vi.fn();
-	return { frappe, page, menu, shown };
+	return { frappe, page, menu, items, shown };
 }
 
 /** The page shown, as the desk shows it when its address names no till. */
@@ -149,6 +156,18 @@ describe("the office's page of a till, opened with no till named", () => {
 
 		expect(shown.$root.markup).toContain("data-new-till");
 		expect(page.btn_secondary.shown).toBe(true);
+	});
+
+	it("offers Delete this till only once the server said the user may delete it", async () => {
+		const before = mount({ tills: [{ name: "Bar" }] });
+		expect(before.items["Delete this till"].shown).toBe(false);
+
+		const refused = await open({ tills: [{ name: "Bar" }] });
+		expect(refused.items["Delete this till"].shown).toBe(false);
+
+		const settings = { ...SETTINGS, can: { ...SETTINGS.can, till: true, delete: true } };
+		const allowed = await open({ tills: [{ name: "Bar" }], settings });
+		expect(allowed.items["Delete this till"].shown).toBe(true);
 	});
 
 	it("offers the ERP's forms of a till only to whoever may read them", () => {
