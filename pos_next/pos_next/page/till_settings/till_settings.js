@@ -331,12 +331,17 @@
 		this.page.add_menu_item(__("Delete this till"), function () {
 			self.delete_till();
 		});
-		this.page.add_menu_item(__("Open the POS Settings form"), function () {
-			self.open_form("POS Settings", { pos_profile: self.profile });
-		});
-		this.page.add_menu_item(__("Open the POS Profile form"), function () {
-			if (self.profile) frappe.set_route("Form", "POS Profile", self.profile);
-		});
+		//// Neoffice — the ERP's own forms are offered to whoever may read them (neoffice-maintenance#3283): a till manager or a
+		//// restaurant's manager who holds no rule on POS Profile was offered a form that opens on a refusal
+		if (frappe.model.can_read("POS Settings"))
+			this.page.add_menu_item(__("Open the POS Settings form"), function () {
+				self.open_form("POS Settings", { pos_profile: self.profile });
+			});
+		if (frappe.model.can_read("POS Profile"))
+			this.page.add_menu_item(__("Open the POS Profile form"), function () {
+				if (self.profile) frappe.set_route("Form", "POS Profile", self.profile);
+			});
+		this.show_actions();
 		this.$root = $('<div class="tsp"></div>').appendTo(this.page.main);
 		this.$root.on("click", "[data-new-till]", function () {
 			self.new_till();
@@ -471,13 +476,33 @@
 	// No till at all: the first one is one click away
 	TillSettingsPage.prototype.render_empty = function () {
 		this.controls = {};
+		//// Neoffice — the button is offered to whoever may make a till only (neoffice-maintenance#3283)
+		this.show_actions();
 		this.$root.html(
 			'<div class="tsp-empty"><p>' +
 				esc(__("There is no till yet.")) +
-				'</p><button type="button" class="btn btn-primary" data-new-till>' +
-				esc(__("New till")) +
-				"</button></div>"
+				"</p>" +
+				(this.may_create
+					? '<button type="button" class="btn btn-primary" data-new-till>' +
+					  esc(__("New till")) +
+					  "</button>"
+					: "") +
+				"</div>"
 		);
+	};
+
+	//// Neoffice — the header offers what the user may do here and nothing more (neoffice-maintenance#3283): « Save » while the open till
+	//// has a setting that is theirs to change, « New till » once the server said the ERP lets them make one (both hidden until then: a
+	//// till manager or a restaurant's manager who may make none saw them on a page that had nothing else)
+	TillSettingsPage.prototype.show_actions = function () {
+		var settings = (this.screen && this.screen.settings) || [];
+		if (this.page.btn_primary)
+			this.page.btn_primary.toggle(
+				settings.some(function (setting) {
+					return setting.editable;
+				})
+			);
+		if (this.page.btn_secondary) this.page.btn_secondary.toggle(Boolean(this.may_create));
 	};
 
 	// Give a listed person the role of a cashier (asked first: it changes who may open the till); the people and the chips are read again
@@ -542,18 +567,17 @@
 
 	// No till asked for, none remembered (or the remembered one is gone): the first in use, else the first there is; with none at all, the
 	// way to make one
+	//// Neoffice — the tills are the ones the user may open, asked of the page's own server method (neoffice-maintenance#3283): Frappe's list
+	//// of POS Profiles refused a till manager and a restaurant's manager, who hold no rule on POS Profile, and the page stayed empty
 	TillSettingsPage.prototype.open_the_first = function () {
 		var self = this;
-		return frappe.db
-			.get_list("POS Profile", {
-				fields: ["name"],
-				order_by: "disabled asc, name asc",
-				limit: 1,
-			})
-			.then(function (rows) {
-				if (rows && rows.length) return self.go(rows[0].name);
-				self.render_empty();
-			});
+		return frappe.call({ method: API + "get_desk_tills" }).then(function (r) {
+			var answer = (r && r.message) || {};
+			var tills = answer.tills || [];
+			self.may_create = Boolean(answer.can && answer.can.create);
+			if (tills.length) return self.go(tills[0].name);
+			self.render_empty();
+		});
 	};
 
 	TillSettingsPage.prototype.choose = function (profile, quiet) {
@@ -607,6 +631,8 @@
 			})
 			.catch(function () {
 				self.screen = null;
+				//// Neoffice — nothing to save on a page that shows no till (neoffice-maintenance#3283)
+				self.show_actions();
 				// A till that is gone (deleted from elsewhere) or no longer ours to open: forget it once and open another
 				if (!self.forgot_a_till) {
 					self.forgot_a_till = true;
@@ -625,8 +651,9 @@
 	TillSettingsPage.prototype.take = function (answer) {
 		this.screen = answer;
 		// A person who may not make a till is not offered the button
-		if (this.page.btn_secondary)
-			this.page.btn_secondary.toggle(Boolean(answer.can && answer.can.create));
+		//// Neoffice — nor « Save » when nothing of the till is theirs to change (neoffice-maintenance#3283)
+		this.may_create = Boolean(answer.can && answer.can.create);
+		this.show_actions();
 		this.by_key = {};
 		(answer.settings || []).forEach(
 			function (setting) {

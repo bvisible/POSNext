@@ -109,6 +109,24 @@ def save_desk_settings(pos_profile: str, values):
 	return _save(pos_profile, values, desk=True)
 
 
+# //// Neoffice — the tills the office's page opens on when no till is named (neoffice-maintenance#3283). The page asked Frappe's own
+# //// list of POS Profiles, which answers a read rule on POS Profile: a till manager and a restaurant's manager hold none (they need
+# //// none: `_open` asks their role and their User Permissions), so the page opened on a refusal, with nothing in it but « New till »
+# //// and « Save ». It asks here instead, as `_open` asks, and no read rule on POS Profile is given to anybody.
+@frappe.whitelist()
+def get_desk_tills():
+	"""The tills the session user may open on the office's page, the ones in use first, then by name (`_tills_to_switch_to`), and
+	whether he may make one (`can.create`, as `create_till` asks). Refused (`frappe.PermissionError`) to whoever manages neither a
+	till nor a restaurant, as the page's other doors are."""
+	from pos_next.api.cash_entry import is_till_manager
+
+	_require_a_manager()
+	return {
+		"tills": _tills_to_switch_to(),
+		"can": {"create": bool(is_till_manager() and frappe.has_permission(POS_PROFILE, "create"))},
+	}
+
+
 # What a new till copied from another does not take: the identity (its own), the key of the shop's QR code (set by the system for
 # each till), and the site's negative stock (one setting of the whole site: copying it would save Stock Settings)
 COPY_NEVER = ("pos_profile", "shop_scan_key", "allow_negative_stock")
@@ -526,8 +544,11 @@ def _answer(till, can, desk=False):
 	if desk:
 		answer["company"] = till.profile.company
 		answer["left_out"] = _left_out_for_the_type(till)
-		answer["people"] = _people_of_the_till(till)
-		answer["readiness"] = _readiness(till, answer["people"])
+		# //// Neoffice — the people of a till and what it needs to open are its managers' (neoffice-maintenance#3283): they belong to
+		# //// Getting started, the payments and the stock, tabs a restaurant's manager does not open. Served to him, the page listed the
+		# //// till's users and drew chips that opened an empty tab.
+		answer["people"] = _people_of_the_till(till) if can["till"] else []
+		answer["readiness"] = _readiness(till, answer["people"]) if can["till"] else []
 		answer["tills"] = _tills_to_switch_to()
 		# What the page offers besides the settings: a new till, deleting this one (the ERP's own rights on a POS Profile; the page
 		# hides the button of what the user may not do, the server refuses it anyway)
