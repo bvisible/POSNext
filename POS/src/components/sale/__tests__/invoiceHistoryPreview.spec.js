@@ -27,6 +27,9 @@ vi.mock("frappe-ui", () => ({
 	},
 }));
 vi.mock("../ReturnInvoiceDialog.vue", () => ({ default: { template: "<div />" } }));
+//// Neoffice — the window that puts a meal on a hotel room, and the call it makes, are not what these specs read: the row's preview.
+vi.mock("../RoomChargeDialog.vue", () => ({ default: { template: "<div />" } }));
+vi.mock("@/utils/apiWrapper", () => ({ call: vi.fn(async () => ({})) }));
 vi.mock("@/composables/useToast", () => ({
 	useToast: () => ({ showSuccess: vi.fn(), showError: vi.fn() }),
 }));
