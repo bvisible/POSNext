@@ -27021,3 +27021,47 @@ msgstr "Pourquoi"
 #: POS/src/components/sale/RoomChargeDialog.vue:52
 msgid "Your PIN"
 msgstr "Votre NIP"
+
+#: pos_next/restaurant/room_settlement.py:72
+msgid "This order is not open any more, or it is not one of the restaurant's tables."
+msgstr "Cette commande n'est plus ouverte, ou ce n'est pas une des tables du restaurant."
+
+#: pos_next/restaurant/room_settlement.py:78
+msgid "Say which table."
+msgstr "Indiquez quelle table."
+
+#: pos_next/restaurant/room_settlement.py:99
+msgid "No table with that name has an open order."
+msgstr "Aucune table portant ce nom n'a de commande ouverte."
+
+#: pos_next/restaurant/room_settlement.py:105
+msgid "This table has several open orders: say which one."
+msgstr "Cette table a plusieurs commandes ouvertes : indiquez laquelle."
+
+#: pos_next/restaurant/room_settlement.py:128
+msgid "No guest in house is in that room."
+msgstr "Aucun client logé à l'hôtel n'occupe cette chambre."
+
+#: pos_next/restaurant/room_settlement.py:133
+msgid "Several stays match: say which one."
+msgstr "Plusieurs séjours correspondent : indiquez lequel."
+
+#: pos_next/restaurant/room_settlement.py:144
+msgid "Say which room."
+msgstr "Indiquez quelle chambre."
+
+#: pos_next/restaurant/room_settlement.py:163
+msgid "This order owes nothing: there is nothing to put on the room."
+msgstr "Cette commande ne doit rien : il n'y a rien à mettre sur la chambre."
+
+#: pos_next/restaurant/room_settlement.py:170
+msgid "This room takes no charge to the bill: the guest pays at the till."
+msgstr "Cette chambre ne prend aucune charge sur la note : le client paie à la caisse."
+
+#: pos_next/restaurant/room_settlement.py:215
+msgid "Say which stay."
+msgstr "Indiquez quel séjour."
+
+#: pos_next/restaurant/room_settlement.py:218
+msgid "This order was changed after it was shown: look at it again before putting it on the room."
+msgstr "Cette commande a été modifiée après son affichage : revoyez-la avant de la mettre sur la chambre."
