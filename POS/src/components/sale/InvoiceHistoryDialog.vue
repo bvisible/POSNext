@@ -70,8 +70,9 @@
 										{{ __("Return") }}
 									</span>
 									<!-- Status badge -->
+									<!-- //// Neoffice — not for a meal on a hotel room: a move leaves the sale « Paid » in the accounts while the guest still owes it, the chip below says it -->
 									<span
-										v-else
+										v-else-if="!onRoom(invoice)"
 										:class="[
 											'text-xs px-2 py-0.5 rounded-full font-medium',
 											getInvoiceStatusColor(invoice),
@@ -85,7 +86,8 @@
 										:data-test="`room-chip-${invoice.name}`"
 										class="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100"
 									>
-										{{ rooms[invoice.name].released ? __("Taken off the room") : __("On room {0}", [rooms[invoice.name].room_number]) }}
+										<!-- //// Neoffice — the chip's text: where the meal is and what the guest still owes (the sale's status is not drawn for it) -->
+										{{ rooms[invoice.name].released ? __("Taken off the room") : __("On room {0}: {1} to collect at the desk", [rooms[invoice.name].room_number, formatCurrency(rooms[invoice.name].owed)]) }}
 									</span>
 								</div>
 								<p class="text-xs text-gray-600 text-start">
@@ -352,7 +354,13 @@ async function loadRooms(names) {
 	}
 }
 
-// A meal still on its room, of a submitted sale, can be corrected; the hotel app refuses what cannot (a closed bill, a day gone by)
+//// Neoffice — a meal still on a room (not taken off): its state is the chip's, not the sale's status
+function onRoom(invoice) {
+	const room = rooms.value[invoice.name]
+	return Boolean(room) && !room.released
+}
+
+//// Neoffice — a meal still on its room, of a submitted sale, can be corrected; the hotel app refuses what cannot (a closed bill, a day gone by)
 function canCorrectRoom(invoice) {
 	const room = rooms.value[invoice.name]
 	return Boolean(room) && !room.released && invoice.docstatus === 1

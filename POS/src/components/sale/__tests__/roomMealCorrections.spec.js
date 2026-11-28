@@ -121,6 +121,11 @@ describe("the history of invoices shows where a meal is", () => {
 		expect(history()).toContain(':data-test="`room-chip-${invoice.name}`"')
 	})
 
+	it("gives a meal on a room the chip's state in place of the sale's status, which a move leaves at « Paid »", () => {
+		expect(history()).toContain('v-else-if="!onRoom(invoice)"')
+		expect(history()).toContain('__("On room {0}: {1} to collect at the desk", [rooms[invoice.name].room_number, formatCurrency(rooms[invoice.name].owed)])')
+	})
+
 	it("offers the two corrections only for a meal still on its room, of a submitted sale", () => {
 		expect(history()).toContain("return Boolean(room) && !room.released && invoice.docstatus === 1")
 		expect(history()).toContain("openRoomCorrection(invoice, 'move')")

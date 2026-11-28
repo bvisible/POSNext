@@ -26981,3 +26981,43 @@ msgstr "La vente entière est portée sur la note du client. Il la règle avec l
 #: POS/src/components/sale/RoomChargeDialog.vue:40
 msgid "This room takes no charge"
 msgstr "Cette chambre n'accepte aucune charge."
+
+#: POS/src/components/sale/InvoiceHistoryDialog.vue:150
+#: POS/src/components/sale/RoomChargeDialog.vue:6
+msgid "Change room"
+msgstr "Changer de chambre"
+
+#: POS/src/components/sale/RoomChargeDialog.vue:12
+msgid "Choose the room this meal goes to, and say why."
+msgstr "Choisissez la chambre à laquelle ce repas est rattaché, et indiquez pourquoi."
+
+#: POS/src/components/sale/RoomChargeDialog.vue:100
+#, python-brace-format
+msgid "Move to room {0}"
+msgstr "Déplacer vers la chambre {0}"
+
+#: POS/src/components/sale/InvoiceHistoryDialog.vue:80
+#, python-brace-format
+msgid "On room {0}: {1} to collect at the desk"
+msgstr "Sur la chambre {0} : {1} à encaisser à la réception"
+
+#: POS/src/components/sale/InvoiceHistoryDialog.vue:151
+#: POS/src/components/sale/RoomChargeDialog.vue:6
+msgid "Take off the room"
+msgstr "Retirer de la chambre"
+
+#: POS/src/components/sale/InvoiceHistoryDialog.vue:80
+msgid "Taken off the room"
+msgstr "Retirée de la chambre"
+
+#: POS/src/components/sale/RoomChargeDialog.vue:13
+msgid "The meal comes off the bill of the guest. The sale stays to be paid at the till."
+msgstr "Le repas sort de la note du client. La vente reste à encaisser à la caisse."
+
+#: POS/src/components/sale/RoomChargeDialog.vue:48
+msgid "Why"
+msgstr "Pourquoi"
+
+#: POS/src/components/sale/RoomChargeDialog.vue:52
+msgid "Your PIN"
+msgstr "Votre NIP"
