@@ -27065,3 +27065,7 @@ msgstr "Indiquez quel séjour."
 #: pos_next/restaurant/room_settlement.py:218
 msgid "This order was changed after it was shown: look at it again before putting it on the room."
 msgstr "Cette commande a été modifiée après son affichage : revoyez-la avant de la mettre sur la chambre."
+
+#: POS/src/components/sale/RoomChargeDialog.vue
+msgid "Type the room number, or two letters of the guest's name."
+msgstr "Saisissez le numéro de la chambre, ou deux lettres du nom du client."
