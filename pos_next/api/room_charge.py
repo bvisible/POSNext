@@ -2,25 +2,20 @@
 """The two questions the payment window asks about a room: is it offered, and which stay is it."""
 
 import frappe
-from frappe import _
 
 from pos_next import room_charge
-
-
-def _require_signed_in():
-	if frappe.session.user == "Guest":
-		frappe.throw(_("Sign in to use the till."), frappe.PermissionError)
 
 
 @frappe.whitelist()
 def status():
 	"""``{"offered", "available", "reason"}``: the button is shown when offered, usable when available, locked with its reason otherwise."""
-	_require_signed_in()
+	# whoever may make a sale at a till may be told whether it can go on a room; a visitor and a portal customer may not
+	frappe.has_permission("Sales Invoice", "create", throw=True)
 	return room_charge.status()
 
 
 @frappe.whitelist()
 def search_stays(text: str | None = None):
 	"""The stays in house that match a room number or a name. The provider decides who may ask."""
-	_require_signed_in()
+	frappe.has_permission("Sales Invoice", "create", throw=True)
 	return room_charge.require_provider().search_stays(text)
