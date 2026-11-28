@@ -26934,3 +26934,50 @@ msgstr "Facture qui a créé cette carte cadeau (Sales Invoice ou POS Invoice)"
 #: POS/src/components/sale/ReturnInvoiceDialog.vue:1043
 msgid "Discount of the sale:"
 msgstr "Remise sur la vente :"
+
+#: pos_next/api/invoices.py:2848
+msgid "A sale made offline cannot be put on a room."
+msgstr "Une vente faite hors ligne ne peut pas être mise sur une chambre."
+
+#: POS/src/components/sale/RoomChargeDialog.vue:51
+msgid "Choose a room"
+msgstr "Choisissez une chambre"
+
+#: POS/src/components/sale/RoomChargeDialog.vue:40
+#, python-brace-format
+msgid "Leaves {0}"
+msgstr "Départ le {0}"
+
+#: POS/src/components/sale/RoomChargeDialog.vue:44
+msgid "Nobody in house for this room."
+msgstr "Personne n'est logé à l'hôtel dans cette chambre."
+
+#: POS/src/components/sale/PaymentDialog.vue:2500
+#: POS/src/components/sale/RoomChargeDialog.vue:4
+msgid "On the room"
+msgstr "Sur la chambre"
+
+#: POS/src/components/sale/RoomChargeDialog.vue:51
+#, python-brace-format
+msgid "Put on room {0}"
+msgstr "Mettre sur la chambre {0}"
+
+#: pos_next/api/invoices.py:2850
+msgid "Put the whole sale on the room, or none of it."
+msgstr "Mettez toute la vente sur la chambre, ou rien."
+
+#: pos_next/room_charge.py:53
+msgid "Putting a meal on a room is not available on this site."
+msgstr "Mettre un repas sur une chambre n'est pas disponible sur ce site."
+
+#: POS/src/components/sale/RoomChargeDialog.vue:12
+msgid "Room number, or the guest's name"
+msgstr "Numéro de chambre ou nom du client"
+
+#: POS/src/components/sale/RoomChargeDialog.vue:9
+msgid "The whole sale goes on the bill of the guest. They pay it with the rest of their bill at the desk."
+msgstr "La vente entière est portée sur la note du client. Il la règle avec le reste de sa note à la réception."
+
+#: POS/src/components/sale/RoomChargeDialog.vue:40
+msgid "This room takes no charge"
+msgstr "Cette chambre n'accepte aucune charge."

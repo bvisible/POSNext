@@ -17,7 +17,7 @@
 						autocomplete="off"
 						data-test="room-search"
 						class="min-h-[48px] w-full rounded-xl border border-gray-300 bg-white px-4 text-[17px] text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
-						:placeholder="__('101')"
+						placeholder="101"
 						@input="search"
 					/>
 				</label>
