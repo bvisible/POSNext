@@ -17,7 +17,7 @@ vi.mock("frappe-ui", () => ({
 }))
 vi.mock("@/stores/posShift", () => ({ usePOSShiftStore: () => ({ profileCurrency: "CHF" }) }))
 vi.mock("@/utils/apiWrapper", () => ({ call: server.call }))
-vi.mock("@/utils/currency", () => ({ formatCurrency: (amount) => `CHF ${Number(amount).toFixed(2)}` }))
+vi.mock("@/utils/currency", () => ({ formatCurrency: (amount) => `CHF ${Number(amount).toFixed(2)}`, formatDate: (value) => `DATE(${value})` }))
 
 const { default: RoomChargeDialog } = await import("../RoomChargeDialog.vue")
 
@@ -93,9 +93,36 @@ describe("correcting a meal on a room", () => {
 		await wrapper.find('[data-test="room-reason"]').setValue("too late")
 		await wrapper.find('[data-test="room-confirm"]').trigger("click")
 		await flushPromises()
-		expect(wrapper.find('[data-test="room-problem"]').exists()).toBe(true)
+		// the sentence the hotel gave, as a sentence: the parsed error is an object and was drawn as JSON (osiris, 28.11)
+		expect(wrapper.find('[data-test="room-problem"]').text()).toBe("The bill of this stay is already closed.")
 		expect(wrapper.emitted("done")).toBeUndefined()
 		expect(wrapper.emitted("update:modelValue")).toBeUndefined()
+	})
+
+	it("names the sale it corrects in its title, so that the cashier knows which meal it is about", () => {
+		expect(open({ mode: "move" }).find("h2").text()).toBe("Change room · FA-1")
+		expect(open({ mode: "release" }).find("h2").text()).toBe("Take off the room · FA-1")
+		expect(open({ mode: "charge", total: 38 }).find("h2").text()).toBe("On the room")
+	})
+
+	it("says the day of departure as a date the reader knows, not as the year-month-day of the database", async () => {
+		server.call.mockResolvedValueOnce([stay])
+		const wrapper = open({ mode: "move" })
+		await typeRoom(wrapper, "102")
+		const row = wrapper.find('[data-test="room-102"]').text()
+		expect(row).toContain("Leaves DATE(2026-11-30)")
+	})
+
+	it("tells the cashier what to type when one letter is not enough, instead of showing nothing", async () => {
+		const wrapper = open({ mode: "charge", total: 38 })
+		await wrapper.find('[data-test="room-search"]').setValue("a")
+		await wrapper.find('[data-test="room-search"]').trigger("input")
+		await flushPromises()
+		expect(wrapper.find('[data-test="room-short"]').exists()).toBe(true)
+		expect(server.call).not.toHaveBeenCalled()
+		await typeRoom(wrapper, "al")
+		expect(wrapper.find('[data-test="room-short"]').exists()).toBe(false)
+		expect(server.call).toHaveBeenCalledTimes(1)
 	})
 
 	it("the plain « On the room » mode still hands the stay to the payment window and calls nothing", async () => {

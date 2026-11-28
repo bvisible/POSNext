@@ -24,6 +24,8 @@
 					/>
 				</label>
 
+				<p v-if="short" class="text-sm text-gray-500 dark:text-gray-400" data-test="room-short">{{ __("Type the room number, or two letters of the guest's name.") }}</p>
+
 				<p v-if="problem" class="rounded-xl bg-red-50 px-4 py-3 text-sm leading-snug text-red-800 dark:bg-red-400/15 dark:text-red-100" data-test="room-problem">{{ problem }}</p>
 
 				<ul v-if="mode !== 'release' && stays.length" class="space-y-2" data-test="room-results">
@@ -38,7 +40,7 @@
 						>
 							<span class="font-semibold text-gray-900 dark:text-gray-100">{{ stay.room_number }} · {{ stay.guest_name }}</span>
 							<span class="text-sm text-gray-600 dark:text-gray-300">
-								{{ stay.takes_charges ? __("Leaves {0}", [stay.check_out_date || "–"]) : __("This room takes no charge") }}
+								{{ stay.takes_charges ? __("Leaves {0}", [stay.check_out_date ? formatDate(stay.check_out_date) : "–"]) : __("This room takes no charge") }}
 							</span>
 						</button>
 					</li>
@@ -76,7 +78,7 @@ import { Dialog } from "frappe-ui"
 import { computed, ref, watch } from "vue"
 import { call } from "@/utils/apiWrapper"
 import { parseError } from "@/utils/errorHandler"
-import { formatCurrency } from "@/utils/currency"
+import { formatCurrency, formatDate } from "@/utils/currency"
 import { usePOSShiftStore } from "@/stores/posShift"
 
 const props = defineProps({
@@ -96,7 +98,11 @@ const money = (amount) => formatCurrency(amount, shiftStore.profileCurrency || u
 const reason = ref("")
 const pin = ref("")
 const working = ref(false)
-const title = computed(() => ({ charge: __("On the room"), move: __("Change room"), release: __("Take off the room") })[props.mode])
+const title = computed(() => {
+	const name = { charge: __("On the room"), move: __("Change room"), release: __("Take off the room") }[props.mode]
+	// a correction is made on one sale of the history: say which
+	return props.mode !== "charge" && props.invoice ? `${name} · ${props.invoice}` : name
+})
 const canConfirm = computed(() => {
 	if (props.mode === "release") return reason.value.trim().length > 0
 	if (props.mode === "move") return Boolean(chosen.value) && reason.value.trim().length > 0
@@ -112,6 +118,8 @@ const stays = ref([])
 const chosen = ref(null)
 const problem = ref("")
 const asked = ref(false)
+// one letter typed: the hotel app wants two (a room number may be one digit)
+const short = ref(false)
 const searching = ref(false)
 let timer = null
 // A slow answer must not overwrite a newer one
@@ -128,6 +136,7 @@ watch(
 		chosen.value = null
 		problem.value = ""
 		asked.value = false
+		short.value = false
 	},
 	{ immediate: true },
 )
@@ -141,8 +150,10 @@ function search() {
 		stays.value = []
 		problem.value = ""
 		asked.value = false
+		short.value = Boolean(asking)
 		return
 	}
+	short.value = false
 	timer = setTimeout(() => lookup(asking), 250)
 }
 
@@ -158,7 +169,7 @@ async function lookup(asking) {
 	} catch (error) {
 		if (mine !== sequence) return
 		stays.value = []
-		problem.value = parseError(error)
+		problem.value = parseError(error).message
 		asked.value = true
 	} finally {
 		if (mine === sequence) searching.value = false
@@ -182,7 +193,7 @@ async function confirm() {
 		emit("done", { invoice: props.invoice, mode: props.mode })
 		show.value = false
 	} catch (error) {
-		problem.value = parseError(error)
+		problem.value = parseError(error).message
 	} finally {
 		working.value = false
 	}

@@ -17,7 +17,7 @@ vi.mock("frappe-ui", () => ({
 }))
 vi.mock("@/stores/posShift", () => ({ usePOSShiftStore: () => ({ profileCurrency: "CHF" }) }))
 vi.mock("@/utils/apiWrapper", () => ({ call: server.call }))
-vi.mock("@/utils/currency", () => ({ formatCurrency: (amount) => `CHF ${Number(amount).toFixed(2)}` }))
+vi.mock("@/utils/currency", () => ({ formatCurrency: (amount) => `CHF ${Number(amount).toFixed(2)}`, formatDate: (value) => `DATE(${value})` }))
 
 const { default: RoomChargeDialog } = await import("../RoomChargeDialog.vue")
 
