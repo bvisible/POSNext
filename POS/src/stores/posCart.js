@@ -875,7 +875,9 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			appointment.value?.booking || null,
 			appointment.value?.starts_at?.slice(0, 10) || null,
 			//// Neoffice — the cashier keeps the online surplus as the customer's credit because she asked (voie 4, 19.11.2026)
-			Boolean(options.keepOnlineSurplusAsCredit)
+			Boolean(options.keepOnlineSurplusAsCredit),
+			//// Neoffice — the stay a hotel restaurant puts the whole sale on (`{ reservation }`); null for any other sale
+			options.roomCharge || null
 		);
 		// Reset write-off amount and loyalty after successful submission
 		if (result) {

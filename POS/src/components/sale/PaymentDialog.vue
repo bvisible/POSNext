@@ -2477,6 +2477,19 @@
 						>
 							{{ creditConfirming ? __("Click again to confirm") : __("Pay on Account") }}
 						</button>
+						<!-- //// Neoffice — « On the room » (hotel restaurant), the same discrete link as « Pay on Account »: shown only where a hotel app says it is on, locked with its reason while the hotel's accounts are off, never while offline (a room must be looked up). -->
+						<button
+							v-if="roomCharge.offered && paymentEntries.length === 0 && !isOffline"
+							type="button"
+							data-test="room-charge-link"
+							:disabled="isSubmitting || !isSalesPersonValid || !roomCharge.available"
+							:title="roomCharge.available ? '' : roomCharge.reason || ''"
+							class="text-xs text-gray-600 hover:text-gray-800 transition-colors py-1 text-center disabled:opacity-60"
+							@click="openRoomCharge"
+						>
+							{{ __("On the room") }}
+						</button>
+						<p v-if="roomCharge.offered && !roomCharge.available && roomCharge.reason && paymentEntries.length === 0 && !isOffline" class="text-xs text-gray-500 text-center leading-snug" data-test="room-charge-reason">{{ roomCharge.reason }}</p>
 					</div>
 				</div>
 				<!-- End Right Column -->
@@ -2538,6 +2551,9 @@
 			<!-- End Unified Terminal Payment Dialog Overlay -->
 		</template>
 	</Dialog>
+
+	<!-- //// Neoffice — « On the room »: which stay, then the whole sale is submitted as a credit sale to it (see roomCharge in the script). -->
+	<RoomChargeDialog v-model="roomChargeOpen" :total="grandTotal" @chosen="putOnTheRoom" />
 
 	<!-- Nested Radix Dialog for overpayment confirmation -->
 	<Dialog v-model="overpayConfirmVisible" :options="{ size: 'xs' }">
@@ -2744,6 +2760,8 @@ import { usePaymentDriver } from "@/composables/usePaymentDriver";
 import { pushPaymentQR, clearPaymentQR } from "@/composables/useCustomerDisplaySync";
 import CardPresentDialog from "@/components/payments/CardPresentDialog.vue";
 import QRPaymentDialog from "@/components/payments/QRPaymentDialog.vue";
+//// Neoffice — « On the room » (hotel restaurant): the stay chosen here, the sale put on its bill by the server.
+import RoomChargeDialog from "@/components/sale/RoomChargeDialog.vue";
 //// Neoffice — a line a package pays is worth 0.00 in the summary, and says by what it is settled (G11, the audit of 18.11).
 import { lineAmountOf } from "@/utils/packageRows";
 
@@ -5256,7 +5274,40 @@ function paymentFeatherIcon(method) {
 	return type === "bank" ? "home" : type === "phone" || type.includes("mobile") ? "smartphone" : "credit-card";
 }
 
-function addCreditAccountPayment() {
+//// Neoffice — « On the room » (hotel restaurant). Whether the till offers it is the hotel app's word (pos_next.api.room_charge.status): nothing is drawn
+//// where no hotel is on; where one is, the link shows, locked with its reason while the hotel's accounts are off. Asked each time the window opens.
+const roomCharge = ref({ offered: false, available: false, reason: null });
+const roomChargeOpen = ref(false);
+watch(
+	() => props.modelValue,
+	async (open) => {
+		if (!open) return;
+		try {
+			const answer = await call("pos_next.api.room_charge.status");
+			roomCharge.value = answer?.message ?? answer ?? roomCharge.value;
+		} catch (error) {
+			// no hotel, or not reachable: the link stays hidden, the sale goes on as it always did
+			roomCharge.value = { offered: false, available: false, reason: null };
+		}
+	},
+	{ immediate: true }
+);
+
+function openRoomCharge() {
+	if (isTerminalPaymentActive({ terminalDialogShown: terminalDialogOnScreen.value, terminalInFlight: terminalInFlight.value })) {
+		showWarning(__("A payment is already in progress"));
+		return;
+	}
+	if (!isSalesPersonValid.value || !roomCharge.value.available) return;
+	roomChargeOpen.value = true;
+}
+
+// The whole sale goes on the stay: a credit sale with no payment row (the very one of « Pay on Account », with the same checks), whose customer the server sets from the stay.
+function putOnTheRoom(stay) {
+	addCreditAccountPayment({ reservation: stay.reservation, room_number: stay.room_number, guest_name: stay.guest_name });
+}
+
+function addCreditAccountPayment(room = null) {
 	//// Neoffice — same terminal guard as confirmCreditSale, for any other caller.
 	if (
 		isTerminalPaymentActive({
@@ -5294,6 +5345,8 @@ function addCreditAccountPayment() {
 		//// Neoffice — the team the sale sends as its own: none where every line names its person (neoffice-maintenance#3184)
 		sales_team: salesTeamOfTheInvoice.value.length > 0 ? salesTeamOfTheInvoice.value : null,
 		delivery_date: isSalesOrder.value ? deliveryDate.value : null,
+		//// Neoffice — « On the room » (hotel restaurant): the stay the whole sale goes on; absent for a sale on account
+		...(room ? { room_charge: room } : {}),
 	};
 
 	log.debug("[PaymentDialog] Emitting credit sale payment-completed:", paymentData);

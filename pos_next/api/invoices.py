@@ -2362,7 +2362,12 @@ def _require_a_paid_sale(invoice_doc, credit):
 		["allow_partial_payment", "allow_credit_sale"],
 		as_dict=True,
 	)
-	if till and not (cint(till.allow_partial_payment) or cint(till.allow_credit_sale)):
+	# //// Neoffice — a sale put on a room is no credit of the till's: its customer is the stay's (set by the hotel app, see submit_invoice).
+	if (
+		till
+		and not (cint(till.allow_partial_payment) or cint(till.allow_credit_sale))
+		and not invoice_doc.flags.get("pos_next_room_charge")
+	):
 		frappe.throw(_("Credit sales are not enabled for this POS Profile."))
 
 
@@ -2836,17 +2841,34 @@ def submit_invoice(invoice=None, data=None):
 		if doctype == "Sales Invoice" and credit_named and not invoice_doc.payments:
 			invoice_doc.flags.pos_next_redeemed_customer_credit = credit_named
 
+		# //// Neoffice — « On the room »: the whole sale goes to the bill of a guest in house, through the hotel app declared in the hook
+		# //// `pos_next_room_charge` (pos_next/room_charge.py). The hotel app refuses what cannot be put on that room and sets the customer of the
+		# //// stay on the sale, which is then a credit sale to that one customer (below); the sale is put on the bill after its save, before
+		# //// its submit (below), in this same request: a refusal takes the sale back and nothing was printed or opened for it. No hotel app,
+		# //// or a hotel that is off: the payload's `room_charge` is refused, and nothing else changes.
+		from pos_next import room_charge
+
+		room_stay = room_charge.reservation_of(data.get("room_charge") or invoice.get("room_charge"))
+		if room_stay:
+			if offline_id:
+				frappe.throw(_("A sale made offline cannot be put on a room."))
+			if invoice_doc.get("payments"):
+				frappe.throw(_("Put the whole sale on the room, or none of it."))
+			room_charge.require_provider().prepare(invoice_doc, room_stay)
+
 		# Allow intentional "Pay on Account" credit sales to submit without a
 		# payment row. The frontend sends is_credit_sale=1 when the cashier puts
 		# the full amount on the customer's account. Only honour it when the POS
 		# Settings for this profile actually permit credit sales, so a tampered
 		# client can't bypass the core payment-row requirement.
-		is_credit_sale = cint(data.get("is_credit_sale") or invoice.get("is_credit_sale"))
+		# //// Neoffice — a sale put on a room is a credit sale (see the block above).
+		is_credit_sale = cint(data.get("is_credit_sale") or invoice.get("is_credit_sale") or bool(room_stay))
 		if is_credit_sale and not invoice_doc.payments and flt(invoice_doc.grand_total) > 0:
 			allow_credit_sale = cint(
 				frappe.db.get_value(DOCTYPE_POS_SETTINGS, {"pos_profile": pos_profile}, "allow_credit_sale")
 			)
-			if not allow_credit_sale:
+			# //// Neoffice — a room is a credit sale to one stay's customer, not the till's credit for any customer: it needs no setting of the till.
+			if not allow_credit_sale and not room_stay:
 				frappe.throw(_("Credit sales are not enabled for this POS Profile."))
 			if not invoice_doc.get("customer"):
 				frappe.throw(_("Customer is required for credit sales"), title=_("Customer Required"))
@@ -2899,6 +2921,12 @@ def submit_invoice(invoice=None, data=None):
 		# //// maintenance#2296).
 		if doctype == "Sales Invoice":
 			_require_a_paid_sale(invoice_doc, credit_named)
+
+		# //// Neoffice — « On the room »: the saved sale (its name and its total are known) goes on the bill of the stay before it is submitted. What
+		# //// Kamra and the hotel's books do after a posting waits for the commit, so a refusal here (a limit, a closed bill) or a submit that fails
+		# //// afterwards takes everything back: no line on the bill, no receipt printed, no drawer opened for a sale that did not happen.
+		if room_stay:
+			room_charge.require_provider().post(invoice_doc, room_stay)
 
 		# //// Neoffice — a sale made offline and synced now carries this flag, so that what reacts to a
 		# //// POS sale being submitted (cloudprnt prints its receipt and opens the cash drawer) does not

@@ -1451,7 +1451,9 @@ export function useInvoice() {
 		//// Neoffice — the day of that appointment: the server reads the cashier's right to it in the day view of that day
 		appointmentDate = null,
 		//// Neoffice — the cashier keeps what the customer paid online beyond the sale as her credit, because she asked: otherwise the gateway gives it back on her card (voie 4, 19.11.2026)
-		keepOnlineSurplusAsCredit = false
+		keepOnlineSurplusAsCredit = false,
+		//// Neoffice — « On the room » (hotel restaurant): the stay the whole sale goes on, `{ reservation }`. The server asks the hotel app, which puts it on the bill.
+		roomCharge = null
 	) {
 		/**
 		 * Two-step submission process with mutex protection:
@@ -1596,6 +1598,11 @@ export function useInvoice() {
 				//// Neoffice — see the parameter above (voie 4, 19.11.2026)
 				if (keepOnlineSurplusAsCredit) {
 					submitData.keep_online_surplus_as_credit = 1;
+				}
+				//// Neoffice — see the parameter above: a room is a credit sale (no payment row) whose customer the hotel app sets
+				if (roomCharge?.reservation) {
+					submitData.room_charge = { reservation: roomCharge.reservation };
+					submitData.is_credit_sale = 1;
 				}
 
 				try {

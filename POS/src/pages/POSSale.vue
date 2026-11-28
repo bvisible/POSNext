@@ -5182,6 +5182,8 @@ async function handlePaymentCompleted(paymentData) {
 				receivableAccount: paymentData.receivable_account || null,
 				//// Neoffice — see the offline payload above: the online surplus goes back on her card unless she asked to keep it
 				keepOnlineSurplusAsCredit: Boolean(paymentData.keep_online_surplus_as_credit),
+				//// Neoffice — « On the room » (hotel restaurant): the stay chosen in the payment window; a sale made offline never carries one (the link is not drawn offline)
+				roomCharge: paymentData.room_charge || null,
 			});
 			//// Neoffice — submit timing probe kept from the payment-latency work (2584aa58,
 			//// 2026-03-24 "performance timing logs").
