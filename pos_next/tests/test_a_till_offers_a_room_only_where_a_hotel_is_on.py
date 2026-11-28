@@ -24,6 +24,19 @@ def a_hotel(status, stays=None):
 		search_stays=lambda text: stays or [],
 		prepare=lambda invoice, reservation: "CUST",
 		post=lambda invoice, reservation: {"folio": "F", "ticket_id": "T", "amount": 1, "duplicate": False},
+		room_of=lambda sale: {"room_number": "101", "released": False} if sale == "SALE-ON-ROOM" else None,
+		move=lambda invoice, reservation, reason, pin=None: {
+			"invoice": invoice,
+			"moved_to": reservation,
+			"reason": reason,
+			"pin": pin,
+		},
+		release=lambda invoice, reason, pin=None: {
+			"invoice": invoice,
+			"released": True,
+			"reason": reason,
+			"pin": pin,
+		},
 	)
 
 
@@ -76,3 +89,46 @@ class TestATillOffersARoomOnlyWhereAHotelIsOn(FrappeTestCase):
 	def test_the_hook_names_no_provider_on_a_site_without_a_hotel_app(self):
 		with patch("frappe.get_hooks", return_value=[]):
 			self.assertIsNone(room_charge.provider())
+
+	# -- correcting a meal from the history of invoices ------------------------------------------------------------
+
+	def test_the_history_knows_which_sales_are_on_a_room_and_asks_for_nothing_where_no_hotel_is_on(self):
+		with self.with_hotel(a_hotel({"offered": True, "available": True, "reason": None})):
+			self.assertEqual(
+				api.rooms_of(frappe.as_json(["SALE-ON-ROOM", "SALE-AT-THE-TABLE"])),
+				{"SALE-ON-ROOM": {"room_number": "101", "released": False}},
+			)
+		with self.with_hotel(a_hotel({"offered": False, "available": False, "reason": None})):
+			self.assertEqual(api.rooms_of(frappe.as_json(["SALE-ON-ROOM"])), {})
+		with self.with_hotel(None):
+			self.assertEqual(api.rooms_of(frappe.as_json(["SALE-ON-ROOM"])), {})
+
+	def test_a_move_and_a_release_go_to_the_hotel_with_their_reason_and_pin(self):
+		with (
+			self.with_hotel(a_hotel({"offered": True, "available": True, "reason": None})),
+			patch("frappe.has_permission", return_value=True),
+		):
+			self.assertEqual(
+				api.move_to_room("FA-1", "RES-2", "wrong room", "1234"),
+				{"invoice": "FA-1", "moved_to": "RES-2", "reason": "wrong room", "pin": "1234"},
+			)
+			self.assertEqual(
+				api.take_off_the_room("FA-1", "paid at the table"),
+				{"invoice": "FA-1", "released": True, "reason": "paid at the table", "pin": None},
+			)
+
+	def test_a_move_and_a_release_are_refused_where_no_hotel_is_on_and_to_a_visitor(self):
+		with self.with_hotel(None), patch("frappe.has_permission", return_value=True):
+			with self.assertRaises(frappe.PermissionError):
+				api.move_to_room("FA-1", "RES-2", "wrong room")
+			with self.assertRaises(frappe.PermissionError):
+				api.take_off_the_room("FA-1", "paid")
+		with self.with_hotel(a_hotel({"offered": True, "available": True, "reason": None})):
+			frappe.set_user("Guest")
+			for call in (
+				lambda: api.rooms_of("[]"),
+				lambda: api.move_to_room("FA-1", "RES-2", "x"),
+				lambda: api.take_off_the_room("FA-1", "x"),
+			):
+				with self.assertRaises(frappe.PermissionError):
+					call()

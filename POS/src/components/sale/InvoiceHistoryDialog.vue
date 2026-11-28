@@ -79,6 +79,14 @@
 									>
 										{{ __(invoice.status) }}
 									</span>
+									<!-- //// Neoffice — a meal put on a hotel room (« On the room »): where it is, or that it was taken off -->
+									<span
+										v-if="rooms[invoice.name]"
+										:data-test="`room-chip-${invoice.name}`"
+										class="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100"
+									>
+										{{ rooms[invoice.name].released ? __("Taken off the room") : __("On room {0}", [rooms[invoice.name].room_number]) }}
+									</span>
 								</div>
 								<p class="text-xs text-gray-600 text-start">
 									{{ invoice.customer_name }}
@@ -144,6 +152,11 @@
 										</svg>
 									</Button>
 								</div>
+								<!-- //// Neoffice — correcting a meal put on the wrong room: another room, or off the room (the sale stays owed, to be paid at the till) -->
+								<div v-if="canCorrectRoom(invoice)" class="mt-2 flex flex-col items-end gap-1">
+									<button type="button" :data-test="`room-move-${invoice.name}`" class="text-xs text-gray-600 hover:text-gray-800" @click="openRoomCorrection(invoice, 'move')">{{ __("Change room") }}</button>
+									<button type="button" :data-test="`room-release-${invoice.name}`" class="text-xs text-gray-600 hover:text-gray-800" @click="openRoomCorrection(invoice, 'release')">{{ __("Take off the room") }}</button>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -164,6 +177,15 @@
 		</template>
 	</Dialog>
 
+	<!-- //// Neoffice — correcting a meal put on a hotel room, from the history (see canCorrectRoom below) -->
+	<RoomChargeDialog
+		v-model="roomCorrectionOpen"
+		:mode="roomCorrection.mode"
+		:invoice="roomCorrection.invoice"
+		:pin-required="roomCorrection.pinRequired"
+		@done="onRoomCorrected"
+	/>
+
 	<!-- Return Invoice Dialog -->
 	<ReturnInvoiceDialog
 		v-model="showReturnDialog"
@@ -183,11 +205,15 @@ import { getInvoiceStatusColor } from "@/utils/invoice"
 //// Neoffice — the row's preview of its ticket (utils/invoicePreview.js and InvoiceTicketPreview.vue, added files).
 import { invoicePreview } from "@/utils/invoicePreview"
 import InvoiceTicketPreview from "./InvoiceTicketPreview.vue"
+//// Neoffice — « On the room » (hotel restaurant): the same window puts a meal on a room, moves it, or takes it off.
+import RoomChargeDialog from "./RoomChargeDialog.vue"
+import { call } from "@/utils/apiWrapper"
 import { Button, Dialog, Input, createResource } from "frappe-ui"
 import { computed, ref, watch } from "vue"
 import ReturnInvoiceDialog from "./ReturnInvoiceDialog.vue"
 
-const { showError } = useToast();
+//// Neoffice — showSuccess: said once a meal put on a room was moved or taken off
+const { showError, showSuccess } = useToast();
 const { formatDate, formatTime } = useFormatters();
 
 const props = defineProps({
@@ -214,6 +240,10 @@ const emit = defineEmits([
 
 const show = ref(props.modelValue)
 const invoices = ref([])
+//// Neoffice — where the meals put on a hotel room are (`{ sale: { room_number, released, owed, pin_required, ... } }`); empty where no hotel is on
+const rooms = ref({})
+const roomCorrectionOpen = ref(false)
+const roomCorrection = ref({ mode: "move", invoice: "", pinRequired: false })
 const searchTerm = ref("")
 const page = ref(0)
 const pageSize = 20
@@ -255,6 +285,9 @@ const invoicesResource = createResource({
 				// Replace the list
 				invoices.value = newInvoices
 			}
+
+			//// Neoffice — which of these sales are on a hotel room (nothing where no hotel is on)
+			loadRooms(newInvoices.map((inv) => inv.name))
 
 			// Check if there are more results
 			hasMore.value = data.length === pageSize
@@ -307,6 +340,33 @@ const filteredInvoices = computed(() => {
 			inv.customer_name?.toLowerCase().includes(term),
 	)
 })
+
+//// Neoffice — which of these sales were put on a room: the hotel app says (nothing, where none is on). A failure leaves the list as it was.
+async function loadRooms(names) {
+	if (!names.length || props.posProfile === undefined) return
+	try {
+		const answer = await call("pos_next.api.room_charge.rooms_of", { invoices: JSON.stringify(names) })
+		rooms.value = { ...rooms.value, ...(answer?.message ?? answer ?? {}) }
+	} catch (error) {
+		// no hotel, or not reachable: no chip, the history works as it always did
+	}
+}
+
+// A meal still on its room, of a submitted sale, can be corrected; the hotel app refuses what cannot (a closed bill, a day gone by)
+function canCorrectRoom(invoice) {
+	const room = rooms.value[invoice.name]
+	return Boolean(room) && !room.released && invoice.docstatus === 1
+}
+
+function openRoomCorrection(invoice, mode) {
+	roomCorrection.value = { mode, invoice: invoice.name, pinRequired: Boolean(rooms.value[invoice.name]?.pin_required) }
+	roomCorrectionOpen.value = true
+}
+
+function onRoomCorrected() {
+	showSuccess(__("Done"))
+	loadInvoices()
+}
 
 function loadInvoices() {
 	if (props.posProfile) {
